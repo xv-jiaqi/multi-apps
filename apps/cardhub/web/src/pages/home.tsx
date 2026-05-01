@@ -1,58 +1,85 @@
 import { observer } from 'mobx-react-lite';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui-web';
+import { Link } from 'react-router';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { APP_NAME, t } from '@repo/shared';
+import { PageShell } from '../components/page-shell';
 import { useStores } from '../stores/root-store';
-import { trpc } from '../lib/trpc';
+import { listMockSeries } from '../lib/mock-data';
 
 export const HomePage = observer(function HomePage() {
   const { locale } = useStores();
-  const ping = trpc.health.ping.useQuery();
+  const tt = (key: string) => t(locale.locale, key);
+  const featured = listMockSeries().slice(0, 3);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-16">
-      <header className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-neutral-900">
-          {t(locale.locale, 'welcome.title')}
-        </h1>
-        <p className="mt-3 text-base text-neutral-600">{t(locale.locale, 'welcome.subtitle')}</p>
-      </header>
-
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>{APP_NAME} · 端到端类型安全演示</CardTitle>
-          <CardDescription>
-            这个卡片通过 tRPC 调用 <code className="rounded bg-neutral-100 px-1">health.ping</code>
-            ， 返回值的类型完全由后端 AppRouter 推导。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {ping.isLoading ? (
-            <p className="text-sm text-neutral-500">{t(locale.locale, 'health.fail')}…</p>
-          ) : ping.isError ? (
-            <p className="text-sm text-red-600">
-              {t(locale.locale, 'health.fail')}: {ping.error.message}
-            </p>
-          ) : ping.data ? (
-            <dl className="grid grid-cols-2 gap-2 text-sm">
-              <dt className="text-neutral-500">status</dt>
-              <dd className="font-mono">{ping.data.status}</dd>
-              <dt className="text-neutral-500">timestamp</dt>
-              <dd className="font-mono">{new Date(ping.data.timestamp).toLocaleString()}</dd>
-              <dt className="text-neutral-500">message</dt>
-              <dd>{ping.data.message}</dd>
-            </dl>
-          ) : null}
-          <div className="flex gap-2">
-            <Button onClick={() => ping.refetch()}>重新检查</Button>
-            <Button
-              variant="outline"
-              onClick={() => locale.setLocale(locale.locale === 'zh-CN' ? 'en-US' : 'zh-CN')}
-            >
-              切换语言 · {locale.locale}
+    <PageShell>
+      <section className="grid gap-12 pb-16 pt-6 md:grid-cols-[1.2fr,1fr] md:items-center">
+        <div className="space-y-6">
+          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white/70 px-3 py-1 text-xs font-medium text-neutral-600 backdrop-blur">
+            {APP_NAME} · MVP
+          </span>
+          <h1 className="text-5xl font-bold tracking-tight text-neutral-900 md:text-6xl">
+            {tt('welcome.title')}
+          </h1>
+          <p className="max-w-xl text-lg text-neutral-600">{tt('welcome.subtitle')}</p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link to="/series">{tt('welcome.cta.browse')}</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/search">{tt('welcome.cta.search')}</Link>
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </main>
+        </div>
+
+        <div className="relative">
+          <div className="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-br from-indigo-200/60 via-fuchsia-200/40 to-amber-200/40 blur-2xl" />
+          <div className="grid grid-cols-2 gap-4">
+            {featured.map((series, idx) => (
+              <Link
+                key={series.slug}
+                to={`/series/${series.slug}`}
+                className={`group relative overflow-hidden rounded-2xl border border-white/60 bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-transform hover:-translate-y-1 ${
+                  idx === 0 ? 'col-span-2' : ''
+                }`}
+              >
+                <div
+                  className={`absolute inset-0 -z-10 bg-gradient-to-br ${series.coverGradient} opacity-30 transition-opacity group-hover:opacity-50`}
+                />
+                <h3 className="text-lg font-semibold text-neutral-900">{series.title}</h3>
+                <p className="mt-1 line-clamp-2 text-xs text-neutral-700">{series.description}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 pb-16 md:grid-cols-3">
+        <Card className="border-white/60 bg-white/70 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-base">系列总览</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold tracking-tight">
+            {listMockSeries().length}
+          </CardContent>
+        </Card>
+        <Card className="border-white/60 bg-white/70 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-base">已索引卡牌</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold tracking-tight">
+            {listMockSeries().reduce((acc, s) => acc + s.cardCount, 0)}
+          </CardContent>
+        </Card>
+        <Card className="border-white/60 bg-white/70 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-base">数据来源</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm leading-relaxed text-neutral-600">
+            当前为 Epic 1 静态模拟数据，Epic 2 起接入 PostgreSQL + tRPC。
+          </CardContent>
+        </Card>
+      </section>
+    </PageShell>
   );
 });
