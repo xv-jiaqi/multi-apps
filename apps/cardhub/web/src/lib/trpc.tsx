@@ -6,9 +6,7 @@ import type { AppRouter } from '@repo/trpc-contract';
 
 export const trpc = createTRPCReact<AppRouter>();
 
-const TRPC_URL =
-  import.meta.env.VITE_TRPC_URL ??
-  (typeof window !== 'undefined' ? `${window.location.origin}/trpc` : 'http://localhost:4000/trpc');
+const TRPC_URL = (import.meta.env.VITE_TRPC_URL as string | undefined) ?? '/trpc';
 
 export function TrpcProvider({ children }: PropsWithChildren) {
   const [queryClient] = useState(

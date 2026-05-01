@@ -4,12 +4,13 @@ import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { useStores } from '../stores/root-store';
-import { listMockSeries } from '../lib/mock-data';
+import { trpc } from '../lib/trpc';
+import { gradientFor } from '../lib/gradients';
 
 export const SeriesListPage = observer(function SeriesListPage() {
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
-  const series = listMockSeries();
+  const query = trpc.series.list.useQuery();
 
   return (
     <PageShell>
@@ -22,19 +23,39 @@ export const SeriesListPage = observer(function SeriesListPage() {
           <p className="text-neutral-600">{tt('series.list.subtitle')}</p>
         </header>
 
-        {series.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
-            {tt('series.empty')}
-          </p>
-        ) : (
+        {query.isLoading ? (
           <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {series.map((s) => (
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <li
+                key={idx}
+                className="h-56 animate-pulse rounded-2xl border border-white/60 bg-white/50"
+              />
+            ))}
+          </ul>
+        ) : query.isError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+            <p className="font-medium">{tt('state.error')}</p>
+            <p className="mt-1 break-all text-xs opacity-80">{query.error.message}</p>
+            <button
+              type="button"
+              onClick={() => query.refetch()}
+              className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+            >
+              {tt('state.retry')}
+            </button>
+          </div>
+        ) : query.data && query.data.items.length > 0 ? (
+          <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {query.data.items.map((s) => (
               <li key={s.slug}>
                 <Link
                   to={`/series/${s.slug}`}
                   className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-lg"
                 >
-                  <div className={`relative h-32 bg-gradient-to-br ${s.coverGradient}`} aria-hidden>
+                  <div
+                    className={`relative h-32 bg-gradient-to-br ${gradientFor(s.slug)}`}
+                    aria-hidden
+                  >
                     <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                   </div>
                   <div className="space-y-2 p-5">
@@ -48,6 +69,10 @@ export const SeriesListPage = observer(function SeriesListPage() {
               </li>
             ))}
           </ul>
+        ) : (
+          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+            {tt('series.empty')}
+          </p>
         )}
       </div>
     </PageShell>

@@ -4,12 +4,15 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { APP_NAME, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { useStores } from '../stores/root-store';
-import { listMockSeries } from '../lib/mock-data';
+import { trpc } from '../lib/trpc';
+import { gradientFor } from '../lib/gradients';
 
 export const HomePage = observer(function HomePage() {
   const { locale } = useStores();
   const tt = (key: string) => t(locale.locale, key);
-  const featured = listMockSeries().slice(0, 3);
+  const seriesQuery = trpc.series.list.useQuery();
+  const featured = (seriesQuery.data?.items ?? []).slice(0, 3);
+  const totalCards = (seriesQuery.data?.items ?? []).reduce((acc, s) => acc + s.cardCount, 0);
 
   return (
     <PageShell>
@@ -35,21 +38,32 @@ export const HomePage = observer(function HomePage() {
         <div className="relative">
           <div className="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-br from-indigo-200/60 via-fuchsia-200/40 to-amber-200/40 blur-2xl" />
           <div className="grid grid-cols-2 gap-4">
-            {featured.map((series, idx) => (
-              <Link
-                key={series.slug}
-                to={`/series/${series.slug}`}
-                className={`group relative overflow-hidden rounded-2xl border border-white/60 bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-transform hover:-translate-y-1 ${
-                  idx === 0 ? 'col-span-2' : ''
-                }`}
-              >
-                <div
-                  className={`absolute inset-0 -z-10 bg-gradient-to-br ${series.coverGradient} opacity-30 transition-opacity group-hover:opacity-50`}
-                />
-                <h3 className="text-lg font-semibold text-neutral-900">{series.title}</h3>
-                <p className="mt-1 line-clamp-2 text-xs text-neutral-700">{series.description}</p>
-              </Link>
-            ))}
+            {seriesQuery.isLoading
+              ? Array.from({ length: 3 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-32 animate-pulse rounded-2xl border border-white/60 bg-white/50 ${
+                      idx === 0 ? 'col-span-2' : ''
+                    }`}
+                  />
+                ))
+              : featured.map((series, idx) => (
+                  <Link
+                    key={series.slug}
+                    to={`/series/${series.slug}`}
+                    className={`group relative overflow-hidden rounded-2xl border border-white/60 bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-transform hover:-translate-y-1 ${
+                      idx === 0 ? 'col-span-2' : ''
+                    }`}
+                  >
+                    <div
+                      className={`absolute inset-0 -z-10 bg-gradient-to-br ${gradientFor(series.slug)} opacity-30 transition-opacity group-hover:opacity-50`}
+                    />
+                    <h3 className="text-lg font-semibold text-neutral-900">{series.title}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-neutral-700">
+                      {series.description}
+                    </p>
+                  </Link>
+                ))}
           </div>
         </div>
       </section>
@@ -60,7 +74,7 @@ export const HomePage = observer(function HomePage() {
             <CardTitle className="text-base">系列总览</CardTitle>
           </CardHeader>
           <CardContent className="text-3xl font-bold tracking-tight">
-            {listMockSeries().length}
+            {seriesQuery.data?.total ?? '—'}
           </CardContent>
         </Card>
         <Card className="border-white/60 bg-white/70 backdrop-blur">
@@ -68,7 +82,7 @@ export const HomePage = observer(function HomePage() {
             <CardTitle className="text-base">已索引卡牌</CardTitle>
           </CardHeader>
           <CardContent className="text-3xl font-bold tracking-tight">
-            {listMockSeries().reduce((acc, s) => acc + s.cardCount, 0)}
+            {seriesQuery.data ? totalCards : '—'}
           </CardContent>
         </Card>
         <Card className="border-white/60 bg-white/70 backdrop-blur">
@@ -76,7 +90,7 @@ export const HomePage = observer(function HomePage() {
             <CardTitle className="text-base">数据来源</CardTitle>
           </CardHeader>
           <CardContent className="text-sm leading-relaxed text-neutral-600">
-            当前为 Epic 1 静态模拟数据，Epic 2 起接入 PostgreSQL + tRPC。
+            实时由 NestJS + tRPC + PostgreSQL 提供（Epic 2）。
           </CardContent>
         </Card>
       </section>

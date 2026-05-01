@@ -1,23 +1,40 @@
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
-import { listAllMockCards } from '../lib/mock-data';
+import { trpc } from '../lib/trpc';
+import { gradientFor } from '../lib/gradients';
+
+const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
+function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
+  if (rarity && (RARITY_ORDER as readonly string[]).includes(rarity)) {
+    return rarity as (typeof RARITY_ORDER)[number];
+  }
+  return 'common';
+}
+
+function useDebounced<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
+}
 
 export const SearchPage = observer(function SearchPage() {
   const { locale } = useStores();
-  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
+  const tt = (key: string) => t(locale.locale, key);
   const [query, setQuery] = useState('');
+  const debounced = useDebounced(query.trim(), 250);
 
-  const all = useMemo(() => listAllMockCards(), []);
-  const trimmed = query.trim().toLowerCase();
-  const results = useMemo(
-    () => (trimmed ? all.filter((c) => c.name.toLowerCase().includes(trimmed)) : []),
-    [all, trimmed],
+  const results = trpc.cards.search.useQuery(
+    { q: debounced, limit: 30 },
+    { enabled: debounced.length > 0 },
   );
 
   return (
@@ -39,33 +56,39 @@ export const SearchPage = observer(function SearchPage() {
           />
         </div>
 
-        {trimmed === '' ? (
+        {debounced === '' ? (
           <p className="text-sm text-neutral-500">{tt('search.placeholder')}</p>
-        ) : results.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
-            {tt('search.empty')}
+        ) : results.isLoading ? (
+          <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
+        ) : results.isError ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+            {results.error.message}
           </p>
-        ) : (
+        ) : results.data && results.data.results.length > 0 ? (
           <ul className="divide-y divide-neutral-200/60 overflow-hidden rounded-2xl border border-white/60 bg-white/70 backdrop-blur">
-            {results.map((card) => (
+            {results.data.results.map((card) => (
               <li key={card.slug}>
                 <Link
                   to={`/cards/${card.slug}`}
                   className="flex items-center gap-4 p-4 transition-colors hover:bg-neutral-50/80"
                 >
                   <div
-                    className={`h-12 w-12 shrink-0 rounded-lg bg-gradient-to-br ${card.imageGradient}`}
+                    className={`h-12 w-12 shrink-0 rounded-lg bg-gradient-to-br ${gradientFor(card.slug)}`}
                     aria-hidden
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-neutral-900">{card.name}</p>
                     <p className="truncate text-xs text-neutral-500">{card.seriesTitle}</p>
                   </div>
-                  <RarityBadge rarity={card.rarity} locale={locale.locale} />
+                  <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
                 </Link>
               </li>
             ))}
           </ul>
+        ) : (
+          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+            {tt('search.empty')}
+          </p>
         )}
       </div>
     </PageShell>

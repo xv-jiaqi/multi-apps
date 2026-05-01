@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "description": "Framework-agnostic shared utilities, zod schemas, constants, i18n dictionaries.",
-  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
