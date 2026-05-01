@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+@import '@repo/design-tokens/tailwind.css';
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+}

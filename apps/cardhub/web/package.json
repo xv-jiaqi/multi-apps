@@ -1,0 +1,43 @@
+{
+  "name": "@cardhub/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cardhub Web frontend (Vite + React 19 + shadcn/ui + MobX + SWR + tRPC).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b --noEmit && vite build",
+    "preview": "vite preview --port 5173",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@repo/design-tokens": "workspace:*",
+    "@repo/shared": "workspace:*",
+    "@repo/stores": "workspace:*",
+    "@repo/trpc-contract": "workspace:*",
+    "@repo/ui-web": "workspace:*",
+    "@tanstack/react-query": "^5.99.2",
+    "@trpc/client": "^11.16.0",
+    "@trpc/react-query": "^11.16.0",
+    "@trpc/server": "^11.16.0",
+    "mobx": "^6.15.0",
+    "mobx-react-lite": "^4.1.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router": "^7.14.1",
+    "swr": "^2.4.1"
+  },
+  "devDependencies": {
+    "@repo/config-ts": "workspace:*",
+    "@tailwindcss/vite": "^4.2.3",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.2.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9"
+  }
+}

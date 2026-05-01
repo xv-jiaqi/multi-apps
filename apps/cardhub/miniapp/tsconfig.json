@@ -1,0 +1,12 @@
+{
+  "extends": "@repo/config-ts/taro.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["@tarojs/taro", "node"]
+  },
+  "include": ["src/**/*", "config/**/*", "types/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

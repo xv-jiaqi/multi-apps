@@ -1,0 +1,33 @@
+{
+  "name": "@repo/stores",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cross-platform MobX stores (UI, session, preferences) shared by web / native / miniapp.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/shared": "workspace:*",
+    "mobx": "^6.15.0"
+  },
+  "devDependencies": {
+    "@repo/config-ts": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}

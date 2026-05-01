@@ -1,0 +1,10 @@
+{
+  "name": "@repo/config-prettier",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared Prettier config.",
+  "main": "./index.cjs",
+  "files": [
+    "index.cjs"
+  ]
+}

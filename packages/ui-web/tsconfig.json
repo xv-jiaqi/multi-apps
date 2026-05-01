@@ -1,0 +1,8 @@
+{
+  "extends": "@repo/config-ts/react.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true
+  },
+  "include": ["src/**/*"]
+}

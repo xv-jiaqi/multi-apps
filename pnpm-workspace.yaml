@@ -1,0 +1,29 @@
+packages:
+  - 'apps/*/*'
+  - 'packages/*'
+
+overrides:
+  # Taro 4.2 ships a @tarojs/webpack5-runner that only validates against
+  # webpack's schema shape from 5.91. Newer webpack (5.100+) added stricter
+  # checks on ProgressPlugin options and breaks `taro build`.
+  webpack: '5.91.0'
+  # Force a single @types/react version workspace-wide. Otherwise miniapp's
+  # React 18 types collide with the React 19 types consumed by web / native
+  # (because @tanstack/react-query et al. pull @types/react@18 transitively),
+  # producing spurious "Type 'bigint' is not assignable to ReactNode" errors.
+  '@types/react': '^19.2.14'
+  '@types/react-dom': '^19.2.3'
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@parcel/watcher'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@swc/core'
+  - '@tarojs/binding'
+  - '@tarojs/cli'
+  - 'bcrypt'
+  - 'core-js'
+  - 'core-js-pure'
+  - 'esbuild'
+  - 'prisma'

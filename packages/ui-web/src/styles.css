@@ -1,0 +1,7 @@
+/*
+ * Optional global stylesheet for apps that want the shared design tokens applied globally.
+ * Import in the host app after `@import "tailwindcss"`:
+ *   @import "@repo/ui-web/styles.css";
+ */
+
+@import '@repo/design-tokens/tailwind.css';

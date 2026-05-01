@@ -1,0 +1,28 @@
+{
+  "name": "@cardhub/native",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cardhub Tauri v2 shell — Desktop (Win/macOS/Linux) + iOS + Android share the same React frontend from @cardhub/web.",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri",
+    "android:init": "tauri android init",
+    "android:dev": "tauri android dev",
+    "android:build": "tauri android build",
+    "ios:init": "tauri ios init",
+    "ios:dev": "tauri ios dev",
+    "ios:build": "tauri ios build",
+    "lint": "echo 'native has no JS sources to lint'",
+    "typecheck": "echo 'native has no JS sources to typecheck'"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-sql": "^2.4.0"
+  },
+  "devDependencies": {
+    "@cardhub/web": "workspace:*",
+    "@tauri-apps/cli": "^2.10.1"
+  }
+}

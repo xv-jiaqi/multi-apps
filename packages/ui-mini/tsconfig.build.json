@@ -1,0 +1,15 @@
+{
+  "extends": "@repo/config-ts/taro.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmit": false
+  },
+  "include": ["src/**/*"]
+}

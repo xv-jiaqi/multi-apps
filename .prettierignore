@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/build
+**/.turbo
+**/.nest
+**/coverage
+**/src-tauri/target
+**/src-tauri/gen
+**/prisma/generated
+**/.temp
+pnpm-lock.yaml

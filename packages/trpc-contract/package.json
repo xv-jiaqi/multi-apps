@@ -1,0 +1,33 @@
+{
+  "name": "@repo/trpc-contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Re-exports the AppRouter type from the API so that clients can derive end-to-end type safety without importing server code.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@trpc/server": "^11.16.0"
+  },
+  "devDependencies": {
+    "@cardhub/api": "workspace:*",
+    "@repo/config-ts": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}

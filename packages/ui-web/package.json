@@ -1,0 +1,40 @@
+{
+  "name": "@repo/ui-web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "shadcn/ui-based shared components for web + native (Tauri). Tailwind v4 required in host app.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css",
+    "./lib/cn": "./src/lib/cn.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.8.0",
+    "tailwind-merge": "^3.5.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@repo/config-ts": "workspace:*",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "typescript": "^6.0.3"
+  }
+}

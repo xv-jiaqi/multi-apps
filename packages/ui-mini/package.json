@@ -1,0 +1,39 @@
+{
+  "name": "@repo/ui-mini",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Taro component wrappers shared across mini-programs (WeChat/Alipay/TikTok/etc).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@tarojs/components": "^4.2.0",
+    "@tarojs/taro": "^4.2.0",
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@repo/config-ts": "workspace:*",
+    "@tarojs/components": "^4.2.0",
+    "@tarojs/taro": "^4.2.0",
+    "@types/node": "^25.6.0",
+    "@types/react": "^18.3.12",
+    "react": "^18.3.1",
+    "typescript": "^6.0.3"
+  }
+}

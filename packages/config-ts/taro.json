@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Taro (React)",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "jsx": "react-jsx",
+    "types": ["@tarojs/taro", "node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

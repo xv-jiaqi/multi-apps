@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments Comment[]
+
+  @@map("users")
+}
+
+model Series {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  description String?
+  coverUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cards Card[]
+
+  @@map("series")
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String?
+  imageUrl    String?
+  rarity      String?
+  attributes  Json?
+  seriesId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  series   Series    @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  comments Comment[]
+
+  @@index([seriesId])
+  @@index([name])
+  @@map("cards")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  cardId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@map("comments")
+}

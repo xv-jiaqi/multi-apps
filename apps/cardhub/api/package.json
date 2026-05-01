@@ -1,0 +1,57 @@
+{
+  "name": "@cardhub/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cardhub backend — NestJS 11 + tRPC v11 + Prisma 7 + PostgreSQL + Redis + JWT.",
+  "main": "dist/main.js",
+  "exports": {
+    ".": "./dist/main.js",
+    "./trpc": "./src/trpc/app-router.ts"
+  },
+  "scripts": {
+    "dev": "nest start --watch --preserveWatchOutput",
+    "build": "nest build",
+    "start": "node dist/main",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.1.19",
+    "@prisma/client": "^6.19.3",
+    "@repo/shared": "workspace:*",
+    "@trpc/server": "^11.16.0",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "ioredis": "^5.10.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.1.19",
+    "@repo/config-ts": "workspace:*",
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "@types/passport-jwt": "^4.0.1",
+    "prisma": "^6.19.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}
