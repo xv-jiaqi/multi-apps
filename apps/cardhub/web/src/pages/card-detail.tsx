@@ -8,6 +8,7 @@ import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { gradientFor } from '../lib/gradients';
+import { CommentSection } from '../components/comment-section';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
 function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
@@ -120,9 +121,8 @@ export const CardDetailPage = observer(function CardDetailPage() {
               <CardHeader>
                 <CardTitle className="text-base">{tt('card.detail.commentsTitle')}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-neutral-500">
-                <p>{tt('card.detail.commentEmpty')}</p>
-                <p className="text-xs italic">{tt('card.detail.commentsPlaceholder')}</p>
+              <CardContent>
+                <CommentSection cardSlug={card.slug} />
               </CardContent>
             </Card>
           </div>

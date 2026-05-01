@@ -5,7 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { AppModule } from './app.module';
 import { TrpcService } from './trpc/trpc.service';
-import { createContext } from './trpc/context';
+import { makeCreateContext } from './trpc/context';
+import { AuthService } from './modules/auth/auth.service';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -13,6 +14,7 @@ async function bootstrap(): Promise<void> {
 
   const config = app.get(ConfigService);
   const trpcService = app.get(TrpcService);
+  const authService = app.get(AuthService);
 
   const corsOrigin = config
     .get<string>('CORS_ORIGIN', 'http://localhost:5173')
@@ -37,7 +39,7 @@ async function bootstrap(): Promise<void> {
     '/trpc',
     trpcExpress.createExpressMiddleware({
       router: trpcService.appRouter,
-      createContext,
+      createContext: makeCreateContext(authService),
     }),
   );
 

@@ -4,9 +4,12 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { AuthRouter } from './auth.router';
+import { TrpcBaseModule } from '../../trpc/trpc-base.module';
 
 @Module({
   imports: [
+    TrpcBaseModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -25,7 +28,7 @@ import { JwtStrategy } from './jwt.strategy';
       },
     }),
   ],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtModule],
+  providers: [AuthService, JwtStrategy, AuthRouter],
+  exports: [AuthService, AuthRouter, JwtModule],
 })
 export class AuthModule {}

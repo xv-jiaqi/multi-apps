@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { Link, NavLink } from 'react-router';
+import { Link, NavLink, useNavigate } from 'react-router';
 import { APP_NAME, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 
@@ -9,7 +9,8 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 export const SiteHeader = observer(function SiteHeader() {
-  const { locale } = useStores();
+  const { locale, session } = useStores();
+  const navigate = useNavigate();
   const tt = (key: string) => t(locale.locale, key);
 
   return (
@@ -47,6 +48,37 @@ export const SiteHeader = observer(function SiteHeader() {
           >
             {locale.locale === 'zh-CN' ? 'EN' : '中'}
           </button>
+
+          {session.isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-neutral-700">@{session.user?.username}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  session.signOut();
+                  navigate('/');
+                }}
+                className="rounded-full border border-neutral-200 px-3 py-1 text-xs text-neutral-600 transition-colors hover:bg-neutral-100"
+              >
+                {tt('nav.logout')}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <NavLink
+                to="/login"
+                className="rounded-full px-3 py-1 text-sm text-neutral-600 transition-colors hover:bg-neutral-100"
+              >
+                {tt('nav.login')}
+              </NavLink>
+              <NavLink
+                to="/register"
+                className="rounded-full bg-neutral-900 px-3 py-1 text-sm text-white transition-colors hover:bg-neutral-700"
+              >
+                {tt('nav.register')}
+              </NavLink>
+            </div>
+          )}
         </div>
       </div>
     </header>
