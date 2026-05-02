@@ -45,7 +45,18 @@ Thumbs.db
 
 # Tauri
 apps/**/src-tauri/target/
+# gen/ contains regenerated platform projects (Xcode + Android Studio). They
+# bake absolute paths and per-developer signing data, so we ignore the whole
+# tree and let `tauri ios init` / `tauri android init` recreate them on first
+# checkout. See apps/cardhub/native/MOBILE_SETUP.md for the bootstrap steps.
 apps/**/src-tauri/gen/
+# Xcode noise — already covered by gen/ ignore but kept for clarity if a
+# contributor opens the .xcworkspace at the repo root for any reason.
+**/xcuserdata/
+**/*.xcuserdatad/
+**/.gradle/
+# Cocoapods cache produced by tauri ios init / build.
+**/Pods/
 
 # Taro
 apps/**/miniapp/dist/

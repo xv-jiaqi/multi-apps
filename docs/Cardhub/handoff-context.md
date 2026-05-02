@@ -219,6 +219,16 @@ API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../
 
 不要把 DSN 写进 `.env.example`；走 Render env group / Cloudflare Pages env。
 
+## 6.15 Safe-area 不要 padding 整个 body（M4）
+
+iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内边距。**不要**在 `<body>` 上加 `padding-top`，因为 `SiteHeader` 是 `position: sticky; top: 0`——一旦 body 有 padding，sticky 会贴到 padding 后的位置，刘海上方留出一条颜色条带，体验丑。
+
+正确做法（已落地在 [globals.css](../../apps/cardhub/web/src/styles/globals.css)）：CSS vars `--safe-area-{top,right,bottom,left}` + utility 类 `.app-safe-top` / `.app-safe-x` / `.app-safe-bottom`。
+
+- SiteHeader（sticky）→ `.app-safe-top`：背景延伸到刘海，内容下沉。
+- PageShell `<main>` → `.app-safe-x .app-safe-bottom`：横屏 iPhone 的左右切角 + 底部 home indicator。
+- 桌面 / Android（无刘海）→ `env(...)` fallback `0px`，零成本 no-op。
+
 ## 6.14 Tauri-aware tRPC URL（M2.5 + M4）
 
 [apps/cardhub/web/src/lib/trpc.tsx](../../apps/cardhub/web/src/lib/trpc.tsx) 的 `resolveTrpcUrl()` 五条决策路径：
@@ -411,8 +421,8 @@ sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 - [x] **M1**（2026-05-03）：jest+vitest 测试栈、helmet、@nestjs/throttler + express-rate-limit、bcryptjs、Postgres CI service container、Dependabot、pnpm audit、README 测试/CI/部署章节。37 个测试全过。commit pending.
 - [x] **M2**（2026-05-03）：LocaleStore localStorage 持久化、MobX autorun 同步 `<html lang>`、双层 ErrorBoundary、skip-to-content、focus-visible、SiteHeader 汉堡菜单、路由 React.lazy 代码分割（首页 chunk 770KB → 299KB）、登录后 redirect 回原页、首页统计卡 i18n、@axe-core/react dev 扫描、bundle visualizer。commit pending.
 - [x] **M2.5**（2026-05-03）：Sentry SDK 双端集成（`SENTRY_DSN` 守卫式启用，dev 0 开销）、`SentryExceptionFilter` 全局拦截 5xx + tRPC `onError` 上报 `INTERNAL_SERVER_ERROR`、Web `ErrorBoundary.onError` 接 `Sentry.captureException`；Dockerfile.api 启动跑 `prisma migrate deploy`（prisma CLI 移到 dependencies）；`resolveTrpcUrl()` 五条决策路径（dev/prod/Tauri/Android emulator）；新增 `.env.development/.staging/.production` 三套；CORS_ORIGIN 默认值加入 `tauri://localhost,https://tauri.localhost`；handoff doc 加 §7.5 部署运行手册。commit `a4a935d`.
-- [x] **M3**（2026-05-03）：Tauri Desktop 图标全套生成（`src-tauri/icons/` 16 张 + ios/ 18 张 + android/ 25 张），从 `source.png` 占位图通过 `tauri icon` 一键导出；保留可重生成脚本 `generate-source.py`；native README 重写覆盖 macOS/Windows/Linux 各自 toolchain + 命令；M2.5 的 Tauri-aware tRPC URL 已就绪。`cargo check` 通过 Rust 侧编译验证。commit pending.
-- [ ] M4
+- [x] **M3**（2026-05-03）：Tauri Desktop 图标全套生成（`src-tauri/icons/` 16 张 + ios/ 18 张 + android/ 25 张），从 `source.png` 占位图通过 `tauri icon` 一键导出；保留可重生成脚本 `generate-source.py`；native README 重写覆盖 macOS/Windows/Linux 各自 toolchain + 命令；M2.5 的 Tauri-aware tRPC URL 已就绪。`cargo check` 通过 Rust 侧编译验证。commit `97aa9d3`.
+- [x] **M4**（2026-05-03）：iOS init `tauri ios init --ci` 在本机（Xcode 16.4 + iOS 17 SDK + xcodegen + cocoapods）跑通，但 `gen/apple/` 全保持 gitignore（每次 fresh checkout 用 30s 重生成）；Android init 跳过（本机 ANDROID_HOME / JDK / NDK 全缺失）；trpc.tsx Android emulator detection（`__TAURI_INTERNALS__` + UA Android + DEV → `http://10.0.2.2:4000/trpc`，M2.5 已就位）；index.html 加 `apple-mobile-web-app-capable` / `mobile-web-app-capable` / `apple-mobile-web-app-status-bar-style` / `theme-color` 四条 meta；globals.css 暴露 `--safe-area-{top,right,bottom,left}` CSS vars + `.app-safe-{top,x,bottom}` utility 类；SiteHeader（sticky）和 PageShell（main）应用 safe-area；.gitignore 加 `xcuserdata/` / `.gradle/` / `Pods/` 兜底；写 `apps/cardhub/native/MOBILE_SETUP.md` 详细列 macOS/Linux/Windows 三平台 mobile toolchain 安装步骤、release 流程、常见错误。commit pending.
 - [ ] M5
 - [ ] M6
 - [ ] M7
