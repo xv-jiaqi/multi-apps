@@ -12,8 +12,35 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint / Typecheck / Build
+    name: Lint / Typecheck / Build / Test
     runs-on: ubuntu-latest
+
+    services:
+      # Postgres service container backs the API e2e tests so they exercise
+      # real Prisma + SQL behaviour instead of mocks. Keep credentials in
+      # sync with apps/cardhub/api/.env.example so contributors can copy the
+      # same DATABASE_URL locally if they want.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cardhub
+          POSTGRES_PASSWORD: cardhub
+          POSTGRES_DB: cardhub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U cardhub -d cardhub_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=public
+      JWT_SECRET: ci-test-secret
+      JWT_EXPIRES_IN: 1h
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      CORS_ORIGIN: http://localhost:5173
+
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +69,9 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @cardhub/api db:generate
 
+      - name: Apply Prisma migrations to the test database
+        run: pnpm --filter @cardhub/api prisma migrate deploy
+
       - name: Lint
         run: pnpm lint
 
@@ -50,3 +80,32 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Test
+        run: pnpm test
+
+  audit:
+    name: pnpm audit (high+)
+    runs-on: ubuntu-latest
+    # Run in parallel with verify; failure here is informational but should
+    # block merges on truly high-severity advisories.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high

@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite';
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
@@ -39,5 +40,23 @@ export default defineConfig({
       '@repo/design-tokens',
       '@repo/ui-web',
     ],
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./test/setup.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'test/**/*.{test,spec}.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html', 'lcov'],
+      // Mirror the API thresholds so CI fails fast when coverage regresses.
+      thresholds: {
+        statements: 60,
+        branches: 50,
+        functions: 60,
+        lines: 60,
+      },
+      exclude: ['src/main.tsx', 'src/**/*.d.ts', 'src/styles/**', 'src/lib/gradients.ts'],
+    },
   },
 });

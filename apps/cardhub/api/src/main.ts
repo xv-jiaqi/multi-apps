@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as trpcExpress from '@trpc/server/adapters/express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { AppModule } from './app.module';
 import { TrpcService } from './trpc/trpc.service';
 import { makeCreateContext } from './trpc/context';
@@ -22,6 +24,17 @@ async function bootstrap(): Promise<void> {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  // helmet hardens HTTP headers (HSTS, X-Frame-Options, etc.). The default
+  // contentSecurityPolicy is too strict for the tRPC + JSON workflow during
+  // development, so we leave CSP off here and re-enable it in M2.5 once the
+  // production frontend origin is known.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
   app.enableCors({
     origin: corsOrigin,
     credentials: true,
@@ -34,6 +47,24 @@ async function bootstrap(): Promise<void> {
       forbidNonWhitelisted: false,
     }),
   );
+
+  // tRPC procedures live behind Express middleware, so NestJS guards / the
+  // ThrottlerGuard do not intercept them. We layer express-rate-limit on the
+  // sensitive auth-mutation paths instead. Reads (queries) stay un-throttled
+  // here; per-procedure throttling for comments / forum posts will be added
+  // alongside the tRPC middleware that owns those routers.
+  const authMutationLimiter = rateLimit({
+    windowMs: 60_000,
+    limit: 10,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: (req) => req.ip ?? 'unknown',
+    skip: (req) => {
+      const url = req.originalUrl ?? req.url ?? '';
+      return !url.includes('auth.register') && !url.includes('auth.login');
+    },
+  });
+  app.use('/trpc', authMutationLimiter);
 
   app.use(
     '/trpc',

@@ -112,6 +112,45 @@ pnpm dev
 - `@cardhub/miniapp` 锁在 **React 18**——Taro 4.2 尚不兼容 React 19 的 `exports` 字段与新 reconciler。
 - `@types/react` / `@types/react-dom` 通过 [pnpm-workspace.yaml](pnpm-workspace.yaml) 的 `overrides` 统一到 19，避免 miniapp 与 web 之间出现 `ReactNode` 类型冲突。
 
+## 测试
+
+| 目标             | 命令                                  |
+| ---------------- | ------------------------------------- |
+| 全仓测试         | `pnpm test`                           |
+| 仅 API（jest）   | `pnpm --filter @cardhub/api test`     |
+| API 含覆盖率     | `pnpm --filter @cardhub/api test:cov` |
+| 仅 Web（vitest） | `pnpm --filter @cardhub/web test`     |
+| Web 含覆盖率     | `pnpm --filter @cardhub/web test:cov` |
+
+- API 单元测试位于 `apps/cardhub/api/src/**/*.spec.ts`，集成测试位于 `apps/cardhub/api/test/**/*.e2e-spec.ts`。
+- Web 测试位于 `apps/cardhub/web/src/**/*.{test,spec}.{ts,tsx}`，setup 在 `apps/cardhub/web/test/setup.ts`。
+- 覆盖率门槛：全局 60% / `auth/*` 80%，CI 不达标会失败。
+- 运行 e2e 时记得用独立的测试库：
+
+  ```bash
+  DATABASE_URL="postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=public" \
+  pnpm --filter @cardhub/api prisma migrate reset --force --skip-seed
+  ```
+
+## CI
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) 在每次 push / PR 跑：
+
+1. `pnpm install --frozen-lockfile`
+2. Prisma generate + `prisma migrate deploy`（用 service container 起的 Postgres 16）
+3. `pnpm lint` / `pnpm typecheck` / `pnpm build` / `pnpm test`
+4. 并行：`pnpm audit --prod --audit-level high`
+
+[`.github/dependabot.yml`](.github/dependabot.yml) 每周一开 minor/patch 升级 PR（npm 与 GitHub Actions 各一组）。
+
+## 部署
+
+Cardhub MVP 推荐 Render（API + Postgres）+ Upstash（Redis）+ Sentry（错误监控）的组合（具体在 M2.5 落地）。
+
+- API 镜像：[`docker/Dockerfile.api`](docker/Dockerfile.api) 是多阶段构建，启动时跑 `prisma migrate deploy && node dist/main.js`。
+- Web：`pnpm --filter @cardhub/web build` 输出 `apps/cardhub/web/dist/`，可托管到任何静态站（Vercel / Cloudflare Pages / Render Static）。
+- 多端 tRPC URL：通过 `VITE_TRPC_URL` 在 dev / staging / prod 切换；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
+
 ## tRPC 端到端类型安全
 
 1. 后端在 `apps/cardhub/api/src/trpc/trpc.service.ts` 定义 `appRouter`，其类型导出为 `AppRouter`。

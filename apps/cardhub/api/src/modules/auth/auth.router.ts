@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { registerInput, loginInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';

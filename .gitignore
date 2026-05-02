@@ -31,6 +31,12 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
+# Other AI agent / IDE workspaces (Iflow, Junie, Qoder, Cursor agents folder)
+.agents/
+.iflow/
+.junie/
+.qoder/
+
 # Tauri
 apps/**/src-tauri/target/
 apps/**/src-tauri/gen/

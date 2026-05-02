@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # Bundle minor + patch upgrades into a single PR per ecosystem so the
+      # weekly noise stays manageable. Major bumps stay individual so they
+      # get reviewed properly.
+      production-minor-and-patch:
+        dependency-type: 'production'
+        update-types: ['minor', 'patch']
+      development-minor-and-patch:
+        dependency-type: 'development'
+        update-types: ['minor', 'patch']
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'chore(ci)'
