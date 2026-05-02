@@ -7,7 +7,49 @@ import { rootStore } from '../stores/root-store';
 
 export const trpc = createTRPCReact<AppRouter>();
 
-const TRPC_URL = (import.meta.env.VITE_TRPC_URL as string | undefined) ?? '/trpc';
+/**
+ * Resolves the tRPC base URL across all five runtime targets:
+ *
+ * 1. **Vite dev (browser)** – uses the relative `/trpc` path so vite.config.ts
+ *    proxy can forward to http://localhost:4000 without CORS noise.
+ * 2. **Vite production build (browser)** – `VITE_TRPC_URL` baked at build
+ *    time. Three .env.{development,staging,production} files prefill the
+ *    canonical Render URL.
+ * 3. **Tauri desktop WebView** – detected via `__TAURI_INTERNALS__` global.
+ *    Uses `VITE_TRPC_URL_TAURI` so we can keep the desktop on the staging
+ *    URL even when the same web bundle is served at a different origin.
+ * 4. **Tauri Android emulator (M4)** – Android Emulator's loopback to host
+ *    is `10.0.2.2`, not `localhost`. Detection runs only in DEV mode; release
+ *    builds fall through to the staging URL.
+ * 5. **Tauri iOS Simulator (M4)** – simulator shares the host's network so
+ *    `localhost` works; falls into the regular Tauri branch.
+ *
+ * Order matters: the more specific check (Android dev) wins over the generic
+ * Tauri branch.
+ */
+const FALLBACK_REMOTE_URL = 'https://cardhub-api.onrender.com/trpc';
+
+function resolveTrpcUrl(): string {
+  const explicit = import.meta.env.VITE_TRPC_URL as string | undefined;
+  const tauriUrl = import.meta.env.VITE_TRPC_URL_TAURI as string | undefined;
+
+  if (typeof window !== 'undefined') {
+    const isTauri = '__TAURI_INTERNALS__' in window;
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isAndroid = /Android/i.test(ua);
+
+    if (isTauri && isAndroid && import.meta.env.DEV) {
+      return 'http://10.0.2.2:4000/trpc';
+    }
+    if (isTauri) {
+      return tauriUrl ?? explicit ?? FALLBACK_REMOTE_URL;
+    }
+  }
+
+  return explicit ?? '/trpc';
+}
+
+const TRPC_URL = resolveTrpcUrl();
 
 export function TrpcProvider({ children }: PropsWithChildren) {
   const [queryClient] = useState(

@@ -39,4 +39,9 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder --chown=app:app /app /app
 USER app
 EXPOSE 4000
-CMD ["node", "dist/main.js"]
+# Run pending Prisma migrations on every container boot, then start Nest. We
+# rely on Prisma's `migrate deploy` instead of `migrate dev` because the
+# command is non-interactive (no prompt for migration name) and is safe to run
+# concurrently — it acquires an advisory lock on `_prisma_migrations`. Render
+# spins one container per release, so contention is not a concern here.
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

@@ -10,10 +10,16 @@ out/
 .turbo/
 *.tsbuildinfo
 
-# Env files
+# Env files — only secrets-bearing files are ignored. Vite mode templates
+# (.env.development / .env.staging / .env.production) are checked in because
+# they only contain non-secret URLs and feature flags.
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
+!.env.development
+!.env.staging
+!.env.production
 
 # Logs
 logs/

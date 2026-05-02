@@ -19,6 +19,7 @@
     "@repo/stores": "workspace:*",
     "@repo/trpc-contract": "workspace:*",
     "@repo/ui-web": "workspace:*",
+    "@sentry/react": "^10.51.0",
     "@tanstack/react-query": "^5.99.2",
     "@trpc/client": "^11.16.0",
     "@trpc/react-query": "^11.16.0",

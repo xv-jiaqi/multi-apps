@@ -210,6 +210,27 @@ DATABASE_URL="postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=pu
 pnpm --filter @cardhub/api prisma migrate reset --force --skip-seed
 ```
 
+## 6.13 Sentry 守卫式初始化（M2.5）
+
+API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../../apps/cardhub/web/src/main.tsx) 都用 `if (DSN)` 守卫包住 `Sentry.init()`，**dev 留空 DSN 时不上报、不增加任何运行时开销**。当 `SENTRY_DSN` / `VITE_SENTRY_DSN` 设置后：
+
+- API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）。
+- Web：`ErrorBoundary` 的 `onError` 调 `Sentry.captureException`。
+
+不要把 DSN 写进 `.env.example`；走 Render env group / Cloudflare Pages env。
+
+## 6.14 Tauri-aware tRPC URL（M2.5 + M4）
+
+[apps/cardhub/web/src/lib/trpc.tsx](../../apps/cardhub/web/src/lib/trpc.tsx) 的 `resolveTrpcUrl()` 五条决策路径：
+
+1. Vite 浏览器 dev → `/trpc`（vite proxy 转发）。
+2. Vite 浏览器 prod → `VITE_TRPC_URL` 注入。
+3. Tauri Desktop（检测 `__TAURI_INTERNALS__`）→ `VITE_TRPC_URL_TAURI`。
+4. Tauri **Android 模拟器** + dev → `http://10.0.2.2:4000/trpc`（**M4 关键**：Android emulator loopback 不是 `localhost`）。
+5. Tauri iOS Simulator → 模拟器和 host 同网络，走第 3 条用 `localhost:4000`。
+
+新增 `.env.development` / `.env.staging` / `.env.production` 三套；构建时按 `vite build --mode <mode>` 选用。
+
 ## 7. 路线图（剩余 milestone）
 
 完整计划在 [.cursor/plans/cardhub-roadmap-execution_9360876c.plan.md](../../.cursor/plans/cardhub-roadmap-execution_9360876c.plan.md)（plan v2，已合入审视反馈）。摘要：
@@ -238,6 +259,77 @@ flowchart TD
 | **M7**    | Prisma Listing（含 currency / imageUrls）+ Report 表、举报系统、`/trade` + 卡牌页内列表、强 disclaimer                                                                                                                                   |
 
 完整工作量预估：14-21 天单人节奏（M3-M5 与 M6-M7 并行可压到 9-12 天）。
+
+## 7.5 部署运行手册（M2.5 落地）
+
+### 7.5.1 一次性配置（Render，强烈推荐）
+
+1. **创建 Postgres 16**：Render Dashboard → New + → PostgreSQL（免费档 500MB）。记下 `Internal Database URL`。
+2. **创建 Redis（Upstash）**：[Upstash console](https://console.upstash.com) → Create Database（免费档 10k cmd/day）。拿到 `Endpoint` / `Port` / `Password`。
+3. **创建 Web Service**：Render → New + → Web Service：
+   - Repository：连接到本仓库（先 push 到 GitHub）。
+   - Runtime：**Docker**。
+   - Dockerfile Path：`docker/Dockerfile.api`。
+   - Build Context：仓库根（`./`）。
+   - Branch：`main`。
+4. **Environment Group**（一次性挂上去）：
+   ```
+   NODE_ENV=production
+   PORT=4000
+   DATABASE_URL=<Render Postgres Internal URL>
+   REDIS_HOST=<Upstash endpoint>
+   REDIS_PORT=<Upstash port>
+   REDIS_PASSWORD=<Upstash password>
+   JWT_SECRET=<openssl rand -hex 32>
+   JWT_EXPIRES_IN=7d
+   CORS_ORIGIN=https://cardhub.example.com,https://cardhub.pages.dev,tauri://localhost,https://tauri.localhost
+   SENTRY_DSN=<sentry.io project DSN>
+   SENTRY_TRACES_SAMPLE_RATE=0.1
+   ```
+5. **Health check**：Render Health Check Path 设为 `/health`。
+6. **触发首次部署**：Render 自动跑 Docker build → 启动时 `npx prisma migrate deploy && node dist/main.js`。**首次部署一定带空 DB**，migration 会自动创建表。
+
+### 7.5.2 部署 Web 前端
+
+任选其一：
+
+- **Cloudflare Pages**（推荐，全球 CDN）：
+  ```bash
+  pnpm --filter @cardhub/web build  # 默认 production mode
+  # 把 apps/cardhub/web/dist 推到 Pages（cf wrangler 或 GitHub Action）
+  ```
+  Pages 项目设置：Build command `pnpm --filter @cardhub/web build`、Output directory `apps/cardhub/web/dist`、Env `VITE_TRPC_URL=https://cardhub-api.onrender.com/trpc`。
+- **Render Static Site**：New + → Static Site，Build cmd 同上，Publish Dir `apps/cardhub/web/dist`，Env 同上。
+
+### 7.5.3 回滚 / 查日志
+
+- **回滚**：Render → Service → Deploys → 在历史版本上点 `Rollback`。Prisma migration 不会自动回滚，DB schema 改动要走 `prisma migrate resolve` 手动操作。
+- **查日志**：Render → Service → Logs（实时 tail）；Sentry → Issues 看异常聚合。
+- **进容器**：Render → Service → Shell（付费档才有）。免费档用 `render psql <db-id>` 接 DB。
+
+### 7.5.4 本地验证生产构建
+
+不需要真部署也能跑一遍生产链路：
+
+```bash
+docker build -f docker/Dockerfile.api -t cardhub-api:test .
+docker run --rm -p 4000:4000 \
+  -e DATABASE_URL=postgresql://cardhub:cardhub@host.docker.internal:5432/cardhub \
+  -e JWT_SECRET=test-only \
+  -e CORS_ORIGIN=http://localhost:5173 \
+  cardhub-api:test
+```
+
+### 7.5.5 ⚠️ 用户必须手动完成的步骤
+
+代码侧 ready，下列步骤需要账号 / 凭证才能上线，AI agent **不能代办**：
+
+1. 注册 [Render](https://render.com) 账号 → 关联 GitHub repo。
+2. 注册 [Upstash](https://upstash.com) 账号 → 创建 Redis db。
+3. 注册 [Sentry](https://sentry.io) 账号 → 创建 `cardhub-api` + `cardhub-web` 两个 project，把 DSN 填进 Render env 和 Pages env。
+4. 注册 [Cloudflare](https://cloudflare.com) 账号（如选 Pages） → 连接 GitHub。
+5. 域名：Render 自动给 `cardhub-api.onrender.com`，Pages 给 `<project>.pages.dev`。买域名后在两边各加 CNAME。
+6. 推送代码到 GitHub remote：`git push origin main`。
 
 ## 8. 接手 Agent 工作建议
 
@@ -318,7 +410,7 @@ sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 - [x] **M0**（2026-05-03）：本文档。commit `945838f`。
 - [x] **M1**（2026-05-03）：jest+vitest 测试栈、helmet、@nestjs/throttler + express-rate-limit、bcryptjs、Postgres CI service container、Dependabot、pnpm audit、README 测试/CI/部署章节。37 个测试全过。commit pending.
 - [x] **M2**（2026-05-03）：LocaleStore localStorage 持久化、MobX autorun 同步 `<html lang>`、双层 ErrorBoundary、skip-to-content、focus-visible、SiteHeader 汉堡菜单、路由 React.lazy 代码分割（首页 chunk 770KB → 299KB）、登录后 redirect 回原页、首页统计卡 i18n、@axe-core/react dev 扫描、bundle visualizer。commit pending.
-- [ ] M2.5
+- [x] **M2.5**（2026-05-03）：Sentry SDK 双端集成（`SENTRY_DSN` 守卫式启用，dev 0 开销）、`SentryExceptionFilter` 全局拦截 5xx + tRPC `onError` 上报 `INTERNAL_SERVER_ERROR`、Web `ErrorBoundary.onError` 接 `Sentry.captureException`；Dockerfile.api 启动跑 `prisma migrate deploy`（prisma CLI 移到 dependencies）；`resolveTrpcUrl()` 五条决策路径（dev/prod/Tauri/Android emulator）；新增 `.env.development/.staging/.production` 三套；CORS_ORIGIN 默认值加入 `tauri://localhost,https://tauri.localhost`；handoff doc 加 §7.5 部署运行手册。commit pending.
 - [ ] M3
 - [ ] M4
 - [ ] M5

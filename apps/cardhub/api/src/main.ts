@@ -1,4 +1,19 @@
 import 'reflect-metadata';
+// Sentry MUST be imported and initialised before any other module that we want
+// to trace. Keeping the side-effect import on top guarantees the global hub is
+// ready by the time NestFactory.create runs.
+import * as Sentry from '@sentry/node';
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV ?? 'development',
+    // Keep traces sampling conservative for the MVP — bump once paid tier
+    // is in place.
+    tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
+  });
+}
+
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +24,7 @@ import { AppModule } from './app.module';
 import { TrpcService } from './trpc/trpc.service';
 import { makeCreateContext } from './trpc/context';
 import { AuthService } from './modules/auth/auth.service';
+import { SentryExceptionFilter } from './common/sentry-exception.filter';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -48,6 +64,10 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
+  // Forward unhandled NestJS exceptions to Sentry. Filter is a no-op when
+  // SENTRY_DSN is unset so local dev is unaffected.
+  app.useGlobalFilters(new SentryExceptionFilter());
+
   // tRPC procedures live behind Express middleware, so NestJS guards / the
   // ThrottlerGuard do not intercept them. We layer express-rate-limit on the
   // sensitive auth-mutation paths instead. Reads (queries) stay un-throttled
@@ -74,6 +94,17 @@ async function bootstrap(): Promise<void> {
     trpcExpress.createExpressMiddleware({
       router: trpcService.appRouter,
       createContext: makeCreateContext(authService),
+      // tRPC errors never reach the NestJS exception pipeline, so we wire the
+      // Sentry hook here instead. INTERNAL_SERVER_ERROR is the only code we
+      // want to alert on; client-side codes (BAD_REQUEST / UNAUTHORIZED / ...)
+      // are routine and would just create noise.
+      onError: ({ error, path, type }) => {
+        if (error.code === 'INTERNAL_SERVER_ERROR' && process.env.SENTRY_DSN) {
+          Sentry.captureException(error.cause ?? error, {
+            tags: { trpcPath: path ?? 'unknown', trpcType: type },
+          });
+        }
+      },
     }),
   );
 
