@@ -5,6 +5,7 @@ import { SeriesRouter } from '../modules/series/series.router';
 import { CardsRouter } from '../modules/cards/cards.router';
 import { AuthRouter } from '../modules/auth/auth.router';
 import { CommentsRouter } from '../modules/comments/comments.router';
+import { ForumRouter } from '../modules/forum/forum.router';
 
 @Injectable()
 export class TrpcService {
@@ -17,6 +18,7 @@ export class TrpcService {
     private readonly cards: CardsRouter,
     private readonly auth: AuthRouter,
     private readonly comments: CommentsRouter,
+    private readonly forum: ForumRouter,
   ) {
     this.appRouter = this.t.router({
       health: this.health.build(),
@@ -24,6 +26,7 @@ export class TrpcService {
       cards: this.cards.build(),
       auth: this.auth.build(),
       comments: this.comments.build(),
+      forum: this.forum.build(),
     });
   }
 }

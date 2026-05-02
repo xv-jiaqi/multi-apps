@@ -70,24 +70,57 @@ async function bootstrap(): Promise<void> {
 
   // tRPC procedures live behind Express middleware, so NestJS guards / the
   // ThrottlerGuard do not intercept them. We layer express-rate-limit on the
-  // sensitive auth-mutation paths instead. Reads (queries) stay un-throttled
-  // here; per-procedure throttling for comments / forum posts will be added
-  // alongside the tRPC middleware that owns those routers.
+  // sensitive write paths instead. Reads (queries) stay un-throttled here.
+  //
+  // Why per-route limiters instead of a single global one: each mutation has
+  // a different abuse profile — login attempts deserve a 1-minute window
+  // while topic creation deserves a 1-hour window. A single limiter would
+  // either be too lax to deter spam or too strict to be usable.
+  // ipKeyGenerator collapses IPv6 prefixes so attackers can't rotate the
+  // last 64 bits to bypass the limit (the helper is mandatory in
+  // express-rate-limit 8.x — see ERR_ERL_KEY_GEN_IPV6). We wrap it so each
+  // limiter doesn't have to re-do the `req.ip ?? 'unknown'` dance.
+  const ipKey = (req: { ip?: string | undefined }): string => ipKeyGenerator(req.ip ?? 'unknown');
+
   const authMutationLimiter = rateLimit({
     windowMs: 60_000,
     limit: 10,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    // ipKeyGenerator collapses IPv6 prefixes so attackers can't rotate the
-    // last 64 bits to bypass the limit (the helper is mandatory in
-    // express-rate-limit 8.x — see ERR_ERL_KEY_GEN_IPV6).
-    keyGenerator: (req) => ipKeyGenerator(req.ip ?? 'unknown'),
+    keyGenerator: ipKey,
     skip: (req) => {
       const url = req.originalUrl ?? req.url ?? '';
       return !url.includes('auth.register') && !url.includes('auth.login');
     },
   });
   app.use('/trpc', authMutationLimiter);
+
+  // Forum write throttles (M6): 5 topics/hour and 30 replies/hour per IP.
+  // The IP is the right surface here because tRPC routes never see the JWT
+  // before the limiter runs — promoting these to per-user limits would
+  // require moving the check into a tRPC middleware, which is overkill for
+  // MVP. A single bad actor behind CGNAT still has to share their bucket
+  // with co-tenants, which is fine for the abuse we're modelling (manual
+  // spam, not a botnet).
+  const forumTopicCreateLimiter = rateLimit({
+    windowMs: 60 * 60_000,
+    limit: 5,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: ipKey,
+    skip: (req) => !(req.originalUrl ?? req.url ?? '').includes('forum.topics.create'),
+  });
+  app.use('/trpc', forumTopicCreateLimiter);
+
+  const forumReplyCreateLimiter = rateLimit({
+    windowMs: 60 * 60_000,
+    limit: 30,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: ipKey,
+    skip: (req) => !(req.originalUrl ?? req.url ?? '').includes('forum.replies.create'),
+  });
+  app.use('/trpc', forumReplyCreateLimiter);
 
   app.use(
     '/trpc',

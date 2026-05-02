@@ -1,7 +1,37 @@
 /* eslint-disable no-console */
 import { PrismaClient, type Prisma } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+// Built-in test accounts created by `pnpm --filter @cardhub/api db:seed`.
+// Both are *demo* credentials — never reuse the passwords in production.
+//   - alice  / password123  → ordinary signed-in user (referenced from
+//     handoff-context.md §4 "测试账号"). Hand-rolled here so e2e flows
+//     don't rely on the public /trpc/auth.register path being un-throttled.
+//   - admin  / admin123!    → admin role. Required by M6/M7 to exercise
+//     "delete any topic / reply" and `reports.list` admin-only checks.
+interface SeedUser {
+  email: string;
+  username: string;
+  rawPassword: string;
+  role: 'user' | 'admin';
+}
+
+const SEED_USERS: SeedUser[] = [
+  {
+    email: 'alice@cardhub.test',
+    username: 'alice',
+    rawPassword: 'password123',
+    role: 'user',
+  },
+  {
+    email: 'admin@cardhub.test',
+    username: 'admin',
+    rawPassword: 'admin123!',
+    role: 'admin',
+  },
+];
 
 interface SeedCard {
   slug: string;
@@ -120,6 +150,20 @@ const SERIES: SeedSeries[] = [
 ];
 
 async function main() {
+  for (const seed of SEED_USERS) {
+    const password = await bcrypt.hash(seed.rawPassword, 10);
+    await prisma.user.upsert({
+      where: { username: seed.username },
+      update: { role: seed.role },
+      create: {
+        email: seed.email,
+        username: seed.username,
+        password,
+        role: seed.role,
+      },
+    });
+  }
+
   for (const series of SERIES) {
     const upsertedSeries = await prisma.series.upsert({
       where: { slug: series.slug },
@@ -162,7 +206,8 @@ async function main() {
 
   const seriesCount = await prisma.series.count();
   const cardCount = await prisma.card.count();
-  console.log(`Seed complete. Series: ${seriesCount}, Cards: ${cardCount}`);
+  const userCount = await prisma.user.count();
+  console.log(`Seed complete. Users: ${userCount}, Series: ${seriesCount}, Cards: ${cardCount}`);
 }
 
 main()

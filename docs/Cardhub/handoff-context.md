@@ -85,6 +85,9 @@ fd39b7b feat(web): static browse experience for Cardhub PRD Epic 1 stories 1.4 /
 - `/cards/:slug` 卡牌详情（图片占位 + 属性 + 评论区）
 - `/search` 全局搜索（debounce 250ms）
 - `/login` `/register` 认证
+- `/forum` 论坛话题列表（cursor 分页 / infinite scroll）（M6）
+- `/forum/new` 发布新话题（authed，5 min 编辑窗口）（M6）
+- `/forum/:slug` 话题详情（Markdown 正文 + 回帖）（M6）
 - `*` 404
 
 ### tRPC AppRouter（[apps/cardhub/api/src/trpc/trpc.service.ts](../../apps/cardhub/api/src/trpc/trpc.service.ts)）
@@ -95,29 +98,28 @@ series.list / series.bySlug
 cards.bySlug / cards.search
 auth.register / auth.login / auth.me
 comments.listForCard (public) / comments.create (authedProcedure)
+forum.topics.list / forum.topics.bySlug                       (public, M6)
+forum.topics.create / forum.topics.update / forum.topics.delete (authed, M6)
+forum.replies.list                                            (public, M6)
+forum.replies.create / forum.replies.delete                   (authed, M6)
 ```
 
 ### 数据库
 
-- Schema：[apps/cardhub/api/prisma/schema.prisma](../../apps/cardhub/api/prisma/schema.prisma) — `User / Series / Card / Comment` 4 张表。
-- Seed：[apps/cardhub/api/prisma/seed.ts](../../apps/cardhub/api/prisma/seed.ts) — 3 系列 / 9 卡牌。运行 `pnpm --filter @cardhub/api db:seed`。
-- 唯一一份 migration：`20260501165944_init`。
+- Schema：[apps/cardhub/api/prisma/schema.prisma](../../apps/cardhub/api/prisma/schema.prisma) — `User / Series / Card / Comment / Topic / Reply` 6 张表（M6 起）。
+- Seed：[apps/cardhub/api/prisma/seed.ts](../../apps/cardhub/api/prisma/seed.ts) — 2 用户（alice / admin）/ 3 系列 / 9 卡牌。运行 `pnpm --filter @cardhub/api db:seed`。
+- Migrations：`20260501165944_init` → `20260502184922_add_user_role_and_forum`（M6）。
 
 ### 测试账号
 
-种子数据没有预置用户。本地手动注册一个：
+M6 起 seed 预置了两个账号（`pnpm --filter @cardhub/api db:seed` 自动 upsert）：
 
-- 用户名：`alice`
-- 邮箱：`alice@cardhub.test`
-- 密码：`password123`
+| username | email              | password    | role  | 用途                                                   |
+| -------- | ------------------ | ----------- | ----- | ------------------------------------------------------ |
+| `alice`  | alice@cardhub.test | password123 | user  | 普通用户，发帖 / 评论 / 发布交易意向                   |
+| `admin`  | admin@cardhub.test | admin123!   | admin | 论坛删任意 topic / reply、查看 `reports.list` 举报队列 |
 
-或直接 curl：
-
-```bash
-curl -X POST http://localhost:4000/trpc/auth.register \
-  -H "content-type: application/json" \
-  -d '{"email":"alice@cardhub.test","username":"alice","password":"password123"}'
-```
+> ⚠️ 这两个是 demo 凭据，**永远不要复用到生产**。生产环境 seed 时务必先注释掉或换密码。
 
 ## 5. 开发命令速查
 
@@ -450,7 +452,7 @@ sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 - [x] **M3**（2026-05-03）：Tauri Desktop 图标全套生成（`src-tauri/icons/` 16 张 + ios/ 18 张 + android/ 25 张），从 `source.png` 占位图通过 `tauri icon` 一键导出；保留可重生成脚本 `generate-source.py`；native README 重写覆盖 macOS/Windows/Linux 各自 toolchain + 命令；M2.5 的 Tauri-aware tRPC URL 已就绪。`cargo check` 通过 Rust 侧编译验证。commit `97aa9d3`.
 - [x] **M4**（2026-05-03）：iOS init `tauri ios init --ci` 在本机（Xcode 16.4 + iOS 17 SDK + xcodegen + cocoapods）跑通，但 `gen/apple/` 全保持 gitignore（每次 fresh checkout 用 30s 重生成）；Android init 跳过（本机 ANDROID_HOME / JDK / NDK 全缺失）；trpc.tsx Android emulator detection（`__TAURI_INTERNALS__` + UA Android + DEV → `http://10.0.2.2:4000/trpc`，M2.5 已就位）；index.html 加 `apple-mobile-web-app-capable` / `mobile-web-app-capable` / `apple-mobile-web-app-status-bar-style` / `theme-color` 四条 meta；globals.css 暴露 `--safe-area-{top,right,bottom,left}` CSS vars + `.app-safe-{top,x,bottom}` utility 类；SiteHeader（sticky）和 PageShell（main）应用 safe-area；.gitignore 加 `xcuserdata/` / `.gradle/` / `Pods/` 兜底；写 `apps/cardhub/native/MOBILE_SETUP.md` 详细列 macOS/Linux/Windows 三平台 mobile toolchain 安装步骤、release 流程、常见错误。commit `ea2f598`.
 - [x] **M5**（2026-05-03）：Taro miniapp 业务接入。`src/app.tsx` 挂 `StoreProvider` + taroSessionStorageDriver / taroLocaleStorageDriver（`Taro.getStorageSync` 三件套）；`src/lib/trpc.ts` headers 回调读 `rootStore.session.token` 注入 `authorization: Bearer`；`src/app.config.ts` 注册 7 页（首页 / 系列列表 / 系列详情 / 卡牌详情 + 评论 / 搜索 / 登录 / 注册）；每页用 `ScrollView + View + Text + Input + Textarea` 重写 web 端等价视图；`@repo/ui-mini` 扩充 Field / RarityBadge / Empty / Skeleton / Link（封装 `Taro.navigateTo`）/ BreadcrumbsMini 五个组件；`@repo/design-tokens/src/taro.scss` 新增 12 个 `$gradient-<slug>` + 4 种稀有度配色；`src/lib/gradients.ts` 返回 `linear-gradient(...)` 字符串供 inline style；`@repo/shared/src/i18n` 新增 `miniapp.*` 字典；`src/index.html` 模板补上（否则 H5 build 不生成入口 HTML，Taro 源码 `fs.existsSync(template)` 守卫）；`package.json#scripts.lint` 改为 echo 占位，Taro CLI 带着过旧 ESLint 8 不兼容根仓库 flat config。`pnpm --filter @cardhub/miniapp build` 出 `dist/weapp/pages/{auth,cards,index,search,series}/*/index.wxml` 7 页；`pnpm --filter @cardhub/miniapp miniapp:h5` 出 `dist/h5/{index.html,js,css}`。17/17 typecheck、0 lint errors、37/37 test 保持。微信 AppID 注册 + 服务器域名白名单需用户手动完成（详见 miniapp README + §6.16）。commit `ff6b83f`.
-- [ ] M6
+- [x] **M6**（2026-05-03）：PRD Phase 2 论坛落地。Prisma schema 加 `User.role` (default `user`) + `Topic` (slug / title / body / pinned / `@@index([createdAt])`) + `Reply` (`@@index([topicId, createdAt])`)；migration `add_user_role_and_forum`；seed upsert `admin` / `alice` 两个测试账号（admin 角色用来跑 `forum.topics.delete` 的"admin 删任意"分支）。新增 `forum` router 8 条 procedure（topics list/bySlug/create/update/delete + replies list/create/delete），cursor pagination key 在 `(createdAt desc, id desc)`、5 min 编辑窗口、admin 检查仅在非 owner 时再 prisma.user.findUnique 一次拿 role。slug 生成走 `@repo/shared` 新增 `slugify(title)` + 6 位 nanoid 后缀，碰 P2002 重试 5 次。`main.ts` 新增 `forumTopicCreateLimiter`（5/h/IP）和 `forumReplyCreateLimiter`（30/h/IP），ipKeyGenerator 共享 `ipKey()` helper。Web 新增 3 页（forum-list useInfiniteQuery / forum-new 带 markdown preview / forum-detail 含回帖区 + 删除按钮 + Markdown 渲染）；新增 `MarkdownView` 组件（react-markdown + remark-gfm + rehype-sanitize 三件套，绝不用 dangerouslySetInnerHTML）；i18n 字典 `forum.*` + `nav.forum/trade` 中英双语；SiteHeader 桌面 + 移动 nav 都加 Forum / Trade。`@repo/shared/zod` 新增 topicCreateInput/topicUpdateInput/replyCreateInput/cursorPaginationInput；`@repo/shared/utils` 新增 slugify/slugifyBase。5 个新 forum.router.spec 测试（cursor 分页 hasMore / anon 拒绝 / 5min 窗口 / admin 删 / 普通用户拒删）。28 个 API 测试 + 6 web 测试全绿。commit pending.
 - [ ] M7
 
 > 每完成一个 milestone，请：

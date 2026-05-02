@@ -47,3 +47,46 @@ export const commentInput = z.object({
   content: z.string().trim().min(1, '评论不能为空').max(500, '评论最多 500 字'),
 });
 export type CommentInput = z.infer<typeof commentInput>;
+
+// Forum (M6) — Markdown body capped at 10k chars to keep XSS surface
+// (rehype-sanitize) and Postgres TOAST fast paths predictable.
+export const topicTitleSchema = z
+  .string()
+  .trim()
+  .min(1, '标题不能为空')
+  .max(120, '标题最多 120 字');
+export const topicBodySchema = z
+  .string()
+  .trim()
+  .min(1, '正文不能为空')
+  .max(10_000, '正文最多 10000 字');
+export const replyBodySchema = z
+  .string()
+  .trim()
+  .min(1, '回帖不能为空')
+  .max(5_000, '回帖最多 5000 字');
+
+export const topicCreateInput = z.object({
+  title: topicTitleSchema,
+  body: topicBodySchema,
+});
+export type TopicCreateInput = z.infer<typeof topicCreateInput>;
+
+export const topicUpdateInput = z.object({
+  id: z.string().uuid(),
+  title: topicTitleSchema,
+  body: topicBodySchema,
+});
+export type TopicUpdateInput = z.infer<typeof topicUpdateInput>;
+
+export const replyCreateInput = z.object({
+  topicId: z.string().uuid(),
+  body: replyBodySchema,
+});
+export type ReplyCreateInput = z.infer<typeof replyCreateInput>;
+
+export const cursorPaginationInput = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+export type CursorPaginationInput = z.infer<typeof cursorPaginationInput>;

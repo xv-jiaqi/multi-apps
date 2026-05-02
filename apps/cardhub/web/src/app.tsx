@@ -20,6 +20,15 @@ const RegisterPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import('./pages/not-found').then((m) => ({ default: m.NotFoundPage })),
 );
+const ForumListPage = lazy(() =>
+  import('./pages/forum-list').then((m) => ({ default: m.ForumListPage })),
+);
+const ForumNewPage = lazy(() =>
+  import('./pages/forum-new').then((m) => ({ default: m.ForumNewPage })),
+);
+const ForumDetailPage = lazy(() =>
+  import('./pages/forum-detail').then((m) => ({ default: m.ForumDetailPage })),
+);
 
 function RouteFallback() {
   return (
@@ -91,6 +100,30 @@ export function App() {
         element={
           <LazyRoute>
             <RegisterPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/forum"
+        element={
+          <LazyRoute>
+            <ForumListPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/forum/new"
+        element={
+          <LazyRoute>
+            <ForumNewPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/forum/:slug"
+        element={
+          <LazyRoute>
+            <ForumDetailPage />
           </LazyRoute>
         }
       />

@@ -12,10 +12,17 @@ model User {
   email     String   @unique
   username  String   @unique
   password  String
+  // role: "user" | "admin". Admins can delete any topic / reply / listing /
+  // comment and view the moderation report queue. Stored as a free-form
+  // string instead of an enum so future roles ("mod", "banned") don't need a
+  // schema migration just to be added.
+  role      String   @default("user")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   comments Comment[]
+  topics   Topic[]
+  replies  Reply[]
 
   @@map("users")
 }
@@ -67,4 +74,41 @@ model Comment {
 
   @@index([cardId])
   @@map("comments")
+}
+
+model Topic {
+  id        String   @id @default(uuid())
+  // slug = slugify(title) + "-" + 6-char nanoid suffix to keep the URL stable
+  // even if the author edits the title within the 5-minute window.
+  slug      String   @unique
+  title     String
+  body      String
+  userId    String
+  // pinned topics float to the top of the timeline. Only admins set this in
+  // M6 — there is no UI for ordinary users.
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies Reply[]
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("topics")
+}
+
+model Reply {
+  id        String   @id @default(uuid())
+  topicId   String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([topicId, createdAt])
+  @@map("replies")
 }

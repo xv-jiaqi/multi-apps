@@ -52,6 +52,12 @@ export const SiteHeader = observer(function SiteHeader() {
           <NavLink to="/search" className={navItemClass}>
             {tt('nav.search')}
           </NavLink>
+          <NavLink to="/forum" className={navItemClass}>
+            {tt('nav.forum')}
+          </NavLink>
+          <NavLink to="/trade" className={navItemClass}>
+            {tt('nav.trade')}
+          </NavLink>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -149,6 +155,12 @@ export const SiteHeader = observer(function SiteHeader() {
             </NavLink>
             <NavLink to="/search" className={mobileNavItemClass} onClick={closeMenu}>
               {tt('nav.search')}
+            </NavLink>
+            <NavLink to="/forum" className={mobileNavItemClass} onClick={closeMenu}>
+              {tt('nav.forum')}
+            </NavLink>
+            <NavLink to="/trade" className={mobileNavItemClass} onClick={closeMenu}>
+              {tt('nav.trade')}
             </NavLink>
             <hr className="my-2 border-neutral-200" />
             {session.isAuthenticated ? (

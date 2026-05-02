@@ -6,9 +6,18 @@ import { SeriesModule } from '../modules/series/series.module';
 import { CardsModule } from '../modules/cards/cards.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CommentsModule } from '../modules/comments/comments.module';
+import { ForumModule } from '../modules/forum/forum.module';
 
 @Module({
-  imports: [TrpcBaseModule, HealthModule, SeriesModule, CardsModule, AuthModule, CommentsModule],
+  imports: [
+    TrpcBaseModule,
+    HealthModule,
+    SeriesModule,
+    CardsModule,
+    AuthModule,
+    CommentsModule,
+    ForumModule,
+  ],
   providers: [TrpcService],
   exports: [TrpcService],
 })
