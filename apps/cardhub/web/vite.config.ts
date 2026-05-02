@@ -2,10 +2,24 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'node:path';
 
+const enableVisualizer = process.env.BUNDLE_VISUALIZE === '1';
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    enableVisualizer
+      ? visualizer({
+          filename: 'dist/stats.html',
+          template: 'treemap',
+          gzipSize: true,
+          brotliSize: true,
+        })
+      : null,
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

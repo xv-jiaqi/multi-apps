@@ -21,7 +21,7 @@ export const HomePage = observer(function HomePage() {
           <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white/70 px-3 py-1 text-xs font-medium text-neutral-600 backdrop-blur">
             {APP_NAME} · MVP
           </span>
-          <h1 className="text-5xl font-bold tracking-tight text-neutral-900 md:text-6xl">
+          <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl md:text-6xl">
             {tt('welcome.title')}
           </h1>
           <p className="max-w-xl text-lg text-neutral-600">{tt('welcome.subtitle')}</p>
@@ -71,7 +71,7 @@ export const HomePage = observer(function HomePage() {
       <section className="grid gap-6 pb-16 md:grid-cols-3">
         <Card className="border-white/60 bg-white/70 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-base">系列总览</CardTitle>
+            <CardTitle className="text-base">{tt('home.stats.series')}</CardTitle>
           </CardHeader>
           <CardContent className="text-3xl font-bold tracking-tight">
             {seriesQuery.data?.total ?? '—'}
@@ -79,7 +79,7 @@ export const HomePage = observer(function HomePage() {
         </Card>
         <Card className="border-white/60 bg-white/70 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-base">已索引卡牌</CardTitle>
+            <CardTitle className="text-base">{tt('home.stats.cards')}</CardTitle>
           </CardHeader>
           <CardContent className="text-3xl font-bold tracking-tight">
             {seriesQuery.data ? totalCards : '—'}
@@ -87,10 +87,10 @@ export const HomePage = observer(function HomePage() {
         </Card>
         <Card className="border-white/60 bg-white/70 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-base">数据来源</CardTitle>
+            <CardTitle className="text-base">{tt('home.stats.source')}</CardTitle>
           </CardHeader>
           <CardContent className="text-sm leading-relaxed text-neutral-600">
-            实时由 NestJS + tRPC + PostgreSQL 提供（Epic 2）。
+            {tt('home.stats.sourceNote')}
           </CardContent>
         </Card>
       </section>

@@ -47,12 +47,17 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
           onSubmit={onSubmit}
           className="space-y-2 rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur"
         >
+          <label htmlFor="comment-content" className="sr-only">
+            {tt('a11y.commentArea')}
+          </label>
           <textarea
+            id="comment-content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={tt('card.detail.loginToComment')}
+            placeholder={tt('card.detail.commentPlaceholder')}
             rows={3}
             maxLength={500}
+            aria-label={tt('a11y.commentArea')}
             className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
           />
           {error ? (

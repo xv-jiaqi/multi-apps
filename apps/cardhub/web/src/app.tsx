@@ -1,24 +1,107 @@
+import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router';
+import { ErrorBoundary } from './components/error-boundary';
 import { HomePage } from './pages/home';
-import { SeriesListPage } from './pages/series-list';
-import { SeriesDetailPage } from './pages/series-detail';
-import { CardDetailPage } from './pages/card-detail';
-import { SearchPage } from './pages/search';
-import { LoginPage } from './pages/login';
-import { RegisterPage } from './pages/register';
-import { NotFoundPage } from './pages/not-found';
+
+const SeriesListPage = lazy(() =>
+  import('./pages/series-list').then((m) => ({ default: m.SeriesListPage })),
+);
+const SeriesDetailPage = lazy(() =>
+  import('./pages/series-detail').then((m) => ({ default: m.SeriesDetailPage })),
+);
+const CardDetailPage = lazy(() =>
+  import('./pages/card-detail').then((m) => ({ default: m.CardDetailPage })),
+);
+const SearchPage = lazy(() => import('./pages/search').then((m) => ({ default: m.SearchPage })));
+const LoginPage = lazy(() => import('./pages/login').then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() =>
+  import('./pages/register').then((m) => ({ default: m.RegisterPage })),
+);
+const NotFoundPage = lazy(() =>
+  import('./pages/not-found').then((m) => ({ default: m.NotFoundPage })),
+);
+
+function RouteFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="mx-auto flex min-h-[40vh] max-w-2xl items-center justify-center text-sm text-neutral-500"
+    >
+      <span className="inline-block h-4 w-4 animate-pulse rounded-full bg-neutral-400" />
+    </div>
+  );
+}
+
+function LazyRoute({ children }: { children: React.ReactNode }) {
+  // Per-route ErrorBoundary so a single page crash doesn't kill the shell.
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+}
 
 export function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/series" element={<SeriesListPage />} />
-      <Route path="/series/:seriesSlug" element={<SeriesDetailPage />} />
-      <Route path="/cards/:cardSlug" element={<CardDetailPage />} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="*" element={<NotFoundPage />} />
+      <Route
+        path="/series"
+        element={
+          <LazyRoute>
+            <SeriesListPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/series/:seriesSlug"
+        element={
+          <LazyRoute>
+            <SeriesDetailPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/cards/:cardSlug"
+        element={
+          <LazyRoute>
+            <CardDetailPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <LazyRoute>
+            <SearchPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <LazyRoute>
+            <LoginPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <LazyRoute>
+            <RegisterPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="*"
+        element={
+          <LazyRoute>
+            <NotFoundPage />
+          </LazyRoute>
+        }
+      />
     </Routes>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { observer } from 'mobx-react-lite';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { registerInput, t } from '@repo/shared';
@@ -10,6 +10,7 @@ import { trpc } from '../lib/trpc';
 
 export const RegisterPage = observer(function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { locale, session } = useStores();
   const tt = (key: string) => t(locale.locale, key);
 
@@ -18,10 +19,13 @@ export const RegisterPage = observer(function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const redirectTo =
+    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/';
+
   const mutation = trpc.auth.register.useMutation({
     onSuccess(data) {
       session.signIn(data.token, data.user);
-      navigate('/', { replace: true });
+      navigate(redirectTo, { replace: true });
     },
     onError(err) {
       setError(err.message);

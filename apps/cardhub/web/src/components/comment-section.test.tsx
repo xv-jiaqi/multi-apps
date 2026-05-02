@@ -106,14 +106,14 @@ describe('CommentSection (authenticated)', () => {
 
   it('shows the textarea + post button when signed in', () => {
     renderShell();
-    expect(screen.getByPlaceholderText(/登录后即可发表评论/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/撰写评论/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /发布评论/ })).toBeDisabled();
   });
 
   it('enables the button only when the textarea has non-whitespace content', async () => {
     const user = userEvent.setup();
     renderShell();
-    const textarea = screen.getByPlaceholderText(/登录后即可发表评论/);
+    const textarea = screen.getByLabelText(/撰写评论/);
     await user.type(textarea, '  ');
     expect(screen.getByRole('button', { name: /发布评论/ })).toBeDisabled();
     await user.type(textarea, 'a great card');
@@ -123,7 +123,7 @@ describe('CommentSection (authenticated)', () => {
   it('calls the create mutation with the validated payload on submit', async () => {
     const user = userEvent.setup();
     renderShell();
-    await user.type(screen.getByPlaceholderText(/登录后即可发表评论/), 'wow');
+    await user.type(screen.getByLabelText(/撰写评论/), 'wow');
     await user.click(screen.getByRole('button', { name: /发布评论/ }));
     expect(mutateMock).toHaveBeenCalledTimes(1);
     expect(mutateMock.mock.calls[0]?.[0]).toEqual({

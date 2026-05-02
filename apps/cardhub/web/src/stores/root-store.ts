@@ -1,15 +1,22 @@
 import { createContext, useContext } from 'react';
-import { LocaleStore, SessionStore, type SessionStorageDriver } from '@repo/stores';
+import { autorun } from 'mobx';
+import {
+  LocaleStore,
+  SessionStore,
+  type LocaleStorageDriver,
+  type SessionStorageDriver,
+} from '@repo/stores';
 
-const STORAGE_KEY = 'cardhub:session';
+const SESSION_KEY = 'cardhub:session';
+const LOCALE_KEY = 'cardhub:locale';
 
-const browserStorageDriver: SessionStorageDriver | null =
+const browserSessionDriver: SessionStorageDriver | null =
   typeof window === 'undefined'
     ? null
     : {
         get() {
           try {
-            const raw = window.localStorage.getItem(STORAGE_KEY);
+            const raw = window.localStorage.getItem(SESSION_KEY);
             if (!raw) return null;
             const parsed = JSON.parse(raw) as {
               token: string;
@@ -23,14 +30,42 @@ const browserStorageDriver: SessionStorageDriver | null =
         },
         set(value) {
           try {
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+            window.localStorage.setItem(SESSION_KEY, JSON.stringify(value));
           } catch {
             // Storage may be disabled (private mode); fall back to memory.
           }
         },
         clear() {
           try {
-            window.localStorage.removeItem(STORAGE_KEY);
+            window.localStorage.removeItem(SESSION_KEY);
+          } catch {
+            // ignore
+          }
+        },
+      };
+
+const browserLocaleDriver: LocaleStorageDriver | null =
+  typeof window === 'undefined'
+    ? null
+    : {
+        get() {
+          try {
+            const value = window.localStorage.getItem(LOCALE_KEY);
+            return (value as ReturnType<LocaleStorageDriver['get']>) ?? null;
+          } catch {
+            return null;
+          }
+        },
+        set(locale) {
+          try {
+            window.localStorage.setItem(LOCALE_KEY, locale);
+          } catch {
+            // ignore
+          }
+        },
+        clear() {
+          try {
+            window.localStorage.removeItem(LOCALE_KEY);
           } catch {
             // ignore
           }
@@ -38,11 +73,20 @@ const browserStorageDriver: SessionStorageDriver | null =
       };
 
 export class RootStore {
-  readonly locale = new LocaleStore();
-  readonly session = new SessionStore(browserStorageDriver);
+  readonly locale = new LocaleStore(browserLocaleDriver);
+  readonly session = new SessionStore(browserSessionDriver);
 }
 
 export const rootStore = new RootStore();
+
+// Keep <html lang> in sync with the active locale via MobX autorun. Using
+// autorun rather than a React effect means the binding survives across
+// route changes and is set up exactly once at module load.
+if (typeof document !== 'undefined') {
+  autorun(() => {
+    document.documentElement.lang = rootStore.locale.locale;
+  });
+}
 
 const StoreContext = createContext<RootStore>(rootStore);
 

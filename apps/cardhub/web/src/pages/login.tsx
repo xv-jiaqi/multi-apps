@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { observer } from 'mobx-react-lite';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { loginInput, t } from '@repo/shared';
@@ -10,6 +10,7 @@ import { trpc } from '../lib/trpc';
 
 export const LoginPage = observer(function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { locale, session } = useStores();
   const tt = (key: string) => t(locale.locale, key);
 
@@ -17,10 +18,15 @@ export const LoginPage = observer(function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Pages that redirect anonymous visitors should call navigate('/login',
+  // { state: { from: location } }) so we can restore them post-login.
+  const redirectTo =
+    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/';
+
   const mutation = trpc.auth.login.useMutation({
     onSuccess(data) {
       session.signIn(data.token, data.user);
-      navigate('/', { replace: true });
+      navigate(redirectTo, { replace: true });
     },
     onError(err) {
       setError(err.message);

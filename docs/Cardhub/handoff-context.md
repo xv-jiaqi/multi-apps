@@ -315,9 +315,9 @@ sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 
 ## 10. 已完成 milestone（实施进度）
 
-- [x] **M0**（2026-05-03）：本文档。commit `docs(docs): add Cardhub handoff context for downstream agents`。
-- [ ] M1
-- [ ] M2
+- [x] **M0**（2026-05-03）：本文档。commit `945838f`。
+- [x] **M1**（2026-05-03）：jest+vitest 测试栈、helmet、@nestjs/throttler + express-rate-limit、bcryptjs、Postgres CI service container、Dependabot、pnpm audit、README 测试/CI/部署章节。37 个测试全过。commit pending.
+- [x] **M2**（2026-05-03）：LocaleStore localStorage 持久化、MobX autorun 同步 `<html lang>`、双层 ErrorBoundary、skip-to-content、focus-visible、SiteHeader 汉堡菜单、路由 React.lazy 代码分割（首页 chunk 770KB → 299KB）、登录后 redirect 回原页、首页统计卡 i18n、@axe-core/react dev 扫描、bundle visualizer。commit pending.
 - [ ] M2.5
 - [ ] M3
 - [ ] M4

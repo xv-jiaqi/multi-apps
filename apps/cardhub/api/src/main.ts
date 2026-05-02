@@ -4,7 +4,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { AppModule } from './app.module';
 import { TrpcService } from './trpc/trpc.service';
 import { makeCreateContext } from './trpc/context';
@@ -58,7 +58,10 @@ async function bootstrap(): Promise<void> {
     limit: 10,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    keyGenerator: (req) => req.ip ?? 'unknown',
+    // ipKeyGenerator collapses IPv6 prefixes so attackers can't rotate the
+    // last 64 bits to bypass the limit (the helper is mandatory in
+    // express-rate-limit 8.x — see ERR_ERL_KEY_GEN_IPV6).
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? 'unknown'),
     skip: (req) => {
       const url = req.originalUrl ?? req.url ?? '';
       return !url.includes('auth.register') && !url.includes('auth.login');
