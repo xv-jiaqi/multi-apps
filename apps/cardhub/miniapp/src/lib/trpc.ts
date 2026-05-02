@@ -1,12 +1,14 @@
 import Taro from '@tarojs/taro';
 import { createTRPCClient, httpLink } from '@trpc/client';
 import type { AppRouter } from '@repo/trpc-contract';
+import { rootStore } from '../stores/root-store';
 
 declare const TRPC_URL: string;
 
 /**
  * Adapts the global `fetch` contract to Taro.request so tRPC links can run
- * inside all mini-program runtimes (WeChat / Alipay / TikTok / ...).
+ * inside all mini-program runtimes (WeChat / Alipay / TikTok / Baidu / QQ)
+ * plus H5, where `Taro.request` falls through to `fetch` anyway.
  */
 const taroFetch: typeof fetch = (input, init) => {
   const url =
@@ -52,11 +54,24 @@ const taroFetch: typeof fetch = (input, init) => {
   });
 };
 
+/**
+ * tRPC client configured with:
+ * - `TRPC_URL` injected at build time via `defineConstants` in
+ *   `apps/cardhub/miniapp/config/index.ts`. Switches between localhost and
+ *   the Render staging URL based on `process.env.TARO_APP_ENV`.
+ * - A headers callback that reads the current session token from MobX on
+ *   every request so sign-in / sign-out flows are picked up without
+ *   recreating the client.
+ */
 export const trpc = createTRPCClient<AppRouter>({
   links: [
     httpLink({
       url: TRPC_URL,
       fetch: taroFetch,
+      headers: () => {
+        const token = rootStore.session.token;
+        return token ? { authorization: `Bearer ${token}` } : {};
+      },
     }),
   ],
 });

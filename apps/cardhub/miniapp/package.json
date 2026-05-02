@@ -15,7 +15,7 @@
     "dev:weapp": "taro build --type weapp --watch",
     "dev:alipay": "taro build --type alipay --watch",
     "dev:h5": "taro build --type h5 --watch",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "echo 'lint runs from workspace root via eslint 10 flat config'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

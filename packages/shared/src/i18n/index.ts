@@ -67,6 +67,18 @@ const zhCN: Dictionary = {
   'state.error': '加载失败',
   'state.notFound': '内容不存在',
   'state.retry': '重试',
+  // Miniapp-specific copy (reused across weapp/alipay/h5).
+  'miniapp.home.browse': '浏览系列',
+  'miniapp.home.search': '搜索卡牌',
+  'miniapp.home.login': '登录',
+  'miniapp.home.profile': '你已登录为 @{username}',
+  'miniapp.home.logout': '退出登录',
+  'miniapp.home.featured': '热门系列',
+  'miniapp.home.viewAll': '查看全部 →',
+  'miniapp.toast.loginOk': '登录成功',
+  'miniapp.toast.registerOk': '注册成功',
+  'miniapp.toast.commentOk': '评论成功',
+  'miniapp.toast.logoutOk': '已退出登录',
 };
 
 const enUS: Dictionary = {
@@ -134,6 +146,17 @@ const enUS: Dictionary = {
   'state.error': 'Failed to load',
   'state.notFound': 'Not found',
   'state.retry': 'Retry',
+  'miniapp.home.browse': 'Browse series',
+  'miniapp.home.search': 'Search cards',
+  'miniapp.home.login': 'Sign in',
+  'miniapp.home.profile': 'Signed in as @{username}',
+  'miniapp.home.logout': 'Sign out',
+  'miniapp.home.featured': 'Featured series',
+  'miniapp.home.viewAll': 'View all →',
+  'miniapp.toast.loginOk': 'Signed in',
+  'miniapp.toast.registerOk': 'Account created',
+  'miniapp.toast.commentOk': 'Comment posted',
+  'miniapp.toast.logoutOk': 'Signed out',
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {

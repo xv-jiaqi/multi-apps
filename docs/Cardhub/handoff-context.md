@@ -229,6 +229,31 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 - PageShell `<main>` → `.app-safe-x .app-safe-bottom`：横屏 iPhone 的左右切角 + 底部 home indicator。
 - 桌面 / Android（无刘海）→ `env(...)` fallback `0px`，零成本 no-op。
 
+## 6.16 Taro 小程序集成踩坑（M5）
+
+1. **React 18 硬锁**：见 §6.4。miniapp 的 `package.json` `react@^18.3.1`，pnpm 的 overrides 把 `@types/react` 统一到 19。miniapp 代码里写 React 19-only 语法（e.g. `use`、Context Actions）会在其它端炸。
+
+2. **H5 build 默认不生成 `index.html`**：Taro 4.2 的 [`@tarojs/webpack5-runner`](../../node_modules/.pnpm) `H5WebpackPlugin.getPlugins()` 里写死 `if (fs.existsSync(path.join(sourceDir, 'index.html'))) { plugins.htmlWebpackPlugin = ... }`。**必须** 在 `apps/cardhub/miniapp/src/index.html` 留一个最简模板，否则 `dist/h5/` 只有 `js/` + `css/`，没有入口 HTML，浏览器根本加载不起来。模板已提交。
+
+3. **小程序没有 Tailwind JIT**：web 端的 `bg-gradient-to-br from-… via-… to-…` 字面量在 miniapp 完全无效。M5 的方案是三处同步：
+   - `apps/cardhub/web/src/lib/gradients.ts`（Tailwind class string，给 v4 JIT 看）
+   - `apps/cardhub/miniapp/src/lib/gradients.ts`（返回完整 `linear-gradient(…)` 字符串）
+   - `packages/design-tokens/src/taro.scss`（`$gradient-<slug>: linear-gradient(…)` SCSS 变量）
+
+   新增 slug 三个都要加，否则封面灰底。
+
+4. **miniapp 的 tRPC 不是 React-Query 变体**：web 端用 `@trpc/react-query`，hooks `useQuery` / `useMutation` 自动管 loading/error。miniapp 端是裸 `@trpc/client`，每页要自己 `useState` 管 loading/error + `useEffect` 触发。参数 schema 可以复用 `@repo/shared` 的 zod `safeParse()` 做前端校验。
+
+5. **Taro page 目录结构**：每个 page 必须同时有 `index.tsx`（组件）+ `index.config.ts`（`definePageConfig(...)`）+ `index.scss`（可选但建议有，保持 loader chain 稳定）。空 scss 也行。
+
+6. **路由栈行为**：`Taro.navigateTo` 有 **10 层页面栈上限**。登录成功后优先用 `navigateBack()`（把登录页从栈移除）；只有第一层时 `redirectTo` 回首页。不要用 `switchTab`，除非某页在 tabBar 里注册过。
+
+7. **微信服务器域名白名单是硬性阻塞**：详见 miniapp README。开发工具里勾 `不校验合法域名` 能绕过，**上线必须配**。M5 代码侧 ready，`AppID 申请 + 白名单` 要用户手动完成。
+
+8. **miniapp local `pnpm lint` 用不了**：Taro CLI 依赖 ESLint 8.41.0，和仓库根的 ESLint 10 flat config 互斥。`apps/cardhub/miniapp/package.json#scripts.lint` 是一个占位 echo；`pnpm lint`（仓库根）才是真实 lint。
+
+9. **mobx-react-lite + Taro**：`observer()` 包一下页面组件即可，不需要额外 polyfill。但 Taro 的 `useDidShow` / `useDidHide` 是 Taro 自有 hook，不要和 React 的 `useEffect` 混用——要在页面 _返回可见_ 时做事（比如刷新评论列表）就用 `useDidShow`。
+
 ## 6.14 Tauri-aware tRPC URL（M2.5 + M4）
 
 [apps/cardhub/web/src/lib/trpc.tsx](../../apps/cardhub/web/src/lib/trpc.tsx) 的 `resolveTrpcUrl()` 五条决策路径：
@@ -404,7 +429,8 @@ sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 - **Playwright E2E**：M1 的 vitest+RTL+supertest 已覆盖核心路径，MVP 够。
 - **changesets 自动 release notes**：版本/changelog 管理。
 - **multi-apps 仓库的"如何新增第二个 app"模板文档**。
-- **微信 `wx.login` / 开放数据**：PRD 外。
+- **微信 AppID 注册 + 服务器域名白名单上线审核流程**（M5 代码侧就绪，账号 + 备案 + 审核需用户手动；详见 miniapp README + §6.16）。
+- **微信 `wx.login` / 开放数据 / 订阅消息**：PRD 外。
 - **API trpc-panel / 类型可视化**。
 - **第三种 i18n 语言**（当前自写 `t()` 够 MVP；超过 3 种考虑 i18next）。
 - **Tauri 自动更新**（`tauri-plugin-updater`）。
@@ -422,8 +448,8 @@ sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 - [x] **M2**（2026-05-03）：LocaleStore localStorage 持久化、MobX autorun 同步 `<html lang>`、双层 ErrorBoundary、skip-to-content、focus-visible、SiteHeader 汉堡菜单、路由 React.lazy 代码分割（首页 chunk 770KB → 299KB）、登录后 redirect 回原页、首页统计卡 i18n、@axe-core/react dev 扫描、bundle visualizer。commit pending.
 - [x] **M2.5**（2026-05-03）：Sentry SDK 双端集成（`SENTRY_DSN` 守卫式启用，dev 0 开销）、`SentryExceptionFilter` 全局拦截 5xx + tRPC `onError` 上报 `INTERNAL_SERVER_ERROR`、Web `ErrorBoundary.onError` 接 `Sentry.captureException`；Dockerfile.api 启动跑 `prisma migrate deploy`（prisma CLI 移到 dependencies）；`resolveTrpcUrl()` 五条决策路径（dev/prod/Tauri/Android emulator）；新增 `.env.development/.staging/.production` 三套；CORS_ORIGIN 默认值加入 `tauri://localhost,https://tauri.localhost`；handoff doc 加 §7.5 部署运行手册。commit `a4a935d`.
 - [x] **M3**（2026-05-03）：Tauri Desktop 图标全套生成（`src-tauri/icons/` 16 张 + ios/ 18 张 + android/ 25 张），从 `source.png` 占位图通过 `tauri icon` 一键导出；保留可重生成脚本 `generate-source.py`；native README 重写覆盖 macOS/Windows/Linux 各自 toolchain + 命令；M2.5 的 Tauri-aware tRPC URL 已就绪。`cargo check` 通过 Rust 侧编译验证。commit `97aa9d3`.
-- [x] **M4**（2026-05-03）：iOS init `tauri ios init --ci` 在本机（Xcode 16.4 + iOS 17 SDK + xcodegen + cocoapods）跑通，但 `gen/apple/` 全保持 gitignore（每次 fresh checkout 用 30s 重生成）；Android init 跳过（本机 ANDROID_HOME / JDK / NDK 全缺失）；trpc.tsx Android emulator detection（`__TAURI_INTERNALS__` + UA Android + DEV → `http://10.0.2.2:4000/trpc`，M2.5 已就位）；index.html 加 `apple-mobile-web-app-capable` / `mobile-web-app-capable` / `apple-mobile-web-app-status-bar-style` / `theme-color` 四条 meta；globals.css 暴露 `--safe-area-{top,right,bottom,left}` CSS vars + `.app-safe-{top,x,bottom}` utility 类；SiteHeader（sticky）和 PageShell（main）应用 safe-area；.gitignore 加 `xcuserdata/` / `.gradle/` / `Pods/` 兜底；写 `apps/cardhub/native/MOBILE_SETUP.md` 详细列 macOS/Linux/Windows 三平台 mobile toolchain 安装步骤、release 流程、常见错误。commit pending.
-- [ ] M5
+- [x] **M4**（2026-05-03）：iOS init `tauri ios init --ci` 在本机（Xcode 16.4 + iOS 17 SDK + xcodegen + cocoapods）跑通，但 `gen/apple/` 全保持 gitignore（每次 fresh checkout 用 30s 重生成）；Android init 跳过（本机 ANDROID_HOME / JDK / NDK 全缺失）；trpc.tsx Android emulator detection（`__TAURI_INTERNALS__` + UA Android + DEV → `http://10.0.2.2:4000/trpc`，M2.5 已就位）；index.html 加 `apple-mobile-web-app-capable` / `mobile-web-app-capable` / `apple-mobile-web-app-status-bar-style` / `theme-color` 四条 meta；globals.css 暴露 `--safe-area-{top,right,bottom,left}` CSS vars + `.app-safe-{top,x,bottom}` utility 类；SiteHeader（sticky）和 PageShell（main）应用 safe-area；.gitignore 加 `xcuserdata/` / `.gradle/` / `Pods/` 兜底；写 `apps/cardhub/native/MOBILE_SETUP.md` 详细列 macOS/Linux/Windows 三平台 mobile toolchain 安装步骤、release 流程、常见错误。commit `ea2f598`.
+- [x] **M5**（2026-05-03）：Taro miniapp 业务接入。`src/app.tsx` 挂 `StoreProvider` + taroSessionStorageDriver / taroLocaleStorageDriver（`Taro.getStorageSync` 三件套）；`src/lib/trpc.ts` headers 回调读 `rootStore.session.token` 注入 `authorization: Bearer`；`src/app.config.ts` 注册 7 页（首页 / 系列列表 / 系列详情 / 卡牌详情 + 评论 / 搜索 / 登录 / 注册）；每页用 `ScrollView + View + Text + Input + Textarea` 重写 web 端等价视图；`@repo/ui-mini` 扩充 Field / RarityBadge / Empty / Skeleton / Link（封装 `Taro.navigateTo`）/ BreadcrumbsMini 五个组件；`@repo/design-tokens/src/taro.scss` 新增 12 个 `$gradient-<slug>` + 4 种稀有度配色；`src/lib/gradients.ts` 返回 `linear-gradient(...)` 字符串供 inline style；`@repo/shared/src/i18n` 新增 `miniapp.*` 字典；`src/index.html` 模板补上（否则 H5 build 不生成入口 HTML，Taro 源码 `fs.existsSync(template)` 守卫）；`package.json#scripts.lint` 改为 echo 占位，Taro CLI 带着过旧 ESLint 8 不兼容根仓库 flat config。`pnpm --filter @cardhub/miniapp build` 出 `dist/weapp/pages/{auth,cards,index,search,series}/*/index.wxml` 7 页；`pnpm --filter @cardhub/miniapp miniapp:h5` 出 `dist/h5/{index.html,js,css}`。17/17 typecheck、0 lint errors、37/37 test 保持。微信 AppID 注册 + 服务器域名白名单需用户手动完成（详见 miniapp README + §6.16）。commit `ff6b83f`.
 - [ ] M6
 - [ ] M7
 
