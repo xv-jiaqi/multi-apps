@@ -2,8 +2,9 @@
 # Production image for @cardhub/web — Vite/React SPA served by nginx.
 #
 # Zeabur picks this Dockerfile when the service env has
-# `ZBPACK_DOCKERFILE_NAME=web`. Build from repo root for other platforms:
-#   docker build -f Dockerfile.web --build-arg VITE_TRPC_URL=https://api.example.com/trpc -t cardhub-web:latest .
+# `ZBPACK_DOCKERFILE_NAME=web`. In Zeabur Variables, set `BUILDTIME_VITE_TRPC_URL`
+# to your public API URL ending in `/trpc`. Example local build:
+#   docker build -f Dockerfile.web --build-arg BUILDTIME_VITE_TRPC_URL=https://api.example.com/trpc -t cardhub-web:latest .
 
 ARG NODE_VERSION=22-alpine
 
@@ -27,15 +28,14 @@ COPY --from=pruner /repo/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --frozen-lockfile
 COPY --from=pruner /repo/out/full/ .
 
-# These ARGs are consumed by Vite at build time. Zeabur auto-injects
-# the matching service env vars; for raw `docker build` pass them via
-# --build-arg. Empty values are fine (Sentry stays disabled).
-ARG VITE_TRPC_URL=
-ARG VITE_SENTRY_DSN=
-ARG VITE_SENTRY_TRACES_SAMPLE_RATE=0.1
-ENV VITE_TRPC_URL=${VITE_TRPC_URL} \
-    VITE_SENTRY_DSN=${VITE_SENTRY_DSN} \
-    VITE_SENTRY_TRACES_SAMPLE_RATE=${VITE_SENTRY_TRACES_SAMPLE_RATE}
+# Zeabur multi-stage builds inject vars as ARG BUILDTIME_* (see Dockerfile docs).
+# Local: docker build --build-arg BUILDTIME_VITE_TRPC_URL=https://api.example.com/trpc ...
+ARG BUILDTIME_VITE_TRPC_URL=
+ARG BUILDTIME_VITE_SENTRY_DSN=
+ARG BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE=0.1
+ENV VITE_TRPC_URL=${BUILDTIME_VITE_TRPC_URL} \
+    VITE_SENTRY_DSN=${BUILDTIME_VITE_SENTRY_DSN} \
+    VITE_SENTRY_TRACES_SAMPLE_RATE=${BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE}
 
 # Build all upstream @repo/* packages first (turbo respects dependsOn:^build),
 # then vite build for @cardhub/web. The `--filter ...^...` syntax includes
@@ -48,30 +48,7 @@ RUN pnpm turbo run build --filter=@cardhub/web
 FROM nginx:1.27-alpine AS runner
 RUN rm /etc/nginx/conf.d/default.conf
 
-# SPA fallback: any path without a file extension falls back to index.html
-# so React Router v7 client routes (/series, /forum/:slug, etc.) survive
-# a refresh.
-COPY <<'NGINX' /etc/nginx/conf.d/cardhub-web.conf
-server {
-    listen       8080;
-    listen       [::]:8080;
-    server_name  _;
-    root         /usr/share/nginx/html;
-    index        index.html;
-
-    # Long-cache hashed assets emitted by vite.
-    location ~* \.(?:js|css|woff2?|ttf|eot|svg|ico|png|jpg|jpeg|webp|gif|map)$ {
-        expires    1y;
-        add_header Cache-Control "public, immutable";
-        try_files  $uri =404;
-    }
-
-    # SPA fallback for everything else.
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-NGINX
+COPY --from=builder /repo/apps/cardhub/web/nginx-spa.conf /etc/nginx/conf.d/cardhub-web.conf
 
 COPY --from=builder /repo/apps/cardhub/web/dist /usr/share/nginx/html
 
