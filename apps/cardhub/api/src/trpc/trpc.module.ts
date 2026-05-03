@@ -7,6 +7,8 @@ import { CardsModule } from '../modules/cards/cards.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CommentsModule } from '../modules/comments/comments.module';
 import { ForumModule } from '../modules/forum/forum.module';
+import { ListingsModule } from '../modules/listings/listings.module';
+import { ReportsModule } from '../modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { ForumModule } from '../modules/forum/forum.module';
     AuthModule,
     CommentsModule,
     ForumModule,
+    ListingsModule,
+    ReportsModule,
   ],
   providers: [TrpcService],
   exports: [TrpcService],

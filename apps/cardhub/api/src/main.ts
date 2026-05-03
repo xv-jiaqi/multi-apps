@@ -122,6 +122,30 @@ async function bootstrap(): Promise<void> {
   });
   app.use('/trpc', forumReplyCreateLimiter);
 
+  // Trade write throttles (M7): 10 listings/hour and 20 reports/hour per IP.
+  // Reports are also gated server-side by a 10/day per-user counter inside
+  // reports.create — this IP-scoped limiter is a coarser first line so the
+  // database query never runs for obvious flooders.
+  const listingPublishLimiter = rateLimit({
+    windowMs: 60 * 60_000,
+    limit: 10,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: ipKey,
+    skip: (req) => !(req.originalUrl ?? req.url ?? '').includes('listings.publish'),
+  });
+  app.use('/trpc', listingPublishLimiter);
+
+  const reportCreateLimiter = rateLimit({
+    windowMs: 60 * 60_000,
+    limit: 20,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: ipKey,
+    skip: (req) => !(req.originalUrl ?? req.url ?? '').includes('reports.create'),
+  });
+  app.use('/trpc', reportCreateLimiter);
+
   app.use(
     '/trpc',
     trpcExpress.createExpressMiddleware({

@@ -29,6 +29,12 @@ const ForumNewPage = lazy(() =>
 const ForumDetailPage = lazy(() =>
   import('./pages/forum-detail').then((m) => ({ default: m.ForumDetailPage })),
 );
+const TradeListPage = lazy(() =>
+  import('./pages/trade-list').then((m) => ({ default: m.TradeListPage })),
+);
+const TradePublishPage = lazy(() =>
+  import('./pages/trade-publish').then((m) => ({ default: m.TradePublishPage })),
+);
 
 function RouteFallback() {
   return (
@@ -124,6 +130,22 @@ export function App() {
         element={
           <LazyRoute>
             <ForumDetailPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/trade"
+        element={
+          <LazyRoute>
+            <TradeListPage />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/trade/new"
+        element={
+          <LazyRoute>
+            <TradePublishPage />
           </LazyRoute>
         }
       />

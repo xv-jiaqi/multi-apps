@@ -9,6 +9,7 @@ import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { gradientFor } from '../lib/gradients';
 import { CommentSection } from '../components/comment-section';
+import { ListingsForCard } from '../components/listings-for-card';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
 function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
@@ -114,6 +115,15 @@ export const CardDetailPage = observer(function CardDetailPage() {
                     </div>
                   ))}
                 </dl>
+              </CardContent>
+            </Card>
+
+            <Card className="border-white/60 bg-white/70 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-base">{tt('trade.detail.byCardTitle')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ListingsForCard cardSlug={card.slug} />
               </CardContent>
             </Card>
 
