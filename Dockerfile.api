@@ -28,8 +28,13 @@ COPY --from=pruner /repo/out/json/ .
 COPY --from=pruner /repo/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --frozen-lockfile
 COPY --from=pruner /repo/out/full/ .
+# Build with turbo so the dependsOn:^build chain in turbo.json compiles every
+# upstream @repo/* package (shared, stores, trpc-contract, ...) before the
+# NestJS tsc step runs. A bare `pnpm --filter @cardhub/api build` would
+# resolve `@repo/shared` to its empty `dist/` (gitignored) and fail with
+# "Cannot find module '@repo/shared'".
 RUN pnpm --filter @cardhub/api db:generate \
-  && pnpm --filter @cardhub/api build \
+  && pnpm turbo run build --filter=@cardhub/api \
   && pnpm --filter @cardhub/api deploy --prod --legacy /app
 
 ############################
@@ -48,4 +53,3 @@ EXPOSE 4000
 # command is non-interactive (no prompt for migration name) and is safe to run
 # concurrently — it acquires an advisory lock on `_prisma_migrations`.
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
-# Trigger Zeabur redeploy after env vars set
