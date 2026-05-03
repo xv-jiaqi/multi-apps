@@ -1,0 +1,17 @@
+# Used for all `docker build -f ... .` invocations from repo root (Zeabur, CI, local).
+**/node_modules
+**/.turbo
+**/dist
+**/build
+**/.nest
+**/.git
+**/.DS_Store
+**/coverage
+**/.vscode
+**/.idea
+**/src-tauri/target
+**/src-tauri/gen
+# Never bake secrets into images (Zeabur / Render inject env at runtime).
+**/.env
+**/.env.*
+!**/.env.example

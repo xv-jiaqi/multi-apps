@@ -326,6 +326,25 @@ flowchart TD
 5. **Health check**：Render Health Check Path 设为 `/health`。
 6. **触发首次部署**：Render 自动跑 Docker build → 启动时 `npx prisma migrate deploy && node dist/main.js`。**首次部署一定带空 DB**，migration 会自动创建表。
 
+### 7.5.1b Zeabur（Docker + 自定义域，例如 card-hub.app）
+
+与 Render **二选一**即可（数据库仍可自建 Postgres / Upstash Redis）。
+
+**API**
+
+1. Zeabur Project → New Service → **Docker**，连接本仓库、`main` 分支。
+2. Dockerfile 选仓库根 **`Dockerfile.api`**（或与 [`Dockerfile.api`](../../Dockerfile.api) 注释一致的平台变量，例如 `ZBPACK_DOCKERFILE_NAME=api`——以 Zeabur 当前文档为准）。
+3. **运行时变量**对齐 §7.5.1：`DATABASE_URL`、`REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`、`JWT_SECRET`、`JWT_EXPIRES_IN`、`CORS_ORIGIN`（必须包含前端正式 origin，例如 `https://card-hub.app,https://www.card-hub.app,tauri://localhost,https://tauri.localhost`）、可选 `SENTRY_*`。
+4. 镜像 **构建阶段**已执行 `db:generate` + `turbo build`；**启动阶段**仍为 `prisma migrate deploy && node dist/main.js`。
+
+**Web**
+
+1. 再建 Docker Service，使用仓库根 **`Dockerfile.web`**（或平台等价：`ZBPACK_DOCKERFILE_NAME=web`）。
+2. **构建变量**注入 `BUILDTIME_VITE_TRPC_URL=https://<API 公网>/trpc`（须带 `/trpc` 后缀），可选 `BUILDTIME_VITE_SENTRY_DSN`、`BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE`，与 [`Dockerfile.web`](../../Dockerfile.web) 中 `ARG` 名称一致。
+3. 在 Zeabur / DNS 将 `card-hub.app`（及 `www`）绑定到 Web 服务；API 可用独立子域（如 `api.card-hub.app`）。
+
+**安全**：仓库根 [`.dockerignore`](../../.dockerignore) 排除 `**/.env`，避免本地密钥被打进镜像；密钥只在平台「运行时变量」填写。
+
 ### 7.5.2 部署 Web 前端
 
 任选其一：
@@ -337,6 +356,7 @@ flowchart TD
   ```
   Pages 项目设置：Build command `pnpm --filter @cardhub/web build`、Output directory `apps/cardhub/web/dist`、Env `VITE_TRPC_URL=https://cardhub-api.onrender.com/trpc`。
 - **Render Static Site**：New + → Static Site，Build cmd 同上，Publish Dir `apps/cardhub/web/dist`，Env 同上。
+- **Zeabur Docker**：见 §7.5.1b，`Dockerfile.web` + 构建变量 `BUILDTIME_VITE_TRPC_URL`。
 
 ### 7.5.3 回滚 / 查日志
 
@@ -367,6 +387,7 @@ docker run --rm -p 4000:4000 \
 4. 注册 [Cloudflare](https://cloudflare.com) 账号（如选 Pages） → 连接 GitHub。
 5. 域名：Render 自动给 `cardhub-api.onrender.com`，Pages 给 `<project>.pages.dev`。买域名后在两边各加 CNAME。
 6. 推送代码到 GitHub remote：`git push origin main`。
+7. 若走 **Zeabur**：注册控制台账号 → 创建 Project → 按 §7.5.1b 创建 API/Web 两个 Docker Service → 在域名服务商完成 DNS（或使用 Zeabur 购买的域名解析）。
 
 ## 8. 接手 Agent 工作建议
 
@@ -382,6 +403,7 @@ docker run --rm -p 4000:4000 \
 - 改 **i18n 字典** → 重启 vite 并清 `apps/cardhub/web/node_modules/.vite` 缓存。
 - 改 **Prisma schema** → `prisma migrate dev --name xxx`（**带 --name**，不带会阻塞）。
 - 改 **trpc-contract 间接依赖的类型**（即任何 router 输入输出）→ `pnpm --filter @repo/trpc-contract build`，否则 web 端 tsc 拿到旧 .d.ts。
+- **根目录 `pnpm build`**：Turbo 已排除 `@cardhub/native`（桌面壳单独构建）；Zeabur / Docker / CI 走 api + web + 小程序包即可。
 
 ### 8.3 验证清单
 

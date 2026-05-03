@@ -17,7 +17,7 @@
     "dev:miniapp:h5": "pnpm --filter @cardhub/miniapp dev:h5",
     "dev:miniapp:alipay": "pnpm --filter @cardhub/miniapp dev:alipay",
     "dev:packages": "turbo run dev --filter=./packages/*",
-    "build": "turbo run build",
+    "build": "turbo run build --filter=!@cardhub/native",
     "lint": "eslint .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

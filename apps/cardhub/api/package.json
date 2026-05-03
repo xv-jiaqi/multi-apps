@@ -2,7 +2,7 @@
   "name": "@cardhub/api",
   "version": "0.0.0",
   "private": true,
-  "description": "Cardhub backend — NestJS 11 + tRPC v11 + Prisma 7 + PostgreSQL + Redis + JWT.",
+  "description": "Cardhub backend — NestJS 11 + tRPC v11 + Prisma 6 + PostgreSQL + Redis + JWT.",
   "main": "dist/main.js",
   "exports": {
     ".": "./dist/main.js",

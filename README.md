@@ -42,7 +42,7 @@ multi-apps/
 │   ├── config-ts/        # TS 配置预设（base/react/node/nest/taro）
 │   ├── config-eslint/    # ESLint flat config 预设
 │   └── config-prettier/  # Prettier 预设
-├── docker/               # docker-compose + API Dockerfile
+├── docker/               # docker-compose；生产镜像亦可用仓库根 Dockerfile.*
 ├── docs/                 # PRD / UI 规范等业务文档
 └── .github/workflows/    # CI + 多端发布流水线
 ```
@@ -106,7 +106,7 @@ pnpm dev
 | Prisma Studio                 | `pnpm db:studio`                               |
 | 全仓 Lint / Typecheck / Build | `pnpm lint` / `pnpm typecheck` / `pnpm build`  |
 
-### 版本与 React 版本说明
+> **`pnpm build`** 按 Turborepo 默认不包含 **`@cardhub/native`**（避免在无 Rust/WebKit 链路的 CI/云端环境里编译桌面壳）；桌面安装包仍用上表的 Native build，或由 Release Native 工作流出产物。
 
 - `@cardhub/web` / `@cardhub/native` 使用 **React 19**。
 - `@cardhub/miniapp` 锁在 **React 18**——Taro 4.2 尚不兼容 React 19 的 `exports` 字段与新 reconciler。
@@ -145,10 +145,11 @@ pnpm dev
 
 ## 部署
 
-Cardhub MVP 推荐 Render（API + Postgres）+ Upstash（Redis）+ Sentry（错误监控）的组合（具体在 M2.5 落地）。
+Cardhub MVP 可用 **Render**（API + Postgres）+ **Upstash**（Redis）+ **Sentry**，或使用 **Zeabur** 自定义域名（例如 `card-hub.app`）+ Docker 多阶段镜像（详见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md) §7.5）。
 
-- API 镜像：[`docker/Dockerfile.api`](docker/Dockerfile.api) 是多阶段构建，启动时跑 `prisma migrate deploy && node dist/main.js`。
-- Web：`pnpm --filter @cardhub/web build` 输出 `apps/cardhub/web/dist/`，可托管到任何静态站（Vercel / Cloudflare Pages / Render Static）。
+- **API 镜像（仓库根）**：[`Dockerfile.api`](Dockerfile.api) — Zeabur 可在服务环境变量中设置 `ZBPACK_DOCKERFILE_NAME=api`；构建阶段会 `prisma generate`，容器启动执行 `prisma migrate deploy && node dist/main.js`。
+- **API 镜像（docker/ 路径）**：[`docker/Dockerfile.api`](docker/Dockerfile.api) 与上面等价，便于沿用旧文档中的路径。
+- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 构建参数 `BUILDTIME_VITE_TRPC_URL`（及可选 Sentry）需在镜像构建时注入；Zeabur 下对应「构建变量」。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
 - 多端 tRPC URL：通过 `VITE_TRPC_URL` 在 dev / staging / prod 切换；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
 
 ## tRPC 端到端类型安全
