@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 # Production image for @cardhub/web — Vite/React SPA served by nginx.
 #
 # Zeabur picks this Dockerfile when the service env has
