@@ -36,10 +36,12 @@ ENV VITE_TRPC_URL=${BUILDTIME_VITE_TRPC_URL} \
     VITE_SENTRY_DSN=${BUILDTIME_VITE_SENTRY_DSN} \
     VITE_SENTRY_TRACES_SAMPLE_RATE=${BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE}
 
-# Build all upstream @repo/* packages first (turbo respects dependsOn:^build),
-# then vite build for @cardhub/web. The `--filter ...^...` syntax includes
-# every workspace package that @cardhub/web depends on.
-RUN pnpm turbo run build --filter=@cardhub/web
+# @repo/trpc-contract lists @cardhub/api as a devDependency (AppRouter types),
+# so `turbo run build --filter=@cardhub/web` still schedules @cardhub/api#build.
+# Prisma Client must exist before Nest/tsc can compile the API — same as
+# Dockerfile.api / CI (prisma generate does not need DATABASE_URL).
+RUN pnpm --filter @cardhub/api db:generate \
+  && pnpm turbo run build --filter=@cardhub/web
 
 ############################
 # Stage 3 — nginx serve

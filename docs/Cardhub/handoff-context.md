@@ -340,7 +340,7 @@ flowchart TD
 **Web**
 
 1. 再建 Docker Service，使用仓库根 **`Dockerfile.web`**（或平台等价：`ZBPACK_DOCKERFILE_NAME=web`）。
-2. **构建变量**注入 `BUILDTIME_VITE_TRPC_URL=https://<API 公网>/trpc`（须带 `/trpc` 后缀），可选 `BUILDTIME_VITE_SENTRY_DSN`、`BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE`，与 [`Dockerfile.web`](../../Dockerfile.web) 中 `ARG` 名称一致。
+2. **构建变量**注入 `BUILDTIME_VITE_TRPC_URL=https://<API 公网>/trpc`（须带 `/trpc` 后缀），可选 `BUILDTIME_VITE_SENTRY_DSN`、`BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE`，与 [`Dockerfile.web`](../../Dockerfile.web) 中 `ARG` 名称一致。（镜像内会在 `turbo build` 前自动 `pnpm --filter @cardhub/api db:generate`，因 `trpc-contract` 依赖 API 类型。）
 3. 在 Zeabur / DNS 将 `card-hub.app`（及 `www`）绑定到 Web 服务；API 可用独立子域（如 `api.card-hub.app`）。
 
 **安全**：仓库根 [`.dockerignore`](../../.dockerignore) 排除 `**/.env`，避免本地密钥被打进镜像；密钥只在平台「运行时变量」填写。
