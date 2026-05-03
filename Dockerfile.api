@@ -35,7 +35,8 @@ COPY --from=pruner /repo/out/full/ .
 # "Cannot find module '@repo/shared'".
 RUN pnpm --filter @cardhub/api db:generate \
   && pnpm turbo run build --filter=@cardhub/api \
-  && pnpm --filter @cardhub/api deploy --prod --legacy /app
+  && pnpm --filter @cardhub/api deploy --prod --legacy /app \
+  && cd /app && npx prisma generate
 
 ############################
 # Stage 3 — runtime
@@ -48,6 +49,10 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder --chown=app:app /app /app
 USER app
 EXPOSE 4000
+# `pnpm deploy` copies prod node_modules but does not carry the generated
+# `.prisma/client` tree from the monorepo root; regenerate inside /app so
+# `require('@prisma/client')` resolves at runtime (Zeabur: avoid
+# "Cannot find module '.prisma/client/default'").
 # Run pending Prisma migrations on every container boot, then start Nest. We
 # rely on Prisma's `migrate deploy` instead of `migrate dev` because the
 # command is non-interactive (no prompt for migration name) and is safe to run

@@ -26,7 +26,8 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pruner /repo/out/full/ .
 RUN pnpm --filter @cardhub/api db:generate \
   && pnpm turbo run build --filter=@cardhub/api \
-  && pnpm --filter @cardhub/api deploy --prod --legacy /app
+  && pnpm --filter @cardhub/api deploy --prod --legacy /app \
+  && cd /app && npx prisma generate
 
 ############################
 # Stage 3 — runtime

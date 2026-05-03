@@ -335,7 +335,7 @@ flowchart TD
 1. Zeabur Project → New Service → **Docker**，连接本仓库、`main` 分支。
 2. Dockerfile 选仓库根 **`Dockerfile.api`**（或与 [`Dockerfile.api`](../../Dockerfile.api) 注释一致的平台变量，例如 `ZBPACK_DOCKERFILE_NAME=api`——以 Zeabur 当前文档为准）。
 3. **运行时变量**对齐 §7.5.1：`DATABASE_URL`、`REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`、`JWT_SECRET`、`JWT_EXPIRES_IN`、`CORS_ORIGIN`（必须包含前端正式 origin，例如 `https://card-hub.app,https://www.card-hub.app,tauri://localhost,https://tauri.localhost`）、可选 `SENTRY_*`。
-4. 镜像 **构建阶段**已执行 `db:generate` + `turbo build`；**启动阶段**仍为 `prisma migrate deploy && node dist/main.js`。
+4. 镜像 **构建阶段**已执行 `db:generate` + `turbo build`；`pnpm deploy` 产物目录内会再执行一次 `prisma generate`，避免运行时缺少 `.prisma/client`。**启动阶段**仍为 `prisma migrate deploy && node dist/main.js`。
 
 **Web**
 
