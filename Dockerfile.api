@@ -48,3 +48,4 @@ EXPOSE 4000
 # command is non-interactive (no prompt for migration name) and is safe to run
 # concurrently — it acquires an advisory lock on `_prisma_migrations`.
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Trigger Zeabur redeploy after env vars set
