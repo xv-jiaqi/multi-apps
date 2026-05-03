@@ -42,7 +42,7 @@ jobs:
       CORS_ORIGIN: http://localhost:5173
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -90,7 +90,7 @@ jobs:
     # Run in parallel with verify; failure here is informational but should
     # block merges on truly high-severity advisories.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
