@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { commentInput, slugSchema } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+
+type CommentWithUser = Prisma.CommentGetPayload<{
+  include: { user: { select: { id: true; username: true } } };
+}>;
 
 @Injectable()
 export class CommentsRouter {
@@ -40,7 +45,7 @@ export class CommentsRouter {
             include: { user: { select: { id: true, username: true } } },
           });
 
-          return comments.map((c) => ({
+          return comments.map((c: CommentWithUser) => ({
             id: c.id,
             content: c.content,
             createdAt: c.createdAt.toISOString(),

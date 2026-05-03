@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { reportCreateInput, reportListInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+
+type ReportWithReporter = Prisma.ReportGetPayload<{
+  include: { reporter: { select: { id: true; username: true } } };
+}>;
 
 @Injectable()
 export class ReportsRouter {
@@ -67,7 +72,7 @@ export class ReportsRouter {
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
         return {
-          items: sliced.map((r) => ({
+          items: sliced.map((r: ReportWithReporter) => ({
             id: r.id,
             targetType: r.targetType,
             targetId: r.targetId,

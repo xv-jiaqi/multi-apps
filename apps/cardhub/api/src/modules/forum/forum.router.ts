@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
   cursorPaginationInput,
@@ -41,7 +42,7 @@ async function createTopicWithUniqueSlug(
         include: { user: { select: { id: true, username: true } } },
       });
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
         lastError = err;
         continue;
       }
@@ -56,17 +57,18 @@ export interface TopicAuthor {
   username: string;
 }
 
-function mapTopicSummary(topic: {
-  id: string;
-  slug: string;
-  title: string;
-  body: string;
-  pinned: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  user: TopicAuthor;
-  _count?: { replies: number };
-}) {
+type TopicSummaryPayload = Prisma.TopicGetPayload<{
+  include: {
+    user: { select: { id: true; username: true } };
+    _count: { select: { replies: true } };
+  };
+}>;
+
+type ReplyWithAuthor = Prisma.ReplyGetPayload<{
+  include: { user: { select: { id: true; username: true } } };
+}>;
+
+function mapTopicSummary(topic: TopicSummaryPayload) {
   return {
     id: topic.id,
     slug: topic.slug,
@@ -140,7 +142,7 @@ export class ForumRouter {
           const sliced = hasMore ? initialReplies.slice(0, 20) : initialReplies;
           return {
             ...mapTopicSummary(topic),
-            replies: sliced.map((r) => ({
+            replies: sliced.map((r: ReplyWithAuthor) => ({
               id: r.id,
               body: r.body,
               createdAt: r.createdAt.toISOString(),
@@ -227,7 +229,7 @@ export class ForumRouter {
           const hasMore = items.length > input.limit;
           const sliced = hasMore ? items.slice(0, input.limit) : items;
           return {
-            items: sliced.map((r) => ({
+            items: sliced.map((r: ReplyWithAuthor) => ({
               id: r.id,
               body: r.body,
               createdAt: r.createdAt.toISOString(),

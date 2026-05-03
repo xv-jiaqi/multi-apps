@@ -1,33 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import { cursorPaginationInput, listingListInput, listingPublishInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
-interface ListingRow {
-  id: string;
-  userId: string;
-  cardSlug: string;
-  kind: 'SELL' | 'BUY';
-  price: Prisma.Decimal | null;
-  currency: string;
-  imageUrls: string[];
-  contact: string;
-  note: string | null;
-  status: 'OPEN' | 'CLOSED';
-  createdAt: Date;
-  updatedAt: Date;
-  user?: { id: string; username: string };
-}
+type ListingWithUser = Prisma.ListingGetPayload<{
+  include: { user: { select: { id: true; username: true } } };
+}>;
 
 /**
  * Decimal -> string keeps tRPC's inferred type stable (tRPC 11 serialises
- * Prisma.Decimal to string already, but typing the conversion explicitly
+ * Decimal to string already, but typing the conversion explicitly
  * means the client never has to disambiguate `string | Decimal`).
  */
-function mapListing(row: ListingRow) {
+function mapListing(row: ListingWithUser) {
   return {
     id: row.id,
     cardSlug: row.cardSlug,
@@ -74,7 +63,7 @@ export class ListingsRouter {
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
         return {
-          items: sliced.map((row) => mapListing(row as ListingRow)),
+          items: sliced.map((row: ListingWithUser) => mapListing(row)),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),
@@ -96,7 +85,7 @@ export class ListingsRouter {
             orderBy: [{ createdAt: 'desc' }],
             include: { user: { select: { id: true, username: true } } },
           });
-          return items.map((row) => mapListing(row as ListingRow));
+          return items.map((row: ListingWithUser) => mapListing(row));
         }),
 
       mine: t.authedProcedure.input(cursorPaginationInput).query(async ({ ctx, input }) => {
@@ -111,7 +100,7 @@ export class ListingsRouter {
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
         return {
-          items: sliced.map((row) => mapListing(row as ListingRow)),
+          items: sliced.map((row: ListingWithUser) => mapListing(row)),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),
@@ -137,7 +126,7 @@ export class ListingsRouter {
             userId: ctx.user.sub,
             cardSlug: input.cardSlug,
             kind: input.kind,
-            price: input.price === undefined ? null : new Prisma.Decimal(input.price.toString()),
+            price: input.price === undefined ? null : new Decimal(input.price.toString()),
             currency: input.currency,
             imageUrls: input.imageUrls,
             contact: input.contact,
@@ -145,7 +134,7 @@ export class ListingsRouter {
           },
           include: { user: { select: { id: true, username: true } } },
         });
-        return mapListing(created as ListingRow);
+        return mapListing(created);
       }),
 
       close: t.authedProcedure

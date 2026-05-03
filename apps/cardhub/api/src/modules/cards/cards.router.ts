@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { slugSchema } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+
+type CardSearchRow = Prisma.CardGetPayload<{
+  include: { series: { select: { slug: true; title: true } } };
+}>;
 
 @Injectable()
 export class CardsRouter {
@@ -67,7 +72,7 @@ export class CardsRouter {
           });
           return {
             query: input.q,
-            results: cards.map((c) => ({
+            results: cards.map((c: CardSearchRow) => ({
               id: c.id,
               slug: c.slug,
               name: c.name,

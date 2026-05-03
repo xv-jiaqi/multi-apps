@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { slugSchema, paginationSchema } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+
+type SeriesListRow = Prisma.SeriesGetPayload<{
+  include: { _count: { select: { cards: true } } };
+}>;
 
 @Injectable()
 export class SeriesRouter {
@@ -29,7 +34,7 @@ export class SeriesRouter {
           prisma.series.count(),
         ]);
         return {
-          items: items.map((s) => ({
+          items: items.map((s: SeriesListRow) => ({
             id: s.id,
             slug: s.slug,
             title: s.title,

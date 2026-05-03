@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { ListingsRouter } from './listings.router';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -108,7 +108,7 @@ describe('ListingsRouter.publish', () => {
 
     const passed = listingCreate.mock.calls[0]?.[0]?.data;
     expect(passed.userId).toBe('u-alice');
-    expect(passed.price).toBeInstanceOf(Prisma.Decimal);
+    expect(passed.price).toBeInstanceOf(Decimal);
     expect(passed.price?.toFixed(2)).toBe('199.50');
   });
 
