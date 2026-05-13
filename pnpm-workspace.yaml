@@ -14,6 +14,19 @@ overrides:
   '@types/react': '^19.2.14'
   '@types/react-dom': '^19.2.3'
 
+# All ignored advisories live in transitive deps of @cardhub/miniapp's
+# Taro 4.2 build toolchain (swiper/lodash-es/fast-uri inside @tarojs/*
+# packages). They never ship to production web or api. Forcing them via
+# pnpm overrides re-resolves the lockfile in a way that flips pnpm's
+# @types/react hoist choice and breaks workspace typecheck across
+# web ↔ miniapp. Revisit when Taro 4.x picks up patched versions upstream.
+auditConfig:
+  ignoreCves:
+    - 'CVE-2026-27212' # swiper prototype pollution (via @tarojs/components)
+    - 'CVE-2026-4800' # lodash-es _.template (via @tarojs/plugin-platform-h5)
+    - 'CVE-2026-6321' # fast-uri path traversal (via webpack → ajv chain)
+    - 'CVE-2026-6322' # fast-uri host confusion (via webpack → ajv chain)
+
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@parcel/watcher'
