@@ -22,7 +22,10 @@ const taroSessionStorageDriver: SessionStorageDriver = {
       if (!raw) return null;
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if (!parsed?.token || !parsed?.user) return null;
-      return { token: parsed.token as string, user: parsed.user };
+      return {
+        token: parsed.token as string,
+        user: parsed.user as { id: string; username: string; role?: string },
+      };
     } catch {
       return null;
     }

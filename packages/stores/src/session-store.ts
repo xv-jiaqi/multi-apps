@@ -3,6 +3,7 @@ import { makeAutoObservable } from 'mobx';
 export interface SessionUser {
   id: string;
   username: string;
+  role?: string;
 }
 
 /**
@@ -34,6 +35,10 @@ export class SessionStore {
 
   get isAuthenticated(): boolean {
     return this.token !== null && this.user !== null;
+  }
+
+  get isAdmin(): boolean {
+    return this.user?.role === 'admin';
   }
 
   signIn(token: string, user: SessionUser): void {

@@ -5,6 +5,7 @@ import { Button } from '@repo/ui-web';
 import { commentInput, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
+import { ReportButton } from './report-button';
 
 interface CommentSectionProps {
   cardSlug: string;
@@ -76,7 +77,11 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
         </form>
       ) : (
         <p className="rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur">
-          <Link to="/login" className="font-medium text-brand-600 hover:underline">
+          <Link
+            to="/login"
+            state={{ from: `/cards/${cardSlug}` }}
+            className="font-medium text-brand-600 hover:underline"
+          >
             {tt('card.detail.loginToComment')}
           </Link>
         </p>
@@ -99,9 +104,14 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
             >
               <div className="flex items-center justify-between text-xs text-neutral-500">
                 <span className="font-semibold text-neutral-900">@{comment.user.username}</span>
-                <time dateTime={comment.createdAt}>
-                  {new Date(comment.createdAt).toLocaleString(locale.locale)}
-                </time>
+                <div className="flex items-center gap-3">
+                  <time dateTime={comment.createdAt}>
+                    {new Date(comment.createdAt).toLocaleString(locale.locale)}
+                  </time>
+                  {session.user?.id !== comment.user.id ? (
+                    <ReportButton targetType="COMMENT" targetId={comment.id} />
+                  ) : null}
+                </div>
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800">{comment.content}</p>
             </li>

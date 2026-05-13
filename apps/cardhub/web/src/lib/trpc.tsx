@@ -30,8 +30,8 @@ export const trpc = createTRPCReact<AppRouter>();
 const FALLBACK_REMOTE_URL = 'https://cardhub-api.onrender.com/trpc';
 
 function resolveTrpcUrl(): string {
-  const explicit = import.meta.env.VITE_TRPC_URL as string | undefined;
-  const tauriUrl = import.meta.env.VITE_TRPC_URL_TAURI as string | undefined;
+  const explicit = (import.meta.env.VITE_TRPC_URL as string | undefined)?.trim() || undefined;
+  const tauriUrl = (import.meta.env.VITE_TRPC_URL_TAURI as string | undefined)?.trim() || undefined;
 
   if (typeof window !== 'undefined') {
     const isTauri = '__TAURI_INTERNALS__' in window;

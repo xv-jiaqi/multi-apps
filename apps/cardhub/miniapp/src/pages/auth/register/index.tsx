@@ -27,7 +27,7 @@ export default observer(function RegisterPage() {
     setSubmitting(true);
     try {
       const { token, user } = await trpc.auth.register.mutate(parsed.data);
-      session.signIn(token, { id: user.id, username: user.username });
+      session.signIn(token, { id: user.id, username: user.username, role: user.role });
       void Taro.showToast({ title: tt('miniapp.toast.registerOk'), icon: 'success' });
       void Taro.redirectTo({ url: '/pages/index/index' });
     } catch (e) {

@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@repo/ui-web';
-import { LISTING_KIND_VALUES, t, type ListingKind } from '@repo/shared';
+import { t, type ListingKind } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { useStores } from '../stores/root-store';
@@ -132,6 +132,7 @@ export const TradeListPage = observer(function TradeListPage() {
             <ul className="space-y-3">
               {items.map((listing) => {
                 const isMine = session.isAuthenticated && listing.seller?.id === session.user?.id;
+                const canClose = isMine || session.isAdmin;
                 return (
                   <li
                     key={listing.id}
@@ -205,11 +206,8 @@ export const TradeListPage = observer(function TradeListPage() {
                     ) : null}
 
                     <div className="mt-3 flex items-center gap-2">
-                      {!isMine ? (
-                        <ReportButton targetType="LISTING" targetId={listing.id} />
-                      ) : (
-                        <CloseButton listingId={listing.id} />
-                      )}
+                      {!isMine ? <ReportButton targetType="LISTING" targetId={listing.id} /> : null}
+                      {canClose ? <CloseButton listingId={listing.id} /> : null}
                     </div>
                   </li>
                 );

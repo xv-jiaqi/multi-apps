@@ -108,4 +108,6 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Audit production dependencies
+        # Specific CVEs are ignored via auditConfig.ignoreCves in
+        # pnpm-workspace.yaml (see comment there for justification).
         run: pnpm audit --prod --audit-level high

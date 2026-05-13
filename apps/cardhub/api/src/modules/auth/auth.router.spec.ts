@@ -17,7 +17,6 @@ type MockPrismaUser = {
   findUnique: jest.Mock;
   create: jest.Mock;
 };
-type MockPrisma = { user: MockPrismaUser };
 
 function makeRouter() {
   const userMock: MockPrismaUser = {
@@ -91,6 +90,7 @@ describe('AuthRouter.register', () => {
         id: 'u-new',
         email: data.email,
         username: data.username,
+        role: 'user',
       }),
     );
 
@@ -105,6 +105,7 @@ describe('AuthRouter.register', () => {
       id: 'u-new',
       email: 'alice@cardhub.test',
       username: 'alice',
+      role: 'user',
     });
 
     const createCall = userMock.create.mock.calls[0]?.[0];
@@ -132,6 +133,7 @@ describe('AuthRouter.login', () => {
       email: 'alice@cardhub.test',
       username: 'alice',
       password: hashedPassword,
+      role: 'admin',
     });
 
     await expect(
@@ -147,6 +149,7 @@ describe('AuthRouter.login', () => {
       email: 'alice@cardhub.test',
       username: 'alice',
       password: hashedPassword,
+      role: 'admin',
     });
 
     const result = await caller.login({
@@ -159,6 +162,7 @@ describe('AuthRouter.login', () => {
       id: 'u1',
       email: 'alice@cardhub.test',
       username: 'alice',
+      role: 'admin',
     });
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u1', username: 'alice' });
   });
@@ -173,5 +177,25 @@ describe('AuthRouter.login', () => {
 
     const where = userMock.findFirst.mock.calls[0]?.[0]?.where;
     expect(where).toEqual({ email: 'alice@cardhub.test' });
+  });
+});
+
+describe('AuthRouter.me', () => {
+  it('returns the current user including role when the token is valid', async () => {
+    const { caller, userMock, auth } = makeRouter();
+    auth.verify = jest.fn().mockReturnValue({ sub: 'u-admin', username: 'admin' });
+    userMock.findUnique.mockResolvedValueOnce({
+      id: 'u-admin',
+      email: 'admin@cardhub.test',
+      username: 'admin',
+      role: 'admin',
+    });
+
+    await expect(caller.me({ token: 'valid.jwt.token' })).resolves.toEqual({
+      id: 'u-admin',
+      email: 'admin@cardhub.test',
+      username: 'admin',
+      role: 'admin',
+    });
   });
 });

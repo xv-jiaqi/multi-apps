@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { loginInput, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { resolvePostAuthRedirect } from '../lib/auth-redirect';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -20,8 +21,7 @@ export const LoginPage = observer(function LoginPage() {
 
   // Pages that redirect anonymous visitors should call navigate('/login',
   // { state: { from: location } }) so we can restore them post-login.
-  const redirectTo =
-    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/';
+  const redirectTo = resolvePostAuthRedirect(location.state);
 
   const mutation = trpc.auth.login.useMutation({
     onSuccess(data) {

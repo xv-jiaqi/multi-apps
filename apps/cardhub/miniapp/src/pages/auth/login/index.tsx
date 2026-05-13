@@ -26,7 +26,7 @@ export default observer(function LoginPage() {
     setSubmitting(true);
     try {
       const { token, user } = await trpc.auth.login.mutate(parsed.data);
-      session.signIn(token, { id: user.id, username: user.username });
+      session.signIn(token, { id: user.id, username: user.username, role: user.role });
       void Taro.showToast({ title: tt('miniapp.toast.loginOk'), icon: 'success' });
       // `navigateBack` when the user got here from the card detail page;
       // `redirectTo` home otherwise so the sign-in page isn't in the stack.

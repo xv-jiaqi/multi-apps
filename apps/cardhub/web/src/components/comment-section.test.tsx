@@ -49,6 +49,14 @@ vi.mock('../lib/trpc', () => {
           }),
         },
       },
+      reports: {
+        create: {
+          useMutation: () => ({
+            mutate: vi.fn(),
+            isPending: false,
+          }),
+        },
+      },
       useUtils: () => ({
         comments: { listForCard: { invalidate: utilsInvalidate } },
       }),

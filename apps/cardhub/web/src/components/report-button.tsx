@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Button } from '@repo/ui-web';
 import { reportCreateInput, t, type ReportTargetType } from '@repo/shared';
 import { useStores } from '../stores/root-store';
@@ -22,6 +22,7 @@ export const ReportButton = observer(function ReportButton({
   targetId,
 }: ReportButtonProps) {
   const { locale, session } = useStores();
+  const location = useLocation();
   const tt = (key: string) => t(locale.locale, key);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
@@ -41,7 +42,11 @@ export const ReportButton = observer(function ReportButton({
 
   if (!session.isAuthenticated) {
     return (
-      <Link to="/login" className="text-xs text-neutral-500 hover:text-neutral-900 hover:underline">
+      <Link
+        to="/login"
+        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+        className="text-xs text-neutral-500 hover:text-neutral-900 hover:underline"
+      >
         {tt('report.button')}
       </Link>
     );

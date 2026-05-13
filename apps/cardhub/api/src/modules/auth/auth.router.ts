@@ -41,7 +41,7 @@ export class AuthRouter {
             username: input.username,
             password: hashed,
           },
-          select: { id: true, email: true, username: true },
+          select: { id: true, email: true, username: true, role: true },
         });
 
         const token = auth.sign({ sub: user.id, username: user.username });
@@ -54,7 +54,7 @@ export class AuthRouter {
           where: isEmail
             ? { email: input.identifier.toLowerCase() }
             : { username: input.identifier },
-          select: { id: true, email: true, username: true, password: true },
+          select: { id: true, email: true, username: true, password: true, role: true },
         });
         if (!user) {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
@@ -68,7 +68,7 @@ export class AuthRouter {
         const token = auth.sign({ sub: user.id, username: user.username });
         return {
           token,
-          user: { id: user.id, email: user.email, username: user.username },
+          user: { id: user.id, email: user.email, username: user.username, role: user.role },
         };
       }),
 
@@ -77,7 +77,7 @@ export class AuthRouter {
           const payload = auth.verify(input.token);
           const user = await prisma.user.findUnique({
             where: { id: payload.sub },
-            select: { id: true, email: true, username: true },
+            select: { id: true, email: true, username: true, role: true },
           });
           if (!user) throw new Error('user gone');
           return user;

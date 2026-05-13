@@ -59,7 +59,9 @@ export const ListingsForCard = observer(function ListingsForCard({
                     @{listing.seller?.username ?? '-'} · {listing.contact}
                   </p>
                 </div>
-                {!isMine ? <ReportButton targetType="LISTING" targetId={listing.id} /> : null}
+                <div className="flex items-center gap-2">
+                  {!isMine ? <ReportButton targetType="LISTING" targetId={listing.id} /> : null}
+                </div>
               </li>
             );
           })}

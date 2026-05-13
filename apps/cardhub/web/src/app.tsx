@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router';
+import { AuthBootstrap } from './components/auth-bootstrap';
 import { ErrorBoundary } from './components/error-boundary';
 import { HomePage } from './pages/home';
 
@@ -35,6 +36,9 @@ const TradeListPage = lazy(() =>
 const TradePublishPage = lazy(() =>
   import('./pages/trade-publish').then((m) => ({ default: m.TradePublishPage })),
 );
+const ReportsListPage = lazy(() =>
+  import('./pages/reports-list').then((m) => ({ default: m.ReportsListPage })),
+);
 
 function RouteFallback() {
   return (
@@ -59,104 +63,115 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route
-        path="/series"
-        element={
-          <LazyRoute>
-            <SeriesListPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/series/:seriesSlug"
-        element={
-          <LazyRoute>
-            <SeriesDetailPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/cards/:cardSlug"
-        element={
-          <LazyRoute>
-            <CardDetailPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/search"
-        element={
-          <LazyRoute>
-            <SearchPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <LazyRoute>
-            <LoginPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <LazyRoute>
-            <RegisterPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/forum"
-        element={
-          <LazyRoute>
-            <ForumListPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/forum/new"
-        element={
-          <LazyRoute>
-            <ForumNewPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/forum/:slug"
-        element={
-          <LazyRoute>
-            <ForumDetailPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/trade"
-        element={
-          <LazyRoute>
-            <TradeListPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/trade/new"
-        element={
-          <LazyRoute>
-            <TradePublishPage />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="*"
-        element={
-          <LazyRoute>
-            <NotFoundPage />
-          </LazyRoute>
-        }
-      />
-    </Routes>
+    <>
+      <AuthBootstrap />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/series"
+          element={
+            <LazyRoute>
+              <SeriesListPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/series/:seriesSlug"
+          element={
+            <LazyRoute>
+              <SeriesDetailPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/cards/:cardSlug"
+          element={
+            <LazyRoute>
+              <CardDetailPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <LazyRoute>
+              <SearchPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <LazyRoute>
+              <LoginPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <LazyRoute>
+              <RegisterPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/forum"
+          element={
+            <LazyRoute>
+              <ForumListPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/forum/new"
+          element={
+            <LazyRoute>
+              <ForumNewPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/forum/:slug"
+          element={
+            <LazyRoute>
+              <ForumDetailPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/trade"
+          element={
+            <LazyRoute>
+              <TradeListPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/trade/new"
+          element={
+            <LazyRoute>
+              <TradePublishPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <LazyRoute>
+              <ReportsListPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <LazyRoute>
+              <NotFoundPage />
+            </LazyRoute>
+          }
+        />
+      </Routes>
+    </>
   );
 }
