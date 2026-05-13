@@ -58,6 +58,11 @@ export const SiteHeader = observer(function SiteHeader() {
           <NavLink to="/trade" className={navItemClass}>
             {tt('nav.trade')}
           </NavLink>
+          {session.isAdmin ? (
+            <NavLink to="/reports" className={navItemClass}>
+              {tt('nav.reports')}
+            </NavLink>
+          ) : null}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -162,6 +167,11 @@ export const SiteHeader = observer(function SiteHeader() {
             <NavLink to="/trade" className={mobileNavItemClass} onClick={closeMenu}>
               {tt('nav.trade')}
             </NavLink>
+            {session.isAdmin ? (
+              <NavLink to="/reports" className={mobileNavItemClass} onClick={closeMenu}>
+                {tt('nav.reports')}
+              </NavLink>
+            ) : null}
             <hr className="my-2 border-neutral-200" />
             {session.isAuthenticated ? (
               <>

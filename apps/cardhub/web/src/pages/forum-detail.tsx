@@ -6,6 +6,7 @@ import { replyBodySchema, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { MarkdownView } from '../components/markdown-view';
+import { ReportButton } from '../components/report-button';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -78,6 +79,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   const topic = topicQuery.data;
   const isOwner = session.user?.id === topic.author.id;
+  const canDeleteTopic = isOwner || session.isAdmin;
 
   const onSubmitReply = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -105,20 +107,23 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           <CardHeader className="space-y-2">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <CardTitle className="text-2xl">{topic.title}</CardTitle>
-              {isOwner ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm(tt('forum.detail.confirmDelete'))) {
-                      deleteTopic.mutate({ id: topic.id });
-                    }
-                  }}
-                  disabled={deleteTopic.isPending}
-                  className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
-                >
-                  {tt('forum.detail.delete')}
-                </button>
-              ) : null}
+              <div className="flex items-center gap-2">
+                {!isOwner ? <ReportButton targetType="TOPIC" targetId={topic.id} /> : null}
+                {canDeleteTopic ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(tt('forum.detail.confirmDelete'))) {
+                        deleteTopic.mutate({ id: topic.id });
+                      }
+                    }}
+                    disabled={deleteTopic.isPending}
+                    className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {tt('forum.detail.delete')}
+                  </button>
+                ) : null}
+              </div>
             </div>
             <div className="flex items-center gap-3 text-xs text-neutral-500">
               <span className="font-medium text-neutral-700">@{topic.author.username}</span>
@@ -144,7 +149,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           ) : (
             <ul className="space-y-3">
               {topic.replies.map((reply) => {
-                const canDelete = session.user?.id === reply.author.id;
+                const canDelete = session.user?.id === reply.author.id || session.isAdmin;
                 return (
                   <li
                     key={reply.id}
@@ -156,6 +161,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                         <time dateTime={reply.createdAt}>
                           {new Date(reply.createdAt).toLocaleString(locale.locale)}
                         </time>
+                        {session.user?.id !== reply.author.id ? (
+                          <ReportButton targetType="REPLY" targetId={reply.id} />
+                        ) : null}
                         {canDelete ? (
                           <button
                             type="button"

@@ -36,6 +36,7 @@ export const HomePage = observer(function HomePage() {
         </div>
 
         <div className="relative">
+          <h2 className="sr-only">{tt('series.list.title')}</h2>
           <div className="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-br from-indigo-200/60 via-fuchsia-200/40 to-amber-200/40 blur-2xl" />
           <div className="grid grid-cols-2 gap-4">
             {seriesQuery.isLoading
@@ -69,6 +70,7 @@ export const HomePage = observer(function HomePage() {
       </section>
 
       <section className="grid gap-6 pb-16 md:grid-cols-3">
+        <h2 className="sr-only">{tt('home.stats.source')}</h2>
         <Card className="border-white/60 bg-white/70 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-base">{tt('home.stats.series')}</CardTitle>

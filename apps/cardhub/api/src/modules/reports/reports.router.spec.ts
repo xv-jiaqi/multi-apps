@@ -8,6 +8,14 @@ function makeRouter() {
   const reportCreate = jest.fn();
   const reportFindMany = jest.fn();
   const userFindUnique = jest.fn();
+  const listingFindUnique = jest.fn();
+  const listingFindMany = jest.fn();
+  const topicFindUnique = jest.fn();
+  const topicFindMany = jest.fn();
+  const replyFindUnique = jest.fn();
+  const replyFindMany = jest.fn();
+  const commentFindUnique = jest.fn();
+  const commentFindMany = jest.fn();
 
   const prisma = {
     report: {
@@ -16,6 +24,10 @@ function makeRouter() {
       findMany: reportFindMany,
     },
     user: { findUnique: userFindUnique },
+    listing: { findUnique: listingFindUnique, findMany: listingFindMany },
+    topic: { findUnique: topicFindUnique, findMany: topicFindMany },
+    reply: { findUnique: replyFindUnique, findMany: replyFindMany },
+    comment: { findUnique: commentFindUnique, findMany: commentFindMany },
   } as unknown as PrismaService;
 
   const router = new ReportsRouter(new TrpcBase(), prisma);
@@ -29,7 +41,21 @@ function makeRouter() {
     });
   }
 
-  return { caller, reportCount, reportCreate, reportFindMany, userFindUnique };
+  return {
+    caller,
+    reportCount,
+    reportCreate,
+    reportFindMany,
+    userFindUnique,
+    listingFindUnique,
+    listingFindMany,
+    topicFindUnique,
+    topicFindMany,
+    replyFindUnique,
+    replyFindMany,
+    commentFindUnique,
+    commentFindMany,
+  };
 }
 
 describe('ReportsRouter.create', () => {
@@ -59,8 +85,9 @@ describe('ReportsRouter.create', () => {
   });
 
   it('persists the report and returns id + createdAt when under quota', async () => {
-    const { caller, reportCount, reportCreate } = makeRouter();
+    const { caller, reportCount, reportCreate, listingFindUnique } = makeRouter();
     reportCount.mockResolvedValueOnce(2);
+    listingFindUnique.mockResolvedValueOnce({ id: 'f3a78b1c-8d4e-4f1a-9b2c-7c8d4e1f5a3b' });
     reportCreate.mockResolvedValueOnce({
       id: 'r-new',
       createdAt: new Date('2026-05-01T00:00:00Z'),
@@ -80,6 +107,21 @@ describe('ReportsRouter.create', () => {
     expect(args.reporterId).toBe('u1');
     expect(args.targetType).toBe('LISTING');
   });
+
+  it('rejects reports that point at deleted targets', async () => {
+    const { caller, reportCount, commentFindUnique, reportCreate } = makeRouter();
+    reportCount.mockResolvedValueOnce(0);
+    commentFindUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      caller({ sub: 'u1', username: 'alice' }).create({
+        targetType: 'COMMENT',
+        targetId: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        reason: 'already gone',
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(reportCreate).not.toHaveBeenCalled();
+  });
 });
 
 describe('ReportsRouter.list', () => {
@@ -92,8 +134,8 @@ describe('ReportsRouter.list', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
-  it('returns paginated rows for admin with cursor support', async () => {
-    const { caller, userFindUnique, reportFindMany } = makeRouter();
+  it('returns paginated rows for admin with cursor support + target context', async () => {
+    const { caller, userFindUnique, reportFindMany, topicFindMany } = makeRouter();
     userFindUnique.mockResolvedValueOnce({ role: 'admin' });
     reportFindMany.mockResolvedValueOnce([
       {
@@ -106,6 +148,14 @@ describe('ReportsRouter.list', () => {
         reporter: { id: 'u1', username: 'alice' },
       },
     ]);
+    topicFindMany.mockResolvedValueOnce([
+      {
+        id: 't1',
+        slug: 'market-watch-abc123',
+        title: 'Market watch',
+        user: { username: 'bob' },
+      },
+    ]);
 
     const result = await caller({ sub: 'u-admin', username: 'admin' }).list({ limit: 20 });
     expect(result.items).toHaveLength(1);
@@ -114,6 +164,11 @@ describe('ReportsRouter.list', () => {
       targetType: 'TOPIC',
       reason: 'r1',
       status: 'PENDING',
+      target: {
+        slug: 'market-watch-abc123',
+        title: 'Market watch',
+        authorUsername: 'bob',
+      },
     });
     expect(result.nextCursor).toBeNull();
   });

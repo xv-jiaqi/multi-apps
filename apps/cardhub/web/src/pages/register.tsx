@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { registerInput, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { resolvePostAuthRedirect } from '../lib/auth-redirect';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -19,8 +20,7 @@ export const RegisterPage = observer(function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const redirectTo =
-    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/';
+  const redirectTo = resolvePostAuthRedirect(location.state);
 
   const mutation = trpc.auth.register.useMutation({
     onSuccess(data) {
