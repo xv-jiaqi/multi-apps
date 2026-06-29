@@ -18,7 +18,7 @@
     "typecheck": "echo 'native has no JS sources to typecheck'"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-sql": "^2.4.0"
   },
   "devDependencies": {

@@ -19,12 +19,12 @@
     "@repo/stores": "workspace:*",
     "@repo/trpc-contract": "workspace:*",
     "@repo/ui-web": "workspace:*",
-    "@sentry/react": "^10.51.0",
-    "@tanstack/react-query": "^5.99.2",
-    "@trpc/client": "^11.16.0",
-    "@trpc/react-query": "^11.16.0",
-    "@trpc/server": "^11.16.0",
-    "mobx": "^6.15.0",
+    "@sentry/react": "^10.62.0",
+    "@tanstack/react-query": "^5.101.2",
+    "@trpc/client": "^11.18.0",
+    "@trpc/react-query": "^11.18.0",
+    "@trpc/server": "^11.18.0",
+    "mobx": "^6.16.1",
     "mobx-react-lite": "^4.1.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
@@ -32,7 +32,7 @@
     "react-router": "^7.14.1",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
-    "swr": "^2.4.1"
+    "swr": "^2.4.2"
   },
   "devDependencies": {
     "@axe-core/react": "^4.11.3",
