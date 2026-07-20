@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
-    "mobx": "^6.15.0"
+    "mobx": "^6.16.1"
   },
   "devDependencies": {
     "@repo/config-ts": "workspace:*",
