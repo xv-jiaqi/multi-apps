@@ -119,22 +119,21 @@ export const CATALOG_SERIES: SeedSeries[] = [
 export interface SeedUser {
   email: string;
   username: string;
-  rawPassword: string;
+  passwordEnvVar: string;
   role: 'user' | 'admin';
 }
 
-// Demo credentials for staging/local only. Never seed these in production.
 export const DEMO_USERS: SeedUser[] = [
   {
     email: 'alice@cardhub.test',
     username: 'alice',
-    rawPassword: 'password123',
+    passwordEnvVar: 'DEMO_USER_PASSWORD',
     role: 'user',
   },
   {
     email: 'admin@cardhub.test',
     username: 'admin',
-    rawPassword: 'admin123!',
+    passwordEnvVar: 'DEMO_ADMIN_PASSWORD',
     role: 'admin',
   },
 ];
