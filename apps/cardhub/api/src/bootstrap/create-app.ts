@@ -33,6 +33,10 @@ export async function createApp(options: CreateAppOptions = {}) {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  // helmet hardens HTTP headers (HSTS, X-Frame-Options, etc.). The default
+  // contentSecurityPolicy is too strict for the tRPC + JSON workflow during
+  // development, so we leave CSP off here and re-enable it once the production
+  // frontend origin policy is ready to be locked down.
   app.use(
     helmet({
       contentSecurityPolicy: false,
@@ -41,7 +45,9 @@ export async function createApp(options: CreateAppOptions = {}) {
   );
 
   app.enableCors({
-    origin: corsOrigin,
+    origin(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+      callback(null, origin ? corsOrigin.includes(origin) : false);
+    },
     credentials: true,
   });
 
@@ -53,6 +59,8 @@ export async function createApp(options: CreateAppOptions = {}) {
     }),
   );
 
+  // Forward unhandled NestJS exceptions to Sentry. Filter is a no-op when
+  // SENTRY_DSN is unset so local dev is unaffected.
   app.useGlobalFilters(new SentryExceptionFilter());
 
   for (const { path, middleware } of createRateLimiters(options.rateLimitOverrides)) {

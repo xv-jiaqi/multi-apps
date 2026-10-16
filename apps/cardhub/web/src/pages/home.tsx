@@ -26,7 +26,11 @@ export const HomePage = observer(function HomePage() {
           </h1>
           <p className="max-w-xl text-lg text-neutral-600">{tt('welcome.subtitle')}</p>
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg">
+            <Button
+              asChild
+              size="lg"
+              className="bg-brand-700 text-white hover:bg-brand-800 focus-visible:ring-brand-700"
+            >
               <Link to="/series">{tt('welcome.cta.browse')}</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
