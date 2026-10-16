@@ -150,6 +150,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | helmet（API，CSP 关闭）+ CORS 白名单                              | ✅   | `CORS_ORIGIN` 逗号分隔。代码默认值包含 Tauri 来源，但 `deploy/.env.example` 的生产值只有 `https://card-hub.app`，会覆盖默认值（CH-303） |
 | Sentry（API）                                                     | ✅   | 配置 `SENTRY_DSN` 才启用；只上报 5xx / `INTERNAL_SERVER_ERROR`                                                                          |
 | Sentry（Web）                                                     | 🟡   | 代码已接入，但 `images.yml` 构建 Web 镜像时没有传 `BUILDTIME_VITE_SENTRY_DSN`，**线上实际不上报**（CH-005）                             |
+| 生产配置启动校验                                                  | ✅   | `NODE_ENV=production` 时启动前校验 `JWT_SECRET`（≥ 32 字符且不是占位值）与 `DATABASE_URL`；开发 / 测试保留现有默认值                    |
 | Redis                                                             | 🟡   | 只用于健康检查 ping，未用于缓存（CH-210）                                                                                               |
 | CI（lint / typecheck / build / test / audit / compose 校验）      | ✅   | `.github/workflows/ci.yml`                                                                                                              |
 | 镜像构建、staging 自动部署、prod 手动部署、健康校验、失败自动回滚 | ✅   | `images.yml` / `deploy.yml` / `deploy/remote-deploy.sh`                                                                                 |
@@ -362,14 +363,13 @@ erDiagram
 2. 话题回帖超过 20 条后，第 21 条起在详情页看不到（CH-003）。
 3. 卡牌评论没有删除能力，也没有限流（CH-002）。
 4. 生产 Web 端 Sentry 实际未启用；`Dockerfile.web` 头部注释仍是 Zeabur 说明（CH-005）。
-5. `JWT_SECRET` 缺失时回退到固定值 `dev-insecure-secret`，生产环境不会报错（CH-004）。
-6. `Topic.pinned` 字段无效；`forum.topics.update`、`listings.mine` 有接口无界面（CH-102 / CH-103）。
-7. 卡牌、系列只有渐变占位图（CH-105）。
-8. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
-9. API 错误信息只有中文（CH-211）。
-10. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。
-11. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
-12. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
+5. `Topic.pinned` 字段无效；`forum.topics.update`、`listings.mine` 有接口无界面（CH-102 / CH-103）。
+6. 卡牌、系列只有渐变占位图（CH-105）。
+7. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
+8. API 错误信息只有中文（CH-211）。
+9. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。
+10. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
+11. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
 
 ## 10. 测试基线
 
