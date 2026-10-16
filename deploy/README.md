@@ -98,12 +98,18 @@ missing or mismatched SHA. If verification fails after switching containers, the
 script attempts to roll back to the previously running immutable `sha-` tag and
 still fails the job.
 
-After the API is healthy, `remote-deploy.sh` runs `CATALOG_SEED_CMD` from the env
-file when it is set. This is intended for the production first deploy's
-catalog-only seed after the app team's seed PR lands. Staging should use the
-same catalog-only seed; test accounts are created manually by ops with random
-passwords. Do not run `seed-demo` on staging. Seed failure triggers the same
-rollback path and exits non-zero.
+Keep `CATALOG_SEED_CMD` empty for normal deploys so later catalog edits are not
+overwritten. On the first deploy of an empty database, run the catalog-only seed
+once after the API is healthy:
+
+```bash
+docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env exec -T api node dist/scripts/seed-catalog.js
+```
+
+Staging should use the same one-time catalog seed. Test accounts are created
+manually by ops with random passwords. Do not run `seed-demo` on staging. The
+optional `CATALOG_SEED_CMD` hook remains available for controlled one-off use;
+if set and it fails, it triggers the same rollback path and exits non-zero.
 
 The web container receives runtime `TRPC_URL`, but consuming it depends on the
 companion app PR. The app PR also changes `/health` to include `gitSha` and to

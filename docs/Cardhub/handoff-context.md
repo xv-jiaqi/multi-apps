@@ -314,7 +314,7 @@ Cardhub 现在以平台无关方式部署到单台海外 Linux VPS：
 - 配置：复制 [`deploy/.env.example`](../../deploy/.env.example) 到 `/opt/cardhub/production/production.env` 与 `/opt/cardhub/staging/staging.env`，两套环境用同一个 app compose 文件和不同 project name（`cardhub-prod` / `cardhub-staging`）。生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。
 - 运行手册：见 [`deploy/README.md`](../../deploy/README.md)，包含服务器 bootstrap、GHCR 登录、DNS、部署、回滚、备份/恢复、日志查看、GitHub Environment 保护规则和单主机 staging/prod key 隔离限制。
 
-API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次部署空库会自动执行已有 migrations。生产和 staging 都可在 env 文件设置 `CATALOG_SEED_CMD=node dist/scripts/seed-catalog.js` 执行 catalog-only seed；staging 测试账号由 ops 手动创建随机密码，不运行 `seed-demo`。
+API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次部署空库会自动执行已有 migrations。`CATALOG_SEED_CMD` 默认留空；生产和 staging 首次部署空库后手动运行一次 `docker compose exec -T api node dist/scripts/seed-catalog.js`。staging 测试账号由 ops 手动创建随机密码，不运行 `seed-demo`。
 
 ### 7.5.2 镜像发布与部署
 
