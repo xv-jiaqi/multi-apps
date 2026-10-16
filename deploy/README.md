@@ -100,8 +100,9 @@ still fails the job.
 
 After the API is healthy, `remote-deploy.sh` runs `CATALOG_SEED_CMD` from the env
 file when it is set. This is intended for the production first deploy's
-catalog-only seed after the app team's seed PR lands. Leave it empty for
-staging, which uses its separate demo seed flow. Seed failure triggers the same
+catalog-only seed after the app team's seed PR lands. Staging should use the
+same catalog-only seed; test accounts are created manually by ops with random
+passwords. Do not run `seed-demo` on staging. Seed failure triggers the same
 rollback path and exits non-zero.
 
 The web container receives runtime `TRPC_URL`, but consuming it depends on the
