@@ -29,6 +29,8 @@
     "db:logs": "docker compose -f docker/docker-compose.yml logs -f",
     "db:generate": "pnpm --filter @cardhub/api db:generate",
     "db:migrate": "pnpm --filter @cardhub/api db:migrate",
+    "seed:catalog": "pnpm --filter @cardhub/api seed:catalog",
+    "seed:demo": "pnpm --filter @cardhub/api seed:demo",
     "db:studio": "pnpm --filter @cardhub/api db:studio",
     "prepare": "husky"
   },

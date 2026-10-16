@@ -108,6 +108,17 @@ pnpm dev
 
 > **`pnpm build`** 按 Turborepo 默认不包含 **`@cardhub/native`**（避免在无 Rust/WebKit 链路的 CI/云端环境里编译桌面壳）；桌面安装包仍用上表的 Native build，或由 Release Native 工作流出产物。
 
+### Cardhub seed 数据
+
+| 用途                     | 命令                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| 生产 catalog-only seed   | `pnpm --filter @cardhub/api seed:catalog`（构建后运行 dist 脚本）              |
+| staging / 本地 demo seed | `pnpm --filter @cardhub/api seed:demo` 或 `pnpm --filter @cardhub/api db:seed` |
+
+- `seed:catalog` 只写卡牌目录（3 个系列 / 9 张卡），不会创建任何用户或用户内容。
+- `seed:demo` / `db:seed` 会先写 catalog，再 upsert `alice` / `admin` 两个 demo 用户。
+- demo seed **必须显式设置** `DEMO_USER_PASSWORD` 和 `DEMO_ADMIN_PASSWORD`；缺任一变量会非零退出。不要在仓库、PR 描述或部署文档中写入真实密码。
+
 - `@cardhub/web` / `@cardhub/native` 使用 **React 19**。
 - `@cardhub/miniapp` 锁在 **React 18**——Taro 4.2 尚不兼容 React 19 的 `exports` 字段与新 reconciler。
 - `@types/react` / `@types/react-dom` 通过 [pnpm-workspace.yaml](pnpm-workspace.yaml) 的 `overrides` 统一到 19，避免 miniapp 与 web 之间出现 `ReactNode` 类型冲突。
