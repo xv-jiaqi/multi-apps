@@ -1,0 +1,122 @@
+name: Cardhub Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target GitHub Environment and VPS env file
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      image_tag:
+        description: Image tag to deploy, usually sha-<full-git-sha>
+        required: true
+        default: main
+      require_git_sha_match:
+        description: Fail if /health gitSha is missing or does not match
+        required: true
+        type: boolean
+        default: false
+  workflow_run:
+    workflows: ['Cardhub Images']
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cardhub-deploy-${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Cardhub
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+    env:
+      DEPLOY_ENV: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+      IMAGE_TAG: ${{ github.event_name == 'workflow_run' && format('sha-{0}', github.event.workflow_run.head_sha) || inputs.image_tag }}
+      REQUIRE_GIT_SHA_MATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.require_git_sha_match || 'false' }}
+    steps:
+      - name: Derive expected SHA
+        id: expected
+        shell: bash
+        run: |
+          if [[ "${IMAGE_TAG}" == sha-* ]]; then
+            echo "sha=${IMAGE_TAG#sha-}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy on VPS
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            DEPLOY_ENV="${DEPLOY_ENV}" \
+            IMAGE_TAG="${IMAGE_TAG}" \
+            EXPECTED_SHA="${{ steps.expected.outputs.sha }}" \
+            REQUIRE_GIT_SHA_MATCH="${REQUIRE_GIT_SHA_MATCH}" \
+            'sh -se' <<'REMOTE'
+          set -eu
+
+          APP_DIR="/opt/cardhub/deploy"
+          ENV_FILE="/opt/cardhub/${DEPLOY_ENV}.env"
+          PROJECT="cardhub-${DEPLOY_ENV}"
+
+          cd "${APP_DIR}"
+          docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" pull api web
+          IMAGE_TAG="${IMAGE_TAG}" docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" up -d postgres redis api web
+
+          API_DOMAIN="$(awk -F= '$1 == "API_DOMAIN" { print $2 }' "${ENV_FILE}" | tail -n 1)"
+          if [ -z "${API_DOMAIN}" ]; then
+            echo "::error::API_DOMAIN is missing from ${ENV_FILE}"
+            exit 1
+          fi
+
+          tmp="$(mktemp)"
+          i=0
+          until [ "${i}" -ge 30 ]; do
+            if curl -fsS "https://${API_DOMAIN}/health" -o "${tmp}"; then
+              break
+            fi
+            i=$((i + 1))
+            sleep 5
+          done
+          if [ "${i}" -ge 30 ]; then
+            echo "::error::Health check failed for https://${API_DOMAIN}/health"
+            exit 1
+          fi
+
+          actual_sha="$(sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${tmp}" | head -n 1)"
+          if [ -z "${actual_sha}" ]; then
+            message="/health JSON does not include gitSha yet; skipping SHA verification until the app change lands."
+            if [ "${REQUIRE_GIT_SHA_MATCH}" = "true" ]; then
+              echo "::error::${message}"
+              exit 1
+            fi
+            echo "::warning::${message}"
+            exit 0
+          fi
+
+          if [ -n "${EXPECTED_SHA}" ] && [ "${actual_sha}" != "${EXPECTED_SHA}" ]; then
+            message="/health gitSha ${actual_sha} does not match deployed SHA ${EXPECTED_SHA}."
+            if [ "${REQUIRE_GIT_SHA_MATCH}" = "true" ]; then
+              echo "::error::${message}"
+              exit 1
+            fi
+            echo "::warning::${message}"
+          fi
+          REMOTE

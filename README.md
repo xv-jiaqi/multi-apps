@@ -145,11 +145,11 @@ pnpm dev
 
 ## 部署
 
-Cardhub MVP 可用 **Render**（API + Postgres）+ **Upstash**（Redis）+ **Sentry**，或使用 **Zeabur** 自定义域名（例如 `card-hub.app`）+ Docker 多阶段镜像（详见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md) §7.5）。
+Cardhub MVP 使用平台无关的 Docker 镜像 + Docker Compose 部署到单台 Linux VPS（详见 [`deploy/README.md`](deploy/README.md)）。
 
-- **API 镜像（仓库根）**：[`Dockerfile.api`](Dockerfile.api) — Zeabur 可在服务环境变量中设置 `ZBPACK_DOCKERFILE_NAME=api`；构建阶段会 `prisma generate`，容器启动执行 `prisma migrate deploy && node dist/main.js`。
-- **API 镜像（docker/ 路径）**：[`docker/Dockerfile.api`](docker/Dockerfile.api) 与上面等价，便于沿用旧文档中的路径。
+- **API 镜像（仓库根）**：[`Dockerfile.api`](Dockerfile.api) — 构建阶段会 `prisma generate`，容器启动执行 `prisma migrate deploy && node dist/main.js`。
 - **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；未设置时回退同源 `/trpc`。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
+- **VPS 部署**：[`deploy/docker-compose.yml`](deploy/docker-compose.yml) 启动 API / Web / Postgres / Redis；[`deploy/edge`](deploy/edge) 的共享 Caddy 负责 HTTPS 和反向代理。
 - 多端 tRPC URL：Web Docker 用运行时 `TRPC_URL`；非容器静态托管可用 `VITE_TRPC_URL` fallback；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
 
 ## tRPC 端到端类型安全

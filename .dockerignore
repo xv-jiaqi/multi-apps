@@ -1,4 +1,4 @@
-# Used for all `docker build -f ... .` invocations from repo root (Zeabur, CI, local).
+# Used for all `docker build -f ... .` invocations from repo root.
 **/node_modules
 **/.turbo
 **/dist
@@ -11,7 +11,7 @@
 **/.idea
 **/src-tauri/target
 **/src-tauri/gen
-# Never bake secrets into images (Zeabur / Render inject env at runtime).
+# Never bake secrets into images; deployment injects env at runtime.
 **/.env
 **/.env.*
 !**/.env.example

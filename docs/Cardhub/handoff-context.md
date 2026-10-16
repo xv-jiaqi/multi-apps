@@ -293,7 +293,7 @@ flowchart TD
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **M1**    | jest+vitest 装包、helmet、@nestjs/throttler、bcrypt CI 选型、6-8 个核心测试、coverage 阈值、CI 跑 test、Dependabot、pnpm audit                                                                                                           |
 | **M2**    | LocaleStore localStorage + MobX autorun 同步 `<html lang>`、双层 ErrorBoundary、skip-to-content、focus-visible、SiteHeader 折叠菜单、路由懒加载、bundle visualizer、登录后 redirect 回原页、首页硬编码、axe-core dev 扫描、Lighthouse CI |
-| **M2.5**  | Render/Fly/Railway 部署、Sentry 前后端、Postgres/Redis 托管、Dockerfile 启动跑 migrate deploy、VITE_TRPC_URL 多环境策略、部署运行手册                                                                                                    |
+| **M2.5**  | VPS + Docker Compose 部署、Sentry 前后端、Postgres/Redis、Dockerfile 启动跑 migrate deploy、VITE_TRPC_URL 多环境策略、部署运行手册                                                                                                       |
 | **M3**    | `cargo tauri icon` 生成图标、Tauri 感知 trpc URL（`__TAURI_INTERNALS__`）、CORS 校验、本地 dmg 构建、native README                                                                                                                       |
 | **M4**    | `tauri ios init` / `android init`、Android emulator 用 `10.0.2.2`、iOS Simulator 用 localhost、真机用 staging URL、`viewport-fit=cover` + `safe-area-inset`                                                                              |
 | **M5**    | 微信白名单 + HTTPS（前置）、app.tsx 挂 store + Taro storage driver、注册 7 个页面、ui-mini 扩组件（Field/Empty/Skeleton/Link）、SCSS 渐变变量                                                                                            |
@@ -304,108 +304,33 @@ flowchart TD
 
 ## 7.5 部署运行手册（M2.5 落地）
 
-### 7.5.1 一次性配置（Render，强烈推荐）
+### 7.5.1 VPS + Docker Compose
 
-1. **创建 Postgres 16**：Render Dashboard → New + → PostgreSQL（免费档 500MB）。记下 `Internal Database URL`。
-2. **创建 Redis（Upstash）**：[Upstash console](https://console.upstash.com) → Create Database（免费档 10k cmd/day）。拿到 `Endpoint` / `Port` / `Password`。
-3. **创建 Web Service**：Render → New + → Web Service：
-   - Repository：连接到本仓库（先 push 到 GitHub）。
-   - Runtime：**Docker**。
-   - Dockerfile Path：`docker/Dockerfile.api`。
-   - Build Context：仓库根（`./`）。
-   - Branch：`main`。
-4. **Environment Group**（一次性挂上去）：
-   ```
-   NODE_ENV=production
-   PORT=4000
-   DATABASE_URL=<Render Postgres Internal URL>
-   REDIS_HOST=<Upstash endpoint>
-   REDIS_PORT=<Upstash port>
-   REDIS_PASSWORD=<Upstash password>
-   JWT_SECRET=<openssl rand -hex 32>
-   JWT_EXPIRES_IN=7d
-   CORS_ORIGIN=https://card-hub.app,https://staging.card-hub.app,tauri://localhost,https://tauri.localhost
-   GIT_SHA=<deployed git sha>
-   BUILD_TIME=<ISO-8601 build timestamp>
-   SENTRY_DSN=<sentry.io project DSN>
-   SENTRY_TRACES_SAMPLE_RATE=0.1
-   ```
-5. **Health check**：Render Health Check Path 设为 `/health`。响应包含 `gitSha` / `buildTime`；DB 不可达时 HTTP 503，部署流水线可校验 `gitSha` 等于当前发布 SHA。
-6. **触发首次部署**：Render 自动跑 Docker build → 启动时 `npx prisma migrate deploy && node dist/main.js`。**首次部署一定带空 DB**，migration 会自动创建表。
+Cardhub 现在以平台无关方式部署到单台海外 Linux VPS：
 
-### 7.5.1b Zeabur（Docker + 自定义域，例如 card-hub.app）
+- 镜像：仓库根 [`Dockerfile.api`](../../Dockerfile.api) 与 [`Dockerfile.web`](../../Dockerfile.web)。Web Docker 镜像使用 PR #38 的 nginx entrypoint，在容器启动时由运行时 `TRPC_URL` 生成未缓存的 `/config.js`。
+- 编排：[`deploy/docker-compose.yml`](../../deploy/docker-compose.yml) 启动 API / Web / Postgres 16 / Redis 7；Postgres/Redis 仅在各 compose project 默认网络内。
+- 代理：[`deploy/edge`](../../deploy/edge) 的共享 Caddy 负责 80/443、自动 HTTPS、`WEB_DOMAIN` 与 `API_DOMAIN` 反向代理；API/Web 通过 external `edge` 网络上的 `ENV_NAME-api` / `ENV_NAME-web` 别名接入。
+- 配置：复制 [`deploy/.env.example`](../../deploy/.env.example) 到 `/opt/cardhub/production/production.env` 与 `/opt/cardhub/staging/staging.env`，两套环境用同一个 app compose 文件和不同 project name（`cardhub-prod` / `cardhub-staging`）。生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。
+- 运行手册：见 [`deploy/README.md`](../../deploy/README.md)，包含服务器 bootstrap、GHCR 登录、DNS、部署、回滚、备份/恢复、日志查看、GitHub Environment 保护规则和单主机 staging/prod key 隔离限制。
 
-与 Render **二选一**即可（数据库仍可自建 Postgres / Upstash Redis）。
+API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次部署空库会自动执行已有 migrations。生产首次部署可在 env 文件设置 `CATALOG_SEED_CMD` 执行 catalog-only seed；staging 留空并走独立 demo seed 流程。
 
-**API**
+### 7.5.2 镜像发布与部署
 
-1. Zeabur Project → New Service → **Docker**，连接本仓库、`main` 分支。
-2. Dockerfile 选仓库根 **`Dockerfile.api`**（或与 [`Dockerfile.api`](../../Dockerfile.api) 注释一致的平台变量，例如 `ZBPACK_DOCKERFILE_NAME=api`——以 Zeabur 当前文档为准）。
-3. **运行时变量**对齐 §7.5.1：`DATABASE_URL`、`REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`、`JWT_SECRET`、`JWT_EXPIRES_IN`、`GIT_SHA`、`BUILD_TIME`、`CORS_ORIGIN`（生产 API：`https://card-hub.app`；预发 API：`https://staging.card-hub.app`；如实际启用 `www` 再追加 `https://www.card-hub.app`）、可选 `SENTRY_*`。`SENTRY_DSN` 配置后 release 使用 `GIT_SHA`。
-4. 镜像 **构建阶段**已执行 `db:generate` + `turbo build`；`pnpm deploy` 产物目录内会再执行一次 `prisma generate`，避免运行时缺少 `.prisma/client`。**启动阶段**仍为 `prisma migrate deploy && node dist/main.js`。
+- `.github/workflows/images.yml`：CI 在 main push 成功后构建 API + Web 镜像，推送到 GHCR，标签为 `sha-<full sha>` 与 `main`。
+- `.github/workflows/deploy.yml`：手动部署 staging / production；自动 staging 仅接受同仓库 main push 的 CI workflow_run。production 和 staging 的部署 SHA 都必须可从 `origin/main` 到达。
+- 部署脚本会同步已验证 commit 的 `deploy/` 文件到 `/opt/cardhub/<environment>/deploy`，再运行远端部署。健康校验要求 API `/health.gitSha` 等于目标 SHA，并等待 Web Docker health 为 `healthy` 且 `/healthz` 可访问。部署、健康检查或 seed 失败会尝试回滚到上一个不可变 `sha-` tag 并让 job 失败。
+- 合并顺序：PR #38 先合入 main，再合并本 infra PR；解决冲突时保留 #38 的 `/config.js` runtime entrypoint。
 
-**Web**
-
-1. 再建 Docker Service，使用仓库根 **`Dockerfile.web`**（或平台等价：`ZBPACK_DOCKERFILE_NAME=web`）。
-2. **运行时变量**注入 `TRPC_URL`（完整 URL，必须带 `/trpc` 后缀）：生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。容器 entrypoint 会在 nginx 启动前生成 `/config.js`；缺失或不匹配 `^https?://[^[:space:]"\\]+/trpc$` 时直接 `exit 1`，避免部署成功但请求全打到无代理的同源 `/trpc`。旧的 `BUILDTIME_VITE_TRPC_URL` 仅保留为非 Docker 静态托管 fallback，不要在统一 Docker 镜像中设置。
-3. 在 Zeabur / DNS 将生产 Web 绑定到 `card-hub.app`，预发 Web 绑定到 `staging.card-hub.app`；API 分别绑定 `api.card-hub.app` / `api-staging.card-hub.app`。
-
-**Web runtime config 手动检查**：
+### 7.5.3 本地验证生产构建
 
 ```bash
-tmpdir=$(mktemp -d)
-CARDHUB_CONFIG_FILE="$tmpdir/config.js" TRPC_URL=https://api-staging.card-hub.app/trpc \
-  sh apps/cardhub/web/docker-entrypoint.d/10-cardhub-runtime-config.sh
-cat "$tmpdir/config.js"
-CARDHUB_CONFIG_FILE="$tmpdir/bad.js" TRPC_URL=https://api-staging.card-hub.app \
-  sh apps/cardhub/web/docker-entrypoint.d/10-cardhub-runtime-config.sh # must exit 1
+docker build -f Dockerfile.api -t cardhub-api:test .
+docker build -f Dockerfile.web -t cardhub-web:test .
+ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config
+ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config
 ```
-
-**安全**：仓库根 [`.dockerignore`](../../.dockerignore) 排除 `**/.env`，避免本地密钥被打进镜像；密钥只在平台「运行时变量」填写。
-
-### 7.5.2 部署 Web 前端
-
-任选其一：
-
-- **Cloudflare Pages**（推荐，全球 CDN）：
-  ```bash
-  pnpm --filter @cardhub/web build  # 默认 production mode
-  # 把 apps/cardhub/web/dist 推到 Pages（cf wrangler 或 GitHub Action）
-  ```
-  Pages 项目设置：Build command `pnpm --filter @cardhub/web build`、Output directory `apps/cardhub/web/dist`。静态托管没有容器 entrypoint 时，可用 `VITE_TRPC_URL=https://api.card-hub.app/trpc` 作为构建时 fallback；Docker 部署不要设置它。
-- **Render Static Site**：New + → Static Site，Build cmd 同上，Publish Dir `apps/cardhub/web/dist`，Env 同上。
-- **Zeabur Docker**：见 §7.5.1b，`Dockerfile.web` + 运行时变量 `TRPC_URL`。
-
-### 7.5.3 回滚 / 查日志
-
-- **回滚**：Render → Service → Deploys → 在历史版本上点 `Rollback`。Prisma migration 不会自动回滚，DB schema 改动要走 `prisma migrate resolve` 手动操作。
-- **查日志**：Render → Service → Logs（实时 tail）；Sentry → Issues 看异常聚合。
-- **进容器**：Render → Service → Shell（付费档才有）。免费档用 `render psql <db-id>` 接 DB。
-
-### 7.5.4 本地验证生产构建
-
-不需要真部署也能跑一遍生产链路：
-
-```bash
-docker build -f docker/Dockerfile.api -t cardhub-api:test .
-docker run --rm -p 4000:4000 \
-  -e DATABASE_URL=postgresql://cardhub:cardhub@host.docker.internal:5432/cardhub \
-  -e JWT_SECRET=test-only \
-  -e CORS_ORIGIN=http://localhost:5173 \
-  cardhub-api:test
-```
-
-### 7.5.5 ⚠️ 用户必须手动完成的步骤
-
-代码侧 ready，下列步骤需要账号 / 凭证才能上线，AI agent **不能代办**：
-
-1. 注册 [Render](https://render.com) 账号 → 关联 GitHub repo。
-2. 注册 [Upstash](https://upstash.com) 账号 → 创建 Redis db。
-3. 注册 [Sentry](https://sentry.io) 账号 → 创建 `cardhub-api` + `cardhub-web` 两个 project，把 DSN 填进 Render env 和 Pages env。
-4. 注册 [Cloudflare](https://cloudflare.com) 账号（如选 Pages） → 连接 GitHub。
-5. 域名：生产 Web/API 分别使用 `card-hub.app` / `api.card-hub.app`，预发 Web/API 分别使用 `staging.card-hub.app` / `api-staging.card-hub.app`。在服务商侧绑定域名后按其指引配置 DNS。
-6. 推送代码到 GitHub remote：`git push origin main`。
-7. 若走 **Zeabur**：注册控制台账号 → 创建 Project → 按 §7.5.1b 创建 API/Web 两个 Docker Service → 在域名服务商完成 DNS（或使用 Zeabur 购买的域名解析）。
 
 ## 8. 接手 Agent 工作建议
 
@@ -421,7 +346,7 @@ docker run --rm -p 4000:4000 \
 - 改 **i18n 字典** → 重启 vite 并清 `apps/cardhub/web/node_modules/.vite` 缓存。
 - 改 **Prisma schema** → `prisma migrate dev --name xxx`（**带 --name**，不带会阻塞）。
 - 改 **trpc-contract 间接依赖的类型**（即任何 router 输入输出）→ `pnpm --filter @repo/trpc-contract build`，否则 web 端 tsc 拿到旧 .d.ts。
-- **根目录 `pnpm build`**：Turbo 已排除 `@cardhub/native`（桌面壳单独构建）；Zeabur / Docker / CI 走 api + web + 小程序包即可。
+- **根目录 `pnpm build`**：Turbo 已排除 `@cardhub/native`（桌面壳单独构建）；Docker / CI 走 api + web + 小程序包即可。
 
 ### 8.3 验证清单
 

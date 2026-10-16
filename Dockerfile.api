@@ -1,13 +1,12 @@
 # syntax=docker/dockerfile:1.7
 # Production image for @cardhub/api.
 #
-# Naming convention follows Zeabur (and is platform-agnostic):
-# Zeabur picks `Dockerfile.api` when service env has
-# `ZBPACK_DOCKERFILE_NAME=api`. For other platforms (Render / Fly / local),
-# build from the repo root explicitly:
+# Build from the repo root explicitly:
 #   docker build -f Dockerfile.api -t cardhub-api:latest .
 
 ARG NODE_VERSION=22-alpine
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
 
 ############################
 # Stage 1 — prune workspace
@@ -42,17 +41,25 @@ RUN pnpm --filter @cardhub/api db:generate \
 # Stage 3 — runtime
 ############################
 FROM node:${NODE_VERSION} AS runner
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
+ENV GIT_SHA=${GIT_SHA}
+ENV BUILD_TIME=${BUILD_TIME}
+LABEL org.opencontainers.image.revision=${GIT_SHA}
+LABEL org.opencontainers.image.created=${BUILD_TIME}
+LABEL org.opencontainers.image.source="https://github.com/xv-jiaqi/cardhub"
 RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder --chown=app:app /app /app
 USER app
 EXPOSE 4000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 # `pnpm deploy` copies prod node_modules but does not carry the generated
 # `.prisma/client` tree from the monorepo root; regenerate inside /app so
-# `require('@prisma/client')` resolves at runtime (Zeabur: avoid
-# "Cannot find module '.prisma/client/default'").
+# `require('@prisma/client')` resolves at runtime.
 # Run pending Prisma migrations on every container boot, then start Nest. We
 # rely on Prisma's `migrate deploy` instead of `migrate dev` because the
 # command is non-interactive (no prompt for migration name) and is safe to run
