@@ -33,7 +33,9 @@ async function main() {
 
   try {
     const counts = await seedDemo(prisma);
-    console.log(`Demo seed complete. Users: ${counts.users}, Series: ${counts.series}, Cards: ${counts.cards}`);
+    console.log(
+      `Demo seed complete. Users: ${counts.users}, Series: ${counts.series}, Cards: ${counts.cards}`,
+    );
   } finally {
     await prisma.$disconnect();
   }

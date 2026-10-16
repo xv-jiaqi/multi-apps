@@ -7,7 +7,9 @@ const prisma = new PrismaClient();
 
 seedDemo(prisma)
   .then((counts) => {
-    console.log(`Seed complete. Users: ${counts.users}, Series: ${counts.series}, Cards: ${counts.cards}`);
+    console.log(
+      `Seed complete. Users: ${counts.users}, Series: ${counts.series}, Cards: ${counts.cards}`,
+    );
   })
   .catch((err) => {
     console.error(err);
