@@ -149,8 +149,8 @@ Cardhub MVP 可用 **Render**（API + Postgres）+ **Upstash**（Redis）+ **Sen
 
 - **API 镜像（仓库根）**：[`Dockerfile.api`](Dockerfile.api) — Zeabur 可在服务环境变量中设置 `ZBPACK_DOCKERFILE_NAME=api`；构建阶段会 `prisma generate`，容器启动执行 `prisma migrate deploy && node dist/main.js`。
 - **API 镜像（docker/ 路径）**：[`docker/Dockerfile.api`](docker/Dockerfile.api) 与上面等价，便于沿用旧文档中的路径。
-- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 构建参数 `BUILDTIME_VITE_TRPC_URL`（及可选 Sentry）需在镜像构建时注入；Zeabur 下对应「构建变量」。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
-- 多端 tRPC URL：通过 `VITE_TRPC_URL` 在 dev / staging / prod 切换；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
+- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；未设置时回退同源 `/trpc`。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
+- 多端 tRPC URL：Web Docker 用运行时 `TRPC_URL`；非容器静态托管可用 `VITE_TRPC_URL` fallback；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
 
 ## tRPC 端到端类型安全
 

@@ -8,13 +8,12 @@ import { rootStore } from '../stores/root-store';
 export const trpc = createTRPCReact<AppRouter>();
 
 /**
- * Resolves the tRPC base URL across all five runtime targets:
+ * Resolves the tRPC base URL across runtime targets:
  *
  * 1. **Vite dev (browser)** – uses the relative `/trpc` path so vite.config.ts
  *    proxy can forward to http://localhost:4000 without CORS noise.
- * 2. **Vite production build (browser)** – `VITE_TRPC_URL` baked at build
- *    time. Three .env.{development,staging,production} files prefill the
- *    canonical Render URL.
+ * 2. **Web container (browser)** – `/config.js` is generated at container
+ *    start from runtime `TRPC_URL`; one image can serve staging and prod.
  * 3. **Tauri desktop WebView** – detected via `__TAURI_INTERNALS__` global.
  *    Uses `VITE_TRPC_URL_TAURI` so we can keep the desktop on the staging
  *    URL even when the same web bundle is served at a different origin.
@@ -27,11 +26,22 @@ export const trpc = createTRPCReact<AppRouter>();
  * Order matters: the more specific check (Android dev) wins over the generic
  * Tauri branch.
  */
-const FALLBACK_REMOTE_URL = 'https://cardhub-api.onrender.com/trpc';
+function nonEmpty(value: string | undefined): string | undefined {
+  return value?.trim() || undefined;
+}
+
+function assertAbsoluteTrpcUrl(value: string | undefined, target: string): string {
+  if (value && /^https?:\/\/.+\/trpc$/.test(value)) {
+    return value;
+  }
+  throw new Error(`${target} requires an absolute http(s) tRPC URL ending in /trpc.`);
+}
 
 function resolveTrpcUrl(): string {
-  const explicit = (import.meta.env.VITE_TRPC_URL as string | undefined)?.trim() || undefined;
-  const tauriUrl = (import.meta.env.VITE_TRPC_URL_TAURI as string | undefined)?.trim() || undefined;
+  const runtimeUrl =
+    typeof window !== 'undefined' ? nonEmpty(window.__CARDHUB_CONFIG__?.TRPC_URL) : undefined;
+  const buildTimeUrl = nonEmpty(import.meta.env.VITE_TRPC_URL as string | undefined);
+  const tauriUrl = nonEmpty(import.meta.env.VITE_TRPC_URL_TAURI as string | undefined);
 
   if (typeof window !== 'undefined') {
     const isTauri = '__TAURI_INTERNALS__' in window;
@@ -42,11 +52,11 @@ function resolveTrpcUrl(): string {
       return 'http://10.0.2.2:4000/trpc';
     }
     if (isTauri) {
-      return tauriUrl ?? explicit ?? FALLBACK_REMOTE_URL;
+      return assertAbsoluteTrpcUrl(tauriUrl ?? buildTimeUrl, 'Tauri');
     }
   }
 
-  return explicit ?? '/trpc';
+  return runtimeUrl ?? buildTimeUrl ?? '/trpc';
 }
 
 const TRPC_URL = resolveTrpcUrl();
