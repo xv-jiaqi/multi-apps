@@ -1,34 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { RedisService } from '../redis/redis.service';
+import { Controller, Get, Res } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
+import type { Response } from 'express';
+import { HealthService, type HealthCheckResult } from './health.service';
 
 @Controller('health')
+@SkipThrottle()
 export class HealthController {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
-  ) {}
+  constructor(private readonly health: HealthService) {}
 
   @Get()
-  async check(): Promise<{
-    status: 'ok';
-    uptime: number;
-    services: { db: boolean; redis: boolean };
-  }> {
-    const [db, redis] = await Promise.all([this.checkDb(), this.redis.ping()]);
-    return {
-      status: 'ok',
-      uptime: process.uptime(),
-      services: { db, redis },
-    };
-  }
-
-  private async checkDb(): Promise<boolean> {
-    try {
-      await this.prisma.$queryRaw`SELECT 1`;
-      return true;
-    } catch {
-      return false;
+  async check(@Res({ passthrough: true }) res: Response): Promise<HealthCheckResult> {
+    const result = await this.health.check();
+    if (!result.services.db) {
+      res.status(503);
     }
+    return result;
   }
 }

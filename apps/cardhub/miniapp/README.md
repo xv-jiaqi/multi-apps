@@ -52,11 +52,11 @@ Navigation goes through `<Link to="/pages/..." />` from `@repo/ui-mini`, which w
 # Dev against a local API (default fallback).
 pnpm --filter @cardhub/miniapp dev
 
-# Point at the M2.5 Render staging API for a weapp build destined for a real device.
-TRPC_URL=https://cardhub-api.onrender.com/trpc pnpm --filter @cardhub/miniapp miniapp:weapp
+# Point at the production API for a weapp build destined for a real device.
+TRPC_URL=https://api.card-hub.app/trpc pnpm --filter @cardhub/miniapp miniapp:weapp
 
 # Cut an H5 build for Cloudflare Pages / any static host.
-TRPC_URL=https://cardhub-api.onrender.com/trpc pnpm --filter @cardhub/miniapp miniapp:h5
+TRPC_URL=https://api.card-hub.app/trpc pnpm --filter @cardhub/miniapp miniapp:h5
 ```
 
 `process.env.TARO_APP_ENV` is available if you later want per-env constants; add branches inside `config/index.ts`'s `defineConstants` block.
@@ -66,10 +66,10 @@ TRPC_URL=https://cardhub-api.onrender.com/trpc pnpm --filter @cardhub/miniapp mi
 The WeChat runtime rejects `wx.request` / `Taro.request` to any URL not pre-registered on the WeChat Public Platform unless the IDE's local dev checkbox is turned off. Required steps to ship:
 
 1. **Register a real WeChat AppID** at [mp.weixin.qq.com](https://mp.weixin.qq.com) (not `touristappid`). An ICP-filed 主体（公司/个体工商户/备案过的个人小程序类目）is required for most categories.
-2. **Bind the server URL**：Public Platform → `开发管理` → `开发设置` → `服务器域名` → `request 合法域名`。Add the exact scheme + host (no path), e.g. `https://cardhub-api.onrender.com`. HTTPS is mandatory; raw IP / self-signed certs are rejected.
+2. **Bind the server URL**：Public Platform → `开发管理` → `开发设置` → `服务器域名` → `request 合法域名`。Add the exact scheme + host (no path), e.g. `https://api.card-hub.app`. HTTPS is mandatory; raw IP / self-signed certs are rejected.
 3. If you also use `uploadFile` / `downloadFile` / `socket`, add them in the matching fields.
 4. **Update `project.config.json`**：replace `appid: touristappid` with your real AppID. Keep `urlCheck: false` off for prod-like preview; toggle it on when you want the DevTools to enforce the whitelist locally.
-5. **Rebuild** against the production URL: `TRPC_URL=https://cardhub-api.onrender.com/trpc pnpm --filter @cardhub/miniapp miniapp:weapp`.
+5. **Rebuild** against the production URL: `TRPC_URL=https://api.card-hub.app/trpc pnpm --filter @cardhub/miniapp miniapp:weapp`.
 6. Submit the `dist/weapp/` bundle via DevTools → `上传` → 在 Public Platform → `版本管理` 走审核。
 
 Real 扫码上线 needs WeChat review (usually 1-3 business days). Agent cannot execute this step.
@@ -77,7 +77,7 @@ Real 扫码上线 needs WeChat review (usually 1-3 business days). Agent cannot 
 ## 端到端联调网络拓扑
 
 - WeChat DevTools 里的小程序运行在 Chromium WebView，和宿主 macOS 在同一网络，所以 `http://localhost:4000` 直连可用（前提是 `Don't verify legal domains` 勾上）。
-- 真机扫码预览时小程序跑在手机上，**你的 API 必须是公网 HTTPS**。用 M2.5 部署的 `https://cardhub-api.onrender.com/trpc`，或本地跑 [ngrok](https://ngrok.com)/[cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) 临时 HTTPS 出口。
+- 真机扫码预览时小程序跑在手机上，**你的 API 必须是公网 HTTPS**。用生产 `https://api.card-hub.app/trpc` 或预发 `https://api-staging.card-hub.app/trpc`，或本地跑 [ngrok](https://ngrok.com)/[cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) 临时 HTTPS 出口。
 - H5 目标和 web 一样，放到 Cloudflare Pages / Netlify / Render Static Site 都行。`dist/h5/index.html` + `dist/h5/css` + `dist/h5/js` 是静态资产。
 
 ## 共享包依赖

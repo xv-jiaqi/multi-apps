@@ -8,6 +8,7 @@ if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV ?? 'development',
+    release: process.env.GIT_SHA?.trim() || undefined,
     // Keep traces sampling conservative for the MVP — bump once paid tier
     // is in place.
     tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
@@ -35,7 +36,10 @@ async function bootstrap(): Promise<void> {
   const authService = app.get(AuthService);
 
   const corsOrigin = config
-    .get<string>('CORS_ORIGIN', 'http://localhost:5173')
+    .get<string>(
+      'CORS_ORIGIN',
+      'http://localhost:5173,http://localhost:10086,https://card-hub.app,https://staging.card-hub.app,tauri://localhost,https://tauri.localhost',
+    )
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);

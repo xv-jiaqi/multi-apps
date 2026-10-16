@@ -6,7 +6,12 @@
   "main": "dist/main.js",
   "exports": {
     ".": "./dist/main.js",
-    "./trpc": "./src/trpc/app-router.ts"
+    "./trpc": {
+      "types": "./dist/trpc/app-router.d.ts",
+      "require": "./dist/trpc/app-router.js",
+      "import": "./dist/trpc/app-router.js",
+      "default": "./dist/trpc/app-router.js"
+    }
   },
   "scripts": {
     "dev": "nest start --watch --preserveWatchOutput",
