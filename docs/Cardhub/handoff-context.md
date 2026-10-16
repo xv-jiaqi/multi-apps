@@ -1,8 +1,10 @@
 # Cardhub Monorepo · 接手 Agent 速读
 
 > 这份文档专为接手本仓库的 AI Agent 准备。粒度是"开机即跑"——读完不需要再问"用什么栈/为什么这么配/为什么 miniapp 锁 React 18"。
+>
+> 文档分工见 [README.md](README.md)：功能现状看 [feature-inventory.md](feature-inventory.md)，待办任务看 [development-backlog.md](development-backlog.md)，本文只负责环境、约定和踩坑。
 
-最后更新：2026-05-03（M0 完成）。每个后续 milestone 完成后，请同步更新本文 §10 "已完成 milestone" 小节。
+最后更新：2026-10-17（Zeabur → 阿里云香港 VPS 迁移完成，功能梳理与任务池落地）。新发现的坑请补到 §6。
 
 ---
 
@@ -35,7 +37,7 @@
 
 ### 与 PRD 的关键差异
 
-PRD 写"后端 Rust + Axum + SQLx"和"前端 Zustand + SWR"。实际选型已和用户确认改为：
+PRD 写"后端 Rust + Axum + SQLx"和"前端 Zustand + SWR"。实际选型已和用户确认改为（完整冲突裁决表见 [README.md](README.md#历史文档与当前实现的冲突裁决)）：
 
 - 后端 Rust → **NestJS + tRPC + Prisma**：理由是端到端 TypeScript 类型推导对个人项目效率最高。
 - Zustand → **MobX**：与现有跨端 store 体验更一致。
@@ -61,56 +63,25 @@ multi-apps/
 │   ├── config-ts/      TS 预设（base/react/node/nest/taro）
 │   ├── config-eslint/  ESLint flat 预设
 │   └── config-prettier/
-├── docker/             docker-compose.yml + Dockerfile.api（多阶段）
-├── docs/Cardhub/       PRD + 本文档（必读：prd/epics.md, ui&ux-specification.md）
-└── .github/workflows/  ci + 占位的 release 流水线
+├── Dockerfile.api      生产 API 镜像（仓库根目录构建）
+├── Dockerfile.web      生产 Web 镜像（nginx + 运行时 /config.js）
+├── deploy/             VPS 部署：compose、Caddy edge、部署 / 备份脚本
+├── docker/             本地开发用 docker-compose.yml（Postgres + Redis）
+├── docs/Cardhub/       文档索引、本文档、功能全景、任务池、PRD / UI 规范
+└── .github/workflows/  ci / images / deploy + 原生与小程序 release（后两者为手动 / 占位）
 ```
 
-## 4. 已完成功能（PRD Epic 1-3 全部落地）
+## 4. 已完成功能
 
-完整 commit 历史：
+PRD Epic 1–3（浏览、搜索、账户、卡牌评论）和 Phase 2（论坛、交易信息板、举报队列）均已落地，生产运行在阿里云香港 VPS。功能逐项状态、Web 路由、tRPC 接口清单、数据模型和已知缺陷统一维护在 [feature-inventory.md](feature-inventory.md)，本文不再重复，避免两处不同步。
 
-```
-2554c29 feat(api): user auth + comments for Cardhub PRD Epic 3
-16662ed feat(api): wire Cardhub PRD Epic 2 — series & cards via tRPC
-fd39b7b feat(web): static browse experience for Cardhub PRD Epic 1 stories 1.4 / 1.5
-8fc9da4 chore: bootstrap multi-apps monorepo with Cardhub skeletons
-```
+### 数据库与种子数据
 
-### Web 端路由（[apps/cardhub/web/src/pages/](../../apps/cardhub/web/src/pages/)）
-
-- `/` 首页（hero + 热门系列 + 统计卡）
-- `/series` 系列列表
-- `/series/:slug` 系列详情（封面 + 卡牌列表）
-- `/cards/:slug` 卡牌详情（图片占位 + 属性 + 评论区）
-- `/search` 全局搜索（debounce 250ms）
-- `/login` `/register` 认证
-- `/forum` 论坛话题列表（cursor 分页 / infinite scroll）（M6）
-- `/forum/new` 发布新话题（authed，5 min 编辑窗口）（M6）
-- `/forum/:slug` 话题详情（Markdown 正文 + 回帖）（M6）
-- `*` 404
-
-### tRPC AppRouter（[apps/cardhub/api/src/trpc/trpc.service.ts](../../apps/cardhub/api/src/trpc/trpc.service.ts)）
-
-```
-health.ping
-series.list / series.bySlug
-cards.bySlug / cards.search
-auth.register / auth.login / auth.me
-comments.listForCard (public) / comments.create (authedProcedure)
-forum.topics.list / forum.topics.bySlug                       (public, M6)
-forum.topics.create / forum.topics.update / forum.topics.delete (authed, M6)
-forum.replies.list                                            (public, M6)
-forum.replies.create / forum.replies.delete                   (authed, M6)
-```
-
-### 数据库
-
-- Schema：[apps/cardhub/api/prisma/schema.prisma](../../apps/cardhub/api/prisma/schema.prisma) — `User / Series / Card / Comment / Topic / Reply` 6 张表（M6 起）。
+- Schema：[apps/cardhub/api/prisma/schema.prisma](../../apps/cardhub/api/prisma/schema.prisma) — `User / Series / Card / Comment / Topic / Reply / Listing / Report` 8 张表。
+- Migrations：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports`。
 - Seed：
-  - catalog-only（生产）：`pnpm --filter @cardhub/api seed:catalog`，只写 3 系列 / 9 卡牌，不创建用户或用户内容。
-  - demo（staging / 本地）：`pnpm --filter @cardhub/api seed:demo` 或 `pnpm --filter @cardhub/api db:seed`，写 catalog + alice / admin 两个 demo 用户。运行前必须设置 `DEMO_USER_PASSWORD` / `DEMO_ADMIN_PASSWORD`，缺失会非零退出。
-- Migrations：`20260501165944_init` → `20260502184922_add_user_role_and_forum`（M6）。
+  - catalog-only（生产、预发）：`pnpm --filter @cardhub/api seed:catalog`，只写 3 系列 / 9 卡牌，不创建用户或用户内容。部署后在容器内执行 `node dist/scripts/seed-catalog.js`，见 deploy/README.md。
+  - demo（仅本地）：`pnpm --filter @cardhub/api seed:demo` 或 `pnpm --filter @cardhub/api db:seed`，写 catalog + alice / admin 两个 demo 用户。运行前必须设置 `DEMO_USER_PASSWORD` / `DEMO_ADMIN_PASSWORD`，缺失会非零退出。
 
 ### 测试账号
 
@@ -121,7 +92,7 @@ M6 起 demo seed 预置两个账号（`pnpm --filter @cardhub/api db:seed` 自�
 | `alice`  | alice@cardhub.test | `DEMO_USER_PASSWORD`  | user  | 普通用户，发帖 / 评论 / 发布交易意向                   |
 | `admin`  | admin@cardhub.test | `DEMO_ADMIN_PASSWORD` | admin | 论坛删任意 topic / reply、查看 `reports.list` 举报队列 |
 
-> ⚠️ 这两个账号只用于 demo / staging / 本地。生产只运行 catalog seed；不要在仓库、PR 描述或部署文档中记录真实 demo 密码。
+> ⚠️ 这两个账号只用于本地开发。生产和预发都只运行 catalog seed，预发测试账号由 ops 手动创建随机密码；不要在仓库、PR 描述或部署文档中记录真实密码。
 
 ## 5. 开发命令速查
 
@@ -214,16 +185,28 @@ DATABASE_URL="postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=pu
 pnpm --filter @cardhub/api prisma migrate reset --force --skip-seed
 ```
 
-## 6.13 Sentry 守卫式初始化（M2.5）
+### 6.13 Sentry 守卫式初始化
 
 API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../../apps/cardhub/web/src/main.tsx) 都用 `if (DSN)` 守卫包住 `Sentry.init()`，**dev 留空 DSN 时不上报、不增加任何运行时开销**。当 `SENTRY_DSN` / `VITE_SENTRY_DSN` 设置后：
 
-- API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）。
+- API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）；environment 取 `SENTRY_ENVIRONMENT`（compose 中等于 `ENV_NAME`），release 取 `GIT_SHA`。
 - Web：`ErrorBoundary` 的 `onError` 调 `Sentry.captureException`。
 
-不要把 DSN 写进 `.env.example`；走 Render env group / Cloudflare Pages env。
+DSN 不要写进 `.env.example`。API 的 DSN 放在 VPS 的 `/opt/cardhub/<environment>/<environment>.env`。Web 目前只在**构建时**读取 `VITE_SENTRY_DSN`，而 `images.yml` 没有传对应的 build arg，所以生产 Web 端实际不上报；改为运行时注入见 backlog CH-005。
 
-## 6.15 Safe-area 不要 padding 整个 body（M4）
+### 6.14 tRPC URL 解析（Web / Tauri）
+
+[apps/cardhub/web/src/lib/trpc.tsx](../../apps/cardhub/web/src/lib/trpc.tsx) 的 `resolveTrpcUrl()` 按以下顺序决策，越具体的分支越靠前：
+
+1. Tauri + Android + 开发模式 → `http://10.0.2.2:4000/trpc`（Android 模拟器访问宿主机的地址不是 `localhost`）。
+2. Tauri（检测 `__TAURI_INTERNALS__`）→ `VITE_TRPC_URL_TAURI`，没有则 `VITE_TRPC_URL`；必须是以 `/trpc` 结尾的绝对 http(s) 地址，否则直接抛错。iOS 模拟器与宿主同网络，也走这一条。
+3. 浏览器 → 运行时 `window.__CARDHUB_CONFIG__.TRPC_URL`（Web 容器启动时由 nginx 入口脚本写入 `/config.js`）→ 构建时 `VITE_TRPC_URL` → 同源 `/trpc`（本地开发由 Vite 代理到 4000 端口）。
+
+`.env.development` / `.env.staging` / `.env.production` 三套配置按 `vite build --mode <mode>` 选用。生产镜像的 `VITE_TRPC_URL` 留空，让同一个镜像通过运行时 `TRPC_URL` 同时服务预发和生产。
+
+**注意**：Vite 会把 `VITE_TRPC_URL=` 注入为空字符串而不是 `undefined`。`resolveTrpcUrl()` 先 `trim()` 并把空字符串归一成 `undefined`，否则 `httpBatchLink` 会把 `auth.login` 发到 `http://localhost:5173/auth.login?batch=1`，登录 / 注册直接 404。
+
+### 6.15 Safe-area 不要 padding 整个 body（M4）
 
 iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内边距。**不要**在 `<body>` 上加 `padding-top`，因为 `SiteHeader` 是 `position: sticky; top: 0`——一旦 body 有 padding，sticky 会贴到 padding 后的位置，刘海上方留出一条颜色条带，体验丑。
 
@@ -233,7 +216,7 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 - PageShell `<main>` → `.app-safe-x .app-safe-bottom`：横屏 iPhone 的左右切角 + 底部 home indicator。
 - 桌面 / Android（无刘海）→ `env(...)` fallback `0px`，零成本 no-op。
 
-## 6.16 Taro 小程序集成踩坑（M5）
+### 6.16 Taro 小程序集成踩坑（M5）
 
 1. **React 18 硬锁**：见 §6.4。miniapp 的 `package.json` `react@^18.3.1`，pnpm 的 overrides 把 `@types/react` 统一到 19。miniapp 代码里写 React 19-only 语法（e.g. `use`、Context Actions）会在其它端炸。
 
@@ -258,26 +241,18 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 
 9. **mobx-react-lite + Taro**：`observer()` 包一下页面组件即可，不需要额外 polyfill。但 Taro 的 `useDidShow` / `useDidHide` 是 Taro 自有 hook，不要和 React 的 `useEffect` 混用——要在页面 _返回可见_ 时做事（比如刷新评论列表）就用 `useDidShow`。
 
-## 6.14 Tauri-aware tRPC URL（M2.5 + M4）
+### 6.17 部署相关的坑
 
-[apps/cardhub/web/src/lib/trpc.tsx](../../apps/cardhub/web/src/lib/trpc.tsx) 的 `resolveTrpcUrl()` 五条决策路径：
+1. **Web 容器缺少合法的 `TRPC_URL` 会拒绝启动**：入口脚本 `apps/cardhub/web/docker-entrypoint.d/10-cardhub-runtime-config.sh` 要求完整的 http(s) 地址且以 `/trpc` 结尾，不再回退同源。`Dockerfile.web` 头部的旧注释与此不符（CH-005 清理）。
+2. **迁移只能向前兼容**：API 容器启动时执行 `prisma migrate deploy`；部署失败自动回滚只换镜像，不撤销已执行的迁移。新列要可空或有默认值，删列 / 改名分两次发布。
+3. **`seed-catalog` 会覆盖同 slug 的数据**：它按 slug upsert，不要在生产重复执行；内容管理后台（CH-107）上线时要改为只插入缺失记录。
+4. **env 文件里的 `CORS_ORIGIN` 会覆盖代码默认值**：代码默认值包含 Tauri 来源，`deploy/.env.example` 的生产值只有 `https://card-hub.app`。桌面 / 移动端连生产 API 前必须补上 Tauri 来源（CH-303）。
+5. **限流按 IP 且在进程内存中计数**：`trust proxy` 只信任 1 跳（Caddy）。如果以后在 Caddy 前再加 CDN / SLB，要同步调整，否则所有用户会共享同一个 IP 的限额；多实例部署时换 Redis store（CH-210）。
+6. **本机办公网络可能拦截 `card-hub.app`**：在 owner 的办公网络下访问线上域名会返回安全策略拦截页（HTTP 403）。线上验证请在外网进行，或通过 VPS 上的 `curl --resolve` 检查。
 
-1. Vite 浏览器 dev → `/trpc`（vite proxy 转发）。
-2. Vite 浏览器 prod → `VITE_TRPC_URL` 注入。
-3. Tauri Desktop（检测 `__TAURI_INTERNALS__`）→ `VITE_TRPC_URL_TAURI`。
-4. Tauri **Android 模拟器** + dev → `http://10.0.2.2:4000/trpc`（**M4 关键**：Android emulator loopback 不是 `localhost`）。
-5. Tauri iOS Simulator → 模拟器和 host 同网络，走第 3 条用 `localhost:4000`。
+## 7. 路线图
 
-新增 `.env.development` / `.env.staging` / `.env.production` 三套；构建时按 `vite build --mode <mode>` 选用。
-
-**注意**：Vite 会把 `.env.development` 里的 `VITE_TRPC_URL=` 注入为空字符串，不是
-`undefined`。`resolveTrpcUrl()` 必须先 `trim()` 并把空字符串归一成 `undefined`，否则
-`httpBatchLink` 会把 `auth.login` 这类请求发到 `http://localhost:5173/auth.login?batch=1`
-而不是 `/trpc/auth.login?batch=1`，登录 / 注册会直接 404。
-
-## 7. 路线图（剩余 milestone）
-
-完整计划在 [.cursor/plans/cardhub-roadmap-execution_9360876c.plan.md](../../.cursor/plans/cardhub-roadmap-execution_9360876c.plan.md)（plan v2，已合入审视反馈）。摘要：
+下面的 M0–M7 路线图**已全部完成**，保留作历史参考（原计划文件 `.cursor/plans/cardhub-roadmap-execution_*.plan.md` 未纳入仓库）。后续工作统一在 [development-backlog.md](development-backlog.md) 中排期和领取。
 
 ```mermaid
 flowchart TD
@@ -302,17 +277,15 @@ flowchart TD
 | **M6**    | Prisma 加 `User.role` + Topic + Reply、5min 编辑窗口、admin 删任意、Markdown body（react-markdown + rehype-sanitize）、cursor 分页                                                                                                       |
 | **M7**    | Prisma Listing（含 currency / imageUrls）+ Report 表、举报系统、`/trade` + 卡牌页内列表、强 disclaimer                                                                                                                                   |
 
-完整工作量预估：14-21 天单人节奏（M3-M5 与 M6-M7 并行可压到 9-12 天）。
-
-## 7.5 部署运行手册（M2.5 落地）
+## 7.5 部署运行手册
 
 ### 7.5.1 VPS + Docker Compose
 
-Cardhub 现在以平台无关方式部署到单台海外 Linux VPS：
+Cardhub 以平台无关的方式部署在阿里云香港的一台 Ubuntu 24.04 VPS 上（2026-10 从 Zeabur 迁移，PR #37–#49）：
 
 - 镜像：仓库根 [`Dockerfile.api`](../../Dockerfile.api) 与 [`Dockerfile.web`](../../Dockerfile.web)。Web Docker 镜像使用 PR #38 的 nginx entrypoint，在容器启动时由运行时 `TRPC_URL` 生成未缓存的 `/config.js`。
 - 编排：[`deploy/docker-compose.yml`](../../deploy/docker-compose.yml) 启动 API / Web / Postgres 16 / Redis 7；Postgres/Redis 仅在各 compose project 默认网络内。
-- 代理：[`deploy/edge`](../../deploy/edge) 的共享 Caddy 负责 80/443、自动 HTTPS、`WEB_DOMAIN` 与 `API_DOMAIN` 反向代理；API/Web 通过 external `edge` 网络上的 `ENV_NAME-api` / `ENV_NAME-web` 别名接入。
+- 代理：[`deploy/edge`](../../deploy/edge) 的共享 Caddy 负责 80/443、自动 HTTPS 和反向代理；API/Web 通过 external `edge` 网络上的 `ENV_NAME-api` / `ENV_NAME-web` 别名接入。生产 Web 根域名路由由 `deploy/edge/optional/root-web.caddy` 提供，`/opt/cardhub/edge/edge.env` 中需保持 `ROOT_WEB_DOMAINS=card-hub.app`。
 - 配置：复制 [`deploy/.env.example`](../../deploy/.env.example) 到 `/opt/cardhub/production/production.env` 与 `/opt/cardhub/staging/staging.env`，两套环境用同一个 app compose 文件和不同 project name（`cardhub-prod` / `cardhub-staging`）。生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。
 - 运行手册：见 [`deploy/README.md`](../../deploy/README.md)，包含服务器 bootstrap、GHCR 登录、DNS、部署、回滚、备份/恢复、日志查看、GitHub Environment 保护规则和单主机 staging/prod key 隔离限制。
 
@@ -323,7 +296,7 @@ API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次
 - `.github/workflows/images.yml`：CI 在 main push 成功后构建 API + Web 镜像，推送到 GHCR，标签为 `sha-<full sha>` 与 `main`。
 - `.github/workflows/deploy.yml`：手动部署 staging / production；自动 staging 仅接受同仓库 main push 的 CI workflow_run。production 和 staging 的部署 SHA 都必须可从 `origin/main` 到达。
 - 部署脚本会同步已验证 commit 的 `deploy/` 文件到 `/opt/cardhub/<environment>/deploy`，再运行远端部署。健康校验要求 API `/health.gitSha` 等于目标 SHA，并等待 Web Docker health 为 `healthy` 且 `/healthz` 可访问。部署、健康检查或 seed 失败会尝试回滚到上一个不可变 `sha-` tag 并让 job 失败。
-- 合并顺序：PR #38 先合入 main，再合并本 infra PR；解决冲突时保留 #38 的 `/config.js` runtime entrypoint。
+- 备份：`deploy/backup.sh` 由 cron 每日执行，保留 7 份日备份 + 4 份周备份；配置 `/opt/cardhub/backups/offsite.env` 后会额外上传到阿里云 OSS（香港）。
 
 ### 7.5.3 本地验证生产构建
 
@@ -338,9 +311,9 @@ ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy
 
 ### 8.1 入口节奏
 
-- **先读 PRD 再动手**：每个 Story 在 [prd/epics.md](prd/epics.md) 都有明确 ACs，按 AC 验收。
-- **每个阶段任务**：跑 `pnpm typecheck && pnpm lint`，能跑端到端就用 cursor-ide-browser MCP 走一遍真实页面，再 `git commit`。
-- **不要做太碎的中间提交**：plan v2 的 milestone 划分粒度合理，一个 milestone 一个 commit。
+- **先领任务再动手**：从 [development-backlog.md](development-backlog.md) 领取任务，按任务卡的验收标准和 §1 通用完成标准交付；涉及 PRD 原始故事时再对照 [prd/epics.md](prd/epics.md) 的 AC。
+- **每个任务**：跑 `pnpm typecheck && pnpm lint && pnpm test`，能跑端到端就用浏览器走一遍真实页面。
+- **一个任务一个分支、一个 PR**，squash 合并到 `main`；合并后 staging 自动部署，生产由 owner 手动发布。
 
 ### 8.2 每次改动后必须做
 
@@ -356,7 +329,7 @@ ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy
 | --------------------- | ----------------------------------------------- |
 | typecheck             | `pnpm typecheck`                                |
 | lint                  | `pnpm lint`                                     |
-| 测试                  | `pnpm test`（M1 后才有意义）                    |
+| 测试                  | `pnpm test`                                     |
 | Web build             | `pnpm --filter @cardhub/web build`              |
 | API build             | `pnpm --filter @cardhub/api build`              |
 | Miniapp build         | `pnpm --filter @cardhub/miniapp build`          |
@@ -392,23 +365,17 @@ pnpm dev
 sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 ```
 
-## 9. Backlog（不进 milestone，但记下别忘）
+## 9. Backlog
 
-- **PWA / Service Worker**：Tauri 已覆盖离线，优先级低。
-- **Playwright E2E**：M1 的 vitest+RTL+supertest 已覆盖核心路径，MVP 够。
-- **changesets 自动 release notes**：版本/changelog 管理。
-- **multi-apps 仓库的"如何新增第二个 app"模板文档**。
-- **微信 AppID 注册 + 服务器域名白名单上线审核流程**（M5 代码侧就绪，账号 + 备案 + 审核需用户手动；详见 miniapp README + §6.16）。
-- **微信 `wx.login` / 开放数据 / 订阅消息**：PRD 外。
-- **API trpc-panel / 类型可视化**。
-- **第三种 i18n 语言**（当前自写 `t()` 够 MVP；超过 3 种考虑 i18next）。
-- **Tauri 自动更新**（`tauri-plugin-updater`）。
-- **Tauri 桌面离线模式**（`tauri-plugin-sql` SQLite 缓存）。
-- **真机 TestFlight / Google Play 上架流程**。
-- **自建图片上传管线**（M7 暂用外链 URL）。
-- **论坛版块 / 标签系统**。
-- **站内消息 / 通知**。
-- **评论 @mention**。
+原先记在这里的事项已并入 [development-backlog.md](development-backlog.md)（对照关系见该文 §5）。以下几项暂不排期，记录备查：
+
+- PWA / Service Worker（Tauri 已覆盖离线诉求）。
+- Tauri 桌面离线模式（`tauri-plugin-sql` SQLite 缓存）。
+- 论坛版块 / 标签系统。
+- changesets 自动生成 release notes。
+- multi-apps 仓库“如何新增第二个 app”的模板文档。
+- 微信 `wx.login` / 开放数据 / 订阅消息（PRD 范围外）。
+- API trpc-panel / 类型可视化。
 
 ## 10. 已完成 milestone（实施进度）
 
@@ -423,8 +390,7 @@ sleep 6 && lsof -i :4000 -t && lsof -i :5173 -t
 - [x] **M7**（2026-05-03）：PRD Phase 2 交易信息板落地。Prisma schema 加 `Listing`（含 `kind ListingKind`、`price Decimal? @db.Decimal(12,2)`、`currency String @default("CNY")`、`imageUrls String[] @default([])`、`status ListingStatus @default(OPEN)`、`@@index([cardSlug])` + `@@index([status, createdAt])`）+ `Report`（多态指针 `targetType` / `targetId`、`status ReportStatus @default(PENDING)`、`@@index([targetType, targetId])`）+ 4 个 enum；migration `add_listings_and_reports`。`@repo/shared/src/zod` 新增 `LISTING_KIND_VALUES` / `LISTING_STATUS_VALUES` / `REPORT_TARGET_VALUES` / `REPORT_STATUS_VALUES` 常量数组 + 类型；`listingPriceSchema`（接受 number 或 string，clamp 到 0-9_999_999_999.99 并 round 到 2 位小数）；`currencyCodeSchema`（ISO 4217 三字母正则）；`listingPublishInput` / `listingListInput` / `reportCreateInput` / `reportListInput`。新增 `listings` router 5 条 procedure（list 默认仅 OPEN 排序 createdAt desc / byCard 卡牌详情页用 take 5 / mine authed / publish authed 带 cardSlug 存在性校验 + Decimal 转换 / close authed 带 ownership-or-admin 检查；price 在响应里 `Decimal.toFixed(2)` 转 string 避免 tRPC `string | Decimal` 联合）。新增 `reports` router 2 条 procedure（create authed 带每用户 10/day quota 计数 + admin role 重新查 / list authed admin only 带 cursor pagination）。`main.ts` 新增 `listingPublishLimiter` (10/h/IP) 和 `reportCreateLimiter` (20/h/IP) 两条 express-rate-limit，复用 ipKey helper。Web 新增 3 个组件 / 2 页：`/trade` (TradeListPage useInfiniteQuery + kind/cardSlug 筛选 + 强 disclaimer + ReportButton + CloseButton 自助关闭) / `/trade/new` (TradePublishPage 带 type-toggle / decimal price input / multi-line image URLs / strict disclaimer)；`ListingsForCard` 嵌入卡牌详情页的"该卡的交易意向"列表（最多 5 条 + 链到 /trade + 鉴别用户隐藏自家 ReportButton）；`ReportButton` 通用举报按钮（unauth fallback 跳 /login，open 后 textarea 提交，成功显示 thanks）；trade & report i18n 中英双语；SiteHeader 桌面 + 移动 nav 加 `Trade` 链接（M6 已经加过 `nav.trade`）。Test：`listings.router.spec.ts` 8 个 / `reports.router.spec.ts` 5 个，含 publish 缺卡 NOT_FOUND、Decimal 入库格式、close ownership / admin / 已关闭幂等、create 配额 10、admin-only list FORBIDDEN。所有测试 41 个全过；`pnpm typecheck` 17/17；`pnpm lint` 0 errors。commit pending.
 - [x] **M7 hardening**（2026-05-04）：补齐举报系统闭环与运行时验收。Auth `register/login/me` 返回 `role`，`SessionStore.isAdmin` 驱动 Web 管理入口；新增 `/reports` 管理员举报队列页，`reports.list` 返回 listing/topic/reply/comment 上下文；`reports.create` 校验 target 是否仍存在，避免无效举报；论坛 topic/reply、卡牌 comment、交易 listing 均挂上举报入口，管理员前端可删除任意 topic/reply、关闭任意 listing。修复登录回跳支持字符串 `state.from` 和 location-like object；修复 `.env.development` 空 `VITE_TRPC_URL` 导致 tRPC 404；首页补 `h2.sr-only` 解决 axe heading order 报错。验证：`pnpm typecheck` 17/17、`pnpm test`（API 38 + Web 22）、`pnpm --filter @cardhub/web build` 通过；Playwright 实测 admin/alice 登录、topic 举报、`/reports` 队列、卡牌详情、交易页均无控制台错误。commit pending.
 
-> 每完成一个 milestone，请：
->
-> 1. 把方框打勾，加日期 + commit hash。
-> 2. 在第 4 节"已完成功能"或第 6 节"踩坑清单"补充新发现。
-> 3. 如有 backlog 项被启用，从第 9 节移除并写进对应 milestone。
+- [x] **Phase 0 · 部署迁移**（2026-10-16）：从 Zeabur 迁移到阿里云香港 VPS。Docker Compose + 共享 Caddy、GHCR 不可变镜像、staging 自动 / prod 手动部署与自动回滚（#37、#43、#49）；Web 运行时 `/config.js` 注入 `TRPC_URL`，API 限流信任一跳代理（#38、#40）；catalog / demo seed 拆分（#39）；限流集成测试与 tRPC 限流错误格式（#42、#46）；Sentry environment（#45、#47）；tRPC 响应保留 `Vary: Origin`（#48）；OSS 异地备份（#44）。
+- [x] **功能梳理**（2026-10-17）：融合仓库内与仓库外历史文档，新增 [README.md](README.md)（文档索引与冲突裁决）、[feature-inventory.md](feature-inventory.md)（功能全景）、[development-backlog.md](development-backlog.md)（接力任务池），本文同步修订。
+
+> M0–M7 与 Phase 0 之后，任务进度统一记录在 development-backlog.md §2，不再往本节追加。

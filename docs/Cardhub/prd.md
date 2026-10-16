@@ -1,5 +1,7 @@
 # Cardhub 产品需求文档 (PRD)
 
+> 本文记录最初的产品意图，内容保持原样。其中的技术选型（Rust、Zustand、SWR、REST 接口路径等）已被当前实现取代，与代码冲突时以仓库为准，裁决表见 [README.md](README.md#历史文档与当前实现的冲突裁决)；功能现状见 [feature-inventory.md](feature-inventory.md)。
+
 ### **1. 目标与背景 (Goals and Background Context)**
 
 #### **1.1 目标 (Goals)**

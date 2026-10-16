@@ -1,5 +1,7 @@
 # UI/UX 规格文档：Cardhub
 
+> 设计意图参考，内容保持原样。尚未实现的部分（分类列表页、用户个人页、收藏 / 分享、深色模式、首页布局等）已拆成任务，见 [development-backlog.md](development-backlog.md)；品牌主色与当前实现不一致，见 [README.md](README.md#历史文档与当前实现的冲突裁决)。
+
 #### **1. 总体用户体验目标与原则**
 
 ##### **1.1 目标用户画像 (Target User Personas)**

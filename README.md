@@ -16,7 +16,7 @@
 
 ## 技术栈（全部使用最新稳定版）
 
-- **前端**：React 19 · TypeScript 6 · Vite 8 · TailwindCSS 4 · shadcn/ui · MobX 6 · SWR 2 · React Router 7 · tRPC v11 client
+- **前端**：React 19 · TypeScript 6 · Vite 8 · TailwindCSS 4 · shadcn/ui · MobX 6 · TanStack Query 5（经 `@trpc/react-query`）· React Router 7 · tRPC v11 client
 - **桌面/移动**：Tauri v2 · Rust stable
 - **小程序/H5**：Taro 4 · React · Sass
 - **后端**：NestJS 11 · tRPC v11（Express 中间件）· Prisma 6 · PostgreSQL 16 · Redis 7 · JWT
@@ -42,7 +42,8 @@ multi-apps/
 │   ├── config-ts/        # TS 配置预设（base/react/node/nest/taro）
 │   ├── config-eslint/    # ESLint flat config 预设
 │   └── config-prettier/  # Prettier 预设
-├── docker/               # docker-compose；生产镜像亦可用仓库根 Dockerfile.*
+├── deploy/               # VPS 部署：compose、Caddy edge、部署 / 备份脚本
+├── docker/               # 本地开发 docker-compose；生产镜像在仓库根 Dockerfile.*
 ├── docs/                 # PRD / UI 规范等业务文档
 └── .github/workflows/    # CI + 多端发布流水线
 ```
@@ -156,10 +157,10 @@ pnpm dev
 
 ## 部署
 
-Cardhub MVP 使用平台无关的 Docker 镜像 + Docker Compose 部署到单台 Linux VPS（详见 [`deploy/README.md`](deploy/README.md)）。
+Cardhub 使用平台无关的 Docker 镜像 + Docker Compose 部署到单台 Linux VPS，当前运行在阿里云香港（详见 [`deploy/README.md`](deploy/README.md)）。
 
 - **API 镜像（仓库根）**：[`Dockerfile.api`](Dockerfile.api) — 构建阶段会 `prisma generate`，容器启动执行 `prisma migrate deploy && node dist/main.js`。
-- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；未设置时回退同源 `/trpc`。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
+- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；该变量必填，缺失或格式不合法时容器拒绝启动。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
 - **VPS 部署**：[`deploy/docker-compose.yml`](deploy/docker-compose.yml) 启动 API / Web / Postgres / Redis；[`deploy/edge`](deploy/edge) 的共享 Caddy 负责 HTTPS 和反向代理。
 - 多端 tRPC URL：Web Docker 用运行时 `TRPC_URL`；非容器静态托管可用 `VITE_TRPC_URL` fallback；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
 
@@ -181,7 +182,12 @@ Cardhub MVP 使用平台无关的 Docker 镜像 + Docker Compose 部署到单台
 
 ## 与 Cardhub 业务文档的关系
 
-项目本身的业务 PRD、史诗、UI 规范在 [`docs/Cardhub/`](docs/Cardhub/)。本 monorepo 的代码设计对齐 `docs/Cardhub/prd/epics.md` 中的 Epic 1 基础设施故事（1.1 / 1.2 / 1.3），但出于技术栈统一性覆盖了"后端 Rust"的原始假设——改为 NestJS + tRPC + Prisma。
+Cardhub 的文档都在 [`docs/Cardhub/`](docs/Cardhub/)，入口是 [`docs/Cardhub/README.md`](docs/Cardhub/README.md)：
+
+- [`handoff-context.md`](docs/Cardhub/handoff-context.md)：技术栈、开发命令、踩坑清单。
+- [`feature-inventory.md`](docs/Cardhub/feature-inventory.md)：功能全景、接口清单、数据模型、已知缺陷。
+- [`development-backlog.md`](docs/Cardhub/development-backlog.md)：接力开发任务池与完成标准。
+- PRD、项目简报、UI 规范：最初的产品意图。其中“后端 Rust”“Zustand + SWR”等技术假设已被 NestJS + tRPC + Prisma、MobX + TanStack Query 取代，冲突以代码为准。
 
 ## 许可
 
