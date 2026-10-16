@@ -7,27 +7,38 @@ function makeRouter() {
   const reportCount = jest.fn();
   const reportCreate = jest.fn();
   const reportFindMany = jest.fn();
+  const reportFindUnique = jest.fn();
+  const reportUpdate = jest.fn();
+  const reportUpdateMany = jest.fn();
   const userFindUnique = jest.fn();
   const listingFindUnique = jest.fn();
   const listingFindMany = jest.fn();
+  const listingUpdate = jest.fn();
   const topicFindUnique = jest.fn();
   const topicFindMany = jest.fn();
+  const topicDelete = jest.fn();
   const replyFindUnique = jest.fn();
   const replyFindMany = jest.fn();
+  const replyDelete = jest.fn();
   const commentFindUnique = jest.fn();
   const commentFindMany = jest.fn();
+  const commentDelete = jest.fn();
 
   const prisma = {
     report: {
       count: reportCount,
       create: reportCreate,
       findMany: reportFindMany,
+      findUnique: reportFindUnique,
+      update: reportUpdate,
+      updateMany: reportUpdateMany,
     },
     user: { findUnique: userFindUnique },
-    listing: { findUnique: listingFindUnique, findMany: listingFindMany },
-    topic: { findUnique: topicFindUnique, findMany: topicFindMany },
-    reply: { findUnique: replyFindUnique, findMany: replyFindMany },
-    comment: { findUnique: commentFindUnique, findMany: commentFindMany },
+    listing: { findUnique: listingFindUnique, findMany: listingFindMany, update: listingUpdate },
+    topic: { findUnique: topicFindUnique, findMany: topicFindMany, delete: topicDelete },
+    reply: { findUnique: replyFindUnique, findMany: replyFindMany, delete: replyDelete },
+    comment: { findUnique: commentFindUnique, findMany: commentFindMany, delete: commentDelete },
+    $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
   const router = new ReportsRouter(new TrpcBase(), prisma);
@@ -46,15 +57,22 @@ function makeRouter() {
     reportCount,
     reportCreate,
     reportFindMany,
+    reportFindUnique,
+    reportUpdate,
+    reportUpdateMany,
     userFindUnique,
     listingFindUnique,
     listingFindMany,
+    listingUpdate,
     topicFindUnique,
     topicFindMany,
+    topicDelete,
     replyFindUnique,
     replyFindMany,
+    replyDelete,
     commentFindUnique,
     commentFindMany,
+    commentDelete,
   };
 }
 
@@ -121,6 +139,117 @@ describe('ReportsRouter.create', () => {
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     expect(reportCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe('ReportsRouter.resolve', () => {
+  it('rejects non-admin callers with FORBIDDEN', async () => {
+    const { caller, userFindUnique, reportUpdate } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u1', role: 'user' });
+
+    await expect(
+      caller({ sub: 'u1', username: 'alice' }).resolve({
+        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        action: 'MARK_RESOLVED',
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(reportUpdate).not.toHaveBeenCalled();
+  });
+
+  it('lets an admin mark a pending report as resolved', async () => {
+    const { caller, userFindUnique, reportFindUnique, reportUpdate } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    reportFindUnique.mockResolvedValueOnce({
+      id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+      status: 'PENDING',
+      targetType: 'COMMENT',
+      targetId: 'target-1',
+    });
+    reportUpdate.mockResolvedValueOnce({});
+
+    await expect(
+      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        action: 'MARK_RESOLVED',
+        resolution: ' handled ',
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(reportUpdate).toHaveBeenCalledWith({
+      where: { id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5' },
+      data: expect.objectContaining({
+        status: 'RESOLVED',
+        resolvedById: 'u-admin',
+        resolution: 'handled',
+      }),
+    });
+  });
+
+  it.each([
+    ['LISTING', 'listingUpdate'],
+    ['TOPIC', 'topicDelete'],
+    ['REPLY', 'replyDelete'],
+    ['COMMENT', 'commentDelete'],
+  ] as const)(
+    'removes or closes %s targets and resolves sibling pending reports',
+    async (targetType, actionMock) => {
+      const router = makeRouter();
+      router.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+      router.reportFindUnique.mockResolvedValueOnce({
+        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        status: 'PENDING',
+        targetType,
+        targetId: 'target-1',
+      });
+      router.listingFindUnique.mockResolvedValueOnce({ id: 'target-1' });
+      router.topicFindUnique.mockResolvedValueOnce({ id: 'target-1' });
+      router.replyFindUnique.mockResolvedValueOnce({ id: 'target-1' });
+      router.commentFindUnique.mockResolvedValueOnce({ id: 'target-1' });
+      router.listingUpdate.mockResolvedValueOnce({});
+      router.topicDelete.mockResolvedValueOnce({});
+      router.replyDelete.mockResolvedValueOnce({});
+      router.commentDelete.mockResolvedValueOnce({});
+      router.reportUpdateMany.mockResolvedValueOnce({ count: 2 });
+
+      await expect(
+        router.caller({ sub: 'u-admin', username: 'admin' }).resolve({
+          id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+          action: 'REMOVE_TARGET',
+          resolution: 'confirmed',
+        }),
+      ).resolves.toEqual({ ok: true });
+
+      expect(router[actionMock]).toHaveBeenCalled();
+      expect(router.reportUpdateMany).toHaveBeenCalledWith({
+        where: { targetType, targetId: 'target-1', status: 'PENDING' },
+        data: expect.objectContaining({
+          status: 'RESOLVED',
+          resolvedById: 'u-admin',
+          resolution: 'confirmed',
+        }),
+      });
+    },
+  );
+
+  it('treats already resolved reports as idempotent no-ops', async () => {
+    const { caller, userFindUnique, reportFindUnique, reportUpdate, reportUpdateMany } =
+      makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    reportFindUnique.mockResolvedValueOnce({
+      id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+      status: 'RESOLVED',
+      targetType: 'COMMENT',
+      targetId: 'target-1',
+    });
+
+    await expect(
+      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        action: 'REMOVE_TARGET',
+      }),
+    ).resolves.toEqual({ ok: true });
+    expect(reportUpdate).not.toHaveBeenCalled();
+    expect(reportUpdateMany).not.toHaveBeenCalled();
   });
 });
 

@@ -20,11 +20,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  comments Comment[]
-  topics   Topic[]
-  replies  Reply[]
-  listings Listing[]
-  reports  Report[]
+  comments        Comment[]
+  topics          Topic[]
+  replies         Reply[]
+  listings        Listing[]
+  reportsFiled    Report[]  @relation("ReportReporter")
+  reportsResolved Report[]  @relation("ReportResolver")
 
   @@map("users")
 }
@@ -172,20 +173,25 @@ model Listing {
 }
 
 model Report {
-  id          String           @id @default(uuid())
-  reporterId  String
+  id           String           @id @default(uuid())
+  reporterId   String
   // Polymorphic pointer: (targetType, targetId). We do not enforce
   // referential integrity with a FK because the target spans four tables;
   // the admin queue surfaces orphaned rows cleanly enough for mvp.
-  targetType  ReportTargetType
-  targetId    String
-  reason      String
-  status      ReportStatus     @default(PENDING)
-  createdAt   DateTime         @default(now())
+  targetType   ReportTargetType
+  targetId     String
+  reason       String
+  status       ReportStatus     @default(PENDING)
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolution   String?
+  createdAt    DateTime         @default(now())
 
-  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter User  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  resolver User? @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@index([targetType, targetId])
   @@index([status, createdAt])
+  @@index([resolvedById])
   @@map("reports")
 }
