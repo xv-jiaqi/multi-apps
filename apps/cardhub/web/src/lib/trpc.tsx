@@ -30,6 +30,13 @@ function nonEmpty(value: string | undefined): string | undefined {
   return value?.trim() || undefined;
 }
 
+function assertAbsoluteTrpcUrl(value: string | undefined, target: string): string {
+  if (value && /^https?:\/\/.+\/trpc$/.test(value)) {
+    return value;
+  }
+  throw new Error(`${target} requires an absolute http(s) tRPC URL ending in /trpc.`);
+}
+
 function resolveTrpcUrl(): string {
   const runtimeUrl =
     typeof window !== 'undefined' ? nonEmpty(window.__CARDHUB_CONFIG__?.TRPC_URL) : undefined;
@@ -45,7 +52,7 @@ function resolveTrpcUrl(): string {
       return 'http://10.0.2.2:4000/trpc';
     }
     if (isTauri) {
-      return tauriUrl ?? runtimeUrl ?? buildTimeUrl ?? '/trpc';
+      return assertAbsoluteTrpcUrl(tauriUrl ?? buildTimeUrl, 'Tauri');
     }
   }
 
