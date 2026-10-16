@@ -46,8 +46,8 @@ jobs:
 
       - name: Validate Cardhub deploy compose
         run: |
-          docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config
-          docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config
+          ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config
+          ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4

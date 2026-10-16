@@ -16,24 +16,31 @@ on:
         required: true
         default: main
   workflow_run:
-    workflows: ['Cardhub Images']
+    workflows: ['CI']
     branches: [main]
     types: [completed]
 
 permissions: {}
 
 concurrency:
-  group: cardhub-deploy-${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+  group: deploy-${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: Deploy Cardhub
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
     permissions:
       contents: read
+      packages: read
     env:
       EVENT_NAME: ${{ github.event_name }}
       INPUT_ENVIRONMENT: ${{ inputs.environment }}
@@ -83,6 +90,12 @@ jobs:
             exit 1
           fi
 
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "${expected_sha}" origin/main; then
+            echo "Refusing to deploy ${expected_sha}: SHA is not reachable from origin/main" >&2
+            exit 1
+          fi
+
           git checkout --detach "${expected_sha}"
 
           echo "environment=${deploy_environment}" >> "$GITHUB_OUTPUT"
@@ -103,14 +116,46 @@ jobs:
           install -m 600 /dev/null ~/.ssh/known_hosts
           printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > ~/.ssh/known_hosts
 
+      - name: Log in to GHCR for image availability checks
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for GHCR images
+        shell: bash
+        env:
+          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+          for image in ghcr.io/xv-jiaqi/cardhub-api ghcr.io/xv-jiaqi/cardhub-web; do
+            found=0
+            for _ in {1..30}; do
+              if docker manifest inspect "${image}:${DEPLOY_IMAGE_TAG}" >/dev/null 2>&1; then
+                found=1
+                break
+              fi
+              sleep 10
+            done
+            if [ "${found}" -ne 1 ]; then
+              echo "Timed out waiting for ${image}:${DEPLOY_IMAGE_TAG}" >&2
+              exit 1
+            fi
+          done
+
       - name: Sync deploy files
         shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
         run: |
           set -euo pipefail
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          remote_deploy_dir="/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy"
+          remote_deploy_dir_q="$(printf '%q' "${remote_deploy_dir}")"
           tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh edge \
             | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-                'mkdir -p /opt/cardhub/deploy && tar -xzf - -C /opt/cardhub/deploy'
+                "mkdir -p ${remote_deploy_dir_q} && tar -xzf - -C ${remote_deploy_dir_q}"
 
       - name: Deploy on VPS
         shell: bash
@@ -124,5 +169,6 @@ jobs:
           deploy_environment="$(printf '%q' "${DEPLOY_ENVIRONMENT}")"
           image_tag="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
           expected_sha="$(printf '%q' "${DEPLOY_EXPECTED_SHA}")"
+          remote_script="$(printf '%q' "/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy/remote-deploy.sh")"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "bash /opt/cardhub/deploy/remote-deploy.sh ${deploy_environment} ${image_tag} ${expected_sha}"
+            "bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"

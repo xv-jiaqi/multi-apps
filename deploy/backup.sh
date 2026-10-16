@@ -2,19 +2,28 @@
 set -euo pipefail
 
 PROJECT="${PROJECT:-cardhub-prod}"
-ENV_FILE="${ENV_FILE:-/opt/cardhub/production.env}"
-COMPOSE_FILE="${COMPOSE_FILE:-/opt/cardhub/deploy/docker-compose.yml}"
+ENV_FILE="${ENV_FILE:-/opt/cardhub/production/production.env}"
+COMPOSE_FILE="${COMPOSE_FILE:-/opt/cardhub/production/deploy/docker-compose.yml}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/cardhub/backups/${PROJECT}}"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="${BACKUP_DIR}/${PROJECT}-${TIMESTAMP}.sql.gz"
 tmp_sql=""
 tmp_gz=""
 
-cleanup() {
+on_exit() {
+  rc="$?"
   [ -z "${tmp_sql}" ] || rm -f "${tmp_sql}"
   [ -z "${tmp_gz}" ] || rm -f "${tmp_gz}"
+  if [ -n "${BACKUP_PING_URL:-}" ]; then
+    if [ "${rc}" -eq 0 ]; then
+      curl -fsS -m 10 "${BACKUP_PING_URL}" >/dev/null || true
+    else
+      curl -fsS -m 10 "${BACKUP_PING_URL%/}/fail" >/dev/null || true
+    fi
+  fi
+  exit "${rc}"
 }
-trap cleanup EXIT
+trap on_exit EXIT
 
 mkdir -p "${BACKUP_DIR}"
 
@@ -60,6 +69,9 @@ done
 declare -A seen_weeks=()
 weekly_count=0
 for backup in "${backups[@]}"; do
+  if [ -n "${keep[${backup}]+x}" ]; then
+    continue
+  fi
   week="$(date -u -r "${backup}" +%G-%V)"
   if [ -z "${seen_weeks[${week}]+x}" ] && [ "${weekly_count}" -lt 4 ]; then
     keep["${backup}"]=1
