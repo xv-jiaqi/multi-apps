@@ -5,14 +5,32 @@ import bcrypt from 'bcryptjs';
 import { DEMO_USERS } from './seed-data';
 import { seedCatalog } from './seed-catalog';
 
-export async function seedDemo(prisma: PrismaClient) {
+type DemoSeedEnv = Pick<NodeJS.ProcessEnv, 'DEMO_USER_PASSWORD' | 'DEMO_ADMIN_PASSWORD'>;
+
+function readDemoPasswords(env: DemoSeedEnv) {
+  return new Map(
+    DEMO_USERS.map((seed) => {
+      const password = env[seed.passwordEnvVar]?.trim();
+      if (!password) {
+        throw new Error(
+          `Missing required ${seed.passwordEnvVar}. Set it before running the demo seed for ${seed.username}.`,
+        );
+      }
+
+      return [seed.username, password] as const;
+    }),
+  );
+}
+
+export async function seedDemo(prisma: PrismaClient, env: DemoSeedEnv = process.env) {
+  const demoPasswords = readDemoPasswords(env);
   const catalogCounts = await seedCatalog(prisma);
 
   for (const seed of DEMO_USERS) {
-    const password = await bcrypt.hash(seed.rawPassword, 10);
+    const password = await bcrypt.hash(demoPasswords.get(seed.username) ?? '', 10);
     await prisma.user.upsert({
       where: { username: seed.username },
-      update: { role: seed.role },
+      update: { email: seed.email, password, role: seed.role },
       create: {
         email: seed.email,
         username: seed.username,
