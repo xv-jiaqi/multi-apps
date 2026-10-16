@@ -13,6 +13,14 @@ overrides:
   # producing spurious "Type 'bigint' is not assignable to ReactNode" errors.
   '@types/react': '^19.2.14'
   '@types/react-dom': '^19.2.3'
+  # Keep production audit green while upstream frameworks catch up.
+  'brace-expansion@1.1.14': '1.1.20'
+  'brace-expansion@5.0.5': '5.0.11'
+  browserslist: '^4.28.7'
+  deepmerge-ts: '^8.0.0'
+  ip-address: '^10.3.1'
+  multer: '^2.3.0'
+  proxy-addr: '^2.0.8'
 
 # All ignored advisories live in transitive deps of @cardhub/miniapp's
 # Taro 4.2 build toolchain (swiper/lodash-es/fast-uri inside @tarojs/*
