@@ -18,11 +18,10 @@ if (process.env.SENTRY_DSN) {
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Express } from 'express';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import helmet from 'helmet';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import { configureTrustProxy } from './bootstrap/trust-proxy';
+import { configureApp } from './bootstrap/configure-app';
 import { AppModule } from './app.module';
 import { TrpcService } from './trpc/trpc.service';
 import { makeCreateContext } from './trpc/context';
@@ -32,8 +31,7 @@ import { SentryExceptionFilter } from './common/sentry-exception.filter';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = new Logger('Bootstrap');
-  const expressApp = app.getHttpAdapter().getInstance() as Express;
-  configureTrustProxy(expressApp);
+  configureApp(app);
 
   const config = app.get(ConfigService);
   const trpcService = app.get(TrpcService);

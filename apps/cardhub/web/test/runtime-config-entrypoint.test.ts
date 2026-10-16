@@ -47,8 +47,12 @@ describe('runtime config entrypoint', () => {
     });
   });
 
-  it('rejects multiline values before URL validation', () => {
-    const result = runScript('https://api.card-hub.app/trpc\nhttps://evil.example/trpc');
+  it.each([
+    ['embedded newline', 'https://api.card-hub.app/trpc\nhttps://evil.example/trpc'],
+    ['trailing newline', 'https://api.card-hub.app/trpc\n'],
+    ['carriage return', 'https://api.card-hub.app/trpc\r'],
+  ])('rejects %s before URL validation', (_name, value) => {
+    const result = runScript(value);
 
     expect(result.ok).toBe(false);
     expect(result).toMatchObject({
