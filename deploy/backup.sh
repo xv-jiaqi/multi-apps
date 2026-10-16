@@ -6,13 +6,14 @@ ENV_FILE="${ENV_FILE:-/opt/cardhub/production/production.env}"
 COMPOSE_FILE="${COMPOSE_FILE:-/opt/cardhub/production/deploy/docker-compose.yml}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/cardhub/backups/${PROJECT}}"
 OFFSITE_ENV_FILE="${OFFSITE_ENV_FILE:-/opt/cardhub/backups/offsite.env}"
-RCLONE_IMAGE="rclone/rclone:1.75.2"
+RCLONE_IMAGE="rclone/rclone:1.75.2@sha256:2687085f718d3c628f7fdfb77c52a1d344332aed543110bb88088f2c70d43eb5"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="${BACKUP_DIR}/${PROJECT}-${TIMESTAMP}.sql.gz"
 tmp_sql=""
 tmp_gz=""
 tmp_rclone_env=""
 
+# shellcheck disable=SC2317
 on_exit() {
   rc="$?"
   [ -z "${tmp_sql}" ] || rm -f "${tmp_sql}"
@@ -29,19 +30,38 @@ on_exit() {
 }
 trap on_exit EXIT
 
+read_offsite_var() {
+  local var_name="$1"
+  (
+    set -euo pipefail
+    # shellcheck source=/dev/null
+    . "${OFFSITE_ENV_FILE}"
+    printf '%s' "${!var_name:-}"
+  )
+}
+
 push_offsite() {
   if [ ! -f "${OFFSITE_ENV_FILE}" ]; then
     return 0
   fi
 
-  # shellcheck source=/dev/null
-  . "${OFFSITE_ENV_FILE}"
+  local oss_access_key_id oss_access_key_secret oss_bucket oss_endpoint
+  oss_access_key_id="$(read_offsite_var OSS_ACCESS_KEY_ID)"
+  oss_access_key_secret="$(read_offsite_var OSS_ACCESS_KEY_SECRET)"
+  oss_bucket="$(read_offsite_var OSS_BUCKET)"
+  oss_endpoint="$(read_offsite_var OSS_ENDPOINT)"
 
-  local required_var
+  local required_var required_value
   for required_var in OSS_ACCESS_KEY_ID OSS_ACCESS_KEY_SECRET OSS_BUCKET OSS_ENDPOINT; do
-    if [ -z "${!required_var:-}" ]; then
+    case "${required_var}" in
+      OSS_ACCESS_KEY_ID) required_value="${oss_access_key_id}" ;;
+      OSS_ACCESS_KEY_SECRET) required_value="${oss_access_key_secret}" ;;
+      OSS_BUCKET) required_value="${oss_bucket}" ;;
+      OSS_ENDPOINT) required_value="${oss_endpoint}" ;;
+    esac
+    if [ -z "${required_value}" ]; then
       echo "Off-site backup env file is missing ${required_var}" >&2
-      exit 1
+      return 1
     fi
   done
 
@@ -50,26 +70,26 @@ push_offsite() {
   {
     printf 'RCLONE_CONFIG_OSS_TYPE=s3\n'
     printf 'RCLONE_CONFIG_OSS_PROVIDER=Alibaba\n'
-    printf 'RCLONE_CONFIG_OSS_ENDPOINT=%s\n' "${OSS_ENDPOINT}"
-    printf 'RCLONE_CONFIG_OSS_ACCESS_KEY_ID=%s\n' "${OSS_ACCESS_KEY_ID}"
-    printf 'RCLONE_CONFIG_OSS_SECRET_ACCESS_KEY=%s\n' "${OSS_ACCESS_KEY_SECRET}"
+    printf 'RCLONE_CONFIG_OSS_ENDPOINT=%s\n' "${oss_endpoint}"
+    printf 'RCLONE_CONFIG_OSS_ACCESS_KEY_ID=%s\n' "${oss_access_key_id}"
+    printf 'RCLONE_CONFIG_OSS_SECRET_ACCESS_KEY=%s\n' "${oss_access_key_secret}"
     printf 'RCLONE_CONFIG_OSS_ACL=private\n'
   } > "${tmp_rclone_env}"
 
   local backup_name
   backup_name="$(basename "${OUT}")"
-  local remote_path="oss:${OSS_BUCKET}/${PROJECT}/${backup_name}"
-  local remote_dir="oss:${OSS_BUCKET}/${PROJECT}"
+  local remote_path="oss:${oss_bucket}/${PROJECT}/${backup_name}"
+  local remote_dir="oss:${oss_bucket}/${PROJECT}"
   local container_backup="/backup/${backup_name}"
 
-  echo "Uploading ${backup_name} to off-site OSS bucket ${OSS_BUCKET}/${PROJECT}"
+  echo "Uploading ${backup_name} to off-site OSS bucket ${oss_bucket}/${PROJECT}"
   if ! docker run --rm \
     --env-file "${tmp_rclone_env}" \
     -v "${BACKUP_DIR}:/backup:ro" \
     "${RCLONE_IMAGE}" \
     copyto "${container_backup}" "${remote_path}" --s3-no-check-bucket; then
     echo "Off-site backup upload failed for ${backup_name}" >&2
-    exit 1
+    return 1
   fi
 
   echo "Verifying off-site backup ${backup_name}"
@@ -79,7 +99,7 @@ push_offsite() {
     "${RCLONE_IMAGE}" \
     check --one-way /backup "${remote_dir}" --include "/${backup_name}" --s3-no-check-bucket; then
     echo "Off-site backup verification failed for ${backup_name}" >&2
-    exit 1
+    return 1
   fi
 }
 
@@ -109,7 +129,8 @@ fi
 mv "${tmp_gz}" "${OUT}"
 tmp_gz=""
 
-push_offsite
+offsite_rc=0
+push_offsite || offsite_rc="$?"
 
 mapfile -t backups < <(ls -1t "${BACKUP_DIR}"/*.sql.gz 2>/dev/null || true)
 declare -A keep=()
@@ -147,3 +168,4 @@ for backup in "${backups[@]}"; do
 done
 
 echo "Wrote ${OUT}"
+exit "${offsite_rc}"

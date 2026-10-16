@@ -198,8 +198,9 @@ successful backup.
 
 After a local dump is finalized and before local retention pruning, the backup
 script optionally uploads that single `.sql.gz` file to Alibaba Cloud OSS using
-the official `rclone/rclone:1.75.2` Docker image. It never deletes or syncs
-remote objects; remote retention must be handled by an OSS lifecycle rule.
+the official `rclone/rclone:1.75.2` Docker image pinned by digest in the script.
+It never deletes or syncs remote objects; remote retention must be handled by an
+OSS lifecycle rule.
 
 The off-site copy is disabled unless `OFFSITE_ENV_FILE` exists. The default path
 is `/opt/cardhub/backups/offsite.env`; override it in the cron environment only
@@ -218,9 +219,57 @@ chown deploy:deploy /opt/cardhub/backups/offsite.env
 chmod 600 /opt/cardhub/backups/offsite.env
 ```
 
-The OSS key only needs object upload/read permissions for the backup prefix. It
-does not need ListBuckets, CreateBucket, delete, or remote retention
-permissions; the script passes `--s3-no-check-bucket` for that reason.
+Keep this file limited to the four `OSS_*` keys above. The backup script reads
+only those values for the rclone env-file.
+
+The OSS key needs object upload/read permissions for the backup prefix, plus
+bucket-level `oss:ListObjects` restricted to that prefix because `rclone check`
+lists the remote project directory before applying the single-file include. It
+does not need `oss:DeleteObject` by design. It also does not need ListBuckets or
+CreateBucket permissions; the script passes `--s3-no-check-bucket` because
+ListBuckets is not granted. `oss:GetBucketInfo` is optional if an operator's
+tooling needs bucket metadata outside this backup script.
+
+Minimal RAM policy template, with placeholders only:
+
+```json
+{
+  "Version": "1",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "oss:PutObject",
+        "oss:GetObject"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<bucket>/<project>/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "oss:ListObjects"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<bucket>"
+      ],
+      "Condition": {
+        "StringLike": {
+          "oss:Prefix": [
+            "<project>/*"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+Use `acs:oss:*:*:<bucket>/*` for the object resource only if the same key must
+write/read multiple project prefixes in that bucket. Do not grant
+`oss:DeleteObject`; remote cleanup is intentionally handled by OSS lifecycle
+rules.
 
 TODO(owner): configure an OSS lifecycle rule for remote backup retention, and
 remove any temporary `_probe/` objects created while validating the bucket.
@@ -229,7 +278,8 @@ Restore from OSS by copying one object back to the VPS, then using the normal
 local restore command:
 
 ```bash
-cat > /tmp/cardhub-oss-rclone.env <<'EOF'
+HISTCONTROL=ignorespace
+ cat > /tmp/cardhub-oss-rclone.env <<'EOF'
 RCLONE_CONFIG_OSS_TYPE=s3
 RCLONE_CONFIG_OSS_PROVIDER=Alibaba
 RCLONE_CONFIG_OSS_ENDPOINT=oss-cn-hongkong.aliyuncs.com
