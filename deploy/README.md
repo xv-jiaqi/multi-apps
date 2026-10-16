@@ -29,6 +29,7 @@ Caddy publishes host ports.
    cp deploy/.env.example /opt/cardhub/production/production.env
    cp deploy/.env.example /opt/cardhub/staging/staging.env
    cp deploy/.env.example /opt/cardhub/edge/edge.env
+   chown "$USER":"$USER" /opt/cardhub/production/production.env /opt/cardhub/staging/staging.env /opt/cardhub/edge/edge.env
    chmod 600 /opt/cardhub/production/*.env /opt/cardhub/staging/*.env /opt/cardhub/edge/*.env
    ```
    Fill different domains, secrets, database names/passwords, and `IMAGE_TAG`
@@ -68,7 +69,13 @@ example from a trusted console or first-party host-key inventory). The workflow
 uses `StrictHostKeyChecking=yes` and does not run `ssh-keyscan`.
 
 The `production` GitHub Environment must also require reviewers and restrict
-deployment branches to `main`.
+deployment branches to `main`. The `staging` GitHub Environment must also
+restrict deployment branches to `main`; staging deploys only main SHAs.
+
+Staging and production can share one VPS for cost/convenience, but a staging
+deploy key on the same host is not a hard security boundary: Docker group access
+is root-equivalent and can read files such as production env files. Full key and
+secret isolation requires a separate staging host.
 
 ## Deploy
 
@@ -90,6 +97,12 @@ running `/opt/cardhub/<environment>/deploy/remote-deploy.sh`. The script polls
 missing or mismatched SHA. If verification fails after switching containers, the
 script attempts to roll back to the previously running immutable `sha-` tag and
 still fails the job.
+
+After the API is healthy, `remote-deploy.sh` runs `CATALOG_SEED_CMD` from the env
+file when it is set. This is intended for the production first deploy's
+catalog-only seed after the app team's seed PR lands. Leave it empty for
+staging, which uses its separate demo seed flow. Seed failure triggers the same
+rollback path and exits non-zero.
 
 The web container receives runtime `TRPC_URL`, but consuming it depends on the
 companion app PR. The app PR also changes `/health` to include `gitSha` and to

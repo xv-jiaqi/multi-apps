@@ -69,6 +69,11 @@ jobs:
             deploy_environment="${INPUT_ENVIRONMENT}"
             image_tag="${INPUT_IMAGE_TAG}"
 
+            if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+              echo "Manual deploys must be run from refs/heads/main, got ${GITHUB_REF}" >&2
+              exit 1
+            fi
+
             if [[ "${deploy_environment}" != "staging" && "${deploy_environment}" != "production" ]]; then
               echo "Invalid environment: ${deploy_environment}" >&2
               exit 1
