@@ -44,7 +44,10 @@ Caddy publishes host ports.
    ```
    Fill different domains, secrets, database names/passwords, and `IMAGE_TAG`
    values in each app env file. Set `ENV_NAME=prod` in `production.env` and
-   `ENV_NAME=staging` in `staging.env`. `TRPC_URL` should point at that
+   `ENV_NAME=staging` in `staging.env`. In `production.env`, also set
+   `SENTRY_ENVIRONMENT=production` so Sentry events match production monitors
+   while `ENV_NAME` remains `prod` for container and network names. `TRPC_URL`
+   should point at that
    environment's API `/trpc` endpoint. Use separate database names:
    `POSTGRES_DB=cardhub_prod` for production and
    `POSTGRES_DB=cardhub_staging` for staging. `POSTGRES_PASSWORD` must match
@@ -54,6 +57,8 @@ Caddy publishes host ports.
    ```dotenv
    ENV_NAME=prod
    ROOT_WEB_DOMAINS=card-hub.app
+   ROOT_WEB_REDIRECT_DOMAINS=www.card-hub.app
+   ROOT_WEB_REDIRECT_TARGET=card-hub.app
    API_DOMAIN=api.card-hub.app
    STAGING_WEB_DOMAIN=staging.card-hub.app
    STAGING_API_DOMAIN=api-staging.card-hub.app
@@ -72,6 +77,9 @@ Caddy publishes host ports.
    ```
 7. Add DNS records:
    - Apex `card-hub.app` A -> VPS public IP with the Cloudflare proxy disabled
+   - `www.card-hub.app` A -> VPS public IP as a DNS-only record; no AAAA record
+     is needed because the VPS does not use IPv6. Caddy serves the HTTPS
+     redirect and preserves the request path/query
    - `API_DOMAIN` A/AAAA -> VPS public IP
    - staging web/API domains -> VPS public IP
 
@@ -88,7 +96,19 @@ Caddy obtains and renews HTTPS certificates automatically.
 The root domain route is enabled by `edge/optional/root-web.caddy`; keep
 `ROOT_WEB_DOMAINS=card-hub.app` in `/opt/cardhub/edge/edge.env`. The Caddyfile
 uses a disabled fallback hostname if `ROOT_WEB_DOMAINS` is unset so Caddy can
-still start, but production should keep the apex value set.
+still start, but production should keep the apex value set. The same Caddyfile
+redirects `ROOT_WEB_REDIRECT_DOMAINS=www.card-hub.app` to
+`https://card-hub.app` with a permanent redirect; keep
+`ROOT_WEB_REDIRECT_TARGET=card-hub.app` in `/opt/cardhub/edge/edge.env`.
+
+After changing any edge env vars manually, recreate the Caddy container so
+Compose injects the new environment; `caddy reload` does not pick up env-file
+changes:
+
+```bash
+cd /opt/cardhub/edge/deploy/edge
+docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d caddy
+```
 
 For GitHub Actions deploys, configure environment-scoped secrets:
 
