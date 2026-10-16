@@ -1,0 +1,2 @@
+# Disabled by default. Copy root-web.caddy.example over this file and set
+# ROOT_WEB_DOMAINS in edge.env after apex/www DNS points at the VPS.

@@ -155,6 +155,40 @@ wait_for_web_health() {
   return 1
 }
 
+public_https_get() {
+  local domain path output
+  domain="$1"
+  path="$2"
+  output="$3"
+
+  "${CURL_BIN:-curl}" -fsS --resolve "${domain}:443:127.0.0.1" "https://${domain}${path}" -o "${output}"
+}
+
+verify_api_health() {
+  local domain expected response_file deadline last_body last_sha
+  domain="$1"
+  expected="$2"
+  response_file="$3"
+  deadline=$((SECONDS + 180))
+  last_body=""
+  last_sha=""
+
+  while [ "${SECONDS}" -lt "${deadline}" ]; do
+    if public_https_get "${domain}" "/health" "${response_file}"; then
+      last_body="$(cat "${response_file}")"
+      last_sha="$(sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' "${response_file}" | head -n 1)"
+      if [ "${last_sha}" = "${expected}" ]; then
+        echo "Verified ${domain} gitSha=${last_sha}"
+        return 0
+      fi
+    fi
+    sleep 5
+  done
+
+  echo "Timed out waiting for https://${domain}/health gitSha=${expected}. Last gitSha='${last_sha}', body='${last_body}'" >&2
+  return 1
+}
+
 on_error() {
   rc="$?"
   rollback
@@ -174,28 +208,11 @@ fi
 
 tmp="$(mktemp)"
 
-deadline=$((SECONDS + 180))
-last_body=""
-last_sha=""
-
-while [ "${SECONDS}" -lt "${deadline}" ]; do
-  if curl -fsS "https://${api_domain}/health" -o "${tmp}"; then
-    last_body="$(cat "${tmp}")"
-    last_sha="$(sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' "${tmp}" | head -n 1)"
-    if [ "${last_sha}" = "${expected_sha}" ]; then
-      echo "Verified ${api_domain} gitSha=${last_sha}"
-      wait_for_web_health
-      catalog_seed_cmd="$(awk -F= '$1 == "CATALOG_SEED_CMD" { print substr($0, index($0, "=") + 1) }' "${env_file}" | tail -n 1 | tr -d '\r')"
-      if [ -n "${catalog_seed_cmd}" ]; then
-        echo "Running catalog seed command"
-        ENV_NAME="${env_name}" IMAGE_TAG="${image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" exec -T api sh -c "${catalog_seed_cmd}"
-      fi
-      rollback_armed=0
-      exit 0
-    fi
-  fi
-  sleep 5
-done
-
-echo "Timed out waiting for https://${api_domain}/health gitSha=${expected_sha}. Last gitSha='${last_sha}', body='${last_body}'" >&2
-false
+verify_api_health "${api_domain}" "${expected_sha}" "${tmp}"
+wait_for_web_health
+catalog_seed_cmd="$(awk -F= '$1 == "CATALOG_SEED_CMD" { print substr($0, index($0, "=") + 1) }' "${env_file}" | tail -n 1 | tr -d '\r')"
+if [ -n "${catalog_seed_cmd}" ]; then
+  echo "Running catalog seed command"
+  ENV_NAME="${env_name}" IMAGE_TAG="${image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" exec -T api sh -c "${catalog_seed_cmd}"
+fi
+rollback_armed=0

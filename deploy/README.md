@@ -53,7 +53,10 @@ Caddy publishes host ports.
 5. Create `/opt/cardhub/edge/edge.env` with only the edge routing vars:
    ```dotenv
    ENV_NAME=prod
-   WEB_DOMAIN=card-hub.app
+   # Leave empty until apex/www DNS has cut over to this VPS. To enable it,
+   # copy edge/optional/root-web.caddy.example to edge/optional/root-web.caddy
+   # and set: ROOT_WEB_DOMAINS=card-hub.app, www.card-hub.app
+   ROOT_WEB_DOMAINS=
    API_DOMAIN=api.card-hub.app
    STAGING_WEB_DOMAIN=staging.card-hub.app
    STAGING_API_DOMAIN=api-staging.card-hub.app
@@ -71,7 +74,7 @@ Caddy publishes host ports.
    echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u <github-user> --password-stdin
    ```
 7. Add DNS records:
-   - `WEB_DOMAIN` A/AAAA -> VPS public IP
+   - `ROOT_WEB_DOMAINS` A/AAAA -> VPS public IP when enabling apex/www
    - `API_DOMAIN` A/AAAA -> VPS public IP
    - staging web/API domains -> VPS public IP
 
@@ -84,6 +87,13 @@ docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d
 ```
 
 Caddy obtains and renews HTTPS certificates automatically.
+
+The apex and `www` routes are optional so the edge can run before the root
+domain cuts over. Leave `ROOT_WEB_DOMAINS` empty and keep
+`edge/optional/root-web.caddy` as the disabled placeholder until the DNS records
+point at the VPS. When ready, copy `edge/optional/root-web.caddy.example` over
+`edge/optional/root-web.caddy`, set `ROOT_WEB_DOMAINS=card-hub.app,
+www.card-hub.app`, and restart the edge compose project.
 
 For GitHub Actions deploys, configure environment-scoped secrets:
 
@@ -129,10 +139,12 @@ main. Production deploys require an explicit immutable `sha-<full-git-sha>` tag.
 
 The deploy workflow syncs `deploy/` files for the deployed SHA to the VPS before
 running `/opt/cardhub/<environment>/deploy/remote-deploy.sh`. The script polls
-`https://<API_DOMAIN>/health` until `gitSha` equals the deployed SHA and fails on
-missing or mismatched SHA. If verification fails after switching containers, the
-script attempts to roll back to the previously running immutable `sha-` tag and
-still fails the job.
+`https://<API_DOMAIN>/health` through Caddy with `curl --resolve
+<API_DOMAIN>:443:127.0.0.1` until `gitSha` equals the deployed SHA and fails on
+missing or mismatched SHA. This keeps the check independent of the VPS resolver
+cache while still exercising Caddy, TLS, and routing. If verification fails
+after switching containers, the script attempts to roll back to the previously
+running immutable `sha-` tag and still fails the job.
 
 Keep `CATALOG_SEED_CMD` empty for normal deploys so later catalog edits are not
 overwritten. On the first deploy of an empty database, run the catalog-only seed
