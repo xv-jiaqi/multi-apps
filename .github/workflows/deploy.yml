@@ -1,0 +1,201 @@
+name: Cardhub Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target GitHub Environment and VPS env file
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      image_tag:
+        description: Image tag to deploy. Production requires sha-<full-git-sha>; staging also accepts main.
+        required: true
+        default: main
+  workflow_run:
+    workflows: ['CI']
+    branches: [main]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: deploy-${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Cardhub
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+    permissions:
+      contents: read
+      packages: read
+    env:
+      EVENT_NAME: ${{ github.event_name }}
+      INPUT_ENVIRONMENT: ${{ inputs.environment }}
+      INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
+      WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate deploy inputs
+        id: deploy-inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
+            deploy_environment="staging"
+            expected_sha="${WORKFLOW_RUN_HEAD_SHA}"
+            image_tag="sha-${expected_sha}"
+          else
+            deploy_environment="${INPUT_ENVIRONMENT}"
+            image_tag="${INPUT_IMAGE_TAG}"
+
+            if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+              echo "Manual deploys must be run from refs/heads/main, got ${GITHUB_REF}" >&2
+              exit 1
+            fi
+
+            if [[ "${deploy_environment}" != "staging" && "${deploy_environment}" != "production" ]]; then
+              echo "Invalid environment: ${deploy_environment}" >&2
+              exit 1
+            fi
+
+            if [[ "${deploy_environment}" == "staging" && "${image_tag}" == "main" ]]; then
+              expected_sha="$(git ls-remote origin refs/heads/main | awk '{ print $1 }')"
+              image_tag="sha-${expected_sha}"
+            elif [[ "${image_tag}" =~ ^sha-[0-9a-f]{40}$ ]]; then
+              expected_sha="${image_tag#sha-}"
+            else
+              echo "Invalid image_tag '${image_tag}'. Production requires sha-<40 hex>; staging accepts sha-<40 hex> or main." >&2
+              exit 1
+            fi
+          fi
+
+          if [[ ! "${expected_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Could not resolve a full deployment SHA" >&2
+            exit 1
+          fi
+
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "${expected_sha}" origin/main; then
+            echo "Refusing to deploy ${expected_sha}: SHA is not reachable from origin/main" >&2
+            exit 1
+          fi
+
+          git checkout --detach "${expected_sha}"
+
+          echo "environment=${deploy_environment}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${image_tag}" >> "$GITHUB_OUTPUT"
+          echo "expected_sha=${expected_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure SSH with pinned host key
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${DEPLOY_KNOWN_HOSTS}" ]]; then
+            echo "DEPLOY_KNOWN_HOSTS is required" >&2
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          install -m 600 /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+
+      - name: Log in to GHCR for image availability checks
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for GHCR images
+        shell: bash
+        env:
+          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+          for image in ghcr.io/xv-jiaqi/cardhub-api ghcr.io/xv-jiaqi/cardhub-web; do
+            found=0
+            for _ in {1..30}; do
+              if docker manifest inspect "${image}:${DEPLOY_IMAGE_TAG}" >/dev/null 2>&1; then
+                found=1
+                break
+              fi
+              sleep 10
+            done
+            if [ "${found}" -ne 1 ]; then
+              echo "Timed out waiting for ${image}:${DEPLOY_IMAGE_TAG}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Sync deploy files
+        shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
+        run: |
+          set -euo pipefail
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          remote_deploy_dir="/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy"
+          remote_deploy_dir_q="$(printf '%q' "${remote_deploy_dir}")"
+          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh \
+            | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+                "mkdir -p ${remote_deploy_dir_q} && tar -xzf - -C ${remote_deploy_dir_q}"
+
+      - name: Sync edge files
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          edge_dir="/opt/cardhub/edge/deploy/edge"
+          edge_dir_q="$(printf '%q' "${edge_dir}")"
+          before="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+            "sha256sum ${edge_dir_q}/Caddyfile 2>/dev/null | cut -d' ' -f1 || true")"
+
+          tar -C deploy/edge -czf - . \
+            | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+                "mkdir -p ${edge_dir_q} && tar -xzf - -C ${edge_dir_q}"
+
+          after="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+            "sha256sum ${edge_dir_q}/Caddyfile 2>/dev/null | cut -d' ' -f1 || true")"
+
+          if [ -n "${before}" ] && [ "${before}" != "${after}" ]; then
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+              'caddy_id="$(docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env -f /opt/cardhub/edge/deploy/edge/docker-compose.yml ps -q caddy 2>/dev/null || true)"; if [ -n "$caddy_id" ]; then docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env -f /opt/cardhub/edge/deploy/edge/docker-compose.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile; fi'
+          fi
+
+      - name: Deploy on VPS
+        shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
+          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
+          DEPLOY_EXPECTED_SHA: ${{ steps.deploy-inputs.outputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          deploy_environment="$(printf '%q' "${DEPLOY_ENVIRONMENT}")"
+          image_tag="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
+          expected_sha="$(printf '%q' "${DEPLOY_EXPECTED_SHA}")"
+          remote_script="$(printf '%q' "/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy/remote-deploy.sh")"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+            "bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"

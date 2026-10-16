@@ -1,0 +1,105 @@
+services:
+  api:
+    image: ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      default:
+      edge:
+        aliases:
+          - ${ENV_NAME}-api
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:4000/health'').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  web:
+    image: ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      TRPC_URL: ${TRPC_URL}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      default:
+      edge:
+        aliases:
+          - ${ENV_NAME}-web
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8080/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Do not publish database ports. Docker-published ports bypass host firewalls
+    # such as ufw; keep Postgres reachable only on the project network.
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Do not publish Redis ports. Docker-published ports bypass host firewalls
+    # such as ufw; keep Redis reachable only on the project network.
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    command:
+      [
+        'sh',
+        '-c',
+        'printf "appendonly yes\nrequirepass %s\n" "$$REDIS_PASSWORD" > /tmp/redis.conf && exec redis-server /tmp/redis.conf',
+      ]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  postgres_data:
+  redis_data:

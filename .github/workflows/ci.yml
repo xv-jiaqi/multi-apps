@@ -44,6 +44,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate Cardhub deploy compose
+        run: |
+          ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config
+          ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
