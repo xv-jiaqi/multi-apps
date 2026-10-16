@@ -1,0 +1,3 @@
+{$ROOT_WEB_DOMAINS} {
+	reverse_proxy {$ENV_NAME}-web:8080
+}

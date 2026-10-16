@@ -1,6 +1,4 @@
-{$WEB_DOMAIN} {
-	reverse_proxy {$ENV_NAME}-web:8080
-}
+import optional/root-web.caddy
 
 {$API_DOMAIN} {
 	reverse_proxy {$ENV_NAME}-api:4000

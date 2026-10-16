@@ -8,12 +8,13 @@ services:
       - '443:443/udp'
     environment:
       ENV_NAME: ${ENV_NAME}
-      WEB_DOMAIN: ${WEB_DOMAIN}
+      ROOT_WEB_DOMAINS: ${ROOT_WEB_DOMAINS:-}
       API_DOMAIN: ${API_DOMAIN}
       STAGING_WEB_DOMAIN: ${STAGING_WEB_DOMAIN}
       STAGING_API_DOMAIN: ${STAGING_API_DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./optional:/etc/caddy/optional:ro
       - caddy_data:/data
       - caddy_config:/config
     networks:
