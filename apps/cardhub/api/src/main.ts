@@ -18,6 +18,7 @@ if (process.env.SENTRY_DSN) {
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Express } from 'express';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import helmet from 'helmet';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
@@ -30,6 +31,12 @@ import { SentryExceptionFilter } from './common/sentry-exception.filter';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = new Logger('Bootstrap');
+  const expressApp = app.getHttpAdapter().getInstance() as Express;
+
+  // The API sits behind exactly one Caddy reverse-proxy hop. This lets Express
+  // derive req.ip from the real client IP while ignoring spoofed extra
+  // X-Forwarded-For entries. Do not change this to `true`.
+  expressApp.set('trust proxy', 1);
 
   const config = app.get(ConfigService);
   const trpcService = app.get(TrpcService);

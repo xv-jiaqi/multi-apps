@@ -347,8 +347,19 @@ flowchart TD
 **Web**
 
 1. 再建 Docker Service，使用仓库根 **`Dockerfile.web`**（或平台等价：`ZBPACK_DOCKERFILE_NAME=web`）。
-2. **运行时变量**注入 `TRPC_URL`（完整 URL，必须带 `/trpc` 后缀）：生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。容器 entrypoint 会在 nginx 启动前生成 `/config.js`，Web bundle 未设置时回退同源 `/trpc`。旧的 `BUILDTIME_VITE_TRPC_URL` 仅保留为非 Docker 静态托管 fallback，不要在统一 Docker 镜像中设置。
+2. **运行时变量**注入 `TRPC_URL`（完整 URL，必须带 `/trpc` 后缀）：生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。容器 entrypoint 会在 nginx 启动前生成 `/config.js`；缺失或不匹配 `^https?://.+/trpc$` 时直接 `exit 1`，避免部署成功但请求全打到无代理的同源 `/trpc`。旧的 `BUILDTIME_VITE_TRPC_URL` 仅保留为非 Docker 静态托管 fallback，不要在统一 Docker 镜像中设置。
 3. 在 Zeabur / DNS 将生产 Web 绑定到 `card-hub.app`，预发 Web 绑定到 `staging.card-hub.app`；API 分别绑定 `api.card-hub.app` / `api-staging.card-hub.app`。
+
+**Web runtime config 手动检查**：
+
+```bash
+tmpdir=$(mktemp -d)
+CARDHUB_CONFIG_FILE="$tmpdir/config.js" TRPC_URL=https://api-staging.card-hub.app/trpc \
+  sh apps/cardhub/web/docker-entrypoint.d/10-cardhub-runtime-config.sh
+cat "$tmpdir/config.js"
+CARDHUB_CONFIG_FILE="$tmpdir/bad.js" TRPC_URL=https://api-staging.card-hub.app \
+  sh apps/cardhub/web/docker-entrypoint.d/10-cardhub-runtime-config.sh # must exit 1
+```
 
 **安全**：仓库根 [`.dockerignore`](../../.dockerignore) 排除 `**/.env`，避免本地密钥被打进镜像；密钥只在平台「运行时变量」填写。
 
