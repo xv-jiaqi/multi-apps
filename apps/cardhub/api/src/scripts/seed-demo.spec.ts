@@ -4,6 +4,12 @@ import bcrypt from 'bcryptjs';
 import { seedDemo } from './seed-demo';
 import { CATALOG_SERIES, DEMO_USERS } from './seed-data';
 
+interface UserUpsertArgs {
+  where: { username: string };
+  update: { password: string };
+  create: { password: string };
+}
+
 function makePrisma() {
   const seriesUpsert = jest.fn(({ where }) => Promise.resolve({ id: `series-${where.slug}` }));
   const cardUpsert = jest.fn(() => Promise.resolve({}));
@@ -11,7 +17,7 @@ function makePrisma() {
   const cardCount = jest.fn(() =>
     Promise.resolve(CATALOG_SERIES.reduce((total, series) => total + series.cards.length, 0)),
   );
-  const userUpsert = jest.fn(() => Promise.resolve({}));
+  const userUpsert = jest.fn((_: UserUpsertArgs) => Promise.resolve({}));
   const userCount = jest.fn(() => Promise.resolve(DEMO_USERS.length));
 
   const prisma = {
@@ -43,8 +49,9 @@ describe('seedDemo', () => {
 
     expect(userUpsert).toHaveBeenCalledTimes(DEMO_USERS.length);
 
-    const aliceCall = userUpsert.mock.calls.find(([arg]) => arg.where.username === 'alice')?.[0];
-    const adminCall = userUpsert.mock.calls.find(([arg]) => arg.where.username === 'admin')?.[0];
+    const upsertArgs = userUpsert.mock.calls.map(([arg]) => arg);
+    const aliceCall = upsertArgs.find((arg) => arg.where.username === 'alice');
+    const adminCall = upsertArgs.find((arg) => arg.where.username === 'admin');
 
     if (!aliceCall || !adminCall) {
       throw new Error('Expected demo seed to upsert both alice and admin');

@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 import { DEMO_USERS } from './seed-data';
 import { seedCatalog } from './seed-catalog';
 
-type DemoSeedEnv = Pick<NodeJS.ProcessEnv, 'DEMO_USER_PASSWORD' | 'DEMO_ADMIN_PASSWORD'>;
+type DemoSeedEnv = Record<string, string | undefined>;
 
 function readDemoPasswords(env: DemoSeedEnv) {
   return new Map(
