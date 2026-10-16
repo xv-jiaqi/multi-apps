@@ -15,34 +15,62 @@ Caddy publishes host ports.
 
 ## One-time server bootstrap
 
-1. Install Docker Engine and the Compose plugin on the VPS.
+1. Create a key-only `deploy` user and install Docker Engine + the Compose
+   plugin. Add `deploy` to the `docker` group, noting that Docker group access
+   is root-equivalent:
+   ```bash
+   sudo adduser --disabled-password --gecos '' deploy
+   sudo usermod -aG docker deploy
+   sudo install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+   # Install the deploy public key into /home/deploy/.ssh/authorized_keys.
+   sudo chmod 600 /home/deploy/.ssh/authorized_keys
+   sudo chown deploy:deploy /home/deploy/.ssh/authorized_keys
+   ```
 2. Create the deploy layout:
    ```bash
    sudo mkdir -p /opt/cardhub/production/deploy /opt/cardhub/staging/deploy /opt/cardhub/edge/deploy /opt/cardhub/backups
-   sudo chown -R "$USER":"$USER" /opt/cardhub
+   sudo chown -R deploy:deploy /opt/cardhub
+   sudo chmod 750 /opt/cardhub /opt/cardhub/production /opt/cardhub/staging /opt/cardhub/edge /opt/cardhub/backups
    ```
 3. Copy `deploy/docker-compose.yml`, `deploy/remote-deploy.sh`,
    and `deploy/backup.sh` into each app env's `deploy/` directory. Copy
    `deploy/edge/` into `/opt/cardhub/edge/deploy/edge/`.
-4. Create env files from `.env.example`:
+4. Create app env files from `.env.example`:
    ```bash
    cp deploy/.env.example /opt/cardhub/production/production.env
    cp deploy/.env.example /opt/cardhub/staging/staging.env
-   cp deploy/.env.example /opt/cardhub/edge/edge.env
-   chown "$USER":"$USER" /opt/cardhub/production/production.env /opt/cardhub/staging/staging.env /opt/cardhub/edge/edge.env
-   chmod 600 /opt/cardhub/production/*.env /opt/cardhub/staging/*.env /opt/cardhub/edge/*.env
+   chown deploy:deploy /opt/cardhub/production/production.env /opt/cardhub/staging/staging.env
+   chmod 600 /opt/cardhub/production/production.env /opt/cardhub/staging/staging.env
    ```
    Fill different domains, secrets, database names/passwords, and `IMAGE_TAG`
    values in each app env file. Set `ENV_NAME=prod` in `production.env` and
    `ENV_NAME=staging` in `staging.env`. `TRPC_URL` should point at that
-   environment's API `/trpc` endpoint. In `edge.env`, set production
-   `WEB_DOMAIN` / `API_DOMAIN` plus `STAGING_WEB_DOMAIN` /
-   `STAGING_API_DOMAIN`, and keep `ENV_NAME=prod`.
-5. Log in to GHCR with a read-only package token:
+   environment's API `/trpc` endpoint. Use separate database names:
+   `POSTGRES_DB=cardhub_prod` for production and
+   `POSTGRES_DB=cardhub_staging` for staging. `POSTGRES_PASSWORD` must match
+   the password embedded in `DATABASE_URL` and be URL-safe; hex from
+   `openssl rand -hex 32` is recommended.
+5. Create `/opt/cardhub/edge/edge.env` with only the edge routing vars:
+   ```dotenv
+   ENV_NAME=prod
+   WEB_DOMAIN=card-hub.app
+   API_DOMAIN=api.card-hub.app
+   STAGING_WEB_DOMAIN=staging.card-hub.app
+   STAGING_API_DOMAIN=api-staging.card-hub.app
+   ```
+   Then lock it down:
    ```bash
+   chown deploy:deploy /opt/cardhub/edge/edge.env
+   chmod 600 /opt/cardhub/edge/edge.env
+   ```
+6. Log in to GHCR as the `deploy` user with a classic PAT scoped to
+   `read:packages` only. Packages stay private; the server only needs pull
+   access:
+   ```bash
+   sudo -iu deploy
    echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u <github-user> --password-stdin
    ```
-6. Add DNS records:
+7. Add DNS records:
    - `WEB_DOMAIN` A/AAAA -> VPS public IP
    - `API_DOMAIN` A/AAAA -> VPS public IP
    - staging web/API domains -> VPS public IP
@@ -76,6 +104,14 @@ Staging and production can share one VPS for cost/convenience, but a staging
 deploy key on the same host is not a hard security boundary: Docker group access
 is root-equivalent and can read files such as production env files. Full key and
 secret isolation requires a separate staging host.
+
+## Ubuntu 24.04 hardening notes
+
+- For fail2ban SSH protection on Ubuntu 24.04, use an `sshd` jail with
+  `backend = auto` and `logpath = /var/log/auth.log`. The systemd unit is
+  `ssh.service` on Ubuntu, not `sshd.service`.
+- Some Alibaba Cloud images set `vm.swappiness=0` in `/etc/sysctl.conf`. Keep
+  that in mind when comparing memory behavior with stock Ubuntu images.
 
 ## Deploy
 

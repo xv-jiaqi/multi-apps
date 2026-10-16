@@ -58,6 +58,8 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    # Do not publish database ports. Docker-published ports bypass host firewalls
+    # such as ufw; keep Postgres reachable only on the project network.
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -74,6 +76,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    # Do not publish Redis ports. Docker-published ports bypass host firewalls
+    # such as ufw; keep Redis reachable only on the project network.
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDISCLI_AUTH: ${REDIS_PASSWORD}

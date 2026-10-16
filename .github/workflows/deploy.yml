@@ -158,9 +158,31 @@ jobs:
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
           remote_deploy_dir="/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy"
           remote_deploy_dir_q="$(printf '%q' "${remote_deploy_dir}")"
-          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh edge \
+          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh \
             | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
                 "mkdir -p ${remote_deploy_dir_q} && tar -xzf - -C ${remote_deploy_dir_q}"
+
+      - name: Sync edge files
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          edge_dir="/opt/cardhub/edge/deploy/edge"
+          edge_dir_q="$(printf '%q' "${edge_dir}")"
+          before="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+            "sha256sum ${edge_dir_q}/Caddyfile 2>/dev/null | awk '{ print \\$1 }' || true")"
+
+          tar -C deploy/edge -czf - . \
+            | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+                "mkdir -p ${edge_dir_q} && tar -xzf - -C ${edge_dir_q}"
+
+          after="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+            "sha256sum ${edge_dir_q}/Caddyfile 2>/dev/null | awk '{ print \\$1 }' || true")"
+
+          if [ -n "${before}" ] && [ "${before}" != "${after}" ]; then
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+              'caddy_id="$(docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env -f /opt/cardhub/edge/deploy/edge/docker-compose.yml ps -q caddy 2>/dev/null || true)"; if [ -n "$caddy_id" ]; then docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env -f /opt/cardhub/edge/deploy/edge/docker-compose.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile; fi'
+          fi
 
       - name: Deploy on VPS
         shell: bash
