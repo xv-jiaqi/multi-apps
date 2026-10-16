@@ -1,10 +1,11 @@
 import express from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import request from 'supertest';
+import { configureTrustProxy } from '../bootstrap/trust-proxy';
 
 function makeLimitedApp() {
   const app = express();
-  app.set('trust proxy', 1);
+  configureTrustProxy(app);
   app.use(
     rateLimit({
       windowMs: 60_000,

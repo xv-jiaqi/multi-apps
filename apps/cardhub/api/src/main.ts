@@ -22,6 +22,7 @@ import type { Express } from 'express';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import helmet from 'helmet';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { configureTrustProxy } from './bootstrap/trust-proxy';
 import { AppModule } from './app.module';
 import { TrpcService } from './trpc/trpc.service';
 import { makeCreateContext } from './trpc/context';
@@ -32,11 +33,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = new Logger('Bootstrap');
   const expressApp = app.getHttpAdapter().getInstance() as Express;
-
-  // The API sits behind exactly one Caddy reverse-proxy hop. This lets Express
-  // derive req.ip from the real client IP while ignoring spoofed extra
-  // X-Forwarded-For entries. Do not change this to `true`.
-  expressApp.set('trust proxy', 1);
+  configureTrustProxy(expressApp);
 
   const config = app.get(ConfigService);
   const trpcService = app.get(TrpcService);
