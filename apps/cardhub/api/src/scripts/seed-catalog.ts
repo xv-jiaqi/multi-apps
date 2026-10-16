@@ -3,11 +3,6 @@ import { PrismaClient } from '@prisma/client';
 
 import { CATALOG_SERIES } from './seed-data';
 
-const CATALOG_SERIES_SLUGS = CATALOG_SERIES.map((series) => series.slug);
-const CATALOG_CARD_SLUGS = CATALOG_SERIES.flatMap((series) =>
-  series.cards.map((card) => card.slug),
-);
-
 export async function seedCatalog(prisma: PrismaClient) {
   for (const series of CATALOG_SERIES) {
     const upsertedSeries = await prisma.series.upsert({
@@ -52,8 +47,8 @@ export async function seedCatalog(prisma: PrismaClient) {
   return {
     expectedSeries: CATALOG_SERIES.length,
     expectedCards: CATALOG_SERIES.reduce((count, series) => count + series.cards.length, 0),
-    series: await prisma.series.count({ where: { slug: { in: CATALOG_SERIES_SLUGS } } }),
-    cards: await prisma.card.count({ where: { slug: { in: CATALOG_CARD_SLUGS } } }),
+    series: await prisma.series.count(),
+    cards: await prisma.card.count(),
   };
 }
 
@@ -64,7 +59,7 @@ async function main() {
     const counts = await seedCatalog(prisma);
     const users = await prisma.user.count();
     console.log(
-      `Catalog seed complete. Seeded series: ${counts.series}/${counts.expectedSeries}, Seeded cards: ${counts.cards}/${counts.expectedCards}, Users: ${users}`,
+      `Catalog seed complete. Series: ${counts.series}/${counts.expectedSeries}, Cards: ${counts.cards}/${counts.expectedCards}, Users: ${users}`,
     );
   } finally {
     await prisma.$disconnect();

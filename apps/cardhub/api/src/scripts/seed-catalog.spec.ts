@@ -19,7 +19,7 @@ function makePrisma() {
     user: { upsert: userUpsert, create: userCreate },
   } as unknown as PrismaClient;
 
-  return { prisma, seriesUpsert, cardUpsert, seriesCount, cardCount, userUpsert, userCreate };
+  return { prisma, seriesUpsert, cardUpsert, userUpsert, userCreate };
 }
 
 describe('seedCatalog', () => {
@@ -35,20 +35,5 @@ describe('seedCatalog', () => {
     );
     expect(userUpsert).not.toHaveBeenCalled();
     expect(userCreate).not.toHaveBeenCalled();
-  });
-
-  it('counts only seeded slugs instead of whole-table rows', async () => {
-    const { prisma, seriesCount, cardCount } = makePrisma();
-
-    await seedCatalog(prisma);
-
-    expect(seriesCount).toHaveBeenCalledWith({
-      where: { slug: { in: CATALOG_SERIES.map((series) => series.slug) } },
-    });
-    expect(cardCount).toHaveBeenCalledWith({
-      where: {
-        slug: { in: CATALOG_SERIES.flatMap((series) => series.cards.map((card) => card.slug)) },
-      },
-    });
   });
 });

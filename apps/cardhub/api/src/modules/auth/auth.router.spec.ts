@@ -1,9 +1,13 @@
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'node:crypto';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { AuthRouter } from './auth.router';
 import type { AuthService } from './auth.service';
 import type { PrismaService } from '../prisma/prisma.service';
+
+const TEST_PASSWORD = randomUUID();
+const WRONG_PASSWORD = randomUUID();
 
 /**
  * AuthRouter unit tests. We mock PrismaService and AuthService so the
@@ -54,7 +58,7 @@ describe('AuthRouter.register', () => {
       caller.register({
         email: 'alice@cardhub.test',
         username: 'alice',
-        password: 'password123',
+        password: TEST_PASSWORD,
       }),
     ).rejects.toMatchObject({
       code: 'CONFLICT',
@@ -74,7 +78,7 @@ describe('AuthRouter.register', () => {
       caller.register({
         email: 'alice@cardhub.test',
         username: 'alice',
-        password: 'password123',
+        password: TEST_PASSWORD,
       }),
     ).rejects.toMatchObject({
       code: 'CONFLICT',
@@ -97,7 +101,7 @@ describe('AuthRouter.register', () => {
     const result = await caller.register({
       email: 'alice@cardhub.test',
       username: 'alice',
-      password: 'password123',
+      password: TEST_PASSWORD,
     });
 
     expect(result.token).toBe('signed.jwt.token');
@@ -109,7 +113,7 @@ describe('AuthRouter.register', () => {
     });
 
     const createCall = userMock.create.mock.calls[0]?.[0];
-    expect(createCall.data.password).not.toBe('password123');
+    expect(createCall.data.password).not.toBe(TEST_PASSWORD);
     expect(createCall.data.password.length).toBeGreaterThan(20);
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u-new', username: 'alice' });
   });
@@ -121,13 +125,13 @@ describe('AuthRouter.login', () => {
     userMock.findFirst.mockResolvedValueOnce(null);
 
     await expect(
-      caller.login({ identifier: 'nobody', password: 'password123' }),
+      caller.login({ identifier: 'nobody', password: TEST_PASSWORD }),
     ).rejects.toBeInstanceOf(TRPCError);
   });
 
   it('rejects wrong password with UNAUTHORIZED', async () => {
     const { caller, userMock } = makeRouter();
-    const hashedPassword = await bcrypt.hash('password123', 4);
+    const hashedPassword = await bcrypt.hash(TEST_PASSWORD, 4);
     userMock.findFirst.mockResolvedValueOnce({
       id: 'u1',
       email: 'alice@cardhub.test',
@@ -137,13 +141,13 @@ describe('AuthRouter.login', () => {
     });
 
     await expect(
-      caller.login({ identifier: 'alice', password: 'wrong-password' }),
+      caller.login({ identifier: 'alice', password: WRONG_PASSWORD }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
   it('returns token + user on valid credentials', async () => {
     const { caller, userMock, auth } = makeRouter();
-    const hashedPassword = await bcrypt.hash('password123', 4);
+    const hashedPassword = await bcrypt.hash(TEST_PASSWORD, 4);
     userMock.findFirst.mockResolvedValueOnce({
       id: 'u1',
       email: 'alice@cardhub.test',
@@ -154,7 +158,7 @@ describe('AuthRouter.login', () => {
 
     const result = await caller.login({
       identifier: 'alice',
-      password: 'password123',
+      password: TEST_PASSWORD,
     });
 
     expect(result.token).toBe('signed.jwt.token');
@@ -172,7 +176,7 @@ describe('AuthRouter.login', () => {
     userMock.findFirst.mockResolvedValueOnce(null);
 
     await expect(
-      caller.login({ identifier: 'alice@cardhub.test', password: 'password123' }),
+      caller.login({ identifier: 'alice@cardhub.test', password: TEST_PASSWORD }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
 
     const where = userMock.findFirst.mock.calls[0]?.[0]?.where;

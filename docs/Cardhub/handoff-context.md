@@ -107,35 +107,37 @@ forum.replies.create / forum.replies.delete                   (authed, M6)
 ### 数据库
 
 - Schema：[apps/cardhub/api/prisma/schema.prisma](../../apps/cardhub/api/prisma/schema.prisma) — `User / Series / Card / Comment / Topic / Reply` 6 张表（M6 起）。
-- Seed：[apps/cardhub/api/prisma/seed.ts](../../apps/cardhub/api/prisma/seed.ts) — 2 用户（alice / admin）/ 3 系列 / 9 卡牌。运行 `pnpm --filter @cardhub/api db:seed`。
+- Seed：
+  - catalog-only（生产）：`pnpm --filter @cardhub/api seed:catalog`，只写 3 系列 / 9 卡牌，不创建用户或用户内容。
+  - demo（staging / 本地）：`pnpm --filter @cardhub/api seed:demo` 或 `pnpm --filter @cardhub/api db:seed`，写 catalog + alice / admin 两个 demo 用户。运行前必须设置 `DEMO_USER_PASSWORD` / `DEMO_ADMIN_PASSWORD`，缺失会非零退出。
 - Migrations：`20260501165944_init` → `20260502184922_add_user_role_and_forum`（M6）。
 
 ### 测试账号
 
-M6 起 seed 预置了两个账号（`pnpm --filter @cardhub/api db:seed` 自动 upsert）：
+M6 起 demo seed 预置两个账号（`pnpm --filter @cardhub/api db:seed` 自动 upsert；密码来自环境变量，不写入代码或文档）：
 
-| username | email              | password    | role  | 用途                                                   |
-| -------- | ------------------ | ----------- | ----- | ------------------------------------------------------ |
-| `alice`  | alice@cardhub.test | password123 | user  | 普通用户，发帖 / 评论 / 发布交易意向                   |
-| `admin`  | admin@cardhub.test | admin123!   | admin | 论坛删任意 topic / reply、查看 `reports.list` 举报队列 |
+| username | email              | password env var      | role  | 用途                                                   |
+| -------- | ------------------ | --------------------- | ----- | ------------------------------------------------------ |
+| `alice`  | alice@cardhub.test | `DEMO_USER_PASSWORD`  | user  | 普通用户，发帖 / 评论 / 发布交易意向                   |
+| `admin`  | admin@cardhub.test | `DEMO_ADMIN_PASSWORD` | admin | 论坛删任意 topic / reply、查看 `reports.list` 举报队列 |
 
-> ⚠️ 这两个是 demo 凭据，**永远不要复用到生产**。生产环境 seed 时务必先注释掉或换密码。
+> ⚠️ 这两个账号只用于 demo / staging / 本地。生产只运行 catalog seed；不要在仓库、PR 描述或部署文档中记录真实 demo 密码。
 
 ## 5. 开发命令速查
 
-| 用途                | 命令                                                                      |
-| ------------------- | ------------------------------------------------------------------------- |
-| 一次起 web + api    | `pnpm dev`                                                                |
-| 仅 api              | `pnpm dev:api`                                                            |
-| 仅 web              | `pnpm dev:web`                                                            |
-| Tauri 桌面          | `pnpm dev:native`                                                         |
-| 小程序              | `pnpm dev:miniapp`                                                        |
-| 共享包 watcher      | `pnpm dev:packages`                                                       |
-| 起 Postgres + Redis | `pnpm db:up` / `pnpm db:down`                                             |
-| 应用迁移            | `pnpm db:migrate`（**注意交互式，CI/script 用 `prisma migrate deploy`**） |
-| 灌种子数据          | `pnpm --filter @cardhub/api db:seed`                                      |
-| 全仓 typecheck      | `pnpm typecheck`                                                          |
-| 全仓 lint           | `pnpm lint`                                                               |
+| 用途                 | 命令                                                                                          |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| 一次起 web + api     | `pnpm dev`                                                                                    |
+| 仅 api               | `pnpm dev:api`                                                                                |
+| 仅 web               | `pnpm dev:web`                                                                                |
+| Tauri 桌面           | `pnpm dev:native`                                                                             |
+| 小程序               | `pnpm dev:miniapp`                                                                            |
+| 共享包 watcher       | `pnpm dev:packages`                                                                           |
+| 起 Postgres + Redis  | `pnpm db:up` / `pnpm db:down`                                                                 |
+| 应用迁移             | `pnpm db:migrate`（**注意交互式，CI/script 用 `prisma migrate deploy`**）                     |
+| 灌本地 demo 种子数据 | 设置 `DEMO_USER_PASSWORD` / `DEMO_ADMIN_PASSWORD` 后运行 `pnpm --filter @cardhub/api db:seed` |
+| 全仓 typecheck       | `pnpm typecheck`                                                                              |
+| 全仓 lint            | `pnpm lint`                                                                                   |
 
 ## 6. 关键设计决策与"别再踩"清单
 
