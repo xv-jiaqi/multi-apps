@@ -2,7 +2,7 @@
 
 > 面向接力实现功能的 Agent。每张任务卡都写明了背景、改动范围、验收标准和依赖，领取后不需要再回头问“要做成什么样”。
 >
-> 现状基线见 [feature-inventory.md](feature-inventory.md)，环境与踩坑见 [handoff-context.md](handoff-context.md)。任务卡里的文件路径都相对仓库根目录。
+> 现状基线见 [feature-inventory.md](feature-inventory.md)，环境与踩坑见 [handoff-context.md](handoff-context.md)，业内取舍见 [industry-benchmark.md](industry-benchmark.md)。任务卡里的文件路径都相对仓库根目录。和业内对标冲突时，以本文件已经写明的验收标准为准。
 
 ---
 
@@ -45,45 +45,50 @@
 
 规模：S ≈ 半天，M ≈ 1–2 天，L ≈ 3 天以上（按单 Agent 估算）。
 
-| 编号   | 任务                                            | 优先级 | 规模 | 依赖                 | 状态   |
-| ------ | ----------------------------------------------- | ------ | ---- | -------------------- | ------ |
-| CH-001 | 举报处理闭环                                    | P0     | M    | —                    | 待领取 |
-| CH-002 | 卡牌评论删除 + 发表限流                         | P0     | S    | —                    | 待领取 |
-| CH-003 | 话题详情回帖翻页                                | P0     | S    | —                    | 待领取 |
-| CH-004 | 生产配置启动校验（JWT_SECRET 等）               | P0     | S    | —                    | 待领取 |
-| CH-005 | Web 端 Sentry 运行时注入 + 清理 Zeabur 残留     | P0     | S    | —                    | 待领取 |
-| CH-101 | 系列页评论（PRD FR4）                           | P1     | M    | CH-002（建议）       | 待领取 |
-| CH-102 | 个人中心 `/me`                                  | P1     | M    | —                    | 待领取 |
-| CH-103 | 论坛完善：话题编辑、置顶、纯文本摘要            | P1     | M    | —                    | 待领取 |
-| CH-104 | 交易信息板体验：卡名展示、卡牌选择器、缩略图    | P1     | M    | CH-105（缩略图部分） | 待领取 |
-| CH-105 | 卡牌 / 系列真实图片渲染                         | P1     | S    | —                    | 待领取 |
-| CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                    | 待领取 |
-| CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                    | 待领取 |
-| CH-108 | 文案清理、页面标题、小型无障碍修复              | P1     | S    | —                    | 待领取 |
-| CH-201 | 分类体系 + 系列发售日期 + 卡牌编号              | P2     | M    | CH-107               | 待领取 |
-| CH-202 | 系列详情：系列内搜索 / 排序 / 分页 + 属性本地化 | P2     | M    | —                    | 待领取 |
-| CH-203 | 收藏与分享                                      | P2     | M    | CH-102               | 待领取 |
-| CH-204 | 评论回复（单层）                                | P2     | M    | CH-002               | 待领取 |
-| CH-205 | 首页改版                                        | P2     | M    | CH-201、CH-106       | 待领取 |
-| CH-206 | 卡牌详情页改版（大图、长描述）                  | P2     | M    | CH-105、CH-107       | 待领取 |
-| CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108               | 待领取 |
-| CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105               | 待领取 |
-| CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107       | 待领取 |
-| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107               | 待领取 |
-| CH-211 | API 错误信息国际化                              | P2     | M    | —                    | 待领取 |
-| CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102               | 待领取 |
-| CH-301 | 小程序补齐论坛 / 交易 / 举报                    | P3     | L    | CH-003、CH-104       | 待领取 |
-| CH-302 | 小程序上线准备                                  | P3     | S    | CH-301               | 待领取 |
-| CH-303 | Tauri 桌面发布（签名、更新、CORS）              | P3     | M    | —                    | 待领取 |
-| CH-304 | iOS / Android 真机构建与上架流程                | P3     | L    | CH-303               | 待领取 |
-| CH-305 | 深色模式                                        | P3     | M    | —                    | 待领取 |
-| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                    | 待领取 |
-| CH-307 | 可观测性：结构化日志 + request id               | P3     | S    | —                    | 待领取 |
-| CH-308 | 产品指标统计                                    | P3     | M    | —                    | 待领取 |
-| CH-309 | Web 安全响应头 + Tauri CSP                      | P3     | S    | CH-005               | 待领取 |
-| CH-310 | 邮箱验证与找回密码                              | P3     | M    | CH-212               | 待领取 |
-| CH-311 | 站内通知与 @提及                                | P3     | L    | CH-204               | 待领取 |
-| CH-312 | 内容多语言                                      | P3     | L    | CH-107               | 待领取 |
+| 编号   | 任务                                            | 优先级 | 规模 | 依赖                  | 状态   |
+| ------ | ----------------------------------------------- | ------ | ---- | --------------------- | ------ |
+| CH-001 | 举报处理闭环                                    | P0     | M    | —                     | 待领取 |
+| CH-002 | 卡牌评论删除 + 发表限流                         | P0     | S    | —                     | 待领取 |
+| CH-003 | 话题详情回帖翻页                                | P0     | S    | —                     | 待领取 |
+| CH-004 | 生产配置启动校验（JWT_SECRET 等）               | P0     | S    | —                     | 待领取 |
+| CH-005 | Web 端 Sentry 运行时注入 + 清理 Zeabur 残留     | P0     | S    | —                     | 待领取 |
+| CH-101 | 系列页评论（PRD FR4）                           | P1     | M    | CH-002（建议）        | 待领取 |
+| CH-102 | 个人中心 `/me`                                  | P1     | M    | —                     | 待领取 |
+| CH-103 | 论坛完善：话题编辑、置顶、纯文本摘要            | P1     | M    | —                     | 待领取 |
+| CH-104 | 交易信息板：卡名、品相、筛选与缩略图            | P1     | M    | CH-105（缩略图部分）  | 待领取 |
+| CH-105 | 卡牌 / 系列真实图片渲染                         | P1     | S    | —                     | 待领取 |
+| CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 待领取 |
+| CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | 待领取 |
+| CH-108 | 文案清理、页面标题、小型无障碍修复              | P1     | S    | —                     | 待领取 |
+| CH-201 | 分类体系：品类、系列、子集、卡号与发售日期      | P2     | L    | CH-107                | 待领取 |
+| CH-202 | 系列清单：搜索、排序、分页与属性本地化          | P2     | M    | CH-201                | 待领取 |
+| CH-203 | 收藏管理、集齐进度与分享                        | P2     | L    | CH-102                | 待领取 |
+| CH-204 | 评论回复（单层）                                | P2     | M    | CH-002                | 待领取 |
+| CH-205 | 首页改版                                        | P2     | M    | CH-201、CH-106        | 待领取 |
+| CH-206 | 卡牌详情页改版（大图、长描述）                  | P2     | M    | CH-105、CH-107        | 待领取 |
+| CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 待领取 |
+| CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105                | 待领取 |
+| CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 待领取 |
+| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | 待领取 |
+| CH-211 | API 错误信息国际化                              | P2     | M    | —                     | 待领取 |
+| CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102                | 待领取 |
+| CH-213 | 平行版本与限量编号                              | P2     | L    | CH-201                | 待领取 |
+| CH-214 | 资讯文章与分类                                  | P2     | L    | CH-107                | 待领取 |
+| CH-215 | 发售日历                                        | P2     | M    | CH-201                | 待领取 |
+| CH-301 | 小程序补齐论坛 / 交易 / 举报                    | P3     | L    | CH-003、CH-104        | 待领取 |
+| CH-302 | 小程序上线准备                                  | P3     | S    | CH-301                | 待领取 |
+| CH-303 | Tauri 桌面发布（签名、更新、CORS）              | P3     | M    | —                     | 待领取 |
+| CH-304 | iOS / Android 真机构建与上架流程                | P3     | L    | CH-303                | 待领取 |
+| CH-305 | 深色模式                                        | P3     | M    | —                     | 待领取 |
+| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | 待领取 |
+| CH-307 | 可观测性：结构化日志 + request id               | P3     | S    | —                     | 待领取 |
+| CH-308 | 产品指标统计                                    | P3     | M    | —                     | 待领取 |
+| CH-309 | Web 安全响应头 + Tauri CSP                      | P3     | S    | CH-005                | 待领取 |
+| CH-310 | 邮箱验证与找回密码                              | P3     | M    | CH-212                | 待领取 |
+| CH-311 | 站内通知与 @提及                                | P3     | L    | CH-204                | 待领取 |
+| CH-312 | 内容多语言                                      | P3     | L    | CH-107                | 待领取 |
+| CH-313 | 用户自报价格记录与走势                          | P3     | L    | CH-102；D8 确认前不做 | 待领取 |
+| CH-314 | 赛事与卡组数据库                                | P3     | L    | CH-107；D9 确认前不做 | 待领取 |
 
 ## 3. 推荐执行顺序
 
@@ -108,7 +113,8 @@ flowchart LR
   end
   subgraph W3[第 3 波]
     CH201[CH-201 分类]
-    CH203[CH-203 收藏分享]
+    CH202[CH-202 系列清单]
+    CH203[CH-203 收藏进度]
     CH204[CH-204 评论回复]
     CH205[CH-205 首页改版]
     CH206[CH-206 详情改版]
@@ -118,6 +124,15 @@ flowchart LR
     CH210[CH-210 缓存]
     CH212[CH-212 会话安全]
   end
+  subgraph W4[第 4 波 对标新增]
+    CH213[CH-213 平行版本]
+    CH214[CH-214 资讯]
+    CH215[CH-215 发售日历]
+  end
+  subgraph W5[确认后才开工]
+    CH313[CH-313 自报价格]
+    CH314[CH-314 赛事卡组]
+  end
   CH002 --> CH101
   CH002 --> CH204
   CH001 --> CH209
@@ -125,17 +140,21 @@ flowchart LR
   CH107 --> CH206
   CH107 --> CH209
   CH107 --> CH210
+  CH107 --> CH214
   CH105 --> CH104
   CH105 --> CH206
   CH105 --> CH208
   CH102 --> CH203
   CH102 --> CH212
   CH108 --> CH207
+  CH201 --> CH202
   CH201 --> CH205
+  CH201 --> CH213
+  CH201 --> CH215
   CH106 --> CH205
 ```
 
-CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中 CH-301 依赖 CH-003 / CH-104，CH-302 依赖 CH-301。
+CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档插入。P3 中 CH-301 依赖 CH-003 与 CH-104，CH-302 依赖 CH-301。CH-313 和 CH-314 在 §6 的 D8、D9 确认前不要开工。任何外部图库、行情或赛事导入都还要等 D12，确认前不要写导入器。
 
 ---
 
@@ -250,14 +269,25 @@ CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中
   3. 列表摘要中不再出现 `#`、`**`、`[]()` 等 Markdown 符号。
 - **依赖**：无。
 
-#### CH-104 交易信息板体验
+#### CH-104 交易信息板：卡名、品相、筛选与缩略图
 
-- **背景**：列表显示 `cardSlug` 而不是卡名；发布时要手动输入 slug；图片只显示为链接。
+- **背景**：列表显示 `cardSlug` 而不是卡名；发布时要手动输入 slug；图片只显示为链接。业内对标里，TCGplayer 和 Cardmarket 的可售单位还带品相、语言和工艺，但那是库存 SKU。Cardhub 只吸收筛选时用得上的事实，交易仍然在站外完成。见 [industry-benchmark.md](industry-benchmark.md) 第 6 节。
 - **改动范围**
   - API：`listings.list / byCard / mine` 输出增加 `card: { name, seriesSlug, seriesTitle, imageUrl } | null`，用一次 `card.findMany({ where: { slug: { in } } })` 批量补齐；卡牌已不存在时为 `null`（`cardSlug` 是软指针）。
-  - Web：列表项显示卡名 + 系列并链接到卡牌页；把“按 slug 筛选”输入框换成卡牌搜索选择器（基于 `cards.search`，250ms 防抖，键盘可选），保留 `/trade/new?cardSlug=` 预填；发布页同样使用选择器并显示所选卡牌预览；图片显示为最多 4 张缩略图（`loading="lazy"`、`referrerPolicy="no-referrer"`，加载失败退回链接），点击新窗口打开原图。
+  - Prisma：`Listing` 增加可空字段 `condition`（枚举 `NEAR_MINT`、`LIGHTLY_PLAYED`、`MODERATELY_PLAYED`、`HEAVILY_PLAYED`、`DAMAGED`）、`language`（枚举 `ZH`、`EN`、`JA`、`OTHER`）、`variantNote String?`。迁移名 `add_listing_facets`。旧数据这三列都是空。若列表会按状态、货币和价格一起过滤，补 `@@index([status, currency, price])`。
+  - shared：`packages/shared/src/zod/index.ts` 的 `listingPublishInput` 与 `listingListInput` 增加上述可选字段。`variantNote` 去空白后最长 40 字。列表增加 `minPrice?`、`maxPrice?`、`sort: 'newest' | 'price_asc' | 'price_desc'`，默认 `newest`。
+  - 价格排序只比较同一种货币。`sort` 为价格时，请求必须带 `currency`（默认 `CNY`），只返回该货币且价格非空的意向。`newest` 仍返回全部货币。不做汇率换算。
+  - Web：`apps/cardhub/web/src/pages/trade-list.tsx`、`trade-publish.tsx` 和 `apps/cardhub/web/src/components/listings-for-card.tsx`。列表项显示卡名和系列并链接到卡牌页；把“按 slug 筛选”换成卡牌搜索选择器（基于 `cards.search`，250ms 防抖，键盘可选），保留 `/trade/new?cardSlug=` 预填；发布页使用同一选择器并显示所选卡牌预览。图片显示为最多 4 张缩略图（`loading="lazy"`、`referrerPolicy="no-referrer"`，加载失败退回链接），点击新窗口打开原图。发布表单增加品相、语言和版本备注，三者都可空。列表增加这三项筛选、价格区间和排序。已填写的品相和语言显示在卡片上。
+  - i18n：品相五档的中文是近全新、轻微使用、中度使用、重度使用、破损。语言是中文、英文、日文、其他。新 key 放在 `trade.*`。
+  - 边界：不建商品 SKU、库存数量、购物车、站内支付、卖家等级或市场价。版本备注是自由短句，不是工艺目录。小程序留到 CH-301，本卡只保证 Web 上的新字段能从接口读到。
   - 🔶 **D1 联系方式可见性（需用户确认）**：是否只对登录用户显示联系方式。确认前保持现状（公开）。若确认要隐藏：匿名请求时 `list / byCard` 返回 `contact: null`，前端显示“登录后查看联系方式”。
-- **验收标准**：列表和卡牌页都显示卡名；发布时无需知道 slug 也能选中卡牌；带图意向显示缩略图且坏图不破版；卡牌被删除的意向仍可展示（显示 slug 和“卡牌已下架”）。
+  - 🔶 **D11 品相用词（默认方案）**：按上面的五档实施，不必再等确认。
+- **验收标准**
+  1. 列表和卡牌页都显示卡名；发布时无需知道 slug 也能选中卡牌。
+  2. 带图意向显示缩略图，坏图不破版。卡牌被删除的意向仍可展示（显示 slug 和“卡牌已下架”）。
+  3. 可以只看“近全新”的出售意向。不填品相、语言和版本备注的旧意向仍能展示和关闭。
+  4. 按价格从低到高排序时，只出现所选货币的有价格意向；“面议”不混进这个排序。
+- **测试**：`listings.router.spec.ts` 补品相筛选、跨货币不进价格排序、旧数据字段为空。
 - **依赖**：缩略图的渲染组件可复用 CH-105 的 `Artwork`。
 
 #### CH-105 卡牌 / 系列真实图片渲染
@@ -273,13 +303,20 @@ CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中
 
 #### CH-106 全局搜索
 
-- **背景**：PRD Story 2.5 和 UI 规范要求在醒目位置放搜索框；目前只能进入 `/search` 页面，且只搜卡牌名。`@@index([name])` 是 btree，对 `ILIKE '%q%'` 无效。
+- **背景**：PRD Story 2.5 和 UI 规范要求在醒目位置放搜索框；目前只能进入 `/search` 页面，且只搜卡牌名。`@@index([name])` 是 btree，对 `ILIKE '%q%'` 无效。Scryfall 的搜索是一整套键值语法，还包含正则、费用和赛制合法性。Cardhub 只借其中很小的一块，见 [industry-benchmark.md](industry-benchmark.md) 第 4 节。
 - **改动范围**
   - Prisma：在 schema 中用 `@@index([name(ops: raw("gin_trgm_ops"))], type: Gin)` 给 `Card.name`、`Series.title` 声明 trigram 索引，并在生成的 `migration.sql` 顶部手动加 `CREATE EXTENSION IF NOT EXISTS pg_trgm;`（部署用的官方 postgres 镜像中 `POSTGRES_USER` 是超级用户，有建扩展权限）。
-  - API：新增 `search.global({ q, limit })` 返回 `{ cards[], series[] }`；`cards.search` 增加可选筛选 `rarity`、`seriesSlug`。
-  - Web：Header 增加搜索框（桌面端内联，移动端在抽屉里），按 ARIA combobox 模式实现下拉建议（最多 5 张卡 + 3 个系列，↑↓ 选择、Enter 打开、Esc 关闭），底部“查看全部结果”跳转 `/search?q=`；`/search` 页读写 URL 的 `q` 参数（可分享），并增加稀有度和系列筛选。
-- **验收标准**：任意页面都能直接搜索；纯键盘可完成搜索并进入详情；`/search?q=极光` 直接打开即有结果；搜索系列标题能命中。
-- **依赖**：无。
+  - shared：在 `packages/shared` 增加纯函数 `parseCardSearchQuery`。识别 `r:`（稀有度枚举）和 `s:`（系列 slug），其余文字按空格拆成名称词。大写 `OR` 连接名称词，前缀 `-` 表示名称中排除该词。不支持正则、比较符、括号和价格。未知前缀返回失败，调用方不要发请求。`c:` 和 `y:` 留给 CH-201，本卡遇到它们按未知前缀处理。
+  - API：新增 `search.global({ q, limit })` 返回 `{ cards[], series[] }`。`cards.search` 增加可选 `rarity`、`seriesSlug`。名称条件使用解析后的词。`q` 的长度上限从 80 调到 200。服务端再解析一次，不信任客户端已经解析过。
+  - Web：Header 增加搜索框（桌面端内联，移动端在抽屉里），按 ARIA combobox 模式实现下拉建议（最多 5 张卡 + 3 个系列，↑↓ 选择、Enter 打开、Esc 关闭），底部“查看全部结果”跳转 `/search?q=`。`/search` 页读写 URL 的 `q` 参数（可分享），并增加稀有度和系列筛选。筛选控件和搜索框写入同一条查询。搜索框下用一行例子说明语法，不另做说明书页面。
+  - 小程序的搜索页可以继续只传名称；完整语法不是本卡的小程序范围。
+- **验收标准**
+  1. 任意页面都能直接搜索；纯键盘可完成搜索并进入详情。
+  2. `/search?q=极光` 直接打开即有结果；搜索系列标题能命中。
+  3. `r:legendary 龙 OR 凤 -幼体` 只返回稀有度为 legendary、名称含“龙”或“凤”、且名称不含“幼体”的卡。
+  4. `usd<1` 这类未知前缀在界面提示不支持，不发起查询。
+- **测试**：`parseCardSearchQuery` 的单测覆盖并且、或者、排除和未知前缀；`cards.router.spec.ts` 覆盖筛选组合。
+- **依赖**：无。分类和发售年份筛选在 CH-201 追加。
 
 #### CH-107 内容管理后台（系列 / 卡牌）
 
@@ -307,37 +344,62 @@ CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中
 
 ### P2 · 知识库能力增强
 
-以下任务融合了 UI 规范和历史设计文档（外部 `fullstack-architecture.md`、`ai-frontend-development-prompts.md`）中的设计意图，技术实现一律遵循当前仓库的栈。
+以下任务融合了 UI 规范、历史设计文档（外部 `fullstack-architecture.md`、`ai-frontend-development-prompts.md`）和 [industry-benchmark.md](industry-benchmark.md) 的取舍。技术实现一律遵循当前仓库的栈。
 
-#### CH-201 分类体系 + 系列发售日期 + 卡牌编号
+#### CH-201 分类体系：品类、系列、子集、卡号与发售日期
 
-- **来源**：PRD §3.2“按系列、年份、类型浏览”、§3.3“分类列表页”；UI 规范站点地图“首页 → 分类列表 → 系列列表”；历史 ERD 中的 `categories`、`series.release_date`、`cards.card_number`。
+- **来源**：PRD §3.2“按系列、年份、类型浏览”、§3.3“分类列表页”；UI 规范站点地图；历史 ERD 中的 `categories`、`series.release_date`、`cards.card_number`。业内清单的层级见 [industry-benchmark.md](industry-benchmark.md) 第 5 节。平行版本和限量编号拆到 CH-213，避免本卡一次迁移做不完。
 - **改动范围**
-  - Prisma：新增 `Category { id, slug @unique, name, description?, sortOrder Int @default(0), createdAt, updatedAt }`；`Series` 增加 `categoryId String?`（`onDelete: SetNull`）和 `releaseDate DateTime? @db.Date`；`Card` 增加 `cardNumber String?`。
-  - API：`categories.list`（含系列数）、`categories.bySlug`（含系列）；`series.list` 增加 `categorySlug?`、`year?`、`sort`（发售日期升序 / 降序、收录时间）筛选，输出带 `releaseDate` 和 `category`；`cards.bySlug` 输出 `cardNumber`。CH-107 的后台表单补这些字段，并新增分类管理。
-  - Web：`/categories`、`/categories/:slug` 页面；系列列表增加分类和年份筛选；系列头图显示发售日期；卡牌详情显示编号；Header 导航加“分类”。
-  - 演示数据：`seed-data.ts` 补 1–2 个分类。
-- **不采用**：历史架构的 `name_i18n_key` + `i18n_texts` 长表，见 CH-312。
+  - Prisma：新增 `Category { id, slug @unique, name, description?, sortOrder Int @default(0), createdAt, updatedAt }`。新增枚举 `SubsetKind`，取值 `BASE`、`INSERT`。新增 `Subset { id, seriesId, slug, name, kind, sortOrder Int @default(0), description?, createdAt, updatedAt }`，`@@unique([seriesId, slug])`，删除系列时级联删除子集。`Series` 增加 `categoryId String?`（`onDelete: SetNull`）和 `releaseDate DateTime? @db.Date`。`Card` 增加 `cardNumber String?`、`subsetId String?`（`onDelete: SetNull`）。迁移名 `add_catalog_taxonomy`。
+  - shared：分类、子集和扩展后的系列 / 卡牌写入字段放进 `packages/shared/src/zod/index.ts`，供 CH-107 的后台和前台筛选共用。
+  - API：`categories.list`（含系列数）、`categories.bySlug`（含系列）。`series.bySlug` 增加 `subsets`，卡牌带 `cardNumber` 和 `subsetSlug`。`series.list` 增加 `categorySlug?`、`year?`、`sort`（发售日期升序 / 降序、收录时间），输出带 `releaseDate` 和 `category`。`cards.bySlug` 输出 `cardNumber`。CH-107 的后台补这些字段，并增加分类管理和子集管理。
+  - Web：`apps/cardhub/web/src/pages/` 新增分类列表和分类详情，路由 `/categories`、`/categories/:slug`，在 `app.tsx` 注册。系列列表增加分类和年份筛选。系列头图显示发售日期。系列页按子集分组，组内按卡号字符串排序即可，自然顺序由 CH-202 负责。卡牌详情显示编号。Header 导航加“分类”。
+  - 搜索：CH-106 已经合并时，在 `/search` 追加分类和发售年份，并让 `parseCardSearchQuery` 接受 `c:`、`y:`。还没合并时，本卡只保证系列列表能筛选，不要提前改搜索框。
+  - 演示数据：`apps/cardhub/api/src/scripts/seed-data.ts` 补 1 个分类，并为现有系列补至少 1 个基础子集和卡号。
+  - 小程序：本卡不改页面。
+- **不采用**：历史架构的 `name_i18n_key` 加 `i18n_texts` 长表，见 CH-312。不用备注字段编码平行卡。
+- **验收标准**
+  1. 访客能从分类进入系列，系列页能看到子集和卡号。
+  2. 没有子集、没有卡号的旧卡牌仍然能打开。
+  3. 删除系列会删除其子集。删除子集不会删除卡牌，只把 `subsetId` 置空。
+  4. 非 admin 调用分类和子集的写接口返回 `FORBIDDEN`。
 - **依赖**：CH-107。
+- **规模**：L。
 
-#### CH-202 系列详情：系列内搜索 / 排序 / 分页 + 属性本地化
+#### CH-202 系列清单：搜索、排序、分页与属性本地化
 
-- **来源**：历史 AI 前端指令 3（系列详情页工具栏：系列内搜索、排序、分页）。
+- **来源**：历史 AI 前端指令 3（系列详情页工具栏）。Checklist 站点的系列页按子集分表，并按卡号排列，见 [industry-benchmark.md](industry-benchmark.md) 第 5 节。
 - **改动范围**
-  - API：新增 `cards.listBySeries({ seriesSlug, q?, rarity?, sort: 'name' | 'rarity' | 'created', page, pageSize })`。`series.bySlug.cards` 暂时保留（小程序在用），在代码中标注待废弃。
-  - Web：系列详情增加工具栏（搜索框、排序下拉、稀有度筛选）和分页，状态同步到 URL 参数。
-  - 属性本地化：已知键（`cost`、`attack`、`health`、`type`）在字典里加 `card.attr.<key>`，未知键显示原文。Web 和小程序共用。
-  - 测试：补上目前缺失的 `series.router.spec.ts`。
-- **依赖**：无。
+  - API：新增 `cards.listBySeries({ seriesSlug, q?, rarity?, subsetSlug?, sort: 'number' | 'name' | 'rarity' | 'created', page, pageSize })`。默认 `sort=number`、`pageSize=60`。卡号排序先比较其中的整数段，再比较其余文本，空卡号放在最后。返回 `total`。`series.bySlug.cards` 暂时保留（小程序在用），在代码中标注待废弃。
+  - Web：`apps/cardhub/web/src/pages/series-detail.tsx` 增加工具栏（子集、稀有度、关键词、排序）和分页，状态写入 URL。没有子集数据时不显示子集筛选。
+  - 平行版本的“默认隐藏”由 CH-213 加到这个工具栏上。本卡不要预做半套开关。
+  - 属性本地化：已知键（`cost`、`attack`、`health`、`type`）在字典里加 `card.attr.<key>`，未知键显示原文。Web 和小程序的卡牌详情共用。小程序系列页仍走旧接口。
+  - 测试：补 `series.router.spec.ts`，以及 `cards.listBySeries` 的成功、系列不存在、非法分页。
+- **验收标准**
+  1. 系列超过 60 张卡时可以翻页，刷新后 URL 里的筛选还在。
+  2. 卡号 `1`、`2`、`10` 按数值排成 1、2、10，而不是按纯字符串把 10 排到 2 前面。
+  3. 属性键 `attack` 在中文界面显示中文标签。
+- **依赖**：CH-201。子集或卡号还是空的时候，搜索、排序和分页仍然要能用。
+- **规模**：M。
 
-#### CH-203 收藏与分享
+#### CH-203 收藏管理、集齐进度与分享
 
-- **来源**：UI 规范 §4 卡牌详情“收藏 / 分享按钮”；历史 AI 前端指令 2。
+- **来源**：UI 规范 §4 卡牌详情“收藏 / 分享按钮”。Pokéllector 的“已拥有 / 完成条”和 TCDB 的私人账本见 [industry-benchmark.md](industry-benchmark.md) 第 7 节。多本收藏、评级、未拆盒和按外部行情估值都不在本卡。
 - **改动范围**
-  - Prisma：`Favorite { id, userId, cardId, createdAt, @@unique([userId, cardId]) }`，两个外键都级联删除。
-  - API：`favorites.toggle({ cardSlug }) → { favorited, count }`；`cards.bySlug` 在已登录时额外返回 `isFavorited`，并返回 `favoriteCount`；`favorites.list`（cursor）。toggle 加限流（每分钟 60 次）。
-  - Web：卡牌详情加收藏按钮（乐观更新，未登录跳转登录）；分享按钮优先用 `navigator.share`，不支持时复制链接并提示；`/me` 增加“我的收藏”。
-- **依赖**：CH-102。
+  - Prisma：`CollectionItem { id, userId, cardId, quantity Int @default(1), wanted Boolean @default(false), createdAt, updatedAt, @@unique([userId, cardId]) }`。两个外键都级联删除。数量为 0 且 `wanted` 为 false 时删除这一行，不留空记录。不做公开的收藏人数。
+  - API：新建 `collection` 模块。`collection.upsert({ cardSlug, quantity, wanted })`、`collection.remove({ cardSlug })`、`collection.mine({ cursor })`、`collection.progress()`。进度按系列返回 `{ seriesSlug, seriesTitle, owned, total }`。`owned` 只数 `quantity > 0` 的卡。`total` 是该系列卡牌数；CH-213 上线后，默认排除 `parallelOfId` 非空的卡。`cards.bySlug` 在已登录时返回当前用户的 `collection: { quantity, wanted } | null`。`upsert` 限流每分钟 60 次。
+  - shared：输入 schema 放 `packages/shared/src/zod/index.ts`。数量为 0 到 99 的整数。
+  - Web：卡牌详情用“我有”和数量，以及“想要”。未登录跳转登录。乐观更新。分享按钮优先用 `navigator.share`，不支持时复制链接并提示。`/me` 增加“我的收藏”：拥有的卡、想要的卡、每个系列的“已有 / 共”。本地开关“把平行版本计入进度”存在 `localStorage`，只影响 `progress` 的请求参数 `includeParallels`。CH-213 未合并时隐藏这个开关，分母就是系列内全部卡牌。
+  - i18n：`collection.*`。
+  - 小程序：本卡不做。
+- **验收标准**
+  1. 登录用户可以把一张卡记为拥有 2 张，或只标记想要。刷新后状态还在。
+  2. 系列进度等于该用户拥有的张数卡（按卡计，不按 quantity 累加）除以系列卡牌数。只标记想要的卡不进分子。
+  3. 其他用户看不到这份收藏。未登录访问 `/me` 的行为仍遵循 CH-102。
+  4. 分享在没有系统分享面板时复制当前卡牌地址。
+- **测试**：成功、未登录拒绝、数量非法、进度不把“只想要”算进去。
+- **依赖**：CH-102。平行版本的分母规则与 CH-213 对齐，但本卡不依赖它先合并。
+- **规模**：L。
 
 #### CH-204 评论回复（单层）
 
@@ -350,29 +412,36 @@ CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中
 
 #### CH-205 首页改版
 
-- **来源**：历史 AI 前端指令 1 + UI 规范 §4 首页布局（页眉区、精选分类区、最新收录系列区）。
+- **来源**：历史 AI 前端指令 1，UI 规范 §4 首页布局（页眉区、精选分类区、最新收录系列区），以及品牌官网的三层视觉，见 [industry-benchmark.md](industry-benchmark.md) 第 2 节。首页不是商店。
 - **改动范围**
-  - Hero 保留主副标题和行动按钮，嵌入 CH-106 的搜索框。
+  - Hero 保留主副标题和行动按钮，嵌入 CH-106 的搜索框。主视觉只突出一个系列：优先用发售日期不晚于今天、且日期最近的系列；没有发售日期时用最新收录。按钮进入该系列页。不放价格、购买或倒计时。
   - 精选分类网格（移动端 2 列，桌面端 4 列；没有分类数据时隐藏）。
   - 最新收录系列：可横向滚动的 6–8 个系列卡片，需要 `series.list` 支持按收录时间倒序。
-  - 全站页脚组件（放进 `PageShell`）：关于、免责声明、语言切换。
+  - 即将发售：CH-215 已有未来日期的记录时显示接下来 3 条，否则整块不渲染。最新资讯：CH-214 已有已发布文章时显示 3 篇，否则整块不渲染。不要为了这两块去依赖那两张卡先合并。
+  - 全站页脚组件（放进 `PageShell`）：关于、非官方与交易免责声明、语言切换。
   - 滚动入场动效：IntersectionObserver + CSS，遵守 `prefers-reduced-motion`。
   - 🔶 **D2 品牌色（需用户确认）**：UI 规范写的是深紫 `#6D28D9`，`packages/design-tokens` 当前是蓝色系。确认前保持蓝色。
 - **依赖**：CH-201、CH-106。
+- **规模**：M。
 
 #### CH-206 卡牌详情页改版
 
-- **来源**：历史 AI 前端指令 2 + UI 规范 §4 卡牌详情（固定功能区 + 自由内容区 + 评论区）。
+- **来源**：历史 AI 前端指令 2，UI 规范 §4 卡牌详情（固定功能区 + 自由内容区 + 评论区）。详情页的信息顺序参考百科站点，见 [industry-benchmark.md](industry-benchmark.md) 第 4 节。价格曲线属于 CH-313，本卡不放。
 - **改动范围**
   - Prisma：`Card.body String?`（Markdown 长描述，≤ 20000 字），在 CH-107 后台编辑，用现有 `MarkdownView` 渲染。历史文档写的“富文本编辑器”统一落地为 Markdown，与论坛保持一致且已有防 XSS 方案。
-  - Web：桌面端双栏，左栏随滚动固定（大图，点击放大为灯箱，支持 Esc 关闭和焦点圈定；收藏 / 分享按钮）；右栏是面包屑、标题、稀有度、编号、长描述，下面依次是属性、交易意向、评论。移动端单栏。
-- **依赖**：CH-105、CH-107；收藏按钮依赖 CH-203（未完成时先不放）。
+  - Web：`apps/cardhub/web/src/pages/card-detail.tsx`。桌面端双栏，左栏随滚动固定（大图，点击放大为灯箱，支持 Esc 关闭和焦点圈定；收藏 / 分享按钮）；右栏是面包屑、标题、稀有度、编号、长描述，下面依次是属性、交易意向、评论。移动端单栏。
+  - 面包屑在有数据时显示分类、系列、子集。CH-201 未提供这些字段时保持现在的系列面包屑。
+  - 同一子集（没有子集时用整个系列）内，按 CH-202 的卡号顺序给出上一张和下一张。CH-202 未合并时不显示这对链接。
+  - CH-213 合并后，详情页列出同一基础卡的其他平行版本。未合并时不显示这个区块，也不要写死空状态。
+- **依赖**：CH-105、CH-107。收藏按钮依赖 CH-203（未完成时先不放）。
+- **规模**：M。
 
 #### CH-207 SEO：sitemap / robots / 页面 meta
 
 - **改动范围**
   - API：新增 REST 端点 `GET /sitemap.xml`，从数据库生成系列、卡牌、话题的 URL；Caddy 在 Web 域名上把 `/sitemap.xml` 反代到 API（修改 `deploy/edge/optional/root-web.caddy` 和 staging 站点块）。
   - Web：`public/robots.txt`（指向 sitemap，禁止抓取 `/reports`、`/admin`、`/me`）；在 CH-108 的 `<PageMeta>` 上补 `description`。
+  - 若 CH-214、CH-215 已经合并，sitemap 同时包含已发布文章和发售日历页。还没合并时不要等它们，本卡先覆盖系列、卡牌和话题。
   - 🔶 **D7 预渲染（需用户确认）**：微信、社交平台的抓取器不执行 JS，单页应用无法提供每页的 OG 卡片。是否做针对爬虫的预渲染或迁移 SSR 需要用户决定；确认前只做 sitemap、robots 和客户端 meta。
 - **依赖**：CH-108。
 
@@ -418,13 +487,72 @@ CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中
   - 不做 refresh token：保留 7 天 access token，在 handoff 文档注明这一决定。
 - **依赖**：CH-102。
 
+#### CH-213 平行版本与限量编号
+
+- **背景 / 来源**：球星卡和部分集换式卡牌的同一卡号会有银折、金标、限量分母不同的版本。TCDB 用“另开一份清单再改备注”表达这件事，备注一覆盖，子集信息就丢了。Cardhub 把平行版本做成指向基础卡的一层关系。见 [industry-benchmark.md](industry-benchmark.md) 第 5 节。
+- **改动范围**
+  - Prisma：`Card` 增加 `parallelOfId String?`（自关联，`onDelete: SetNull`）、`parallelName String?`、`printRun Int?`。迁移名 `add_card_parallels`。应用层校验：`parallelOfId` 指向的卡必须属于同一系列，且自己的 `parallelOfId` 为空；不能指向自己。`parallelOfId` 有值时 `parallelName` 必填，最长 40 字。`printRun` 要么为空（表示不编号），要么是大于 0 的整数。
+  - shared：`cardUpsertInput` 增加这三个可选字段。
+  - API：CH-107 的卡牌写入接口保存并校验它们。`cards.bySlug` 返回基础卡摘要，以及同一基础卡下的其他平行版本（名称、限量、slug）。`cards.listBySeries` 若已存在，增加 `includeParallels`，默认 `false`。还没有这个接口时，`series.bySlug` 的卡牌带上 `parallelOfId`，由前端默认隐藏。
+  - Web：后台卡牌表单增加“这是哪张基础卡的平行版本”，候选只限同一系列、且自身不是平行卡的记录。系列清单默认隐藏平行卡，工具栏提供“显示平行版本”。卡牌详情列出同组的其他版本。限量显示为 `/10` 这种分母；空则显示“不编号”。
+  - 收藏进度：与 CH-203 的约定一致。CH-203 已合并时，默认分母排除平行卡。
+  - 小程序：本卡不改。
+- **验收标准**
+  1. 管理员可以把同系列的一张卡标成另一张基础卡的平行版本，并写下名称和可选限量。
+  2. 把平行卡再挂到另一张平行卡上，接口返回输入错误。
+  3. 系列页默认看不到平行卡；打开开关后能看到，并回到同一卡号附近。
+  4. 不填这三个字段的旧卡牌行为不变。
+- **测试**：同系列成功、跨系列拒绝、平行卡再挂平行卡拒绝、默认列表不含平行卡。
+- **依赖**：CH-201。
+- **规模**：L。
+
+#### CH-214 资讯文章与分类
+
+- **背景 / 来源**：Beckett 和 PokéBeach 用栏目、文章和发售信息把“发生了什么”从清单里分开。Cardhub 需要同样的旁路，但文章必须是站内原创或管理员撰写的转述，不抓取那两站的正文和卡图。见 [industry-benchmark.md](industry-benchmark.md) 第 3 节。
+- **改动范围**
+  - Prisma：`NewsCategory { id, slug @unique, name, sortOrder Int @default(0) }`。`ArticleStatus` 枚举 `DRAFT`、`PUBLISHED`。`Article { id, slug @unique, title, summary, body, coverUrl?, categoryId?（onDelete: SetNull）, status, publishedAt DateTime?, authorId, sourceUrl?, createdAt, updatedAt }`。作者外键 `onDelete: Restrict`（不要因为删用户而丢掉已发布文章；本阶段不提供删管理员账号）。`sourceUrl` 只是展示用的 https 链接。迁移名 `add_news_articles`。
+  - shared：`articleUpsertInput`（slug、title ≤120、summary ≤300、body ≤20000、coverUrl 规则同系列封面、categorySlug 可选、status、sourceUrl 可选 https）。放在 `packages/shared/src/zod/index.ts`。
+  - API：按 §1.1 新建 `news` 模块。`news.list({ categorySlug?, cursor })` 只返回 `PUBLISHED`，按 `publishedAt desc`。`news.bySlug` 对访客只返回已发布；admin 可以按 slug 预览草稿。`admin.news.create / update / delete`、`admin.newsCategories.create / update / delete` 使用 CH-107 的 `adminProcedure`。slug 创建后不可改。删除还有文章的栏目时拒绝。
+  - Web：`/news`、`/news/:slug`，在 `app.tsx` 懒加载。详情用现有 `MarkdownView`。管理页 `/admin/news`，放进 CH-107 的“管理”入口。Header 增加“资讯”。
+  - i18n：`news.*`。
+  - 🔶 **D10 投稿范围（默认方案）**：只允许管理员发布。不要做用户投稿和文章评论。若以后要开放投稿，需要另一次确认，因为要审核队列。
+  - 小程序：本卡不做。
+- **验收标准**
+  1. 访客能按栏目打开已发布文章；草稿有地址也返回 `NOT_FOUND`。
+  2. 非 admin 调用写接口返回 `FORBIDDEN`。
+  3. 文章里的 Markdown 图片和脚本被现有消毒策略去掉，不能执行。
+  4. 没有文章时列表是空状态，首页不要出现空白资讯块（那是 CH-205 的隐藏规则）。
+- **测试**：访客看不到草稿、admin 能发布、栏目下还有文章时不能删栏目。
+- **依赖**：CH-107。
+- **规模**：L。
+
+#### CH-215 发售日历
+
+- **背景 / 来源**：品牌官网和资讯站都把“哪天发售”从长文里抽出来。Cardhub 的系列发售日期在 CH-201，本卡补的是可以独立存在的日历条目，例如一个还没有清单的新品。见 [industry-benchmark.md](industry-benchmark.md) 第 2、3 节。
+- **改动范围**
+  - Prisma：`Release { id, title, releaseDate DateTime @db.Date, region String?, seriesId String?（onDelete: SetNull）, categoryId String?（onDelete: SetNull）, note String?, sourceUrl String?, createdAt, updatedAt }`。`region` 只允许 `CN`、`JP`、`GLOBAL` 或空。迁移名 `add_release_calendar`。
+  - shared：`releaseUpsertInput`。`sourceUrl` 必须是 https，服务器不请求这个地址。
+  - API：`releases.list({ from?, to?, categorySlug? })` 按日期升序，公开。`admin.releases.create / update / delete`。`series.bySlug` 附上关联的发售条目。
+  - Web：`/calendar` 按月分组。管理表单放在 `/admin/catalog` 旁的 `/admin/releases`，纳入“管理”入口。系列详情在 CH-201 的发售日期旁边列出关联条目。
+  - i18n：`calendar.*`。
+  - 小程序：本卡不做。
+- **验收标准**
+  1. 日历能看到下个月的条目，点进去能进已关联的系列；没关联系列时只显示标题、日期和备注。
+  2. 修改日期后，月份分组跟着变。
+  3. `sourceUrl` 渲染成新窗口链接，网络面板里没有服务器去抓那个地址的请求。
+  4. 非 admin 不能写入。
+- **测试**：日期筛选、删除系列后条目还在但 `seriesId` 为空、非法地区拒绝。
+- **依赖**：CH-201。
+- **规模**：M。
+
 ### P3 · 多端与长期
 
 #### CH-301 小程序补齐论坛 / 交易 / 举报
 
 - 新增页面：论坛列表 / 详情 / 发帖，交易列表 / 发布，举报（ActionSheet + 表单）；增加 tabBar（首页 / 论坛 / 交易 / 我的）。每个页面目录要有 `index.tsx`、`index.config.ts`、`index.scss`（见 handoff §6.16）。
 - 🔶 **D6 小程序 Markdown 渲染**（默认方案）：先按纯文本显示并保留换行；如需富文本，再评估在小程序运行时可用的 Markdown → 安全 HTML 方案配合 `RichText`。
-- 同步 CH-002 的评论删除、CH-003 的回帖翻页、CH-104 的卡名展示。
+- 同步 CH-002 的评论删除、CH-003 的回帖翻页、CH-104 的卡名展示。品相等新字段在小程序上可以只读显示，不要求把 Web 的全部筛选搬过来。
+- 本卡不包含资讯、发售日历、收藏进度、平行版本和价格图。那些页面留在各自的任务里。
 - **依赖**：CH-003、CH-104。
 
 #### CH-302 小程序上线准备
@@ -485,6 +613,47 @@ CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中
 - 🔶 **D5（需用户确认）**：是否需要卡牌 / 系列内容的英文版本。若需要，推荐翻译表方案（`SeriesTranslation`、`CardTranslation`，按 `locale` 唯一），不采用历史架构的全局 `i18n_texts` 长表。确认前不实施。
 - **依赖**：CH-107（后台需要支持编辑多语言字段）。
 
+#### CH-313 用户自报价格记录与走势
+
+- **背景 / 来源**：Card Ladder 一类产品的核心是授权或自建的成交库和指数。那个数据不能抓。Cardhub 若要碰价格，只能保存用户自己写下的观察，并明确这不是市场价。见 [industry-benchmark.md](industry-benchmark.md) 第 8 节。
+- 🔶 **D8（需用户确认）**：确认前不实施。不要先做“隐藏入口”或导入脚本。
+- **改动范围**（确认之后才动工）
+  - Prisma：`PriceObservation { id, userId, cardId, price Decimal @db.Decimal(12, 2), currency String, observedOn DateTime @db.Date, note String?, hiddenAt DateTime?, createdAt, updatedAt, @@unique([userId, cardId, observedOn]) }`。两个外键级联删除。迁移名 `add_price_observations`。不设“来源网站”字段。
+  - shared：金额复用 `listingPriceSchema` 的范围。`note` 最长 200 字。货币沿用 ISO 4217 三位校验。
+  - API：`prices.upsert`（登录，同一天再次提交则覆盖）、`prices.remove`（仅本人）、`prices.forCard({ cardSlug, currency })`、`admin.prices.hide`。公开查询去掉 `hiddenAt` 非空的行，返回 `{ count, min, max, points: [{ date, average }] }`。`points` 按观察日聚合，一种货币一条线。限流：每小时 30 次 upsert。
+  - Web：卡牌详情在属性下方增加区块。标题使用“用户自报价格”，第一行说明“由用户自己填写，只代表个人记录”。折线用页面内的 SVG 绘制，不引入图表库。未登录看到登录入口。`/me` 列出自己的记录。
+  - i18n：`prices.*`。文案使用“用户自报价格”，不要写成指数、指导价或市场价。
+  - 小程序：本卡不做。
+- **验收标准**
+  1. 登录用户可以给一张卡记下某天的价格；同一天再记一次，只保留后一次。
+  2. 卡牌页的图只包含未被隐藏的、所选货币的点，并始终能看到“由用户自己填写，只代表个人记录”。
+  3. 管理员隐藏后，该点从公开聚合里消失，作者在 `/me` 仍能看到“已隐藏”。
+  4. 没有任何记录时不画空坐标轴，只显示“还没有自报价格”。
+- **测试**：覆盖写入、同日覆盖、隐藏后不进聚合、未登录拒绝。
+- **依赖**：CH-102。另外受 D8、D12 约束。
+- **规模**：L。
+
+#### CH-314 赛事与卡组数据库
+
+- **背景 / 来源**：Limitless 把锦标赛、名次、卡组和占比放在一起，并提供瑞士轮、组牌、代打打印等工具。Cardhub 只考虑其中“管理员录入一场已结束赛事”的部分。见 [industry-benchmark.md](industry-benchmark.md) 第 9 节。
+- 🔶 **D9（需用户确认）**：确认前不实施。确认时要指定第一种游戏；未指定就不要用空字符串游戏名上线。
+- **改动范围**（确认之后才动工）
+  - Prisma：`Tournament { id, slug @unique, name, game, heldOn DateTime @db.Date, location?, playerCount Int?, note?, createdAt, updatedAt }`。`Deck { id, tournamentId, name, placing Int, wins Int @default(0), losses Int @default(0), ties Int @default(0) }`，删除赛事时级联删除卡组。`DeckCard { id, deckId, cardId, count Int, @@unique([deckId, cardId]) }`，删除卡组或卡牌时级联删除。迁移名 `add_tournaments`。`count` 为 1 到 60。`placing`、胜负平为非负整数。
+  - shared：对应的 admin 写入 schema。
+  - API：`events.list`、`events.bySlug`（含卡组、用卡、计算字段）。胜率 = `wins / (wins + losses)`，分母为 0 时为 null。平局不进这个分母，单独返回。某卡组名称的占比 = 该名称的卡组数 / 本场已录入卡组数。`cards.bySlug` 增加 `deckAppearanceCount`（未被删除的 `DeckCard` 行数）。全部写接口走 `adminProcedure`。不要做自动卡组归类，不要请求 Limitless 或其他赛事站。
+  - Web：`/events`、`/events/:slug`。赛事页用表格显示名次、卡组名、战绩、胜率和用卡。卡牌详情显示“在已录入卡组中出现 N 次”，并链到那些赛事。页眉写明“只统计站内已录入的赛事”。管理页 `/admin/events`。
+  - 明确不做：对阵矩阵、选手排名、即将开赛的报名、代打打印、卡图拼版。
+  - i18n：`events.*`。
+  - 小程序：本卡不做。
+- **验收标准**
+  1. 管理员能录入一场赛事、两副卡组，以及每副卡组里的站内卡牌和张数。
+  2. 3 胜 1 负 1 平时，胜率显示为 75%，平局单独显示为 1。0 胜 0 负时胜率为空，而不是 0 或报错。
+  3. 卡牌页的出现次数等于引用它的卡组数。删掉赛事后，这个数下降。
+  4. 非 admin 不能写入。访客看不到任何“全行业环境”或外部站点的实时数据。
+- **测试**：胜率分母、平局、删除赛事的级联、非 admin 拒绝。
+- **依赖**：CH-107。另外受 D9、D12 约束。
+- **规模**：L。
+
 ---
 
 ## 5. 来源对照
@@ -500,17 +669,31 @@ CH-202、CH-211 与 P3 任务没有强依赖，可在任意空档插入。P3 中
 | 代码中已有接口但缺界面                                                                                 | CH-003、CH-102、CH-103                                                  |
 | 代码审查发现的缺陷                                                                                     | CH-001、CH-002、CH-004、CH-005、CH-108、CH-303（CORS）                  |
 | handoff 文档原 Backlog（PWA、Playwright、updater、离线、图片管线、版块标签、通知、@mention、第三语言） | CH-306、CH-303、CH-208、CH-311、CH-312；PWA、桌面离线、版块标签暂不排期 |
+| industry-benchmark.md：品牌官网的视觉层次                                                              | CH-205                                                                  |
+| industry-benchmark.md：资讯栏目、文章、发售日历                                                        | CH-214、CH-215、CH-201                                                  |
+| industry-benchmark.md：百科搜索与详情层次                                                              | CH-106、CH-206                                                          |
+| industry-benchmark.md：清单层级（品类、系列、子集、卡号、平行版本）                                    | CH-201、CH-202、CH-213                                                  |
+| industry-benchmark.md：交易筛选，边界仍是信息板                                                        | CH-104                                                                  |
+| industry-benchmark.md：私人收藏与系列进度                                                              | CH-203                                                                  |
+| industry-benchmark.md：用户自报价格（确认前不做）                                                      | CH-313                                                                  |
+| industry-benchmark.md：手工录入的赛事与卡组（确认前不做）                                              | CH-314                                                                  |
+| 对标后明确不建任务：担保交易、SKU 商城、金库拍卖、评级、行情指数、爬取图库、代打打印                   | 无任务                                                                  |
 
 ## 6. 待用户决策汇总
 
-| 编号 | 问题                                     | 默认处理                                | 关联任务 |
-| ---- | ---------------------------------------- | --------------------------------------- | -------- |
-| D1   | 交易联系方式是否只对登录用户可见         | 确认前保持公开                          | CH-104   |
-| D2   | 品牌主色是否改为 UI 规范的深紫 `#6D28D9` | 确认前保持当前蓝色                      | CH-205   |
-| D3   | 产品指标采用自托管统计工具还是服务端统计 | 确认前不实施                            | CH-308   |
-| D4   | 邮件服务商                               | 确认前不实施                            | CH-310   |
-| D5   | 是否需要内容多语言                       | 确认前不实施                            | CH-312   |
-| D6   | 小程序 Markdown 渲染方式                 | 默认纯文本显示，无需确认                | CH-301   |
-| D7   | 是否做面向爬虫的预渲染 / SSR             | 确认前只做 sitemap、robots、客户端 meta | CH-207   |
+| 编号 | 问题                                       | 默认处理                                                                  | 关联任务                    |
+| ---- | ------------------------------------------ | ------------------------------------------------------------------------- | --------------------------- |
+| D1   | 交易联系方式是否只对登录用户可见           | 确认前保持公开                                                            | CH-104                      |
+| D2   | 品牌主色是否改为 UI 规范的深紫 `#6D28D9`   | 确认前保持当前蓝色                                                        | CH-205                      |
+| D3   | 产品指标采用自托管统计工具还是服务端统计   | 确认前不实施                                                              | CH-308                      |
+| D4   | 邮件服务商                                 | 确认前不实施                                                              | CH-310                      |
+| D5   | 是否需要内容多语言                         | 确认前不实施                                                              | CH-312                      |
+| D6   | 小程序 Markdown 渲染方式                   | 默认纯文本显示，无需确认                                                  | CH-301                      |
+| D7   | 是否做面向爬虫的预渲染 / SSR               | 确认前只做 sitemap、robots、客户端 meta                                   | CH-207                      |
+| D8   | 是否上线用户自报价格和走势图               | 确认前不实施                                                              | CH-313                      |
+| D9   | 是否建设赛事与卡组，以及第一种游戏         | 确认前不实施。未指定游戏时也不要开工                                      | CH-314                      |
+| D10  | 资讯是否开放用户投稿                       | 默认只由管理员发布，CH-214 按此实施，不必等待                             | CH-214                      |
+| D11  | 交易信息板的品相用词                       | 默认五档可空：近全新、轻微使用、中度使用、重度使用、破损。CH-104 按此实施 | CH-104                      |
+| D12  | 是否对接或抓取外部卡牌库、图库、行情、赛事 | 确认前不实施任何导入器。站内手填不受影响                                  | CH-313、CH-314 及以后的导入 |
 
-系列评论的建模方式已在 CH-101 中定案（可空外键 + CHECK 约束），不需要再确认。
+系列评论的建模方式已在 CH-101 中定案（可空外键 + CHECK 约束），不需要再确认。D8、D9、D12 涉及价格展示、持续公开数据和第三方权利，确认前不要写对应代码。D10 和 D11 已有默认方案，实现时按默认方案做。

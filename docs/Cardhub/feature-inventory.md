@@ -2,7 +2,7 @@
 
 > 基线：`main` @ `8a52715`（2026-10-16，PR #49 合入后）。
 >
-> 本文只记录**代码里已经存在的能力**和**已核实的缺口**。待做事项与验收标准在 [development-backlog.md](development-backlog.md)，编号形如 `CH-xxx`。完成任务后请同步修改本文对应条目的状态，否则本文会与代码脱节。
+> 本文只记录**代码里已经存在的能力**和**已核实的缺口**。待做事项与验收标准在 [development-backlog.md](development-backlog.md)，编号形如 `CH-xxx`。业内站点里哪些能力要借、哪些明确不做，见 [industry-benchmark.md](industry-benchmark.md)。完成任务后请同步修改本文对应条目的状态，否则本文会与代码脱节。
 
 图例：✅ 已实现　🟡 部分实现（有接口无界面，或存在已知缺口）　❌ 未实现
 
@@ -19,6 +19,8 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 3. **举报只能看不能处理**：`RESOLVED` 状态没有任何入口可以到达（CH-001）。
 4. **部分已有接口没有界面**：话题编辑、我的交易意向、回帖翻页（CH-003 / CH-102 / CH-103）。
 5. **小程序只覆盖 MVP**：论坛、交易、举报均未接入（CH-301）。
+
+对标之后新出现、代码里仍然不存在的能力，不在下面各表展开成新模块：平行版本（CH-213）、资讯（CH-214）、发售日历（CH-215）、用户自报价格（CH-313，确认前不做）、赛事与卡组（CH-314，确认前不做）。收藏进度写在 CH-203，交易品相写在 CH-104。
 
 ## 2. 运行环境
 
@@ -43,7 +45,7 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 | 卡牌详情（属性、稀有度） | ✅   | `/cards/:cardSlug`    | `cards.bySlug`                      | `attributes` 是扁平 JSON，键名原样显示（`cost`/`attack`…），未本地化（CH-202）                                      |
 | 稀有度                   | ✅   | 各列表与详情          | `Card.rarity`                       | `common / rare / epic / legendary`，标签写在 `rarity-badge.tsx`（Web）和 `@repo/ui-mini`（小程序）                  |
 | 卡牌 / 系列图片          | 🟡   | —                     | `Card.imageUrl` / `Series.coverUrl` | 现有数据全是 `gradient:...` 占位符；前端按 slug 查 `gradients.ts` 渲染渐变 + 首字母，**从不渲染真实图片**（CH-105） |
-| 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                   | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）                                                                    |
+| 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                   | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）。平行版本与限量编号见 CH-213                                       |
 | 内容维护                 | 🟡   | —                     | `seed:catalog`                      | 只能修改 `apps/cardhub/api/src/scripts/seed-data.ts` 后重跑 seed；seed 按 slug upsert 会覆盖同名记录（CH-107）      |
 | 面包屑                   | ✅   | 所有深层页面          | —                                   |                                                                                                                     |
 
@@ -98,7 +100,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 
 | 能力                                    | 状态 | 入口                                    | 接口               | 说明                                                                                  |
 | --------------------------------------- | ---- | --------------------------------------- | ------------------ | ------------------------------------------------------------------------------------- |
-| 意向列表（出/求筛选、按卡牌 slug 筛选） | ✅   | `/trade`                                | `listings.list`    | 只显示 `OPEN`；卡牌显示为 slug 而不是卡名（CH-104）                                   |
+| 意向列表（出/求筛选、按卡牌 slug 筛选） | ✅   | `/trade`                                | `listings.list`    | 只显示 `OPEN`；卡牌显示为 slug 而不是卡名。品相、语言、版本备注和价格筛选也在 CH-104  |
 | 发布意向                                | ✅   | `/trade/new`（卡牌页可带 `?cardSlug=`） | `listings.publish` | 需要手填卡牌 slug；价格可空（显示“面议”）；货币 ISO 4217，默认 CNY；最多 4 个外链图片 |
 | 卡牌页内意向（最多 5 条）               | ✅   | 卡牌详情页                              | `listings.byCard`  |                                                                                       |
 | 关闭意向（本人 / 管理员）               | ✅   | 列表项                                  | `listings.close`   | 幂等                                                                                  |
@@ -136,7 +138,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | 刘海屏 safe-area                           | ✅   | `.app-safe-top / .app-safe-x / .app-safe-bottom` |
 | 页面级 `<title>` / description             | ❌   | 全站固定 `Cardhub`（CH-108 / CH-207）            |
 | 首页精选分类、最新系列横滑、页脚、入场动效 | ❌   | UI 规范与历史 AI 前端指令要求（CH-205）          |
-| 收藏、分享                                 | ❌   | CH-203                                           |
+| 收藏、分享                                 | ❌   | CH-203（含集齐进度）                             |
 | 深色模式                                   | ❌   | CH-305                                           |
 
 ### 3.10 平台与运维

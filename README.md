@@ -187,6 +187,7 @@ Cardhub 的文档都在 [`docs/Cardhub/`](docs/Cardhub/)，入口是 [`docs/Card
 - [`handoff-context.md`](docs/Cardhub/handoff-context.md)：技术栈、开发命令、踩坑清单。
 - [`feature-inventory.md`](docs/Cardhub/feature-inventory.md)：功能全景、接口清单、数据模型、已知缺陷。
 - [`development-backlog.md`](docs/Cardhub/development-backlog.md)：接力开发任务池与完成标准。
+- [`industry-benchmark.md`](docs/Cardhub/industry-benchmark.md)：业内卡牌站点对标，以及哪些能力明确不做。
 - PRD、项目简报、UI 规范：最初的产品意图。其中“后端 Rust”“Zustand + SWR”等技术假设已被 NestJS + tRPC + Prisma、MobX + TanStack Query 取代，冲突以代码为准。
 
 ## 许可
