@@ -1,13 +1,12 @@
 name: Cardhub Images
 
 on:
-  push:
+  workflow_run:
+    workflows: ['CI']
     branches: [main]
-  workflow_dispatch:
+    types: [completed]
 
-permissions:
-  contents: read
-  packages: write
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +15,11 @@ concurrency:
 jobs:
   build:
     name: Build and push GHCR images
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +32,8 @@ jobs:
             image: ghcr.io/xv-jiaqi/cardhub-web
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set build time
         id: build-time
@@ -51,12 +56,12 @@ jobs:
           file: ${{ matrix.file }}
           push: true
           build-args: |
-            GIT_SHA=${{ github.sha }}
+            GIT_SHA=${{ github.event.workflow_run.head_sha }}
             BUILD_TIME=${{ steps.build-time.outputs.value }}
           labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
             org.opencontainers.image.created=${{ steps.build-time.outputs.value }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           tags: |
-            ${{ matrix.image }}:sha-${{ github.sha }}
+            ${{ matrix.image }}:sha-${{ github.event.workflow_run.head_sha }}
             ${{ matrix.image }}:main

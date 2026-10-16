@@ -4,11 +4,14 @@ This directory runs Cardhub on one Linux VPS with Docker Compose. Use the same
 compose file for staging and production by changing the project name and env
 file:
 
-- production: `docker compose -p cardhub-production --env-file /opt/cardhub/production.env ...`
+- production: `docker compose -p cardhub-prod --env-file /opt/cardhub/production.env ...`
 - staging: `docker compose -p cardhub-staging --env-file /opt/cardhub/staging.env ...`
 
-Run one shared Caddy proxy with the `proxy` profile. App projects start only
-API, web, Postgres, and Redis; only Caddy publishes host ports.
+Run one shared Caddy proxy from `deploy/edge/`. App projects start only API,
+web, Postgres, and Redis. Postgres and Redis stay on each compose project's
+private default network; only API and web also join the external `edge` network
+with aliases derived from `ENV_NAME` (`prod-api`, `staging-api`, etc.). Only
+Caddy publishes host ports.
 
 ## One-time server bootstrap
 
@@ -18,21 +21,21 @@ API, web, Postgres, and Redis; only Caddy publishes host ports.
    sudo mkdir -p /opt/cardhub/deploy /opt/cardhub/backups
    sudo chown -R "$USER":"$USER" /opt/cardhub
    ```
-3. Copy `deploy/docker-compose.yml`, `deploy/Caddyfile`, and `deploy/backup.sh`
-   into `/opt/cardhub/deploy/`.
+3. Copy `deploy/docker-compose.yml`, `deploy/remote-deploy.sh`,
+   `deploy/backup.sh`, and `deploy/edge/` into `/opt/cardhub/deploy/`.
 4. Create env files from `.env.example`:
    ```bash
    cp deploy/.env.example /opt/cardhub/production.env
    cp deploy/.env.example /opt/cardhub/staging.env
-   cp deploy/.env.example /opt/cardhub/proxy.env
+   cp deploy/.env.example /opt/cardhub/edge.env
    chmod 600 /opt/cardhub/*.env
    ```
    Fill different domains, secrets, database names/passwords, and `IMAGE_TAG`
-   values in each app env file. Set `DEPLOY_ENV=production` or
-   `DEPLOY_ENV=staging` to match the compose project suffix. `TRPC_URL` should
-   point at that environment's API `/trpc` endpoint. In `proxy.env`, set
-   production `WEB_DOMAIN` / `API_DOMAIN` plus `STAGING_WEB_DOMAIN` /
-   `STAGING_API_DOMAIN`, and keep `DEPLOY_ENV=production`.
+   values in each app env file. Set `ENV_NAME=prod` in `production.env` and
+   `ENV_NAME=staging` in `staging.env`. `TRPC_URL` should point at that
+   environment's API `/trpc` endpoint. In `edge.env`, set production
+   `WEB_DOMAIN` / `API_DOMAIN` plus `STAGING_WEB_DOMAIN` /
+   `STAGING_API_DOMAIN`, and keep `ENV_NAME=prod`.
 5. Log in to GHCR with a read-only package token:
    ```bash
    echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u <github-user> --password-stdin
@@ -42,27 +45,50 @@ API, web, Postgres, and Redis; only Caddy publishes host ports.
    - `API_DOMAIN` A/AAAA -> VPS public IP
    - staging web/API domains -> VPS public IP
 
-Start the shared Caddy proxy once:
+Create the shared proxy network and start Caddy once:
 
 ```bash
-cd /opt/cardhub/deploy
-docker compose -p cardhub-proxy --env-file /opt/cardhub/proxy.env --profile proxy up -d caddy
+docker network create edge
+cd /opt/cardhub/deploy/edge
+docker compose -p cardhub-edge --env-file /opt/cardhub/edge.env up -d
 ```
 
 Caddy obtains and renews HTTPS certificates automatically.
+
+For GitHub Actions deploys, configure environment-scoped secrets:
+
+- `DEPLOY_HOST`
+- `DEPLOY_USER`
+- `DEPLOY_SSH_KEY`
+- `DEPLOY_KNOWN_HOSTS`
+
+`DEPLOY_KNOWN_HOSTS` must contain the pinned host key line for the VPS (for
+example from a trusted console or first-party host-key inventory). The workflow
+uses `StrictHostKeyChecking=yes` and does not run `ssh-keyscan`.
 
 ## Deploy
 
 ```bash
 cd /opt/cardhub/deploy
-docker compose -p cardhub-production --env-file /opt/cardhub/production.env pull api web
-docker compose -p cardhub-production --env-file /opt/cardhub/production.env up -d postgres redis api web
+IMAGE_TAG=sha-<full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production.env pull api web
+IMAGE_TAG=sha-<full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production.env up -d postgres redis api web
 ```
 
 Use `cardhub-staging` with `/opt/cardhub/staging.env` for staging. If both run
 on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
 and passwords in each env file. Production deploys are manual; staging can be
-redeployed automatically by GitHub Actions after a main-branch image build.
+redeployed automatically by GitHub Actions after CI and image builds succeed on
+main. Production deploys require an explicit immutable `sha-<full-git-sha>` tag.
+
+The deploy workflow syncs `deploy/` files for the deployed SHA to the VPS before
+running `/opt/cardhub/deploy/remote-deploy.sh`. The script polls
+`https://<API_DOMAIN>/health` until `gitSha` equals the deployed SHA and fails on
+missing or mismatched SHA.
+
+The web container receives runtime `TRPC_URL`, but consuming it depends on the
+companion app PR. The app PR also changes `/health` to include `gitSha` and to
+return 503 when dependencies are unhealthy; this infra PR expects to merge with
+that app PR.
 
 ## Rollback
 
@@ -71,8 +97,8 @@ env file, then redeploy:
 
 ```bash
 cd /opt/cardhub/deploy
-docker compose -p cardhub-production --env-file /opt/cardhub/production.env pull api web
-docker compose -p cardhub-production --env-file /opt/cardhub/production.env up -d postgres redis api web
+IMAGE_TAG=sha-<older-full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production.env pull api web
+IMAGE_TAG=sha-<older-full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production.env up -d postgres redis api web
 ```
 
 Prisma migrations are not automatically rolled back. Handle schema reversions
@@ -80,24 +106,30 @@ manually if a rollback crosses a database migration.
 
 ## Backups
 
-Run a daily compressed `pg_dump` and keep the last 7 backups:
+Run a daily compressed `pg_dump`. The script writes to temporary files, verifies
+the dump and gzip, then atomically renames the backup on success. It keeps the
+latest 7 daily backups plus 4 weekly backups and never deletes the newest
+successful backup.
 
 ```cron
-15 2 * * * PROJECT=cardhub-production ENV_FILE=/opt/cardhub/production.env /opt/cardhub/deploy/backup.sh >> /opt/cardhub/backups/backup.log 2>&1
+15 2 * * * PROJECT=cardhub-prod ENV_FILE=/opt/cardhub/production.env /opt/cardhub/deploy/backup.sh >> /opt/cardhub/backups/backup.log 2>&1
 ```
+
+Off-site backup copy is a required follow-up; this script only creates local VPS
+backups.
 
 Restore example:
 
 ```bash
-gzip -dc /opt/cardhub/backups/cardhub-production/cardhub-production-YYYYMMDDTHHMMSSZ.sql.gz \
-  | docker compose -p cardhub-production --env-file /opt/cardhub/production.env -f /opt/cardhub/deploy/docker-compose.yml exec -T postgres sh -c \
+gzip -dc /opt/cardhub/backups/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz \
+  | docker compose -p cardhub-prod --env-file /opt/cardhub/production.env -f /opt/cardhub/deploy/docker-compose.yml exec -T postgres sh -c \
     'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
 ## Logs and health
 
 ```bash
-docker compose -p cardhub-production --env-file /opt/cardhub/production.env logs -f api
-docker compose -p cardhub-production --env-file /opt/cardhub/production.env ps
+docker compose -p cardhub-prod --env-file /opt/cardhub/production.env logs -f api
+docker compose -p cardhub-prod --env-file /opt/cardhub/production.env ps
 curl https://api.cardhub.example.com/health
 ```

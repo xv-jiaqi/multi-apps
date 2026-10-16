@@ -1,0 +1,15 @@
+{$WEB_DOMAIN} {
+	reverse_proxy {$ENV_NAME}-web:8080
+}
+
+{$API_DOMAIN} {
+	reverse_proxy {$ENV_NAME}-api:4000
+}
+
+{$STAGING_WEB_DOMAIN} {
+	reverse_proxy staging-web:8080
+}
+
+{$STAGING_API_DOMAIN} {
+	reverse_proxy staging-api:4000
+}

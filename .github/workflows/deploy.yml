@@ -12,21 +12,15 @@ on:
           - production
         default: staging
       image_tag:
-        description: Image tag to deploy, usually sha-<full-git-sha>
+        description: Image tag to deploy. Production requires sha-<full-git-sha>; staging also accepts main.
         required: true
         default: main
-      require_git_sha_match:
-        description: Fail if /health gitSha is missing or does not match
-        required: true
-        type: boolean
-        default: false
   workflow_run:
     workflows: ['Cardhub Images']
     branches: [main]
     types: [completed]
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: cardhub-deploy-${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
@@ -38,85 +32,97 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+    permissions:
+      contents: read
     env:
-      DEPLOY_ENV: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
-      IMAGE_TAG: ${{ github.event_name == 'workflow_run' && format('sha-{0}', github.event.workflow_run.head_sha) || inputs.image_tag }}
-      REQUIRE_GIT_SHA_MATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.require_git_sha_match || 'false' }}
+      EVENT_NAME: ${{ github.event_name }}
+      INPUT_ENVIRONMENT: ${{ inputs.environment }}
+      INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
+      WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
     steps:
-      - name: Derive expected SHA
-        id: expected
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate deploy inputs
+        id: deploy-inputs
         shell: bash
         run: |
-          if [[ "${IMAGE_TAG}" == sha-* ]]; then
-            echo "sha=${IMAGE_TAG#sha-}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+
+          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
+            deploy_environment="staging"
+            expected_sha="${WORKFLOW_RUN_HEAD_SHA}"
+            image_tag="sha-${expected_sha}"
           else
-            echo "sha=" >> "$GITHUB_OUTPUT"
+            deploy_environment="${INPUT_ENVIRONMENT}"
+            image_tag="${INPUT_IMAGE_TAG}"
+
+            if [[ "${deploy_environment}" != "staging" && "${deploy_environment}" != "production" ]]; then
+              echo "Invalid environment: ${deploy_environment}" >&2
+              exit 1
+            fi
+
+            if [[ "${deploy_environment}" == "staging" && "${image_tag}" == "main" ]]; then
+              expected_sha="$(git ls-remote origin refs/heads/main | awk '{ print $1 }')"
+              image_tag="sha-${expected_sha}"
+            elif [[ "${image_tag}" =~ ^sha-[0-9a-f]{40}$ ]]; then
+              expected_sha="${image_tag#sha-}"
+            else
+              echo "Invalid image_tag '${image_tag}'. Production requires sha-<40 hex>; staging accepts sha-<40 hex> or main." >&2
+              exit 1
+            fi
           fi
 
-      - name: Configure SSH
+          if [[ ! "${expected_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Could not resolve a full deployment SHA" >&2
+            exit 1
+          fi
+
+          git checkout --detach "${expected_sha}"
+
+          echo "environment=${deploy_environment}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${image_tag}" >> "$GITHUB_OUTPUT"
+          echo "expected_sha=${expected_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure SSH with pinned host key
         shell: bash
         run: |
+          set -euo pipefail
+          if [[ -z "${DEPLOY_KNOWN_HOSTS}" ]]; then
+            echo "DEPLOY_KNOWN_HOSTS is required" >&2
+            exit 1
+          fi
           mkdir -p ~/.ssh
           install -m 600 /dev/null ~/.ssh/deploy_key
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          install -m 600 /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+
+      - name: Sync deploy files
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh edge \
+            | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+                'mkdir -p /opt/cardhub/deploy && tar -xzf - -C /opt/cardhub/deploy'
 
       - name: Deploy on VPS
         shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
+          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
+          DEPLOY_EXPECTED_SHA: ${{ steps.deploy-inputs.outputs.expected_sha }}
         run: |
-          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            DEPLOY_ENV="${DEPLOY_ENV}" \
-            IMAGE_TAG="${IMAGE_TAG}" \
-            EXPECTED_SHA="${{ steps.expected.outputs.sha }}" \
-            REQUIRE_GIT_SHA_MATCH="${REQUIRE_GIT_SHA_MATCH}" \
-            'sh -se' <<'REMOTE'
-          set -eu
-
-          APP_DIR="/opt/cardhub/deploy"
-          ENV_FILE="/opt/cardhub/${DEPLOY_ENV}.env"
-          PROJECT="cardhub-${DEPLOY_ENV}"
-
-          cd "${APP_DIR}"
-          docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" pull api web
-          IMAGE_TAG="${IMAGE_TAG}" docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" up -d postgres redis api web
-
-          API_DOMAIN="$(awk -F= '$1 == "API_DOMAIN" { print $2 }' "${ENV_FILE}" | tail -n 1)"
-          if [ -z "${API_DOMAIN}" ]; then
-            echo "::error::API_DOMAIN is missing from ${ENV_FILE}"
-            exit 1
-          fi
-
-          tmp="$(mktemp)"
-          i=0
-          until [ "${i}" -ge 30 ]; do
-            if curl -fsS "https://${API_DOMAIN}/health" -o "${tmp}"; then
-              break
-            fi
-            i=$((i + 1))
-            sleep 5
-          done
-          if [ "${i}" -ge 30 ]; then
-            echo "::error::Health check failed for https://${API_DOMAIN}/health"
-            exit 1
-          fi
-
-          actual_sha="$(sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${tmp}" | head -n 1)"
-          if [ -z "${actual_sha}" ]; then
-            message="/health JSON does not include gitSha yet; skipping SHA verification until the app change lands."
-            if [ "${REQUIRE_GIT_SHA_MATCH}" = "true" ]; then
-              echo "::error::${message}"
-              exit 1
-            fi
-            echo "::warning::${message}"
-            exit 0
-          fi
-
-          if [ -n "${EXPECTED_SHA}" ] && [ "${actual_sha}" != "${EXPECTED_SHA}" ]; then
-            message="/health gitSha ${actual_sha} does not match deployed SHA ${EXPECTED_SHA}."
-            if [ "${REQUIRE_GIT_SHA_MATCH}" = "true" ]; then
-              echo "::error::${message}"
-              exit 1
-            fi
-            echo "::warning::${message}"
-          fi
-          REMOTE
+          set -euo pipefail
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          deploy_environment="$(printf '%q' "${DEPLOY_ENVIRONMENT}")"
+          image_tag="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
+          expected_sha="$(printf '%q' "${DEPLOY_EXPECTED_SHA}")"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+            "bash /opt/cardhub/deploy/remote-deploy.sh ${deploy_environment} ${image_tag} ${expected_sha}"
