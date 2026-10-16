@@ -36,6 +36,26 @@ describe('rate limit proxy IP handling', () => {
     }
   });
 
+  it('preserves Origin when tRPC adds its own Vary values on successful responses', async () => {
+    const app = await makeTestApp();
+    try {
+      await request(app.getHttpServer())
+        .get('/trpc/health.ping')
+        .set('Origin', 'http://localhost:5173')
+        .expect(200)
+        .expect('Access-Control-Allow-Origin', 'http://localhost:5173')
+        .expect((res) => {
+          expect(res.headers.vary).toBeDefined();
+          const vary = (res.headers.vary as string)
+            .split(',')
+            .map((item: string) => item.trim().toLowerCase());
+          expect(vary).toEqual(expect.arrayContaining(['origin', 'trpc-accept']));
+        });
+    } finally {
+      await app.close();
+    }
+  });
+
   it('never throttles /health through the real bootstrap path', async () => {
     const app = await makeTestApp();
     try {
