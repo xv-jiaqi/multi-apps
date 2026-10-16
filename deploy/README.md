@@ -77,8 +77,9 @@ Caddy publishes host ports.
    ```
 7. Add DNS records:
    - Apex `card-hub.app` A -> VPS public IP with the Cloudflare proxy disabled
-   - `www.card-hub.app` A -> VPS public IP as a DNS-only record; Caddy serves
-     the HTTPS redirect and preserves the request path/query
+   - `www.card-hub.app` A -> VPS public IP as a DNS-only record; no AAAA record
+     is needed because the VPS does not use IPv6. Caddy serves the HTTPS
+     redirect and preserves the request path/query
    - `API_DOMAIN` A/AAAA -> VPS public IP
    - staging web/API domains -> VPS public IP
 
