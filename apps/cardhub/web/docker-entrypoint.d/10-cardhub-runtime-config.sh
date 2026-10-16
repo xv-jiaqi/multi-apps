@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-CONFIG_FILE=/usr/share/nginx/html/config.js
+CONFIG_FILE=${CARDHUB_CONFIG_FILE:-/usr/share/nginx/html/config.js}
 TRPC_URL_VALUE=${TRPC_URL:-}
 
 escaped_trpc_url=$(printf '%s' "$TRPC_URL_VALUE" | sed 's/\\/\\\\/g; s/"/\\"/g')
