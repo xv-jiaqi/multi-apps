@@ -1,27 +1,20 @@
-import { Module, type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { configureApp } from '../bootstrap/configure-app';
+import { createApp } from '../bootstrap/create-app';
+import { HealthService } from '../modules/health/health.service';
 
-@Module({})
-class TestModule {}
-
-async function makeLimitedApp(): Promise<INestApplication> {
-  const moduleRef = await Test.createTestingModule({ imports: [TestModule] }).compile();
-  const app = moduleRef.createNestApplication();
-  const expressApp = configureApp(app);
-  expressApp.use(
-    rateLimit({
-      windowMs: 60_000,
-      limit: 1,
-      standardHeaders: false,
-      legacyHeaders: false,
-      keyGenerator: (req) => ipKeyGenerator(req.ip ?? 'unknown'),
-    }),
-  );
-  expressApp.get('/limited', (req, res) => {
-    res.status(200).json({ ip: req.ip });
+async function makeTestApp(): Promise<INestApplication> {
+  const app = await createApp({
+    rateLimitOverrides: {
+      authMutation: { limit: 1, windowMs: 60_000 },
+    },
+  });
+  jest.spyOn(app.get(HealthService), 'check').mockResolvedValue({
+    status: 'ok',
+    uptime: 1,
+    services: { db: true, redis: true },
+    gitSha: 'test-sha',
+    buildTime: 'test-build-time',
   });
   await app.init();
 
@@ -29,19 +22,29 @@ async function makeLimitedApp(): Promise<INestApplication> {
 }
 
 describe('rate limit proxy IP handling', () => {
-  it('uses separate buckets for different client IPs behind one trusted proxy', async () => {
-    const app = await makeLimitedApp();
+  it('never throttles /health through the real bootstrap path', async () => {
+    const app = await makeTestApp();
+    try {
+      for (let i = 0; i < 65; i += 1) {
+        await request(app.getHttpServer())
+          .get('/health')
+          .set('X-Forwarded-For', '203.0.113.10')
+          .expect(200);
+      }
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('throttles real auth tRPC routes after the configured max', async () => {
+    const app = await makeTestApp();
     try {
       await request(app.getHttpServer())
-        .get('/limited')
+        .get('/trpc/auth.login')
         .set('X-Forwarded-For', '203.0.113.10')
-        .expect(200);
+        .expect((res) => expect(res.status).not.toBe(429));
       await request(app.getHttpServer())
-        .get('/limited')
-        .set('X-Forwarded-For', '203.0.113.11')
-        .expect(200);
-      await request(app.getHttpServer())
-        .get('/limited')
+        .get('/trpc/auth.login')
         .set('X-Forwarded-For', '203.0.113.10')
         .expect(429);
     } finally {
@@ -49,15 +52,19 @@ describe('rate limit proxy IP handling', () => {
     }
   });
 
-  it('does not let a spoofed extra X-Forwarded-For entry create a new bucket', async () => {
-    const app = await makeLimitedApp();
+  it('uses separate buckets for different client IPs and ignores spoofed extra XFF entries', async () => {
+    const app = await makeTestApp();
     try {
       await request(app.getHttpServer())
-        .get('/limited')
+        .get('/trpc/auth.login')
         .set('X-Forwarded-For', '203.0.113.10')
-        .expect(200);
+        .expect((res) => expect(res.status).not.toBe(429));
       await request(app.getHttpServer())
-        .get('/limited')
+        .get('/trpc/auth.login')
+        .set('X-Forwarded-For', '203.0.113.11')
+        .expect((res) => expect(res.status).not.toBe(429));
+      await request(app.getHttpServer())
+        .get('/trpc/auth.login')
         .set('X-Forwarded-For', '198.51.100.250, 203.0.113.10')
         .expect(429);
     } finally {
