@@ -7,6 +7,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TrpcModule } from './trpc/trpc.module';
+import { validateEnv } from './config/env.validation';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { TrpcModule } from './trpc/trpc.module';
       isGlobal: true,
       cache: true,
       envFilePath: ['.env.local', '.env'],
+      validate: validateEnv,
     }),
     // Global throttler defaults: 60 req/min/IP. Only NestJS controllers go
     // through this guard; tRPC routes are throttled by express-rate-limit
