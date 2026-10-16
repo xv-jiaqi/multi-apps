@@ -44,7 +44,10 @@ Caddy publishes host ports.
    ```
    Fill different domains, secrets, database names/passwords, and `IMAGE_TAG`
    values in each app env file. Set `ENV_NAME=prod` in `production.env` and
-   `ENV_NAME=staging` in `staging.env`. `TRPC_URL` should point at that
+   `ENV_NAME=staging` in `staging.env`. In `production.env`, also set
+   `SENTRY_ENVIRONMENT=production` so Sentry events match production monitors
+   while `ENV_NAME` remains `prod` for container and network names. `TRPC_URL`
+   should point at that
    environment's API `/trpc` endpoint. Use separate database names:
    `POSTGRES_DB=cardhub_prod` for production and
    `POSTGRES_DB=cardhub_staging` for staging. `POSTGRES_PASSWORD` must match
