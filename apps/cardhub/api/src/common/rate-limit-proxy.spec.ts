@@ -22,6 +22,20 @@ async function makeTestApp(): Promise<INestApplication> {
 }
 
 describe('rate limit proxy IP handling', () => {
+  it('sets Vary: Origin on CORS responses for dynamic origins', async () => {
+    const app = await makeTestApp();
+    try {
+      await request(app.getHttpServer())
+        .get('/health')
+        .set('Origin', 'http://localhost:5173')
+        .expect('Vary', /Origin/)
+        .expect('Access-Control-Allow-Origin', 'http://localhost:5173')
+        .expect(200);
+    } finally {
+      await app.close();
+    }
+  });
+
   it('never throttles /health through the real bootstrap path', async () => {
     const app = await makeTestApp();
     try {
@@ -46,7 +60,64 @@ describe('rate limit proxy IP handling', () => {
       await request(app.getHttpServer())
         .get('/trpc/auth.login')
         .set('X-Forwarded-For', '203.0.113.10')
-        .expect(429);
+        .expect('Content-Type', /application\/json/)
+        .expect(429)
+        .expect((res) => {
+          expect(res.body).toEqual({
+            error: {
+              message: 'Too many requests',
+              code: -32029,
+              data: {
+                code: 'TOO_MANY_REQUESTS',
+                httpStatus: 429,
+                path: 'auth.login',
+              },
+            },
+          });
+        });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns a tRPC-shaped JSON error array for throttled batch requests', async () => {
+    const app = await makeTestApp();
+    try {
+      await request(app.getHttpServer())
+        .get('/trpc/auth.login,auth.register?batch=1')
+        .set('X-Forwarded-For', '203.0.113.10')
+        .expect((res) => expect(res.status).not.toBe(429));
+      await request(app.getHttpServer())
+        .get('/trpc/auth.login,auth.register?batch=1')
+        .set('X-Forwarded-For', '203.0.113.10')
+        .expect('Content-Type', /application\/json/)
+        .expect(429)
+        .expect((res) => {
+          expect(res.body).toEqual([
+            {
+              error: {
+                message: 'Too many requests',
+                code: -32029,
+                data: {
+                  code: 'TOO_MANY_REQUESTS',
+                  httpStatus: 429,
+                  path: 'auth.login',
+                },
+              },
+            },
+            {
+              error: {
+                message: 'Too many requests',
+                code: -32029,
+                data: {
+                  code: 'TOO_MANY_REQUESTS',
+                  httpStatus: 429,
+                  path: 'auth.register',
+                },
+              },
+            },
+          ]);
+        });
     } finally {
       await app.close();
     }
