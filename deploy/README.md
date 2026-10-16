@@ -191,9 +191,60 @@ successful backup.
 15 2 * * * PROJECT=cardhub-prod ENV_FILE=/opt/cardhub/production/production.env COMPOSE_FILE=/opt/cardhub/production/deploy/docker-compose.yml BACKUP_PING_URL=https://hc-ping.com/<uuid> /opt/cardhub/production/deploy/backup.sh >> /opt/cardhub/backups/backup.log 2>&1
 ```
 
-Off-site backup copy is a required follow-up; this script only creates local VPS
-backups. `BACKUP_PING_URL` is optional; when set, success pings the URL and
-failure pings `<url>/fail` for healthchecks.io-style alerting.
+`BACKUP_PING_URL` is optional; when set, success pings the URL and failure pings
+`<url>/fail` for healthchecks.io-style alerting.
+
+### Optional off-site OSS copy
+
+After a local dump is finalized and before local retention pruning, the backup
+script optionally uploads that single `.sql.gz` file to Alibaba Cloud OSS using
+the official `rclone/rclone:1.75.2` Docker image. It never deletes or syncs
+remote objects; remote retention must be handled by an OSS lifecycle rule.
+
+The off-site copy is disabled unless `OFFSITE_ENV_FILE` exists. The default path
+is `/opt/cardhub/backups/offsite.env`; override it in the cron environment only
+if the file lives elsewhere.
+
+Create the off-site env file with placeholders replaced by real OSS values:
+
+```bash
+cat > /opt/cardhub/backups/offsite.env <<'EOF'
+OSS_ACCESS_KEY_ID=replace-with-access-key-id
+OSS_ACCESS_KEY_SECRET=replace-with-access-key-secret
+OSS_BUCKET=replace-with-bucket-name
+OSS_ENDPOINT=oss-cn-hongkong.aliyuncs.com
+EOF
+chown deploy:deploy /opt/cardhub/backups/offsite.env
+chmod 600 /opt/cardhub/backups/offsite.env
+```
+
+The OSS key only needs object upload/read permissions for the backup prefix. It
+does not need ListBuckets, CreateBucket, delete, or remote retention
+permissions; the script passes `--s3-no-check-bucket` for that reason.
+
+TODO(owner): configure an OSS lifecycle rule for remote backup retention, and
+remove any temporary `_probe/` objects created while validating the bucket.
+
+Restore from OSS by copying one object back to the VPS, then using the normal
+local restore command:
+
+```bash
+cat > /tmp/cardhub-oss-rclone.env <<'EOF'
+RCLONE_CONFIG_OSS_TYPE=s3
+RCLONE_CONFIG_OSS_PROVIDER=Alibaba
+RCLONE_CONFIG_OSS_ENDPOINT=oss-cn-hongkong.aliyuncs.com
+RCLONE_CONFIG_OSS_ACCESS_KEY_ID=replace-with-access-key-id
+RCLONE_CONFIG_OSS_SECRET_ACCESS_KEY=replace-with-access-key-secret
+RCLONE_CONFIG_OSS_ACL=private
+EOF
+chmod 600 /tmp/cardhub-oss-rclone.env
+docker run --rm --env-file /tmp/cardhub-oss-rclone.env \
+  -v /opt/cardhub/backups/cardhub-prod:/restore \
+  rclone/rclone:1.75.2 \
+  copyto oss:replace-with-bucket-name/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz \
+  /restore/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz --s3-no-check-bucket
+rm -f /tmp/cardhub-oss-rclone.env
+```
 
 Restore example:
 
