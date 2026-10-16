@@ -53,10 +53,7 @@ Caddy publishes host ports.
 5. Create `/opt/cardhub/edge/edge.env` with only the edge routing vars:
    ```dotenv
    ENV_NAME=prod
-   # Leave empty until apex/www DNS has cut over to this VPS. To enable it,
-   # copy edge/optional/root-web.caddy.example to edge/optional/root-web.caddy
-   # and set: ROOT_WEB_DOMAINS=card-hub.app, www.card-hub.app
-   ROOT_WEB_DOMAINS=
+   ROOT_WEB_DOMAINS=card-hub.app
    API_DOMAIN=api.card-hub.app
    STAGING_WEB_DOMAIN=staging.card-hub.app
    STAGING_API_DOMAIN=api-staging.card-hub.app
@@ -74,7 +71,7 @@ Caddy publishes host ports.
    echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u <github-user> --password-stdin
    ```
 7. Add DNS records:
-   - `ROOT_WEB_DOMAINS` A/AAAA -> VPS public IP when enabling apex/www
+   - Apex `card-hub.app` A -> VPS public IP with the Cloudflare proxy disabled
    - `API_DOMAIN` A/AAAA -> VPS public IP
    - staging web/API domains -> VPS public IP
 
@@ -88,12 +85,10 @@ docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d
 
 Caddy obtains and renews HTTPS certificates automatically.
 
-The apex and `www` routes are optional so the edge can run before the root
-domain cuts over. Leave `ROOT_WEB_DOMAINS` empty and keep
-`edge/optional/root-web.caddy` as the disabled placeholder until the DNS records
-point at the VPS. When ready, copy `edge/optional/root-web.caddy.example` over
-`edge/optional/root-web.caddy`, set `ROOT_WEB_DOMAINS=card-hub.app,
-www.card-hub.app`, and restart the edge compose project.
+The root domain route is enabled by `edge/optional/root-web.caddy`; keep
+`ROOT_WEB_DOMAINS=card-hub.app` in `/opt/cardhub/edge/edge.env`. The Caddyfile
+uses a disabled fallback hostname if `ROOT_WEB_DOMAINS` is unset so Caddy can
+still start, but production should keep the apex value set.
 
 For GitHub Actions deploys, configure environment-scoped secrets:
 
@@ -290,7 +285,7 @@ EOF
 chmod 600 /tmp/cardhub-oss-rclone.env
 docker run --rm --env-file /tmp/cardhub-oss-rclone.env \
   -v /opt/cardhub/backups/cardhub-prod:/restore \
-  rclone/rclone:1.75.2 \
+  rclone/rclone:1.75.2@sha256:2687085f718d3c628f7fdfb77c52a1d344332aed543110bb88088f2c70d43eb5 \
   copyto oss:replace-with-bucket-name/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz \
   /restore/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz --s3-no-check-bucket
 rm -f /tmp/cardhub-oss-rclone.env

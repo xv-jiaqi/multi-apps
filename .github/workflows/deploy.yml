@@ -170,14 +170,14 @@ jobs:
           edge_dir="/opt/cardhub/edge/deploy/edge"
           edge_dir_q="$(printf '%q' "${edge_dir}")"
           before="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "sha256sum ${edge_dir_q}/Caddyfile 2>/dev/null | cut -d' ' -f1 || true")"
+            "cd ${edge_dir_q} 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 || true")"
 
           tar -C deploy/edge -czf - . \
             | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
                 "mkdir -p ${edge_dir_q} && tar -xzf - -C ${edge_dir_q}"
 
           after="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "sha256sum ${edge_dir_q}/Caddyfile 2>/dev/null | cut -d' ' -f1 || true")"
+            "cd ${edge_dir_q} 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 || true")"
 
           if [ -n "${before}" ] && [ "${before}" != "${after}" ]; then
             ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
