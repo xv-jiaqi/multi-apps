@@ -16,7 +16,7 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 1. **内容只能通过 seed 写入**：没有内容管理后台，知识库无法日常维护（CH-107）。
 2. **卡牌没有真实图片**：数据里全是 `gradient:` 占位符，前端只渲染渐变色块（CH-105）。
-3. **举报只能看不能处理**：`RESOLVED` 状态没有任何入口可以到达（CH-001）。
+3. **举报处理闭环已完成**：管理员可在队列中标记已处理，或删除 / 关闭被举报内容并处理相关待处理举报。
 4. **部分已有接口没有界面**：话题编辑、我的交易意向、回帖翻页（CH-003 / CH-102 / CH-103）。
 5. **小程序只覆盖 MVP**：论坛、交易、举报均未接入（CH-301）。
 
@@ -111,13 +111,14 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 
 ### 3.7 举报与管理
 
-| 能力                                          | 状态 | 入口                                 | 接口                                                              | 说明                                                               |
-| --------------------------------------------- | ---- | ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 举报话题 / 回帖 / 评论 / 意向                 | ✅   | 各内容旁“举报”                       | `reports.create`                                                  | 校验目标存在；每用户 24 小时最多 10 次                             |
-| 举报队列（待处理 / 已处理筛选，附目标上下文） | ✅   | `/reports`（Header 仅对 admin 显示） | `reports.list`                                                    | 每次请求都重新查库校验 admin 身份；目标已删除时 `target` 为 `null` |
-| 处理举报（标记已处理）                        | ❌   | —                                    | —                                                                 | `RESOLVED` 状态**无法到达**（CH-001）                              |
-| 管理员删除 / 关闭任意内容                     | 🟡   | 在内容原页面操作                     | `forum.topics.delete` / `forum.replies.delete` / `listings.close` | 评论不能删（CH-002）；队列页不能直接处置（CH-001）                 |
-| 封禁用户、用户管理、操作审计                  | ❌   | —                                    | —                                                                 | CH-209                                                             |
+| 能力                                          | 状态 | 入口                                 | 接口                                                                                  | 说明                                                                                                 |
+| --------------------------------------------- | ---- | ------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 举报话题 / 回帖 / 评论 / 意向                 | ✅   | 各内容旁“举报”                       | `reports.create`                                                                      | 校验目标存在；每用户 24 小时最多 10 次                                                               |
+| 举报队列（待处理 / 已处理筛选，附目标上下文） | ✅   | `/reports`（Header 仅对 admin 显示） | `reports.list`                                                                        | 每次请求都重新查库校验 admin 身份；目标已删除时 `target` 为 `null`；已处理条目显示处理人、时间和说明 |
+| 处理举报（标记已处理）                        | ✅   | `/reports`                           | `reports.resolve`                                                                     | 记录处理人、处理时间和可选说明；重复处理幂等                                                         |
+| 删除 / 关闭被举报内容并处理                   | ✅   | `/reports`                           | `reports.resolve`                                                                     | `TOPIC` / `REPLY` / `COMMENT` 删除，`LISTING` 关闭；同一目标其它待处理举报一并处理                   |
+| 管理员删除 / 关闭任意内容                     | 🟡   | 原页面 + `/reports`                  | `forum.topics.delete` / `forum.replies.delete` / `listings.close` / `reports.resolve` | 评论删除的通用入口仍属 CH-002；举报队列可处置评论目标                                                |
+| 封禁用户、用户管理、操作审计                  | ❌   | —                                    | —                                                                                     | CH-209                                                                                               |
 
 ### 3.8 国际化
 
@@ -178,33 +179,34 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 
 所有业务接口都挂在 `/trpc`，定义在 `apps/cardhub/api/src/modules/*/*.router.ts`，汇总在 `apps/cardhub/api/src/trpc/trpc.service.ts`。客户端通过 `@repo/trpc-contract` 获取 `AppRouter` 类型。
 
-| Procedure              | 类型     | 权限                    | 输入                                                                      | 输出要点                                              |
-| ---------------------- | -------- | ----------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `health.ping`          | query    | 公开                    | —                                                                         | `status / timestamp / message / gitSha / buildTime`   |
-| `series.list`          | query    | 公开                    | `{ page?=1, pageSize?=20(≤100) }`                                         | `{ items[{…, cardCount}], page, pageSize, total }`    |
-| `series.bySlug`        | query    | 公开                    | `{ slug }`                                                                | 系列 + `cards[{ id, slug, name, rarity, imageUrl }]`  |
-| `cards.bySlug`         | query    | 公开                    | `{ slug }`                                                                | 卡牌 + 扁平 `attributes` + `seriesSlug / seriesTitle` |
-| `cards.search`         | query    | 公开                    | `{ q(1–80), limit=20(≤50) }`                                              | `{ query, results[] }`                                |
-| `auth.register`        | mutation | 公开（限流）            | `{ email, username, password }`                                           | `{ token, user{ id, email, username, role } }`        |
-| `auth.login`           | mutation | 公开（限流）            | `{ identifier, password }`                                                | 同上                                                  |
-| `auth.me`              | query    | 公开（token 走 input）  | `{ token }`                                                               | `user`                                                |
-| `comments.listForCard` | query    | 公开                    | `{ cardSlug, limit=50(≤100) }`                                            | `[{ id, content, createdAt, user }]`                  |
-| `comments.create`      | mutation | 登录                    | `{ cardSlug, content }`                                                   | 新评论                                                |
-| `forum.topics.list`    | query    | 公开                    | `{ cursor?, limit=20(≤50) }`                                              | `{ items[TopicSummary], nextCursor }`                 |
-| `forum.topics.bySlug`  | query    | 公开                    | `{ slug }`                                                                | `TopicSummary + replies(前 20) + replyNextCursor`     |
-| `forum.topics.create`  | mutation | 登录（限流）            | `{ title, body }`                                                         | `TopicSummary`                                        |
-| `forum.topics.update`  | mutation | 作者，发布后 5 分钟内   | `{ id, title, body }`                                                     | `TopicSummary`                                        |
-| `forum.topics.delete`  | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                              |
-| `forum.replies.list`   | query    | 公开                    | `{ topicId, cursor?, limit }`                                             | `{ items, nextCursor }`（正序）                       |
-| `forum.replies.create` | mutation | 登录（限流）            | `{ topicId, body }`                                                       | 新回帖                                                |
-| `forum.replies.delete` | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                              |
-| `listings.list`        | query    | 公开                    | `{ cursor?, limit, cardSlug?, kind? }`                                    | `{ items[Listing], nextCursor }`，仅 `OPEN`           |
-| `listings.byCard`      | query    | 公开                    | `{ cardSlug, limit=5(≤20) }`                                              | `Listing[]`，仅 `OPEN`                                |
-| `listings.mine`        | query    | 登录                    | `{ cursor?, limit }`                                                      | 含 `CLOSED`                                           |
-| `listings.publish`     | mutation | 登录（限流）            | `{ cardSlug, kind, price?, currency='CNY', imageUrls≤4, contact, note? }` | `Listing`（`price` 为两位小数字符串）                 |
-| `listings.close`       | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                              |
-| `reports.create`       | mutation | 登录（限流 + 每日配额） | `{ targetType, targetId, reason }`                                        | `{ id, createdAt }`                                   |
-| `reports.list`         | query    | admin                   | `{ cursor?, limit, status? }`                                             | `items[]` 含 `target` 上下文（目标已删除时为 `null`） |
+| Procedure              | 类型     | 权限                    | 输入                                                                      | 输出要点                                                                                      |
+| ---------------------- | -------- | ----------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `health.ping`          | query    | 公开                    | —                                                                         | `status / timestamp / message / gitSha / buildTime`                                           |
+| `series.list`          | query    | 公开                    | `{ page?=1, pageSize?=20(≤100) }`                                         | `{ items[{…, cardCount}], page, pageSize, total }`                                            |
+| `series.bySlug`        | query    | 公开                    | `{ slug }`                                                                | 系列 + `cards[{ id, slug, name, rarity, imageUrl }]`                                          |
+| `cards.bySlug`         | query    | 公开                    | `{ slug }`                                                                | 卡牌 + 扁平 `attributes` + `seriesSlug / seriesTitle`                                         |
+| `cards.search`         | query    | 公开                    | `{ q(1–80), limit=20(≤50) }`                                              | `{ query, results[] }`                                                                        |
+| `auth.register`        | mutation | 公开（限流）            | `{ email, username, password }`                                           | `{ token, user{ id, email, username, role } }`                                                |
+| `auth.login`           | mutation | 公开（限流）            | `{ identifier, password }`                                                | 同上                                                                                          |
+| `auth.me`              | query    | 公开（token 走 input）  | `{ token }`                                                               | `user`                                                                                        |
+| `comments.listForCard` | query    | 公开                    | `{ cardSlug, limit=50(≤100) }`                                            | `[{ id, content, createdAt, user }]`                                                          |
+| `comments.create`      | mutation | 登录                    | `{ cardSlug, content }`                                                   | 新评论                                                                                        |
+| `forum.topics.list`    | query    | 公开                    | `{ cursor?, limit=20(≤50) }`                                              | `{ items[TopicSummary], nextCursor }`                                                         |
+| `forum.topics.bySlug`  | query    | 公开                    | `{ slug }`                                                                | `TopicSummary + replies(前 20) + replyNextCursor`                                             |
+| `forum.topics.create`  | mutation | 登录（限流）            | `{ title, body }`                                                         | `TopicSummary`                                                                                |
+| `forum.topics.update`  | mutation | 作者，发布后 5 分钟内   | `{ id, title, body }`                                                     | `TopicSummary`                                                                                |
+| `forum.topics.delete`  | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                                                                      |
+| `forum.replies.list`   | query    | 公开                    | `{ topicId, cursor?, limit }`                                             | `{ items, nextCursor }`（正序）                                                               |
+| `forum.replies.create` | mutation | 登录（限流）            | `{ topicId, body }`                                                       | 新回帖                                                                                        |
+| `forum.replies.delete` | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                                                                      |
+| `listings.list`        | query    | 公开                    | `{ cursor?, limit, cardSlug?, kind? }`                                    | `{ items[Listing], nextCursor }`，仅 `OPEN`                                                   |
+| `listings.byCard`      | query    | 公开                    | `{ cardSlug, limit=5(≤20) }`                                              | `Listing[]`，仅 `OPEN`                                                                        |
+| `listings.mine`        | query    | 登录                    | `{ cursor?, limit }`                                                      | 含 `CLOSED`                                                                                   |
+| `listings.publish`     | mutation | 登录（限流）            | `{ cardSlug, kind, price?, currency='CNY', imageUrls≤4, contact, note? }` | `Listing`（`price` 为两位小数字符串）                                                         |
+| `listings.close`       | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                                                                      |
+| `reports.create`       | mutation | 登录（限流 + 每日配额） | `{ targetType, targetId, reason }`                                        | `{ id, createdAt }`                                                                           |
+| `reports.list`         | query    | admin                   | `{ cursor?, limit, status? }`                                             | `items[]` 含 `target` 上下文（目标已删除时为 `null`）、`resolvedAt`、`resolver`、`resolution` |
+| `reports.resolve`      | mutation | admin                   | `{ id, action, resolution? }`                                             | `MARK_RESOLVED` 或 `REMOVE_TARGET`；删除 / 关闭目标时同步处理同目标待处理举报                 |
 
 另有 NestJS REST 端点 `GET /health`（不经过 tRPC，跳过全局 Throttler）。
 
@@ -286,6 +288,9 @@ erDiagram
     string targetId
     string reason
     enum status
+    datetime resolvedAt
+    string resolvedById FK
+    string resolution
   }
 ```
 
@@ -293,9 +298,9 @@ erDiagram
 
 - `User.role` 是自由字符串（`user` / `admin`），新增角色不需要迁移。
 - `Listing.cardSlug` 是**软指针**，不是外键：目录重建或改名时不会连带删除用户发布的意向。
-- `Report.targetType + targetId` 是多态指针，没有外键；目标被删后举报记录保留用于审计。
+- `Report.targetType + targetId` 是多态指针，没有外键；目标被删后举报记录保留用于审计。已处理记录通过可空的 `resolvedAt`、`resolvedById` 和 `resolution` 保存处理信息；处理人被删除时保留举报记录并把处理人置空。
 - 所有关联用户的外键都是 `onDelete: Cascade`。
-- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports`。
+- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution`。
 
 ## 7. 页面清单
 
@@ -361,14 +366,15 @@ erDiagram
 
 1. 举报无法标记为已处理，队列只增不减（CH-001）。
 2. 话题回帖超过 20 条后，第 21 条起在详情页看不到（CH-003）。
-3. 卡牌评论没有删除能力，也没有限流（CH-002）。
-4. `Topic.pinned` 字段无效；`forum.topics.update`、`listings.mine` 有接口无界面（CH-102 / CH-103）。
-5. 卡牌、系列只有渐变占位图（CH-105）。
-6. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
-7. API 错误信息只有中文（CH-211）。
-8. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。
-9. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
-10. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
+3. 卡牌评论没有通用删除能力，也没有限流（CH-002）。举报队列中的“删除内容并处理”可以删除被举报评论。
+4. 生产 Web 端 Sentry 实际未启用；`Dockerfile.web` 头部注释仍是 Zeabur 说明（CH-005）。
+5. `Topic.pinned` 字段无效；`forum.topics.update`、`listings.mine` 有接口无界面（CH-102 / CH-103）。
+6. 卡牌、系列只有渐变占位图（CH-105）。
+7. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
+8. API 错误信息只有中文（CH-211）。
+9. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。
+10. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
+11. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
 
 ## 10. 测试基线
 
