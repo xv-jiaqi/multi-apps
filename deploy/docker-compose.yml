@@ -41,6 +41,8 @@ services:
     restart: unless-stopped
     environment:
       TRPC_URL: ${TRPC_URL}
+      SENTRY_DSN: ${WEB_SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-${ENV_NAME:-}}
     depends_on:
       api:
         condition: service_healthy

@@ -1,8 +1,9 @@
 # Production image for @cardhub/web — Vite/React SPA served by nginx.
 #
-# Zeabur picks this Dockerfile when the service env has
-# `ZBPACK_DOCKERFILE_NAME=web`. Set runtime env `TRPC_URL` to the public API URL
-# ending in `/trpc`; when unset, the SPA falls back to same-origin `/trpc`.
+# The nginx entrypoint writes /config.js from runtime environment variables so
+# one immutable image can serve staging and production. Set `TRPC_URL` to the
+# public API URL ending in `/trpc`; the container refuses to start when it is
+# missing or invalid.
 # Example local run:
 #   docker run -e TRPC_URL=https://api.card-hub.app/trpc cardhub-web:latest
 

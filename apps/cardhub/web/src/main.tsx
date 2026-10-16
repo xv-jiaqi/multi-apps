@@ -7,14 +7,28 @@ import { ErrorBoundary } from './components/error-boundary';
 import { TrpcProvider } from './lib/trpc';
 import './styles/globals.css';
 
+function nonEmpty(value: string | undefined): string | undefined {
+  return value?.trim() || undefined;
+}
+
 // Initialise Sentry as early as possible so the ErrorBoundary's componentDidCatch
 // hook (which calls Sentry.captureException) has a real client to talk to.
-// When VITE_SENTRY_DSN is unset (local dev, demo builds) Sentry stays inert.
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+// When the runtime and build-time DSNs are unset, Sentry stays inert.
+const runtimeConfig = typeof window !== 'undefined' ? window.__CARDHUB_CONFIG__ : undefined;
+const sentryDsn =
+  nonEmpty(runtimeConfig?.SENTRY_DSN) ??
+  nonEmpty(import.meta.env.VITE_SENTRY_DSN as string | undefined);
+
 if (sentryDsn) {
+  const sentryRelease = nonEmpty(runtimeConfig?.GIT_SHA);
+
   Sentry.init({
     dsn: sentryDsn,
-    environment: (import.meta.env.MODE as string) || 'development',
+    environment:
+      nonEmpty(runtimeConfig?.SENTRY_ENVIRONMENT) ??
+      (import.meta.env.MODE as string) ??
+      'development',
+    release: sentryRelease,
     tracesSampleRate: Number(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
   });
 }

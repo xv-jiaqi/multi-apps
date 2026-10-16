@@ -45,8 +45,10 @@ Caddy publishes host ports.
    Fill different domains, secrets, database names/passwords, and `IMAGE_TAG`
    values in each app env file. Set `ENV_NAME=prod` in `production.env` and
    `ENV_NAME=staging` in `staging.env`. In `production.env`, also set
-   `SENTRY_ENVIRONMENT=production` so Sentry events match production monitors
-   while `ENV_NAME` remains `prod` for container and network names. `TRPC_URL`
+   `SENTRY_ENVIRONMENT=production` so Sentry events from both API and Web match
+   production monitors while `ENV_NAME` remains `prod` for container and network
+   names. Set `SENTRY_DSN` for API events and `WEB_SENTRY_DSN` for browser
+   events. Leave either DSN empty to disable that side cleanly. `TRPC_URL`
    should point at that
    environment's API `/trpc` endpoint. Use separate database names:
    `POSTGRES_DB=cardhub_prod` for production and
@@ -174,12 +176,11 @@ manually by ops with random passwords. Do not run `seed-demo` on staging. The
 optional `CATALOG_SEED_CMD` hook remains available for controlled one-off use;
 if set and it fails, it triggers the same rollback path and exits non-zero.
 
-The web container receives runtime `TRPC_URL`, but consuming it depends on the
-companion app PR. The app PR also changes `/health` to include `gitSha` and to
-return 503 when dependencies are unhealthy; this infra PR expects to merge with
-that app PR. Merge order should be app PR #38 first, then this infra PR; when
-resolving any Dockerfile/nginx conflicts, keep #38's nginx entrypoint that writes
-an uncached `/config.js` from runtime `TRPC_URL`.
+The web container receives runtime `TRPC_URL` and optional browser Sentry
+settings (`WEB_SENTRY_DSN`, `SENTRY_ENVIRONMENT`, and the image `GIT_SHA`) via
+the nginx entrypoint. The generated `/config.js` is uncached and validated at
+container startup; a missing or malformed `TRPC_URL` makes the web container
+exit instead of silently falling back to another API URL.
 
 ## Rollback
 
@@ -253,27 +254,16 @@ Minimal RAM policy template, with placeholders only:
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "oss:PutObject",
-        "oss:GetObject"
-      ],
-      "Resource": [
-        "acs:oss:*:*:<bucket>/<project>/*"
-      ]
+      "Action": ["oss:PutObject", "oss:GetObject"],
+      "Resource": ["acs:oss:*:*:<bucket>/<project>/*"]
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "oss:ListObjects"
-      ],
-      "Resource": [
-        "acs:oss:*:*:<bucket>"
-      ],
+      "Action": ["oss:ListObjects"],
+      "Resource": ["acs:oss:*:*:<bucket>"],
       "Condition": {
         "StringLike": {
-          "oss:Prefix": [
-            "<project>/*"
-          ]
+          "oss:Prefix": ["<project>/*"]
         }
       }
     }
