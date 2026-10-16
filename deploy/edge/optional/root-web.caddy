@@ -1,3 +1,7 @@
 {$ROOT_WEB_DOMAINS:http://root-web-disabled.invalid} {
 	reverse_proxy {$ENV_NAME}-web:8080
 }
+
+{$ROOT_WEB_REDIRECT_DOMAINS:http://root-web-redirect-disabled.invalid} {
+	redir https://{$ROOT_WEB_REDIRECT_TARGET:card-hub.app}{uri} 308
+}
