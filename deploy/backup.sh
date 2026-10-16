@@ -59,6 +59,7 @@ push_offsite() {
   local backup_name
   backup_name="$(basename "${OUT}")"
   local remote_path="oss:${OSS_BUCKET}/${PROJECT}/${backup_name}"
+  local remote_dir="oss:${OSS_BUCKET}/${PROJECT}"
   local container_backup="/backup/${backup_name}"
 
   echo "Uploading ${backup_name} to off-site OSS bucket ${OSS_BUCKET}/${PROJECT}"
@@ -76,7 +77,7 @@ push_offsite() {
     --env-file "${tmp_rclone_env}" \
     -v "${BACKUP_DIR}:/backup:ro" \
     "${RCLONE_IMAGE}" \
-    check --one-way "${container_backup}" "${remote_path}" --s3-no-check-bucket; then
+    check --one-way /backup "${remote_dir}" --include "/${backup_name}" --s3-no-check-bucket; then
     echo "Off-site backup verification failed for ${backup_name}" >&2
     exit 1
   fi
