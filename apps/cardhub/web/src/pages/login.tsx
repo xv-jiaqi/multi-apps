@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { loginInput, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { resolvePostAuthRedirect } from '../lib/auth-redirect';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -47,6 +48,7 @@ export const LoginPage = observer(function LoginPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('auth.login.title')} />
       <div className="mx-auto max-w-md space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('auth.login.title') }]}

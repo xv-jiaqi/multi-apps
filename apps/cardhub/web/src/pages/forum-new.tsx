@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { t, topicCreateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { MarkdownView } from '../components/markdown-view';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -55,6 +56,7 @@ export const ForumNewPage = observer(function ForumNewPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('forum.new.title')} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[

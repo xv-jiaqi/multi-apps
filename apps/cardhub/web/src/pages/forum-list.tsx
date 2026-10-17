@@ -1,15 +1,21 @@
 import { observer } from 'mobx-react-lite';
-import { Link } from 'react-router';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Button } from '@repo/ui-web';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
 export const ForumListPage = observer(function ForumListPage() {
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [notice, setNotice] = useState('');
+  const noticeRef = useRef<HTMLParagraphElement>(null);
 
   // useInfiniteQuery on the cursor-based topics.list — getNextPageParam
   // returns the cursor returned by the server; null halts the chain.
@@ -20,8 +26,21 @@ export const ForumListPage = observer(function ForumListPage() {
 
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
 
+  useEffect(() => {
+    if ((location.state as { notice?: string } | null)?.notice !== 'topicDeleted') return;
+    setNotice(t(locale.locale, 'forum.detail.topicDeleted'));
+    navigate('.', { replace: true, state: null });
+  }, [location.state, locale.locale, navigate]);
+
+  useEffect(() => {
+    if (notice) {
+      noticeRef.current?.focus();
+    }
+  }, [notice]);
+
   return (
     <PageShell>
+      <PageMeta title={tt('forum.list.title')} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('forum.list.title') }]}
@@ -32,9 +51,9 @@ export const ForumListPage = observer(function ForumListPage() {
             <p className="text-neutral-600">{tt('forum.list.subtitle')}</p>
           </div>
           {session.isAuthenticated ? (
-            <Link to="/forum/new">
-              <Button>{tt('forum.list.newTopic')}</Button>
-            </Link>
+            <Button asChild>
+              <Link to="/forum/new">{tt('forum.list.newTopic')}</Link>
+            </Button>
           ) : (
             <Link
               to="/login"
@@ -45,6 +64,17 @@ export const ForumListPage = observer(function ForumListPage() {
             </Link>
           )}
         </header>
+
+        {notice ? (
+          <p
+            ref={noticeRef}
+            role="status"
+            tabIndex={-1}
+            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {notice}
+          </p>
+        ) : null}
 
         {query.isLoading ? (
           <ul className="space-y-3">

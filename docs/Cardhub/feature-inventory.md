@@ -90,10 +90,10 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | 发布话题（Markdown + 预览）       | ✅   | `/forum/new`   | `forum.topics.create`  | slug = 标题英文化 + 6 位随机后缀（中文标题会退化成 `topic-xxxxxx`）                                                                                                 |
 | 话题详情 + Markdown 渲染          | ✅   | `/forum/:slug` | `forum.topics.bySlug`  | `react-markdown` + `remark-gfm` + `rehype-sanitize`，禁止 `dangerouslySetInnerHTML`                                                                                 |
 | 编辑话题（发布后 5 分钟内）       | 🟡   | —              | `forum.topics.update`  | 接口和窗口校验都有，**没有界面**（CH-103）                                                                                                                          |
-| 删除话题（本人 / 管理员）         | ✅   | 话题详情       | `forum.topics.delete`  | 级联删除回帖                                                                                                                                                        |
+| 删除话题（本人 / 管理员）         | ✅   | 话题详情       | `forum.topics.delete`  | Web / Tauri 使用行内二步确认；成功后返回列表并显示可聚焦的删除提示；级联删除回帖                                                                                   |
 | 回帖（Markdown）                  | ✅   | 话题详情       | `forum.replies.create` |                                                                                                                                                                     |
 | 回帖翻页                          | ✅   | `/forum/:slug` | `forum.replies.list`   | 详情页先渲染 `bySlug` 内联的前 20 条；有 `replyNextCursor` 时可点击“加载更多回帖”继续按正序追加；首个后续页加载中显示忙态，失败重试中禁用按钮，新回帖可见高亮并聚焦 |
-| 删除回帖（本人 / 管理员）         | ✅   | 回帖旁         | `forum.replies.delete` |                                                                                                                                                                     |
+| 删除回帖（本人 / 管理员）         | ✅   | 回帖旁         | `forum.replies.delete` | Web / Tauri 使用行内二步确认；成功后本地更新已展开分页、游标和回帖数，避免分页收回或 refetch 使用已删除游标                                                         |
 | 置顶                              | 🟡   | —              | `Topic.pinned`         | 字段存在，没有设置接口和界面（CH-103）                                                                                                                              |
 | 版块 / 标签                       | ❌   | —              | —                      | 长期需求，暂未排期                                                                                                                                                  |
 
@@ -138,7 +138,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | 路由懒加载 + 双层 ErrorBoundary            | ✅   |                                                                                                                 |
 | 加载 / 错误 / 空状态、骨架屏               | ✅   |                                                                                                                 |
 | 刘海屏 safe-area + 页面横向留白            | ✅   | `.app-safe-top / .app-safe-x / .app-safe-bottom`；`.app-safe-x` 同时保证页面最小横向留白（< sm 16px，sm+ 24px） |
-| 页面级 `<title>` / description             | ❌   | 全站固定 `Cardhub`（CH-108 / CH-207）                                                                           |
+| 页面级 `<title>` / description             | 🟡   | 页面 `<title>` 已按 `{页面名} · Cardhub` 设置；description 留给 CH-207                                          |
 | 首页精选分类、最新系列横滑、页脚、入场动效 | ❌   | UI 规范与历史 AI 前端指令要求（CH-205）                                                                         |
 | 收藏、分享                                 | ❌   | CH-203（含集齐进度）                                                                                            |
 | 深色模式                                   | ❌   | CH-305                                                                                                          |
@@ -375,9 +375,8 @@ erDiagram
 2. 现有 seed 仍只有渐变占位图；真实图片需要 CH-107/CH-208 后填入 https URL，小程序渲染同步留给 CH-301。
 3. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
 4. API 错误信息只有中文（CH-211）。
-5. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。
-6. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
-7. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
+5. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
+6. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
 
 ## 10. 测试基线
 

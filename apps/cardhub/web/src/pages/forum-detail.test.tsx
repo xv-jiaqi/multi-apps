@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
 
 const topicInvalidate = vi.fn();
+const topicsListInvalidate = vi.fn();
 const repliesInvalidate = vi.fn();
 const createReplyMutate = vi.fn();
 const deleteReplyMutate = vi.fn();
+const deleteTopicMutate = vi.fn();
 const fetchNextPage = vi.fn();
 const repliesReset = vi.fn();
+const topicSetData = vi.fn();
+const repliesSetInfiniteData = vi.fn();
 const repliesQueryInputs: Array<{ topicId: string; limit: number }> = [];
 let latestInitialCursor: string | undefined;
 
@@ -60,6 +64,7 @@ const topicState: {
 const repliesQueryState = {
   data: {
     pages: [] as Array<{ items: ReplyFixture[]; nextCursor: string | null }>,
+    pageParams: [] as Array<string | undefined>,
   },
   cursor: undefined as string | undefined,
   hasNextPage: true,
@@ -80,6 +85,16 @@ function nextReplyPage(cursor: string | undefined) {
   };
 }
 
+function refetchLoadedReplyPages() {
+  if (repliesQueryState.data.pageParams.length === 0) return;
+  const pages = repliesQueryState.data.pageParams.map((pageParam) => nextReplyPage(pageParam));
+  repliesQueryState.data = {
+    pages,
+    pageParams: repliesQueryState.data.pageParams,
+  };
+  repliesQueryState.hasNextPage = Boolean(pages.at(-1)?.nextCursor);
+}
+
 vi.mock('../lib/trpc', () => ({
   trpc: {
     forum: {
@@ -88,8 +103,11 @@ vi.mock('../lib/trpc', () => ({
           useQuery: () => topicState,
         },
         delete: {
-          useMutation: () => ({
-            mutate: vi.fn(),
+          useMutation: (handlers: {
+            onSuccess?: () => void | Promise<void>;
+            onError?: (error: { data?: { code?: string } }) => void | Promise<void>;
+          }) => ({
+            mutate: (input: unknown) => deleteTopicMutate(input, handlers),
             isPending: false,
           }),
         },
@@ -105,6 +123,9 @@ vi.mock('../lib/trpc', () => ({
           ) => {
             repliesQueryInputs.push(input);
             latestInitialCursor = options.initialCursor;
+            if (repliesQueryState.data.pages.length === 0) {
+              repliesQueryState.cursor = options.initialCursor;
+            }
             return {
               ...repliesQueryState,
               fetchNextPage,
@@ -124,8 +145,14 @@ vi.mock('../lib/trpc', () => ({
           }),
         },
         delete: {
-          useMutation: ({ onSuccess }: { onSuccess?: () => void }) => ({
-            mutate: (input: unknown) => deleteReplyMutate(input, { onSuccess }),
+          useMutation: ({
+            onSuccess,
+            onError,
+          }: {
+            onSuccess?: (data: { ok: boolean }, variables: { id: string }) => void;
+            onError?: (error: { data?: { code?: string } }, variables: { id: string }) => void;
+          }) => ({
+            mutate: (input: { id: string }) => deleteReplyMutate(input, { onSuccess, onError }),
           }),
         },
       },
@@ -141,10 +168,18 @@ vi.mock('../lib/trpc', () => ({
     useUtils: () => ({
       forum: {
         topics: {
-          bySlug: { invalidate: topicInvalidate },
+          bySlug: {
+            invalidate: topicInvalidate,
+            setData: topicSetData,
+          },
+          list: { invalidate: topicsListInvalidate },
         },
         replies: {
-          list: { invalidate: repliesInvalidate, reset: repliesReset },
+          list: {
+            invalidate: repliesInvalidate,
+            reset: repliesReset,
+            setInfiniteData: repliesSetInfiniteData,
+          },
         },
       },
     }),
@@ -153,11 +188,19 @@ vi.mock('../lib/trpc', () => ({
 
 import { ForumDetailPage } from './forum-detail';
 
+function ForumLanding() {
+  const location = useLocation();
+  return (
+    <div>forum notice: {(location.state as { notice?: string } | null)?.notice ?? 'none'}</div>
+  );
+}
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/forum/test-topic']}>
       <Routes>
         <Route path="/forum/:slug" element={<ForumDetailPage />} />
+        <Route path="/forum" element={<ForumLanding />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -166,15 +209,46 @@ function renderPage() {
 beforeEach(() => {
   rootStore.session.signOut();
   topicInvalidate.mockClear();
-  repliesInvalidate.mockClear();
+  topicsListInvalidate.mockReset();
+  topicsListInvalidate.mockResolvedValue(undefined);
+  repliesInvalidate.mockReset();
+  repliesInvalidate.mockImplementation(async () => {
+    refetchLoadedReplyPages();
+  });
   repliesReset.mockReset();
   repliesReset.mockImplementation(() => {
     repliesQueryState.cursor = latestInitialCursor;
-    repliesQueryState.data = { pages: [] };
+    repliesQueryState.data = { pages: [], pageParams: [] };
     repliesQueryState.hasNextPage = Boolean(latestInitialCursor);
   });
+  topicSetData.mockReset();
+  topicSetData.mockImplementation((_input, updater) => {
+    topicState.data = typeof updater === 'function' ? updater(topicState.data) : updater;
+  });
+  repliesSetInfiniteData.mockReset();
+  repliesSetInfiniteData.mockImplementation((_input, updater) => {
+    repliesQueryState.data =
+      typeof updater === 'function' ? updater(repliesQueryState.data) : updater;
+    repliesQueryState.hasNextPage = Boolean(repliesQueryState.data.pages.at(-1)?.nextCursor);
+  });
   createReplyMutate.mockReset();
+  createReplyMutate.mockImplementation((_input, handlers) => {
+    const created = {
+      id: 'reply-new',
+      body: 'new reply',
+      createdAt: '2026-05-01T00:50:00.000Z',
+      author: { id: 'user-current', username: 'alice' },
+    };
+    availableReplies = [...availableReplies, created];
+    return handlers.onSuccess?.(created);
+  });
   deleteReplyMutate.mockReset();
+  deleteReplyMutate.mockImplementation((input, handlers) => {
+    availableReplies = availableReplies.filter((reply) => reply.id !== input.id);
+    handlers.onSuccess?.({ ok: true }, input);
+  });
+  deleteTopicMutate.mockReset();
+  deleteTopicMutate.mockImplementation((_input, handlers) => handlers.onSuccess?.());
   fetchNextPage.mockReset();
   repliesQueryInputs.length = 0;
   latestInitialCursor = undefined;
@@ -182,7 +256,10 @@ beforeEach(() => {
   fetchNextPage.mockImplementation(async () => {
     const cursor = repliesQueryState.data.pages.at(-1)?.nextCursor ?? repliesQueryState.cursor;
     const page = nextReplyPage(cursor);
-    repliesQueryState.data = { pages: [...repliesQueryState.data.pages, page] };
+    repliesQueryState.data = {
+      pages: [...repliesQueryState.data.pages, page],
+      pageParams: [...repliesQueryState.data.pageParams, cursor],
+    };
     repliesQueryState.hasNextPage = Boolean(page.nextCursor);
     return { data: repliesQueryState.data };
   });
@@ -202,7 +279,7 @@ beforeEach(() => {
     replyNextCursor: replies[19]!.id,
   };
   repliesQueryState.cursor = undefined;
-  repliesQueryState.data = { pages: [] };
+  repliesQueryState.data = { pages: [], pageParams: [] };
   repliesQueryState.hasNextPage = true;
   repliesQueryState.isFetchingNextPage = false;
   repliesQueryState.isLoading = false;
@@ -273,6 +350,123 @@ describe('ForumDetailPage replies pagination', () => {
     expect(await screen.findByText('Reply 22')).toBeInTheDocument();
     expect(screen.getByText('Reply 30')).toBeInTheDocument();
     expect(screen.queryByText('Reply 20')).not.toBeInTheDocument();
+  });
+
+  it('keeps loaded reply pages expanded after deleting an inline non-cursor reply', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'user-5', username: 'user5' });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    expect(await screen.findByText('Reply 21')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '删除 @user5 的回帖' }));
+    expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    await waitFor(() => expect(screen.queryByText('Reply 5')).not.toBeInTheDocument());
+    expect(screen.getByText('Reply 21')).toBeInTheDocument();
+    expect(screen.getByText('Reply 40')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '回帖（44）' })).toBeInTheDocument();
+  });
+
+  it('removes a deleted reply from an already loaded pagination page', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'admin-1', username: 'admin', role: 'admin' });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    expect(await screen.findByText('Reply 25')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '删除 @user25 的回帖' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    await waitFor(() => expect(screen.queryByText('Reply 25')).not.toBeInTheDocument());
+    expect(screen.getByText('Reply 21')).toBeInTheDocument();
+    expect(screen.getByText('Reply 40')).toBeInTheDocument();
+    expect(screen.getByText('回帖已删除')).toHaveFocus();
+  });
+
+  it('can load more replies after deleting the current reply cursor', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'admin-1', username: 'admin', role: 'admin' });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '删除 @user20 的回帖' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    await waitFor(() => expect(screen.queryByText('Reply 20')).not.toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+
+    expect(await screen.findByText('Reply 21')).toBeInTheDocument();
+    expect(screen.getByText('Reply 40')).toBeInTheDocument();
+  });
+
+  it('keeps refetched pages after deleting the cursor reply and posting a reply', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'admin-1', username: 'admin', role: 'admin' });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    expect(await screen.findByText('Reply 40')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '删除 @user20 的回帖' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    await waitFor(() => expect(screen.queryByText('Reply 20')).not.toBeInTheDocument());
+    expect(repliesQueryState.data.pageParams).toEqual(['reply-19']);
+
+    await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
+    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+
+    await waitFor(() => {
+      expect(fetchNextPage).toHaveBeenCalledTimes(2);
+    });
+
+    const cachedReplyIds = repliesQueryState.data.pages.flatMap((page) =>
+      page.items.map((reply) => reply.id),
+    );
+    expect(cachedReplyIds).toEqual(
+      expect.arrayContaining(['reply-21', 'reply-40', 'reply-45', 'reply-new']),
+    );
+    expect(new Set(cachedReplyIds).size).toBe(cachedReplyIds.length);
+  });
+
+  it('returns focus to the reply delete button on Escape and on delete failure', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'user-1', username: 'user1' });
+    deleteReplyMutate.mockImplementation((input, handlers) => {
+      handlers.onError?.({ data: { code: 'FORBIDDEN' } }, input);
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    const deleteButton = screen.getByRole('button', { name: '删除 @user1 的回帖' });
+    await user.click(deleteButton);
+    expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '删除 @user1 的回帖' })).toHaveFocus();
+    });
+
+    await user.click(screen.getByRole('button', { name: '删除 @user1 的回帖' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('你没有权限删除这条回帖');
+    expect(screen.getByRole('button', { name: '删除 @user1 的回帖' })).toHaveFocus();
+  });
+
+  it('navigates to the forum list with a topicDeleted notice after deleting a topic', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'author-1', username: 'author' });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '删除这个话题' }));
+    expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    expect(await screen.findByText('forum notice: topicDeleted')).toBeInTheDocument();
+    expect(topicsListInvalidate).toHaveBeenCalled();
   });
 
   it('invalidates both topic detail and replies list after posting a reply', async () => {

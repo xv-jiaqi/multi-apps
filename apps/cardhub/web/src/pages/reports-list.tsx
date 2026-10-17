@@ -5,6 +5,7 @@ import { t, type Locale, type ReportResolveAction, type ReportStatus } from '@re
 import { Button } from '@repo/ui-web';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -97,6 +98,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('reports.title')} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('reports.title') }]}

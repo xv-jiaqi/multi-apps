@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { Artwork } from '../components/artwork';
@@ -14,6 +15,7 @@ export const SeriesListPage = observer(function SeriesListPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('series.list.title')} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('breadcrumb.series') }]}

@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { registerInput, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { resolvePostAuthRedirect } from '../lib/auth-redirect';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -46,6 +47,7 @@ export const RegisterPage = observer(function RegisterPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('auth.register.title')} />
       <div className="mx-auto max-w-md space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('auth.register.title') }]}
