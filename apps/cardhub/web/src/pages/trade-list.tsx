@@ -102,12 +102,18 @@ export const TradeListPage = observer(function TradeListPage() {
   const languageFilter: ListingLanguage | undefined = isLanguage(rawLanguage)
     ? rawLanguage
     : undefined;
-  const currencyFilter: TradeCurrency | undefined = isTradeCurrency(rawCurrency)
+  const currencyInUrl: TradeCurrency | undefined = isTradeCurrency(rawCurrency)
     ? rawCurrency
     : undefined;
   const sort: ListingSort = isSort(rawSort) ? rawSort : 'newest';
-  const minPrice = parsePrice(searchParams.get('min'));
-  const maxPrice = parsePrice(searchParams.get('max'));
+  const priceSort = sort === 'price_asc' || sort === 'price_desc';
+  // A shared price sort without a currency is not a valid API query. Default
+  // the request (and the currency control) to CNY. A price range still needs
+  // an explicit currency in the URL, so a bare min/max is not sent.
+  const currencyFilter: TradeCurrency | undefined =
+    currencyInUrl ?? (priceSort ? 'CNY' : undefined);
+  const minPrice = currencyInUrl ? parsePrice(searchParams.get('min')) : undefined;
+  const maxPrice = currencyInUrl ? parsePrice(searchParams.get('max')) : undefined;
   const priceInvalid =
     minPrice !== undefined &&
     maxPrice !== undefined &&
@@ -158,7 +164,7 @@ export const TradeListPage = observer(function TradeListPage() {
     conditionFilter,
     languageFilter,
     currencyFilter,
-    searchParams.get('min') || searchParams.get('max'),
+    minPrice !== undefined || maxPrice !== undefined,
     sort !== 'newest',
   ].filter(Boolean).length;
   const hasAnyFilter = activeFilterCount > 0;
@@ -174,17 +180,26 @@ export const TradeListPage = observer(function TradeListPage() {
   function clearAllFilters() {
     setSearchParams(new URLSearchParams(), { replace: true });
   }
+  function clearCurrency() {
+    setPriceDraft({ min: '', max: '' });
+    updateParams({
+      currency: null,
+      min: null,
+      max: null,
+      ...(priceSort ? { sort: null } : {}),
+    });
+  }
   function commitPriceRange() {
     if (!currencyFilter) return;
     updateParams({ min: priceDraft.min.trim(), max: priceDraft.max.trim() });
   }
   const priceRangeLabel =
-    searchParams.get('min') && searchParams.get('max')
-      ? `${searchParams.get('min')}–${searchParams.get('max')} ${currencyFilter ?? ''}`
-      : searchParams.get('min')
-        ? `≥ ${searchParams.get('min')} ${currencyFilter ?? ''}`
-        : searchParams.get('max')
-          ? `≤ ${searchParams.get('max')} ${currencyFilter ?? ''}`
+    minPrice !== undefined && maxPrice !== undefined
+      ? `${searchParams.get('min')}–${searchParams.get('max')} ${currencyInUrl}`
+      : minPrice !== undefined
+        ? `≥ ${searchParams.get('min')} ${currencyInUrl}`
+        : maxPrice !== undefined
+          ? `≤ ${searchParams.get('max')} ${currencyInUrl}`
           : '';
 
   return (
@@ -348,10 +363,8 @@ export const TradeListPage = observer(function TradeListPage() {
                 <Select
                   value={currencyFilter ?? 'any'}
                   onValueChange={(value) => {
-                    if (value === 'any') {
-                      setPriceDraft({ min: '', max: '' });
-                      updateParams({ currency: null, min: null, max: null });
-                    } else updateParams({ currency: value });
+                    if (value === 'any') clearCurrency();
+                    else updateParams({ currency: value });
                   }}
                 >
                   <SelectTrigger className="w-28">
@@ -448,7 +461,7 @@ export const TradeListPage = observer(function TradeListPage() {
                 <FilterChip
                   label={currencyFilter}
                   clearLabel={tt('trade.filter.clear', { label: tt('trade.publish.currency') })}
-                  onClear={() => updateParams({ currency: null, min: null, max: null })}
+                  onClear={clearCurrency}
                 />
               ) : null}
               {priceRangeLabel ? (

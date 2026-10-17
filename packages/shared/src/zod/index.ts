@@ -156,8 +156,6 @@ export const currencyCodeSchema = z
   .toUpperCase()
   .regex(/^[A-Z]{3}$/, '货币代码必须是 3 个大写字母 (ISO 4217)');
 
-export const listingCurrencyInputSchema = z.string().trim().min(1).max(12).default('CNY');
-
 export const listingPriceSchema = z.union([z.number(), z.string()]).transform((val, ctx) => {
   const asNumber = typeof val === 'number' ? val : Number(val);
   if (!Number.isFinite(asNumber) || asNumber < 0 || asNumber > 9_999_999_999.99) {
@@ -175,7 +173,7 @@ export const listingPublishInput = z.object({
   cardSlug: slugSchema,
   kind: z.enum(LISTING_KIND_VALUES),
   price: listingPriceSchema.optional(),
-  currency: listingCurrencyInputSchema,
+  currency: currencyCodeSchema.default('CNY'),
   // Cap at 4 to keep the schema close to "thumbnails the user can post" —
   // larger image collections belong in the (backlog) self-hosted pipeline.
   imageUrls: z
@@ -197,11 +195,6 @@ export const listingPublishInput = z.object({
   variantNote: z.string().trim().max(40, '版本备注最多 40 字').optional(),
 });
 export type ListingPublishInput = z.infer<typeof listingPublishInput>;
-
-export const listingEditInput = listingPublishInput.partial().extend({
-  id: z.string().uuid(),
-});
-export type ListingEditInput = z.infer<typeof listingEditInput>;
 
 export const listingListInput = cursorPaginationInput.extend({
   cardSlug: slugSchema.optional(),

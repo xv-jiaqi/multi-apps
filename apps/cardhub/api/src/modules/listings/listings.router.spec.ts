@@ -1,5 +1,5 @@
 import { Decimal } from '@prisma/client/runtime/library';
-import { listingEditInput, listingPublishInput } from '@repo/shared';
+import { listingPublishInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { ListingsRouter } from './listings.router';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -78,7 +78,7 @@ function listingRow(overrides: Record<string, unknown> = {}) {
 }
 
 describe('listing image URL schema', () => {
-  it('requires https for publish and edit inputs', () => {
+  it('requires https image URLs and an uppercase ISO currency code', () => {
     expect(
       listingPublishInput.safeParse({
         cardSlug: 'aurora-knight',
@@ -89,10 +89,23 @@ describe('listing image URL schema', () => {
       }).success,
     ).toBe(false);
 
+    const parsed = listingPublishInput.safeParse({
+      cardSlug: 'aurora-knight',
+      kind: 'SELL',
+      currency: 'cny',
+      imageUrls: ['https://img.cardhub.test/a.jpg'],
+      contact: 'wechat: alice',
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.currency).toBe('CNY');
+
     expect(
-      listingEditInput.safeParse({
-        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
-        imageUrls: ['HTTP://img.cardhub.test/a.jpg'],
+      listingPublishInput.safeParse({
+        cardSlug: 'aurora-knight',
+        kind: 'SELL',
+        currency: '元',
+        imageUrls: [],
+        contact: 'wechat: alice',
       }).success,
     ).toBe(false);
   });

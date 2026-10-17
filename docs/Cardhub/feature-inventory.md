@@ -105,7 +105,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | 发布意向                                      | ✅   | `/trade/new`（卡牌页可带 `?cardSlug=`） | `listings.publish` | 卡牌搜索选择器；价格可空（显示“面议”）；货币下拉默认 CNY；品相、语言、版本备注可空；最多 4 个 https 外链图片      |
 | 卡牌页内意向（最多 5 条）                     | ✅   | 卡牌详情页                              | `listings.byCard`  | 显示品相 / 语言 / 版本备注与联系方式，仍只显示 `OPEN`                                                             |
 | 关闭意向（本人 / 管理员）                     | ✅   | 列表项、`/me`                           | `listings.close`   | 共用 `ListingCloseControl` 行内两步确认；关闭成功后刷新列表                                                       |
-| 我的意向（含已关闭）                          | ✅   | `/me#me-listings`                       | `listings.mine`    | `/me` 上混合显示 OPEN / CLOSED，可用行内两步确认关闭；页面仍显示 slug，接口已附带卡牌摘要                        |
+| 我的意向（含已关闭）                          | ✅   | `/me#me-listings`                       | `listings.mine`    | `/me` 上混合显示 OPEN / CLOSED，可用行内两步确认关闭；页面仍显示 slug，接口已附带卡牌摘要                         |
 | 图片展示                                      | ✅   | 列表项                                  | —                  | https 图片显示缩略图；非 https 或坏图显示“图片 n”文字链接，已有非 https 数据不迁移                                |
 | 免责声明                                      | ✅   | 列表页 + 发布页                         | —                  |                                                                                                                   |
 | 联系方式可见性                                | 🟡   | 列表项 + 卡牌页区块                     | `listings.*`       | D1 未定，API 仍保持公开；前端已兼容未来 `contact: null` 并显示“登录后查看联系方式”                                |
@@ -206,7 +206,7 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `forum.replies.delete` | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                                                                      |
 | `listings.list`        | query    | 公开                    | `{ cursor?, limit, cardSlug?, kind?, condition?, language?, minPrice?, maxPrice?, currency?, sort? }` | `{ items[Listing + card?], nextCursor }`，仅 `OPEN`；价格区间或价格排序必须带 `currency` |
 | `listings.byCard`      | query    | 公开                    | `{ cardSlug, limit=5(≤20) }`                                              | `Listing[]`，仅 `OPEN`                                                                        |
-| `listings.mine`        | query    | 登录                    | `{ pageCursor?, cursor?, limit }`                                         | 含 `CLOSED`；附带卡牌摘要                                                                     |
+| `listings.mine`        | query    | 登录                    | `{ cursor?, pageCursor?, limit=20(≤50) }`                                 | 含 `CLOSED`；附带卡牌摘要                                                                     |
 | `listings.publish`     | mutation | 登录（限流）            | `{ cardSlug, kind, price?, currency='CNY', imageUrls≤4(https), contact, note?, condition?, language?, variantNote? }` | `Listing`（`price` 为两位小数字符串） |
 | `listings.close`       | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                                                                      |
 | `reports.create`       | mutation | 登录（限流 + 每日配额） | `{ targetType, targetId, reason }`                                        | `{ id, createdAt }`                                                                           |
@@ -320,7 +320,7 @@ erDiagram
 - `Comment` 通过可空的 `cardId` / `seriesId` 指向卡牌或系列；数据库 CHECK 约束保证两者恰好有一个非空。
 - `Report.targetType + targetId` 是多态指针，没有外键；目标被删后举报记录保留用于审计。已处理记录通过可空的 `resolvedAt`、`resolvedById` 和 `resolution` 保存处理信息；处理人被删除时保留举报记录并把处理人置空。
 - 所有关联用户的外键都是 `onDelete: Cascade`。
-- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution` → `20261017070000_add_series_comments`。
+- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution` → `20261017070000_add_series_comments` → `20261017071000_add_listing_facets`。
 
 ## 7. 页面清单
 
