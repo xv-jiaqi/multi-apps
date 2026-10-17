@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router';
 import { APP_NAME, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
+import { HeaderSearch } from './header-search';
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-2 py-1 text-sm font-medium transition-colors hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
@@ -49,7 +50,7 @@ export const SiteHeader = observer(function SiteHeader() {
           <NavLink to="/series" className={navItemClass}>
             {tt('nav.series')}
           </NavLink>
-          <NavLink to="/search" className={navItemClass}>
+          <NavLink to="/search" className={(state) => `${navItemClass(state)} lg:hidden`}>
             {tt('nav.search')}
           </NavLink>
           <NavLink to="/forum" className={navItemClass}>
@@ -65,7 +66,11 @@ export const SiteHeader = observer(function SiteHeader() {
           ) : null}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto hidden w-56 lg:block xl:w-72">
+          <HeaderSearch placement="inline" />
+        </div>
+
+        <div className="ml-auto flex items-center gap-2 lg:ml-0">
           <button
             type="button"
             aria-label={tt('a11y.toggleLocale')}
@@ -158,6 +163,9 @@ export const SiteHeader = observer(function SiteHeader() {
           className="md:hidden border-t border-neutral-200 bg-white/95 backdrop-blur"
         >
           <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3">
+            <div className="pb-2">
+              <HeaderSearch placement="drawer" onAfterNavigate={closeMenu} />
+            </div>
             <NavLink to="/" end className={mobileNavItemClass} onClick={closeMenu}>
               {tt('nav.home')}
             </NavLink>

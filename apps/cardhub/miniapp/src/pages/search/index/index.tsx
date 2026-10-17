@@ -46,13 +46,13 @@ export default observer(function SearchPage() {
     }
     const parsed = parseCardSearchQuery(debounced);
     if (!parsed.ok) {
+      const colon = parsed.token.indexOf(':');
       setError(
-        tt(
-          parsed.reason === 'unknownPrefix' ? 'search.unsupportedPrefix' : 'search.invalidRarity',
-          {
-            token: parsed.token,
-          },
-        ),
+        parsed.reason === 'unknownPrefix'
+          ? tt('search.unsupportedPrefix', { token: parsed.token })
+          : tt('search.invalidRarity', {
+              value: colon >= 0 ? parsed.token.slice(colon + 1) : parsed.token,
+            }),
       );
       setLoading(false);
       return;

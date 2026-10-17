@@ -141,6 +141,17 @@ function LoginProbe() {
 
 vi.mock('../lib/trpc', () => ({
   trpc: {
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isFetching: false,
+          isError: false,
+          isSuccess: false,
+          refetch: vi.fn(),
+        }),
+      },
+    },
     users: {
       me: {
         useQuery: () => mock.meState,

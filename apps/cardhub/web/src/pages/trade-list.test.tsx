@@ -41,6 +41,17 @@ vi.mock('../lib/trpc', () => ({
         mine: { invalidate: vi.fn() },
       },
     }),
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isFetching: false,
+          isError: false,
+          isSuccess: false,
+          refetch: vi.fn(),
+        }),
+      },
+    },
     cards: {
       bySlug: {
         useQuery: () => ({ data: undefined, isLoading: false, isError: false }),

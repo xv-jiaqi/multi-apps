@@ -50,11 +50,11 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 ### 3.2 搜索
 
-| 能力                              | 状态 | 入口      | 接口                             | 说明                                                                                                                              |
-| --------------------------------- | ---- | --------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 卡牌名模糊搜索（不区分大小写）    | ✅   | `/search` | `cards.search`                   | Postgres `ILIKE '%q%'`，最多 50 条，前端 250ms 防抖；`@@index([name])` 是 btree，对 `%q%` 无加速（CH-106）                        |
-| Header 常驻搜索框 / 下拉建议      | ❌   | —         | —                                | PRD Story 2.5 AC1 与 UI 规范主导航要求“醒目位置的搜索框”，目前只有导航链接（CH-106）                                              |
-| 搜索系列、描述，按稀有度/系列筛选 | 🟡   | `/search` | `search.global` / `cards.search` | API 已支持全局搜索、系列结果与稀有度 / 系列解析；Header 搜索框、`/search` 筛选 UI 和 trigram 索引仍在 CH-106 后续前端 / 数据库 PR |
+| 能力                           | 状态 | 入口        | 接口            | 说明                                                                                                                                  |
+| ------------------------------ | ---- | ----------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 卡牌名模糊搜索（不区分大小写） | ✅   | `/search`   | `search.global` | 名称词、`r:` / `s:`、OR 与排除；输入防抖 250ms 后写入 URL `q`。匹配仍是 `ILIKE '%q%'`，btree 索引对中缀无加速；trigram 未做（CH-106） |
+| Header 常驻搜索框 / 下拉建议   | ✅   | 顶栏 / 抽屉 | `search.global` | lg（≥1024）内联，最多 5 张卡 + 3 个系列；768–1023 只保留导航「搜索」链接（已定例外）；更窄时搜索框在抽屉顶部                          |
+| 搜索系列、按稀有度/系列筛选    | ✅   | `/search`   | `search.global` | 系列结果在卡牌之前，带 `cardCount` / `coverUrl`；稀有度和系列筛选与搜索框写入同一条 `q`。系列按标题搜，描述未参与搜索                 |
 
 ### 3.3 账户与会话
 
@@ -389,7 +389,7 @@ erDiagram
 按对用户的影响排序，括号内是对应任务。
 
 1. 现有 seed 仍只有渐变占位图；真实图片需要 CH-107/CH-208 后填入 https URL，小程序渲染同步留给 CH-301。
-2. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
+2. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描。全局搜索的 Web 界面已经接上，trigram 索引仍未加（CH-106）。
 3. API 错误信息只有中文（CH-211）。
 4. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
 5. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
@@ -397,6 +397,6 @@ erDiagram
 ## 10. 测试基线
 
 - API（Jest）：`apps/cardhub/api/src/**/*.spec.ts`，覆盖 auth、cards、comments、forum、listings、reports、health、限流代理、seed 脚本。覆盖率门槛：全局语句 60%、分支 50%；`auth/*` 语句 80%。
-- Web（Vitest + RTL，jsdom）：评论区组件、登录回跳、渐变映射、运行时配置脚本、ui-web 表单控件。Combobox 键盘（第一次 Esc 只关闭列表并保留输入；select 模式编辑后 Esc 恢复已选值；末项 ArrowDown 取消高亮并回到输入框；0 条结果时 `aria-expanded` 不为 true）另有 Chromium 测试 `combobox.browser.test.tsx`（Vitest browser mode + Playwright）。jsdom 复现不了 Radix 在 document capture 阶段拦截 Esc。
+- Web（Vitest + RTL，jsdom）：评论区组件、登录回跳、渐变映射、运行时配置脚本、ui-web 表单控件、全局搜索页与顶栏搜索。Combobox 键盘（第一次 Esc 只关闭列表并保留输入；select 模式编辑后 Esc 恢复已选值；末项 ArrowDown 取消高亮并回到输入框；0 条结果时 `aria-expanded` 不为 true）另有 Chromium 测试 `combobox.browser.test.tsx`（Vitest browser mode + Playwright）。jsdom 复现不了 Radix 在 document capture 阶段拦截 Esc。
 - CI 用 Postgres 16 service container 执行 `prisma migrate deploy` 后跑全量测试，并在测试前安装 Playwright Chromium。
 - 缺口：`series` 路由、小程序、原生壳、端到端流程（CH-306）。
