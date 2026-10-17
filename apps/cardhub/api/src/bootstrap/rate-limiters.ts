@@ -11,6 +11,7 @@ type RateLimitOverrideConfig = Pick<RateLimitConfig, 'windowMs' | 'limit'>;
 
 export type RateLimitName =
   | 'authMutation'
+  | 'commentCreate'
   | 'forumTopicCreate'
   | 'forumReplyCreate'
   | 'listingPublish'
@@ -83,6 +84,11 @@ export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> 
       const url = req.originalUrl ?? req.url ?? '';
       return !url.includes('auth.register') && !url.includes('auth.login');
     },
+  },
+  commentCreate: {
+    windowMs: 60 * 60_000,
+    limit: 30,
+    skip: urlDoesNotInclude('comments.create'),
   },
   forumTopicCreate: {
     windowMs: 60 * 60_000,

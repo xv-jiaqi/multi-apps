@@ -1,12 +1,14 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createApp } from '../bootstrap/create-app';
+import { productionRateLimitConfigs } from '../bootstrap/rate-limiters';
 import { HealthService } from '../modules/health/health.service';
 
 async function makeTestApp(): Promise<INestApplication> {
   const app = await createApp({
     rateLimitOverrides: {
       authMutation: { limit: 1, windowMs: 60_000 },
+      commentCreate: { limit: 30, windowMs: 60_000 },
     },
   });
   jest.spyOn(app.get(HealthService), 'check').mockResolvedValue({
@@ -22,6 +24,11 @@ async function makeTestApp(): Promise<INestApplication> {
 }
 
 describe('rate limit proxy IP handling', () => {
+  it('keeps the production comments.create limit at 30 per hour', () => {
+    expect(productionRateLimitConfigs.commentCreate.windowMs).toBe(3_600_000);
+    expect(productionRateLimitConfigs.commentCreate.limit).toBe(30);
+  });
+
   it('sets Vary: Origin on CORS responses for dynamic origins', async () => {
     const app = await makeTestApp();
     try {
@@ -158,6 +165,39 @@ describe('rate limit proxy IP handling', () => {
         .get('/trpc/auth.login')
         .set('X-Forwarded-For', '198.51.100.250, 203.0.113.10')
         .expect(429);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('throttles comments.create on the 31st request per IP', async () => {
+    const app = await makeTestApp();
+    try {
+      for (let i = 0; i < 30; i += 1) {
+        await request(app.getHttpServer())
+          .get('/trpc/comments.create')
+          .set('X-Forwarded-For', '203.0.113.20')
+          .expect((res) => expect(res.status).not.toBe(429));
+      }
+
+      await request(app.getHttpServer())
+        .get('/trpc/comments.create')
+        .set('X-Forwarded-For', '203.0.113.20')
+        .expect('Content-Type', /application\/json/)
+        .expect(429)
+        .expect((res) => {
+          expect(res.body).toEqual({
+            error: {
+              message: 'Too many requests',
+              code: -32029,
+              data: {
+                code: 'TOO_MANY_REQUESTS',
+                httpStatus: 429,
+                path: 'comments.create',
+              },
+            },
+          });
+        });
     } finally {
       await app.close();
     }
