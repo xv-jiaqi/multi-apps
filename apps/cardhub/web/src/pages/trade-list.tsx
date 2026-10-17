@@ -8,6 +8,7 @@ import { Breadcrumbs } from '../components/breadcrumbs';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from '../components/report-button';
+import { ListingCloseControl } from '../components/listing-close-control';
 
 const KIND_FILTERS: Array<{ key: 'all' | ListingKind; tKey: string }> = [
   { key: 'all', tKey: 'trade.list.filterAll' },
@@ -26,6 +27,7 @@ export const TradeListPage = observer(function TradeListPage() {
 
   const [kindFilter, setKindFilter] = useState<'all' | ListingKind>('all');
   const [cardSlugFilter, setCardSlugFilter] = useState('');
+  const utils = trpc.useUtils();
 
   const trimmedSlug = cardSlugFilter.trim();
   const query = trpc.listings.list.useInfiniteQuery(
@@ -207,7 +209,16 @@ export const TradeListPage = observer(function TradeListPage() {
 
                     <div className="mt-3 flex items-center gap-2">
                       {!isMine ? <ReportButton targetType="LISTING" targetId={listing.id} /> : null}
-                      {canClose ? <CloseButton listingId={listing.id} /> : null}
+                      {canClose ? (
+                        <ListingCloseControl
+                          listingId={listing.id}
+                          onClosed={() => {
+                            void utils.listings.list.invalidate();
+                            void utils.listings.byCard.invalidate();
+                            void utils.listings.mine.invalidate();
+                          }}
+                        />
+                      ) : null}
                     </div>
                   </li>
                 );
@@ -230,29 +241,6 @@ export const TradeListPage = observer(function TradeListPage() {
         )}
       </div>
     </PageShell>
-  );
-});
-
-const CloseButton = observer(function CloseButton({ listingId }: { listingId: string }) {
-  const { locale } = useStores();
-  const tt = (key: string) => t(locale.locale, key);
-  const utils = trpc.useUtils();
-  const close = trpc.listings.close.useMutation({
-    onSuccess() {
-      void utils.listings.list.invalidate();
-      void utils.listings.byCard.invalidate();
-      void utils.listings.mine.invalidate();
-    },
-  });
-  return (
-    <button
-      type="button"
-      onClick={() => close.mutate({ id: listingId })}
-      disabled={close.isPending}
-      className="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-    >
-      {close.isPending ? tt('state.loading') : tt('trade.close')}
-    </button>
   );
 });
 

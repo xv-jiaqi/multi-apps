@@ -39,6 +39,7 @@ const TradePublishPage = lazy(() =>
 const ReportsListPage = lazy(() =>
   import('./pages/reports-list').then((m) => ({ default: m.ReportsListPage })),
 );
+const MePage = lazy(() => import('./pages/me').then((m) => ({ default: m.MePage })));
 
 function RouteFallback() {
   return (
@@ -160,6 +161,14 @@ export function App() {
           element={
             <LazyRoute>
               <ReportsListPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/me"
+          element={
+            <LazyRoute>
+              <MePage />
             </LazyRoute>
           }
         />

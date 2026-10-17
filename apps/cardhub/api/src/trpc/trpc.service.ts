@@ -8,6 +8,7 @@ import { CommentsRouter } from '../modules/comments/comments.router';
 import { ForumRouter } from '../modules/forum/forum.router';
 import { ListingsRouter } from '../modules/listings/listings.router';
 import { ReportsRouter } from '../modules/reports/reports.router';
+import { UsersRouter } from '../modules/users/users.router';
 
 @Injectable()
 export class TrpcService {
@@ -23,6 +24,7 @@ export class TrpcService {
     private readonly forum: ForumRouter,
     private readonly listings: ListingsRouter,
     private readonly reports: ReportsRouter,
+    private readonly users: UsersRouter,
   ) {
     this.appRouter = this.t.router({
       health: this.health.build(),
@@ -33,6 +35,7 @@ export class TrpcService {
       forum: this.forum.build(),
       listings: this.listings.build(),
       reports: this.reports.build(),
+      users: this.users.build(),
     });
   }
 }

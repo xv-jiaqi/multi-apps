@@ -9,6 +9,7 @@ import { CommentsModule } from '../modules/comments/comments.module';
 import { ForumModule } from '../modules/forum/forum.module';
 import { ListingsModule } from '../modules/listings/listings.module';
 import { ReportsModule } from '../modules/reports/reports.module';
+import { UsersModule } from '../modules/users/users.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ReportsModule } from '../modules/reports/reports.module';
     ForumModule,
     ListingsModule,
     ReportsModule,
+    UsersModule,
   ],
   providers: [TrpcService],
   exports: [TrpcService],

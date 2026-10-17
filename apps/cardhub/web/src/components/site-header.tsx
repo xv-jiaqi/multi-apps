@@ -17,7 +17,7 @@ const mobileNavItemClass = ({ isActive }: { isActive: boolean }) =>
 export const SiteHeader = observer(function SiteHeader() {
   const { locale, session } = useStores();
   const navigate = useNavigate();
-  const tt = (key: string) => t(locale.locale, key);
+  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
@@ -79,7 +79,13 @@ export const SiteHeader = observer(function SiteHeader() {
           <div className="hidden items-center gap-2 md:flex">
             {session.isAuthenticated ? (
               <>
-                <span className="text-sm text-neutral-700">@{session.user?.username}</span>
+                <NavLink
+                  to="/me"
+                  aria-label={tt('nav.meAria', { user: session.user?.username ?? '' })}
+                  className="rounded-full px-3 py-1 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-[current=page]:font-medium aria-[current=page]:text-neutral-900"
+                >
+                  @{session.user?.username}
+                </NavLink>
                 <button
                   type="button"
                   onClick={() => {
@@ -175,7 +181,10 @@ export const SiteHeader = observer(function SiteHeader() {
             <hr className="my-2 border-neutral-200" />
             {session.isAuthenticated ? (
               <>
-                <p className="px-3 py-2 text-sm text-neutral-500">@{session.user?.username}</p>
+                <NavLink to="/me" className={mobileNavItemClass} onClick={closeMenu}>
+                  {tt('nav.me')}{' '}
+                  <span className="text-sm text-neutral-500">@{session.user?.username}</span>
+                </NavLink>
                 <button
                   type="button"
                   onClick={() => {
