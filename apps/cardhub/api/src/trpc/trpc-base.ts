@@ -8,12 +8,12 @@ const ADMIN_CATALOG_ERROR_CODE_SET = new Set<string>(ADMIN_CATALOG_ERROR_CODES);
 const IMPORT_ROW_STATUS_SET = new Set(['created', 'updated', 'unchanged', 'error']);
 const IMPORT_ROW_TYPE_SET = new Set(['series', 'card']);
 
-interface SanitizedImportRowError {
+export interface SanitizedImportRowError {
   path: string;
   code: AdminCatalogErrorCode;
 }
 
-interface SanitizedImportRow {
+export interface SanitizedImportRow {
   row: {
     row: number;
     type: 'series' | 'card';
@@ -25,7 +25,7 @@ interface SanitizedImportRow {
   errors: SanitizedImportRowError[];
 }
 
-interface AdminCatalogErrorDetails {
+export interface AdminCatalogErrorDetails {
   code?: AdminCatalogErrorCode;
   cardCount?: number;
   commentCount?: number;
