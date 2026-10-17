@@ -118,9 +118,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       if (!current) return current;
       const replyExists = current.replies.some((reply) => reply.id === replyId);
       const nextCount =
-        replyExists || deletedIndex >= 0
-          ? Math.max(0, current.replyCount - 1)
-          : current.replyCount;
+        replyExists || deletedIndex >= 0 ? Math.max(0, current.replyCount - 1) : current.replyCount;
       return {
         ...current,
         replyCount: nextCount,
@@ -232,7 +230,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setRestoreDeleteFocus(null);
     setDeleteError(null);
     void utils.forum.replies.list.reset({ topicId, limit: 20 });
-  }, [topicId, utils]);
+  }, [topicId]);
 
   useEffect(() => {
     if (!confirmingDelete) return;
