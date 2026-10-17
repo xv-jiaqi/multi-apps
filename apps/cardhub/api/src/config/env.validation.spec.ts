@@ -39,6 +39,30 @@ describe('validateEnv', () => {
     ).toThrow('JWT_SECRET must be at least 32 characters when NODE_ENV=production');
   });
 
+  it.each(['', '   '])(
+    'rejects production startup when DATABASE_URL is empty or whitespace-only (%j)',
+    (databaseUrl) => {
+      expect(() =>
+        validateEnv({
+          ...VALID_PRODUCTION_ENV,
+          DATABASE_URL: databaseUrl,
+        }),
+      ).toThrow('DATABASE_URL is required when NODE_ENV=production');
+    },
+  );
+
+  it.each(['', '   '])(
+    'rejects production startup when JWT_SECRET is empty or whitespace-only (%j)',
+    (jwtSecret) => {
+      expect(() =>
+        validateEnv({
+          ...VALID_PRODUCTION_ENV,
+          JWT_SECRET: jwtSecret,
+        }),
+      ).toThrow('JWT_SECRET is required when NODE_ENV=production');
+    },
+  );
+
   it('accepts production startup when JWT_SECRET and DATABASE_URL are valid', () => {
     expect(validateEnv(VALID_PRODUCTION_ENV)).toBe(VALID_PRODUCTION_ENV);
   });

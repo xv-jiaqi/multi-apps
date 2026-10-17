@@ -6,13 +6,11 @@ export const BANNED_PRODUCTION_JWT_SECRETS = [
   'change-me-generate-with-openssl-rand-hex-32',
 ] as const;
 
-const envSchema = z
-  .object({
-    NODE_ENV: z.string().optional(),
-    JWT_SECRET: z.string().optional(),
-    DATABASE_URL: z.string().optional(),
-  })
-  .passthrough();
+const envSchema = z.looseObject({
+  NODE_ENV: z.string().optional(),
+  JWT_SECRET: z.string().optional(),
+  DATABASE_URL: z.string().optional(),
+});
 
 function envString(value: string | undefined): string {
   return value?.trim() ?? '';
@@ -22,7 +20,9 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
   const parsed = envSchema.safeParse(config);
 
   if (!parsed.success) {
-    const messages = parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
+    const messages = parsed.error.issues.map(
+      (issue) => `${issue.path.join('.')}: ${issue.message}`,
+    );
     throw new Error(`Invalid Cardhub API environment configuration:\n- ${messages.join('\n- ')}`);
   }
 
@@ -42,7 +42,11 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
       messages.push('JWT_SECRET must be at least 32 characters when NODE_ENV=production');
     }
 
-    if (BANNED_PRODUCTION_JWT_SECRETS.includes(jwtSecret as (typeof BANNED_PRODUCTION_JWT_SECRETS)[number])) {
+    if (
+      BANNED_PRODUCTION_JWT_SECRETS.includes(
+        jwtSecret as (typeof BANNED_PRODUCTION_JWT_SECRETS)[number],
+      )
+    ) {
       messages.push(`JWT_SECRET must not use the placeholder value "${jwtSecret}"`);
     }
   }
