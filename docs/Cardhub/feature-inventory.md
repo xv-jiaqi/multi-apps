@@ -14,7 +14,7 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 当前最影响产品完整度的缺口：
 
-1. **内容只能通过 seed 写入**：没有内容管理后台，知识库无法日常维护（CH-107）。
+1. **内容后台已在 Web / Tauri 提供**：管理员可在 `/admin/catalog` 维护系列和卡牌，或用 JSON 导入。小程序没有后台。
 2. **卡牌没有真实图片**：数据里全是 `gradient:` 占位符，前端只渲染渐变色块（CH-105）。
 3. **举报处理闭环已完成**：管理员可在队列中标记已处理，或删除 / 关闭被举报内容并处理相关待处理举报。
 4. **小程序只覆盖 MVP**：论坛、交易、举报均未接入（CH-301）。
@@ -37,16 +37,16 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 ### 3.1 卡牌目录（系列 / 卡牌）
 
-| 能力                     | 状态 | 入口                  | 接口                                | 说明                                                                                                                                                                                                                                      |
-| ------------------------ | ---- | --------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 系列列表（封面、卡牌数） | ✅   | `/series`             | `series.list`                       | 接口支持 `page/pageSize`，前端只取第一页（默认 20 条）；无排序、无筛选                                                                                                                                                                    |
-| 系列详情 + 卡牌网格      | ✅   | `/series/:seriesSlug` | `series.bySlug`                     | 一次返回全部卡牌；无系列内搜索、排序、分页（CH-202）                                                                                                                                                                                      |
-| 卡牌详情（属性、稀有度） | ✅   | `/cards/:cardSlug`    | `cards.bySlug`                      | `attributes` 是扁平 JSON，键名原样显示（`cost`/`attack`…），未本地化（CH-202）                                                                                                                                                            |
-| 稀有度                   | ✅   | 各列表与详情          | `Card.rarity`                       | `common / rare / epic / legendary`，标签写在 `rarity-badge.tsx`（Web）和 `@repo/ui-mini`（小程序）                                                                                                                                        |
-| 卡牌 / 系列图片          | 🟡   | 全站图位              | `Card.imageUrl` / `Series.coverUrl` | Web / Tauri 已支持 https 真实图片：加载中固定灰底、加载完淡入、坏链或 `gradient:` 回退原渐变；卡牌详情用 63:88 contain，其余卡图按 63:88 cover，系列封面按 2:1 或现有背景容器 cover。现有 seed 仍是 `gradient:...`，小程序同步留给 CH-301 |
-| 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                   | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）。平行版本与限量编号见 CH-213                                                                                                                                                             |
-| 内容维护                 | 🟡   | —                     | `admin.*` / `seed:catalog`          | CH-107 API 部分已提供管理员目录写接口与 JSON 导入；后台 Web 页面待后续 PR。`seed:catalog` 只插入缺失记录，不覆盖后台编辑                                                                                                                  |
-| 面包屑                   | ✅   | 所有深层页面          | —                                   |                                                                                                                                                                                                                                           |
+| 能力                     | 状态 | 入口                  | 接口                                                        | 说明                                                                                                                                                                                                                                      |
+| ------------------------ | ---- | --------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 系列列表（封面、卡牌数） | ✅   | `/series`             | `series.list`                                               | 接口支持 `page/pageSize`，前端只取第一页（默认 20 条）；无排序、无筛选                                                                                                                                                                    |
+| 系列详情 + 卡牌网格      | ✅   | `/series/:seriesSlug` | `series.bySlug`                                             | 一次返回全部卡牌；无系列内搜索、排序、分页（CH-202）                                                                                                                                                                                      |
+| 卡牌详情（属性、稀有度） | ✅   | `/cards/:cardSlug`    | `cards.bySlug`                                              | `attributes` 是扁平 JSON，键名原样显示（`cost`/`attack`…），未本地化（CH-202）                                                                                                                                                            |
+| 稀有度                   | ✅   | 各列表与详情          | `Card.rarity`                                               | `common / rare / epic / legendary`，标签写在 `rarity-badge.tsx`（Web）和 `@repo/ui-mini`（小程序）                                                                                                                                        |
+| 卡牌 / 系列图片          | 🟡   | 全站图位              | `Card.imageUrl` / `Series.coverUrl`                         | Web / Tauri 已支持 https 真实图片：加载中固定灰底、加载完淡入、坏链或 `gradient:` 回退原渐变；卡牌详情用 63:88 contain，其余卡图按 63:88 cover，系列封面按 2:1 或现有背景容器 cover。现有 seed 仍是 `gradient:...`，小程序同步留给 CH-301 |
+| 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                                           | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）。平行版本与限量编号见 CH-213                                                                                                                                                             |
+| 内容维护                 | ✅   | `/admin/catalog`      | `admin.series.*` / `admin.cards.*` / `admin.catalog.import` | 管理员可新建、编辑、删除系列和卡牌，并先预览再导入 JSON。空系列行内确认删除；仍有卡牌或评论时输入 slug 强制删除。`seed:catalog` 只插入缺失记录，不覆盖后台编辑                                                                            |
+| 面包屑                   | ✅   | 所有深层页面          | —                                                           |                                                                                                                                                                                                                                           |
 
 ### 3.2 搜索
 
@@ -111,14 +111,15 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 
 ### 3.7 举报与管理
 
-| 能力                                          | 状态 | 入口                                 | 接口                                                                                                      | 说明                                                                                                                                                                         |
-| --------------------------------------------- | ---- | ------------------------------------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 举报话题 / 回帖 / 评论 / 意向                 | ✅   | 各内容旁“举报”                       | `reports.create`                                                                                          | 校验目标存在；每用户 24 小时最多 10 次                                                                                                                                       |
-| 举报队列（待处理 / 已处理筛选，附目标上下文） | ✅   | `/reports`（Header 仅对 admin 显示） | `reports.list`                                                                                            | 每次请求都重新查库校验 admin 身份；目标已删除时 `target` 为 `null`；交易意向目标返回可选 `cardName` 并在 Web 显示卡名与本地化开放/关闭状态；已处理条目显示处理人、时间和说明 |
-| 处理举报（标记已处理）                        | ✅   | `/reports`                           | `reports.resolve`                                                                                         | 记录处理人、处理时间和可选说明；重复处理幂等                                                                                                                                 |
-| 删除 / 关闭被举报内容并处理                   | ✅   | `/reports`                           | `reports.resolve`                                                                                         | `TOPIC` / `REPLY` / `COMMENT` 删除，`LISTING` 关闭；同一目标其它待处理举报一并处理                                                                                           |
-| 管理员删除 / 关闭任意内容                     | 🟡   | 原页面 + `/reports`                  | `comments.delete` / `forum.topics.delete` / `forum.replies.delete` / `listings.close` / `reports.resolve` | 卡牌详情页可用 `comments.delete` 删除评论；`/reports` 可删除被举报评论并处理举报                                                                                             |
-| 封禁用户、用户管理、操作审计                  | ❌   | —                                    | —                                                                                                         | CH-209                                                                                                                                                                       |
+| 能力                                          | 状态 | 入口                                             | 接口                                                                                                      | 说明                                                                                                                                                                         |
+| --------------------------------------------- | ---- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 举报话题 / 回帖 / 评论 / 意向                 | ✅   | 各内容旁“举报”                                   | `reports.create`                                                                                          | 校验目标存在；每用户 24 小时最多 10 次                                                                                                                                       |
+| 举报队列（待处理 / 已处理筛选，附目标上下文） | ✅   | `/reports`（Header「管理」菜单，仅 admin）       | `reports.list`                                                                                            | 每次请求都重新查库校验 admin 身份；目标已删除时 `target` 为 `null`；交易意向目标返回可选 `cardName` 并在 Web 显示卡名与本地化开放/关闭状态；已处理条目显示处理人、时间和说明 |
+| 内容管理（系列 / 卡牌 / JSON 导入）           | ✅   | `/admin/catalog`（Header「管理」菜单，仅 admin） | `admin.series.*` / `admin.cards.*` / `admin.catalog.import`                                               | 系列表、卡牌表、新建 / 编辑页和 JSON 导入。删除空系列走行内确认；删除仍有卡牌或评论的系列要输入 slug。非管理员不请求 admin 接口                                              |
+| 处理举报（标记已处理）                        | ✅   | `/reports`                                       | `reports.resolve`                                                                                         | 记录处理人、处理时间和可选说明；重复处理幂等                                                                                                                                 |
+| 删除 / 关闭被举报内容并处理                   | ✅   | `/reports`                                       | `reports.resolve`                                                                                         | `TOPIC` / `REPLY` / `COMMENT` 删除，`LISTING` 关闭；同一目标其它待处理举报一并处理                                                                                           |
+| 管理员删除 / 关闭任意内容                     | 🟡   | 原页面 + `/reports`                              | `comments.delete` / `forum.topics.delete` / `forum.replies.delete` / `listings.close` / `reports.resolve` | 卡牌详情页可用 `comments.delete` 删除评论；`/reports` 可删除被举报评论并处理举报                                                                                             |
+| 封禁用户、用户管理、操作审计                  | ❌   | —                                                | —                                                                                                         | CH-209                                                                                                                                                                       |
 
 ### 3.8 国际化
 
@@ -173,6 +174,7 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | 论坛            | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
 | 交易信息板      | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
 | 举报 / 举报队列 | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
+| 内容管理后台    | ✅         | ✅                                    | ✅                                                                   | ❌                             |
 | 发布状态        | 生产已上线 | `release-native.yml` 手动出包，未签名 | iOS 需本机 `ios:init` 生成工程；Android 未初始化；均未上架（CH-304） | 未申请 AppID、未上线（CH-302） |
 
 ## 5. tRPC 接口清单
@@ -327,23 +329,30 @@ erDiagram
 
 ### 7.1 Web（同时供 Desktop / iOS / Android 使用）
 
-| 路由                  | 页面文件                  | 访问控制                     |
-| --------------------- | ------------------------- | ---------------------------- |
-| `/`                   | `pages/home.tsx`          | 公开                         |
-| `/series`             | `pages/series-list.tsx`   | 公开                         |
-| `/series/:seriesSlug` | `pages/series-detail.tsx` | 公开                         |
-| `/cards/:cardSlug`    | `pages/card-detail.tsx`   | 公开（评论、发布意向需登录） |
-| `/search`             | `pages/search.tsx`        | 公开                         |
-| `/login` `/register`  | `pages/login.tsx` 等      | 公开                         |
-| `/forum`              | `pages/forum-list.tsx`    | 公开                         |
-| `/forum/new`          | `pages/forum-new.tsx`     | 登录，未登录跳转 `/login`    |
-| `/forum/:slug/edit`   | `pages/forum-edit.tsx`    | 作者，发布后 5 分钟内        |
-| `/forum/:slug`        | `pages/forum-detail.tsx`  | 公开（回帖需登录）           |
-| `/trade`              | `pages/trade-list.tsx`    | 公开                         |
-| `/trade/new`          | `pages/trade-publish.tsx` | 登录，未登录显示登录提示     |
-| `/reports`            | `pages/reports-list.tsx`  | admin                        |
-| `/me`                 | `pages/me.tsx`            | 登录，未登录跳转 `/login`    |
-| `*`                   | `pages/not-found.tsx`     | 公开                         |
+| 路由                                    | 页面文件                                | 访问控制                     |
+| --------------------------------------- | --------------------------------------- | ---------------------------- |
+| `/`                                     | `pages/home.tsx`                        | 公开                         |
+| `/series`                               | `pages/series-list.tsx`                 | 公开                         |
+| `/series/:seriesSlug`                   | `pages/series-detail.tsx`               | 公开                         |
+| `/cards/:cardSlug`                      | `pages/card-detail.tsx`                 | 公开（评论、发布意向需登录） |
+| `/search`                               | `pages/search.tsx`                      | 公开                         |
+| `/login` `/register`                    | `pages/login.tsx` 等                    | 公开                         |
+| `/forum`                                | `pages/forum-list.tsx`                  | 公开                         |
+| `/forum/new`                            | `pages/forum-new.tsx`                   | 登录，未登录跳转 `/login`    |
+| `/forum/:slug/edit`                     | `pages/forum-edit.tsx`                  | 作者，发布后 5 分钟内        |
+| `/forum/:slug`                          | `pages/forum-detail.tsx`                | 公开（回帖需登录）           |
+| `/trade`                                | `pages/trade-list.tsx`                  | 公开                         |
+| `/trade/new`                            | `pages/trade-publish.tsx`               | 登录，未登录显示登录提示     |
+| `/reports`                              | `pages/reports-list.tsx`                | admin                        |
+| `/admin/catalog`                        | `pages/admin/catalog-series.tsx`        | admin                        |
+| `/admin/catalog/import`                 | `pages/admin/catalog-import.tsx`        | admin                        |
+| `/admin/catalog/series/new`             | `pages/admin/series-form-page.tsx`      | admin                        |
+| `/admin/catalog/series/:slug`           | `pages/admin/catalog-series-detail.tsx` | admin                        |
+| `/admin/catalog/series/:slug/edit`      | `pages/admin/series-form-page.tsx`      | admin                        |
+| `/admin/catalog/series/:slug/cards/new` | `pages/admin/card-form-page.tsx`        | admin                        |
+| `/admin/catalog/cards/:slug/edit`       | `pages/admin/card-form-page.tsx`        | admin                        |
+| `/me`                                   | `pages/me.tsx`                          | 登录，未登录跳转 `/login`    |
+| `*`                                     | `pages/not-found.tsx`                   | 公开                         |
 
 页面文件都在 `apps/cardhub/web/src/` 下。除首页外均通过 `React.lazy` 懒加载。
 

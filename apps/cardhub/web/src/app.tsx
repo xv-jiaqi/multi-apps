@@ -42,6 +42,29 @@ const TradePublishPage = lazy(() =>
 const ReportsListPage = lazy(() =>
   import('./pages/reports-list').then((m) => ({ default: m.ReportsListPage })),
 );
+const CatalogSeriesPage = lazy(() =>
+  import('./pages/admin/catalog-series').then((m) => ({ default: m.CatalogSeriesPage })),
+);
+const CatalogSeriesDetailPage = lazy(() =>
+  import('./pages/admin/catalog-series-detail').then((m) => ({
+    default: m.CatalogSeriesDetailPage,
+  })),
+);
+const NewSeriesPage = lazy(() =>
+  import('./pages/admin/series-form-page').then((m) => ({ default: m.NewSeriesPage })),
+);
+const EditSeriesPage = lazy(() =>
+  import('./pages/admin/series-form-page').then((m) => ({ default: m.EditSeriesPage })),
+);
+const NewCardPage = lazy(() =>
+  import('./pages/admin/card-form-page').then((m) => ({ default: m.NewCardPage })),
+);
+const EditCardPage = lazy(() =>
+  import('./pages/admin/card-form-page').then((m) => ({ default: m.EditCardPage })),
+);
+const CatalogImportPage = lazy(() =>
+  import('./pages/admin/catalog-import').then((m) => ({ default: m.CatalogImportPage })),
+);
 const MePage = lazy(() => import('./pages/me').then((m) => ({ default: m.MePage })));
 
 function RouteFallback() {
@@ -172,6 +195,62 @@ export function App() {
           element={
             <LazyRoute>
               <ReportsListPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/admin/catalog"
+          element={
+            <LazyRoute>
+              <CatalogSeriesPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/admin/catalog/import"
+          element={
+            <LazyRoute>
+              <CatalogImportPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/admin/catalog/series/new"
+          element={
+            <LazyRoute>
+              <NewSeriesPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/admin/catalog/series/:slug/edit"
+          element={
+            <LazyRoute>
+              <EditSeriesPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/admin/catalog/series/:slug/cards/new"
+          element={
+            <LazyRoute>
+              <NewCardPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/admin/catalog/series/:slug"
+          element={
+            <LazyRoute>
+              <CatalogSeriesDetailPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/admin/catalog/cards/:slug/edit"
+          element={
+            <LazyRoute>
+              <EditCardPage />
             </LazyRoute>
           }
         />
