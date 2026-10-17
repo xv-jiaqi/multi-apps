@@ -10,12 +10,16 @@ export function CardThumb({
   src,
   slug,
   width,
+  onError,
 }: {
   src?: string | null;
   slug?: string | null;
   width: string;
+  onError?: () => void;
 }) {
-  const [failed, setFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const trimmed = src?.trim() ?? '';
+  const failed = isHttpsImageUrl(trimmed) && failedSrc === trimmed;
 
   return (
     <span
@@ -24,15 +28,18 @@ export function CardThumb({
         width,
       )}
     >
-      {isHttpsImageUrl(src) && !failed ? (
+      {isHttpsImageUrl(trimmed) && !failed ? (
         <img
-          src={src.trim()}
+          src={trimmed}
           alt=""
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
           className="absolute inset-0 size-full object-cover"
-          onError={() => setFailed(true)}
+          onError={() => {
+            setFailedSrc(trimmed);
+            onError?.();
+          }}
         />
       ) : (
         <span aria-hidden className={cn('absolute inset-0 bg-gradient-to-br', gradientFor(slug))} />
