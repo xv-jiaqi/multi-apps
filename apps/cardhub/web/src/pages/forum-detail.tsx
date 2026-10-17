@@ -60,6 +60,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [showLoadedReplyPages, setShowLoadedReplyPages] = useState(false);
   const [replyStatus, setReplyStatus] = useState({ message: '', visible: false });
   const [focusReplyId, setFocusReplyId] = useState<string | null>(null);
+  const [pendingLoadedReplyFocusId, setPendingLoadedReplyFocusId] = useState<string | null>(null);
+  const [restoreLoadMoreButtonFocus, setRestoreLoadMoreButtonFocus] = useState(false);
   const [pendingCreatedReplyId, setPendingCreatedReplyId] = useState<string | null>(null);
   const [autoLoadFailedReplyId, setAutoLoadFailedReplyId] = useState<string | null>(null);
   const [isRetryingReplies, setIsRetryingReplies] = useState(false);
@@ -117,6 +119,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     utils.forum.topics.bySlug.setData({ slug }, (current) => {
       if (!current) return current;
       const replyExists = current.replies.some((reply) => reply.id === replyId);
+      // Decrement only when this reply is on the inline page or an already
+      // loaded page. One that is in neither cannot be deleted from this view,
+      // so the displayed count stays unchanged.
       const nextCount =
         replyExists || deletedIndex >= 0 ? Math.max(0, current.replyCount - 1) : current.replyCount;
       return {
@@ -229,7 +234,12 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setConfirmingDelete(null);
     setRestoreDeleteFocus(null);
     setDeleteError(null);
+    setPendingLoadedReplyFocusId(null);
+    setRestoreLoadMoreButtonFocus(false);
     void utils.forum.replies.list.reset({ topicId, limit: 20 });
+    // `utils` is intentionally omitted. tRPC v11 useUtils() is referentially
+    // stable; including it reset loaded reply pages whenever a render handed
+    // back a new utils object (the forum-detail test mock does that).
   }, [topicId]);
 
   useEffect(() => {
@@ -261,6 +271,14 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setHighlightedReplyId(focusReplyId);
     setFocusReplyId(null);
   }, [focusReplyId, visibleReplies]);
+
+  useEffect(() => {
+    if (!pendingLoadedReplyFocusId) return;
+    const node = replyRefs.current.get(pendingLoadedReplyFocusId);
+    if (!node) return;
+    node.focus();
+    setPendingLoadedReplyFocusId(null);
+  }, [pendingLoadedReplyFocusId, visibleReplies]);
 
   useEffect(() => {
     if (!highlightedReplyId) return;
@@ -328,6 +346,15 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     }
   }, [showLoadMoreError]);
 
+  useEffect(() => {
+    if (!restoreLoadMoreButtonFocus || isLoadingMoreReplies) return;
+    const button = loadMoreButtonRef.current;
+    if (button && !button.disabled) {
+      button.focus();
+    }
+    setRestoreLoadMoreButtonFocus(false);
+  }, [isLoadingMoreReplies, restoreLoadMoreButtonFocus]);
+
   if (topicQuery.isLoading) {
     return (
       <PageShell>
@@ -394,10 +421,17 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       });
     }
     const hasNextPageAfterFetch = Boolean(pages.at(-1)?.nextCursor);
-    if (!hasNextPageAfterFetch && newReplies[0]) {
-      setFocusReplyId(newReplies[0].id);
+    if (newReplies[0]) {
+      if (hasNextPageAfterFetch) {
+        // The button is still disabled while this fetch's loading flag is
+        // true, so focusing it drops focus to <body>. The new row is
+        // focusable (tabIndex=-1) once it commits.
+        setPendingLoadedReplyFocusId(newReplies[0].id);
+      } else {
+        setFocusReplyId(newReplies[0].id);
+      }
     } else if (hasNextPageAfterFetch) {
-      loadMoreButtonRef.current?.focus();
+      setRestoreLoadMoreButtonFocus(true);
     }
   };
 
@@ -515,10 +549,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                     }}
                     tabIndex={-1}
                     aria-busy={deletingThisReply || undefined}
-                    className={`rounded-2xl border p-4 backdrop-blur transition-colors duration-1000 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
+                    className={`rounded-2xl border p-4 backdrop-blur transition-colors ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
                       highlightedReplyId === reply.id
                         ? 'border-brand-200 bg-brand-50 duration-0'
-                        : 'border-white/60 bg-white/80'
+                        : 'border-white/60 bg-white/80 duration-1000'
                     }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-500">

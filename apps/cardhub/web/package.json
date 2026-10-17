@@ -12,7 +12,7 @@
     "preview": "vite preview --port 5173",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run && playwright install chromium && vitest run --config vitest.browser.config.ts",
+    "test": "vitest run && vitest run --config vitest.browser.config.ts",
     "test:cov": "vitest run --coverage"
   },
   "dependencies": {
