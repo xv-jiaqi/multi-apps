@@ -40,7 +40,11 @@ export const LoginPage = observer(function LoginPage() {
     const parsed = loginInput.safeParse({ identifier, password });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      setError(issue?.message ?? tt('auth.errors.required'));
+      setError(
+        issue?.code === 'too_big' && issue.path[0] === 'identifier'
+          ? tt('auth.errors.identifier.tooLong')
+          : (issue?.message ?? tt('auth.errors.required')),
+      );
       return;
     }
     mutation.mutate(parsed.data);

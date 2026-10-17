@@ -34,6 +34,7 @@ const listHarness = vi.hoisted(() => ({
   inputs: [] as ListInput[],
   items: [] as Array<Record<string, unknown>>,
   isError: false,
+  isLoading: false,
   isFetching: false,
   errorMessage: 'network down',
   refetch: vi.fn(),
@@ -79,7 +80,7 @@ vi.mock('../lib/trpc', () => ({
           listHarness.inputs.push(input);
           return {
             data: { pages: [{ items: listHarness.items, nextCursor: null }] },
-            isLoading: false,
+            isLoading: listHarness.isLoading,
             isError: listHarness.isError,
             isFetching: listHarness.isFetching,
             isFetchingNextPage: false,
@@ -173,6 +174,7 @@ describe('TradeListPage price filters', () => {
     listHarness.inputs.length = 0;
     listHarness.items = [];
     listHarness.isError = false;
+    listHarness.isLoading = false;
     listHarness.isFetching = false;
     listHarness.errorMessage = 'network down';
     listHarness.refetch.mockClear();
@@ -465,15 +467,21 @@ describe('TradeListPage price filters', () => {
     expect(listHarness.refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('disables retry and shows the loading label while listings are refetching', () => {
+  it('keeps the error alert and focus while listings are retrying', () => {
     listHarness.isError = true;
+    listHarness.isLoading = true;
     listHarness.isFetching = true;
     renderTrade();
 
-    const button = screen.getByRole('button', { name: '加载中…' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('aria-busy', 'true');
+    const button = screen.getByRole('button', { name: '重试中' });
+    button.focus();
+    expect(screen.getByRole('alert')).toHaveTextContent('加载失败');
     expect(screen.getByRole('alert')).not.toHaveTextContent('network down');
+    expect(screen.queryByText('加载中…')).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(button);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).not.toHaveAttribute('disabled');
   });
 
   it('localizes the load error in English', async () => {

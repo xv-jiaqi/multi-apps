@@ -1,4 +1,11 @@
-import { slugSchema, t, type Locale } from '@repo/shared';
+import {
+  ADMIN_ATTRIBUTE_KEY_MAX,
+  ADMIN_ATTRIBUTE_MAX_KEYS,
+  ADMIN_ATTRIBUTE_VALUE_MAX,
+  slugSchema,
+  t,
+  type Locale,
+} from '@repo/shared';
 
 export interface AdminSeriesItem {
   id: string;
@@ -147,6 +154,44 @@ function isIssue(value: unknown): value is ZodIssueLike {
   return Boolean(value) && typeof value === 'object';
 }
 
+const TOO_BIG_STRING = /^Too big: expected string to have <=(\d+) characters$/;
+const TOO_MANY_ATTRIBUTES = /^At most \d+ attributes$/;
+
+function localizeAdminIssue(locale: Locale, path: string[], message: string): string {
+  if (TOO_MANY_ATTRIBUTES.test(message)) {
+    return t(locale, 'admin.attrs.errorTooMany', { max: ADMIN_ATTRIBUTE_MAX_KEYS });
+  }
+  const tooBig = TOO_BIG_STRING.exec(message);
+  if (tooBig) {
+    const max = Number(tooBig[1]);
+    const head = path[0];
+    if (head === 'imageUrl' || head === 'coverUrl') {
+      return t(locale, 'admin.error.imageTooLong', { max });
+    }
+    if (head === 'attributes') {
+      return t(locale, 'admin.attrs.errorValueLength', { max });
+    }
+    return t(locale, 'admin.error.tooLong');
+  }
+  if (message === 'Invalid key in record' && path[0] === 'attributes') {
+    return t(locale, 'admin.attrs.errorKeyLength', { max: ADMIN_ATTRIBUTE_KEY_MAX });
+  }
+  if (message === 'Image URL must be empty, https://, or gradient:') {
+    return t(locale, 'admin.error.imageUrl');
+  }
+  return message;
+}
+
+function isAttributeCapIssue(path: string[], message: string): boolean {
+  return (
+    path[0] === 'attributes' &&
+    (path.length === 1 ||
+      message === 'Invalid key in record' ||
+      TOO_BIG_STRING.test(message) ||
+      TOO_MANY_ATTRIBUTES.test(message))
+  );
+}
+
 function issuesFromMessage(message: string): ZodIssueLike[] {
   const trimmed = message.trim();
   if (!trimmed.startsWith('[')) return [];
@@ -202,13 +247,16 @@ export function readValidationFeedback(
     const extras: string[] = [];
     for (const issue of issues) {
       const path = issuePath(issue.path);
-      const text =
-        typeof issue.message === 'string' && issue.message.trim()
-          ? issue.message.trim()
-          : t(locale, 'admin.error.invalidType');
+      const raw =
+        typeof issue.message === 'string' && issue.message.trim() ? issue.message.trim() : '';
+      const text = raw
+        ? localizeAdminIssue(locale, path, raw)
+        : t(locale, 'admin.error.invalidType');
       const head = path[0];
       const field = head === 'seriesSlug' ? 'series' : head;
-      if (field && head && path.length === 1 && KNOWN_FIELDS.has(head)) {
+      if (isAttributeCapIssue(path, raw)) {
+        fields.attributes = fields.attributes ? `${fields.attributes}\n${text}` : text;
+      } else if (field && head && path.length === 1 && KNOWN_FIELDS.has(head)) {
         fields[field] = fields[field] ? `${fields[field]}\n${text}` : text;
       } else if (path.length > 0) {
         extras.push(`${path.join('.')}: ${text}`);
@@ -511,6 +559,10 @@ export function validateAttributeRows(
       errors[row.id] = t(locale, 'admin.attrs.errorKey');
       continue;
     }
+    if (key.length > ADMIN_ATTRIBUTE_KEY_MAX) {
+      errors[row.id] = t(locale, 'admin.attrs.errorKeyLength', { max: ADMIN_ATTRIBUTE_KEY_MAX });
+      continue;
+    }
     const lowered = key.toLowerCase();
     const firstId = seen.get(lowered);
     if (firstId) {
@@ -528,7 +580,23 @@ export function validateAttributeRows(
     } else if (row.type === 'boolean') {
       attributes[key] = row.value === 'true';
     } else {
+      if (row.value.length > ADMIN_ATTRIBUTE_VALUE_MAX) {
+        errors[row.id] = t(locale, 'admin.attrs.errorValueLength', {
+          max: ADMIN_ATTRIBUTE_VALUE_MAX,
+        });
+        continue;
+      }
       attributes[key] = row.value;
+    }
+  }
+
+  if (
+    Object.keys(errors).length === 0 &&
+    Object.keys(attributes).length > ADMIN_ATTRIBUTE_MAX_KEYS
+  ) {
+    const last = [...rows].reverse().find((row) => row.key.trim());
+    if (last) {
+      errors[last.id] = t(locale, 'admin.attrs.errorTooMany', { max: ADMIN_ATTRIBUTE_MAX_KEYS });
     }
   }
 

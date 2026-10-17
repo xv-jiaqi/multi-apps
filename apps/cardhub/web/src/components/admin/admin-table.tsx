@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react';
 import { cn } from '@repo/ui-web';
+import { RetryButton } from '../retry-button';
 import { focusRing } from './catalog-utils';
 
 export const actionClass = `inline-flex min-h-6 items-center rounded px-1 ${focusRing}`;
@@ -61,26 +62,27 @@ export function AdminErrorBox({
   onRetry,
   retrying,
   retryLabel,
-  loadingLabel,
+  retryingLabel,
 }: {
   title: string;
   onRetry: () => void;
   retrying: boolean;
   retryLabel: string;
-  loadingLabel: string;
+  retryingLabel: string;
 }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+    <div
+      role="alert"
+      className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+    >
       <p className="font-medium">{title}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        disabled={retrying}
-        aria-busy={retrying || undefined}
-        className={`mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:pointer-events-none disabled:opacity-50 ${focusRing}`}
-      >
-        {retrying ? loadingLabel : retryLabel}
-      </button>
+      <RetryButton
+        retrying={retrying}
+        label={retryLabel}
+        retryingLabel={retryingLabel}
+        onRetry={onRetry}
+        className={`mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 ${focusRing}`}
+      />
     </div>
   );
 }

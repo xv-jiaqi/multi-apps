@@ -123,6 +123,7 @@ function renderPage() {
 }
 
 beforeEach(() => {
+  rootStore.locale.setLocale('zh-CN');
   rootStore.session.signIn('jwt.token', { id: 'author-1', username: 'author' });
   topicState.isLoading = false;
   topicState.isError = false;
@@ -138,6 +139,13 @@ describe('ForumEditPage', () => {
     renderPage();
 
     expect(screen.getByRole('button', { name: '保存修改' })).toBeDisabled();
+    expect(document.title).toBe('编辑话题 · Cardhub');
+  });
+
+  it('uses the English document title', () => {
+    rootStore.locale.setLocale('en-US');
+    renderPage();
+    expect(document.title).toBe('Edit topic · Cardhub');
   });
 
   it('keeps the edited body and shows amber alert when the server returns FORBIDDEN', async () => {

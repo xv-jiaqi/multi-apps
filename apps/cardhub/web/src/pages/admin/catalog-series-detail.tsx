@@ -11,6 +11,7 @@ import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
 import { RarityBadge } from '../../components/rarity-badge';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
+import { queryFallback } from '../../components/retry-button';
 import {
   AdminConfirmRow,
   AdminEmpty,
@@ -86,9 +87,11 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
       card.name.toLowerCase().includes(queryText) || card.slug.toLowerCase().includes(queryText),
   );
   const revoked = seriesQuery.isError && isAccessRevoked(seriesQuery.error);
-  const loading = seriesQuery.isLoading || cardsQuery.isLoading;
-  const missing =
-    !loading && !seriesQuery.isError && !cardsQuery.isError && (!series || cardsQuery.data == null);
+  const detailView = queryFallback({
+    isError: seriesQuery.isError || cardsQuery.isError,
+    isLoading: seriesQuery.isLoading || cardsQuery.isLoading,
+  });
+  const missing = detailView === 'ready' && (!series || cardsQuery.data == null);
 
   useEffect(() => {
     if (revoked) reportForbidden();
@@ -161,7 +164,20 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
       </header>
       <PageMeta title={series?.title ?? tt('nav.catalog')} />
       <AdminStatus message={notice} statusRef={statusRef} />
-      {loading ? (
+      {detailView === 'error' ? (
+        revoked ? null : (
+          <AdminErrorBox
+            title={tt('state.error')}
+            onRetry={() => {
+              void seriesQuery.refetch();
+              void cardsQuery.refetch();
+            }}
+            retrying={seriesQuery.isFetching || cardsQuery.isFetching}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+          />
+        )
+      ) : detailView === 'loading' ? (
         <AdminTable caption={tt('admin.cards.caption', { series: series?.title ?? slug })} busy>
           <CardHead tt={tt} />
           <tbody>
@@ -181,19 +197,6 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
             ))}
           </tbody>
         </AdminTable>
-      ) : seriesQuery.isError || cardsQuery.isError ? (
-        revoked ? null : (
-          <AdminErrorBox
-            title={tt('state.error')}
-            onRetry={() => {
-              void seriesQuery.refetch();
-              void cardsQuery.refetch();
-            }}
-            retrying={seriesQuery.isFetching || cardsQuery.isFetching}
-            retryLabel={tt('state.retry')}
-            loadingLabel={tt('state.loading')}
-          />
-        )
       ) : missing ? (
         <AdminEmpty>{tt('state.notFound')}</AdminEmpty>
       ) : cards.length === 0 ? (

@@ -179,22 +179,29 @@ describe('CommentSection (unauthenticated)', () => {
     },
   );
 
-  it('disables retry and shows the loading label while comments are refetching', () => {
+  it('keeps the error alert and focus while comments are retrying', () => {
     queryState.isError = true;
+    queryState.isLoading = true;
     queryState.isFetching = true;
     queryState.error = { message: 'Internal server error (QA mock)' };
     renderShell();
 
-    const button = screen.getByRole('button', { name: '加载中…' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('aria-busy', 'true');
+    const button = screen.getByRole('button', { name: '重试中' });
+    button.focus();
     expect(screen.getByRole('alert')).toHaveTextContent('加载失败');
     expect(screen.getByRole('alert')).not.toHaveTextContent('Internal server error');
+    expect(screen.queryByText('加载中…')).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(button);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).not.toHaveAttribute('disabled');
 
     act(() => {
       rootStore.locale.setLocale('en-US');
     });
-    expect(screen.getByRole('button', { name: 'Loading…' })).toBeDisabled();
+    const english = screen.getByRole('button', { name: 'Retrying…' });
+    english.focus();
+    expect(document.activeElement).toBe(english);
   });
 
   it('still surfaces existing comments for anonymous viewers', () => {

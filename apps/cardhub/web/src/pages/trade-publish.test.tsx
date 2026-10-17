@@ -196,4 +196,42 @@ describe('TradePublishPage', () => {
       if (naturalWidth) Object.defineProperty(imageProto, 'naturalWidth', naturalWidth);
     }
   });
+
+  it('rejects an image link longer than 2048 characters in shared copy', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/trade/new?cardSlug=aurora-knight']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('极光骑士')).toBeInTheDocument();
+    const images = screen.getByRole('textbox', { name: /实物图链接/ });
+    fireEvent.change(images, {
+      target: { value: `https://example.com/${'a'.repeat(2048)}` },
+    });
+    await user.type(screen.getByRole('textbox', { name: /联系方式/ }), 'wechat');
+    await user.click(screen.getByRole('button', { name: '发布意向' }));
+
+    expect(screen.getByText('图片链接最长 2048 个字符')).toBeInTheDocument();
+    expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
+    expect(images).toHaveFocus();
+  });
+
+  it('rejects a price string longer than 64 characters in shared copy', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/trade/new?cardSlug=aurora-knight']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('极光骑士')).toBeInTheDocument();
+    const price = screen.getByRole('textbox', { name: '价格（可空）' });
+    fireEvent.change(price, { target: { value: '0'.repeat(65) } });
+    await user.type(screen.getByRole('textbox', { name: /联系方式/ }), 'wechat');
+    await user.click(screen.getByRole('button', { name: '发布意向' }));
+
+    expect(screen.getByText('价格最长 64 个字符')).toBeInTheDocument();
+    expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
+    expect(price).toHaveFocus();
+  });
 });

@@ -18,6 +18,7 @@ import {
 } from '@repo/ui-web';
 import {
   LISTING_CONDITION_VALUES,
+  LISTING_IMAGE_URL_MAX,
   LISTING_KIND_VALUES,
   LISTING_LANGUAGE_VALUES,
   TRADE_CURRENCY_VALUES,
@@ -176,9 +177,11 @@ export const TradePublishPage = observer(function TradePublishPage() {
   const imageError =
     imageUrls.length > 4
       ? tt('trade.publish.error.tooManyImages')
-      : imageUrls.some((url) => !url.toLowerCase().startsWith('https://'))
-        ? tt('trade.publish.error.imageUrl')
-        : undefined;
+      : imageUrls.some((url) => url.length > LISTING_IMAGE_URL_MAX)
+        ? tt('trade.publish.error.imageTooLong')
+        : imageUrls.some((url) => !url.toLowerCase().startsWith('https://'))
+          ? tt('trade.publish.error.imageUrl')
+          : undefined;
 
   function focusFirstError(errors: FieldErrors) {
     if (errors.card) cardInputRef.current?.focus();
@@ -217,9 +220,19 @@ export const TradePublishPage = observer(function TradePublishPage() {
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
       const mapped: FieldErrors = {};
-      if (issue?.path[0] === 'imageUrls') mapped.imageUrls = tt(issue.message);
-      else if (issue?.path[0] === 'price') mapped.price = tt('trade.publish.error.price');
-      else if (issue?.path[0] === 'contact') mapped.contact = tt('trade.publish.error.contact');
+      if (issue?.path[0] === 'imageUrls') {
+        mapped.imageUrls =
+          issue.code === 'too_big'
+            ? issue.path.length === 1
+              ? tt('trade.publish.error.tooManyImages')
+              : tt('trade.publish.error.imageTooLong')
+            : tt(issue.message);
+      } else if (issue?.path[0] === 'price') {
+        mapped.price =
+          issue.code === 'too_big'
+            ? tt('trade.publish.error.priceTooLong')
+            : tt('trade.publish.error.price');
+      } else if (issue?.path[0] === 'contact') mapped.contact = tt('trade.publish.error.contact');
       else mapped.card = tt('trade.publish.error.cardRequired');
       setFieldErrors(mapped);
       focusFirstError(mapped);

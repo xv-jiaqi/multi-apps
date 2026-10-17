@@ -8,6 +8,7 @@ import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
+import { queryFallback } from '../../components/retry-button';
 import {
   AdminConfirmRow,
   AdminEmpty,
@@ -77,6 +78,7 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
     (series) => !hidden.has(series.slug),
   );
   const revoked = query.isError && isAccessRevoked(query.error);
+  const listView = queryFallback(query);
 
   useEffect(() => {
     if (revoked) reportForbidden();
@@ -146,7 +148,17 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
         </div>
       </header>
       <AdminStatus message={notice} statusRef={statusRef} />
-      {query.isLoading ? (
+      {listView === 'error' ? (
+        revoked ? null : (
+          <AdminErrorBox
+            title={tt('state.error')}
+            onRetry={() => void query.refetch()}
+            retrying={query.isFetching}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+          />
+        )
+      ) : listView === 'loading' ? (
         <AdminTable caption={tt('admin.series.caption')} busy>
           <AdminTableHead>
             <AdminTh>{tt('admin.col.cover')}</AdminTh>
@@ -176,16 +188,6 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
             ))}
           </tbody>
         </AdminTable>
-      ) : query.isError ? (
-        revoked ? null : (
-          <AdminErrorBox
-            title={tt('state.error')}
-            onRetry={() => void query.refetch()}
-            retrying={query.isFetching}
-            retryLabel={tt('state.retry')}
-            loadingLabel={tt('state.loading')}
-          />
-        )
       ) : items.length === 0 ? (
         <AdminEmpty>
           <p>{tt('admin.series.empty')}</p>
