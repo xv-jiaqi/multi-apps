@@ -42,11 +42,23 @@ export const loginInput = z.object({
 export type RegisterInput = z.infer<typeof registerInput>;
 export type LoginInput = z.infer<typeof loginInput>;
 
+export const commentContentSchema = z
+  .string()
+  .trim()
+  .min(1, '评论不能为空')
+  .max(500, '评论最多 500 字');
+
 export const commentInput = z.object({
   cardSlug: slugSchema,
-  content: z.string().trim().min(1, '评论不能为空').max(500, '评论最多 500 字'),
+  content: commentContentSchema,
 });
 export type CommentInput = z.infer<typeof commentInput>;
+
+export const seriesCommentInput = z.object({
+  seriesSlug: slugSchema,
+  content: commentContentSchema,
+});
+export type SeriesCommentInput = z.infer<typeof seriesCommentInput>;
 
 // Forum (M6) — Markdown body capped at 10k chars to keep XSS surface
 // (rehype-sanitize) and Postgres TOAST fast paths predictable.

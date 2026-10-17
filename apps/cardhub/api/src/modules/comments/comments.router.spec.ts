@@ -13,6 +13,7 @@ import type { TrpcContext } from '../../trpc/context';
 
 function makeRouter() {
   const cardFindUnique = jest.fn();
+  const seriesFindUnique = jest.fn();
   const commentFindMany = jest.fn();
   const commentCreate = jest.fn();
   const commentFindUnique = jest.fn();
@@ -20,6 +21,7 @@ function makeRouter() {
   const userFindUnique = jest.fn();
   const prisma = {
     card: { findUnique: cardFindUnique },
+    series: { findUnique: seriesFindUnique },
     comment: {
       findMany: commentFindMany,
       create: commentCreate,
@@ -43,6 +45,7 @@ function makeRouter() {
   return {
     caller,
     cardFindUnique,
+    seriesFindUnique,
     commentFindMany,
     commentCreate,
     commentFindUnique,
@@ -81,6 +84,46 @@ describe('CommentsRouter.listForCard', () => {
     cardFindUnique.mockResolvedValueOnce(null);
 
     await expect(caller(null).listForCard({ cardSlug: 'no-card' })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+});
+
+describe('CommentsRouter.listForSeries', () => {
+  it('is public and returns comments for a series target', async () => {
+    const { caller, seriesFindUnique, commentFindMany } = makeRouter();
+    seriesFindUnique.mockResolvedValueOnce({ id: 'series-1' });
+    commentFindMany.mockResolvedValueOnce([
+      {
+        id: 'cm-series',
+        content: 'great set',
+        createdAt: new Date('2026-05-02T00:00:00Z'),
+        user: { id: 'u1', username: 'alice' },
+      },
+    ]);
+
+    const result = await caller(null).listForSeries({ seriesSlug: 'sky-dawn' });
+    expect(result).toEqual([
+      {
+        id: 'cm-series',
+        content: 'great set',
+        createdAt: '2026-05-02T00:00:00.000Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ]);
+    expect(commentFindMany).toHaveBeenCalledWith({
+      where: { seriesId: 'series-1' },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: { user: { select: { id: true, username: true } } },
+    });
+  });
+
+  it('returns NOT_FOUND when the series slug is unknown', async () => {
+    const { caller, seriesFindUnique } = makeRouter();
+    seriesFindUnique.mockResolvedValueOnce(null);
+
+    await expect(caller(null).listForSeries({ seriesSlug: 'no-series' })).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
   });
@@ -129,6 +172,55 @@ describe('CommentsRouter.create', () => {
     await expect(
       caller({ sub: 'u-alice', username: 'alice' }).create({
         cardSlug: 'ghost-card',
+        content: 'hi',
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('CommentsRouter.createForSeries', () => {
+  it('rejects anonymous calls via the authedProcedure middleware', async () => {
+    const { caller } = makeRouter();
+    await expect(
+      caller(null).createForSeries({ seriesSlug: 'sky-dawn', content: 'hi' }),
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
+
+  it('persists the comment against a series target', async () => {
+    const { caller, seriesFindUnique, commentCreate } = makeRouter();
+    seriesFindUnique.mockResolvedValueOnce({ id: 'series-1' });
+    commentCreate.mockResolvedValueOnce({
+      id: 'cm-new',
+      content: 'great series',
+      createdAt: new Date('2026-05-02T00:00:00Z'),
+      user: { id: 'u-alice', username: 'alice' },
+    });
+
+    const result = await caller({ sub: 'u-alice', username: 'alice' }).createForSeries({
+      seriesSlug: 'sky-dawn',
+      content: 'great series',
+    });
+
+    expect(result).toEqual({
+      id: 'cm-new',
+      content: 'great series',
+      createdAt: '2026-05-02T00:00:00.000Z',
+      user: { id: 'u-alice', username: 'alice' },
+    });
+    expect(commentCreate.mock.calls[0]?.[0]?.data).toEqual({
+      content: 'great series',
+      seriesId: 'series-1',
+      userId: 'u-alice',
+    });
+  });
+
+  it('returns NOT_FOUND when targeting an unknown series', async () => {
+    const { caller, seriesFindUnique } = makeRouter();
+    seriesFindUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      caller({ sub: 'u-alice', username: 'alice' }).createForSeries({
+        seriesSlug: 'ghost-series',
         content: 'hi',
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });

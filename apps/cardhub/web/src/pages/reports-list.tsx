@@ -61,8 +61,10 @@ type ReportItem =
   | (ReportBase & {
       targetType: 'COMMENT';
       target: {
-        cardSlug: string;
-        cardName: string;
+        cardSlug: string | null;
+        cardName: string | null;
+        seriesSlug: string | null;
+        seriesTitle: string | null;
         authorUsername: string | null;
         excerpt: string;
       } | null;
@@ -74,6 +76,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | ReportStatus>('all');
   const [statusMessage, setStatusMessage] = useState<{ id: number; text: string } | null>(null);
   const statusMessageIdRef = useRef(0);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
 
   const query = trpc.reports.list.useInfiniteQuery(
@@ -93,6 +96,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
 
   function handleFilterChange(next: 'all' | ReportStatus) {
     setStatusMessage(null);
+    setLoadMoreError(null);
     setStatusFilter(next);
   }
 
@@ -202,12 +206,26 @@ export const ReportsListPage = observer(function ReportsListPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => void query.fetchNextPage()}
+                      onClick={async () => {
+                        setLoadMoreError(null);
+                        const result = await query.fetchNextPage();
+                        if (result.isError) {
+                          setLoadMoreError(result.error?.message ?? tt('state.error'));
+                        }
+                      }}
                       disabled={query.isFetchingNextPage}
                     >
                       {query.isFetchingNextPage ? tt('state.loading') : tt('reports.loadMore')}
                     </Button>
                   </div>
+                ) : null}
+                {loadMoreError ? (
+                  <p
+                    role="alert"
+                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                  >
+                    {loadMoreError}
+                  </p>
                 ) : null}
               </>
             )}
@@ -550,14 +568,23 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
   }
 
   if (report.targetType === 'COMMENT' && report.target) {
+    const targetPath = report.target.cardSlug
+      ? `/cards/${report.target.cardSlug}`
+      : report.target.seriesSlug
+        ? `/series/${report.target.seriesSlug}`
+        : null;
+    const targetLabel =
+      report.target.cardName ?? report.target.seriesTitle ?? tt('reports.openTarget');
+
     return (
       <div className="space-y-1">
-        <Link
-          to={`/cards/${report.target.cardSlug}`}
-          className="font-medium text-brand-600 hover:underline"
-        >
-          {report.target.cardName}
-        </Link>
+        {targetPath ? (
+          <Link to={targetPath} className="font-medium text-brand-600 hover:underline">
+            {targetLabel}
+          </Link>
+        ) : (
+          <p className="font-medium text-neutral-800">{targetLabel}</p>
+        )}
         <p className="text-neutral-800">{report.target.excerpt}</p>
         <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
       </div>

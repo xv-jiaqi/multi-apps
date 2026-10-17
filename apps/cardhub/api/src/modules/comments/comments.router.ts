@@ -2,13 +2,22 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { commentInput, slugSchema } from '@repo/shared';
+import { commentInput, seriesCommentInput, slugSchema } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
 type CommentWithUser = Prisma.CommentGetPayload<{
   include: { user: { select: { id: true; username: true } } };
 }>;
+
+function mapComment(c: CommentWithUser) {
+  return {
+    id: c.id,
+    content: c.content,
+    createdAt: c.createdAt.toISOString(),
+    user: c.user,
+  };
+}
 
 @Injectable()
 export class CommentsRouter {
@@ -45,12 +54,33 @@ export class CommentsRouter {
             include: { user: { select: { id: true, username: true } } },
           });
 
-          return comments.map((c: CommentWithUser) => ({
-            id: c.id,
-            content: c.content,
-            createdAt: c.createdAt.toISOString(),
-            user: c.user,
-          }));
+          return comments.map(mapComment);
+        }),
+
+      listForSeries: t.procedure
+        .input(
+          z.object({
+            seriesSlug: slugSchema,
+            limit: z.number().int().min(1).max(100).default(50),
+          }),
+        )
+        .query(async ({ input }) => {
+          const series = await prisma.series.findUnique({
+            where: { slug: input.seriesSlug },
+            select: { id: true },
+          });
+          if (!series) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
+          }
+
+          const comments = await prisma.comment.findMany({
+            where: { seriesId: series.id },
+            orderBy: { createdAt: 'desc' },
+            take: input.limit,
+            include: { user: { select: { id: true, username: true } } },
+          });
+
+          return comments.map(mapComment);
         }),
 
       create: t.authedProcedure.input(commentInput).mutation(async ({ ctx, input }) => {
@@ -74,13 +104,34 @@ export class CommentsRouter {
           include: { user: { select: { id: true, username: true } } },
         });
 
-        return {
-          id: created.id,
-          content: created.content,
-          createdAt: created.createdAt.toISOString(),
-          user: created.user,
-        };
+        return mapComment(created);
       }),
+
+      createForSeries: t.authedProcedure
+        .input(seriesCommentInput)
+        .mutation(async ({ ctx, input }) => {
+          if (!ctx.user) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' });
+          }
+          const series = await prisma.series.findUnique({
+            where: { slug: input.seriesSlug },
+            select: { id: true },
+          });
+          if (!series) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
+          }
+
+          const created = await prisma.comment.create({
+            data: {
+              content: input.content,
+              seriesId: series.id,
+              userId: ctx.user.sub,
+            },
+            include: { user: { select: { id: true, username: true } } },
+          });
+
+          return mapComment(created);
+        }),
 
       delete: t.authedProcedure
         .input(z.object({ id: z.string().uuid() }))

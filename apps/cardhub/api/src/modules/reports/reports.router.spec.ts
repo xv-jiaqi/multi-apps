@@ -420,4 +420,43 @@ describe('ReportsRouter.list', () => {
       sellerUsername: 'seller',
     });
   });
+
+  it('returns series context for reports on series comments', async () => {
+    const { caller, userFindUnique, reportFindMany, commentFindMany } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ role: 'admin' });
+    reportFindMany.mockResolvedValueOnce([
+      {
+        id: 'r-series-comment',
+        targetType: 'COMMENT',
+        targetId: 'cm-series',
+        reason: 'off topic',
+        status: 'PENDING',
+        createdAt: new Date('2026-05-01T00:00:00Z'),
+        reporter: { id: 'u1', username: 'alice' },
+      },
+    ]);
+    commentFindMany.mockResolvedValueOnce([
+      {
+        id: 'cm-series',
+        content: 'series comment body',
+        user: { username: 'bob' },
+        card: null,
+        series: { slug: 'sky-dawn', title: '天穹黎明' },
+      },
+    ]);
+
+    const result = await caller({ sub: 'u-admin', username: 'admin' }).list({ limit: 20 });
+
+    expect(result.items[0]).toMatchObject({
+      targetType: 'COMMENT',
+      target: {
+        cardSlug: null,
+        cardName: null,
+        seriesSlug: 'sky-dawn',
+        seriesTitle: '天穹黎明',
+        authorUsername: 'bob',
+        excerpt: 'series comment body',
+      },
+    });
+  });
 });
