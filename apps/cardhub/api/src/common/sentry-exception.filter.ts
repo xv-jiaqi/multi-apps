@@ -16,10 +16,19 @@ import type { Request, Response } from 'express';
  * silent), so local development sees no behavioural change.
  *
  * Note: tRPC errors flow through the Express middleware bypass, not Nest's
- * exception pipeline. They are reported separately by `tRPCErrorReporter` in
- * `trpc-base.ts` (`onError` hook) so we capture both pipelines without double
- * reporting.
+ * exception pipeline. They are reported separately by the tRPC `onError`
+ * hook in `create-app.ts` so we capture both pipelines without double
+ * reporting. Body-parser 4xx errors (413 / malformed JSON) keep their status
+ * and are logged as warnings; only 5xx is sent to Sentry as an error.
  */
+function clientErrorStatus(exception: unknown): number | undefined {
+  if (typeof exception !== 'object' || exception === null) return undefined;
+  const record = exception as { statusCode?: unknown; status?: unknown };
+  const status = record.statusCode ?? record.status;
+  if (typeof status !== 'number' || status < 400 || status >= 500) return undefined;
+  return status;
+}
+
 @Catch()
 export class SentryExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(SentryExceptionFilter.name);
@@ -35,20 +44,34 @@ export class SentryExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       body = exception.getResponse();
-    } else if (exception instanceof Error) {
-      this.logger.error(exception.message, exception.stack);
     } else {
-      this.logger.error('Unknown exception', String(exception));
+      const clientStatus = clientErrorStatus(exception);
+      if (clientStatus !== undefined) {
+        status = clientStatus;
+        body = {
+          statusCode: clientStatus,
+          message: exception instanceof Error ? exception.message : 'Bad Request',
+        };
+      }
     }
 
-    // Only forward 500-class crashes to Sentry; 4xx are user errors.
     if (status >= 500) {
+      if (!(exception instanceof HttpException)) {
+        if (exception instanceof Error) {
+          this.logger.error(exception.message, exception.stack);
+        } else {
+          this.logger.error('Unknown exception', String(exception));
+        }
+      }
       Sentry.captureException(exception, {
         tags: {
           path: request?.originalUrl ?? 'unknown',
           method: request?.method ?? 'unknown',
         },
       });
+    } else if (!(exception instanceof HttpException) && exception instanceof Error) {
+      // Body-parser 413/400 and other client errors are not server failures.
+      this.logger.warn(exception.message);
     }
 
     response.status(status).json(body);
