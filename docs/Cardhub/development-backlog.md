@@ -60,6 +60,7 @@
 | CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 进行中（API #67、Web #77；trigram 未做）    |
 | CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | API 已完成（PR #71）；Web 进行中（另开 PR） |
 | CH-108 | 文案清理、页面标题、小型无障碍修复              | P1     | S    | —                     | ✅ PR #61                                   |
+| CH-109 | 卡牌详情页 CLS                                  | P1     | S    | —                     | 待领取                                      |
 | CH-201 | 分类体系：品类、系列、子集、卡号与发售日期      | P2     | L    | CH-107                | 待领取                                      |
 | CH-202 | 系列清单：搜索、排序、分页与属性本地化          | P2     | M    | CH-201                | 待领取                                      |
 | CH-203 | 收藏管理、集齐进度与分享                        | P2     | L    | CH-102                | 待领取                                      |
@@ -110,6 +111,7 @@ flowchart LR
     CH105[CH-105 真实图片]
     CH106[CH-106 全局搜索]
     CH107[CH-107 内容后台]
+    CH109[CH-109 详情 CLS]
   end
   subgraph W3[第 3 波]
     CH201[CH-201 分类]
@@ -277,6 +279,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - Prisma：`Listing` 增加可空字段 `condition`（枚举 `NEAR_MINT`、`LIGHTLY_PLAYED`、`MODERATELY_PLAYED`、`HEAVILY_PLAYED`、`DAMAGED`）、`language`（枚举 `ZH`、`EN`、`JA`、`OTHER`）、`variantNote String?`。迁移名 `add_listing_facets`。旧数据这三列都是空。若列表会按状态、货币和价格一起过滤，补 `@@index([status, currency, price])`。
   - shared：`packages/shared/src/zod/index.ts` 的 `listingPublishInput` 与 `listingListInput` 增加上述可选字段。`variantNote` 去空白后最长 40 字。列表增加 `minPrice?`、`maxPrice?`、`sort: 'newest' | 'price_asc' | 'price_desc'`，默认 `newest`。
   - 价格排序只比较同一种货币。`sort` 为价格时，请求必须带 `currency`（默认 `CNY`），只返回该货币且价格非空的意向。`newest` 仍返回全部货币。不做汇率换算。
+  - **WARN-5（已定，按 A）**：自动带上的 `currency` 在切回最新发布或清空价格区间时去掉；用户主动选的保留。
   - Web：`apps/cardhub/web/src/pages/trade-list.tsx`、`trade-publish.tsx` 和 `apps/cardhub/web/src/components/listings-for-card.tsx`。列表项显示卡名和系列并链接到卡牌页；把“按 slug 筛选”换成卡牌搜索选择器（基于 `cards.search`，250ms 防抖，键盘可选），保留 `/trade/new?cardSlug=` 预填；发布页使用同一选择器并显示所选卡牌预览。图片显示为最多 4 张缩略图（`loading="lazy"`、`referrerPolicy="no-referrer"`，加载失败退回链接），点击新窗口打开原图。发布表单增加品相、语言和版本备注，三者都可空。列表增加这三项筛选、价格区间和排序。已填写的品相和语言显示在卡片上。
   - i18n：品相五档的中文是近全新、轻微使用、中度使用、重度使用、破损。语言是中文、英文、日文、其他。新 key 放在 `trade.*`。
   - 边界：不建商品 SKU、库存数量、购物车、站内支付、卖家等级或市场价。版本备注是自由短句，不是工艺目录。小程序留到 CH-301，本卡只保证 Web 上的新字段能从接口读到。
@@ -311,6 +314,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - shared：在 `packages/shared` 增加纯函数 `parseCardSearchQuery`。识别 `r:`（稀有度枚举）和 `s:`（系列 slug），其余文字按空格拆成名称词。大写 `OR` 连接名称词，前缀 `-` 表示名称中排除该词。不支持正则、比较符、括号和价格。未知前缀返回失败，调用方不要发请求。`c:` 和 `y:` 留给 CH-201，本卡遇到它们按未知前缀处理。
   - API：新增 `search.global({ q, limit })` 返回 `{ cards[], series[] }`。`cards.search` 增加可选 `rarity`、`seriesSlug`。名称条件使用解析后的词。`q` 的长度上限从 80 调到 200。服务端再解析一次，不信任客户端已经解析过。
   - Web：Header 增加搜索框（桌面端内联，移动端在抽屉里），按 ARIA combobox 模式实现下拉建议（最多 5 张卡 + 3 个系列，↑↓ 选择、Enter 打开、Esc 关闭），底部“查看全部结果”跳转 `/search?q=`。`/search` 页读写 URL 的 `q` 参数（可分享），并增加稀有度和系列筛选。筛选控件和搜索框写入同一条查询。搜索框下用一行例子说明语法，不另做说明书页面。
+  - `?q=` 同步。
   - 小程序的搜索页可以继续只传名称；完整语法不是本卡的小程序范围。
 - **验收标准**
   1. 任意页面都能直接搜索；纯键盘可完成搜索并进入详情。
@@ -330,6 +334,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
     - **slug 创建后不可修改**（URL 和 `Listing.cardSlug` 依赖它）。
     - 删除系列会级联删除卡牌和评论：有卡牌时拒绝，除非显式 `force: true`，前端二次确认。
     - 当前 `seed-catalog` 按 slug upsert 会**覆盖**后台编辑。改为“只插入不存在的记录”（`update: {}`），同步更新 `seed-catalog.spec.ts`，并在 deploy/README.md 注明。
+    - 导入最多 500 行 / 1MB。超出整批拒绝，不写入任何行。
   - Web：新增 `/admin/catalog`（admin）：系列表格 + 新建 / 编辑表单；进入系列后是卡牌表格 + 表单（attributes 用键值对编辑器）；JSON 导入页（粘贴或上传文件，先预览再执行）。Header 把“举报队列”和“内容管理”收进一个“管理”入口。
 - **验收标准**：admin 不改代码即可新增、编辑、删除系列和卡牌，前台立即可见；非 admin 调用全部返回 `FORBIDDEN`；导入同一份 JSON 两次结果一致；重跑 `seed:catalog` 不会覆盖后台的修改。
 - **依赖**：无。完成后解锁 CH-201、CH-206、CH-209、CH-210。
@@ -343,6 +348,13 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - 删除 `trade-list.tsx`、`trade-publish.tsx` 末尾无人引用的 `useTradeListPage`、`useTradePublishPage` 别名导出。
 - **验收标准**：浏览器标签页标题随页面变化；axe 开发扫描对上述页面没有新增问题；全仓 grep 不到被删除的别名。
 - **依赖**：无。
+
+#### CH-109 卡牌详情页 CLS
+
+- **背景**：卡牌详情页存在累积布局偏移（CLS）。若排查确认由 #65（真实图片渲染）引起，本项并入 CH-105，不单独立项。
+- **验收标准**：桌面和手机的 CLS 都 ≤ 0.1，并附 Lighthouse 报告。
+- **依赖**：无。若由 #65 引起则归入 CH-105。
+- **规模**：S。
 
 ### P2 · 知识库能力增强
 
@@ -477,7 +489,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 - **背景**：路由里的 `TRPCError.message` 和 shared 中的 zod 校验文案都是中文字面量，英文界面也显示中文。
 - **默认方案**：错误信息改为稳定 key（如 `errors.card.notFound`、`errors.validation.usernameTooShort`），客户端用 `translateError(err, locale)` 翻译，找不到 key 时显示原文。不采用“按请求头返回不同语言”，因为 zod 文案在 schema 定义时就固定了。
-- **改动范围**：全部 router 的 `TRPCError`、`packages/shared/src/zod` 的校验文案、Web 与小程序展示错误的位置、断言错误文案的测试；字典新增 `errors.*`。
+- **改动范围**：全部 router 的 `TRPCError`、`packages/shared/src/zod` 的校验文案、Web 与小程序展示错误的位置、断言错误文案的测试；字典新增 `errors.*`。CH-106 API 报错中文化。
 - **依赖**：无，但改动面广，建议在 P1 大部分合入后再做，以减少冲突。
 
 #### CH-212 会话安全

@@ -11,6 +11,7 @@ import { AuthService } from '../modules/auth/auth.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
 import { configureApp } from './configure-app';
+import { jsonBodyParser } from './json-body';
 import { createRateLimiters, type RateLimitOverrides } from './rate-limiters';
 
 export type CreateAppOptions = {
@@ -57,7 +58,9 @@ const preserveExistingVaryHeader: RequestHandler = (_req, res, next) => {
 };
 
 export async function createApp(options: CreateAppOptions = {}) {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  // bodyParser is replaced by jsonBodyParser so catalog import can accept 1MB
+  // without raising the 100kb cap on every other route.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false });
   configureApp(app);
 
   const config = app.get(ConfigService);
@@ -107,6 +110,7 @@ export async function createApp(options: CreateAppOptions = {}) {
     app.use(path, middleware);
   }
 
+  app.use(jsonBodyParser());
   app.use('/trpc', preserveExistingVaryHeader);
   app.use(
     '/trpc',

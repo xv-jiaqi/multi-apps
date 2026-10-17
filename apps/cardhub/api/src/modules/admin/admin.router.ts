@@ -9,7 +9,9 @@ import {
   adminCatalogImportInput,
   adminSeriesDeleteInput,
   adminSeriesUpsertInput,
+  catalogImportLimit,
   slugSchema,
+  t as translate,
 } from '@repo/shared';
 import { z } from 'zod';
 import { TrpcBase } from '../../trpc/trpc-base';
@@ -361,6 +363,21 @@ function isPrismaUniqueError(error: unknown): boolean {
   return isPlainObject(error) && error.code === 'P2002';
 }
 
+function assertCatalogImportLimits(raw: unknown): void {
+  const violation = catalogImportLimit(raw);
+  if (!violation) return;
+  if (violation.reason === 'tooManyRows') {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: translate('zh-CN', 'admin.import.tooManyRows', { count: violation.count }),
+    });
+  }
+  throw new TRPCError({
+    code: 'PAYLOAD_TOO_LARGE',
+    message: translate('zh-CN', 'admin.import.tooLarge'),
+  });
+}
+
 @Injectable()
 export class AdminRouter {
   constructor(
@@ -704,9 +721,18 @@ export class AdminRouter {
         }),
       }),
       catalog: t.router({
-        import: t.adminProcedure.input(adminCatalogImportInput).mutation(async ({ input }) => {
-          return input.dryRun ? previewImport(input.data) : applyImport(input.data);
-        }),
+        import: t.adminProcedure
+          .use(async ({ getRawInput, next }) => {
+            // Reject the whole batch before zod and before any catalog read
+            // or write. Row count and serialized size are decided on the raw
+            // input so a 501-row or >1MB body never reaches the transaction.
+            assertCatalogImportLimits(await getRawInput());
+            return next();
+          })
+          .input(adminCatalogImportInput)
+          .mutation(async ({ input }) => {
+            return input.dryRun ? previewImport(input.data) : applyImport(input.data);
+          }),
       }),
     });
   }
