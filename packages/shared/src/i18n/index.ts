@@ -473,6 +473,7 @@ const zhCN: Dictionary = {
   'admin.import.tooManyRows': '一次最多导入 500 行，当前 {count} 行',
   'admin.import.tooLarge': '一次最多导入 1MB',
   'admin.import.back': '返回内容管理',
+  'admin.import.already': '这份内容已经导入过，请修改后再导入',
   // Miniapp-specific copy (reused across weapp/alipay/h5).
   'miniapp.home.browse': '浏览系列',
   'miniapp.home.search': '搜索卡牌',
@@ -965,6 +966,7 @@ const enUS: Dictionary = {
   'admin.import.tooManyRows': 'You can import at most 500 rows at a time (this file has {count})',
   'admin.import.tooLarge': 'You can import at most 1MB at a time',
   'admin.import.back': 'Back to catalog',
+  'admin.import.already': 'This content was already imported. Change it before importing again.',
   'miniapp.home.browse': 'Browse series',
   'miniapp.home.search': 'Search cards',
   'miniapp.home.login': 'Sign in',

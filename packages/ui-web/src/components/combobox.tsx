@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Check, Loader2, Search, X } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { controlBase, controlSm, optionBase, popoverSurface } from './form-styles';
+import { controlBase, optionBase, popoverSurface } from './form-styles';
 
 type ComboboxStatus = 'idle' | 'loading' | 'error' | 'success';
 
@@ -347,7 +347,7 @@ export function Combobox<T>({
               setFocused(false);
               setActiveIndex(-1);
             }}
-            className={cn(controlBase, size === 'sm' && controlSm, 'pl-9 pr-9')}
+            className={cn(controlBase, size === 'sm' && 'h-8 text-sm', 'pl-9 pr-9')}
           />
           <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
             {status === 'loading' ? (

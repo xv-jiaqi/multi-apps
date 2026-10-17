@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { ImgHTMLAttributes } from 'react';
 import { resolveArtwork, t } from '@repo/shared';
 import { cn } from '@repo/ui-web';
@@ -41,6 +41,7 @@ export function useArtImage({
   const resolved = resolveArtwork(src);
   const imageSrc = resolved.kind === 'image' ? resolved.src : null;
   const onErrorRef = useRef(onError);
+  const imageNode = useRef<HTMLImageElement | null>(null);
   const reportedError = useRef<{ src: string | null; done: boolean }>({
     src: imageSrc,
     done: false,
@@ -50,17 +51,6 @@ export function useArtImage({
     status: 'loading' | 'loaded' | 'error';
   }>({ src: imageSrc, status: 'loading' });
   const status = imageState.src === imageSrc ? imageState.status : 'loading';
-
-  useEffect(() => {
-    onErrorRef.current = onError;
-  }, [onError]);
-
-  useEffect(() => {
-    if (reportedError.current.src !== imageSrc) {
-      reportedError.current = { src: imageSrc, done: false };
-    }
-    setImageState({ src: imageSrc, status: 'loading' });
-  }, [imageSrc]);
 
   const fail = useCallback(() => {
     setImageState((current) =>
@@ -73,8 +63,41 @@ export function useArtImage({
     onErrorRef.current?.();
   }, [imageSrc]);
 
+  useLayoutEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useLayoutEffect(() => {
+    if (reportedError.current.src !== imageSrc) {
+      reportedError.current = { src: imageSrc, done: false };
+    }
+    const img = imageNode.current;
+    const shownSrc = img?.getAttribute('src') || null;
+    // A cached image can already be complete in the ref callback. Settling it
+    // here keeps that result; forcing "loading" would leave opacity-0 in place
+    // because load and error do not fire again.
+    if (imageSrc && img?.complete && shownSrc === imageSrc) {
+      if (img.naturalWidth > 0) {
+        setImageState((current) =>
+          current.src === imageSrc && current.status === 'loaded'
+            ? current
+            : { src: imageSrc, status: 'loaded' },
+        );
+        return;
+      }
+      fail();
+      return;
+    }
+    setImageState((current) =>
+      current.src === imageSrc && current.status === 'loading'
+        ? current
+        : { src: imageSrc, status: 'loading' },
+    );
+  }, [fail, imageSrc]);
+
   const ref = useCallback(
     (img: HTMLImageElement | null) => {
+      imageNode.current = img;
       if (!img?.complete) return;
       if (img.naturalWidth > 0) {
         setImageState({ src: imageSrc, status: 'loaded' });
