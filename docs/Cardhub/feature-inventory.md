@@ -72,14 +72,14 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 
 ### 3.4 卡牌评论
 
-| 能力                         | 状态 | 入口       | 接口                   | 说明                                                    |
-| ---------------------------- | ---- | ---------- | ---------------------- | ------------------------------------------------------- |
-| 查看评论（最新 50 条，倒序） | ✅   | 卡牌详情页 | `comments.listForCard` | 无分页                                                  |
-| 发表评论（≤ 500 字）         | ✅   | 卡牌详情页 | `comments.create`      | 需登录；**没有限流**（CH-002）                          |
-| 删除评论（本人 / 管理员）    | ❌   | —          | —                      | schema 注释写了“admin 可删评论”，实际没有接口（CH-002） |
-| 举报评论                     | ✅   | 评论旁     | `reports.create`       | 自己的评论不显示举报按钮                                |
-| 系列页评论                   | ❌   | —          | —                      | PRD FR4 要求“卡牌和系列介绍页面”都能评论（CH-101）      |
-| 评论回复                     | ❌   | —          | —                      | 历史架构文档设计了 `parent_comment_id`（CH-204）        |
+| 能力                         | 状态 | 入口       | 接口                   | 说明                                                |
+| ---------------------------- | ---- | ---------- | ---------------------- | --------------------------------------------------- |
+| 查看评论（最新 50 条，倒序） | ✅   | 卡牌详情页 | `comments.listForCard` | 无分页                                              |
+| 发表评论（≤ 500 字）         | ✅   | 卡牌详情页 | `comments.create`      | 需登录；按 IP 限流 30 次 / 小时                     |
+| 删除评论（本人 / 管理员）    | ✅   | 卡牌详情页 | `comments.delete`      | Web / Tauri 使用行内二次确认；小程序同步留到 CH-301 |
+| 举报评论                     | ✅   | 评论旁     | `reports.create`       | 自己的评论不显示举报按钮                            |
+| 系列页评论                   | ❌   | —          | —                      | PRD FR4 要求“卡牌和系列介绍页面”都能评论（CH-101）  |
+| 评论回复                     | ❌   | —          | —                      | 历史架构文档设计了 `parent_comment_id`（CH-204）    |
 
 ### 3.5 论坛
 
@@ -117,7 +117,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | 举报队列（待处理 / 已处理筛选，附目标上下文） | ✅   | `/reports`（Header 仅对 admin 显示） | `reports.list`                                                                        | 每次请求都重新查库校验 admin 身份；目标已删除时 `target` 为 `null`；已处理条目显示处理人、时间和说明 |
 | 处理举报（标记已处理）                        | ✅   | `/reports`                           | `reports.resolve`                                                                     | 记录处理人、处理时间和可选说明；重复处理幂等                                                         |
 | 删除 / 关闭被举报内容并处理                   | ✅   | `/reports`                           | `reports.resolve`                                                                     | `TOPIC` / `REPLY` / `COMMENT` 删除，`LISTING` 关闭；同一目标其它待处理举报一并处理                   |
-| 管理员删除 / 关闭任意内容                     | 🟡   | 原页面 + `/reports`                  | `forum.topics.delete` / `forum.replies.delete` / `listings.close` / `reports.resolve` | 评论删除的通用入口仍属 CH-002；举报队列可处置评论目标                                                |
+| 管理员删除 / 关闭任意内容                     | 🟡   | 原页面 + `/reports`                  | `comments.delete` / `forum.topics.delete` / `forum.replies.delete` / `listings.close` / `reports.resolve` | 卡牌详情页可用 `comments.delete` 删除评论；`/reports` 可删除被举报评论并处理举报                     |
 | 封禁用户、用户管理、操作审计                  | ❌   | —                                    | —                                                                                     | CH-209                                                                                               |
 
 ### 3.8 国际化
@@ -190,7 +190,8 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `auth.login`           | mutation | 公开（限流）            | `{ identifier, password }`                                                | 同上                                                                                          |
 | `auth.me`              | query    | 公开（token 走 input）  | `{ token }`                                                               | `user`                                                                                        |
 | `comments.listForCard` | query    | 公开                    | `{ cardSlug, limit=50(≤100) }`                                            | `[{ id, content, createdAt, user }]`                                                          |
-| `comments.create`      | mutation | 登录                    | `{ cardSlug, content }`                                                   | 新评论                                                                                        |
+| `comments.create`      | mutation | 登录（限流）            | `{ cardSlug, content }`                                                   | 新评论                                                                                        |
+| `comments.delete`      | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                                                                      |
 | `forum.topics.list`    | query    | 公开                    | `{ cursor?, limit=20(≤50) }`                                              | `{ items[TopicSummary], nextCursor }`                                                         |
 | `forum.topics.bySlug`  | query    | 公开                    | `{ slug }`                                                                | `TopicSummary + replies(前 20) + replyNextCursor`                                             |
 | `forum.topics.create`  | mutation | 登录（限流）            | `{ title, body }`                                                         | `TopicSummary`                                                                                |
@@ -353,6 +354,7 @@ erDiagram
 | 名称               | 匹配的 procedure              | 窗口   | 上限 |
 | ------------------ | ----------------------------- | ------ | ---- |
 | `authMutation`     | `auth.register`、`auth.login` | 1 分钟 | 10   |
+| `commentCreate`    | `comments.create`             | 1 小时 | 30   |
 | `forumTopicCreate` | `forum.topics.create`         | 1 小时 | 5    |
 | `forumReplyCreate` | `forum.replies.create`        | 1 小时 | 30   |
 | `listingPublish`   | `listings.publish`            | 1 小时 | 10   |
@@ -364,17 +366,14 @@ erDiagram
 
 按对用户的影响排序，括号内是对应任务。
 
-1. 举报无法标记为已处理，队列只增不减（CH-001）。
-2. 话题回帖超过 20 条后，第 21 条起在详情页看不到（CH-003）。
-3. 卡牌评论没有通用删除能力，也没有限流（CH-002）。举报队列中的“删除内容并处理”可以删除被举报评论。
-4. 生产 Web 端 Sentry 实际未启用；`Dockerfile.web` 头部注释仍是 Zeabur 说明（CH-005）。
-5. `Topic.pinned` 字段无效；`forum.topics.update`、`listings.mine` 有接口无界面（CH-102 / CH-103）。
-6. 卡牌、系列只有渐变占位图（CH-105）。
-7. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
-8. API 错误信息只有中文（CH-211）。
-9. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。
-10. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
-11. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
+1. 话题回帖超过 20 条后，第 21 条起在详情页看不到（CH-003）。
+2. `Topic.pinned` 字段无效；`forum.topics.update`、`listings.mine` 有接口无界面（CH-102 / CH-103）。
+3. 卡牌、系列只有渐变占位图（CH-105）。
+4. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
+5. API 错误信息只有中文（CH-211）。
+6. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。
+7. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
+8. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
 
 ## 10. 测试基线
 
