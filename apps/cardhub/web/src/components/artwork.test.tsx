@@ -131,9 +131,7 @@ describe('useArtImage', () => {
       expect(onError).toHaveBeenCalledTimes(2);
     } finally {
       if (complete) Object.defineProperty(imageProto, 'complete', complete);
-      else delete imageProto.complete;
       if (naturalWidth) Object.defineProperty(imageProto, 'naturalWidth', naturalWidth);
-      else delete imageProto.naturalWidth;
     }
   });
 
