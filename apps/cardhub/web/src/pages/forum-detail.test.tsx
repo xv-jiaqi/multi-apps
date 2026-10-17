@@ -9,6 +9,9 @@ const repliesInvalidate = vi.fn();
 const createReplyMutate = vi.fn();
 const deleteReplyMutate = vi.fn();
 const fetchNextPage = vi.fn();
+const repliesReset = vi.fn();
+const repliesQueryInputs: Array<{ topicId: string; limit: number }> = [];
+let latestInitialCursor: string | undefined;
 
 interface ReplyFixture {
   id: string;
@@ -26,7 +29,8 @@ function makeReply(index: number): ReplyFixture {
   };
 }
 
-const replies = Array.from({ length: 25 }, (_, index) => makeReply(index + 1));
+const replies = Array.from({ length: 45 }, (_, index) => makeReply(index + 1));
+let availableReplies = replies;
 
 const topicState: {
   isLoading: boolean;
@@ -55,17 +59,23 @@ const topicState: {
 
 const repliesQueryState = {
   data: {
-    pages: [
-      {
-        items: replies.slice(20),
-        nextCursor: null,
-      },
-    ],
+    pages: [] as Array<{ items: ReplyFixture[]; nextCursor: string | null }>,
   },
-  hasNextPage: false,
+  cursor: undefined as string | undefined,
+  hasNextPage: true,
   isFetchingNextPage: false,
   isFetchNextPageError: false,
 };
+
+function nextReplyPage(cursor: string | undefined) {
+  const startIndex = cursor ? availableReplies.findIndex((reply) => reply.id === cursor) + 1 : 0;
+  const safeStartIndex = startIndex > 0 ? startIndex : 0;
+  const items = availableReplies.slice(safeStartIndex, safeStartIndex + 20);
+  return {
+    items,
+    nextCursor: safeStartIndex + items.length < availableReplies.length ? items.at(-1)!.id : null,
+  };
+}
 
 vi.mock('../lib/trpc', () => ({
   trpc: {
@@ -86,10 +96,17 @@ vi.mock('../lib/trpc', () => ({
       },
       replies: {
         list: {
-          useInfiniteQuery: () => ({
-            ...repliesQueryState,
-            fetchNextPage,
-          }),
+          useInfiniteQuery: (
+            input: { topicId: string; limit: number },
+            options: { initialCursor?: string },
+          ) => {
+            repliesQueryInputs.push(input);
+            latestInitialCursor = options.initialCursor;
+            return {
+              ...repliesQueryState,
+              fetchNextPage,
+            };
+          },
         },
         create: {
           useMutation: ({
@@ -124,7 +141,7 @@ vi.mock('../lib/trpc', () => ({
           bySlug: { invalidate: topicInvalidate },
         },
         replies: {
-          list: { invalidate: repliesInvalidate },
+          list: { invalidate: repliesInvalidate, reset: repliesReset },
         },
       },
     }),
@@ -147,10 +164,25 @@ beforeEach(() => {
   rootStore.session.signOut();
   topicInvalidate.mockClear();
   repliesInvalidate.mockClear();
+  repliesReset.mockReset();
+  repliesReset.mockImplementation(() => {
+    repliesQueryState.cursor = latestInitialCursor;
+    repliesQueryState.data = { pages: [] };
+    repliesQueryState.hasNextPage = Boolean(latestInitialCursor);
+  });
   createReplyMutate.mockReset();
   deleteReplyMutate.mockReset();
   fetchNextPage.mockReset();
-  fetchNextPage.mockResolvedValue({ data: repliesQueryState.data });
+  repliesQueryInputs.length = 0;
+  latestInitialCursor = undefined;
+  availableReplies = replies;
+  fetchNextPage.mockImplementation(async () => {
+    const cursor = repliesQueryState.data.pages.at(-1)?.nextCursor ?? repliesQueryState.cursor;
+    const page = nextReplyPage(cursor);
+    repliesQueryState.data = { pages: [...repliesQueryState.data.pages, page] };
+    repliesQueryState.hasNextPage = Boolean(page.nextCursor);
+    return { data: repliesQueryState.data };
+  });
   topicState.isLoading = false;
   topicState.isError = false;
   topicState.error = null;
@@ -162,18 +194,19 @@ beforeEach(() => {
     createdAt: '2026-05-01T00:00:00.000Z',
     updatedAt: '2026-05-01T00:00:00.000Z',
     author: { id: 'author-1', username: 'author' },
-    replyCount: 25,
+    replyCount: 45,
     replies: replies.slice(0, 20),
     replyNextCursor: replies[19]!.id,
   };
-  repliesQueryState.data.pages = [{ items: replies.slice(20), nextCursor: null }];
-  repliesQueryState.hasNextPage = false;
+  repliesQueryState.cursor = undefined;
+  repliesQueryState.data = { pages: [] };
+  repliesQueryState.hasNextPage = true;
   repliesQueryState.isFetchingNextPage = false;
   repliesQueryState.isFetchNextPageError = false;
 });
 
 describe('ForumDetailPage replies pagination', () => {
-  it('renders the first 20 replies and reveals the remaining 5 after loading more', async () => {
+  it('renders the first 20 replies and loads 41 replies across two clicks', async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -183,10 +216,57 @@ describe('ForumDetailPage replies pagination', () => {
 
     await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
 
-    expect(screen.getByText('Reply 21')).toBeInTheDocument();
-    expect(screen.getByText('Reply 25')).toBeInTheDocument();
+    expect(await screen.findByText('Reply 21')).toBeInTheDocument();
+    expect(screen.getByText('Reply 40')).toBeInTheDocument();
+    expect(screen.queryByText('Reply 41')).not.toBeInTheDocument();
+    expect(screen.getAllByText(/^Reply \d+$/)).toHaveLength(40);
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+
+    expect(await screen.findByText('Reply 41')).toBeInTheDocument();
     expect(screen.getByText('已显示全部回帖')).toBeInTheDocument();
-    expect(screen.getAllByText(/^Reply \d+$/)).toHaveLength(25);
+    expect(screen.getAllByText(/^Reply \d+$/)).toHaveLength(45);
+    expect(fetchNextPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses the refreshed inline cursor after deleting the previous cursor reply', async () => {
+    const user = userEvent.setup();
+    const view = renderPage();
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    expect(await screen.findByText('Reply 30')).toBeInTheDocument();
+
+    availableReplies = replies.filter((reply) => reply.id !== replies[19]!.id);
+    topicState.data = {
+      ...topicState.data!,
+      replyCount: availableReplies.length,
+      replies: availableReplies.slice(0, 20),
+      replyNextCursor: availableReplies[19]!.id,
+    };
+    view.rerender(
+      <MemoryRouter initialEntries={['/forum/test-topic']}>
+        <Routes>
+          <Route path="/forum/:slug" element={<ForumDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(latestInitialCursor).toBe('reply-21');
+      expect(repliesReset).toHaveBeenCalled();
+    });
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    view.rerender(
+      <MemoryRouter initialEntries={['/forum/test-topic']}>
+        <Routes>
+          <Route path="/forum/:slug" element={<ForumDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Reply 22')).toBeInTheDocument();
+    expect(screen.getByText('Reply 30')).toBeInTheDocument();
+    expect(screen.queryByText('Reply 20')).not.toBeInTheDocument();
   });
 
   it('invalidates both topic detail and replies list after posting a reply', async () => {

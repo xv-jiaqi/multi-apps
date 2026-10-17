@@ -42,13 +42,16 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [focusReplyId, setFocusReplyId] = useState<string | null>(null);
   const [pendingCreatedReplyId, setPendingCreatedReplyId] = useState<string | null>(null);
   const replyRefs = useRef(new Map<string, HTMLLIElement>());
+  const previousReplyNextCursorRef = useRef<string | null>(null);
 
+  // Valid UUID placeholder keeps the query input shape stable while `enabled`
+  // prevents requests before the topic has loaded.
   const topicId = topicQuery.data?.id ?? '00000000-0000-0000-0000-000000000000';
   const replyNextCursor = topicQuery.data?.replyNextCursor ?? null;
   const repliesQuery = trpc.forum.replies.list.useInfiniteQuery(
     { topicId, limit: 20 },
     {
-      enabled: !!replyNextCursor,
+      enabled: showLoadedReplyPages && !!replyNextCursor,
       initialCursor: replyNextCursor ?? undefined,
       getNextPageParam: (last) => last.nextCursor ?? undefined,
     },
@@ -100,7 +103,14 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setReplyStatusMessage('');
     setFocusReplyId(null);
     setPendingCreatedReplyId(null);
+    previousReplyNextCursorRef.current = null;
   }, [topicId]);
+
+  useEffect(() => {
+    if (previousReplyNextCursorRef.current === replyNextCursor) return;
+    previousReplyNextCursorRef.current = replyNextCursor;
+    void utils.forum.replies.list.reset({ topicId, limit: 20 });
+  }, [replyNextCursor, topicId, utils]);
 
   useEffect(() => {
     if (!focusReplyId) return;
@@ -182,17 +192,15 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const onLoadMoreReplies = async () => {
     const beforeIds = new Set(visibleReplies.map((reply) => reply.id));
     setShowLoadedReplyPages(true);
-    let pages = repliesQuery.data?.pages ?? [];
-    if (pages.length === 0 && !repliesQuery.isFetchingNextPage) {
-      const result = await repliesQuery.fetchNextPage();
-      pages = result.data?.pages ?? [];
-    }
+    const result = await repliesQuery.fetchNextPage();
+    const pages = result.data?.pages ?? [];
     const mergedLoadedReplies = mergeReplies(pages.flatMap((page) => page.items));
     const newReplies = mergedLoadedReplies.filter((reply) => !beforeIds.has(reply.id));
     if (newReplies.length > 0) {
       setReplyStatusMessage(tt('forum.detail.repliesLoaded', { count: newReplies.length }));
     }
-    if (!repliesQuery.hasNextPage && newReplies[0]) {
+    const hasNextPageAfterFetch = Boolean(pages.at(-1)?.nextCursor);
+    if (!hasNextPageAfterFetch && newReplies[0]) {
       setFocusReplyId(newReplies[0].id);
     }
   };
