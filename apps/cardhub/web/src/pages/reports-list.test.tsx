@@ -119,6 +119,30 @@ describe('ReportsListPage resolution controls', () => {
     expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
   });
 
+  it('returns focus to the remove trigger after canceling inline confirmation', async () => {
+    const user = userEvent.setup();
+    queryState.items = [reportFixture];
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '删除内容并处理' }));
+    await user.click(screen.getByRole('button', { name: '取消' }));
+
+    expect(screen.getByRole('button', { name: '删除内容并处理' })).toHaveFocus();
+  });
+
+  it('returns focus to the remove trigger after dismissing inline confirmation with Esc', async () => {
+    const user = userEvent.setup();
+    queryState.items = [reportFixture];
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '删除内容并处理' }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('button', { name: '删除内容并处理' })).toHaveFocus();
+  });
+
   it('hides remove action when the reported content no longer exists', () => {
     queryState.items = [{ ...reportFixture, target: null }];
 

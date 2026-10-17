@@ -185,6 +185,63 @@ describe('ReportsRouter.resolve', () => {
     });
   });
 
+  it('returns NOT_FOUND when the report id does not exist', async () => {
+    const { caller, userFindUnique, reportFindUnique, reportUpdate, reportUpdateMany } =
+      makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    reportFindUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        action: 'MARK_RESOLVED',
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(reportUpdate).not.toHaveBeenCalled();
+    expect(reportUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it('marks resolved even when the reported target no longer exists', async () => {
+    const { caller, userFindUnique, reportFindUnique, reportUpdate, commentFindUnique } =
+      makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    reportFindUnique.mockResolvedValueOnce({
+      id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+      status: 'PENDING',
+      targetType: 'COMMENT',
+      targetId: 'target-1',
+    });
+    reportUpdate.mockResolvedValueOnce({});
+
+    await expect(
+      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        action: 'MARK_RESOLVED',
+      }),
+    ).resolves.toEqual({ ok: true });
+    expect(commentFindUnique).not.toHaveBeenCalled();
+    expect(reportUpdate).toHaveBeenCalledWith({
+      where: { id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5' },
+      data: expect.objectContaining({
+        status: 'RESOLVED',
+        resolvedById: 'u-admin',
+      }),
+    });
+  });
+
+  it('rejects invalid resolve input before touching the database', async () => {
+    const { caller, userFindUnique, reportFindUnique } = makeRouter();
+
+    await expect(
+      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+        id: 'not-a-uuid',
+        action: 'MARK_RESOLVED',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(userFindUnique).not.toHaveBeenCalled();
+    expect(reportFindUnique).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['LISTING', 'listingUpdate'],
     ['TOPIC', 'topicDelete'],
@@ -230,6 +287,27 @@ describe('ReportsRouter.resolve', () => {
       });
     },
   );
+
+  it('returns NOT_FOUND for REMOVE_TARGET when the target no longer exists', async () => {
+    const { caller, userFindUnique, reportFindUnique, commentFindUnique, reportUpdateMany } =
+      makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    reportFindUnique.mockResolvedValueOnce({
+      id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+      status: 'PENDING',
+      targetType: 'COMMENT',
+      targetId: 'target-1',
+    });
+    commentFindUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+        id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+        action: 'REMOVE_TARGET',
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(reportUpdateMany).not.toHaveBeenCalled();
+  });
 
   it('treats already resolved reports as idempotent no-ops', async () => {
     const { caller, userFindUnique, reportFindUnique, reportUpdate, reportUpdateMany } =

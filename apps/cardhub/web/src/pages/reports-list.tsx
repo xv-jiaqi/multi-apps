@@ -218,6 +218,7 @@ function ReportListItem({
   const tt = (key: string) => t(locale, key);
   const [note, setNote] = useState('');
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [restoreRemoveFocus, setRestoreRemoveFocus] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittingAction, setSubmittingAction] = useState<ReportResolveAction | null>(null);
   const utils = trpc.useUtils();
@@ -255,6 +256,13 @@ function ReportListItem({
     }
   }, [confirmingRemove]);
 
+  useEffect(() => {
+    if (!confirmingRemove && restoreRemoveFocus) {
+      removeButtonRef.current?.focus();
+      setRestoreRemoveFocus(false);
+    }
+  }, [confirmingRemove, restoreRemoveFocus]);
+
   function submit(action: ReportResolveAction) {
     setError(null);
     setSubmittingAction(action);
@@ -266,8 +274,8 @@ function ReportListItem({
   }
 
   function cancelConfirm() {
+    setRestoreRemoveFocus(true);
     setConfirmingRemove(false);
-    removeButtonRef.current?.focus();
   }
 
   return (
