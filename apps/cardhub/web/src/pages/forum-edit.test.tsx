@@ -83,7 +83,7 @@ function LoginProbe() {
 
 function makeTopic(overrides: Partial<TopicFixture> = {}): TopicFixture {
   return {
-    id: overrides.id ?? '00000000-0000-0000-0000-000000000001',
+    id: overrides.id ?? '11111111-1111-4111-a111-111111111111',
     slug: overrides.slug ?? 'test-topic',
     title: overrides.title ?? 'Original title',
     body: overrides.body ?? 'Original body',

@@ -198,6 +198,7 @@ export function markdownToPlainText(markdown: string, maxLength: number): string
     .replace(/(?:^|\n)(?: {4}|\t).*/g, ' ')
     // Images and raw HTML do not contribute to forum list summaries.
     .replace(/!\[[^\]]*]\([^)]*\)/g, ' ')
+    .replace(/<((?:https?:\/\/|mailto:)[^>\s]+)>/g, '$1')
     .replace(/<([A-Za-z][A-Za-z0-9-]*)(?:\s[^>]*)?>[\s\S]*?<\/\1>/g, ' ')
     .replace(/<\/?[A-Za-z][^>]*>/g, ' ')
     .replace(/^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/gm, ' ')
@@ -207,6 +208,7 @@ export function markdownToPlainText(markdown: string, maxLength: number): string
     .replace(/`([^`]+)`/g, '$1')
     .replace(/^\s{0,3}#{1,6}\s+/gm, '')
     .replace(/^\s{0,3}>\s?/gm, '')
+    .replace(/(^|\s)[-*+]\s+\[[ xX]\]\s+/g, ' ')
     .replace(/^\s{0,3}(?:[-*+]|\d+[.)])\s+/gm, '')
     .replace(/\[[ xX]\]\s+/g, '')
     .replace(/\*\*([^*\n]+)\*\*/g, '$1')
