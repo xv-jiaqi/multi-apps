@@ -90,9 +90,11 @@ beforeEach(() => {
   seriesState.items = [forge];
   seriesState.isLoading = false;
   seriesState.isError = false;
+  seriesState.isFetching = false;
   cardsState.data = { cards: [] };
   cardsState.isLoading = false;
   cardsState.isError = false;
+  cardsState.isFetching = false;
 });
 
 describe('catalog series detail title', () => {

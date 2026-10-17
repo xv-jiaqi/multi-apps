@@ -1,4 +1,12 @@
-import { slugSchema, t, type Locale } from '@repo/shared';
+import {
+  ADMIN_ATTRIBUTE_KEY_MAX,
+  ADMIN_ATTRIBUTE_MAX_KEYS,
+  ADMIN_ATTRIBUTE_VALUE_MAX,
+  LISTING_IMAGE_URL_MAX,
+  slugSchema,
+  t,
+  type Locale,
+} from '@repo/shared';
 
 export interface AdminSeriesItem {
   id: string;
@@ -129,6 +137,9 @@ const KNOWN_FIELDS = new Set([
 interface ZodIssueLike {
   path?: unknown;
   message?: unknown;
+  code?: unknown;
+  maximum?: unknown;
+  issues?: unknown;
 }
 
 export interface ValidationFeedback {
@@ -145,6 +156,58 @@ function issuePath(path: unknown): string[] {
 
 function isIssue(value: unknown): value is ZodIssueLike {
   return Boolean(value) && typeof value === 'object';
+}
+
+function issueCode(issue: ZodIssueLike): string {
+  return typeof issue.code === 'string' ? issue.code : '';
+}
+
+function issueMaximum(issue: ZodIssueLike, fallback: number): number {
+  return typeof issue.maximum === 'number' ? issue.maximum : fallback;
+}
+
+function nestedKeyMaximum(issue: ZodIssueLike): number {
+  if (!Array.isArray(issue.issues)) return ADMIN_ATTRIBUTE_KEY_MAX;
+  for (const nested of issue.issues) {
+    if (isIssue(nested) && typeof nested.maximum === 'number') return nested.maximum;
+  }
+  return ADMIN_ATTRIBUTE_KEY_MAX;
+}
+
+function localizeAdminIssue(locale: Locale, issue: ZodIssueLike, path: string[]): string {
+  const code = issueCode(issue);
+  const head = path[0];
+  const message = typeof issue.message === 'string' ? issue.message.trim() : '';
+  if (code === 'custom' && head === 'attributes' && path.length === 1) {
+    return t(locale, 'admin.attrs.errorTooMany', { max: ADMIN_ATTRIBUTE_MAX_KEYS });
+  }
+  if (code === 'invalid_key' && head === 'attributes') {
+    return t(locale, 'admin.attrs.errorKeyLength', { max: nestedKeyMaximum(issue) });
+  }
+  if (code === 'too_big') {
+    if (head === 'imageUrl' || head === 'coverUrl') {
+      return t(locale, 'admin.error.imageTooLong', {
+        max: issueMaximum(issue, LISTING_IMAGE_URL_MAX),
+      });
+    }
+    if (head === 'attributes') {
+      return t(locale, 'admin.attrs.errorValueLength', {
+        max: issueMaximum(issue, ADMIN_ATTRIBUTE_VALUE_MAX),
+      });
+    }
+    return t(locale, 'admin.error.tooLong');
+  }
+  if (code === 'custom' && (head === 'imageUrl' || head === 'coverUrl') && path.length === 1) {
+    return t(locale, 'admin.error.imageUrl');
+  }
+  return message || t(locale, 'admin.error.invalidType');
+}
+
+function isAttributeCapIssue(path: string[], issue: ZodIssueLike): boolean {
+  if (path[0] !== 'attributes') return false;
+  const code = issueCode(issue);
+  if (path.length === 1) return code === 'custom';
+  return code === 'invalid_key' || code === 'too_big';
 }
 
 function issuesFromMessage(message: string): ZodIssueLike[] {
@@ -202,13 +265,12 @@ export function readValidationFeedback(
     const extras: string[] = [];
     for (const issue of issues) {
       const path = issuePath(issue.path);
-      const text =
-        typeof issue.message === 'string' && issue.message.trim()
-          ? issue.message.trim()
-          : t(locale, 'admin.error.invalidType');
+      const text = localizeAdminIssue(locale, issue, path);
       const head = path[0];
       const field = head === 'seriesSlug' ? 'series' : head;
-      if (field && head && path.length === 1 && KNOWN_FIELDS.has(head)) {
+      if (isAttributeCapIssue(path, issue)) {
+        fields.attributes = fields.attributes ? `${fields.attributes}\n${text}` : text;
+      } else if (field && head && path.length === 1 && KNOWN_FIELDS.has(head)) {
         fields[field] = fields[field] ? `${fields[field]}\n${text}` : text;
       } else if (path.length > 0) {
         extras.push(`${path.join('.')}: ${text}`);
@@ -511,6 +573,10 @@ export function validateAttributeRows(
       errors[row.id] = t(locale, 'admin.attrs.errorKey');
       continue;
     }
+    if (key.length > ADMIN_ATTRIBUTE_KEY_MAX) {
+      errors[row.id] = t(locale, 'admin.attrs.errorKeyLength', { max: ADMIN_ATTRIBUTE_KEY_MAX });
+      continue;
+    }
     const lowered = key.toLowerCase();
     const firstId = seen.get(lowered);
     if (firstId) {
@@ -528,7 +594,23 @@ export function validateAttributeRows(
     } else if (row.type === 'boolean') {
       attributes[key] = row.value === 'true';
     } else {
+      if (row.value.length > ADMIN_ATTRIBUTE_VALUE_MAX) {
+        errors[row.id] = t(locale, 'admin.attrs.errorValueLength', {
+          max: ADMIN_ATTRIBUTE_VALUE_MAX,
+        });
+        continue;
+      }
       attributes[key] = row.value;
+    }
+  }
+
+  if (
+    Object.keys(errors).length === 0 &&
+    Object.keys(attributes).length > ADMIN_ATTRIBUTE_MAX_KEYS
+  ) {
+    const last = [...rows].reverse().find((row) => row.key.trim());
+    if (last) {
+      errors[last.id] = t(locale, 'admin.attrs.errorTooMany', { max: ADMIN_ATTRIBUTE_MAX_KEYS });
     }
   }
 

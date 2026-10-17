@@ -6,6 +6,7 @@ import { commentInput, seriesCommentInput, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from './report-button';
+import { RetryButton, queryFallback, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
 
@@ -38,6 +39,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const [deleteError, setDeleteError] = useState<{ id: string; message: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const statusRef = useRef<HTMLParagraphElement | null>(null);
+  const commentsRef = useRef<HTMLElement | null>(null);
   const deleteButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const cancelButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -158,6 +160,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     }
   };
 
+  const commentsView = queryFallback(list);
+  useFocusOnRecovery(commentsView, commentsRef);
+
   return (
     <div className="space-y-4">
       {session.isAuthenticated ? (
@@ -231,35 +236,43 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         {statusMessage}
       </p>
 
-      {list.isLoading ? (
-        <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
-      ) : list.isError ? (
+      {commentsView === 'error' ? (
         <div
           role="alert"
           className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
         >
           {tt('state.error')}
-          <button
-            type="button"
-            disabled={list.isFetching}
-            aria-busy={list.isFetching || undefined}
-            onClick={() => {
+          <RetryButton
+            retrying={list.isFetching}
+            label={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+            onRetry={() => {
               void list.refetch();
             }}
-            className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:pointer-events-none disabled:opacity-50"
-          >
-            {list.isFetching ? tt('state.loading') : tt('state.retry')}
-          </button>
+            className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          />
         </div>
+      ) : commentsView === 'loading' ? (
+        <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
       ) : !list.data || list.data.length === 0 ? (
         <p
+          ref={(node) => {
+            commentsRef.current = node;
+          }}
           tabIndex={-1}
-          className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500"
+          className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('card.detail.commentEmpty')}
         </p>
       ) : (
-        <ul tabIndex={-1} aria-label={tt('a11y.commentList')} className="space-y-3">
+        <ul
+          ref={(node) => {
+            commentsRef.current = node;
+          }}
+          tabIndex={-1}
+          aria-label={tt('a11y.commentList')}
+          className="space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           {list.data.map((comment) => {
             const canDelete = session.user?.id === comment.user.id || session.isAdmin;
             const isConfirming = confirmingId === comment.id;

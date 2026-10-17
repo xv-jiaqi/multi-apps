@@ -8,6 +8,7 @@ import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
+import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import {
   AdminConfirmRow,
   AdminEmpty,
@@ -70,6 +71,7 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
   const [rowError, setRowError] = useState<{ slug: string; message: string } | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [force, setForce] = useState<AdminSeriesItem | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
   const deleteRefs = useRef(new Map<string, HTMLButtonElement>());
   const focusDeleteSlug = useRef<string | null>(null);
   const focusNoticeOnClose = useRef(false);
@@ -77,6 +79,8 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
     (series) => !hidden.has(series.slug),
   );
   const revoked = query.isError && isAccessRevoked(query.error);
+  const listView = queryFallback(query);
+  useFocusOnRecovery(listView, titleRef);
 
   useEffect(() => {
     if (revoked) reportForbidden();
@@ -131,7 +135,11 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+          <h1
+            ref={titleRef}
+            tabIndex={-1}
+            className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
             {tt('admin.catalog.title')}
           </h1>
           <p className="text-sm text-neutral-600">{tt('admin.catalog.subtitle')}</p>
@@ -146,7 +154,17 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
         </div>
       </header>
       <AdminStatus message={notice} statusRef={statusRef} />
-      {query.isLoading ? (
+      {listView === 'error' ? (
+        revoked ? null : (
+          <AdminErrorBox
+            title={tt('state.error')}
+            onRetry={() => void query.refetch()}
+            retrying={query.isFetching}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+          />
+        )
+      ) : listView === 'loading' ? (
         <AdminTable caption={tt('admin.series.caption')} busy>
           <AdminTableHead>
             <AdminTh>{tt('admin.col.cover')}</AdminTh>
@@ -176,16 +194,6 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
             ))}
           </tbody>
         </AdminTable>
-      ) : query.isError ? (
-        revoked ? null : (
-          <AdminErrorBox
-            title={tt('state.error')}
-            onRetry={() => void query.refetch()}
-            retrying={query.isFetching}
-            retryLabel={tt('state.retry')}
-            loadingLabel={tt('state.loading')}
-          />
-        )
       ) : items.length === 0 ? (
         <AdminEmpty>
           <p>{tt('admin.series.empty')}</p>

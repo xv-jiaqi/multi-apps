@@ -11,6 +11,7 @@ import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
 import { RarityBadge } from '../../components/rarity-badge';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
+import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import {
   AdminConfirmRow,
   AdminEmpty,
@@ -71,6 +72,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
   const [pendingSlug, setPendingSlug] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ slug: string; message: string } | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
   const deleteRefs = useRef(new Map<string, HTMLButtonElement>());
   const focusDeleteSlug = useRef<string | null>(null);
   const series = ((seriesQuery.data?.items ?? []) as AdminSeriesItem[]).find(
@@ -86,9 +88,9 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
       card.name.toLowerCase().includes(queryText) || card.slug.toLowerCase().includes(queryText),
   );
   const revoked = seriesQuery.isError && isAccessRevoked(seriesQuery.error);
-  const loading = seriesQuery.isLoading || cardsQuery.isLoading;
-  const missing =
-    !loading && !seriesQuery.isError && !cardsQuery.isError && (!series || cardsQuery.data == null);
+  const detailView = queryFallback(seriesQuery, cardsQuery);
+  useFocusOnRecovery(detailView, titleRef);
+  const missing = detailView === 'ready' && (!series || cardsQuery.data == null);
 
   useEffect(() => {
     if (revoked) reportForbidden();
@@ -140,7 +142,13 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
       />
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">{title}</h1>
+          <h1
+            ref={titleRef}
+            tabIndex={-1}
+            className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {title}
+          </h1>
           <p className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
             <span className="font-mono">{slug}</span>
             {series ? (
@@ -161,7 +169,20 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
       </header>
       <PageMeta title={series?.title ?? tt('nav.catalog')} />
       <AdminStatus message={notice} statusRef={statusRef} />
-      {loading ? (
+      {detailView === 'error' ? (
+        revoked ? null : (
+          <AdminErrorBox
+            title={tt('state.error')}
+            onRetry={() => {
+              void seriesQuery.refetch();
+              void cardsQuery.refetch();
+            }}
+            retrying={seriesQuery.isFetching || cardsQuery.isFetching}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+          />
+        )
+      ) : detailView === 'loading' ? (
         <AdminTable caption={tt('admin.cards.caption', { series: series?.title ?? slug })} busy>
           <CardHead tt={tt} />
           <tbody>
@@ -181,19 +202,6 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
             ))}
           </tbody>
         </AdminTable>
-      ) : seriesQuery.isError || cardsQuery.isError ? (
-        revoked ? null : (
-          <AdminErrorBox
-            title={tt('state.error')}
-            onRetry={() => {
-              void seriesQuery.refetch();
-              void cardsQuery.refetch();
-            }}
-            retrying={seriesQuery.isFetching || cardsQuery.isFetching}
-            retryLabel={tt('state.retry')}
-            loadingLabel={tt('state.loading')}
-          />
-        )
       ) : missing ? (
         <AdminEmpty>{tt('state.notFound')}</AdminEmpty>
       ) : cards.length === 0 ? (

@@ -27,6 +27,7 @@ import {
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
+import { RetryButton, queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from '../components/report-button';
@@ -95,6 +96,7 @@ export const TradeListPage = observer(function TradeListPage() {
   const [closedNotice, setClosedNotice] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const noticeRef = useRef<HTMLParagraphElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
   const utils = trpc.useUtils();
 
   const rawKind = searchParams.get('kind');
@@ -179,6 +181,8 @@ export const TradeListPage = observer(function TradeListPage() {
     { enabled: !priceInvalid, getNextPageParam: (last) => last.nextCursor ?? undefined },
   );
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const listView = queryFallback(query);
+  useFocusOnRecovery(listView, titleRef);
   const activeFilterCount = [
     kindFilter !== 'all',
     cardSlugFilter,
@@ -259,7 +263,13 @@ export const TradeListPage = observer(function TradeListPage() {
         />
         <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">{tt('trade.list.title')}</h1>
+            <h1
+              ref={titleRef}
+              tabIndex={-1}
+              className="text-3xl font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              {tt('trade.list.title')}
+            </h1>
             <p className="text-neutral-600">{tt('trade.list.subtitle')}</p>
           </div>
           {session.isAuthenticated ? (
@@ -543,18 +553,18 @@ export const TradeListPage = observer(function TradeListPage() {
             {tt('trade.closed')}
           </p>
         ) : null}
-        {query.isLoading ? (
-          <ListingSkeleton />
-        ) : query.isError ? (
+        {listView === 'error' ? (
           <ErrorBox
             title={tt('state.error')}
             retryLabel={tt('state.retry')}
-            loadingLabel={tt('state.loading')}
+            retryingLabel={tt('state.retrying')}
             retrying={query.isFetching}
             retry={() => {
               void query.refetch();
             }}
           />
+        ) : listView === 'loading' ? (
+          <ListingSkeleton />
         ) : items.length === 0 ? (
           <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
             <p>{hasAnyFilter ? tt('trade.filter.empty') : tt('trade.list.empty')}</p>
@@ -870,13 +880,13 @@ function ListingSkeleton() {
 function ErrorBox({
   title,
   retryLabel,
-  loadingLabel,
+  retryingLabel,
   retrying,
   retry,
 }: {
   title: string;
   retryLabel: string;
-  loadingLabel: string;
+  retryingLabel: string;
   retrying: boolean;
   retry: () => void;
 }) {
@@ -886,15 +896,13 @@ function ErrorBox({
       className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
     >
       <p className="font-medium">{title}</p>
-      <button
-        type="button"
-        onClick={retry}
-        disabled={retrying}
-        aria-busy={retrying || undefined}
-        className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:pointer-events-none disabled:opacity-50"
-      >
-        {retrying ? loadingLabel : retryLabel}
-      </button>
+      <RetryButton
+        retrying={retrying}
+        label={retryLabel}
+        retryingLabel={retryingLabel}
+        onRetry={retry}
+        className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      />
     </div>
   );
 }

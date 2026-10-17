@@ -1,6 +1,6 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { rootStore } from '../../stores/root-store';
@@ -182,6 +182,95 @@ describe('attributes editor', () => {
     await user.click(screen.getByRole('button', { name: '删除属性「cost」' }));
     expect(screen.getByRole('button', { name: '添加属性' })).toHaveFocus();
   });
+
+  it('stops new attributes at 40 and explains why', async () => {
+    const user = userEvent.setup();
+    cardState.data = {
+      id: 'c1',
+      slug: 'aurora-knight',
+      name: '极光骑士',
+      description: '',
+      imageUrl: '',
+      rarity: 'common',
+      attributes: Object.fromEntries(Array.from({ length: 40 }, (_, index) => [`k${index}`, 'v'])),
+      seriesSlug: 'celestial-dawn',
+      seriesTitle: '天穹黎明',
+      commentCount: 0,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    };
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/cards/aurora-knight/edit']}>
+        <Routes>
+          <Route path="/admin/catalog/cards/:slug/edit" element={<EditCardPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const add = screen.getByRole('button', { name: '添加属性' });
+    expect(add).toBeDisabled();
+    expect(screen.getByText('已有 40 个属性，最多 40 个')).toBeInTheDocument();
+    const names = screen.getAllByRole('textbox', { name: /属性名/ });
+    expect(names).toHaveLength(40);
+    names[39]?.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getAllByRole('textbox', { name: /属性名/ })).toHaveLength(40);
+  });
+
+  it('marks a 41st attribute on the field and focuses that row', async () => {
+    const user = userEvent.setup();
+    cardState.data = {
+      id: 'c1',
+      slug: 'aurora-knight',
+      name: '极光骑士',
+      description: '',
+      imageUrl: '',
+      rarity: 'common',
+      attributes: Object.fromEntries(Array.from({ length: 41 }, (_, index) => [`k${index}`, 'v'])),
+      seriesSlug: 'celestial-dawn',
+      seriesTitle: '天穹黎明',
+      commentCount: 0,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    };
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/cards/aurora-knight/edit']}>
+        <Routes>
+          <Route path="/admin/catalog/cards/:slug/edit" element={<EditCardPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('已有 41 个属性，最多 40 个')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+    expect(screen.getByText('最多 40 个属性')).toBeInTheDocument();
+    expect(screen.queryByText('At most 40 attributes')).not.toBeInTheDocument();
+    expect(document.activeElement).toHaveValue('k40');
+  });
+
+  it('rejects an over-long attribute name and value on the row', async () => {
+    const user = userEvent.setup();
+    renderNew();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'aurora-knight');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '极光骑士');
+    await user.click(screen.getByRole('button', { name: '添加属性' }));
+    fireEvent.change(screen.getByRole('textbox', { name: '第 1 行属性名' }), {
+      target: { value: 'a'.repeat(65) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(screen.getByText('属性名最长 64 个字符')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '第 1 行属性名' })).toHaveFocus();
+
+    fireEvent.change(screen.getByRole('textbox', { name: '第 1 行属性名' }), {
+      target: { value: 'cost' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: '第 1 行的值' }), {
+      target: { value: 'b'.repeat(501) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(screen.getByText('属性值最长 500 个字符')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '第 1 行属性名' })).toHaveFocus();
+  });
 });
 
 describe('card form server validation', () => {
@@ -200,10 +289,14 @@ describe('card form server validation', () => {
         data: {
           code: 'BAD_REQUEST',
           zodError: {
-            formErrors: [],
-            fieldErrors: {
-              imageUrl: ['Too big: expected string to have <=2048 characters'],
-            },
+            issues: [
+              {
+                code: 'too_big',
+                maximum: 2048,
+                path: ['imageUrl'],
+                message: 'rejected by schema',
+              },
+            ],
           },
         },
       };
@@ -211,9 +304,9 @@ describe('card form server validation', () => {
 
     await submitNewCard(user);
 
-    expect(
-      await screen.findByText('Too big: expected string to have <=2048 characters'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('图片链接最长 2048 个字符')).toBeInTheDocument();
+    expect(screen.queryByText('rejected by schema')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
     expect(screen.queryByText('BAD_REQUEST')).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '卡图链接' })).toHaveFocus();
@@ -239,6 +332,74 @@ describe('card form server validation', () => {
       'attributes.cost: Invalid input: expected number, received object',
     );
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
+  });
+
+  it('puts the attribute cap on the attributes field and moves focus there', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          { code: 'custom', path: ['attributes'], message: 'limit exceeded' },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+
+    await submitNewCard(user);
+
+    const attributes = document.getElementById('card-attributes');
+    expect(attributes).toHaveTextContent('最多 40 个属性');
+    expect(attributes).toHaveFocus();
+    expect(screen.queryByText('limit exceeded')).not.toBeInTheDocument();
+    expect(screen.queryByText('At most 40 attributes')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('translates an over-long attribute value from the server onto the attributes field', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          {
+            code: 'too_big',
+            maximum: 500,
+            path: ['attributes', 'cost'],
+            message: 'rejected by schema',
+          },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+
+    await submitNewCard(user);
+
+    expect(document.getElementById('card-attributes')).toHaveTextContent('属性值最长 500 个字符');
+    expect(document.getElementById('card-attributes')).toHaveFocus();
+    expect(screen.queryByText('rejected by schema')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
+  });
+
+  it('translates an invalid attribute key from its zod code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          {
+            code: 'invalid_key',
+            path: ['attributes', 'k'.repeat(65)],
+            message: 'bad key',
+            issues: [{ code: 'too_big', maximum: 64, message: 'rejected by schema' }],
+          },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+
+    await submitNewCard(user);
+
+    expect(document.getElementById('card-attributes')).toHaveTextContent('属性名最长 64 个字符');
+    expect(screen.queryByText('bad key')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invalid key in record')).not.toBeInTheDocument();
   });
 
   it('invalidates the previous series list when the card moves', async () => {

@@ -92,6 +92,7 @@ beforeEach(() => {
   seriesState.items = [existing];
   seriesState.isLoading = false;
   seriesState.isError = false;
+  seriesState.isFetching = false;
   createCalls.length = 0;
   createImpl.current = async (input) => input;
   invalidateAdminSeriesList.mockClear();
@@ -174,8 +175,10 @@ describe('series form', () => {
       throw {
         message: JSON.stringify([
           {
+            code: 'too_big',
+            maximum: 2048,
             path: ['coverUrl'],
-            message: 'Too big: expected string to have <=2048 characters',
+            message: 'rejected by schema',
           },
         ]),
         data: { code: 'BAD_REQUEST' },
@@ -193,11 +196,37 @@ describe('series form', () => {
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
     await user.click(screen.getByRole('button', { name: '创建' }));
 
-    expect(
-      await screen.findByText('Too big: expected string to have <=2048 characters'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('图片链接最长 2048 个字符')).toBeInTheDocument();
+    expect(screen.queryByText('rejected by schema')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
+    expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
     expect(screen.queryByText('BAD_REQUEST')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
+  });
+
+  it('translates an image-url refine from its zod code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([{ code: 'custom', path: ['coverUrl'], message: 'not a url' }]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
+        <Routes>
+          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('请填写 https:// 开头的图片链接，或者留空')).toBeInTheDocument();
+    expect(screen.queryByText('not a url')).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
   });
 
