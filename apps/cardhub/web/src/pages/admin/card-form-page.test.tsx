@@ -26,6 +26,10 @@ const seriesState = {
   refetch: vi.fn(),
 };
 
+const createImpl: { current: (input: unknown) => Promise<unknown> } = {
+  current: async (input) => input,
+};
+
 const cardState = {
   data: null as unknown,
   isLoading: false,
@@ -53,11 +57,19 @@ vi.mock('../../lib/trpc', () => ({
       cards: {
         get: { useQuery: () => cardState },
         create: {
-          useMutation: () => ({ isPending: false, mutateAsync: async (input: unknown) => input }),
+          useMutation: () => ({
+            isPending: false,
+            mutateAsync: (input: unknown) => createImpl.current(input),
+          }),
         },
         update: {
           useMutation: () => ({ isPending: false, mutateAsync: async (input: unknown) => input }),
         },
+      },
+    },
+    search: {
+      global: {
+        useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
       },
     },
     useUtils: () => ({
@@ -88,6 +100,7 @@ beforeEach(() => {
   cardState.data = null;
   cardState.isLoading = false;
   cardState.isError = false;
+  createImpl.current = async (input) => input;
 });
 
 describe('attributes editor', () => {
@@ -153,5 +166,63 @@ describe('attributes editor', () => {
 
     await user.click(screen.getByRole('button', { name: '删除属性「cost」' }));
     expect(screen.getByRole('button', { name: '添加属性' })).toHaveFocus();
+  });
+});
+
+describe('card form server validation', () => {
+  async function submitNewCard(user: ReturnType<typeof userEvent.setup>) {
+    renderNew();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'aurora-knight');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '极光骑士');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+  }
+
+  it('shows a field-level zod error instead of only the generic save failure', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: 'BAD_REQUEST',
+        data: {
+          code: 'BAD_REQUEST',
+          zodError: {
+            formErrors: [],
+            fieldErrors: {
+              imageUrl: ['Too big: expected string to have <=2048 characters'],
+            },
+          },
+        },
+      };
+    };
+
+    await submitNewCard(user);
+
+    expect(
+      await screen.findByText('Too big: expected string to have <=2048 characters'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
+    expect(screen.queryByText('BAD_REQUEST')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '卡图链接' })).toHaveFocus();
+  });
+
+  it('shows a nested zod path from the server message', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          {
+            path: ['attributes', 'cost'],
+            message: 'Invalid input: expected number, received object',
+          },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+
+    await submitNewCard(user);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'attributes.cost: Invalid input: expected number, received object',
+    );
+    expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
   });
 });

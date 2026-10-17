@@ -51,6 +51,11 @@ vi.mock('../../lib/trpc', () => ({
         },
       },
     },
+    search: {
+      global: {
+        useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
+      },
+    },
     useUtils: () => ({
       admin: { series: { list: { invalidate: vi.fn() } } },
       series: { list: { invalidate: vi.fn() } },
@@ -160,6 +165,36 @@ describe('CatalogSeriesPage delete', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('已删除系列「安静」');
     expect(screen.queryByRole('link', { name: '安静' })).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveFocus();
+  });
+
+  it('opens the force dialog immediately when a series has comments but no cards', async () => {
+    const user = userEvent.setup();
+    seriesState.items = [{ ...quiet, commentCount: 3 }];
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '删除「安静」' }));
+
+    const dialog = await screen.findByRole('alertdialog');
+    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    expect(dialog).toHaveTextContent('删除系列「安静」及其系列评论');
+    expect(dialog).toHaveTextContent('3 条系列评论');
+    expect(dialog).not.toHaveTextContent('这些卡牌下的');
+    expect(dialog).not.toHaveTextContent('卡牌评论');
+    expect(deleteCalls).toEqual([]);
+  });
+
+  it('uses series-comment copy in English when there are no cards', async () => {
+    const user = userEvent.setup();
+    rootStore.locale.setLocale('en-US');
+    seriesState.items = [{ ...quiet, title: 'Quiet Notes', commentCount: 1 }];
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Delete “Quiet Notes”' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    expect(dialog).toHaveTextContent('Delete “Quiet Notes” and its series comments');
+    expect(dialog).toHaveTextContent('1 series comment');
+    expect(dialog).not.toHaveTextContent('on them');
   });
 
   it('opens the force dialog for a series that still has cards', async () => {

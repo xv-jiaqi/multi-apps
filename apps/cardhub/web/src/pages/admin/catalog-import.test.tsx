@@ -28,6 +28,11 @@ vi.mock('../../lib/trpc', () => ({
         },
       },
     },
+    search: {
+      global: {
+        useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
+      },
+    },
     useUtils: () => ({}),
   },
 }));

@@ -265,7 +265,7 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
                             onClick={() => {
                               setNotice(null);
                               setRowError(null);
-                              if (series.cardCount > 0) {
+                              if (series.cardCount > 0 || series.commentCount > 0) {
                                 setConfirmingSlug(null);
                                 setForce(series);
                                 return;

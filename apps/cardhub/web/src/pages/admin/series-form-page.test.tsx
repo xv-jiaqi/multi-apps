@@ -15,6 +15,9 @@ const seriesState = {
 };
 
 const createCalls: unknown[] = [];
+const createImpl: { current: (input: unknown) => Promise<unknown> } = {
+  current: async (input) => input,
+};
 
 vi.mock('../../lib/trpc', () => ({
   trpc: {
@@ -35,7 +38,7 @@ vi.mock('../../lib/trpc', () => ({
             isPending: false,
             mutateAsync: async (input: unknown) => {
               createCalls.push(input);
-              return input;
+              return createImpl.current(input);
             },
           }),
         },
@@ -45,6 +48,11 @@ vi.mock('../../lib/trpc', () => ({
             mutateAsync: async (input: unknown) => input,
           }),
         },
+      },
+    },
+    search: {
+      global: {
+        useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
       },
     },
     useUtils: () => ({
@@ -74,6 +82,7 @@ beforeEach(() => {
   seriesState.isLoading = false;
   seriesState.isError = false;
   createCalls.length = 0;
+  createImpl.current = async (input) => input;
 });
 
 describe('series form', () => {
@@ -141,5 +150,62 @@ describe('series form', () => {
     await user.click(screen.getByRole('button', { name: '创建' }));
     expect(createCalls).toHaveLength(0);
     expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
+  });
+
+  it('shows the server validation message for a field instead of only the generic save failure', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          {
+            path: ['coverUrl'],
+            message: 'Too big: expected string to have <=2048 characters',
+          },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
+        <Routes>
+          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(
+      await screen.findByText('Too big: expected string to have <=2048 characters'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
+    expect(screen.queryByText('BAD_REQUEST')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
+  });
+
+  it('shows a server message when the error has no field path', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: '封面链接最长 2048 个字符',
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
+        <Routes>
+          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('出错了：封面链接最长 2048 个字符');
+    expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
   });
 });

@@ -95,13 +95,23 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
           <>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                {tt('admin.series.forceTitle', { title: series.title })}
+                {series.cardCount === 0
+                  ? tt('admin.series.forceTitleSeriesComments', { title: series.title })
+                  : tt('admin.series.forceTitle', { title: series.title })}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                {tt('admin.series.forceBody', {
-                  cards: formatAdminCount(locale.locale, 'cards', series.cardCount),
-                  comments: formatAdminCount(locale.locale, 'comments', series.commentCount),
-                })}
+                {series.cardCount === 0
+                  ? tt('admin.series.forceBodySeriesComments', {
+                      comments: formatAdminCount(
+                        locale.locale,
+                        'seriesComments',
+                        series.commentCount,
+                      ),
+                    })
+                  : tt('admin.series.forceBody', {
+                      cards: formatAdminCount(locale.locale, 'cards', series.cardCount),
+                      comments: formatAdminCount(locale.locale, 'comments', series.commentCount),
+                    })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="mt-4 space-y-4 text-sm text-neutral-800">

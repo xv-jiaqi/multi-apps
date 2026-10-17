@@ -14,8 +14,8 @@ import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
 import { AttributesEditor } from '../../components/admin/attributes-editor';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
 import {
+  applyValidationFeedback,
   attributesToRows,
-  failureText,
   isAccessRevoked,
   validateAttributeRows,
   validateOptionalText,
@@ -205,7 +205,21 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         setErrors({ rarity: tt('admin.error.rarity') });
         return;
       }
-      setFormError(failureText(locale.locale, error, 'admin.saveFailed'));
+      const feedback = applyValidationFeedback(locale.locale, error, 'admin.saveFailed', [
+        'series',
+        'slug',
+        'name',
+        'description',
+        'imageUrl',
+        'rarity',
+      ]);
+      if (Object.keys(feedback.fields).length > 0) {
+        setErrors(feedback.fields);
+        const order = ['series', 'slug', 'name', 'description', 'imageUrl', 'rarity'];
+        const first = order.find((key) => feedback.fields[key]);
+        if (first) focusField(first);
+      }
+      setFormError(feedback.message);
     }
   };
 
@@ -359,7 +373,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
             {formError ? (
               <p
                 role="alert"
-                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                className="whitespace-pre-line rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
               >
                 {formError}
               </p>

@@ -101,7 +101,8 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
     deleteRefs.current.get(cardSlug)?.focus();
   }, [confirmingSlug]);
 
-  const title = series?.title ?? tt('admin.cards.caption');
+  const seriesName = series?.title ?? slug;
+  const title = tt('admin.cards.caption', { series: seriesName });
 
   const confirmDelete = async (card: PublicCard) => {
     setRowError(null);

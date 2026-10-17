@@ -1,8 +1,23 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
+vi.mock('../lib/trpc', () => ({
+  trpc: {
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isLoading: false,
+          isFetching: false,
+          isError: false,
+        }),
+      },
+    },
+  },
+}));
+
 import { SiteHeader } from './site-header';
 
 beforeEach(() => {

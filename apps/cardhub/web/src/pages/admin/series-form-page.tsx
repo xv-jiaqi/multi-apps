@@ -11,7 +11,7 @@ import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate
 import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
 import {
-  failureText,
+  applyValidationFeedback,
   isAccessRevoked,
   validateOptionalText,
   validateRequiredText,
@@ -146,7 +146,6 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
         reportForbidden();
         return;
       }
-      const message = failureText(locale.locale, error, 'admin.saveFailed');
       const code = (error as { data?: { adminCatalogError?: { code?: string } } }).data
         ?.adminCatalogError?.code;
       if (code === 'SLUG_TAKEN') {
@@ -154,7 +153,17 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
         slugRef.current?.focus();
         return;
       }
-      setFormError(message);
+      const feedback = applyValidationFeedback(locale.locale, error, 'admin.saveFailed', [
+        'slug',
+        'title',
+        'description',
+        'coverUrl',
+      ]);
+      if (Object.keys(feedback.fields).length > 0) {
+        setErrors(feedback.fields);
+        focusFirst(feedback.fields);
+      }
+      setFormError(feedback.message);
     }
   };
 
@@ -265,7 +274,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
             {formError ? (
               <p
                 role="alert"
-                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                className="whitespace-pre-line rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
               >
                 {formError}
               </p>

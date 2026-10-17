@@ -64,7 +64,7 @@ const pluralRules = new Intl.PluralRules('en-US');
 
 export function formatAdminCount(
   locale: Locale,
-  kind: 'cards' | 'comments',
+  kind: 'cards' | 'comments' | 'seriesComments',
   count: number,
 ): string {
   const category = pluralRules.select(count) === 'one' ? 'one' : 'other';
@@ -111,6 +111,160 @@ export function failureText(locale: Locale, error: unknown, fallbackKey: string)
     return adminErrorText(locale, failure.admin.code, failure.message);
   }
   return t(locale, fallbackKey);
+}
+
+const TRPC_CODE_MESSAGES = new Set([
+  'PARSE_ERROR',
+  'BAD_REQUEST',
+  'INTERNAL_SERVER_ERROR',
+  'NOT_IMPLEMENTED',
+  'BAD_GATEWAY',
+  'SERVICE_UNAVAILABLE',
+  'GATEWAY_TIMEOUT',
+  'UNAUTHORIZED',
+  'PAYMENT_REQUIRED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'METHOD_NOT_SUPPORTED',
+  'TIMEOUT',
+  'CONFLICT',
+  'PRECONDITION_FAILED',
+  'PAYLOAD_TOO_LARGE',
+  'UNSUPPORTED_MEDIA_TYPE',
+  'UNPROCESSABLE_CONTENT',
+  'PRECONDITION_REQUIRED',
+  'TOO_MANY_REQUESTS',
+  'CLIENT_CLOSED_REQUEST',
+]);
+
+const KNOWN_FIELDS = new Set([
+  'slug',
+  'title',
+  'name',
+  'description',
+  'coverUrl',
+  'imageUrl',
+  'rarity',
+  'seriesSlug',
+  'series',
+  'attributes',
+]);
+
+interface ZodIssueLike {
+  path?: unknown;
+  message?: unknown;
+}
+
+export interface ValidationFeedback {
+  fields: Record<string, string>;
+  message: string | null;
+}
+
+function issuePath(path: unknown): string[] {
+  if (!Array.isArray(path)) return [];
+  return path
+    .filter((part) => typeof part === 'string' || typeof part === 'number')
+    .map((part) => String(part));
+}
+
+function isIssue(value: unknown): value is ZodIssueLike {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function issuesFromMessage(message: string): ZodIssueLike[] {
+  const trimmed = message.trim();
+  if (!trimmed.startsWith('[')) return [];
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isIssue);
+  } catch {
+    return [];
+  }
+}
+
+function issuesFromZodError(zodError: unknown): ZodIssueLike[] {
+  if (!zodError || typeof zodError !== 'object') return [];
+  const record = zodError as {
+    fieldErrors?: Record<string, unknown>;
+    formErrors?: unknown;
+    issues?: unknown;
+  };
+  if (Array.isArray(record.issues)) return record.issues.filter(isIssue);
+  const issues: ZodIssueLike[] = [];
+  if (record.fieldErrors && typeof record.fieldErrors === 'object') {
+    for (const [field, messages] of Object.entries(record.fieldErrors)) {
+      const list = Array.isArray(messages) ? messages : [messages];
+      for (const message of list) {
+        if (typeof message === 'string' && message) issues.push({ path: [field], message });
+      }
+    }
+  }
+  if (Array.isArray(record.formErrors)) {
+    for (const message of record.formErrors) {
+      if (typeof message === 'string' && message) issues.push({ path: [], message });
+    }
+  }
+  return issues;
+}
+
+export function readValidationFeedback(
+  locale: Locale,
+  error: unknown,
+  fallbackKey: string,
+): ValidationFeedback {
+  const failure = readTrpcFailure(error);
+  if (failure.admin?.code && failure.admin.code !== 'SERIES_HAS_CARDS') {
+    return { fields: {}, message: adminErrorText(locale, failure.admin.code, failure.message) };
+  }
+
+  const zodError = (error as { data?: { zodError?: unknown } } | null)?.data?.zodError;
+  const fromZod = issuesFromZodError(zodError);
+  const issues = fromZod.length > 0 ? fromZod : issuesFromMessage(failure.message);
+  if (issues.length > 0) {
+    const fields: Record<string, string> = {};
+    const extras: string[] = [];
+    for (const issue of issues) {
+      const path = issuePath(issue.path);
+      const text =
+        typeof issue.message === 'string' && issue.message.trim()
+          ? issue.message.trim()
+          : t(locale, 'admin.error.invalidType');
+      const head = path[0];
+      const field = head === 'seriesSlug' ? 'series' : head;
+      if (field && head && path.length === 1 && KNOWN_FIELDS.has(head)) {
+        fields[field] = fields[field] ? `${fields[field]}\n${text}` : text;
+      } else if (path.length > 0) {
+        extras.push(`${path.join('.')}: ${text}`);
+      } else {
+        extras.push(text);
+      }
+    }
+    return { fields, message: extras.length > 0 ? extras.join('\n') : null };
+  }
+
+  const raw = failure.message.trim();
+  if (raw && !TRPC_CODE_MESSAGES.has(raw)) {
+    return { fields: {}, message: t(locale, 'admin.error.unknown', { message: raw }) };
+  }
+  return { fields: {}, message: t(locale, fallbackKey) };
+}
+
+export function applyValidationFeedback(
+  locale: Locale,
+  error: unknown,
+  fallbackKey: string,
+  renderedFields: readonly string[],
+): ValidationFeedback {
+  const feedback = readValidationFeedback(locale, error, fallbackKey);
+  const fields: Record<string, string> = {};
+  const extras: string[] = [];
+  for (const [key, value] of Object.entries(feedback.fields)) {
+    if (renderedFields.includes(key)) fields[key] = value;
+    else extras.push(value);
+  }
+  const parts = [feedback.message, ...extras].filter((part): part is string => Boolean(part));
+  return { fields, message: parts.length > 0 ? parts.join('\n') : null };
 }
 
 export function isAllowedImageUrl(value: string): boolean {
