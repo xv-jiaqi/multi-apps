@@ -64,6 +64,9 @@ const repliesQueryState = {
   cursor: undefined as string | undefined,
   hasNextPage: true,
   isFetchingNextPage: false,
+  isLoading: false,
+  isFetching: false,
+  isSuccess: true,
   isFetchNextPageError: false,
 };
 
@@ -202,6 +205,9 @@ beforeEach(() => {
   repliesQueryState.data = { pages: [] };
   repliesQueryState.hasNextPage = true;
   repliesQueryState.isFetchingNextPage = false;
+  repliesQueryState.isLoading = false;
+  repliesQueryState.isFetching = false;
+  repliesQueryState.isSuccess = true;
   repliesQueryState.isFetchNextPageError = false;
 });
 
@@ -318,5 +324,71 @@ describe('ForumDetailPage replies pagination', () => {
     });
     expect(await screen.findByRole('alert')).toHaveTextContent('回帖加载失败');
     expect(fetchNextPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows loading instead of the end message while the first hidden reply page loads', async () => {
+    const user = userEvent.setup();
+    fetchNextPage.mockImplementation(async () => {
+      repliesQueryState.isLoading = true;
+      repliesQueryState.isSuccess = false;
+      return new Promise(() => undefined);
+    });
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+
+    const loadingButton = await screen.findByRole('button', { name: '加载中…' });
+    expect(loadingButton).toBeDisabled();
+    expect(loadingButton).toHaveAttribute('aria-busy', 'true');
+    expect(screen.queryByText('已显示全部回帖')).not.toBeInTheDocument();
+  });
+
+  it('reuses load-more loading state while retrying failed reply pagination', async () => {
+    const user = userEvent.setup();
+    repliesQueryState.isFetchNextPageError = true;
+    fetchNextPage.mockImplementation(async () => {
+      repliesQueryState.isLoading = true;
+      repliesQueryState.isSuccess = false;
+      return new Promise(() => undefined);
+    });
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '重试' }));
+
+    const loadingButton = await screen.findByRole('button', { name: '加载中…' });
+    expect(loadingButton).toBeDisabled();
+    expect(loadingButton).toHaveAttribute('aria-busy', 'true');
+    expect(screen.queryByText('已显示全部回帖')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('visibly highlights a newly posted reply after it becomes visible', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'user-current', username: 'alice' });
+    const newReply = {
+      id: 'reply-new',
+      body: 'new highlighted reply',
+      createdAt: '2026-05-01T00:30:00.000Z',
+      author: { id: 'user-current', username: 'alice' },
+    };
+    createReplyMutate.mockImplementation((_input, handlers) => handlers.onSuccess?.(newReply));
+    repliesQueryState.hasNextPage = false;
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText('撰写回帖'), 'new highlighted reply');
+    topicState.data = {
+      ...topicState.data!,
+      replyCount: 46,
+      replies: [...topicState.data!.replies, newReply],
+      replyNextCursor: null,
+    };
+    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+
+    const highlightedReply = await screen.findByText('new highlighted reply');
+    await waitFor(() => {
+      expect(highlightedReply.closest('li')).toHaveClass('border-brand-200');
+      expect(highlightedReply.closest('li')).toHaveClass('bg-brand-50');
+      expect(highlightedReply.closest('li')).toHaveFocus();
+    });
   });
 });

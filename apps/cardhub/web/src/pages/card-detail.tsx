@@ -95,7 +95,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
               </div>
               <p className="text-neutral-600">{card.description}</p>
               <p className="text-sm text-neutral-500">
-                {tt('card.detail.series')}：
+                {tt('card.detail.seriesLabel')}
                 <Link to={`/series/${card.seriesSlug}`} className="text-brand-600 hover:underline">
                   {card.seriesTitle}
                 </Link>

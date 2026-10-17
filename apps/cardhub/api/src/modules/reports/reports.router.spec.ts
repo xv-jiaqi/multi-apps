@@ -23,6 +23,7 @@ function makeRouter() {
   const commentFindUnique = jest.fn();
   const commentFindMany = jest.fn();
   const commentDelete = jest.fn();
+  const cardFindMany = jest.fn();
 
   const prisma = {
     report: {
@@ -38,6 +39,7 @@ function makeRouter() {
     topic: { findUnique: topicFindUnique, findMany: topicFindMany, delete: topicDelete },
     reply: { findUnique: replyFindUnique, findMany: replyFindMany, delete: replyDelete },
     comment: { findUnique: commentFindUnique, findMany: commentFindMany, delete: commentDelete },
+    card: { findMany: cardFindMany },
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
@@ -73,6 +75,7 @@ function makeRouter() {
     commentFindUnique,
     commentFindMany,
     commentDelete,
+    cardFindMany,
   };
 }
 
@@ -378,5 +381,43 @@ describe('ReportsRouter.list', () => {
       },
     });
     expect(result.nextCursor).toBeNull();
+  });
+
+  it('adds optional cardName to listing target context', async () => {
+    const { caller, userFindUnique, reportFindMany, listingFindMany, cardFindMany } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ role: 'admin' });
+    reportFindMany.mockResolvedValueOnce([
+      {
+        id: 'r-listing',
+        targetType: 'LISTING',
+        targetId: 'listing-1',
+        reason: 'fake listing',
+        status: 'PENDING',
+        createdAt: new Date('2026-05-01T00:00:00Z'),
+        reporter: { id: 'u1', username: 'alice' },
+      },
+    ]);
+    listingFindMany.mockResolvedValueOnce([
+      {
+        id: 'listing-1',
+        cardSlug: 'forge-titan',
+        status: 'OPEN',
+        user: { username: 'seller' },
+      },
+    ]);
+    cardFindMany.mockResolvedValueOnce([{ slug: 'forge-titan', name: 'Forge Titan' }]);
+
+    const result = await caller({ sub: 'u-admin', username: 'admin' }).list({ limit: 20 });
+
+    expect(cardFindMany).toHaveBeenCalledWith({
+      where: { slug: { in: ['forge-titan'] } },
+      select: { slug: true, name: true },
+    });
+    expect(result.items[0]?.target).toMatchObject({
+      cardSlug: 'forge-titan',
+      cardName: 'Forge Titan',
+      status: 'OPEN',
+      sellerUsername: 'seller',
+    });
   });
 });

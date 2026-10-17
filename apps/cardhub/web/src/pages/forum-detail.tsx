@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { replyBodySchema, t } from '@repo/shared';
@@ -46,7 +46,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [focusReplyId, setFocusReplyId] = useState<string | null>(null);
   const [pendingCreatedReplyId, setPendingCreatedReplyId] = useState<string | null>(null);
   const [autoLoadFailedReplyId, setAutoLoadFailedReplyId] = useState<string | null>(null);
+  const [isRetryingReplies, setIsRetryingReplies] = useState(false);
+  const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);
   const replyRefs = useRef(new Map<string, HTMLLIElement>());
+  const loadMoreButtonRef = useRef<HTMLButtonElement>(null);
+  const retryButtonRef = useRef<HTMLButtonElement>(null);
   const previousReplyNextCursorRef = useRef<string | null>(null);
 
   // Valid UUID placeholder keeps the query input shape stable while `enabled`
@@ -77,6 +81,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       setReplyError(null);
       setShowLoadedReplyPages(true);
       setPendingCreatedReplyId(created.id);
+      setFocusReplyId(created.id);
       setAutoLoadFailedReplyId(null);
       await Promise.all([
         utils.forum.topics.bySlug.invalidate({ slug }),
@@ -110,6 +115,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setFocusReplyId(null);
     setPendingCreatedReplyId(null);
     setAutoLoadFailedReplyId(null);
+    setIsRetryingReplies(false);
+    setHighlightedReplyId(null);
     previousReplyNextCursorRef.current = null;
   }, [topicId]);
 
@@ -124,24 +131,39 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const node = replyRefs.current.get(focusReplyId);
     if (!node) return;
     node.focus();
+    setHighlightedReplyId(focusReplyId);
     setFocusReplyId(null);
   }, [focusReplyId, visibleReplies]);
+
+  useEffect(() => {
+    if (!highlightedReplyId) return;
+    const timer = window.setTimeout(() => setHighlightedReplyId(null), 1000);
+    return () => window.clearTimeout(timer);
+  }, [highlightedReplyId]);
+
+  const fetchNextRepliesPage = useCallback(
+    async (failureId: string) => {
+      try {
+        const result = await repliesQuery.fetchNextPage();
+        if (fetchNextPageFailed(result)) {
+          setAutoLoadFailedReplyId(failureId);
+          return null;
+        }
+        return result;
+      } catch {
+        setAutoLoadFailedReplyId(failureId);
+        return null;
+      }
+    },
+    [repliesQuery.fetchNextPage],
+  );
 
   useEffect(() => {
     if (!pendingCreatedReplyId) return;
     if (autoLoadFailedReplyId === pendingCreatedReplyId) return;
     if (repliesQuery.hasNextPage && !repliesQuery.isFetchingNextPage) {
       void (async () => {
-        let result: Awaited<ReturnType<typeof repliesQuery.fetchNextPage>>;
-        try {
-          result = await repliesQuery.fetchNextPage();
-        } catch {
-          setAutoLoadFailedReplyId(pendingCreatedReplyId);
-          return;
-        }
-        if (fetchNextPageFailed(result)) {
-          setAutoLoadFailedReplyId(pendingCreatedReplyId);
-        }
+        await fetchNextRepliesPage(pendingCreatedReplyId);
       })();
       return;
     }
@@ -149,6 +171,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       (reply) => reply.id === pendingCreatedReplyId,
     );
     if (!repliesQuery.hasNextPage && !repliesQuery.isFetchingNextPage && createdReplyIsVisible) {
+      setHighlightedReplyId(pendingCreatedReplyId);
       setFocusReplyId(pendingCreatedReplyId);
       replyRefs.current.get(pendingCreatedReplyId)?.scrollIntoView({ block: 'nearest' });
       setPendingCreatedReplyId(null);
@@ -156,11 +179,26 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   }, [
     pendingCreatedReplyId,
     autoLoadFailedReplyId,
+    fetchNextRepliesPage,
     repliesQuery.hasNextPage,
     repliesQuery.isFetchingNextPage,
-    repliesQuery.fetchNextPage,
     visibleReplies,
   ]);
+
+  const isLoadingMoreReplies =
+    isRetryingReplies ||
+    repliesQuery.isFetchingNextPage ||
+    (showLoadedReplyPages && repliesQuery.isLoading);
+  const allRepliesShown =
+    showLoadedReplyPages && repliesQuery.isSuccess && !repliesQuery.hasNextPage;
+  const showLoadMoreError =
+    (repliesQuery.isFetchNextPageError || autoLoadFailedReplyId !== null) && !isLoadingMoreReplies;
+
+  useEffect(() => {
+    if (showLoadMoreError) {
+      retryButtonRef.current?.focus();
+    }
+  }, [showLoadMoreError]);
 
   if (topicQuery.isLoading) {
     return (
@@ -196,7 +234,6 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const topic = topicQuery.data;
   const isOwner = session.user?.id === topic.author.id;
   const canDeleteTopic = isOwner || session.isAdmin;
-  const showLoadMoreError = repliesQuery.isFetchNextPageError || autoLoadFailedReplyId !== null;
 
   const onSubmitReply = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -213,16 +250,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const beforeIds = new Set(visibleReplies.map((reply) => reply.id));
     setShowLoadedReplyPages(true);
     setAutoLoadFailedReplyId(null);
-    let result: Awaited<ReturnType<typeof repliesQuery.fetchNextPage>>;
-    try {
-      result = await repliesQuery.fetchNextPage();
-    } catch {
-      return;
-    }
-    if (fetchNextPageFailed(result)) {
-      setAutoLoadFailedReplyId('manual');
-      return;
-    }
+    const result = await fetchNextRepliesPage('manual');
+    if (!result) return;
     const pages = result.data?.pages ?? [];
     const mergedLoadedReplies = mergeReplies(pages.flatMap((page) => page.items));
     const newReplies = mergedLoadedReplies.filter((reply) => !beforeIds.has(reply.id));
@@ -232,6 +261,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const hasNextPageAfterFetch = Boolean(pages.at(-1)?.nextCursor);
     if (!hasNextPageAfterFetch && newReplies[0]) {
       setFocusReplyId(newReplies[0].id);
+    } else if (hasNextPageAfterFetch) {
+      loadMoreButtonRef.current?.focus();
     }
   };
 
@@ -307,12 +338,18 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                       }
                     }}
                     tabIndex={-1}
-                    className="rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur"
+                    className={`rounded-2xl border p-4 backdrop-blur transition-colors duration-1000 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
+                      highlightedReplyId === reply.id
+                        ? 'border-brand-200 bg-brand-50 duration-0'
+                        : 'border-white/60 bg-white/80'
+                    }`}
                   >
-                    <div className="flex items-center justify-between text-xs text-neutral-500">
-                      <span className="font-medium text-neutral-700">@{reply.author.username}</span>
-                      <div className="flex items-center gap-3">
-                        <time dateTime={reply.createdAt}>
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-500">
+                      <span className="min-w-0 truncate font-medium text-neutral-700">
+                        @{reply.author.username}
+                      </span>
+                      <div className="ml-auto flex shrink-0 items-center gap-3">
+                        <time dateTime={reply.createdAt} className="whitespace-nowrap">
                           {new Date(reply.createdAt).toLocaleString(locale.locale)}
                         </time>
                         {session.user?.id !== reply.author.id ? (
@@ -326,7 +363,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                                 deleteReply.mutate({ id: reply.id });
                               }
                             }}
-                            className="text-red-600 hover:underline"
+                            className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                           >
                             {tt('forum.detail.delete')}
                           </button>
@@ -350,44 +387,45 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
               >
                 <span>{tt('forum.detail.loadMoreFailed')}</span>
                 <button
+                  ref={retryButtonRef}
                   type="button"
+                  disabled={isRetryingReplies}
+                  aria-busy={isRetryingReplies}
                   onClick={() => {
-                    setAutoLoadFailedReplyId(null);
                     void (async () => {
-                      let result: Awaited<ReturnType<typeof repliesQuery.fetchNextPage>>;
-                      try {
-                        result = await repliesQuery.fetchNextPage();
-                      } catch {
-                        setAutoLoadFailedReplyId(pendingCreatedReplyId ?? 'manual');
-                        return;
+                      setIsRetryingReplies(true);
+                      if (pendingCreatedReplyId) {
+                        const result = await fetchNextRepliesPage(pendingCreatedReplyId);
+                        if (result) {
+                          setAutoLoadFailedReplyId(null);
+                        }
+                      } else {
+                        await onLoadMoreReplies();
                       }
-                      if (fetchNextPageFailed(result)) {
-                        setAutoLoadFailedReplyId(pendingCreatedReplyId ?? 'manual');
-                      }
+                      setIsRetryingReplies(false);
                     })();
                   }}
-                  className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                  className="min-h-9 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0"
                 >
-                  {tt('state.retry')}
+                  {isRetryingReplies ? tt('state.loading') : tt('state.retry')}
                 </button>
               </div>
-            ) : showLoadedReplyPages && !repliesQuery.hasNextPage ? (
-              <p className="text-center text-xs text-neutral-500">
+            ) : allRepliesShown ? (
+              <p className="text-center text-xs text-neutral-600">
                 {tt('forum.detail.allRepliesShown')}
               </p>
             ) : (
               <div className="flex justify-center">
                 <Button
+                  ref={loadMoreButtonRef}
                   type="button"
                   variant="outline"
                   className="w-full sm:w-auto"
                   onClick={() => void onLoadMoreReplies()}
-                  disabled={repliesQuery.isFetchingNextPage}
-                  aria-busy={repliesQuery.isFetchingNextPage}
+                  disabled={isLoadingMoreReplies}
+                  aria-busy={isLoadingMoreReplies}
                 >
-                  {repliesQuery.isFetchingNextPage
-                    ? tt('state.loading')
-                    : tt('forum.detail.loadMoreReplies')}
+                  {isLoadingMoreReplies ? tt('state.loading') : tt('forum.detail.loadMoreReplies')}
                 </Button>
               </div>
             )

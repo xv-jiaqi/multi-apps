@@ -189,11 +189,23 @@ export class ReportsRouter {
             : Promise.resolve([]),
         ]);
 
+        const listingCardSlugs = Array.from(new Set(listings.map((listing) => listing.cardSlug)));
+        const cards =
+          listingCardSlugs.length > 0
+            ? await prisma.card.findMany({
+                where: { slug: { in: listingCardSlugs } },
+                select: { slug: true, name: true },
+              })
+            : [];
+
+        const cardNameBySlug = new Map(cards.map((card) => [card.slug, card.name]));
+
         const listingMap = new Map(
           listings.map((listing) => [
             listing.id,
             {
               cardSlug: listing.cardSlug,
+              cardName: cardNameBySlug.get(listing.cardSlug),
               status: listing.status,
               sellerUsername: listing.user?.username ?? null,
             },

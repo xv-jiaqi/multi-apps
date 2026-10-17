@@ -29,6 +29,10 @@ const queryState: {
   error: null,
 };
 const mutationState: { isPending: boolean } = { isPending: false };
+const deleteMutationState: { isPending: boolean; variables: { id: string } | undefined } = {
+  isPending: false,
+  variables: undefined,
+};
 
 vi.mock('../lib/trpc', () => {
   return {
@@ -55,11 +59,14 @@ vi.mock('../lib/trpc', () => {
             onError,
           }: {
             onSuccess?: () => void;
-            onError?: (e: { message: string; data?: { code?: string } }, variables: { id: string }) => void;
+            onError?: (
+              e: { message: string; data?: { code?: string } },
+              variables: { id: string },
+            ) => void;
           }) => ({
             mutate: (input: { id: string }) => deleteMutateMock(input, { onSuccess, onError }),
-            isPending: false,
-            variables: undefined,
+            isPending: deleteMutationState.isPending,
+            variables: deleteMutationState.variables,
           }),
         },
       },
@@ -98,6 +105,8 @@ beforeEach(() => {
   queryState.isError = false;
   queryState.error = null;
   mutationState.isPending = false;
+  deleteMutationState.isPending = false;
+  deleteMutationState.variables = undefined;
 });
 
 describe('CommentSection (unauthenticated)', () => {
@@ -166,16 +175,12 @@ describe('CommentSection (authenticated)', () => {
     ];
 
     const { unmount } = renderShell();
-    expect(
-      screen.getByRole('button', { name: '删除 @alice 的评论' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toBeInTheDocument();
     unmount();
 
     rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob', role: 'admin' });
     const adminRender = renderShell();
-    expect(
-      screen.getByRole('button', { name: '删除 @alice 的评论' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toBeInTheDocument();
     adminRender.unmount();
 
     rootStore.session.signIn('jwt.token', { id: 'u3', username: 'charlie' });
@@ -202,7 +207,9 @@ describe('CommentSection (authenticated)', () => {
 
     await user.click(screen.getByRole('button', { name: '取消' }));
     expect(screen.queryByText('删除这条评论？')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus(),
+    );
   });
 
   it('collapses the delete confirmation on Esc and returns focus to delete', async () => {
@@ -262,6 +269,55 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('你没有权限删除这条评论');
+    expect(screen.getByRole('alert')).toHaveClass('bg-red-50');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus(),
+    );
+  });
+
+  it('shows a visible success status and focuses it after deleting a comment', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'own comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    deleteMutateMock.mockImplementationOnce((_input, callbacks) => {
+      callbacks.onSuccess?.();
+    });
+    renderShell();
+
+    await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent('评论已删除');
+    expect(status).toHaveClass('bg-emerald-50');
+    expect(status).toHaveFocus();
+  });
+
+  it('uses a wrapped confirmation row and prevents disabled delete underline while deleting', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'L'.repeat(80),
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    deleteMutationState.isPending = true;
+    deleteMutationState.variables = { id: 'cm-1' };
+    renderShell();
+
+    await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
+
+    expect(screen.getByRole('group', { name: '删除这条评论？' })).toHaveClass('bg-red-50');
+    expect(screen.getByText('L'.repeat(80))).toHaveClass('[overflow-wrap:anywhere]');
+    expect(screen.getByRole('button', { name: '删除中…' })).toHaveClass('disabled:no-underline');
   });
 
   it('shows localized copy when comment creation is rate limited', async () => {
@@ -271,10 +327,10 @@ describe('CommentSection (authenticated)', () => {
         _input: unknown,
         callbacks: { onError: (error: { message: string; data?: { code?: string } }) => void },
       ) => {
-      callbacks.onError({
-        message: 'Too many requests',
-        data: { code: 'TOO_MANY_REQUESTS' },
-      });
+        callbacks.onError({
+          message: 'Too many requests',
+          data: { code: 'TOO_MANY_REQUESTS' },
+        });
       },
     );
     renderShell();

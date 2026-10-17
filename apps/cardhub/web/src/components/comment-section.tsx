@@ -11,6 +11,10 @@ interface CommentSectionProps {
   cardSlug: string;
 }
 
+function formatDateTime(value: string, locale: string) {
+  return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 export const CommentSection = observer(function CommentSection({ cardSlug }: CommentSectionProps) {
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
@@ -22,6 +26,7 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<{ id: string; message: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
+  const statusRef = useRef<HTMLParagraphElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
   const emptyRef = useRef<HTMLParagraphElement | null>(null);
   const deleteButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -44,7 +49,6 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
       setConfirmingId(null);
       setDeleteError(null);
       setStatusMessage(tt('card.detail.commentDeleted'));
-      shouldFocusListAfterDelete.current = true;
       void utils.comments.listForCard.invalidate({ cardSlug });
     },
     onError(err, variables) {
@@ -65,6 +69,7 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
             ? tt('card.detail.commentDeleteForbidden')
             : tt('card.detail.commentDeleteFailed'),
       });
+      restoreDeleteFocus(variables.id);
     },
   });
 
@@ -72,6 +77,11 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
     if (!confirmingId) return;
     cancelButtonRefs.current[confirmingId]?.focus();
   }, [confirmingId]);
+
+  useEffect(() => {
+    if (!statusMessage) return;
+    statusRef.current?.focus();
+  }, [statusMessage]);
 
   useEffect(() => {
     if (!shouldFocusListAfterDelete.current || list.isLoading) return;
@@ -86,6 +96,7 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setStatusMessage('');
     const parsed = commentInput.safeParse({ cardSlug, content });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? '');
@@ -126,6 +137,7 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
             onChange={(e) => {
               setContent(e.target.value);
               if (error) setError(null);
+              if (statusMessage) setStatusMessage('');
             }}
             placeholder={tt('card.detail.commentPlaceholder')}
             rows={3}
@@ -162,7 +174,16 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
         </p>
       )}
 
-      <p role="status" className="sr-only">
+      <p
+        ref={statusRef}
+        role="status"
+        tabIndex={-1}
+        className={
+          statusMessage
+            ? 'rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+            : 'sr-only'
+        }
+      >
         {statusMessage}
       </p>
 
@@ -192,75 +213,81 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
                 aria-busy={isDeleting ? true : undefined}
                 className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
               >
-                <div className="flex items-center justify-between text-xs text-neutral-500">
-                  <span className="font-semibold text-neutral-900">@{comment.user.username}</span>
-                  <div
-                    className="flex items-center gap-3"
-                    onKeyDown={(event) => onConfirmKeyDown(event, comment.id)}
-                  >
-                    {isConfirming ? (
-                      <>
-                        <span className="text-red-700">
-                          {tt('card.detail.confirmDeleteComment')}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={isDeleting}
-                          onClick={() => deleteComment.mutate({ id: comment.id })}
-                          className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
-                        >
-                          {isDeleting
-                            ? tt('card.detail.commentDeleting')
-                            : tt('card.detail.commentDelete')}
-                        </button>
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-500">
+                  <span className="min-w-0 truncate font-semibold text-neutral-900">
+                    @{comment.user.username}
+                  </span>
+                  {!isConfirming ? (
+                    <div className="ml-auto flex shrink-0 items-center gap-3">
+                      <time dateTime={comment.createdAt} className="whitespace-nowrap">
+                        {formatDateTime(comment.createdAt, locale.locale)}
+                      </time>
+                      {session.user?.id !== comment.user.id ? (
+                        <ReportButton targetType="COMMENT" targetId={comment.id} />
+                      ) : null}
+                      {canDelete ? (
                         <button
                           type="button"
                           ref={(node) => {
-                            cancelButtonRefs.current[comment.id] = node;
+                            deleteButtonRefs.current[comment.id] = node;
                           }}
-                          disabled={isDeleting}
-                          onClick={() => cancelDelete(comment.id)}
-                          className="inline-flex min-h-6 items-center rounded px-1 text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                          aria-label={tt('card.detail.commentDeleteAria', {
+                            user: comment.user.username,
+                          })}
+                          onClick={() => {
+                            setDeleteError(null);
+                            setStatusMessage('');
+                            setConfirmingId(comment.id);
+                          }}
+                          className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
-                          {tt('card.detail.commentDeleteCancel')}
+                          {tt('card.detail.commentDelete')}
                         </button>
-                      </>
-                    ) : (
-                      <>
-                        <time dateTime={comment.createdAt}>
-                          {new Date(comment.createdAt).toLocaleString(locale.locale)}
-                        </time>
-                        {session.user?.id !== comment.user.id ? (
-                          <ReportButton targetType="COMMENT" targetId={comment.id} />
-                        ) : null}
-                        {canDelete ? (
-                          <button
-                            type="button"
-                            ref={(node) => {
-                              deleteButtonRefs.current[comment.id] = node;
-                            }}
-                            aria-label={tt('card.detail.commentDeleteAria', {
-                              user: comment.user.username,
-                            })}
-                            onClick={() => {
-                              setDeleteError(null);
-                              setStatusMessage('');
-                              setConfirmingId(comment.id);
-                            }}
-                            className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                          >
-                            {tt('card.detail.commentDelete')}
-                          </button>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800">
+                <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 [overflow-wrap:anywhere]">
                   {comment.content}
                 </p>
+                {isConfirming ? (
+                  <div
+                    role="group"
+                    aria-label={tt('card.detail.confirmDeleteComment')}
+                    className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs"
+                    onKeyDown={(event) => onConfirmKeyDown(event, comment.id)}
+                  >
+                    <span className="mr-auto text-red-700">
+                      {tt('card.detail.confirmDeleteComment')}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isDeleting}
+                      onClick={() => deleteComment.mutate({ id: comment.id })}
+                      className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+                    >
+                      {isDeleting
+                        ? tt('card.detail.commentDeleting')
+                        : tt('card.detail.commentDelete')}
+                    </button>
+                    <button
+                      type="button"
+                      ref={(node) => {
+                        cancelButtonRefs.current[comment.id] = node;
+                      }}
+                      disabled={isDeleting}
+                      onClick={() => cancelDelete(comment.id)}
+                      className="inline-flex min-h-6 items-center rounded px-1 text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {tt('card.detail.commentDeleteCancel')}
+                    </button>
+                  </div>
+                ) : null}
                 {deleteError?.id === comment.id ? (
-                  <p role="alert" className="mt-2 text-xs text-red-600">
+                  <p
+                    role="alert"
+                    className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                  >
                     {deleteError.message}
                   </p>
                 ) : null}
