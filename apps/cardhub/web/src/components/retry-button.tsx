@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { cn } from '@repo/ui-web';
 
 /**
@@ -29,12 +29,27 @@ export function queryFallback(...queries: QueryFallbackState[]): QueryView {
   return 'ready';
 }
 
-/** After the error view recovers, move focus to the content that replaced it. */
+function shouldRestoreFocus(active: Element | null, target: HTMLElement | null) {
+  if (active == null || active === document.body) return true;
+  return target != null && active.contains(target);
+}
+
+/**
+ * After the error view recovers, move focus to the content that replaced it
+ * when focus is on the document or on an ancestor of that content. `#main` is
+ * focusable and wraps every error box, so a click that lands there still
+ * moves. An input that does not contain the content keeps focus. Read
+ * activeElement after commit: removing the retry button moves it to body
+ * before paint.
+ */
 export function useFocusOnRecovery(view: QueryView, targetRef: RefObject<HTMLElement | null>) {
   const previous = useRef(view);
-  useEffect(() => {
-    if (previous.current === 'error' && view === 'ready') targetRef.current?.focus();
+  useLayoutEffect(() => {
+    const recovered = previous.current === 'error' && view === 'ready';
     previous.current = view;
+    const target = targetRef.current;
+    if (!recovered || !shouldRestoreFocus(document.activeElement, target)) return;
+    target?.focus({ preventScroll: true });
   }, [view, targetRef]);
 }
 
