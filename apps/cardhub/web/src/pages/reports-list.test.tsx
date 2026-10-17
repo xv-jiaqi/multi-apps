@@ -332,6 +332,19 @@ describe('ReportsListPage resolution controls', () => {
     expect(screen.getByRole('button', { name: '加载中…' })).toHaveAttribute('aria-busy', 'true');
   });
 
+  it('gives filter pills a ring offset and lets report meta wrap to its own row', () => {
+    queryState.items = [reportFixture];
+
+    renderPage();
+
+    expect(screen.getByRole('button', { name: '全部' })).toHaveClass('focus-visible:ring-offset-2');
+    const meta = screen.getByText('@bob').parentElement;
+    expect(meta).toHaveClass('w-full');
+    expect(meta).toHaveClass('sm:w-auto');
+    expect(meta).toHaveClass('sm:text-right');
+    expect(screen.getByText('spam report').parentElement).toHaveClass('min-w-0', 'flex-1');
+  });
+
   it('allows long unbroken resolution notes to wrap inside the details grid', () => {
     const longResolution = 'R'.repeat(120);
     queryState.items = [

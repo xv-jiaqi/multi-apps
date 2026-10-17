@@ -85,6 +85,10 @@ function nextReplyPage(cursor: string | undefined) {
   };
 }
 
+// React Query v5 refetches an infinite query with the cursors stored in
+// `pageParams`, not the latest `initialCursor`. This mock replays that, so
+// the cursor-delete test fails if `removeReplyFromCache` leaves a deleted id
+// in `pageParams`.
 function refetchLoadedReplyPages() {
   if (repliesQueryState.data.pageParams.length === 0) return;
   const pages = repliesQueryState.data.pageParams.map((pageParam) => nextReplyPage(pageParam));
@@ -584,5 +588,29 @@ describe('ForumDetailPage replies pagination', () => {
       expect(highlightedReply.closest('li')).toHaveClass('bg-brand-50');
       expect(highlightedReply.closest('li')).toHaveFocus();
     });
+    const highlightedItem = highlightedReply.closest('li');
+    expect(
+      highlightedItem?.className.split(/\s+/).filter((name) => name.startsWith('duration-')),
+    ).toEqual(['duration-0']);
+    const restingItem = screen.getByText('Reply 1').closest('li');
+    expect(
+      restingItem?.className.split(/\s+/).filter((name) => name.startsWith('duration-')),
+    ).toEqual(['duration-1000']);
+  });
+
+  it('moves focus to the first newly loaded reply when more pages remain', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+
+    const firstNew = await screen.findByText('Reply 21');
+    const item = firstNew.closest('li');
+    expect(item).toHaveAttribute('tabindex', '-1');
+    await waitFor(() => {
+      expect(item).toHaveFocus();
+    });
+    expect(document.activeElement).not.toBe(document.body);
+    expect(screen.getByRole('button', { name: '加载更多回帖' })).toBeInTheDocument();
   });
 });
