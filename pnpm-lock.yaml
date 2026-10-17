@@ -92,6 +92,9 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      express:
+        specifier: 5.2.1
+        version: 5.2.1
       express-rate-limit:
         specifier: ^8.4.1
         version: 8.4.1(express@5.2.1)
