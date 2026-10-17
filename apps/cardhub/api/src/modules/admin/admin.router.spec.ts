@@ -95,14 +95,84 @@ function makeHttpApp(prisma: PrismaService) {
 }
 
 describe('AdminRouter auth', () => {
-  it('rejects non-admin callers with FORBIDDEN', async () => {
-    const { caller, userFindUnique, seriesFindMany } = makeRouter();
-    userFindUnique.mockResolvedValueOnce({ id: 'u1', role: 'user' });
+  type RouterHarness = ReturnType<typeof makeRouter>;
+  type AdminCaller = ReturnType<RouterHarness['caller']>;
+  const writeMockNames = [
+    'seriesCreate',
+    'seriesUpdate',
+    'seriesUpsert',
+    'seriesDelete',
+    'cardCreate',
+    'cardUpdate',
+    'cardUpsert',
+    'cardDelete',
+    'transaction',
+  ] as const;
 
-    await expect(caller({ sub: 'u1', username: 'alice' }).series.list()).rejects.toMatchObject({
+  function expectNoWrites(router: RouterHarness) {
+    for (const mockName of writeMockNames) {
+      expect(router[mockName]).not.toHaveBeenCalled();
+    }
+  }
+
+  it.each([
+    ['series.list', (admin: AdminCaller) => admin.series.list()],
+    [
+      'series.create',
+      (admin: AdminCaller) => admin.series.create({ slug: 'new-series', title: 'New Series' }),
+    ],
+    [
+      'series.update',
+      (admin: AdminCaller) =>
+        admin.series.update({ slug: 'existing-series', title: 'Existing Series' }),
+    ],
+    [
+      'series.delete',
+      (admin: AdminCaller) => admin.series.delete({ slug: 'existing-series', force: false }),
+    ],
+    ['cards.get', (admin: AdminCaller) => admin.cards.get({ slug: 'existing-card' })],
+    [
+      'cards.create',
+      (admin: AdminCaller) =>
+        admin.cards.create({
+          slug: 'new-card',
+          name: 'New Card',
+          rarity: 'common',
+          attributes: {},
+          seriesSlug: 'existing-series',
+        }),
+    ],
+    [
+      'cards.update',
+      (admin: AdminCaller) =>
+        admin.cards.update({
+          slug: 'existing-card',
+          name: 'Existing Card',
+          rarity: 'rare',
+          attributes: {},
+          seriesSlug: 'existing-series',
+        }),
+    ],
+    ['cards.delete', (admin: AdminCaller) => admin.cards.delete({ slug: 'existing-card' })],
+    ['catalog.import', (admin: AdminCaller) => admin.catalog.import({ dryRun: false, data: [] })],
+  ] as const)('rejects non-admin callers for %s with FORBIDDEN', async (_name, invoke) => {
+    const router = makeRouter();
+    router.userFindUnique.mockResolvedValueOnce({ id: 'u1', role: 'user' });
+
+    await expect(invoke(router.caller({ sub: 'u1', username: 'alice' }))).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });
-    expect(seriesFindMany).not.toHaveBeenCalled();
+    expectNoWrites(router);
+  });
+
+  it('rejects anonymous callers with UNAUTHORIZED before checking role', async () => {
+    const router = makeRouter();
+
+    await expect(router.caller(null).series.list()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(router.userFindUnique).not.toHaveBeenCalled();
+    expectNoWrites(router);
   });
 });
 
