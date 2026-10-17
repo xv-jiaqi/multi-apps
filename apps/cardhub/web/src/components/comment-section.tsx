@@ -13,7 +13,7 @@ interface CommentSectionProps {
 
 export const CommentSection = observer(function CommentSection({ cardSlug }: CommentSectionProps) {
   const { locale, session } = useStores();
-  const tt = (key: string) => t(locale.locale, key);
+  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
   const list = trpc.comments.listForCard.useQuery({ cardSlug });
   const utils = trpc.useUtils();
@@ -179,16 +179,12 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
           {tt('card.detail.commentEmpty')}
         </p>
       ) : (
-        <ul
-          ref={listRef}
-          tabIndex={-1}
-          aria-label={tt('a11y.commentList')}
-          className="space-y-3"
-        >
+        <ul ref={listRef} tabIndex={-1} aria-label={tt('a11y.commentList')} className="space-y-3">
           {list.data.map((comment) => {
             const canDelete = session.user?.id === comment.user.id || session.isAdmin;
             const isConfirming = confirmingId === comment.id;
-            const isDeleting = deleteComment.isPending && deleteComment.variables?.id === comment.id;
+            const isDeleting =
+              deleteComment.isPending && deleteComment.variables?.id === comment.id;
 
             return (
               <li
@@ -198,7 +194,10 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
               >
                 <div className="flex items-center justify-between text-xs text-neutral-500">
                   <span className="font-semibold text-neutral-900">@{comment.user.username}</span>
-                  <div className="flex items-center gap-3" onKeyDown={(event) => onConfirmKeyDown(event, comment.id)}>
+                  <div
+                    className="flex items-center gap-3"
+                    onKeyDown={(event) => onConfirmKeyDown(event, comment.id)}
+                  >
                     {isConfirming ? (
                       <>
                         <span className="text-red-700">
