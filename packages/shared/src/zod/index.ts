@@ -91,6 +91,13 @@ export const cursorPaginationInput = z.object({
 });
 export type CursorPaginationInput = z.infer<typeof cursorPaginationInput>;
 
+export const pageCursorPaginationInput = z.object({
+  pageCursor: z.string().optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+export type PageCursorPaginationInput = z.infer<typeof pageCursorPaginationInput>;
+
 // M7 — Trade listings + reports.
 export const LISTING_KIND_VALUES = ['SELL', 'BUY'] as const;
 export type ListingKind = (typeof LISTING_KIND_VALUES)[number];
@@ -147,6 +154,11 @@ export const listingListInput = cursorPaginationInput.extend({
   kind: z.enum(LISTING_KIND_VALUES).optional(),
 });
 export type ListingListInput = z.infer<typeof listingListInput>;
+
+export const listingMineInput = pageCursorPaginationInput.extend({
+  cursor: z.string().optional(),
+});
+export type ListingMineInput = z.infer<typeof listingMineInput>;
 
 export const reportCreateInput = z.object({
   targetType: z.enum(REPORT_TARGET_VALUES),

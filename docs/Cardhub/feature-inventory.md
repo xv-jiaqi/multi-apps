@@ -17,7 +17,7 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 1. **内容只能通过 seed 写入**：没有内容管理后台，知识库无法日常维护（CH-107）。
 2. **卡牌没有真实图片**：数据里全是 `gradient:` 占位符，前端只渲染渐变色块（CH-105）。
 3. **举报处理闭环已完成**：管理员可在队列中标记已处理，或删除 / 关闭被举报内容并处理相关待处理举报。
-4. **部分已有接口没有界面**：话题编辑、我的交易意向（CH-102 / CH-103）。
+4. **部分已有接口没有界面**：话题编辑（CH-103）。
 5. **小程序只覆盖 MVP**：论坛、交易、举报均未接入（CH-301）。
 
 对标之后新出现、代码里仍然不存在的能力，不在下面各表展开成新模块：平行版本（CH-213）、资讯（CH-214）、发售日历（CH-215）、用户自报价格（CH-313，确认前不做）、赛事与卡组（CH-314，确认前不做）。收藏进度写在 CH-203，交易品相写在 CH-104。
@@ -59,14 +59,15 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 ### 3.3 账户与会话
 
-| 能力                             | 状态 | 入口                 | 接口            | 说明                                                                                                                        |
-| -------------------------------- | ---- | -------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 注册（邮箱 + 用户名 + 密码）     | ✅   | `/register`          | `auth.register` | bcryptjs 10 轮；邮箱或用户名重复返回 `CONFLICT`                                                                             |
-| 登录（邮箱或用户名）             | ✅   | `/login`             | `auth.login`    | 邮箱转小写匹配，**用户名区分大小写**；登录后按 `location.state.from` 回跳                                                   |
-| 会话恢复                         | ✅   | 全局 `AuthBootstrap` | `auth.me`       | 启动时用本地 token 拉取最新 `role`；返回 `UNAUTHORIZED` 自动登出。`auth.me` 用 **input** 传 token，而不是读请求头（CH-212） |
-| 登出                             | ✅   | Header               | —               | 只清本地存储，服务端不吊销 token                                                                                            |
-| 角色                             | ✅   | —                    | `User.role`     | `user` / `admin`。admin 目前只能直接改库或由 demo seed 创建                                                                 |
-| 个人中心、资料、改密码、找回密码 | ❌   | —                    | —               | CH-102 / CH-212 / CH-310                                                                                                    |
+| 能力                         | 状态 | 入口                 | 接口            | 说明                                                                                                                        |
+| ---------------------------- | ---- | -------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 注册（邮箱 + 用户名 + 密码） | ✅   | `/register`          | `auth.register` | bcryptjs 10 轮；邮箱或用户名重复返回 `CONFLICT`                                                                             |
+| 登录（邮箱或用户名）         | ✅   | `/login`             | `auth.login`    | 邮箱转小写匹配，**用户名区分大小写**；登录后按 `location.state.from` 回跳                                                   |
+| 会话恢复                     | ✅   | 全局 `AuthBootstrap` | `auth.me`       | 启动时用本地 token 拉取最新 `role`；返回 `UNAUTHORIZED` 自动登出。`auth.me` 用 **input** 传 token，而不是读请求头（CH-212） |
+| 登出                         | ✅   | Header               | —               | 只清本地存储，服务端不吊销 token                                                                                            |
+| 角色                         | ✅   | —                    | `User.role`     | `user` / `admin`。admin 目前只能直接改库或由 demo seed 创建                                                                 |
+| 个人中心                     | ✅   | `/me`                | `users.me`      | 概览显示资料和本人话题 / 回帖 / 评论 / 交易意向计数；交易意向计数使用包含已关闭的新字段 `listingTotalCount`                 |
+| 资料编辑、改密码、找回密码   | ❌   | —                    | —               | CH-212 / CH-310                                                                                                             |
 
 Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web 存在 `localStorage['cardhub:session']`，小程序存在 `Taro.setStorageSync`。
 
@@ -98,16 +99,16 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 
 ### 3.6 交易信息板（仅撮合信息，站外交易）
 
-| 能力                                    | 状态 | 入口                                    | 接口               | 说明                                                                                  |
-| --------------------------------------- | ---- | --------------------------------------- | ------------------ | ------------------------------------------------------------------------------------- |
-| 意向列表（出/求筛选、按卡牌 slug 筛选） | ✅   | `/trade`                                | `listings.list`    | 只显示 `OPEN`；卡牌显示为 slug 而不是卡名。品相、语言、版本备注和价格筛选也在 CH-104  |
-| 发布意向                                | ✅   | `/trade/new`（卡牌页可带 `?cardSlug=`） | `listings.publish` | 需要手填卡牌 slug；价格可空（显示“面议”）；货币 ISO 4217，默认 CNY；最多 4 个外链图片 |
-| 卡牌页内意向（最多 5 条）               | ✅   | 卡牌详情页                              | `listings.byCard`  |                                                                                       |
-| 关闭意向（本人 / 管理员）               | ✅   | 列表项                                  | `listings.close`   | 幂等                                                                                  |
-| 我的意向（含已关闭）                    | 🟡   | —                                       | `listings.mine`    | 接口有，**没有界面**（CH-102）                                                        |
-| 图片展示                                | 🟡   | 列表项                                  | —                  | 只显示为外链文字，不渲染缩略图（CH-104）                                              |
-| 免责声明                                | ✅   | 列表页 + 发布页                         | —                  |                                                                                       |
-| 联系方式可见性                          | —    | —                                       | —                  | 目前匿名访客也能看到联系方式，是否改为登录可见待用户决策（CH-104）                    |
+| 能力                                    | 状态 | 入口                                    | 接口               | 说明                                                                                   |
+| --------------------------------------- | ---- | --------------------------------------- | ------------------ | -------------------------------------------------------------------------------------- |
+| 意向列表（出/求筛选、按卡牌 slug 筛选） | ✅   | `/trade`                                | `listings.list`    | 只显示 `OPEN`；卡牌显示为 slug 而不是卡名。品相、语言、版本备注和价格筛选也在 CH-104   |
+| 发布意向                                | ✅   | `/trade/new`（卡牌页可带 `?cardSlug=`） | `listings.publish` | 需要手填卡牌 slug；价格可空（显示“面议”）；货币 ISO 4217，默认 CNY；最多 4 个外链图片  |
+| 卡牌页内意向（最多 5 条）               | ✅   | 卡牌详情页                              | `listings.byCard`  |                                                                                        |
+| 关闭意向（本人 / 管理员）               | ✅   | 列表项                                  | `listings.close`   | 幂等                                                                                   |
+| 我的意向（含已关闭）                    | ✅   | `/me#me-listings`                       | `listings.mine`    | `/me` 上混合显示 OPEN / CLOSED，可用行内两步确认关闭；卡名待 CH-104 合并后由 slug 切换 |
+| 图片展示                                | 🟡   | 列表项                                  | —                  | 只显示为外链文字，不渲染缩略图（CH-104）                                               |
+| 免责声明                                | ✅   | 列表页 + 发布页                         | —                  |                                                                                        |
+| 联系方式可见性                          | —    | —                                       | —                  | 目前匿名访客也能看到联系方式，是否改为登录可见待用户决策（CH-104）                     |
 
 ### 3.7 举报与管理
 
@@ -208,6 +209,9 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `reports.create`       | mutation | 登录（限流 + 每日配额） | `{ targetType, targetId, reason }`                                        | `{ id, createdAt }`                                                                           |
 | `reports.list`         | query    | admin                   | `{ cursor?, limit, status? }`                                             | `items[]` 含 `target` 上下文（目标已删除时为 `null`）、`resolvedAt`、`resolver`、`resolution` |
 | `reports.resolve`      | mutation | admin                   | `{ id, action, resolution? }`                                             | `MARK_RESOLVED` 或 `REMOVE_TARGET`；删除 / 关闭目标时同步处理同目标待处理举报                 |
+| `users.me`             | query    | 登录                    | —                                                                         | 资料 + `listingCount`（开放）/ `listingTotalCount`（含已关闭）/ 话题 / 回帖 / 评论计数        |
+| `users.myTopics`       | query    | 登录                    | `{ pageCursor?, limit }`                                                  | 本人话题 cursor 分页；每条含 `slug / title / replyCount / createdAt`                          |
+| `users.myComments`     | query    | 登录                    | `{ pageCursor?, limit }`                                                  | 本人评论 cursor 分页；每条含卡牌 slug、名称与 `imageUrl`                                      |
 
 另有 NestJS REST 端点 `GET /health`（不经过 tRPC，跳过全局 Throttler）。
 
@@ -321,6 +325,7 @@ erDiagram
 | `/trade`              | `pages/trade-list.tsx`    | 公开                         |
 | `/trade/new`          | `pages/trade-publish.tsx` | 登录，未登录显示登录提示     |
 | `/reports`            | `pages/reports-list.tsx`  | admin                        |
+| `/me`                 | `pages/me.tsx`            | 登录，未登录跳转 `/login`    |
 | `*`                   | `pages/not-found.tsx`     | 公开                         |
 
 页面文件都在 `apps/cardhub/web/src/` 下。除首页外均通过 `React.lazy` 懒加载。
@@ -366,7 +371,7 @@ erDiagram
 
 按对用户的影响排序，括号内是对应任务。
 
-1. `Topic.pinned` 字段无效；`forum.topics.update`、`listings.mine` 有接口无界面（CH-102 / CH-103）。
+1. `Topic.pinned` 字段无效；`forum.topics.update` 有接口无界面（CH-103）。
 2. 卡牌、系列只有渐变占位图（CH-105）。
 3. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
 4. API 错误信息只有中文（CH-211）。

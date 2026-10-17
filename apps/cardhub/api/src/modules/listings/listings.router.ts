@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { z } from 'zod';
-import { cursorPaginationInput, listingListInput, listingPublishInput } from '@repo/shared';
+import { listingListInput, listingMineInput, listingPublishInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -88,13 +88,14 @@ export class ListingsRouter {
           return items.map((row: ListingWithUser) => mapListing(row));
         }),
 
-      mine: t.authedProcedure.input(cursorPaginationInput).query(async ({ ctx, input }) => {
+      mine: t.authedProcedure.input(listingMineInput).query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const pageCursor = input.pageCursor ?? input.cursor;
         const items = await prisma.listing.findMany({
           where: { userId: ctx.user.sub },
           take: input.limit + 1,
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-          ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
+          ...(pageCursor ? { cursor: { id: pageCursor }, skip: 1 } : {}),
           include: { user: { select: { id: true, username: true } } },
         });
         const hasMore = items.length > input.limit;
