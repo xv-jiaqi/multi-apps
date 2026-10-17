@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router';
 import { useEffect, useState } from 'react';
-import { t } from '@repo/shared';
+import { parseCardSearchQuery, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { RarityBadge } from '../components/rarity-badge';
@@ -31,10 +31,11 @@ export const SearchPage = observer(function SearchPage() {
   const tt = (key: string) => t(locale.locale, key);
   const [query, setQuery] = useState('');
   const debounced = useDebounced(query.trim(), 250);
+  const parsed = parseCardSearchQuery(debounced);
 
   const results = trpc.cards.search.useQuery(
     { q: debounced, limit: 30 },
-    { enabled: debounced.length > 0 },
+    { enabled: debounced.length > 0 && parsed.ok },
   );
 
   return (
@@ -58,6 +59,10 @@ export const SearchPage = observer(function SearchPage() {
 
         {debounced === '' ? (
           <p className="text-sm text-neutral-500">{tt('search.placeholder')}</p>
+        ) : !parsed.ok ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+            {parsed.reason}: {parsed.token}
+          </p>
         ) : results.isLoading ? (
           <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
         ) : results.isError ? (

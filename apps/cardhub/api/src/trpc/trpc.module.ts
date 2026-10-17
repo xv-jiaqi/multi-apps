@@ -10,6 +10,7 @@ import { ForumModule } from '../modules/forum/forum.module';
 import { ListingsModule } from '../modules/listings/listings.module';
 import { ReportsModule } from '../modules/reports/reports.module';
 import { UsersModule } from '../modules/users/users.module';
+import { SearchModule } from '../modules/search/search.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UsersModule } from '../modules/users/users.module';
     ListingsModule,
     ReportsModule,
     UsersModule,
+    SearchModule,
   ],
   providers: [TrpcService],
   exports: [TrpcService],

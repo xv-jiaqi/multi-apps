@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { ScrollView, View, Text, Input } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, Link, RarityBadge, Skeleton, type Rarity } from '@repo/ui-mini';
-import { t } from '@repo/shared';
+import { parseCardSearchQuery, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { gradientFor } from '../../../lib/gradients';
@@ -41,6 +41,13 @@ export default observer(function SearchPage() {
   useEffect(() => {
     if (debounced.length === 0) {
       setResults(null);
+      setError(null);
+      return;
+    }
+    const parsed = parseCardSearchQuery(debounced);
+    if (!parsed.ok) {
+      setError(`${parsed.reason}: ${parsed.token}`);
+      setLoading(false);
       return;
     }
     let cancelled = false;

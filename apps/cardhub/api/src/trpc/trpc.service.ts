@@ -9,6 +9,7 @@ import { ForumRouter } from '../modules/forum/forum.router';
 import { ListingsRouter } from '../modules/listings/listings.router';
 import { ReportsRouter } from '../modules/reports/reports.router';
 import { UsersRouter } from '../modules/users/users.router';
+import { SearchRouter } from '../modules/search/search.router';
 
 @Injectable()
 export class TrpcService {
@@ -25,11 +26,13 @@ export class TrpcService {
     private readonly listings: ListingsRouter,
     private readonly reports: ReportsRouter,
     private readonly users: UsersRouter,
+    private readonly search: SearchRouter,
   ) {
     this.appRouter = this.t.router({
       health: this.health.build(),
       series: this.series.build(),
       cards: this.cards.build(),
+      search: this.search.build(),
       auth: this.auth.build(),
       comments: this.comments.build(),
       forum: this.forum.build(),
