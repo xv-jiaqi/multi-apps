@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import {
-  ADMIN_CATALOG_ERROR_CODES,
   type AdminCatalogErrorCode,
   RARITY_VALUES,
   adminCardDeleteInput,
@@ -78,8 +77,6 @@ type CardAdminRow = Prisma.CardGetPayload<{
     _count: { select: { comments: true } };
   };
 }>;
-
-const IMPORT_ERROR_CODES = new Set<string>(ADMIN_CATALOG_ERROR_CODES);
 
 function normalizeOptionalText(value: string | undefined): string | null {
   const trimmed = value?.trim() ?? '';
@@ -354,11 +351,6 @@ function normalizeImport(data: unknown): NormalizedImport {
   });
 
   return { series: normalizedSeries, cards: normalizedCards, results };
-}
-
-function getErrorCodeFromCause(cause: unknown): AdminCatalogErrorCode | null {
-  if (!isPlainObject(cause) || typeof cause.code !== 'string') return null;
-  return IMPORT_ERROR_CODES.has(cause.code) ? (cause.code as AdminCatalogErrorCode) : null;
 }
 
 function isPrismaUniqueError(error: unknown): boolean {
@@ -721,13 +713,7 @@ export class AdminRouter {
       }),
       catalog: t.router({
         import: t.adminProcedure.input(adminCatalogImportInput).mutation(async ({ input }) => {
-          try {
-            return input.dryRun ? previewImport(input.data) : applyImport(input.data);
-          } catch (error) {
-            const code = error instanceof TRPCError ? getErrorCodeFromCause(error.cause) : null;
-            if (code) throw error;
-            throw error;
-          }
+          return input.dryRun ? previewImport(input.data) : applyImport(input.data);
         }),
       }),
     });
