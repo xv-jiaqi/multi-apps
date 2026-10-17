@@ -2,7 +2,7 @@ jest.mock('@sentry/node', () => ({
   captureException: jest.fn(() => ''),
 }));
 
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpException, InternalServerErrorException } from '@nestjs/common';
 import type { ArgumentsHost } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { SentryExceptionFilter } from './sentry-exception.filter';
@@ -64,30 +64,72 @@ describe('SentryExceptionFilter', () => {
 
     expect(large.response.status).toHaveBeenCalledWith(413);
     expect(large.json).toHaveBeenCalledWith({
-      statusCode: 413,
-      message: '内容太大，请精简后重试',
+      error: {
+        message: '内容太大，请精简后重试',
+        code: -32013,
+        data: {
+          code: 'PAYLOAD_TOO_LARGE',
+          httpStatus: 413,
+          path: 'comments.create',
+        },
+      },
     });
     expect(importRoute.response.status).toHaveBeenCalledWith(413);
     expect(importRoute.json).toHaveBeenCalledWith({
-      statusCode: 413,
-      message: '一次最多导入 1MB',
+      error: {
+        message: '一次最多导入 1MB',
+        code: -32013,
+        data: {
+          code: 'PAYLOAD_TOO_LARGE',
+          httpStatus: 413,
+          path: 'admin.catalog.import',
+        },
+      },
     });
     expect(bad.response.status).toHaveBeenCalledWith(400);
     expect(bad.json).toHaveBeenCalledWith({
-      statusCode: 400,
-      message: '请求格式有误',
+      error: {
+        message: '请求格式有误',
+        code: -32600,
+        data: {
+          code: 'BAD_REQUEST',
+          httpStatus: 400,
+          path: 'comments.create',
+        },
+      },
     });
     expect(many.json).toHaveBeenCalledWith({
-      statusCode: 413,
-      message: '内容太大，请精简后重试',
+      error: {
+        message: '内容太大，请精简后重试',
+        code: -32013,
+        data: {
+          code: 'PAYLOAD_TOO_LARGE',
+          httpStatus: 413,
+          path: 'comments.create',
+        },
+      },
     });
     expect(media.json).toHaveBeenCalledWith({
-      statusCode: 415,
-      message: '不支持这种内容格式',
+      error: {
+        message: '不支持这种内容格式',
+        code: -32015,
+        data: {
+          code: 'UNSUPPORTED_MEDIA_TYPE',
+          httpStatus: 415,
+          path: 'comments.create',
+        },
+      },
     });
     expect(rejected.json).toHaveBeenCalledWith({
-      statusCode: 403,
-      message: '请求未能通过校验',
+      error: {
+        message: '请求未能通过校验',
+        code: -32003,
+        data: {
+          code: 'FORBIDDEN',
+          httpStatus: 403,
+          path: 'comments.create',
+        },
+      },
     });
 
     const serialized = JSON.stringify([
@@ -125,6 +167,92 @@ describe('SentryExceptionFilter', () => {
         tags: { path: '/trpc/comments.create', method: 'POST' },
       }),
     );
+  });
+
+  it('replaces a Nest BadRequestException built from a JSON SyntaxError', () => {
+    const leaked = `Unexpected token '}', ..."{"rows":[LEAK_MARKER]}" is not valid JSON`;
+    const wrapped = new BadRequestException(leaked);
+    const onTrpc = capture(wrapped);
+    const outside = capture(wrapped, '/health');
+
+    expect(onTrpc.response.status).toHaveBeenCalledWith(400);
+    expect(onTrpc.json).toHaveBeenCalledWith({
+      error: {
+        message: '请求格式有误',
+        code: -32600,
+        data: {
+          code: 'BAD_REQUEST',
+          httpStatus: 400,
+          path: 'comments.create',
+        },
+      },
+    });
+    expect(outside.response.status).toHaveBeenCalledWith(400);
+    expect(outside.json).toHaveBeenCalledWith({
+      statusCode: 400,
+      message: '请求格式有误',
+    });
+    const serialized = JSON.stringify([onTrpc.json.mock.calls, outside.json.mock.calls]);
+    expect(serialized).not.toContain('LEAK_MARKER');
+    expect(serialized).not.toContain('Unexpected token');
+    expect(serialized).not.toContain('is not valid JSON');
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('does not pass through body-parser types carried on an HttpException', () => {
+    const tooLarge = Object.assign(
+      new BadRequestException('request entity too large LIMIT_SECRET'),
+      {
+        type: 'entity.too.large',
+      },
+    );
+    const charset = Object.assign(new HttpException('unsupported charset "UTF-99-SECRET"', 400), {
+      type: 'charset.unsupported',
+    });
+    const verify = Object.assign(new HttpException('verify failed: internal token abc', 403), {
+      type: 'entity.verify.failed',
+    });
+
+    const large = capture(tooLarge, '/trpc/admin.catalog.import');
+    const media = capture(charset, '/health');
+    const rejected = capture(verify);
+
+    expect(large.json).toHaveBeenCalledWith({
+      error: {
+        message: '一次最多导入 1MB',
+        code: -32013,
+        data: {
+          code: 'PAYLOAD_TOO_LARGE',
+          httpStatus: 413,
+          path: 'admin.catalog.import',
+        },
+      },
+    });
+    expect(media.response.status).toHaveBeenCalledWith(415);
+    expect(media.json).toHaveBeenCalledWith({
+      statusCode: 415,
+      message: '不支持这种内容格式',
+    });
+    expect(rejected.json).toHaveBeenCalledWith({
+      error: {
+        message: '请求未能通过校验',
+        code: -32003,
+        data: {
+          code: 'FORBIDDEN',
+          httpStatus: 403,
+          path: 'comments.create',
+        },
+      },
+    });
+    const serialized = JSON.stringify([
+      large.json.mock.calls,
+      media.json.mock.calls,
+      rejected.json.mock.calls,
+    ]);
+    expect(serialized).not.toContain('LIMIT_SECRET');
+    expect(serialized).not.toContain('UTF-99-SECRET');
+    expect(serialized).not.toContain('internal token');
+    expect(captureException).not.toHaveBeenCalled();
   });
 
   it('does not report an HttpException 4xx and keeps its response body', () => {
