@@ -106,6 +106,41 @@ function InfiniteProbe({ gates }: { gates: Gate<string>[] }) {
   );
 }
 
+function InputProbe({
+  gates,
+  refetchRef,
+}: {
+  gates: Gate<string>[];
+  refetchRef: { current: (() => void) | null };
+}) {
+  const query = useQuery({
+    queryKey: ['retry-input'],
+    retry: false,
+    queryFn: () => {
+      const gate = createGate<string>();
+      gates.push(gate);
+      return gate.promise;
+    },
+  });
+  refetchRef.current = () => {
+    void query.refetch();
+  };
+  return (
+    <>
+      <input aria-label="评论" />
+      <FallbackView
+        view={queryFallback(query)}
+        errorMessage={query.error instanceof Error ? query.error.message : null}
+        fetching={query.isFetching}
+        readyText={typeof query.data === 'string' ? query.data : ''}
+        onRetry={() => {
+          void query.refetch();
+        }}
+      />
+    </>
+  );
+}
+
 function renderProbe(ui: ReactNode) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -159,5 +194,34 @@ describe('queryFallback with a real QueryClient', () => {
 
   it('keeps the error view for an infinite query that has never resolved', async () => {
     await expectRetryKeepsTheError((gates) => <InfiniteProbe gates={gates} />);
+  });
+
+  it('keeps focus in an input when a failed query recovers without retry', async () => {
+    const gates: Gate<string>[] = [];
+    const refetchRef: { current: (() => void) | null } = { current: null };
+    renderProbe(<InputProbe gates={gates} refetchRef={refetchRef} />);
+    await waitFor(() => expect(gates).toHaveLength(1));
+
+    act(() => {
+      gates[0]?.reject(new Error('first'));
+    });
+    await screen.findByRole('button', { name: '重试' });
+
+    const input = screen.getByRole('textbox', { name: '评论' });
+    input.focus();
+    expect(input).toHaveFocus();
+
+    act(() => {
+      refetchRef.current?.();
+    });
+    await waitFor(() => expect(gates).toHaveLength(2));
+    expect(input).toHaveFocus();
+
+    act(() => {
+      gates[1]?.resolve('loaded');
+    });
+    expect(await screen.findByRole('heading', { name: 'loaded' })).toBeInTheDocument();
+    expect(document.activeElement).toBe(input);
+    expect(input).toHaveFocus();
   });
 });

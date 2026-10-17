@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { cn } from '@repo/ui-web';
 
 /**
@@ -29,12 +29,24 @@ export function queryFallback(...queries: QueryFallbackState[]): QueryView {
   return 'ready';
 }
 
-/** After the error view recovers, move focus to the content that replaced it. */
+function shouldRestoreFocus(active: Element | null) {
+  if (active == null || active === document.body) return true;
+  return active instanceof HTMLElement && active.dataset.retryButton != null;
+}
+
+/**
+ * After the error view recovers, move focus to the content that replaced it
+ * only when it is still on the retry button or has already dropped to the
+ * document. Read activeElement in a layout effect: removing the button moves
+ * it to body before paint, while an input outside that tree stays focused.
+ */
 export function useFocusOnRecovery(view: QueryView, targetRef: RefObject<HTMLElement | null>) {
   const previous = useRef(view);
-  useEffect(() => {
-    if (previous.current === 'error' && view === 'ready') targetRef.current?.focus();
+  useLayoutEffect(() => {
+    const recovered = previous.current === 'error' && view === 'ready';
     previous.current = view;
+    if (!recovered || !shouldRestoreFocus(document.activeElement)) return;
+    targetRef.current?.focus();
   }, [view, targetRef]);
 }
 
@@ -54,6 +66,7 @@ export function RetryButton({
   return (
     <button
       type="button"
+      data-retry-button=""
       aria-disabled={retrying || undefined}
       aria-busy={retrying || undefined}
       onClick={() => {
