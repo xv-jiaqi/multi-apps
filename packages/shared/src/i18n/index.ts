@@ -231,6 +231,7 @@ const zhCN: Dictionary = {
   'trade.publish.error.imageUrl': '图片链接需以 https:// 开头',
   'trade.publish.error.tooManyImages': '最多 4 张图片',
   'trade.publish.error.contact': '联系方式需要 2–200 个字',
+  'trade.publish.rateLimited': '发布太频繁，请稍后再试',
   'trade.publish.disclaimer':
     'Cardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。',
   'trade.condition.label': '品相',
@@ -714,6 +715,7 @@ const enUS: Dictionary = {
   'trade.publish.error.imageUrl': 'Image links must start with https://',
   'trade.publish.error.tooManyImages': 'Up to 4 photos',
   'trade.publish.error.contact': 'Contact must be 2–200 characters',
+  'trade.publish.rateLimited': 'Too many listings. Try again later.',
   'trade.publish.disclaimer':
     'Cardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.',
   'trade.condition.label': 'Condition',

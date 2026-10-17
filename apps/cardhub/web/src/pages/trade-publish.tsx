@@ -62,6 +62,9 @@ function PublishImagePreview({ url, fallback }: { url: string; fallback: string 
   }
   return (
     <img
+      ref={(img) => {
+        if (img?.complete && img.naturalWidth === 0) setFailed(true);
+      }}
       src={url}
       alt=""
       loading="lazy"
@@ -134,7 +137,9 @@ export const TradePublishPage = observer(function TradePublishPage() {
       navigate('/trade', { replace: true });
     },
     onError(err) {
-      setFormError(err.message);
+      setFormError(
+        err.data?.code === 'TOO_MANY_REQUESTS' ? tt('trade.publish.rateLimited') : err.message,
+      );
     },
   });
 

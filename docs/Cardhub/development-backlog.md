@@ -280,7 +280,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - shared：`packages/shared/src/zod/index.ts` 的 `listingPublishInput` 与 `listingListInput` 增加上述可选字段。`variantNote` 去空白后最长 40 字。列表增加 `minPrice?`、`maxPrice?`、`sort: 'newest' | 'price_asc' | 'price_desc'`，默认 `newest`。
   - 价格排序只比较同一种货币。`sort` 为价格时，请求必须带 `currency`（默认 `CNY`），只返回该货币且价格非空的意向。只传 `currency`、不传价格区间、排序为 `newest` 时，也只返回该货币（含面议）。没有 `currency` 的 `newest` 返回全部货币。不做汇率换算。
   - **WARN-5（已定，按 A）**：自动带上的 `currency` 在切回最新发布或清空价格区间时去掉；用户主动选的保留。
-  - URL 里只有 `min` / `max`、没有 `currency` 时，不显示价格筛选 chip，也不计入筛选数量。
+  - 分享链接只有 `min` / `max`、没有 `currency` 时，忽略价格区间，并用 replace 从 URL 去掉 `min` 和 `max`。
   - Web：`apps/cardhub/web/src/pages/trade-list.tsx`、`trade-publish.tsx` 和 `apps/cardhub/web/src/components/listings-for-card.tsx`。列表项显示卡名和系列并链接到卡牌页；把“按 slug 筛选”换成卡牌搜索选择器（基于 `cards.search`，250ms 防抖，键盘可选），保留 `/trade/new?cardSlug=` 预填；发布页使用同一选择器并显示所选卡牌预览。图片显示为最多 4 张缩略图（`loading="lazy"`、`referrerPolicy="no-referrer"`，加载失败退回链接），点击新窗口打开原图。发布表单增加品相、语言和版本备注，三者都可空。列表增加这三项筛选、价格区间和排序。已填写的品相和语言显示在卡片上。
   - i18n：品相五档的中文是近全新、轻微使用、中度使用、重度使用、破损。语言是中文、英文、日文、其他。新 key 放在 `trade.*`。
   - 边界：不建商品 SKU、库存数量、购物车、站内支付、卖家等级或市场价。版本备注是自由短句，不是工艺目录。小程序留到 CH-301，本卡只保证 Web 上的新字段能从接口读到。

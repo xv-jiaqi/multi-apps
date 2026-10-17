@@ -93,6 +93,7 @@ export const TradeListPage = observer(function TradeListPage() {
       : { min: '', max: '' },
   );
   const [closedNotice, setClosedNotice] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const noticeRef = useRef<HTMLParagraphElement | null>(null);
   const utils = trpc.useUtils();
 
@@ -116,8 +117,7 @@ export const TradeListPage = observer(function TradeListPage() {
   const priceSort = sort === 'price_asc' || sort === 'price_desc';
   // A price sort without a currency is not a valid API query. Default the
   // request (and the currency control) to CNY, but do not write that default
-  // into the URL. A price range still needs currency in the URL, so a bare
-  // min/max is not sent and is not shown as an active filter.
+  // into the URL. A shared min/max without currency is ignored and removed.
   const currencyFilter: TradeCurrency | undefined =
     currencyInUrl ?? (priceSort ? 'CNY' : undefined);
   const minPrice = currencyInUrl ? parsePrice(searchParams.get('min')) : undefined;
@@ -129,6 +129,15 @@ export const TradeListPage = observer(function TradeListPage() {
     Number.isFinite(maxPrice) &&
     minPrice > maxPrice;
 
+  useEffect(() => {
+    const min = searchParams.get('min');
+    const max = searchParams.get('max');
+    if ((!min && !max) || isTradeCurrency(searchParams.get('currency'))) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('min');
+    next.delete('max');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
   useEffect(() => {
     if (!isTradeCurrency(searchParams.get('currency'))) {
       setPriceDraft({ min: '', max: '' });
@@ -204,8 +213,9 @@ export const TradeListPage = observer(function TradeListPage() {
       ...(priceSort ? { sort: null } : {}),
     });
   }
-  function clearAutoCurrency() {
-    return currencyChosenByUser ? {} : { currency: null as string | null };
+  function clearAutoCurrency(): Record<string, string | null> {
+    if (currencyChosenByUser) return {};
+    return { currency: null };
   }
   function leavePriceSort() {
     updateParams({ sort: null, ...clearAutoCurrency() });
@@ -312,7 +322,7 @@ export const TradeListPage = observer(function TradeListPage() {
           <div
             id="trade-filters"
             data-open={filtersOpen ? 'true' : undefined}
-            className="hidden flex-wrap items-end gap-3 sm:flex data-[open=true]:flex"
+            className="hidden flex-wrap items-start gap-3 sm:flex data-[open=true]:flex"
           >
             <FilterField label={tt('trade.condition.label')} className="w-full sm:w-40">
               <Select
@@ -666,22 +676,28 @@ export const TradeListPage = observer(function TradeListPage() {
                                 })}
                               </time>
                             </p>
-                            <div className="ml-auto flex items-center gap-2">
-                              {!isMine ? (
+                            {!isMine ? (
+                              <div className="ml-auto flex items-center gap-2">
                                 <ReportButton targetType="LISTING" targetId={listing.id} />
-                              ) : null}
-                              {canClose ? (
-                                <ListingCloseControl
-                                  listingId={listing.id}
-                                  onClosed={() => {
-                                    void utils.listings.list.invalidate();
-                                    void utils.listings.byCard.invalidate();
-                                    void utils.listings.mine.invalidate();
-                                    setClosedNotice(true);
-                                  }}
-                                />
-                              ) : null}
-                            </div>
+                              </div>
+                            ) : null}
+                            {canClose ? (
+                              <ListingCloseControl
+                                listingId={listing.id}
+                                confirming={confirmingId === listing.id}
+                                onConfirmingChange={(open) =>
+                                  setConfirmingId((current) =>
+                                    open ? listing.id : current === listing.id ? null : current,
+                                  )
+                                }
+                                onClosed={() => {
+                                  void utils.listings.list.invalidate();
+                                  void utils.listings.byCard.invalidate();
+                                  void utils.listings.mine.invalidate();
+                                  setClosedNotice(true);
+                                }}
+                              />
+                            ) : null}
                           </div>
                         </div>
                       </div>
@@ -795,6 +811,9 @@ function TradePhoto({
       className="block size-16 overflow-hidden rounded-md bg-neutral-100 ring-1 ring-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
     >
       <img
+        ref={(img) => {
+          if (img?.complete && img.naturalWidth === 0) setFailed(true);
+        }}
         src={url}
         alt=""
         loading="lazy"
@@ -828,7 +847,10 @@ function ListingSkeleton() {
   return (
     <ul className="space-y-3">
       {Array.from({ length: 4 }).map((_, index) => (
-        <li key={index} className="rounded-2xl border border-white/60 bg-white/50 p-4 sm:p-5">
+        <li
+          key={index}
+          className="animate-pulse rounded-2xl border border-white/60 bg-white/50 p-4 sm:p-5"
+        >
           <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-4">
             <div className="aspect-[63/88] w-16 rounded-sm bg-neutral-200" />
             <div className="space-y-3">

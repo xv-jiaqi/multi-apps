@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -23,6 +23,12 @@ if (typeof ResizeObserver === 'undefined') {
   vi.stubGlobal('ResizeObserver', ResizeObserverMock);
 }
 
+const publishHarness = vi.hoisted(() => ({
+  onError: undefined as
+    | ((error: { message: string; data?: { code?: string } }) => void)
+    | undefined,
+}));
+
 vi.mock('../lib/trpc', () => ({
   trpc: {
     useUtils: () => ({
@@ -31,9 +37,34 @@ vi.mock('../lib/trpc', () => ({
         byCard: { invalidate: vi.fn() },
       },
     }),
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isFetching: false,
+          isError: false,
+          isSuccess: false,
+          refetch: vi.fn(),
+        }),
+      },
+    },
     cards: {
       bySlug: {
-        useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
+        useQuery: (input: { slug: string }, options?: { enabled?: boolean }) =>
+          options?.enabled && input.slug
+            ? {
+                data: {
+                  slug: input.slug,
+                  name: '极光骑士',
+                  rarity: 'rare',
+                  imageUrl: null,
+                  seriesSlug: 'starter',
+                  seriesTitle: '启程',
+                },
+                isLoading: false,
+                isError: false,
+              }
+            : { data: undefined, isLoading: false, isError: false },
       },
       search: {
         useQuery: () => ({
@@ -47,7 +78,12 @@ vi.mock('../lib/trpc', () => ({
     },
     listings: {
       publish: {
-        useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+        useMutation: (options?: {
+          onError?: (error: { message: string; data?: { code?: string } }) => void;
+        }) => {
+          publishHarness.onError = options?.onError;
+          return { mutate: vi.fn(), isPending: false };
+        },
       },
     },
   },
@@ -78,6 +114,39 @@ describe('TradePublishPage', () => {
     await user.click(screen.getByRole('button', { name: '发布意向' }));
     expect(await screen.findByText('请选择一张卡牌')).toBeInTheDocument();
     expect(screen.getByText('联系方式需要 2–200 个字')).toBeInTheDocument();
+    expect(document.getElementById('trade-card')).toHaveFocus();
+  });
+
+  it('focuses the contact field when the card is already selected', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/trade/new?cardSlug=aurora-knight']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('极光骑士')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '发布意向' }));
+    expect(await screen.findByText('联系方式需要 2–200 个字')).toBeInTheDocument();
+    expect(screen.queryByText('请选择一张卡牌')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /联系方式/ })).toHaveFocus();
+  });
+
+  it('shows the shared rate-limit copy instead of the raw error', async () => {
+    render(
+      <MemoryRouter initialEntries={['/trade/new']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      publishHarness.onError?.({
+        message: 'Too many requests',
+        data: { code: 'TOO_MANY_REQUESTS' },
+      });
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('发布太频繁，请稍后再试');
   });
 
   it('falls back to a text link when a preview image fails to load', async () => {
@@ -100,5 +169,31 @@ describe('TradePublishPage', () => {
     const fallback = await screen.findByRole('link', { name: '图片 1' });
     expect(fallback).toHaveAttribute('href', 'https://example.com/broken.png');
     expect(document.querySelector('img[src="https://example.com/broken.png"]')).toBeNull();
+  });
+
+  it('falls back when a cached preview already has no natural width', async () => {
+    const user = userEvent.setup();
+    const imageProto = HTMLImageElement.prototype;
+    const complete = Object.getOwnPropertyDescriptor(imageProto, 'complete');
+    const naturalWidth = Object.getOwnPropertyDescriptor(imageProto, 'naturalWidth');
+    Object.defineProperty(imageProto, 'complete', { configurable: true, get: () => true });
+    Object.defineProperty(imageProto, 'naturalWidth', { configurable: true, get: () => 0 });
+    try {
+      render(
+        <MemoryRouter initialEntries={['/trade/new']}>
+          <TradePublishPage />
+        </MemoryRouter>,
+      );
+      await user.type(
+        screen.getByRole('textbox', { name: /实物图链接/ }),
+        'https://example.com/cached.png',
+      );
+      const fallback = await screen.findByRole('link', { name: '图片 1' });
+      expect(fallback).toHaveAttribute('href', 'https://example.com/cached.png');
+      expect(document.querySelector('img[src="https://example.com/cached.png"]')).toBeNull();
+    } finally {
+      if (complete) Object.defineProperty(imageProto, 'complete', complete);
+      if (naturalWidth) Object.defineProperty(imageProto, 'naturalWidth', naturalWidth);
+    }
   });
 });

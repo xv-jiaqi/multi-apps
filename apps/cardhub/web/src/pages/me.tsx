@@ -182,6 +182,7 @@ export const MePage = observer(function MePage() {
     id: string;
     section: SectionId;
   } | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const successRef = useRef<HTMLParagraphElement | null>(null);
   const loadedHashRef = useRef<string | null>(null);
   const listingLoadMoreRef = useRef<HTMLButtonElement | null>(null);
@@ -551,7 +552,16 @@ export const MePage = observer(function MePage() {
                           {formatDateTime(listing.createdAt, locale.locale)}
                         </time>
                         {listing.status === 'OPEN' ? (
-                          <ListingCloseControl listingId={listing.id} onClosed={closeListing} />
+                          <ListingCloseControl
+                            listingId={listing.id}
+                            confirming={confirmingId === listing.id}
+                            onConfirmingChange={(open) =>
+                              setConfirmingId((current) =>
+                                open ? listing.id : current === listing.id ? null : current,
+                              )
+                            }
+                            onClosed={closeListing}
+                          />
                         ) : null}
                       </div>
                     </div>

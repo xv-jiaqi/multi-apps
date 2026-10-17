@@ -216,6 +216,11 @@ describe('TradeListPage price filters', () => {
     renderTrade('?min=10&max=30');
 
     await screen.findByText('暂无交易意向');
+    await waitFor(() => {
+      const search = searchText();
+      expect(search).not.toContain('min=');
+      expect(search).not.toContain('max=');
+    });
     expect(screen.queryByText('加载失败')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '清除 价格区间' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /筛选与排序（/ })).not.toBeInTheDocument();
@@ -225,6 +230,24 @@ describe('TradeListPage price filters', () => {
     expect(latestInput()).toMatchObject({
       sort: 'newest',
       currency: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
+    });
+  });
+
+  it('removes a shared price range without currency while keeping a price sort', async () => {
+    renderTrade('?sort=price_asc&min=10&max=30');
+
+    await waitFor(() => {
+      const search = searchText();
+      expect(search).toContain('sort=price_asc');
+      expect(search).not.toContain('min=');
+      expect(search).not.toContain('max=');
+      expect(search).not.toContain('currency=');
+    });
+    expect(latestInput()).toMatchObject({
+      sort: 'price_asc',
+      currency: 'CNY',
       minPrice: undefined,
       maxPrice: undefined,
     });
@@ -405,6 +428,24 @@ describe('TradeListPage price filters', () => {
     const fallback = await screen.findByRole('link', { name: '图片 1' });
     expect(fallback).toHaveAttribute('href', 'https://example.com/broken.png');
     expect(document.querySelector('img[src="https://example.com/broken.png"]')).toBeNull();
+  });
+
+  it('falls back when a cached listing photo already has no natural width', () => {
+    const imageProto = HTMLImageElement.prototype;
+    const complete = Object.getOwnPropertyDescriptor(imageProto, 'complete');
+    const naturalWidth = Object.getOwnPropertyDescriptor(imageProto, 'naturalWidth');
+    Object.defineProperty(imageProto, 'complete', { configurable: true, get: () => true });
+    Object.defineProperty(imageProto, 'naturalWidth', { configurable: true, get: () => 0 });
+    try {
+      listHarness.items = [listingWithPhoto(['https://example.com/cached.png'])];
+      renderTrade();
+      const fallback = screen.getByRole('link', { name: '图片 1' });
+      expect(fallback).toHaveAttribute('href', 'https://example.com/cached.png');
+      expect(document.querySelector('img[src="https://example.com/cached.png"]')).toBeNull();
+    } finally {
+      if (complete) Object.defineProperty(imageProto, 'complete', complete);
+      if (naturalWidth) Object.defineProperty(imageProto, 'naturalWidth', naturalWidth);
+    }
   });
 
   it('localizes the load error in English', async () => {
