@@ -19,7 +19,7 @@ function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
 }
 
 type SeriesHeroProps = {
-  series: { slug: string; title: string; description: string; coverUrl: string };
+  series: { slug: string; title: string; description: string | null; coverUrl: string | null };
   alt: string;
   cardCountLabel: string;
 };
@@ -42,10 +42,15 @@ function SeriesHero({ series, alt, cardCountLabel }: SeriesHeroProps) {
       )}
     >
       {hasImage ? <img key={series.coverUrl} {...art.imgProps} /> : null}
-      <div className={cn('absolute inset-0', hasImage ? 'bg-black/65' : 'bg-black/15')} aria-hidden />
+      <div
+        className={cn('absolute inset-0', hasImage ? 'bg-black/65' : 'bg-black/15')}
+        aria-hidden
+      />
       <div className="relative space-y-3">
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{series.title}</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-white/90">{series.description}</p>
+        <p className="max-w-2xl text-sm leading-relaxed text-white/90">
+          {series.description ?? ''}
+        </p>
         <p className="text-xs uppercase tracking-widest text-white/80">{cardCountLabel}</p>
       </div>
     </header>

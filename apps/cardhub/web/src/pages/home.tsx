@@ -11,8 +11,8 @@ import { useArtImage } from '../components/artwork';
 type FeaturedSeries = {
   slug: string;
   title: string;
-  description: string;
-  coverUrl: string;
+  description: string | null;
+  coverUrl: string | null;
 };
 
 function FeaturedSeriesTile({ series, featured }: { series: FeaturedSeries; featured: boolean }) {
@@ -41,7 +41,7 @@ function FeaturedSeriesTile({ series, featured }: { series: FeaturedSeries; feat
         />
       )}
       <h3 className="text-lg font-semibold text-neutral-900">{series.title}</h3>
-      <p className="mt-1 line-clamp-2 text-xs text-neutral-700">{series.description}</p>
+      <p className="mt-1 line-clamp-2 text-xs text-neutral-700">{series.description ?? ''}</p>
     </Link>
   );
 }
@@ -92,11 +92,7 @@ export const HomePage = observer(function HomePage() {
                   />
                 ))
               : featured.map((series, idx) => (
-                  <FeaturedSeriesTile
-                    key={series.slug}
-                    series={series}
-                    featured={idx === 0}
-                  />
+                  <FeaturedSeriesTile key={series.slug} series={series} featured={idx === 0} />
                 ))}
           </div>
         </div>

@@ -38,16 +38,16 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 ### 3.1 卡牌目录（系列 / 卡牌）
 
-| 能力                     | 状态 | 入口                  | 接口                                | 说明                                                                                                                |
-| ------------------------ | ---- | --------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 系列列表（封面、卡牌数） | ✅   | `/series`             | `series.list`                       | 接口支持 `page/pageSize`，前端只取第一页（默认 20 条）；无排序、无筛选                                              |
-| 系列详情 + 卡牌网格      | ✅   | `/series/:seriesSlug` | `series.bySlug`                     | 一次返回全部卡牌；无系列内搜索、排序、分页（CH-202）                                                                |
-| 卡牌详情（属性、稀有度） | ✅   | `/cards/:cardSlug`    | `cards.bySlug`                      | `attributes` 是扁平 JSON，键名原样显示（`cost`/`attack`…），未本地化（CH-202）                                      |
-| 稀有度                   | ✅   | 各列表与详情          | `Card.rarity`                       | `common / rare / epic / legendary`，标签写在 `rarity-badge.tsx`（Web）和 `@repo/ui-mini`（小程序）                  |
-| 卡牌 / 系列图片          | 🟡   | —                     | `Card.imageUrl` / `Series.coverUrl` | 现有数据全是 `gradient:...` 占位符；前端按 slug 查 `gradients.ts` 渲染渐变 + 首字母，**从不渲染真实图片**（CH-105） |
-| 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                   | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）。平行版本与限量编号见 CH-213                                       |
-| 内容维护                 | 🟡   | —                     | `seed:catalog`                      | 只能修改 `apps/cardhub/api/src/scripts/seed-data.ts` 后重跑 seed；seed 按 slug upsert 会覆盖同名记录（CH-107）      |
-| 面包屑                   | ✅   | 所有深层页面          | —                                   |                                                                                                                     |
+| 能力                     | 状态 | 入口                  | 接口                                | 说明                                                                                                                                                                                                                                      |
+| ------------------------ | ---- | --------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 系列列表（封面、卡牌数） | ✅   | `/series`             | `series.list`                       | 接口支持 `page/pageSize`，前端只取第一页（默认 20 条）；无排序、无筛选                                                                                                                                                                    |
+| 系列详情 + 卡牌网格      | ✅   | `/series/:seriesSlug` | `series.bySlug`                     | 一次返回全部卡牌；无系列内搜索、排序、分页（CH-202）                                                                                                                                                                                      |
+| 卡牌详情（属性、稀有度） | ✅   | `/cards/:cardSlug`    | `cards.bySlug`                      | `attributes` 是扁平 JSON，键名原样显示（`cost`/`attack`…），未本地化（CH-202）                                                                                                                                                            |
+| 稀有度                   | ✅   | 各列表与详情          | `Card.rarity`                       | `common / rare / epic / legendary`，标签写在 `rarity-badge.tsx`（Web）和 `@repo/ui-mini`（小程序）                                                                                                                                        |
+| 卡牌 / 系列图片          | 🟡   | 全站图位              | `Card.imageUrl` / `Series.coverUrl` | Web / Tauri 已支持 https 真实图片：加载中固定灰底、加载完淡入、坏链或 `gradient:` 回退原渐变；卡牌详情用 63:88 contain，其余卡图按 63:88 cover，系列封面按 2:1 或现有背景容器 cover。现有 seed 仍是 `gradient:...`，小程序同步留给 CH-301 |
+| 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                   | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）。平行版本与限量编号见 CH-213                                                                                                                                                             |
+| 内容维护                 | 🟡   | —                     | `seed:catalog`                      | 只能修改 `apps/cardhub/api/src/scripts/seed-data.ts` 后重跑 seed；seed 按 slug upsert 会覆盖同名记录（CH-107）                                                                                                                            |
+| 面包屑                   | ✅   | 所有深层页面          | —                                   |                                                                                                                                                                                                                                           |
 
 ### 3.2 搜索
 
@@ -372,7 +372,7 @@ erDiagram
 按对用户的影响排序，括号内是对应任务。
 
 1. `Topic.pinned` 字段无效；`forum.topics.update` 有接口无界面（CH-103）。
-2. 卡牌、系列只有渐变占位图（CH-105）。
+2. 现有 seed 仍只有渐变占位图；真实图片需要 CH-107/CH-208 后填入 https URL，小程序渲染同步留给 CH-301。
 3. 搜索索引对 `ILIKE '%q%'` 无效，数据量上来后会全表扫描（CH-106）。
 4. API 错误信息只有中文（CH-211）。
 5. 首页统计卡文案暴露“NestJS + tRPC + PostgreSQL（Epic 2）”等开发信息；论坛、交易列表页用 `<Link><Button/></Link>` 嵌套了两个可交互元素；`trade-list.tsx` / `trade-publish.tsx` 末尾有无用的别名导出（CH-108）。

@@ -25,6 +25,7 @@ type UseArtImageResult = {
   imgProps: ImgHTMLAttributes<HTMLImageElement> & {
     ref: (img: HTMLImageElement | null) => void;
     fetchPriority?: 'high';
+    'data-loaded'?: true;
   };
 };
 
@@ -60,7 +61,7 @@ export function useArtImage({
       decoding: 'async',
       referrerPolicy: 'no-referrer',
       draggable: false,
-      'data-loaded': status === 'loaded' || undefined,
+      'data-loaded': status === 'loaded' ? true : undefined,
       className: cn(
         'absolute inset-0 size-full opacity-0 transition-opacity duration-200 motion-reduce:transition-none data-loaded:opacity-100',
         fit === 'contain' ? 'object-contain' : 'object-cover',
@@ -77,12 +78,7 @@ export function ArtImage(props: ArtImageProps) {
 
   if (mode === 'placeholder') return null;
 
-  return (
-    <img
-      key={typeof props.src === 'string' ? props.src : 'placeholder'}
-      {...imgProps}
-    />
-  );
+  return <img key={typeof props.src === 'string' ? props.src : 'placeholder'} {...imgProps} />;
 }
 
 type ArtworkProps = {
@@ -121,9 +117,7 @@ function ArtworkPlaceholder({
           <span
             className={cn(
               'font-black uppercase tracking-widest text-white/70',
-              initial === 'bottom-left'
-                ? 'absolute bottom-6 left-6 text-5xl'
-                : 'relative text-3xl',
+              initial === 'bottom-left' ? 'absolute bottom-6 left-6 text-5xl' : 'relative text-3xl',
             )}
           >
             {name.slice(0, 1)}
@@ -154,19 +148,9 @@ export function Artwork({
   const { mode, imgProps } = useArtImage({ src, alt, fit, priority });
 
   return (
-    <div
-      className={cn(
-        'relative overflow-hidden',
-        ART_ASPECT[kind],
-        ART_SURFACE,
-        className,
-      )}
-    >
+    <div className={cn('relative overflow-hidden', ART_ASPECT[kind], ART_SURFACE, className)}>
       {mode === 'image' ? (
-        <img
-          key={typeof src === 'string' ? src : 'placeholder'}
-          {...imgProps}
-        />
+        <img key={typeof src === 'string' ? src : 'placeholder'} {...imgProps} />
       ) : (
         <ArtworkPlaceholder kind={kind} slug={slug} name={name} initial={placeholderInitial} />
       )}
