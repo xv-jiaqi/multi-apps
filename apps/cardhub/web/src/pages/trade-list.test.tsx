@@ -127,6 +127,29 @@ describe('TradeListPage price filters', () => {
     });
   });
 
+  it('writes the default currency when a price range is committed without one in the URL', async () => {
+    const user = userEvent.setup();
+    renderTrade('?sort=price_asc');
+
+    await user.type(screen.getByRole('textbox', { name: '最低价' }), '10');
+    await user.type(screen.getByRole('textbox', { name: '最高价' }), '20');
+    await user.tab();
+
+    await waitFor(() => {
+      const search = screen.getByLabelText('search').textContent ?? '';
+      expect(search).toContain('sort=price_asc');
+      expect(search).toContain('currency=CNY');
+      expect(search).toContain('min=10');
+      expect(search).toContain('max=20');
+    });
+    expect(latestInput()).toMatchObject({
+      sort: 'price_asc',
+      currency: 'CNY',
+      minPrice: 10,
+      maxPrice: 20,
+    });
+  });
+
   it('drops a price range when the URL has no currency', async () => {
     renderTrade('?min=10');
 
