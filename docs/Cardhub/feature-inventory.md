@@ -89,7 +89,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | 发布话题（Markdown + 预览）       | ✅   | `/forum/new`        | `forum.topics.create`    | slug = 标题英文化 + 6 位随机后缀（中文标题会退化成 `topic-xxxxxx`）                                                                                                 |
 | 话题详情 + Markdown 渲染          | ✅   | `/forum/:slug`      | `forum.topics.bySlug`    | `react-markdown` + `remark-gfm` + `rehype-sanitize`；返回 `editableUntil` 和 `serverNow` 校正编辑倒计时；详情页只用 `editedAt` 显示“已编辑”                         |
 | 编辑话题（发布后 5 分钟内）       | ✅   | `/forum/:slug/edit` | `forum.topics.update`    | 仅作者可在发布后 5 分钟内编辑；`editedAt` 只在 update 写入，置顶不算编辑                                                                                            |
-| 删除话题（本人 / 管理员）         | ✅   | 话题详情            | `forum.topics.delete`    | Web / Tauri 使用行内二步确认；成功后返回列表并显示可聚焦的删除提示；级联删除回帖                                                                                   |
+| 删除话题（本人 / 管理员）         | ✅   | 话题详情            | `forum.topics.delete`    | Web / Tauri 使用行内二步确认；成功后返回列表并显示可聚焦的删除提示；级联删除回帖                                                                                    |
 | 回帖（Markdown）                  | ✅   | 话题详情            | `forum.replies.create`   |                                                                                                                                                                     |
 | 回帖翻页                          | ✅   | `/forum/:slug`      | `forum.replies.list`     | 详情页先渲染 `bySlug` 内联的前 20 条；有 `replyNextCursor` 时可点击“加载更多回帖”继续按正序追加；首个后续页加载中显示忙态，失败重试中禁用按钮，新回帖可见高亮并聚焦 |
 | 删除回帖（本人 / 管理员）         | ✅   | 回帖旁              | `forum.replies.delete`   | Web / Tauri 使用行内二步确认；成功后本地更新已展开分页、游标和回帖数，避免分页收回或 refetch 使用已删除游标                                                         |
@@ -321,7 +321,7 @@ erDiagram
 - `Comment` 通过可空的 `cardId` / `seriesId` 指向卡牌或系列；数据库 CHECK 约束保证两者恰好有一个非空。
 - `Report.targetType + targetId` 是多态指针，没有外键；目标被删后举报记录保留用于审计。已处理记录通过可空的 `resolvedAt`、`resolvedById` 和 `resolution` 保存处理信息；处理人被删除时保留举报记录并把处理人置空。
 - 所有关联用户的外键都是 `onDelete: Cascade`。
-- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution` → `20261017070000_add_series_comments` → `20261017071000_add_listing_facets`。
+- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution` → `20261017070000_add_series_comments` → `20261017070600_add_topic_editing_and_pinning` → `20261017071000_add_listing_facets`。
 
 ## 7. 页面清单
 
