@@ -46,6 +46,20 @@ function makeRouter() {
 }
 
 describe('AuthRouter.register', () => {
+  it('rejects an email longer than 128 characters', async () => {
+    const { caller, userMock } = makeRouter();
+
+    await expect(
+      caller.register({
+        email: `${'a'.repeat(117)}@example.com`,
+        username: 'alice',
+        password: TEST_PASSWORD,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    expect(userMock.findFirst).not.toHaveBeenCalled();
+  });
+
   it('rejects duplicate email with CONFLICT', async () => {
     const { caller, userMock } = makeRouter();
     userMock.findFirst.mockResolvedValueOnce({
@@ -185,6 +199,16 @@ describe('AuthRouter.login', () => {
 });
 
 describe('AuthRouter.me', () => {
+  it('rejects a token longer than 2048 characters', async () => {
+    const { caller, auth } = makeRouter();
+
+    await expect(caller.me({ token: 'a'.repeat(2049) })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+
+    expect(auth.verify).not.toHaveBeenCalled();
+  });
+
   it('returns the current user including role when the token is valid', async () => {
     const { caller, userMock, auth } = makeRouter();
     auth.verify = jest.fn().mockReturnValue({ sub: 'u-admin', username: 'admin' });

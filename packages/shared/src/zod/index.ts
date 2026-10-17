@@ -27,7 +27,10 @@ export const usernameSchema = z
   .max(24, '用户名最多 24 个字符')
   .regex(/^[A-Za-z0-9_-]+$/, '用户名只能包含字母、数字、下划线和连字符');
 
-export const emailSchema = z.string().trim().toLowerCase().email('邮箱格式不正确');
+/** Same cap as the login identifier, so a registered email can be used to sign in. */
+export const EMAIL_MAX = 128;
+
+export const emailSchema = z.string().trim().max(EMAIL_MAX).toLowerCase().email('邮箱格式不正确');
 
 export const passwordSchema = z.string().min(8, '密码至少 8 位').max(128, '密码过长');
 
@@ -106,15 +109,23 @@ export const replyCreateInput = z.object({
 });
 export type ReplyCreateInput = z.infer<typeof replyCreateInput>;
 
+/**
+ * List cursors are Prisma ids. Users, cards, listings, topics, and reports
+ * all use `@default(uuid())`, which is 36 characters. Shorter test ids still fit.
+ */
+export const CURSOR_MAX = 36;
+
+const cursorSchema = z.string().max(CURSOR_MAX);
+
 export const cursorPaginationInput = z.object({
-  cursor: z.string().optional(),
+  cursor: cursorSchema.optional(),
   limit: z.number().int().min(1).max(50).default(20),
 });
 export type CursorPaginationInput = z.infer<typeof cursorPaginationInput>;
 
 export const pageCursorPaginationInput = z.object({
-  pageCursor: z.string().optional(),
-  cursor: z.string().optional(),
+  pageCursor: cursorSchema.optional(),
+  cursor: cursorSchema.optional(),
   limit: z.number().int().min(1).max(50).default(20),
 });
 export type PageCursorPaginationInput = z.infer<typeof pageCursorPaginationInput>;
@@ -162,37 +173,54 @@ export const currencyCodeSchema = z
   .toUpperCase()
   .regex(/^[A-Z]{3}$/, '货币代码必须是 3 个大写字母 (ISO 4217)');
 
-export const listingPriceSchema = z.union([z.number(), z.string()]).transform((val, ctx) => {
-  const asNumber = typeof val === 'number' ? val : Number(val);
-  if (!Number.isFinite(asNumber) || asNumber < 0 || asNumber > 9_999_999_999.99) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: '价格必须是 0 到 9,999,999,999.99 之间的数字',
-    });
-    return z.NEVER;
-  }
-  // Round to 2 decimals to match Decimal(12, 2) on the database side.
-  return Math.round(asNumber * 100) / 100;
-});
+/**
+ * Decimal(12, 2) prints in 13 characters (`9999999999.99`). 64 leaves room for
+ * the leading zeros, extra fraction digits, and short scientific notation
+ * (`1e2`) that the publish form accepts via `Number()`, without taking a
+ * multi-kilobyte digit string.
+ */
+export const LISTING_PRICE_STRING_MAX = 64;
+
+export const listingPriceSchema = z
+  .union([z.number(), z.string().max(LISTING_PRICE_STRING_MAX)])
+  .transform((val, ctx) => {
+    const asNumber = typeof val === 'number' ? val : Number(val);
+    if (!Number.isFinite(asNumber) || asNumber < 0 || asNumber > 9_999_999_999.99) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '价格必须是 0 到 9,999,999,999.99 之间的数字',
+      });
+      return z.NEVER;
+    }
+    // Round to 2 decimals to match Decimal(12, 2) on the database side.
+    return Math.round(asNumber * 100) / 100;
+  });
+
+/** Same ceiling as the admin image fields. */
+export const LISTING_IMAGE_URL_MAX = 2048;
+
+/** Publish form rejects a fifth photo before it calls the API. */
+export const LISTING_IMAGE_MAX_COUNT = 4;
 
 export const listingPublishInput = z.object({
   cardSlug: slugSchema,
   kind: z.enum(LISTING_KIND_VALUES),
   price: listingPriceSchema.optional(),
   currency: currencyCodeSchema.default('CNY'),
-  // Cap at 4 to keep the schema close to "thumbnails the user can post" —
-  // larger image collections belong in the (backlog) self-hosted pipeline.
+  // Cap at 4 to match the publish form ("每行一个 https 链接，最多 4 张").
+  // Each URL matches the admin image fields and stays well under the 100kb body cap.
   imageUrls: z
     .array(
       z
         .string()
         .trim()
+        .max(LISTING_IMAGE_URL_MAX)
         .url('trade.publish.error.imageUrl')
         .refine((url) => url.toLowerCase().startsWith('https://'), {
           message: 'trade.publish.error.imageUrl',
         }),
     )
-    .max(4, 'trade.publish.error.tooManyImages')
+    .max(LISTING_IMAGE_MAX_COUNT, 'trade.publish.error.tooManyImages')
     .default([]),
   contact: z.string().trim().min(2, '联系方式至少 2 个字符').max(200, '联系方式最多 200 字'),
   note: z.string().trim().max(500, '说明最多 500 字').optional(),
@@ -215,7 +243,7 @@ export const listingListInput = cursorPaginationInput.extend({
 export type ListingListInput = z.infer<typeof listingListInput>;
 
 export const listingMineInput = pageCursorPaginationInput.extend({
-  cursor: z.string().optional(),
+  cursor: cursorSchema.optional(),
 });
 export type ListingMineInput = z.infer<typeof listingMineInput>;
 
@@ -238,18 +266,43 @@ export const reportResolveInput = z.object({
 });
 export type ReportResolveInput = z.infer<typeof reportResolveInput>;
 
+/**
+ * Signed `{ sub, username }` JWTs are a few hundred characters. 2048 leaves
+ * room for extra registered claims without accepting an arbitrary blob.
+ */
+export const AUTH_TOKEN_MAX = 2048;
+
+export const authTokenSchema = z.string().max(AUTH_TOKEN_MAX);
+
 const adminImageUrlSchema = z
   .string()
   .trim()
-  .max(2048)
+  .max(LISTING_IMAGE_URL_MAX)
   .refine(
     (value) => value === '' || value.startsWith('https://') || value.startsWith('gradient:'),
     'Image URL must be empty, https://, or gradient:',
   )
   .optional();
 
-export const adminAttributeValueSchema = z.union([z.string(), z.number(), z.boolean()]);
-export const adminAttributesSchema = z.record(z.string(), adminAttributeValueSchema);
+/**
+ * Seed attributes are a handful of short keys (`cost`, `type`, `随从`).
+ * The editor does not set maxLength, so these caps stay wide, but 40 keys of
+ * 64 and 500 characters stay under the 100kb JSON body cap even as CJK.
+ */
+export const ADMIN_ATTRIBUTE_MAX_KEYS = 40;
+export const ADMIN_ATTRIBUTE_KEY_MAX = 64;
+export const ADMIN_ATTRIBUTE_VALUE_MAX = 500;
+
+export const adminAttributeValueSchema = z.union([
+  z.string().max(ADMIN_ATTRIBUTE_VALUE_MAX),
+  z.number(),
+  z.boolean(),
+]);
+export const adminAttributesSchema = z
+  .record(z.string().max(ADMIN_ATTRIBUTE_KEY_MAX), adminAttributeValueSchema)
+  .refine((value) => Object.keys(value).length <= ADMIN_ATTRIBUTE_MAX_KEYS, {
+    message: `At most ${ADMIN_ATTRIBUTE_MAX_KEYS} attributes`,
+  });
 
 export const adminSeriesUpsertInput = z.object({
   slug: slugSchema,

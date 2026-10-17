@@ -196,6 +196,59 @@ describe('ListingsRouter.publish', () => {
     expect(passed.condition).toBe('NEAR_MINT');
   });
 
+  it('rejects an image URL, photo count, or price string over the cap before writing', async () => {
+    const { caller, cardFindUnique, listingCreate } = makeRouter();
+    const prefix = 'https://img.cardhub.test/';
+    const tooLongUrl = `${prefix}${'a'.repeat(2049 - prefix.length)}`;
+
+    await expect(
+      caller({ sub: 'u-alice', username: 'alice' }).publish({
+        cardSlug: 'aurora-knight',
+        kind: 'SELL',
+        currency: 'CNY',
+        imageUrls: [tooLongUrl],
+        contact: 'wechat: alice',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await expect(
+      caller({ sub: 'u-alice', username: 'alice' }).publish({
+        cardSlug: 'aurora-knight',
+        kind: 'SELL',
+        currency: 'CNY',
+        imageUrls: Array.from({ length: 5 }, () => 'https://img.cardhub.test/a.jpg'),
+        contact: 'wechat: alice',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await expect(
+      caller({ sub: 'u-alice', username: 'alice' }).publish({
+        cardSlug: 'aurora-knight',
+        kind: 'SELL',
+        price: '0'.repeat(65),
+        currency: 'CNY',
+        imageUrls: [],
+        contact: 'wechat: alice',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    expect(cardFindUnique).not.toHaveBeenCalled();
+    expect(listingCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects a cursor longer than a uuid', async () => {
+    const { caller, listingFindMany } = makeRouter();
+
+    await expect(caller(null).list({ cursor: 'x'.repeat(37) })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    await expect(
+      caller({ sub: 'u-alice', username: 'alice' }).mine({ pageCursor: 'x'.repeat(37) }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    expect(listingFindMany).not.toHaveBeenCalled();
+  });
+
   it('rejects http image URLs before writing', async () => {
     const { caller, cardFindUnique, listingCreate } = makeRouter();
 

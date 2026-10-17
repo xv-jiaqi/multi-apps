@@ -101,6 +101,16 @@ function makeTopicRow(
 }
 
 describe('ForumRouter.topics.list', () => {
+  it('rejects a cursor longer than a uuid', async () => {
+    const { caller, topicFindMany } = makeRouter();
+
+    await expect(caller(null).topics.list({ cursor: 'x'.repeat(37) })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+
+    expect(topicFindMany).not.toHaveBeenCalled();
+  });
+
   it('returns nextCursor only when more rows exist beyond the limit', async () => {
     const { caller, topicFindMany } = makeRouter();
     // 3 rows when limit=2 → hasMore=true, nextCursor=last-of-page id.
