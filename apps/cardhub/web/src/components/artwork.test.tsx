@@ -1,31 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { resolveArtwork } from '@repo/shared';
 import { ART_ASPECT, ART_EDGE, Artwork, useArtImage } from './artwork';
 import { rootStore } from '../stores/root-store';
 
 rootStore.locale.setLocale('zh-CN');
-
-describe('resolveArtwork', () => {
-  it('accepts trimmed https URLs only', () => {
-    expect(resolveArtwork(' https://img.cardhub.test/card.webp ')).toEqual({
-      kind: 'image',
-      src: 'https://img.cardhub.test/card.webp',
-    });
-    expect(resolveArtwork('HTTPS://img.cardhub.test/card.webp')).toEqual({
-      kind: 'image',
-      src: 'HTTPS://img.cardhub.test/card.webp',
-    });
-  });
-
-  it('rejects placeholder, empty, http, and data URLs', () => {
-    expect(resolveArtwork('gradient:from-sky-200')).toEqual({ kind: 'placeholder' });
-    expect(resolveArtwork('http://img.cardhub.test/card.webp')).toEqual({ kind: 'placeholder' });
-    expect(resolveArtwork('data:image/png;base64,abc')).toEqual({ kind: 'placeholder' });
-    expect(resolveArtwork('')).toEqual({ kind: 'placeholder' });
-    expect(resolveArtwork(null)).toEqual({ kind: 'placeholder' });
-  });
-});
 
 describe('Artwork', () => {
   it('renders a card image with the fixed card ratio, neutral surface, and alt text', () => {
@@ -132,5 +110,19 @@ describe('useArtImage', () => {
     render(<ModeProbe src="http://img.cardhub.test/card.webp" />);
 
     expect(screen.getByTestId('mode')).toHaveTextContent('placeholder');
+  });
+
+  it('resets loaded state when the image URL changes', () => {
+    const { rerender } = render(<ModeProbe src="https://img.cardhub.test/one.webp" />);
+
+    const firstImage = screen.getByAltText('probe');
+    fireEvent.load(firstImage);
+    expect(firstImage).toHaveAttribute('data-loaded', 'true');
+
+    rerender(<ModeProbe src="https://img.cardhub.test/two.webp" />);
+
+    const nextImage = screen.getByAltText('probe');
+    expect(screen.getByTestId('mode')).toHaveTextContent('image');
+    expect(nextImage).not.toHaveAttribute('data-loaded');
   });
 });

@@ -37,16 +37,27 @@ export function useArtImage({
   className,
 }: ArtImageProps): UseArtImageResult {
   const resolved = resolveArtwork(src);
-  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const imageSrc = resolved.kind === 'image' ? resolved.src : null;
+  const [imageState, setImageState] = useState<{
+    src: string | null;
+    status: 'loading' | 'loaded' | 'error';
+  }>({ src: imageSrc, status: 'loading' });
+  const status = imageState.src === imageSrc ? imageState.status : 'loading';
 
   useEffect(() => {
-    setStatus('loading');
-  }, [src]);
+    setImageState({ src: imageSrc, status: 'loading' });
+  }, [imageSrc]);
 
-  const ref = useCallback((img: HTMLImageElement | null) => {
-    if (!img?.complete) return;
-    setStatus(img.naturalWidth > 0 ? 'loaded' : 'error');
-  }, []);
+  const ref = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (!img?.complete) return;
+      setImageState({
+        src: imageSrc,
+        status: img.naturalWidth > 0 ? 'loaded' : 'error',
+      });
+    },
+    [imageSrc],
+  );
 
   const mode = resolved.kind === 'image' && status !== 'error' ? 'image' : 'placeholder';
 
@@ -54,7 +65,7 @@ export function useArtImage({
     mode,
     imgProps: {
       ref,
-      src: resolved.kind === 'image' ? resolved.src : undefined,
+      src: imageSrc ?? undefined,
       alt,
       loading: priority ? 'eager' : 'lazy',
       fetchPriority: priority ? 'high' : undefined,
@@ -67,8 +78,8 @@ export function useArtImage({
         fit === 'contain' ? 'object-contain' : 'object-cover',
         className,
       ),
-      onLoad: () => setStatus('loaded'),
-      onError: () => setStatus('error'),
+      onLoad: () => setImageState({ src: imageSrc, status: 'loaded' }),
+      onError: () => setImageState({ src: imageSrc, status: 'error' }),
     },
   };
 }
