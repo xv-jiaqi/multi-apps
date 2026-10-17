@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { t, topicUpdateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { TopicForm } from '../components/topic-form';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -78,6 +79,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
   if (topicQuery.isLoading) {
     return (
       <PageShell>
+        <PageMeta title={tt('forum.edit.title')} />
         <div className="space-y-4">
           <div className="h-10 w-1/3 animate-pulse rounded-md bg-neutral-200" />
           <div className="h-64 animate-pulse rounded-md bg-neutral-200" />
@@ -90,6 +92,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
     const isNotFound = topicQuery.error?.data?.code === 'NOT_FOUND';
     return (
       <PageShell>
+        <PageMeta title={tt('forum.edit.title')} />
         <div className="space-y-4">
           <Breadcrumbs
             items={[
@@ -125,6 +128,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
   if (!isOwner || (!enteredAllowed && !isWithinWindow)) {
     return (
       <PageShell>
+        <PageMeta title={tt('forum.edit.title')} />
         <div className="space-y-4">
           <Breadcrumbs
             items={[
@@ -162,6 +166,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('forum.edit.title')} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[

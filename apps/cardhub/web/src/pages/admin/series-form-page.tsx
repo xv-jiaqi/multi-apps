@@ -9,6 +9,7 @@ import { PageShell } from '../../components/page-shell';
 import { AdminField } from '../../components/admin/admin-field';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
 import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
+import { queryFallback } from '../../components/retry-button';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
 import {
   applyValidationFeedback,
@@ -72,6 +73,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
   const coverRef = useRef<HTMLInputElement>(null);
   const saving = create.isPending || update.isPending;
   const revoked = list.isError && isAccessRevoked(list.error);
+  const editView = queryFallback(list);
 
   useEffect(() => {
     if (revoked) reportForbidden();
@@ -189,20 +191,20 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-neutral-900">{pageTitle}</h1>
       </header>
-      {mode === 'edit' && list.isLoading ? (
-        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
-          <div className="h-4 w-40 animate-pulse rounded bg-neutral-200" />
-        </div>
-      ) : mode === 'edit' && list.isError ? (
+      {mode === 'edit' && editView === 'error' ? (
         revoked ? null : (
           <AdminErrorBox
             title={tt('state.error')}
             onRetry={() => void list.refetch()}
             retrying={list.isFetching}
             retryLabel={tt('state.retry')}
-            loadingLabel={tt('state.loading')}
+            retryingLabel={tt('state.retrying')}
           />
         )
+      ) : mode === 'edit' && editView === 'loading' ? (
+        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+          <div className="h-4 w-40 animate-pulse rounded bg-neutral-200" />
+        </div>
       ) : mode === 'edit' && !existing ? (
         <AdminEmpty>{tt('state.notFound')}</AdminEmpty>
       ) : (

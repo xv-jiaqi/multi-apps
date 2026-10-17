@@ -39,7 +39,11 @@ export const RegisterPage = observer(function RegisterPage() {
     const parsed = registerInput.safeParse({ email, username, password });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      setError(issue?.message ?? tt('auth.errors.required'));
+      setError(
+        issue?.code === 'too_big' && issue.path[0] === 'email'
+          ? tt('auth.errors.email.tooLong')
+          : (issue?.message ?? tt('auth.errors.required')),
+      );
       return;
     }
     mutation.mutate(parsed.data);

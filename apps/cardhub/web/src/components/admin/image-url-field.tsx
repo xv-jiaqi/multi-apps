@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState, type Ref } from 'react';
-import { t } from '@repo/shared';
+import { LISTING_IMAGE_URL_MAX, t } from '@repo/shared';
 import { cn } from '@repo/ui-web';
 import { Input } from '@repo/ui-web';
 import { ART_ASPECT } from '../artwork';
@@ -144,5 +144,8 @@ function CoverPreview({ src, slug, onError }: { src?: string; slug: string; onEr
 }
 
 export function imageUrlError(value: string, locale: Parameters<typeof t>[0]): string | null {
+  if (value.trim().length > LISTING_IMAGE_URL_MAX) {
+    return t(locale, 'admin.error.imageTooLong', { max: LISTING_IMAGE_URL_MAX });
+  }
   return isAllowedImageUrl(value) ? null : t(locale, 'admin.error.imageUrl');
 }

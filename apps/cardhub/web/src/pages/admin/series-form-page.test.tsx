@@ -92,6 +92,7 @@ beforeEach(() => {
   seriesState.items = [existing];
   seriesState.isLoading = false;
   seriesState.isError = false;
+  seriesState.isFetching = false;
   createCalls.length = 0;
   createImpl.current = async (input) => input;
   invalidateAdminSeriesList.mockClear();
@@ -193,9 +194,10 @@ describe('series form', () => {
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
     await user.click(screen.getByRole('button', { name: '创建' }));
 
+    expect(await screen.findByText('图片链接最长 2048 个字符')).toBeInTheDocument();
     expect(
-      await screen.findByText('Too big: expected string to have <=2048 characters'),
-    ).toBeInTheDocument();
+      screen.queryByText('Too big: expected string to have <=2048 characters'),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
     expect(screen.queryByText('BAD_REQUEST')).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
@@ -260,5 +262,26 @@ describe('series form', () => {
     expect(invalidateSeriesList).toHaveBeenCalledTimes(1);
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'celestial-dawn' });
     expect(invalidateAdminSeriesList).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the error alert and focus while the series list is retrying', () => {
+    seriesState.isError = true;
+    seriesState.isLoading = true;
+    seriesState.isFetching = true;
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/series/celestial-dawn/edit']}>
+        <Routes>
+          <Route path="/admin/catalog/series/:slug/edit" element={<EditSeriesPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const button = screen.getByRole('button', { name: '重试中' });
+    button.focus();
+    expect(screen.getByRole('alert')).toHaveTextContent('加载失败');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(button);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toHaveAttribute('disabled');
   });
 });

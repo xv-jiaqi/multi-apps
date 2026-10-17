@@ -1,20 +1,27 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { X } from 'lucide-react';
-import { t } from '@repo/shared';
+import { ADMIN_ATTRIBUTE_MAX_KEYS, t } from '@repo/shared';
 import { Button, Input } from '@repo/ui-web';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui-web';
 import { useStores } from '../../stores/root-store';
-import { createAttributeRow, type AttributeRow, type AttributeType } from './catalog-utils';
+import {
+  createAttributeRow,
+  focusRing,
+  type AttributeRow,
+  type AttributeType,
+} from './catalog-utils';
 
 export const AttributesEditor = observer(function AttributesEditor({
   rows,
   onChange,
   errors,
+  formError,
 }: {
   rows: AttributeRow[];
   onChange: (rows: AttributeRow[]) => void;
   errors: Record<string, string>;
+  formError?: string;
 }) {
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
@@ -29,7 +36,10 @@ export const AttributesEditor = observer(function AttributesEditor({
     setPendingFocus(null);
   }, [pendingFocus]);
 
+  const atLimit = rows.length >= ADMIN_ATTRIBUTE_MAX_KEYS;
+
   const addRow = () => {
+    if (atLimit) return;
     const row = createAttributeRow();
     onChange([...rows, row]);
     setPendingFocus(row.id);
@@ -63,7 +73,14 @@ export const AttributesEditor = observer(function AttributesEditor({
   };
 
   return (
-    <fieldset className="space-y-2" onKeyDown={onEditorKeyDown}>
+    <fieldset
+      id="card-attributes"
+      tabIndex={-1}
+      aria-invalid={formError ? true : undefined}
+      aria-describedby={formError ? 'card-attributes-error' : undefined}
+      className={`space-y-2 focus:outline-none ${focusRing}`}
+      onKeyDown={onEditorKeyDown}
+    >
       <legend className="text-sm font-medium text-neutral-800">{tt('admin.attrs.label')}</legend>
       <div aria-hidden className="hidden gap-2 px-0.5 text-xs text-neutral-600 sm:flex">
         <span className="w-40">{tt('admin.attrs.colKey')}</span>
@@ -162,9 +179,26 @@ export const AttributesEditor = observer(function AttributesEditor({
           })}
         </ul>
       )}
-      <Button ref={addRef} type="button" variant="outline" size="sm" onClick={addRow}>
+      <Button
+        ref={addRef}
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={atLimit}
+        onClick={addRow}
+      >
         {tt('admin.attrs.add')}
       </Button>
+      {atLimit ? (
+        <p className="text-xs text-neutral-600">
+          {tt('admin.attrs.atLimit', { max: ADMIN_ATTRIBUTE_MAX_KEYS })}
+        </p>
+      ) : null}
+      {formError ? (
+        <p id="card-attributes-error" className="text-xs text-red-700">
+          {formError}
+        </p>
+      ) : null}
     </fieldset>
   );
 });

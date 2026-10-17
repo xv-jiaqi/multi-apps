@@ -11,6 +11,7 @@ import { RARITY_LABELS } from '../../components/rarity-badge';
 import { AdminField } from '../../components/admin/admin-field';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
 import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
+import { queryFallback } from '../../components/retry-button';
 import { AttributesEditor } from '../../components/admin/attributes-editor';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
 import {
@@ -111,7 +112,10 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const seriesForCrumb =
     seriesItems.find((item) => item.slug === (mode === 'edit' ? card?.seriesSlug : routeSlug)) ??
     null;
-  const loading = seriesQuery.isLoading || (mode === 'edit' && cardQuery.isLoading);
+  const formView = queryFallback({
+    isError: seriesQuery.isError || cardQuery.isError,
+    isLoading: seriesQuery.isLoading || (mode === 'edit' && cardQuery.isLoading),
+  });
   const missingSeries = mode === 'create' && !seriesQuery.isLoading && !seriesForCrumb;
   const missingCard = mode === 'edit' && !cardQuery.isLoading && !cardQuery.isError && !card;
 
@@ -216,12 +220,20 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         'description',
         'imageUrl',
         'rarity',
+        'attributes',
       ]);
-      if (Object.keys(feedback.fields).length > 0) {
-        setErrors(feedback.fields);
+      const attributeMessage = feedback.fields.attributes;
+      const fieldErrors = { ...feedback.fields };
+      delete fieldErrors.attributes;
+      if (Object.keys(fieldErrors).length > 0 || attributeMessage) {
+        setErrors({
+          ...fieldErrors,
+          ...(attributeMessage ? { attributes: attributeMessage } : {}),
+        });
         const order = ['series', 'slug', 'name', 'description', 'imageUrl', 'rarity'];
-        const first = order.find((key) => feedback.fields[key]);
+        const first = order.find((key) => fieldErrors[key]);
         if (first) focusField(first);
+        else document.getElementById('card-attributes')?.focus();
       }
       setFormError(feedback.message);
     }
@@ -250,11 +262,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           {mode === 'edit' && card ? card.name : pageTitle}
         </h1>
       </header>
-      {loading ? (
-        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
-          <div className="h-4 w-40 animate-pulse rounded bg-neutral-200" />
-        </div>
-      ) : seriesQuery.isError || cardQuery.isError ? (
+      {formView === 'error' ? (
         revoked ? null : (
           <AdminErrorBox
             title={tt('state.error')}
@@ -264,9 +272,13 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
             }}
             retrying={seriesQuery.isFetching || cardQuery.isFetching}
             retryLabel={tt('state.retry')}
-            loadingLabel={tt('state.loading')}
+            retryingLabel={tt('state.retrying')}
           />
         )
+      ) : formView === 'loading' ? (
+        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+          <div className="h-4 w-40 animate-pulse rounded bg-neutral-200" />
+        </div>
       ) : missingSeries || missingCard ? (
         <AdminEmpty>{tt('state.notFound')}</AdminEmpty>
       ) : (
@@ -373,7 +385,12 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
               slug={mode === 'create' ? slugValue : routeSlug}
               inputRef={imageRef}
             />
-            <AttributesEditor rows={rows} onChange={setRows} errors={attrErrors} />
+            <AttributesEditor
+              rows={rows}
+              onChange={setRows}
+              errors={attrErrors}
+              formError={errors.attributes}
+            />
             {formError ? (
               <p
                 role="alert"
