@@ -172,3 +172,19 @@ export function parseCardSearchQuery(query: string): CardSearchParseResult {
     excludeTerms,
   };
 }
+
+export function hasCardSearchConditions(
+  parsed: Extract<CardSearchParseResult, { ok: true }>,
+): boolean {
+  return (
+    Boolean(parsed.rarity) ||
+    Boolean(parsed.seriesSlug) ||
+    parsed.includeGroups.length > 0 ||
+    parsed.excludeTerms.length > 0
+  );
+}
+
+export function shouldRequestCardSearchQuery(query: string): boolean {
+  const parsed = parseCardSearchQuery(query);
+  return parsed.ok && hasCardSearchConditions(parsed);
+}

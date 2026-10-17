@@ -1,4 +1,4 @@
-import { parseCardSearchQuery } from '@repo/shared';
+import { parseCardSearchQuery, shouldRequestCardSearchQuery } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import type { PrismaService } from '../prisma/prisma.service';
 import { SearchRouter } from './search.router';
@@ -55,6 +55,16 @@ describe('parseCardSearchQuery', () => {
       excludeTerms: ['幼体'],
     });
   });
+
+  it.each(['r:', 'OR', 's:天穹黎明'])('marks %s as a client-side no-request query', (q) => {
+    expect(shouldRequestCardSearchQuery(q)).toBe(false);
+  });
+
+  it('allows valid client-side search requests', () => {
+    expect(shouldRequestCardSearchQuery('极光')).toBe(true);
+    expect(shouldRequestCardSearchQuery('r:legendary')).toBe(true);
+    expect(shouldRequestCardSearchQuery('s:celestial-dawn')).toBe(true);
+  });
 });
 
 describe('SearchRouter.global', () => {
@@ -79,6 +89,18 @@ describe('SearchRouter.global', () => {
     expect(cardFindMany.mock.calls[0]?.[0].take).toBe(5);
     expect(seriesFindMany.mock.calls[0]?.[0].take).toBe(3);
   });
+
+  it.each(['r:', 'OR', 's:天穹黎明'])(
+    'returns empty results without querying Prisma for no-condition input %s',
+    async (q) => {
+      const { caller, cardFindMany, seriesFindMany } = makeRouter();
+
+      await expect(caller.global({ q })).resolves.toEqual({ query: q, cards: [], series: [] });
+
+      expect(cardFindMany).not.toHaveBeenCalled();
+      expect(seriesFindMany).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects new group limits above their caps', async () => {
     const { caller } = makeRouter();

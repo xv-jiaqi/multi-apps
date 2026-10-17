@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { parseCardSearchQuery } from '@repo/shared';
+import { hasCardSearchConditions, parseCardSearchQuery } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { assertParsedSearch, buildCardSearchWhere, buildSeriesSearchWhere } from './search-query';
@@ -35,6 +35,9 @@ export class SearchRouter {
     return t.router({
       global: t.procedure.input(globalSearchInput).query(async ({ input }) => {
         const parsed = assertParsedSearch(parseCardSearchQuery(input.q));
+        if (!hasCardSearchConditions(parsed)) {
+          return { query: input.q, cards: [], series: [] };
+        }
         const cardLimit = input.cardLimit ?? input.limit;
         const seriesLimit = input.seriesLimit ?? input.limit;
 

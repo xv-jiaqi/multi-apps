@@ -74,6 +74,17 @@ describe('CardsRouter.search', () => {
     });
   });
 
+  it.each(['r:', 'OR', 's:天穹黎明'])(
+    'returns empty results without querying Prisma for no-condition input %s',
+    async (q) => {
+      const { caller, findMany } = makeRouter();
+
+      await expect(caller.search({ q, limit: 5 })).resolves.toEqual({ query: q, results: [] });
+
+      expect(findMany).not.toHaveBeenCalled();
+    },
+  );
+
   it('flattens series relation into seriesSlug / seriesTitle', async () => {
     const { caller, findMany } = makeRouter();
     findMany.mockResolvedValueOnce([

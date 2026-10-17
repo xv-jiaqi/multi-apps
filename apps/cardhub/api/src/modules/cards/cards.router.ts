@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { parseCardSearchQuery, slugSchema } from '@repo/shared';
+import { hasCardSearchConditions, parseCardSearchQuery, slugSchema } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { assertParsedSearch, buildCardSearchWhere } from '../search/search-query';
@@ -66,11 +66,15 @@ export class CardsRouter {
         )
         .query(async ({ input }) => {
           const parsed = assertParsedSearch(parseCardSearchQuery(input.q));
-          const where = buildCardSearchWhere({
+          const effectiveParsed = {
             ...parsed,
             ...(input.rarity ? { rarity: input.rarity } : {}),
             ...(input.seriesSlug ? { seriesSlug: input.seriesSlug } : {}),
-          });
+          };
+          if (!hasCardSearchConditions(effectiveParsed)) {
+            return { query: input.q, results: [] };
+          }
+          const where = buildCardSearchWhere(effectiveParsed);
           const cards = await prisma.card.findMany({
             where,
             include: { series: { select: { slug: true, title: true } } },
