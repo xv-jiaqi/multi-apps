@@ -184,6 +184,7 @@ export class ReportsRouter {
                   content: true,
                   user: { select: { username: true } },
                   card: { select: { slug: true, name: true } },
+                  series: { select: { slug: true, title: true } },
                 },
               })
             : Promise.resolve([]),
@@ -236,8 +237,10 @@ export class ReportsRouter {
           comments.map((comment) => [
             comment.id,
             {
-              cardSlug: comment.card.slug,
-              cardName: comment.card.name,
+              cardSlug: comment.card?.slug ?? null,
+              cardName: comment.card?.name ?? null,
+              seriesSlug: comment.series?.slug ?? null,
+              seriesTitle: comment.series?.title ?? null,
               authorUsername: comment.user?.username ?? null,
               excerpt: comment.content.slice(0, 160),
             },

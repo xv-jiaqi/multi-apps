@@ -61,8 +61,10 @@ type ReportItem =
   | (ReportBase & {
       targetType: 'COMMENT';
       target: {
-        cardSlug: string;
-        cardName: string;
+        cardSlug: string | null;
+        cardName: string | null;
+        seriesSlug: string | null;
+        seriesTitle: string | null;
         authorUsername: string | null;
         excerpt: string;
       } | null;
@@ -550,14 +552,23 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
   }
 
   if (report.targetType === 'COMMENT' && report.target) {
+    const targetPath = report.target.cardSlug
+      ? `/cards/${report.target.cardSlug}`
+      : report.target.seriesSlug
+        ? `/series/${report.target.seriesSlug}`
+        : null;
+    const targetLabel =
+      report.target.cardName ?? report.target.seriesTitle ?? tt('reports.openTarget');
+
     return (
       <div className="space-y-1">
-        <Link
-          to={`/cards/${report.target.cardSlug}`}
-          className="font-medium text-brand-600 hover:underline"
-        >
-          {report.target.cardName}
-        </Link>
+        {targetPath ? (
+          <Link to={targetPath} className="font-medium text-brand-600 hover:underline">
+            {targetLabel}
+          </Link>
+        ) : (
+          <p className="font-medium text-neutral-800">{targetLabel}</p>
+        )}
         <p className="text-neutral-800">{report.target.excerpt}</p>
         <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
       </div>

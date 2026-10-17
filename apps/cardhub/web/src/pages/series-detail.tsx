@@ -1,10 +1,12 @@
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { RarityBadge } from '../components/rarity-badge';
+import { CommentSection } from '../components/comment-section';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
@@ -183,6 +185,15 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
             ))}
           </ul>
         </section>
+
+        <Card className="border-white/60 bg-white/70 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-base">{tt('series.detail.commentsTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CommentSection target={{ kind: 'series', slug: series.slug }} />
+          </CardContent>
+        </Card>
       </div>
     </PageShell>
   );

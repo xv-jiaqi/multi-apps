@@ -10,8 +10,47 @@ type MyTopicRow = Prisma.TopicGetPayload<{
 }>;
 
 type MyCommentRow = Prisma.CommentGetPayload<{
-  include: { card: { select: { slug: true; name: true; imageUrl: true } } };
+  include: {
+    card: { select: { slug: true; name: true; imageUrl: true } };
+    series: { select: { slug: true; title: true } };
+  };
 }>;
+
+function mapMyComment(comment: MyCommentRow) {
+  const base = {
+    id: comment.id,
+    body: comment.content,
+    createdAt: comment.createdAt.toISOString(),
+  };
+  if (comment.card) {
+    return {
+      ...base,
+      cardSlug: comment.card.slug,
+      cardName: comment.card.name,
+      cardImageUrl: comment.card.imageUrl,
+      target: {
+        kind: 'card' as const,
+        slug: comment.card.slug,
+        name: comment.card.name,
+        imageUrl: comment.card.imageUrl,
+      },
+    };
+  }
+  if (comment.series) {
+    return {
+      ...base,
+      cardSlug: null,
+      cardName: null,
+      cardImageUrl: null,
+      target: {
+        kind: 'series' as const,
+        slug: comment.series.slug,
+        title: comment.series.title,
+      },
+    };
+  }
+  throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '评论目标缺失' });
+}
 
 @Injectable()
 export class UsersRouter {
@@ -90,19 +129,15 @@ export class UsersRouter {
             take: input.limit + 1,
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
             ...(pageCursor ? { cursor: { id: pageCursor }, skip: 1 } : {}),
-            include: { card: { select: { slug: true, name: true, imageUrl: true } } },
+            include: {
+              card: { select: { slug: true, name: true, imageUrl: true } },
+              series: { select: { slug: true, title: true } },
+            },
           });
           const hasMore = items.length > input.limit;
           const sliced = hasMore ? items.slice(0, input.limit) : items;
           return {
-            items: sliced.map((comment: MyCommentRow) => ({
-              id: comment.id,
-              body: comment.content,
-              createdAt: comment.createdAt.toISOString(),
-              cardSlug: comment.card.slug,
-              cardName: comment.card.name,
-              cardImageUrl: comment.card.imageUrl,
-            })),
+            items: sliced.map(mapMyComment),
             nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
           };
         }),

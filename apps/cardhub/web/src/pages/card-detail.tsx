@@ -137,7 +137,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 <CardTitle className="text-base">{tt('card.detail.commentsTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CommentSection cardSlug={card.slug} />
+                <CommentSection target={{ kind: 'card', slug: card.slug }} />
               </CardContent>
             </Card>
           </div>

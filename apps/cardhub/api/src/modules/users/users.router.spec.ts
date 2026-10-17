@@ -134,9 +134,41 @@ describe('UsersRouter.myComments', () => {
       cardSlug: 'aurora-knight',
       cardName: 'Aurora Knight',
       cardImageUrl: 'https://img.cardhub.test/aurora.jpg',
+      target: {
+        kind: 'card',
+        slug: 'aurora-knight',
+        name: 'Aurora Knight',
+        imageUrl: 'https://img.cardhub.test/aurora.jpg',
+      },
     });
     expect(commentFindMany.mock.calls[0]?.[0]?.include).toEqual({
       card: { select: { slug: true, name: true, imageUrl: true } },
+      series: { select: { slug: true, title: true } },
+    });
+  });
+
+  it('returns a series target when the comment is not attached to a card', async () => {
+    const { caller, commentFindMany } = makeRouter();
+    commentFindMany.mockResolvedValueOnce([
+      {
+        id: 'c-series',
+        content: 'Great series',
+        createdAt: new Date('2026-05-04T00:00:00Z'),
+        card: null,
+        series: { slug: 'sky-dawn', title: '天穹黎明' },
+      },
+    ]);
+
+    const result = await caller({ sub: 'u1', username: 'alice' }).myComments({ limit: 10 });
+
+    expect(result.items[0]).toEqual({
+      id: 'c-series',
+      body: 'Great series',
+      createdAt: '2026-05-04T00:00:00.000Z',
+      cardSlug: null,
+      cardName: null,
+      cardImageUrl: null,
+      target: { kind: 'series', slug: 'sky-dawn', title: '天穹黎明' },
     });
   });
 });

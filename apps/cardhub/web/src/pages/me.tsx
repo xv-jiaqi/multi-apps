@@ -687,6 +687,12 @@ export const MePage = observer(function MePage() {
             <>
               <ul className="divide-y divide-neutral-200/70">
                 {commentItems.map((comment) => {
+                  const label =
+                    comment.target.kind === 'card' ? comment.target.name : comment.target.title;
+                  const href =
+                    comment.target.kind === 'card'
+                      ? `/cards/${comment.target.slug}`
+                      : `/series/${comment.target.slug}`;
                   const parts = splitOnCardPattern(tt('me.comments.onCard', { card: '{card}' }));
                   return (
                     <li
@@ -698,21 +704,18 @@ export const MePage = observer(function MePage() {
                       }}
                       className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 py-3 first:pt-0 last:pb-0 focus:outline-none"
                     >
-                      <Link to={`/cards/${comment.cardSlug}`} tabIndex={-1} aria-hidden>
+                      <Link to={href} tabIndex={-1} aria-hidden>
                         <CardThumb
                           width="w-10"
-                          src={comment.cardImageUrl}
-                          slug={comment.cardSlug}
+                          src={comment.target.kind === 'card' ? comment.target.imageUrl : null}
+                          slug={comment.target.slug}
                         />
                       </Link>
                       <div className="min-w-0 space-y-1">
                         <p className="text-xs text-neutral-600">
                           {parts.before}
-                          <Link
-                            to={`/cards/${comment.cardSlug}`}
-                            className="font-medium text-neutral-900 hover:underline"
-                          >
-                            {comment.cardName}
+                          <Link to={href} className="font-medium text-neutral-900 hover:underline">
+                            {label}
                           </Link>
                           {parts.after} ·{' '}
                           <time dateTime={comment.createdAt} className="whitespace-nowrap">

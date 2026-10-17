@@ -2,24 +2,35 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@repo/ui-web';
-import { commentInput, t } from '@repo/shared';
+import { commentInput, seriesCommentInput, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from './report-button';
 
+type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
+
 interface CommentSectionProps {
-  cardSlug: string;
+  target: CommentTarget;
 }
 
 function formatDateTime(value: string, locale: string) {
   return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-export const CommentSection = observer(function CommentSection({ cardSlug }: CommentSectionProps) {
+export const CommentSection = observer(function CommentSection({ target }: CommentSectionProps) {
+  const commentTarget = target;
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
-  const list = trpc.comments.listForCard.useQuery({ cardSlug });
+  const cardList = trpc.comments.listForCard.useQuery(
+    { cardSlug: commentTarget.kind === 'card' ? commentTarget.slug : '' },
+    { enabled: commentTarget.kind === 'card' && !!commentTarget.slug },
+  );
+  const seriesList = trpc.comments.listForSeries.useQuery(
+    { seriesSlug: commentTarget.kind === 'series' ? commentTarget.slug : '' },
+    { enabled: commentTarget.kind === 'series' && !!commentTarget.slug },
+  );
+  const list = commentTarget.kind === 'card' ? cardList : seriesList;
   const utils = trpc.useUtils();
   const [content, setContent] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -27,37 +38,60 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
   const [deleteError, setDeleteError] = useState<{ id: string; message: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const statusRef = useRef<HTMLParagraphElement | null>(null);
-  const listRef = useRef<HTMLUListElement | null>(null);
-  const emptyRef = useRef<HTMLParagraphElement | null>(null);
   const deleteButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const cancelButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const shouldFocusListAfterDelete = useRef(false);
 
-  const create = trpc.comments.create.useMutation({
+  const handleCreateSuccess = () => {
+    setContent('');
+    if (commentTarget.kind === 'card') {
+      void utils.comments.listForCard.invalidate({ cardSlug: commentTarget.slug });
+    } else {
+      void utils.comments.listForSeries.invalidate({ seriesSlug: commentTarget.slug });
+    }
+  };
+
+  const handleCreateError = (err: { message: string; data?: { code?: string } | null }) => {
+    const code = err.data?.code;
+    setError(code === 'TOO_MANY_REQUESTS' ? tt('card.detail.commentRateLimited') : err.message);
+  };
+
+  const createForCard = trpc.comments.create.useMutation({
     onSuccess() {
-      setContent('');
-      void utils.comments.listForCard.invalidate({ cardSlug });
+      handleCreateSuccess();
     },
     onError(err) {
-      const code = err.data?.code;
-      setError(code === 'TOO_MANY_REQUESTS' ? tt('card.detail.commentRateLimited') : err.message);
+      handleCreateError(err);
     },
   });
 
+  const createForSeries = trpc.comments.createForSeries.useMutation({
+    onSuccess() {
+      handleCreateSuccess();
+    },
+    onError(err) {
+      handleCreateError(err);
+    },
+  });
+
+  function markDeleted() {
+    setConfirmingId(null);
+    setDeleteError(null);
+    setStatusMessage(tt('card.detail.commentDeleted'));
+    if (commentTarget.kind === 'card') {
+      void utils.comments.listForCard.invalidate({ cardSlug: commentTarget.slug });
+    } else {
+      void utils.comments.listForSeries.invalidate({ seriesSlug: commentTarget.slug });
+    }
+  }
+
   const deleteComment = trpc.comments.delete.useMutation({
     onSuccess() {
-      setConfirmingId(null);
-      setDeleteError(null);
-      setStatusMessage(tt('card.detail.commentDeleted'));
-      void utils.comments.listForCard.invalidate({ cardSlug });
+      markDeleted();
     },
     onError(err, variables) {
       const code = err.data?.code;
       if (code === 'NOT_FOUND') {
-        setConfirmingId(null);
-        setDeleteError(null);
-        shouldFocusListAfterDelete.current = true;
-        void utils.comments.listForCard.invalidate({ cardSlug });
+        markDeleted();
         return;
       }
 
@@ -83,31 +117,34 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
     statusRef.current?.focus();
   }, [statusMessage]);
 
-  useEffect(() => {
-    if (!shouldFocusListAfterDelete.current || list.isLoading) return;
-    shouldFocusListAfterDelete.current = false;
-    if (list.data && list.data.length > 0) {
-      listRef.current?.focus();
-    } else {
-      emptyRef.current?.focus();
-    }
-  }, [list.data, list.isLoading]);
+  const isCreating = createForCard.isPending || createForSeries.isPending;
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setStatusMessage('');
-    const parsed = commentInput.safeParse({ cardSlug, content });
+
+    if (commentTarget.kind === 'card') {
+      const parsed = commentInput.safeParse({ cardSlug: commentTarget.slug, content });
+      if (!parsed.success) {
+        setError(parsed.error.issues[0]?.message ?? '');
+        return;
+      }
+      createForCard.mutate(parsed.data);
+      return;
+    }
+
+    const parsed = seriesCommentInput.safeParse({ seriesSlug: commentTarget.slug, content });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? '');
       return;
     }
-    create.mutate(parsed.data);
+    createForSeries.mutate(parsed.data);
   };
 
-  const restoreDeleteFocus = (commentId: string) => {
+  function restoreDeleteFocus(commentId: string) {
     window.requestAnimationFrame(() => deleteButtonRefs.current[commentId]?.focus());
-  };
+  }
 
   const cancelDelete = (commentId: string) => {
     setConfirmingId(null);
@@ -139,7 +176,11 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
               if (error) setError(null);
               if (statusMessage) setStatusMessage('');
             }}
-            placeholder={tt('card.detail.commentPlaceholder')}
+            placeholder={tt(
+              commentTarget.kind === 'card'
+                ? 'card.detail.commentPlaceholder'
+                : 'series.detail.commentPlaceholder',
+            )}
             rows={3}
             maxLength={500}
             aria-label={tt('a11y.commentArea')}
@@ -155,10 +196,8 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
           ) : null}
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-neutral-500">{content.length} / 500</span>
-            <Button type="submit" disabled={create.isPending || !content.trim()}>
-              {create.isPending
-                ? tt('card.detail.commentSubmitting')
-                : tt('card.detail.commentSubmit')}
+            <Button type="submit" disabled={isCreating || !content.trim()}>
+              {isCreating ? tt('card.detail.commentSubmitting') : tt('card.detail.commentSubmit')}
             </Button>
           </div>
         </form>
@@ -166,7 +205,12 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
         <p className="rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur">
           <Link
             to="/login"
-            state={{ from: `/cards/${cardSlug}` }}
+            state={{
+              from:
+                commentTarget.kind === 'card'
+                  ? `/cards/${commentTarget.slug}`
+                  : `/series/${commentTarget.slug}`,
+            }}
             className="font-medium text-brand-600 hover:underline"
           >
             {tt('card.detail.loginToComment')}
@@ -193,14 +237,13 @@ export const CommentSection = observer(function CommentSection({ cardSlug }: Com
         <p className="text-sm text-red-600">{list.error.message}</p>
       ) : !list.data || list.data.length === 0 ? (
         <p
-          ref={emptyRef}
           tabIndex={-1}
           className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500"
         >
           {tt('card.detail.commentEmpty')}
         </p>
       ) : (
-        <ul ref={listRef} tabIndex={-1} aria-label={tt('a11y.commentList')} className="space-y-3">
+        <ul tabIndex={-1} aria-label={tt('a11y.commentList')} className="space-y-3">
           {list.data.map((comment) => {
             const canDelete = session.user?.id === comment.user.id || session.isAdmin;
             const isConfirming = confirmingId === comment.id;

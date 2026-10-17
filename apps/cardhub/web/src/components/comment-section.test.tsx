@@ -41,7 +41,22 @@ vi.mock('../lib/trpc', () => {
         listForCard: {
           useQuery: () => queryState,
         },
+        listForSeries: {
+          useQuery: () => queryState,
+        },
         create: {
+          useMutation: ({
+            onSuccess,
+            onError,
+          }: {
+            onSuccess?: () => void;
+            onError?: (e: { message: string }) => void;
+          }) => ({
+            mutate: (input: unknown) => mutateMock(input, { onSuccess, onError }),
+            isPending: mutationState.isPending,
+          }),
+        },
+        createForSeries: {
           useMutation: ({
             onSuccess,
             onError,
@@ -79,7 +94,10 @@ vi.mock('../lib/trpc', () => {
         },
       },
       useUtils: () => ({
-        comments: { listForCard: { invalidate: utilsInvalidate } },
+        comments: {
+          listForCard: { invalidate: utilsInvalidate },
+          listForSeries: { invalidate: utilsInvalidate },
+        },
       }),
     },
   };
@@ -90,7 +108,15 @@ import { CommentSection } from './comment-section';
 function renderShell() {
   return render(
     <MemoryRouter>
-      <CommentSection cardSlug="aurora-knight" />
+      <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+    </MemoryRouter>,
+  );
+}
+
+function renderSeriesShell() {
+  return render(
+    <MemoryRouter>
+      <CommentSection target={{ kind: 'series', slug: 'sky-dawn' }} />
     </MemoryRouter>,
   );
 }
@@ -161,6 +187,18 @@ describe('CommentSection (authenticated)', () => {
     expect(mutateMock.mock.calls[0]?.[0]).toEqual({
       cardSlug: 'aurora-knight',
       content: 'wow',
+    });
+  });
+
+  it('calls the series create mutation with a series payload', async () => {
+    const user = userEvent.setup();
+    renderSeriesShell();
+    await user.type(screen.getByLabelText(/撰写评论/), 'great series');
+    await user.click(screen.getByRole('button', { name: /发布评论/ }));
+    expect(mutateMock).toHaveBeenCalledTimes(1);
+    expect(mutateMock.mock.calls[0]?.[0]).toEqual({
+      seriesSlug: 'sky-dawn',
+      content: 'great series',
     });
   });
 
@@ -318,6 +356,68 @@ describe('CommentSection (authenticated)', () => {
     expect(screen.getByRole('group', { name: '删除这条评论？' })).toHaveClass('bg-red-50');
     expect(screen.getByText('L'.repeat(80))).toHaveClass('[overflow-wrap:anywhere]');
     expect(screen.getByRole('button', { name: '删除中…' })).toHaveClass('disabled:no-underline');
+  });
+
+  it('shows a visible status message after successful deletion', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'own comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    deleteMutateMock.mockImplementationOnce(
+      (_input: { id: string }, callbacks: { onSuccess: () => void }) => {
+        callbacks.onSuccess();
+      },
+    );
+    renderShell();
+
+    await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    expect(screen.getByRole('status')).toHaveTextContent('评论已删除');
+    expect(screen.getByRole('status')).toHaveClass('bg-emerald-50');
+  });
+
+  it.each([
+    ['card', () => renderShell()],
+    ['series', () => renderSeriesShell()],
+  ] as const)('treats NOT_FOUND as a successful %s comment delete', async (_kind, renderTarget) => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'own comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    deleteMutateMock.mockImplementationOnce(
+      (
+        input: { id: string },
+        callbacks: {
+          onError: (
+            error: { message: string; data?: { code?: string } },
+            variables: { id: string },
+          ) => void;
+        },
+      ) => {
+        callbacks.onError({ message: '评论不存在', data: { code: 'NOT_FOUND' } }, input);
+      },
+    );
+    renderTarget();
+
+    await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent('评论已删除');
+    expect(status).toHaveClass('bg-emerald-50');
+    expect(status).toHaveFocus();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows localized copy when comment creation is rate limited', async () => {

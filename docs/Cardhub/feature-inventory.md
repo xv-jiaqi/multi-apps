@@ -73,14 +73,14 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 
 ### 3.4 卡牌评论
 
-| 能力                         | 状态 | 入口       | 接口                   | 说明                                                                                                          |
-| ---------------------------- | ---- | ---------- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 查看评论（最新 50 条，倒序） | ✅   | 卡牌详情页 | `comments.listForCard` | 无分页                                                                                                        |
-| 发表评论（≤ 500 字）         | ✅   | 卡牌详情页 | `comments.create`      | 需登录；按 IP 限流 30 次 / 小时                                                                               |
-| 删除评论（本人 / 管理员）    | ✅   | 卡牌详情页 | `comments.delete`      | Web / Tauri 使用行内二次确认；成功后显示可见状态提示并聚焦提示，失败后焦点回到删除按钮。小程序同步留到 CH-301 |
-| 举报评论                     | ✅   | 评论旁     | `reports.create`       | 自己的评论不显示举报按钮                                                                                      |
-| 系列页评论                   | ❌   | —          | —                      | PRD FR4 要求“卡牌和系列介绍页面”都能评论（CH-101）                                                            |
-| 评论回复                     | ❌   | —          | —                      | 历史架构文档设计了 `parent_comment_id`（CH-204）                                                              |
+| 能力                         | 状态 | 入口       | 接口                                                  | 说明                                                                                                          |
+| ---------------------------- | ---- | ---------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 查看评论（最新 50 条，倒序） | ✅   | 卡牌详情页 | `comments.listForCard`                                | 无分页                                                                                                        |
+| 发表评论（≤ 500 字）         | ✅   | 卡牌详情页 | `comments.create`                                     | 需登录；按 IP 限流 30 次 / 小时                                                                               |
+| 删除评论（本人 / 管理员）    | ✅   | 卡牌详情页 | `comments.delete`                                     | Web / Tauri 使用行内二次确认；成功后显示可见状态提示并聚焦提示，失败后焦点回到删除按钮。小程序同步留到 CH-301 |
+| 举报评论                     | ✅   | 评论旁     | `reports.create`                                      | 自己的评论不显示举报按钮                                                                                      |
+| 系列页评论                   | ✅   | 系列详情页 | `comments.listForSeries` / `comments.createForSeries` | Web / Tauri 复用卡牌评论区交互；小程序同步留到 CH-301                                                         |
+| 评论回复                     | ❌   | —          | —                                                     | 历史架构文档设计了 `parent_comment_id`（CH-204）                                                              |
 
 ### 3.5 论坛
 
@@ -192,7 +192,9 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `auth.login`           | mutation | 公开（限流）            | `{ identifier, password }`                                                | 同上                                                                                          |
 | `auth.me`              | query    | 公开（token 走 input）  | `{ token }`                                                               | `user`                                                                                        |
 | `comments.listForCard` | query    | 公开                    | `{ cardSlug, limit=50(≤100) }`                                            | `[{ id, content, createdAt, user }]`                                                          |
+| `comments.listForSeries` | query  | 公开                    | `{ seriesSlug, limit=50(≤100) }`                                          | `[{ id, content, createdAt, user }]`                                                          |
 | `comments.create`      | mutation | 登录（限流）            | `{ cardSlug, content }`                                                   | 新评论                                                                                        |
+| `comments.createForSeries` | mutation | 登录（限流）        | `{ seriesSlug, content }`                                                 | 新系列评论                                                                                    |
 | `comments.delete`      | mutation | 作者或 admin            | `{ id }`                                                                  | `{ ok }`                                                                                      |
 | `forum.topics.list`    | query    | 公开                    | `{ cursor?, limit=20(≤50) }`                                              | `{ items[TopicSummary], nextCursor }`                                                         |
 | `forum.topics.bySlug`  | query    | 公开                    | `{ slug }`                                                                | `TopicSummary + replies(前 20) + replyNextCursor`                                             |
@@ -212,7 +214,7 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `reports.resolve`      | mutation | admin                   | `{ id, action, resolution? }`                                             | `MARK_RESOLVED` 或 `REMOVE_TARGET`；删除 / 关闭目标时同步处理同目标待处理举报                 |
 | `users.me`             | query    | 登录                    | —                                                                         | 资料 + `listingCount`（开放）/ `listingTotalCount`（含已关闭）/ 话题 / 回帖 / 评论计数        |
 | `users.myTopics`       | query    | 登录                    | `{ pageCursor?, limit }`                                                  | 本人话题 cursor 分页；每条含 `slug / title / replyCount / createdAt`                          |
-| `users.myComments`     | query    | 登录                    | `{ pageCursor?, limit }`                                                  | 本人评论 cursor 分页；每条含卡牌 slug、名称与 `imageUrl`                                      |
+| `users.myComments`     | query    | 登录                    | `{ pageCursor?, limit }`                                                  | 本人评论 cursor 分页；`target` 为卡牌（含 `imageUrl`）或系列                                  |
 
 另有 NestJS REST 端点 `GET /health`（不经过 tRPC，跳过全局 Throttler）。
 
@@ -229,6 +231,7 @@ erDiagram
   User ||--o{ Report : files
   Series ||--o{ Card : contains
   Card ||--o{ Comment : has
+  Series ||--o{ Comment : has
   Topic ||--o{ Reply : has
 
   User {
@@ -260,6 +263,7 @@ erDiagram
     string content
     string userId FK
     string cardId FK
+    string seriesId FK
   }
   Topic {
     string id PK
@@ -304,9 +308,10 @@ erDiagram
 
 - `User.role` 是自由字符串（`user` / `admin`），新增角色不需要迁移。
 - `Listing.cardSlug` 是**软指针**，不是外键：目录重建或改名时不会连带删除用户发布的意向。
+- `Comment` 通过可空的 `cardId` / `seriesId` 指向卡牌或系列；数据库 CHECK 约束保证两者恰好有一个非空。
 - `Report.targetType + targetId` 是多态指针，没有外键；目标被删后举报记录保留用于审计。已处理记录通过可空的 `resolvedAt`、`resolvedById` 和 `resolution` 保存处理信息；处理人被删除时保留举报记录并把处理人置空。
 - 所有关联用户的外键都是 `onDelete: Cascade`。
-- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution`。
+- 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution` → `20261017070000_add_series_comments`。
 
 ## 7. 页面清单
 
