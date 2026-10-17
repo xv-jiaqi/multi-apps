@@ -5,9 +5,11 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
   cursorPaginationInput,
+  markdownToPlainText,
   replyCreateInput,
   slugify,
   topicCreateInput,
+  topicSetPinnedInput,
   topicUpdateInput,
 } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
@@ -74,7 +76,9 @@ function mapTopicSummary(topic: TopicSummaryPayload) {
     slug: topic.slug,
     title: topic.title,
     body: topic.body,
+    excerpt: markdownToPlainText(topic.body, 120),
     pinned: topic.pinned,
+    editedAt: topic.editedAt?.toISOString() ?? null,
     createdAt: topic.createdAt.toISOString(),
     updatedAt: topic.updatedAt.toISOString(),
     author: topic.user,
@@ -95,14 +99,11 @@ export class ForumRouter {
 
     const topics = t.router({
       list: t.procedure.input(cursorPaginationInput).query(async ({ input }) => {
-        // Cursor pagination keyed on (createdAt desc, id desc) so two topics
-        // posted in the same millisecond stay deterministic. Cursor is the
-        // last item's id; Prisma's cursor + skip:1 idiom translates that
-        // into a stable seek even if pagination is interleaved with new
-        // inserts.
+        // Cursor pagination keyed on (pinned desc, createdAt desc, id desc)
+        // so pinned topics float without the client doing a second sort.
         const items = await prisma.topic.findMany({
           take: input.limit + 1,
-          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
           ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
           include: {
             user: { select: { id: true, username: true } },
@@ -140,8 +141,11 @@ export class ForumRouter {
           });
           const hasMore = initialReplies.length > 20;
           const sliced = hasMore ? initialReplies.slice(0, 20) : initialReplies;
+          const editableUntil = new Date(topic.createdAt.getTime() + EDIT_WINDOW_MS);
           return {
             ...mapTopicSummary(topic),
+            editableUntil: editableUntil.toISOString(),
+            serverNow: new Date().toISOString(),
             replies: sliced.map((r: ReplyWithAuthor) => ({
               id: r.id,
               body: r.body,
@@ -180,7 +184,32 @@ export class ForumRouter {
         }
         const updated = await prisma.topic.update({
           where: { id: input.id },
-          data: { title: input.title, body: input.body },
+          data: { title: input.title, body: input.body, editedAt: new Date() },
+          include: {
+            user: { select: { id: true, username: true } },
+            _count: { select: { replies: true } },
+          },
+        });
+        return mapTopicSummary(updated);
+      }),
+
+      setPinned: t.authedProcedure.input(topicSetPinnedInput).mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const requester = await prisma.user.findUnique({
+          where: { id: ctx.user.sub },
+          select: { role: true },
+        });
+        if (requester?.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: '只有管理员可以置顶话题' });
+        }
+        const topic = await prisma.topic.findUnique({
+          where: { id: input.id },
+          select: { id: true },
+        });
+        if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
+        const updated = await prisma.topic.update({
+          where: { id: input.id },
+          data: { pinned: input.pinned },
           include: {
             user: { select: { id: true, username: true } },
             _count: { select: { replies: true } },

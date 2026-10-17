@@ -75,6 +75,7 @@ function makeTopicRow(
     title: string;
     body: string;
     pinned: boolean;
+    editedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
     userId: string;
@@ -90,6 +91,7 @@ function makeTopicRow(
     title: overrides.title ?? 'sample',
     body: overrides.body ?? 'body',
     pinned: overrides.pinned ?? false,
+    editedAt: overrides.editedAt ?? null,
     createdAt: overrides.createdAt ?? new Date('2026-05-01T00:00:00Z'),
     updatedAt: overrides.updatedAt ?? new Date('2026-05-01T00:00:00Z'),
     userId: overrides.userId ?? 'u-alice',
@@ -110,6 +112,7 @@ describe('ForumRouter.topics.list', () => {
 
     const page = await caller(null).topics.list({ limit: 2 });
     expect(page.items.map((t) => t.id)).toEqual(['t1', 't2']);
+    expect(page.items[0]?.excerpt).toBe('body');
     expect(page.nextCursor).toBe('t2');
 
     // Now: only 1 row when limit=2 → no more pages.
@@ -122,6 +125,36 @@ describe('ForumRouter.topics.list', () => {
     const cursorArg = topicFindMany.mock.calls[1]?.[0];
     expect(cursorArg?.cursor).toEqual({ id: 't2' });
     expect(cursorArg?.skip).toBe(1);
+    expect(cursorArg?.orderBy).toEqual([{ pinned: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }]);
+  });
+
+  it('returns a plain-text excerpt computed from Markdown body', async () => {
+    const { caller, topicFindMany } = makeRouter();
+    topicFindMany.mockResolvedValueOnce([
+      makeTopicRow({
+        body: '# Heading\n![alt](https://example.com/a.png)\nRead [docs](https://example.com).',
+      }),
+    ]);
+
+    const page = await caller(null).topics.list({ limit: 20 });
+
+    expect(page.items[0]?.excerpt).toBe('Heading Read docs.');
+    expect(page.items[0]?.body).toContain('![alt]');
+  });
+});
+
+describe('ForumRouter.topics.bySlug', () => {
+  it('returns serverNow and editableUntil for client clock correction', async () => {
+    const { caller, topicFindUnique, replyFindMany } = makeRouter();
+    topicFindUnique.mockResolvedValueOnce(
+      makeTopicRow({ createdAt: new Date('2026-05-01T00:00:00Z') }),
+    );
+    replyFindMany.mockResolvedValueOnce([]);
+
+    const topic = await caller(null).topics.bySlug({ slug: 'sample-topic' });
+
+    expect(topic.editableUntil).toBe('2026-05-01T00:05:00.000Z');
+    expect(Date.parse(topic.serverNow)).not.toBeNaN();
   });
 });
 
@@ -135,6 +168,36 @@ describe('ForumRouter.topics.create', () => {
 });
 
 describe('ForumRouter.topics.update', () => {
+  it('writes editedAt when the owner edits inside the 5-minute window', async () => {
+    const { caller, topicFindUnique, topicUpdate } = makeRouter();
+    topicFindUnique.mockResolvedValueOnce({
+      id: 't-current',
+      userId: 'u-alice',
+      createdAt: new Date(),
+    });
+    topicUpdate.mockResolvedValueOnce(
+      makeTopicRow({
+        id: 't-current',
+        title: 'edited title',
+        body: 'edited body',
+        editedAt: new Date('2026-05-01T00:01:00Z'),
+      }),
+    );
+
+    const result = await caller({ sub: 'u-alice', username: 'alice' }).topics.update({
+      id: '11111111-1111-4111-a111-111111111111',
+      title: 'edited title',
+      body: 'edited body',
+    });
+
+    expect(topicUpdate.mock.calls[0]?.[0].data).toEqual({
+      title: 'edited title',
+      body: 'edited body',
+      editedAt: expect.any(Date),
+    });
+    expect(result.editedAt).toBe('2026-05-01T00:01:00.000Z');
+  });
+
   it('forbids edits after the 5-minute window even for the owner', async () => {
     const { caller, topicFindUnique } = makeRouter();
     const longAgo = new Date(Date.now() - 10 * 60_000);
@@ -151,6 +214,44 @@ describe('ForumRouter.topics.update', () => {
         body: 'edited later',
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+});
+
+describe('ForumRouter.topics.setPinned', () => {
+  it('lets admins pin a topic without marking it edited', async () => {
+    const { caller, topicFindUnique, topicUpdate, userFindUnique } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ role: 'admin' });
+    topicFindUnique.mockResolvedValueOnce({ id: 't-pin' });
+    topicUpdate.mockResolvedValueOnce(
+      makeTopicRow({
+        id: 't-pin',
+        pinned: true,
+        editedAt: null,
+        updatedAt: new Date('2026-05-01T00:10:00Z'),
+      }),
+    );
+
+    const result = await caller({ sub: 'u-admin', username: 'admin' }).topics.setPinned({
+      id: '44444444-4444-4444-a444-444444444444',
+      pinned: true,
+    });
+
+    expect(topicUpdate.mock.calls[0]?.[0].data).toEqual({ pinned: true });
+    expect(result.pinned).toBe(true);
+    expect(result.editedAt).toBeNull();
+  });
+
+  it('rejects non-admin callers with FORBIDDEN', async () => {
+    const { caller, topicUpdate, userFindUnique } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ role: 'user' });
+
+    await expect(
+      caller({ sub: 'u-bob', username: 'bob' }).topics.setPinned({
+        id: '55555555-5555-4555-a555-555555555555',
+        pinned: true,
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(topicUpdate).not.toHaveBeenCalled();
   });
 });
 

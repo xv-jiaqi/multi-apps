@@ -10,6 +10,7 @@ const repliesInvalidate = vi.fn();
 const createReplyMutate = vi.fn();
 const deleteReplyMutate = vi.fn();
 const deleteTopicMutate = vi.fn();
+const setPinnedMutate = vi.fn();
 const fetchNextPage = vi.fn();
 const repliesReset = vi.fn();
 const topicSetData = vi.fn();
@@ -46,8 +47,12 @@ const topicState: {
         slug: string;
         title: string;
         body: string;
+        pinned: boolean;
+        editedAt: string | null;
         createdAt: string;
         updatedAt: string;
+        editableUntil: string;
+        serverNow: string;
         author: { id: string; username: string };
         replyCount: number;
         replies: ReplyFixture[];
@@ -112,6 +117,18 @@ vi.mock('../lib/trpc', () => ({
             onError?: (error: { data?: { code?: string } }) => void | Promise<void>;
           }) => ({
             mutate: (input: unknown) => deleteTopicMutate(input, handlers),
+            isPending: false,
+          }),
+        },
+        setPinned: {
+          useMutation: ({
+            onSuccess,
+            onError,
+          }: {
+            onSuccess?: (topic: { pinned: boolean }) => void | Promise<void>;
+            onError?: (error: { data?: { code?: string } }) => void;
+          }) => ({
+            mutate: (input: unknown) => setPinnedMutate(input, { onSuccess, onError }),
             isPending: false,
           }),
         },
@@ -253,6 +270,7 @@ beforeEach(() => {
   });
   deleteTopicMutate.mockReset();
   deleteTopicMutate.mockImplementation((_input, handlers) => handlers.onSuccess?.());
+  setPinnedMutate.mockReset();
   fetchNextPage.mockReset();
   repliesQueryInputs.length = 0;
   latestInitialCursor = undefined;
@@ -275,8 +293,12 @@ beforeEach(() => {
     slug: 'test-topic',
     title: 'Test topic',
     body: 'Topic body',
+    pinned: false,
+    editedAt: null,
     createdAt: '2026-05-01T00:00:00.000Z',
     updatedAt: '2026-05-01T00:00:00.000Z',
+    editableUntil: new Date(Date.now() + 5 * 60_000).toISOString(),
+    serverNow: new Date().toISOString(),
     author: { id: 'author-1', username: 'author' },
     replyCount: 45,
     replies: replies.slice(0, 20),
@@ -642,5 +664,74 @@ describe('ForumDetailPage replies pagination', () => {
     });
     expect(document.activeElement).not.toBe(document.body);
     expect(screen.getByRole('button', { name: '加载更多回帖' })).toBeInTheDocument();
+  });
+});
+
+describe('ForumDetailPage CH-103 topic controls', () => {
+  it('does not show edited marker for a pinned topic that was never edited', () => {
+    topicState.data = {
+      ...topicState.data!,
+      pinned: true,
+      editedAt: null,
+      updatedAt: '2026-05-01T00:10:00.000Z',
+    };
+
+    renderPage();
+
+    expect(screen.getByText('置顶')).toBeInTheDocument();
+    expect(screen.queryByText('已编辑')).not.toBeInTheDocument();
+  });
+
+  it('shows edited marker only when editedAt is present', () => {
+    topicState.data = {
+      ...topicState.data!,
+      editedAt: '2026-05-01T00:02:00.000Z',
+    };
+
+    renderPage();
+
+    expect(
+      screen.getByText((_, element) => element?.textContent?.includes('已编辑') ?? false, {
+        selector: 'span',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('uses serverNow correction when deciding whether the edit action is visible', () => {
+    rootStore.session.signIn('jwt.token', { id: 'author-1', username: 'author' });
+    const localNow = Date.now();
+    topicState.data = {
+      ...topicState.data!,
+      editableUntil: new Date(localNow + 60_000).toISOString(),
+      serverNow: new Date(localNow + 120_000).toISOString(),
+    };
+
+    renderPage();
+
+    expect(screen.queryByRole('link', { name: '编辑这个话题' })).not.toBeInTheDocument();
+  });
+
+  it('keeps focus on the pin button and announces success after pinning', async () => {
+    rootStore.session.signIn('jwt.token', {
+      id: 'admin-id',
+      username: 'admin',
+      role: 'admin',
+    });
+    setPinnedMutate.mockImplementation((_input, handlers) => {
+      void handlers.onSuccess?.({ pinned: true });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    const pinButton = screen.getByRole('button', { name: '置顶' });
+    await user.click(pinButton);
+
+    expect(setPinnedMutate.mock.calls[0]?.[0]).toEqual({
+      id: '00000000-0000-0000-0000-000000000001',
+      pinned: true,
+    });
+    expect(await screen.findByText('已置顶，话题会显示在列表最前')).toBeInTheDocument();
+    expect(pinButton).toHaveFocus();
+    expect(topicsListInvalidate).toHaveBeenCalled();
   });
 });

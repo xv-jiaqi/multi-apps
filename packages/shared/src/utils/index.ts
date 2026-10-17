@@ -188,3 +188,39 @@ export function shouldRequestCardSearchQuery(query: string): boolean {
   const parsed = parseCardSearchQuery(query);
   return parsed.ok && hasCardSearchConditions(parsed);
 }
+
+export function markdownToPlainText(markdown: string, maxLength: number): string {
+  if (maxLength <= 0) return '';
+
+  const plain = markdown
+    // Remove fenced and indented code blocks entirely.
+    .replace(/(^|\n)(```|~~~)[\s\S]*?(?:\n\2[^\n]*|$)/g, ' ')
+    .replace(/(?:^|\n)(?: {4}|\t).*/g, ' ')
+    // Images and raw HTML do not contribute to forum list summaries.
+    .replace(/!\[[^\]]*]\([^)]*\)/g, ' ')
+    .replace(/<([A-Za-z][A-Za-z0-9-]*)(?:\s[^>]*)?>[\s\S]*?<\/\1>/g, ' ')
+    .replace(/<\/?[A-Za-z][^>]*>/g, ' ')
+    .replace(/^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/gm, ' ')
+    // Keep useful inline text while stripping Markdown delimiters.
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/<((?:https?:\/\/|mailto:)[^>\s]+)>/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}>\s?/gm, '')
+    .replace(/^\s{0,3}(?:[-*+]|\d+[.)])\s+/gm, '')
+    .replace(/\[[ xX]\]\s+/g, '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    .replace(/(^|[\s([{"'])\*([^*\s][^*\n]*?)\*(?=$|[\s)\]}.,!?;:'"])/g, '$1$2')
+    .replace(/(^|[\s([{"'])_([^_\s][^_\n]*?)_(?=$|[\s)\]}.,!?;:'"])/g, '$1$2')
+    .replace(/~~([^~\n]+)~~/g, '$1')
+    .replace(/\|/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plain) return '';
+
+  const chars = Array.from(plain);
+  if (chars.length <= maxLength) return plain;
+  return `${chars.slice(0, maxLength).join('').trimEnd()}…`;
+}

@@ -27,6 +27,9 @@ const ForumListPage = lazy(() =>
 const ForumNewPage = lazy(() =>
   import('./pages/forum-new').then((m) => ({ default: m.ForumNewPage })),
 );
+const ForumEditPage = lazy(() =>
+  import('./pages/forum-edit').then((m) => ({ default: m.ForumEditPage })),
+);
 const ForumDetailPage = lazy(() =>
   import('./pages/forum-detail').then((m) => ({ default: m.ForumDetailPage })),
 );
@@ -129,6 +132,14 @@ export function App() {
           element={
             <LazyRoute>
               <ForumNewPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/forum/:slug/edit"
+          element={
+            <LazyRoute>
+              <ForumEditPage />
             </LazyRoute>
           }
         />
