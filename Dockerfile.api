@@ -5,8 +5,6 @@
 #   docker build -f Dockerfile.api -t cardhub-api:latest .
 
 ARG NODE_VERSION=22-alpine
-ARG GIT_SHA=unknown
-ARG BUILD_TIME=unknown
 
 ############################
 # Stage 1 — prune workspace
@@ -50,16 +48,9 @@ RUN pnpm --filter @cardhub/api db:generate \
 # Stage 4 — runtime
 ############################
 FROM node:${NODE_VERSION} AS runner
-ARG GIT_SHA=unknown
-ARG BUILD_TIME=unknown
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
-ENV GIT_SHA=${GIT_SHA}
-ENV BUILD_TIME=${BUILD_TIME}
-LABEL org.opencontainers.image.revision=${GIT_SHA}
-LABEL org.opencontainers.image.created=${BUILD_TIME}
-LABEL org.opencontainers.image.source="https://github.com/xv-jiaqi/multi-apps"
 RUN addgroup -S app && adduser -S app -G app
 COPY --from=prod-deps --chown=app:app /app/package.json ./package.json
 COPY --from=prod-deps --chown=app:app /app/node_modules ./node_modules
@@ -86,6 +77,13 @@ if (fs.existsSync(repoScope)) {
 }
 require('@prisma/client');
 NODE
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ENV GIT_SHA=${GIT_SHA}
+ENV BUILD_TIME=${BUILD_TIME}
+LABEL org.opencontainers.image.revision=${GIT_SHA}
+LABEL org.opencontainers.image.created=${BUILD_TIME}
+LABEL org.opencontainers.image.source="https://github.com/xv-jiaqi/multi-apps"
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"

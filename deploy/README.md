@@ -163,6 +163,13 @@ cache while still exercising Caddy, TLS, and routing. If verification fails
 after switching containers, the script attempts to roll back to the previously
 running immutable `sha-` tag and still fails the job.
 
+Image builds use Docker Buildx's GitHub Actions cache with separate scopes for
+API and Web images. The cache is configured with `mode=max` so intermediate
+layers such as the API production dependency tree can be reused across fresh
+GitHub runners. GitHub's Actions cache has a 10GB repository limit; because the
+scopes are per image, older cache entries are evicted by GitHub's LRU policy when
+the repo exceeds that limit.
+
 Before switching images, `remote-deploy.sh` records the environment's previous
 API and web `sha-` tags in `/opt/cardhub/<environment>/.deploy-state/`.
 After a successful deploy, `image-cleanup.sh` removes only stale
