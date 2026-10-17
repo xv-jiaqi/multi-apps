@@ -29,24 +29,27 @@ export function queryFallback(...queries: QueryFallbackState[]): QueryView {
   return 'ready';
 }
 
-function shouldRestoreFocus(active: Element | null) {
+function shouldRestoreFocus(active: Element | null, target: HTMLElement | null) {
   if (active == null || active === document.body) return true;
-  return active instanceof HTMLElement && active.dataset.retryButton != null;
+  return target != null && active.contains(target);
 }
 
 /**
  * After the error view recovers, move focus to the content that replaced it
- * only when it is still on the retry button or has already dropped to the
- * document. Read activeElement in a layout effect: removing the button moves
- * it to body before paint, while an input outside that tree stays focused.
+ * when focus is on the document or on an ancestor of that content. `#main` is
+ * focusable and wraps every error box, so a click that lands there still
+ * moves. An input that does not contain the content keeps focus. Read
+ * activeElement after commit: removing the retry button moves it to body
+ * before paint.
  */
 export function useFocusOnRecovery(view: QueryView, targetRef: RefObject<HTMLElement | null>) {
   const previous = useRef(view);
   useLayoutEffect(() => {
     const recovered = previous.current === 'error' && view === 'ready';
     previous.current = view;
-    if (!recovered || !shouldRestoreFocus(document.activeElement)) return;
-    targetRef.current?.focus();
+    const target = targetRef.current;
+    if (!recovered || !shouldRestoreFocus(document.activeElement, target)) return;
+    target?.focus({ preventScroll: true });
   }, [view, targetRef]);
 }
 
@@ -66,7 +69,6 @@ export function RetryButton({
   return (
     <button
       type="button"
-      data-retry-button=""
       aria-disabled={retrying || undefined}
       aria-busy={retrying || undefined}
       onClick={() => {

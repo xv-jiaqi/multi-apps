@@ -141,6 +141,40 @@ function InputProbe({
   );
 }
 
+function MainProbe({
+  gates,
+  refetchRef,
+}: {
+  gates: Gate<string>[];
+  refetchRef: { current: (() => void) | null };
+}) {
+  const query = useQuery({
+    queryKey: ['retry-main'],
+    retry: false,
+    queryFn: () => {
+      const gate = createGate<string>();
+      gates.push(gate);
+      return gate.promise;
+    },
+  });
+  refetchRef.current = () => {
+    void query.refetch();
+  };
+  return (
+    <main id="main" tabIndex={-1}>
+      <FallbackView
+        view={queryFallback(query)}
+        errorMessage={query.error instanceof Error ? query.error.message : null}
+        fetching={query.isFetching}
+        readyText={typeof query.data === 'string' ? query.data : ''}
+        onRetry={() => {
+          void query.refetch();
+        }}
+      />
+    </main>
+  );
+}
+
 function renderProbe(ui: ReactNode) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -223,5 +257,35 @@ describe('queryFallback with a real QueryClient', () => {
     expect(await screen.findByRole('heading', { name: 'loaded' })).toBeInTheDocument();
     expect(document.activeElement).toBe(input);
     expect(input).toHaveFocus();
+  });
+
+  it('moves focus from main to the title when a failed query recovers', async () => {
+    const gates: Gate<string>[] = [];
+    const refetchRef: { current: (() => void) | null } = { current: null };
+    renderProbe(<MainProbe gates={gates} refetchRef={refetchRef} />);
+    await waitFor(() => expect(gates).toHaveLength(1));
+
+    act(() => {
+      gates[0]?.reject(new Error('first'));
+    });
+    await screen.findByRole('button', { name: '重试' });
+
+    const main = document.getElementById('main');
+    if (!(main instanceof HTMLElement)) throw new Error('missing main');
+    main.focus();
+    expect(main).toHaveFocus();
+
+    act(() => {
+      refetchRef.current?.();
+    });
+    await waitFor(() => expect(gates).toHaveLength(2));
+    expect(main).toHaveFocus();
+
+    act(() => {
+      gates[1]?.resolve('loaded');
+    });
+    const heading = await screen.findByRole('heading', { name: 'loaded' });
+    expect(heading).toHaveFocus();
+    expect(document.activeElement).toBe(heading);
   });
 });
