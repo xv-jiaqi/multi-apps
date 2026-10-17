@@ -191,7 +191,14 @@ export const TradeListPage = observer(function TradeListPage() {
   }
   function commitPriceRange() {
     if (!currencyFilter) return;
-    updateParams({ min: priceDraft.min.trim(), max: priceDraft.max.trim() });
+    // A price sort defaults the control to CNY without putting currency in the
+    // URL. min/max are ignored unless currency is present, so write that
+    // default together with the range (shared links like ?sort=price_asc).
+    updateParams({
+      currency: currencyFilter,
+      min: priceDraft.min.trim(),
+      max: priceDraft.max.trim(),
+    });
   }
   const priceRangeLabel =
     minPrice !== undefined && maxPrice !== undefined
