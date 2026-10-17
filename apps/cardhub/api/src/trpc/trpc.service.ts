@@ -10,6 +10,7 @@ import { ListingsRouter } from '../modules/listings/listings.router';
 import { ReportsRouter } from '../modules/reports/reports.router';
 import { UsersRouter } from '../modules/users/users.router';
 import { SearchRouter } from '../modules/search/search.router';
+import { AdminRouter } from '../modules/admin/admin.router';
 
 @Injectable()
 export class TrpcService {
@@ -27,6 +28,7 @@ export class TrpcService {
     private readonly reports: ReportsRouter,
     private readonly users: UsersRouter,
     private readonly search: SearchRouter,
+    private readonly admin: AdminRouter,
   ) {
     this.appRouter = this.t.router({
       health: this.health.build(),
@@ -39,6 +41,7 @@ export class TrpcService {
       listings: this.listings.build(),
       reports: this.reports.build(),
       users: this.users.build(),
+      admin: this.admin.build(),
     });
   }
 }

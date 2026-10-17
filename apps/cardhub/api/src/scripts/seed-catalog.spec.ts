@@ -36,4 +36,17 @@ describe('seedCatalog', () => {
     expect(userUpsert).not.toHaveBeenCalled();
     expect(userCreate).not.toHaveBeenCalled();
   });
+
+  it('does not overwrite existing catalog rows', async () => {
+    const { prisma, seriesUpsert, cardUpsert } = makePrisma();
+
+    await seedCatalog(prisma);
+
+    const seriesCalls = seriesUpsert.mock.calls as unknown as Array<[{ update?: unknown }]>;
+    const cardCalls = cardUpsert.mock.calls as unknown as Array<[{ update?: unknown }]>;
+    const firstSeriesArgs = seriesCalls[0]?.[0];
+    const firstCardArgs = cardCalls[0]?.[0];
+    expect(firstSeriesArgs?.update).toEqual({});
+    expect(firstCardArgs?.update).toEqual({});
+  });
 });

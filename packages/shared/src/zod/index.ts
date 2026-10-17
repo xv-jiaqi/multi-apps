@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const RARITY_VALUES = ['common', 'rare', 'epic', 'legendary'] as const;
+export type Rarity = (typeof RARITY_VALUES)[number];
+
 export const slugSchema = z
   .string()
   .min(1)
@@ -190,3 +193,52 @@ export const reportResolveInput = z.object({
   resolution: z.string().trim().max(500, '处理说明最多 500 字').optional(),
 });
 export type ReportResolveInput = z.infer<typeof reportResolveInput>;
+
+const adminImageUrlSchema = z
+  .string()
+  .trim()
+  .max(2048)
+  .refine(
+    (value) => value === '' || value.startsWith('https://') || value.startsWith('gradient:'),
+    'Image URL must be empty, https://, or gradient:',
+  )
+  .optional();
+
+export const adminAttributeValueSchema = z.union([z.string(), z.number(), z.boolean()]);
+export const adminAttributesSchema = z.record(z.string(), adminAttributeValueSchema);
+
+export const adminSeriesUpsertInput = z.object({
+  slug: slugSchema,
+  title: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(5000).optional(),
+  coverUrl: adminImageUrlSchema,
+});
+export type AdminSeriesUpsertInput = z.infer<typeof adminSeriesUpsertInput>;
+
+export const adminCardUpsertInput = z.object({
+  slug: slugSchema,
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(5000).optional(),
+  rarity: z.enum(RARITY_VALUES),
+  imageUrl: adminImageUrlSchema,
+  attributes: adminAttributesSchema.default({}),
+  seriesSlug: slugSchema,
+});
+export type AdminCardUpsertInput = z.infer<typeof adminCardUpsertInput>;
+
+export const adminSeriesDeleteInput = z.object({
+  slug: slugSchema,
+  force: z.boolean().default(false),
+});
+export type AdminSeriesDeleteInput = z.infer<typeof adminSeriesDeleteInput>;
+
+export const adminCardDeleteInput = z.object({
+  slug: slugSchema,
+});
+export type AdminCardDeleteInput = z.infer<typeof adminCardDeleteInput>;
+
+export const adminCatalogImportInput = z.object({
+  data: z.unknown(),
+  dryRun: z.boolean().default(true),
+});
+export type AdminCatalogImportInput = z.infer<typeof adminCatalogImportInput>;

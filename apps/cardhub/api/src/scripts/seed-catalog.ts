@@ -7,11 +7,7 @@ export async function seedCatalog(prisma: PrismaClient) {
   for (const series of CATALOG_SERIES) {
     const upsertedSeries = await prisma.series.upsert({
       where: { slug: series.slug },
-      update: {
-        title: series.title,
-        description: series.description,
-        coverUrl: series.coverUrl,
-      },
+      update: {},
       create: {
         slug: series.slug,
         title: series.title,
@@ -23,14 +19,7 @@ export async function seedCatalog(prisma: PrismaClient) {
     for (const card of series.cards) {
       await prisma.card.upsert({
         where: { slug: card.slug },
-        update: {
-          name: card.name,
-          description: card.description,
-          imageUrl: card.imageUrl,
-          rarity: card.rarity,
-          attributes: card.attributes,
-          seriesId: upsertedSeries.id,
-        },
+        update: {},
         create: {
           slug: card.slug,
           name: card.name,
