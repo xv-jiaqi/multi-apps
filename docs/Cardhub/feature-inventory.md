@@ -90,7 +90,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | 发布话题（Markdown + 预览）       | ✅   | `/forum/new`   | `forum.topics.create`  | slug = 标题英文化 + 6 位随机后缀（中文标题会退化成 `topic-xxxxxx`）                                                                                                 |
 | 话题详情 + Markdown 渲染          | ✅   | `/forum/:slug` | `forum.topics.bySlug`  | `react-markdown` + `remark-gfm` + `rehype-sanitize`，禁止 `dangerouslySetInnerHTML`                                                                                 |
 | 编辑话题（发布后 5 分钟内）       | 🟡   | —              | `forum.topics.update`  | 接口和窗口校验都有，**没有界面**（CH-103）                                                                                                                          |
-| 删除话题（本人 / 管理员）         | ✅   | 话题详情       | `forum.topics.delete`  | Web / Tauri 使用行内二步确认；成功后返回列表并显示可聚焦的删除提示；级联删除回帖                                                                                   |
+| 删除话题（本人 / 管理员）         | ✅   | 话题详情       | `forum.topics.delete`  | Web / Tauri 使用行内二步确认；成功后返回列表并显示可聚焦的删除提示；级联删除回帖                                                                                    |
 | 回帖（Markdown）                  | ✅   | 话题详情       | `forum.replies.create` |                                                                                                                                                                     |
 | 回帖翻页                          | ✅   | `/forum/:slug` | `forum.replies.list`   | 详情页先渲染 `bySlug` 内联的前 20 条；有 `replyNextCursor` 时可点击“加载更多回帖”继续按正序追加；首个后续页加载中显示忙态，失败重试中禁用按钮，新回帖可见高亮并聚焦 |
 | 删除回帖（本人 / 管理员）         | ✅   | 回帖旁         | `forum.replies.delete` | Web / Tauri 使用行内二步确认；成功后本地更新已展开分页、游标和回帖数，避免分页收回或 refetch 使用已删除游标                                                         |
@@ -387,6 +387,6 @@ erDiagram
 ## 10. 测试基线
 
 - API（Jest）：`apps/cardhub/api/src/**/*.spec.ts`，覆盖 auth、cards、comments、forum、listings、reports、health、限流代理、seed 脚本。覆盖率门槛：全局语句 60%、分支 50%；`auth/*` 语句 80%。
-- Web（Vitest + RTL）：评论区组件、登录回跳、渐变映射、运行时配置脚本。
-- CI 用 Postgres 16 service container 执行 `prisma migrate deploy` 后跑全量测试。
+- Web（Vitest + RTL，jsdom）：评论区组件、登录回跳、渐变映射、运行时配置脚本、ui-web 表单控件。Combobox 键盘（第一次 Esc 只关闭列表并保留输入；select 模式编辑后 Esc 恢复已选值；末项 ArrowDown 取消高亮并回到输入框；0 条结果时 `aria-expanded` 不为 true）另有 Chromium 测试 `combobox.browser.test.tsx`（Vitest browser mode + Playwright）。jsdom 复现不了 Radix 在 document capture 阶段拦截 Esc。
+- CI 用 Postgres 16 service container 执行 `prisma migrate deploy` 后跑全量测试，并在测试前安装 Playwright Chromium。
 - 缺口：`series` 路由、小程序、原生壳、端到端流程（CH-306）。

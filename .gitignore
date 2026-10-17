@@ -70,6 +70,8 @@ apps/**/prisma/migrations/dev/
 # Coverage
 coverage/
 .nyc_output/
+.vitest-attachments/
+**/__screenshots__/
 
 # Misc
 .eslintcache

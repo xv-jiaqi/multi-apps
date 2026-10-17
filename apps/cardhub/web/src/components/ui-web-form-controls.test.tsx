@@ -246,6 +246,10 @@ describe('ui-web Combobox', () => {
     expect(input).toHaveAttribute('aria-activedescendant');
     fireEvent.mouseLeave(listbox);
     expect(input).not.toHaveAttribute('aria-activedescendant');
+
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}');
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+    expect(input).toHaveFocus();
   });
 
   it('does not reopen an empty dismissed popover with ArrowDown', async () => {
@@ -255,6 +259,8 @@ describe('ui-web Combobox', () => {
     const input = screen.getByRole('combobox');
     await user.type(input, 'z');
     expect(await screen.findByRole('status')).toHaveTextContent('No results');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
 
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
