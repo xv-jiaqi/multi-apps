@@ -318,6 +318,26 @@ describe('MePage', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveFocus());
   });
 
+  it('refocuses the success notice after closing two listings in a row', async () => {
+    const user = userEvent.setup();
+    listingState.data = {
+      pages: [{ items: [listing('1'), listing('2')], nextCursor: null }],
+    };
+
+    renderMe();
+
+    await user.click(screen.getAllByRole('button', { name: '关闭这条意向' })[0]!);
+    await user.click(screen.getByRole('button', { name: '关闭意向' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveFocus());
+
+    await user.click(screen.getByRole('button', { name: '关闭这条意向' }));
+    await user.click(screen.getByRole('button', { name: '关闭意向' }));
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveFocus());
+    expect(document.body).not.toHaveFocus();
+    expect(setInfiniteData).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps focus on load-more when more pages remain', async () => {
     const user = userEvent.setup();
     listingState.hasNextPage = true;

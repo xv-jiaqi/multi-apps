@@ -176,7 +176,7 @@ export const MePage = observer(function MePage() {
   const location = useLocation();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [hash, setHash] = useState(location.hash);
-  const [successNotice, setSuccessNotice] = useState(false);
+  const [successNoticeId, setSuccessNoticeId] = useState(0);
   const [pendingFocus, setPendingFocus] = useState<{
     id: string;
     section: SectionId;
@@ -265,10 +265,10 @@ export const MePage = observer(function MePage() {
   }, [location.hash, me.isSuccess]);
 
   useEffect(() => {
-    if (successNotice) {
+    if (successNoticeId > 0) {
       requestAnimationFrame(() => successRef.current?.focus());
     }
-  }, [successNotice]);
+  }, [successNoticeId]);
 
   useEffect(() => {
     if (!pendingFocus) return;
@@ -315,7 +315,7 @@ export const MePage = observer(function MePage() {
         })),
       };
     });
-    setSuccessNotice(true);
+    setSuccessNoticeId((current) => current + 1);
   };
 
   const loadMore = async (
@@ -464,7 +464,7 @@ export const MePage = observer(function MePage() {
           action={{ to: '/trade/new', label: tt('trade.list.publish') }}
           isLoading={listings.isLoading}
           notice={
-            successNotice ? (
+            successNoticeId > 0 ? (
               <p
                 ref={successRef}
                 role="status"
