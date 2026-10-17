@@ -61,7 +61,7 @@ describe('json body limits', () => {
     expect(response.body).toEqual([
       {
         error: {
-          message: '一次最多导入 1MB',
+          message: '内容太大，请精简后重试',
           code: -32013,
           data: {
             code: 'PAYLOAD_TOO_LARGE',
@@ -83,6 +83,7 @@ describe('json body limits', () => {
       .send(Buffer.alloc(CATALOG_IMPORT_HTTP_BODY_LIMIT + 1, 0x78));
 
     expect(response.status).toBe(413);
+    expect(response.body.error.message).toBe('一次最多导入 1MB');
     expect(response.body.error.data).toEqual({
       code: 'PAYLOAD_TOO_LARGE',
       httpStatus: 413,

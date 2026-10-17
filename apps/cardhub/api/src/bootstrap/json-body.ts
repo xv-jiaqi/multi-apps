@@ -46,9 +46,11 @@ function isPayloadTooLarge(error: unknown): boolean {
 }
 
 function payloadTooLargeError(path: string | undefined) {
+  const messageKey =
+    path === CATALOG_IMPORT_PROCEDURE ? 'admin.import.tooLarge' : 'error.payloadTooLarge';
   return {
     error: {
-      message: t('zh-CN', 'admin.import.tooLarge'),
+      message: t('zh-CN', messageKey),
       code: -32013,
       data: {
         code: 'PAYLOAD_TOO_LARGE',
@@ -75,8 +77,10 @@ function rejectPayloadTooLarge(req: Request, res: Response): void {
  *
  * Any route whose body exceeds its cap is rejected here with 413 and the
  * shared tRPC `PAYLOAD_TOO_LARGE` shape — before the handler and before
- * Sentry. Other body-parser 4xx errors (malformed JSON) are forwarded so
- * `SentryExceptionFilter` can answer with that status without an ERROR event.
+ * Sentry. Catalog import keeps the import-specific message; every other
+ * route uses the generic one. Other body-parser 4xx errors (malformed JSON)
+ * are forwarded so `SentryExceptionFilter` can answer with that status
+ * without an ERROR event.
  *
  * Nest's built-in parser is a single global limit, so `createApp` disables
  * it (`bodyParser: false`) and mounts this instead.

@@ -1045,7 +1045,7 @@ describe('AdminRouter HTTP error formatting', () => {
     expect(response.status).toBe(413);
     expect(response.body).toEqual({
       error: {
-        message: '一次最多导入 1MB',
+        message: '内容太大，请精简后重试',
         code: -32013,
         data: {
           code: 'PAYLOAD_TOO_LARGE',
