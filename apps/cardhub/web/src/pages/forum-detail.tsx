@@ -26,6 +26,10 @@ function mergeReplies(replies: TopicReply[]): TopicReply[] {
   });
 }
 
+function fetchNextPageFailed(result: { isError?: boolean }): boolean {
+  return result.isError === true;
+}
+
 export const ForumDetailPage = observer(function ForumDetailPage() {
   const { slug = '' } = useParams<{ slug: string }>();
   const { locale, session } = useStores();
@@ -127,9 +131,18 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     if (!pendingCreatedReplyId) return;
     if (autoLoadFailedReplyId === pendingCreatedReplyId) return;
     if (repliesQuery.hasNextPage && !repliesQuery.isFetchingNextPage) {
-      void repliesQuery.fetchNextPage().catch(() => {
-        setAutoLoadFailedReplyId(pendingCreatedReplyId);
-      });
+      void (async () => {
+        let result: Awaited<ReturnType<typeof repliesQuery.fetchNextPage>>;
+        try {
+          result = await repliesQuery.fetchNextPage();
+        } catch {
+          setAutoLoadFailedReplyId(pendingCreatedReplyId);
+          return;
+        }
+        if (fetchNextPageFailed(result)) {
+          setAutoLoadFailedReplyId(pendingCreatedReplyId);
+        }
+      })();
       return;
     }
     const createdReplyIsVisible = visibleReplies.some(
@@ -204,6 +217,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     try {
       result = await repliesQuery.fetchNextPage();
     } catch {
+      return;
+    }
+    if (fetchNextPageFailed(result)) {
+      setAutoLoadFailedReplyId('manual');
       return;
     }
     const pages = result.data?.pages ?? [];
@@ -336,9 +353,18 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                   type="button"
                   onClick={() => {
                     setAutoLoadFailedReplyId(null);
-                    void repliesQuery.fetchNextPage().catch(() => {
-                      setAutoLoadFailedReplyId(pendingCreatedReplyId ?? 'manual');
-                    });
+                    void (async () => {
+                      let result: Awaited<ReturnType<typeof repliesQuery.fetchNextPage>>;
+                      try {
+                        result = await repliesQuery.fetchNextPage();
+                      } catch {
+                        setAutoLoadFailedReplyId(pendingCreatedReplyId ?? 'manual');
+                        return;
+                      }
+                      if (fetchNextPageFailed(result)) {
+                        setAutoLoadFailedReplyId(pendingCreatedReplyId ?? 'manual');
+                      }
+                    })();
                   }}
                   className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
                 >

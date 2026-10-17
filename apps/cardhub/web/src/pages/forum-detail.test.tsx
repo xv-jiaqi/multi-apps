@@ -305,7 +305,7 @@ describe('ForumDetailPage replies pagination', () => {
     );
     fetchNextPage.mockImplementation(async () => {
       repliesQueryState.isFetchNextPageError = true;
-      throw new Error('network failed');
+      return { data: repliesQueryState.data, isError: true };
     });
     const user = userEvent.setup();
     renderPage();
