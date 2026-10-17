@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createApp } from '../bootstrap/create-app';
+import { productionRateLimitConfigs } from '../bootstrap/rate-limiters';
 import { HealthService } from '../modules/health/health.service';
 
 async function makeTestApp(): Promise<INestApplication> {
@@ -23,6 +24,11 @@ async function makeTestApp(): Promise<INestApplication> {
 }
 
 describe('rate limit proxy IP handling', () => {
+  it('keeps the production comments.create limit at 30 per hour', () => {
+    expect(productionRateLimitConfigs.commentCreate.windowMs).toBe(3_600_000);
+    expect(productionRateLimitConfigs.commentCreate.limit).toBe(30);
+  });
+
   it('sets Vary: Origin on CORS responses for dynamic origins', async () => {
     const app = await makeTestApp();
     try {

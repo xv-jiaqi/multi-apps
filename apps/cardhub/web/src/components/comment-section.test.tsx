@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -203,6 +203,65 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '取消' }));
     expect(screen.queryByText('删除这条评论？')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus();
+  });
+
+  it('collapses the delete confirmation on Esc and returns focus to delete', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'own comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    renderShell();
+
+    await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
+    expect(screen.getByText('删除这条评论？')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByText('删除这条评论？')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus(),
+    );
+  });
+
+  it('shows an alert when comment deletion is forbidden', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'own comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    deleteMutateMock.mockImplementationOnce(
+      (
+        input: { id: string },
+        callbacks: {
+          onError: (
+            error: { message: string; data?: { code?: string } },
+            variables: { id: string },
+          ) => void;
+        },
+      ) => {
+        callbacks.onError(
+          {
+            message: 'Forbidden',
+            data: { code: 'FORBIDDEN' },
+          },
+          input,
+        );
+      },
+    );
+    renderShell();
+
+    await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
+    await user.click(screen.getByRole('button', { name: '删除' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('你没有权限删除这条评论');
   });
 
   it('shows localized copy when comment creation is rate limited', async () => {
