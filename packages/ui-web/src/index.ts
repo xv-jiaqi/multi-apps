@@ -1,5 +1,7 @@
 export { cn } from './lib/cn';
 export { Button, buttonVariants } from './components/button';
+export { Combobox } from './components/combobox';
+export type { ComboboxGroup, ComboboxLabels, ComboboxProps } from './components/combobox';
 export {
   Card,
   CardHeader,
@@ -43,3 +45,18 @@ export {
   isConfirmPhraseValid,
   type ConfirmPhraseFieldProps,
 } from './components/confirm-phrase-field';
+export { Input } from './components/input';
+export type { InputProps } from './components/input';
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from './components/select';
+export type { SelectTriggerProps } from './components/select';
+export { SegmentedControl } from './components/segmented-control';
+export type { SegmentedControlOption, SegmentedControlProps } from './components/segmented-control';
