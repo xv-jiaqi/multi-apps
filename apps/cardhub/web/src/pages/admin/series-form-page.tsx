@@ -9,7 +9,7 @@ import { PageShell } from '../../components/page-shell';
 import { AdminField } from '../../components/admin/admin-field';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
 import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
-import { queryFallback } from '../../components/retry-button';
+import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
 import {
   applyValidationFeedback,
@@ -67,6 +67,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [ready, setReady] = useState(mode === 'create');
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -74,6 +75,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
   const saving = create.isPending || update.isPending;
   const revoked = list.isError && isAccessRevoked(list.error);
   const editView = queryFallback(list);
+  useFocusOnRecovery(editView, headingRef);
 
   useEffect(() => {
     if (revoked) reportForbidden();
@@ -189,7 +191,13 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
         ]}
       />
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900">{pageTitle}</h1>
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
+          {pageTitle}
+        </h1>
       </header>
       {mode === 'edit' && editView === 'error' ? (
         revoked ? null : (

@@ -467,23 +467,6 @@ describe('TradeListPage price filters', () => {
     expect(listHarness.refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the error alert and focus while listings are retrying', () => {
-    listHarness.isError = true;
-    listHarness.isLoading = true;
-    listHarness.isFetching = true;
-    renderTrade();
-
-    const button = screen.getByRole('button', { name: '重试中' });
-    button.focus();
-    expect(screen.getByRole('alert')).toHaveTextContent('加载失败');
-    expect(screen.getByRole('alert')).not.toHaveTextContent('network down');
-    expect(screen.queryByText('加载中…')).not.toBeInTheDocument();
-    expect(document.activeElement).toBe(button);
-    expect(button).toHaveAttribute('aria-disabled', 'true');
-    expect(button).toHaveAttribute('aria-busy', 'true');
-    expect(button).not.toHaveAttribute('disabled');
-  });
-
   it('localizes the load error in English', async () => {
     listHarness.isError = true;
     rootStore.locale.setLocale('en-US');

@@ -191,7 +191,7 @@ export const AttributesEditor = observer(function AttributesEditor({
       </Button>
       {atLimit ? (
         <p className="text-xs text-neutral-600">
-          {tt('admin.attrs.atLimit', { max: ADMIN_ATTRIBUTE_MAX_KEYS })}
+          {tt('admin.attrs.atLimit', { count: rows.length, max: ADMIN_ATTRIBUTE_MAX_KEYS })}
         </p>
       ) : null}
       {formError ? (

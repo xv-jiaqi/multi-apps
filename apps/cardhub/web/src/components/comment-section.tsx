@@ -6,7 +6,7 @@ import { commentInput, seriesCommentInput, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from './report-button';
-import { RetryButton, queryFallback } from './retry-button';
+import { RetryButton, queryFallback, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
 
@@ -39,6 +39,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const [deleteError, setDeleteError] = useState<{ id: string; message: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const statusRef = useRef<HTMLParagraphElement | null>(null);
+  const commentsRef = useRef<HTMLElement | null>(null);
   const deleteButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const cancelButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -160,6 +161,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   };
 
   const commentsView = queryFallback(list);
+  useFocusOnRecovery(commentsView, commentsRef);
 
   return (
     <div className="space-y-4">
@@ -254,13 +256,23 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
       ) : !list.data || list.data.length === 0 ? (
         <p
+          ref={(node) => {
+            commentsRef.current = node;
+          }}
           tabIndex={-1}
-          className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500"
+          className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('card.detail.commentEmpty')}
         </p>
       ) : (
-        <ul tabIndex={-1} aria-label={tt('a11y.commentList')} className="space-y-3">
+        <ul
+          ref={(node) => {
+            commentsRef.current = node;
+          }}
+          tabIndex={-1}
+          aria-label={tt('a11y.commentList')}
+          className="space-y-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           {list.data.map((comment) => {
             const canDelete = session.user?.id === comment.user.id || session.isAdmin;
             const isConfirming = confirmingId === comment.id;

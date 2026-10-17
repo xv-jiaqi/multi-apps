@@ -27,7 +27,7 @@ import {
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
-import { RetryButton, queryFallback } from '../components/retry-button';
+import { RetryButton, queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from '../components/report-button';
@@ -96,6 +96,7 @@ export const TradeListPage = observer(function TradeListPage() {
   const [closedNotice, setClosedNotice] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const noticeRef = useRef<HTMLParagraphElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
   const utils = trpc.useUtils();
 
   const rawKind = searchParams.get('kind');
@@ -181,6 +182,7 @@ export const TradeListPage = observer(function TradeListPage() {
   );
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
   const listView = queryFallback(query);
+  useFocusOnRecovery(listView, titleRef);
   const activeFilterCount = [
     kindFilter !== 'all',
     cardSlugFilter,
@@ -261,7 +263,13 @@ export const TradeListPage = observer(function TradeListPage() {
         />
         <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">{tt('trade.list.title')}</h1>
+            <h1
+              ref={titleRef}
+              tabIndex={-1}
+              className="text-3xl font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              {tt('trade.list.title')}
+            </h1>
             <p className="text-neutral-600">{tt('trade.list.subtitle')}</p>
           </div>
           {session.isAuthenticated ? (

@@ -11,7 +11,7 @@ import { RARITY_LABELS } from '../../components/rarity-badge';
 import { AdminField } from '../../components/admin/admin-field';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
 import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
-import { queryFallback } from '../../components/retry-button';
+import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import { AttributesEditor } from '../../components/admin/attributes-editor';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
 import {
@@ -83,6 +83,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(mode === 'create');
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -112,10 +113,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const seriesForCrumb =
     seriesItems.find((item) => item.slug === (mode === 'edit' ? card?.seriesSlug : routeSlug)) ??
     null;
-  const formView = queryFallback({
-    isError: seriesQuery.isError || cardQuery.isError,
-    isLoading: seriesQuery.isLoading || (mode === 'edit' && cardQuery.isLoading),
-  });
+  const formView = queryFallback(seriesQuery, ...(mode === 'edit' ? [cardQuery] : []));
+  useFocusOnRecovery(formView, titleRef);
   const missingSeries = mode === 'create' && !seriesQuery.isLoading && !seriesForCrumb;
   const missingCard = mode === 'edit' && !cardQuery.isLoading && !cardQuery.isError && !card;
 
@@ -258,7 +257,11 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         ]}
       />
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+        <h1
+          ref={titleRef}
+          tabIndex={-1}
+          className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           {mode === 'edit' && card ? card.name : pageTitle}
         </h1>
       </header>

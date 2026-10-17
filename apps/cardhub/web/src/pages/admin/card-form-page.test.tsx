@@ -209,7 +209,7 @@ describe('attributes editor', () => {
 
     const add = screen.getByRole('button', { name: '添加属性' });
     expect(add).toBeDisabled();
-    expect(screen.getByText('已有 40 个属性，不能再添加')).toBeInTheDocument();
+    expect(screen.getByText('已有 40 个属性，最多 40 个')).toBeInTheDocument();
     const names = screen.getAllByRole('textbox', { name: /属性名/ });
     expect(names).toHaveLength(40);
     names[39]?.focus();
@@ -241,6 +241,7 @@ describe('attributes editor', () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByText('已有 41 个属性，最多 40 个')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '保存修改' }));
     expect(screen.getByText('最多 40 个属性')).toBeInTheDocument();
     expect(screen.queryByText('At most 40 attributes')).not.toBeInTheDocument();
@@ -288,10 +289,14 @@ describe('card form server validation', () => {
         data: {
           code: 'BAD_REQUEST',
           zodError: {
-            formErrors: [],
-            fieldErrors: {
-              imageUrl: ['Too big: expected string to have <=2048 characters'],
-            },
+            issues: [
+              {
+                code: 'too_big',
+                maximum: 2048,
+                path: ['imageUrl'],
+                message: 'rejected by schema',
+              },
+            ],
           },
         },
       };
@@ -300,9 +305,8 @@ describe('card form server validation', () => {
     await submitNewCard(user);
 
     expect(await screen.findByText('图片链接最长 2048 个字符')).toBeInTheDocument();
-    expect(
-      screen.queryByText('Too big: expected string to have <=2048 characters'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('rejected by schema')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
     expect(screen.queryByText('BAD_REQUEST')).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '卡图链接' })).toHaveFocus();
@@ -334,7 +338,9 @@ describe('card form server validation', () => {
     const user = userEvent.setup();
     createImpl.current = async () => {
       throw {
-        message: JSON.stringify([{ path: ['attributes'], message: 'At most 40 attributes' }]),
+        message: JSON.stringify([
+          { code: 'custom', path: ['attributes'], message: 'limit exceeded' },
+        ]),
         data: { code: 'BAD_REQUEST' },
       };
     };
@@ -344,6 +350,7 @@ describe('card form server validation', () => {
     const attributes = document.getElementById('card-attributes');
     expect(attributes).toHaveTextContent('最多 40 个属性');
     expect(attributes).toHaveFocus();
+    expect(screen.queryByText('limit exceeded')).not.toBeInTheDocument();
     expect(screen.queryByText('At most 40 attributes')).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -354,8 +361,10 @@ describe('card form server validation', () => {
       throw {
         message: JSON.stringify([
           {
+            code: 'too_big',
+            maximum: 500,
             path: ['attributes', 'cost'],
-            message: 'Too big: expected string to have <=500 characters',
+            message: 'rejected by schema',
           },
         ]),
         data: { code: 'BAD_REQUEST' },
@@ -366,7 +375,31 @@ describe('card form server validation', () => {
 
     expect(document.getElementById('card-attributes')).toHaveTextContent('属性值最长 500 个字符');
     expect(document.getElementById('card-attributes')).toHaveFocus();
+    expect(screen.queryByText('rejected by schema')).not.toBeInTheDocument();
     expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
+  });
+
+  it('translates an invalid attribute key from its zod code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          {
+            code: 'invalid_key',
+            path: ['attributes', 'k'.repeat(65)],
+            message: 'bad key',
+            issues: [{ code: 'too_big', maximum: 64, message: 'rejected by schema' }],
+          },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+
+    await submitNewCard(user);
+
+    expect(document.getElementById('card-attributes')).toHaveTextContent('属性名最长 64 个字符');
+    expect(screen.queryByText('bad key')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invalid key in record')).not.toBeInTheDocument();
   });
 
   it('invalidates the previous series list when the card moves', async () => {

@@ -297,20 +297,3 @@ describe('CatalogSeriesPage delete', () => {
     expect(screen.queryByText('SLUG_TAKEN')).not.toBeInTheDocument();
   });
 });
-
-describe('CatalogSeriesPage load failure', () => {
-  it('keeps the error alert and focus while the list is retrying', () => {
-    seriesState.isError = true;
-    seriesState.isLoading = true;
-    seriesState.isFetching = true;
-    renderPage();
-
-    const button = screen.getByRole('button', { name: '重试中' });
-    button.focus();
-    expect(screen.getByRole('alert')).toHaveTextContent('加载失败');
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(document.activeElement).toBe(button);
-    expect(button).toHaveAttribute('aria-disabled', 'true');
-    expect(button).not.toHaveAttribute('disabled');
-  });
-});

@@ -2,6 +2,7 @@ import {
   ADMIN_ATTRIBUTE_KEY_MAX,
   ADMIN_ATTRIBUTE_MAX_KEYS,
   ADMIN_ATTRIBUTE_VALUE_MAX,
+  LISTING_IMAGE_URL_MAX,
   slugSchema,
   t,
   type Locale,
@@ -136,6 +137,9 @@ const KNOWN_FIELDS = new Set([
 interface ZodIssueLike {
   path?: unknown;
   message?: unknown;
+  code?: unknown;
+  maximum?: unknown;
+  issues?: unknown;
 }
 
 export interface ValidationFeedback {
@@ -154,42 +158,56 @@ function isIssue(value: unknown): value is ZodIssueLike {
   return Boolean(value) && typeof value === 'object';
 }
 
-const TOO_BIG_STRING = /^Too big: expected string to have <=(\d+) characters$/;
-const TOO_MANY_ATTRIBUTES = /^At most \d+ attributes$/;
+function issueCode(issue: ZodIssueLike): string {
+  return typeof issue.code === 'string' ? issue.code : '';
+}
 
-function localizeAdminIssue(locale: Locale, path: string[], message: string): string {
-  if (TOO_MANY_ATTRIBUTES.test(message)) {
+function issueMaximum(issue: ZodIssueLike, fallback: number): number {
+  return typeof issue.maximum === 'number' ? issue.maximum : fallback;
+}
+
+function nestedKeyMaximum(issue: ZodIssueLike): number {
+  if (!Array.isArray(issue.issues)) return ADMIN_ATTRIBUTE_KEY_MAX;
+  for (const nested of issue.issues) {
+    if (isIssue(nested) && typeof nested.maximum === 'number') return nested.maximum;
+  }
+  return ADMIN_ATTRIBUTE_KEY_MAX;
+}
+
+function localizeAdminIssue(locale: Locale, issue: ZodIssueLike, path: string[]): string {
+  const code = issueCode(issue);
+  const head = path[0];
+  const message = typeof issue.message === 'string' ? issue.message.trim() : '';
+  if (code === 'custom' && head === 'attributes' && path.length === 1) {
     return t(locale, 'admin.attrs.errorTooMany', { max: ADMIN_ATTRIBUTE_MAX_KEYS });
   }
-  const tooBig = TOO_BIG_STRING.exec(message);
-  if (tooBig) {
-    const max = Number(tooBig[1]);
-    const head = path[0];
+  if (code === 'invalid_key' && head === 'attributes') {
+    return t(locale, 'admin.attrs.errorKeyLength', { max: nestedKeyMaximum(issue) });
+  }
+  if (code === 'too_big') {
     if (head === 'imageUrl' || head === 'coverUrl') {
-      return t(locale, 'admin.error.imageTooLong', { max });
+      return t(locale, 'admin.error.imageTooLong', {
+        max: issueMaximum(issue, LISTING_IMAGE_URL_MAX),
+      });
     }
     if (head === 'attributes') {
-      return t(locale, 'admin.attrs.errorValueLength', { max });
+      return t(locale, 'admin.attrs.errorValueLength', {
+        max: issueMaximum(issue, ADMIN_ATTRIBUTE_VALUE_MAX),
+      });
     }
     return t(locale, 'admin.error.tooLong');
   }
-  if (message === 'Invalid key in record' && path[0] === 'attributes') {
-    return t(locale, 'admin.attrs.errorKeyLength', { max: ADMIN_ATTRIBUTE_KEY_MAX });
-  }
-  if (message === 'Image URL must be empty, https://, or gradient:') {
+  if (code === 'custom' && (head === 'imageUrl' || head === 'coverUrl') && path.length === 1) {
     return t(locale, 'admin.error.imageUrl');
   }
-  return message;
+  return message || t(locale, 'admin.error.invalidType');
 }
 
-function isAttributeCapIssue(path: string[], message: string): boolean {
-  return (
-    path[0] === 'attributes' &&
-    (path.length === 1 ||
-      message === 'Invalid key in record' ||
-      TOO_BIG_STRING.test(message) ||
-      TOO_MANY_ATTRIBUTES.test(message))
-  );
+function isAttributeCapIssue(path: string[], issue: ZodIssueLike): boolean {
+  if (path[0] !== 'attributes') return false;
+  const code = issueCode(issue);
+  if (path.length === 1) return code === 'custom';
+  return code === 'invalid_key' || code === 'too_big';
 }
 
 function issuesFromMessage(message: string): ZodIssueLike[] {
@@ -247,14 +265,10 @@ export function readValidationFeedback(
     const extras: string[] = [];
     for (const issue of issues) {
       const path = issuePath(issue.path);
-      const raw =
-        typeof issue.message === 'string' && issue.message.trim() ? issue.message.trim() : '';
-      const text = raw
-        ? localizeAdminIssue(locale, path, raw)
-        : t(locale, 'admin.error.invalidType');
+      const text = localizeAdminIssue(locale, issue, path);
       const head = path[0];
       const field = head === 'seriesSlug' ? 'series' : head;
-      if (isAttributeCapIssue(path, raw)) {
+      if (isAttributeCapIssue(path, issue)) {
         fields.attributes = fields.attributes ? `${fields.attributes}\n${text}` : text;
       } else if (field && head && path.length === 1 && KNOWN_FIELDS.has(head)) {
         fields[field] = fields[field] ? `${fields[field]}\n${text}` : text;
