@@ -244,10 +244,17 @@ describe('catalog import', () => {
 
     expect(await screen.findByText(/导入完成/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: '返回内容管理' })).toHaveAttribute(
+      'href',
+      '/admin/catalog',
+    );
+    expect(screen.getByText('这份内容已经导入过，请修改后再导入')).toBeInTheDocument();
     expect(calls.filter((call) => !call.dryRun)).toHaveLength(1);
 
     await user.type(screen.getByRole('textbox', { name: 'JSON 内容' }), ' ');
     expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(screen.queryByRole('link', { name: '返回内容管理' })).not.toBeInTheDocument();
+    expect(screen.queryByText('这份内容已经导入过，请修改后再导入')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '预览' }));
     expect(screen.getByRole('button', { name: '导入' })).toBeEnabled();
   });
@@ -264,15 +271,22 @@ describe('catalog import', () => {
     await user.click(screen.getByRole('button', { name: '导入' }));
     await user.click(screen.getByRole('button', { name: '确认导入' }));
     expect(await screen.findByText(/导入完成/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '返回内容管理' })).toBeInTheDocument();
 
     await user.type(textbox, 'x');
+    expect(screen.queryByRole('link', { name: '返回内容管理' })).not.toBeInTheDocument();
     await user.keyboard('{Backspace}');
+    expect(textbox).toHaveValue('[]');
     expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: '返回内容管理' })).toBeInTheDocument();
+    expect(screen.getByText('这份内容已经导入过，请修改后再导入')).toBeInTheDocument();
 
     const file = new File(['[]'], 'catalog.json', { type: 'application/json' });
     await user.upload(screen.getByLabelText('选择文件'), file);
     await waitFor(() => expect(textbox).toHaveValue('[]'));
     expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: '返回内容管理' })).toBeInTheDocument();
+    expect(screen.getByText('这份内容已经导入过，请修改后再导入')).toBeInTheDocument();
     expect(calls.filter((call) => !call.dryRun)).toHaveLength(1);
   });
 });

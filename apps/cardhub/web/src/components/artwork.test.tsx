@@ -135,6 +135,43 @@ describe('useArtImage', () => {
     }
   });
 
+  it('keeps a cached complete image loaded after effects run', () => {
+    const imageProto = HTMLImageElement.prototype;
+    const complete = Object.getOwnPropertyDescriptor(imageProto, 'complete');
+    const naturalWidth = Object.getOwnPropertyDescriptor(imageProto, 'naturalWidth');
+    Object.defineProperty(imageProto, 'complete', { configurable: true, get: () => true });
+    Object.defineProperty(imageProto, 'naturalWidth', { configurable: true, get: () => 120 });
+    try {
+      render(<ModeProbe src="https://img.cardhub.test/cached.webp" />);
+
+      expect(screen.getByAltText('probe')).toHaveAttribute('data-loaded', 'true');
+      expect(screen.getByTestId('mode')).toHaveTextContent('image');
+    } finally {
+      if (complete) Object.defineProperty(imageProto, 'complete', complete);
+      if (naturalWidth) Object.defineProperty(imageProto, 'naturalWidth', naturalWidth);
+    }
+  });
+
+  it('keeps a cached broken image in the error state after effects run', () => {
+    const onError = vi.fn();
+    const imageProto = HTMLImageElement.prototype;
+    const complete = Object.getOwnPropertyDescriptor(imageProto, 'complete');
+    const naturalWidth = Object.getOwnPropertyDescriptor(imageProto, 'naturalWidth');
+    Object.defineProperty(imageProto, 'complete', { configurable: true, get: () => true });
+    Object.defineProperty(imageProto, 'naturalWidth', { configurable: true, get: () => 0 });
+    try {
+      render(
+        <ModeProbe src="https://img.cardhub.test/cached-broken-settled.webp" onError={onError} />,
+      );
+
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('mode')).toHaveTextContent('placeholder');
+    } finally {
+      if (complete) Object.defineProperty(imageProto, 'complete', complete);
+      if (naturalWidth) Object.defineProperty(imageProto, 'naturalWidth', naturalWidth);
+    }
+  });
+
   it('resets loaded state when the image URL changes', () => {
     const { rerender } = render(<ModeProbe src="https://img.cardhub.test/one.webp" />);
 

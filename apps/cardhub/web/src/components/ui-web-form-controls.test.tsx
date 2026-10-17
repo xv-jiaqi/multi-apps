@@ -144,14 +144,15 @@ describe('ui-web Select', () => {
 });
 
 describe('ui-web Combobox', () => {
-  it('keeps the search icon padding when the small size sets horizontal padding', () => {
+  it('keeps icon padding on the small size without the compact horizontal padding', () => {
     render(<ComboHarness size="sm" />);
 
     const input = screen.getByRole('combobox');
     expect(input).toHaveClass('pl-9');
     expect(input).toHaveClass('pr-9');
     expect(input).toHaveClass('h-8');
-    expect(input.className.indexOf('pl-9')).toBeGreaterThan(input.className.indexOf('px-2.5'));
+    expect(input).toHaveClass('text-sm');
+    expect(input).not.toHaveClass('px-2.5');
   });
 
   it('exposes combobox/listbox ARIA and selects the highlighted item', async () => {

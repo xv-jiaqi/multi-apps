@@ -77,7 +77,6 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   } | null>(null);
   const [filter, setFilter] = useState<'all' | 'errors'>('errors');
   const [confirming, setConfirming] = useState(false);
-  const [done, setDone] = useState(false);
   const [importedText, setImportedText] = useState<string | null>(null);
   const [phase, setPhase] = useState<'preview' | 'execute' | null>(null);
   const importCatalog = trpc.admin.catalog.import.useMutation();
@@ -97,7 +96,6 @@ const CatalogImportBody = observer(function CatalogImportBody() {
     setText(value);
     setParseError(null);
     setConfirming(false);
-    if (importedText === null || value !== importedText) setDone(false);
     setNotice(null);
   };
 
@@ -178,7 +176,6 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       const counts = summarizeImport(rows);
       setPreview({ ...preview, rows });
       setConfirming(false);
-      setDone(true);
       setImportedText(preview.text);
       setNotice(tt('admin.import.done', { create: counts.create, update: counts.update }));
     } catch (error) {
@@ -215,7 +212,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       </header>
       <div className="flex flex-wrap items-center gap-3">
         <AdminStatus message={notice} statusRef={statusRef} />
-        {done ? (
+        {sameAsImported ? (
           <Link
             to="/admin/catalog"
             className={`text-sm font-medium text-brand-600 hover:underline ${focusRing}`}
@@ -375,6 +372,9 @@ const CatalogImportBody = observer(function CatalogImportBody() {
             ) : null}
             {nothing && !stale ? (
               <p className="text-sm text-neutral-700">{tt('admin.import.nothing')}</p>
+            ) : null}
+            {sameAsImported && !stale ? (
+              <p className="text-sm text-neutral-700">{tt('admin.import.already')}</p>
             ) : null}
             <Button
               type="button"
