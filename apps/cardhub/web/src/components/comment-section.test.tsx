@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -166,7 +166,9 @@ describe('CommentSection (unauthenticated)', () => {
       await user.click(screen.getByRole('button', { name: '重试' }));
       expect(refetchMock).toHaveBeenCalledTimes(1);
 
-      rootStore.locale.setLocale('en-US');
+      act(() => {
+        rootStore.locale.setLocale('en-US');
+      });
       await waitFor(() => {
         expect(screen.getByRole('alert')).toHaveTextContent('Failed to load');
         expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
