@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import '@repo/design-tokens/tailwind.css';
 
+@source '../../../../../packages/ui-web/src';
+
 /*
  * Safe-area insets for iOS notch / Android status-bar / Tauri WebView.
  * Browsers without env() (Tauri Desktop, all desktop browsers) treat the
