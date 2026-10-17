@@ -163,6 +163,42 @@ cache while still exercising Caddy, TLS, and routing. If verification fails
 after switching containers, the script attempts to roll back to the previously
 running immutable `sha-` tag and still fails the job.
 
+Image builds use Docker Buildx's GitHub Actions cache with separate scopes for
+API and Web images. The cache is configured with `mode=max` so intermediate
+layers such as the API production dependency tree can be reused across fresh
+GitHub runners. GitHub's Actions cache has a 10GB repository limit; because the
+scopes are per image, older cache entries are evicted by GitHub's LRU policy when
+the repo exceeds that limit.
+
+Before switching images, `remote-deploy.sh` records the environment's previous
+API and web `sha-` tags in `/opt/cardhub/<environment>/.deploy-state/`.
+After a successful deploy, `image-cleanup.sh` removes only stale
+`ghcr.io/xv-jiaqi/cardhub-api:sha-*` and
+`ghcr.io/xv-jiaqi/cardhub-web:sha-*` images. Cleanup keeps, independently for
+`cardhub-prod` and `cardhub-staging`:
+
+- the images currently referenced by that compose project's containers;
+- the previous API and web tags recorded in that environment's state file; and
+- any Cardhub image still referenced by any local Docker container, running or
+  stopped.
+
+This is intentionally cross-environment: a staging deploy scans both production
+and staging state before deleting anything, so staging cannot remove production's
+current image or production's rollback target. Cleanup is best-effort and logs a
+warning instead of failing the deployment if Docker cleanup fails. Cleanup takes
+a non-blocking lock at `/opt/cardhub/.image-cleanup.lock`; if staging and
+production deploy concurrently, whichever cleanup starts second skips its cleanup
+attempt and the deploy still succeeds. The script is scoped to Cardhub API/Web
+`sha-*` tags and does not run a machine-wide dangling image prune. Docker frees
+layers that become unreferenced by the removed Cardhub tags, while unrelated
+dangling images are left alone.
+
+To inspect the decision without deleting images, run:
+
+```bash
+/opt/cardhub/staging/deploy/image-cleanup.sh --dry-run --root /opt/cardhub
+```
+
 Keep `CATALOG_SEED_CMD` empty for normal deploys so later catalog edits are not
 overwritten. On the first deploy of an empty database, run the catalog-only seed
 once after the API is healthy:

@@ -65,6 +65,8 @@ jobs:
             org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
             org.opencontainers.image.created=${{ steps.build-time.outputs.value }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
           tags: |
             ${{ matrix.image }}:sha-${{ github.event.workflow_run.head_sha }}
             ${{ matrix.image }}:main
