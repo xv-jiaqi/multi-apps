@@ -123,8 +123,9 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
       focusFirst(next);
       return;
     }
+    const submittedSlug = mode === 'create' ? slugValue.trim() : slug;
     const input = {
-      slug: mode === 'create' ? slugValue.trim() : slug,
+      slug: submittedSlug,
       title: title.trim(),
       description: description.trim() || undefined,
       coverUrl: coverUrl.trim() || undefined,
@@ -137,7 +138,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
       }
       void utils.admin.series.list.invalidate();
       void utils.series.list.invalidate();
-      void utils.series.bySlug.invalidate({ slug: input.slug });
+      void utils.series.bySlug.invalidate({ slug: submittedSlug });
       navigate('/admin/catalog', {
         state: {
           notice:

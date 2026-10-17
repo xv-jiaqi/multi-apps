@@ -58,8 +58,9 @@ const preserveExistingVaryHeader: RequestHandler = (_req, res, next) => {
 };
 
 export async function createApp(options: CreateAppOptions = {}) {
-  // bodyParser is replaced by jsonBodyParser so catalog import can accept 1MB
-  // without raising the 100kb cap on every other route.
+  // bodyParser is replaced by jsonBodyParser so catalog import can accept a
+  // 1MB procedure input plus 16KB of tRPC batch envelope, without raising the
+  // 100kb cap on every other route.
   const app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false });
   configureApp(app);
 

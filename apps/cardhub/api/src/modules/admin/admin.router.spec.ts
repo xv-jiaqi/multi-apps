@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { CATALOG_IMPORT_MAX_BYTES, CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
-import { jsonBodyParser } from '../../bootstrap/json-body';
+import { CATALOG_IMPORT_HTTP_BODY_LIMIT, jsonBodyParser } from '../../bootstrap/json-body';
 import { TrpcBase } from '../../trpc/trpc-base';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { TrpcContext } from '../../trpc/context';
@@ -913,7 +913,7 @@ describe('AdminRouter HTTP error formatting', () => {
     ]);
   });
 
-  it('rejects an HTTP body over 1MB before any catalog write', async () => {
+  it('rejects an HTTP body over the import route cap before any catalog write', async () => {
     const router = makeRouter();
     const body = JSON.stringify({
       dryRun: false,
@@ -921,11 +921,11 @@ describe('AdminRouter HTTP error formatting', () => {
         {
           slug: 'oversized-series',
           title: 'Oversized',
-          blob: 'x'.repeat(CATALOG_IMPORT_MAX_BYTES),
+          blob: 'x'.repeat(CATALOG_IMPORT_HTTP_BODY_LIMIT),
         },
       ],
     });
-    expect(Buffer.byteLength(body)).toBeGreaterThan(CATALOG_IMPORT_MAX_BYTES);
+    expect(Buffer.byteLength(body)).toBeGreaterThan(CATALOG_IMPORT_HTTP_BODY_LIMIT);
 
     const response = await request(makeHttpApp(router.prisma))
       .post('/trpc/admin.catalog.import')
@@ -941,7 +941,7 @@ describe('AdminRouter HTTP error formatting', () => {
     expect(router.transaction).not.toHaveBeenCalled();
   });
 
-  it('returns a batched tRPC error when the import body exceeds 1MB', async () => {
+  it('returns a batched tRPC error when the import HTTP body exceeds the route cap', async () => {
     const router = makeRouter();
     const body = JSON.stringify({
       0: {
@@ -950,7 +950,7 @@ describe('AdminRouter HTTP error formatting', () => {
           {
             slug: 'oversized-series',
             title: 'Oversized',
-            blob: 'x'.repeat(CATALOG_IMPORT_MAX_BYTES),
+            blob: 'x'.repeat(CATALOG_IMPORT_HTTP_BODY_LIMIT),
           },
         ],
       },
@@ -976,6 +976,37 @@ describe('AdminRouter HTTP error formatting', () => {
       },
     ]);
     expect(router.userFindUnique).not.toHaveBeenCalled();
+    expect(router.transaction).not.toHaveBeenCalled();
+  });
+
+  it('does not reject a just-under-1MB import wrapped in a tRPC batch envelope', async () => {
+    const router = makeRouter();
+    router.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    router.seriesFindMany.mockResolvedValue([]);
+
+    const shell = JSON.stringify({
+      dryRun: true,
+      data: [{ slug: 'wide-series', title: 'Wide', description: '' }],
+    });
+    const description = 'x'.repeat(CATALOG_IMPORT_MAX_BYTES - 1 - Buffer.byteLength(shell));
+    const input = {
+      dryRun: true,
+      data: [{ slug: 'wide-series', title: 'Wide', description }],
+    };
+    const body = JSON.stringify({ 0: input });
+
+    expect(Buffer.byteLength(JSON.stringify(input))).toBe(CATALOG_IMPORT_MAX_BYTES - 1);
+    expect(Buffer.byteLength(body)).toBeGreaterThan(CATALOG_IMPORT_MAX_BYTES);
+    expect(Buffer.byteLength(body)).toBeLessThanOrEqual(CATALOG_IMPORT_HTTP_BODY_LIMIT);
+
+    const response = await request(makeHttpApp(router.prisma))
+      .post('/trpc/admin.catalog.import?batch=1')
+      .set('Content-Type', 'application/json')
+      .send(body);
+
+    expect(response.status).not.toBe(413);
+    expect(response.status).toBe(200);
+    expect(router.seriesUpsert).not.toHaveBeenCalled();
     expect(router.transaction).not.toHaveBeenCalled();
   });
 
