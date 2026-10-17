@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -25,6 +26,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
   if (query.isLoading) {
     return (
       <PageShell>
+        <PageMeta title={tt('state.loading')} />
         <div className="space-y-6">
           <div className="h-4 w-40 animate-pulse rounded bg-neutral-200" />
           <div className="h-48 animate-pulse rounded-3xl bg-neutral-200/60" />
@@ -42,6 +44,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
     const isNotFound = query.error?.data?.code === 'NOT_FOUND';
     return (
       <PageShell>
+        <PageMeta title={seriesSlug} />
         <div className="space-y-4">
           <Breadcrumbs
             items={[
@@ -62,6 +65,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
 
   return (
     <PageShell>
+      <PageMeta title={series.title} />
       <div className="space-y-8">
         <Breadcrumbs
           items={[

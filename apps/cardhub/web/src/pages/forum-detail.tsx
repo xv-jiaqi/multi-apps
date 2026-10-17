@@ -1,5 +1,14 @@
 import { observer } from 'mobx-react-lite';
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { replyBodySchema, t } from '@repo/shared';
@@ -7,6 +16,7 @@ import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { MarkdownView } from '../components/markdown-view';
 import { ReportButton } from '../components/report-button';
+import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -16,6 +26,12 @@ interface TopicReply {
   createdAt: string;
   author: { id: string; username: string };
 }
+
+type ConfirmingDelete = { kind: 'topic' } | { kind: 'reply'; id: string };
+type DeleteFocusTarget = { kind: 'topic' } | { kind: 'reply'; id: string };
+type DeleteError =
+  | { kind: 'topic'; message: string }
+  | { kind: 'reply'; id: string; message: string };
 
 function mergeReplies(replies: TopicReply[]): TopicReply[] {
   const seen = new Set<string>();
@@ -42,16 +58,22 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [replyBody, setReplyBody] = useState('');
   const [replyError, setReplyError] = useState<string | null>(null);
   const [showLoadedReplyPages, setShowLoadedReplyPages] = useState(false);
-  const [replyStatusMessage, setReplyStatusMessage] = useState('');
+  const [replyStatus, setReplyStatus] = useState({ message: '', visible: false });
   const [focusReplyId, setFocusReplyId] = useState<string | null>(null);
   const [pendingCreatedReplyId, setPendingCreatedReplyId] = useState<string | null>(null);
   const [autoLoadFailedReplyId, setAutoLoadFailedReplyId] = useState<string | null>(null);
   const [isRetryingReplies, setIsRetryingReplies] = useState(false);
   const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<ConfirmingDelete | null>(null);
+  const [restoreDeleteFocus, setRestoreDeleteFocus] = useState<DeleteFocusTarget | null>(null);
+  const [deleteError, setDeleteError] = useState<DeleteError | null>(null);
   const replyRefs = useRef(new Map<string, HTMLLIElement>());
+  const replyDeleteButtonRefs = useRef(new Map<string, HTMLButtonElement>());
+  const topicDeleteButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelDeleteButtonRef = useRef<HTMLButtonElement>(null);
+  const replyStatusRef = useRef<HTMLParagraphElement>(null);
   const loadMoreButtonRef = useRef<HTMLButtonElement>(null);
   const retryButtonRef = useRef<HTMLButtonElement>(null);
-  const previousReplyNextCursorRef = useRef<string | null>(null);
 
   // Valid UUID placeholder keeps the query input shape stable while `enabled`
   // prevents requests before the topic has loaded.
@@ -75,10 +97,65 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     return mergeReplies([...inlineReplies, ...(showLoadedReplyPages ? hiddenLoadedReplies : [])]);
   }, [hiddenLoadedReplies, showLoadedReplyPages, topicQuery.data?.replies]);
 
+  function clearDeleteState() {
+    setDeleteError(null);
+    setReplyStatus((current) => (current.visible ? { message: '', visible: false } : current));
+  }
+
+  function focusDeleteButton(target: DeleteFocusTarget) {
+    setRestoreDeleteFocus(target);
+  }
+
+  function removeReplyFromCache(replyId: string) {
+    const currentReplies = visibleReplies;
+    const deletedIndex = currentReplies.findIndex((reply) => reply.id === replyId);
+    const previousReplyId =
+      deletedIndex > 0 ? (currentReplies[deletedIndex - 1]?.id ?? null) : null;
+    const moveCursor = (cursor: string | null | undefined) =>
+      cursor === replyId ? previousReplyId : cursor;
+
+    utils.forum.topics.bySlug.setData({ slug }, (current) => {
+      if (!current) return current;
+      const replyExists = current.replies.some((reply) => reply.id === replyId);
+      const nextCount =
+        replyExists || deletedIndex >= 0
+          ? Math.max(0, current.replyCount - 1)
+          : current.replyCount;
+      return {
+        ...current,
+        replyCount: nextCount,
+        replies: current.replies.filter((reply) => reply.id !== replyId),
+        replyNextCursor: moveCursor(current.replyNextCursor) ?? null,
+      };
+    });
+
+    utils.forum.replies.list.setInfiniteData({ topicId, limit: 20 }, (current) => {
+      if (!current) return current;
+      const movePageParam = (pageParam: string | null) =>
+        pageParam === replyId ? previousReplyId : pageParam;
+      return {
+        ...current,
+        pages: current.pages.map((page) => {
+          const originalItems = page.items as TopicReply[];
+          const indexInPage = originalItems.findIndex((reply) => reply.id === replyId);
+          const previousInPage =
+            indexInPage > 0 ? (originalItems[indexInPage - 1]?.id ?? null) : previousReplyId;
+          return {
+            ...page,
+            items: originalItems.filter((reply) => reply.id !== replyId),
+            nextCursor: page.nextCursor === replyId ? previousInPage : page.nextCursor,
+          };
+        }),
+        pageParams: (current.pageParams ?? []).map(movePageParam),
+      };
+    });
+  }
+
   const createReply = trpc.forum.replies.create.useMutation({
     async onSuccess(created) {
       setReplyBody('');
       setReplyError(null);
+      clearDeleteState();
       setShowLoadedReplyPages(true);
       setPendingCreatedReplyId(created.id);
       setFocusReplyId(created.id);
@@ -94,37 +171,89 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   });
 
   const deleteTopic = trpc.forum.topics.delete.useMutation({
-    onSuccess() {
-      void utils.forum.topics.list.invalidate();
-      navigate('/forum');
+    async onSuccess() {
+      await utils.forum.topics.list.invalidate();
+      navigate('/forum', { replace: true, state: { notice: 'topicDeleted' } });
+    },
+    async onError(err) {
+      if (err.data?.code === 'NOT_FOUND') {
+        await utils.forum.topics.list.invalidate();
+        navigate('/forum', { replace: true, state: { notice: 'topicDeleted' } });
+        return;
+      }
+      setConfirmingDelete(null);
+      setDeleteError({
+        kind: 'topic',
+        message:
+          err.data?.code === 'FORBIDDEN'
+            ? tt('forum.detail.deleteTopicForbidden')
+            : tt('forum.detail.deleteFailed'),
+      });
+      focusDeleteButton({ kind: 'topic' });
     },
   });
 
   const deleteReply = trpc.forum.replies.delete.useMutation({
-    onSuccess() {
-      void Promise.all([
-        utils.forum.topics.bySlug.invalidate({ slug }),
-        utils.forum.replies.list.invalidate({ topicId }),
-      ]);
+    onSuccess(_data, variables) {
+      removeReplyFromCache(variables.id);
+      setConfirmingDelete(null);
+      setDeleteError(null);
+      setReplyStatus({ message: tt('forum.detail.replyDeleted'), visible: true });
+    },
+    onError(err, variables) {
+      if (err.data?.code === 'NOT_FOUND') {
+        removeReplyFromCache(variables.id);
+        setConfirmingDelete(null);
+        setDeleteError(null);
+        return;
+      }
+      setConfirmingDelete(null);
+      setDeleteError({
+        kind: 'reply',
+        id: variables.id,
+        message:
+          err.data?.code === 'FORBIDDEN'
+            ? tt('forum.detail.deleteReplyForbidden')
+            : tt('forum.detail.deleteFailed'),
+      });
+      focusDeleteButton({ kind: 'reply', id: variables.id });
     },
   });
 
   useEffect(() => {
     setShowLoadedReplyPages(false);
-    setReplyStatusMessage('');
+    setReplyStatus({ message: '', visible: false });
     setFocusReplyId(null);
     setPendingCreatedReplyId(null);
     setAutoLoadFailedReplyId(null);
     setIsRetryingReplies(false);
     setHighlightedReplyId(null);
-    previousReplyNextCursorRef.current = null;
-  }, [topicId]);
+    setConfirmingDelete(null);
+    setRestoreDeleteFocus(null);
+    setDeleteError(null);
+    void utils.forum.replies.list.reset({ topicId, limit: 20 });
+  }, [topicId, utils]);
 
   useEffect(() => {
-    if (previousReplyNextCursorRef.current === replyNextCursor) return;
-    previousReplyNextCursorRef.current = replyNextCursor;
-    void utils.forum.replies.list.reset({ topicId, limit: 20 });
-  }, [replyNextCursor, topicId, utils]);
+    if (!confirmingDelete) return;
+    cancelDeleteButtonRef.current?.focus();
+  }, [confirmingDelete]);
+
+  useEffect(() => {
+    if (!restoreDeleteFocus || confirmingDelete) return;
+    if (restoreDeleteFocus.kind === 'topic') {
+      topicDeleteButtonRef.current?.focus();
+    } else {
+      replyDeleteButtonRefs.current.get(restoreDeleteFocus.id)?.focus();
+    }
+    setRestoreDeleteFocus(null);
+  }, [confirmingDelete, restoreDeleteFocus, visibleReplies]);
+
+  useEffect(() => {
+    if (replyStatus.visible) {
+      replyStatusRef.current?.focus();
+    }
+  }, [replyStatus.visible, replyStatus.message]);
 
   useEffect(() => {
     if (!focusReplyId) return;
@@ -193,6 +322,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     showLoadedReplyPages && repliesQuery.isSuccess && !repliesQuery.hasNextPage;
   const showLoadMoreError =
     (repliesQuery.isFetchNextPageError || autoLoadFailedReplyId !== null) && !isLoadingMoreReplies;
+  const deletingTopic = deleteTopic.isPending && confirmingDelete?.kind === 'topic';
 
   useEffect(() => {
     if (showLoadMoreError) {
@@ -203,6 +333,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   if (topicQuery.isLoading) {
     return (
       <PageShell>
+        <PageMeta title={tt('state.loading')} />
         <div className="space-y-4">
           <div className="h-6 w-1/3 animate-pulse rounded bg-neutral-200" />
           <div className="h-32 animate-pulse rounded-2xl bg-white/60" />
@@ -215,6 +346,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const isNotFound = topicQuery.error?.data?.code === 'NOT_FOUND';
     return (
       <PageShell>
+        <PageMeta title={slug} />
         <div className="space-y-4">
           <Breadcrumbs
             items={[
@@ -238,6 +370,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const onSubmitReply = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setReplyError(null);
+    clearDeleteState();
     const parsed = replyBodySchema.safeParse(replyBody);
     if (!parsed.success) {
       setReplyError(parsed.error.issues[0]?.message ?? tt('state.error'));
@@ -248,6 +381,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   const onLoadMoreReplies = async () => {
     const beforeIds = new Set(visibleReplies.map((reply) => reply.id));
+    clearDeleteState();
     setShowLoadedReplyPages(true);
     setAutoLoadFailedReplyId(null);
     const result = await fetchNextRepliesPage('manual');
@@ -256,7 +390,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const mergedLoadedReplies = mergeReplies(pages.flatMap((page) => page.items));
     const newReplies = mergedLoadedReplies.filter((reply) => !beforeIds.has(reply.id));
     if (newReplies.length > 0) {
-      setReplyStatusMessage(tt('forum.detail.repliesLoaded', { count: newReplies.length }));
+      setReplyStatus({
+        message: tt('forum.detail.repliesLoaded', { count: newReplies.length }),
+        visible: false,
+      });
     }
     const hasNextPageAfterFetch = Boolean(pages.at(-1)?.nextCursor);
     if (!hasNextPageAfterFetch && newReplies[0]) {
@@ -268,6 +405,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   return (
     <PageShell>
+      <PageMeta title={topic.title} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[
@@ -277,34 +415,62 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           ]}
         />
 
-        <Card className="border-white/60 bg-white/80 backdrop-blur">
+        <Card
+          className="border-white/60 bg-white/80 backdrop-blur"
+          aria-busy={deletingTopic || undefined}
+        >
           <CardHeader className="space-y-2">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <CardTitle className="text-2xl">{topic.title}</CardTitle>
               <div className="flex items-center gap-2">
                 {!isOwner ? <ReportButton targetType="TOPIC" targetId={topic.id} /> : null}
-                {canDeleteTopic ? (
+                {canDeleteTopic && confirmingDelete?.kind !== 'topic' ? (
                   <button
+                    ref={topicDeleteButtonRef}
                     type="button"
                     onClick={() => {
-                      if (confirm(tt('forum.detail.confirmDelete'))) {
-                        deleteTopic.mutate({ id: topic.id });
-                      }
+                      clearDeleteState();
+                      setConfirmingDelete({ kind: 'topic' });
                     }}
                     disabled={deleteTopic.isPending}
-                    className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    aria-label={tt('forum.detail.deleteTopicAria')}
+                    className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
                   >
                     {tt('forum.detail.delete')}
                   </button>
                 ) : null}
               </div>
             </div>
-            <div className="flex items-center gap-3 text-xs text-neutral-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
               <span className="font-medium text-neutral-700">@{topic.author.username}</span>
-              <time dateTime={topic.createdAt}>
+              <time dateTime={topic.createdAt} className="whitespace-nowrap">
                 {new Date(topic.createdAt).toLocaleString(locale.locale)}
               </time>
             </div>
+            {confirmingDelete?.kind === 'topic' ? (
+              <DeleteConfirmGroup
+                label={tt('forum.detail.confirmDelete')}
+                dangerLabel={
+                  deletingTopic ? tt('forum.detail.deleting') : tt('forum.detail.delete')
+                }
+                cancelLabel={tt('forum.detail.deleteCancel')}
+                disabled={deletingTopic}
+                cancelRef={cancelDeleteButtonRef}
+                onConfirm={() => deleteTopic.mutate({ id: topic.id })}
+                onCancel={() => {
+                  setConfirmingDelete(null);
+                  focusDeleteButton({ kind: 'topic' });
+                }}
+              />
+            ) : null}
+            {deleteError?.kind === 'topic' ? (
+              <p
+                role="alert"
+                className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+              >
+                {deleteError.message}
+              </p>
+            ) : null}
           </CardHeader>
           <CardContent>
             <MarkdownView body={topic.body} />
@@ -315,8 +481,17 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           <h2 className="text-xl font-semibold">
             {tt('forum.detail.repliesTitle', { count: topic.replyCount })}
           </h2>
-          <p role="status" className="sr-only">
-            {replyStatusMessage}
+          <p
+            ref={replyStatusRef}
+            role="status"
+            tabIndex={-1}
+            className={
+              replyStatus.visible
+                ? 'rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                : 'sr-only'
+            }
+          >
+            {replyStatus.message}
           </p>
 
           {visibleReplies.length === 0 ? (
@@ -327,6 +502,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             <ul className="space-y-3">
               {visibleReplies.map((reply) => {
                 const canDelete = session.user?.id === reply.author.id || session.isAdmin;
+                const confirmingThisReply =
+                  confirmingDelete?.kind === 'reply' && confirmingDelete.id === reply.id;
+                const deletingThisReply = deleteReply.isPending && confirmingThisReply;
                 return (
                   <li
                     key={reply.id}
@@ -338,6 +516,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                       }
                     }}
                     tabIndex={-1}
+                    aria-busy={deletingThisReply || undefined}
                     className={`rounded-2xl border p-4 backdrop-blur transition-colors duration-1000 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
                       highlightedReplyId === reply.id
                         ? 'border-brand-200 bg-brand-50 duration-0'
@@ -355,15 +534,24 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                         {session.user?.id !== reply.author.id ? (
                           <ReportButton targetType="REPLY" targetId={reply.id} />
                         ) : null}
-                        {canDelete ? (
+                        {canDelete && !confirmingThisReply ? (
                           <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(tt('forum.detail.confirmDeleteReply'))) {
-                                deleteReply.mutate({ id: reply.id });
+                            ref={(node) => {
+                              if (node) {
+                                replyDeleteButtonRefs.current.set(reply.id, node);
+                              } else {
+                                replyDeleteButtonRefs.current.delete(reply.id);
                               }
                             }}
-                            className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                            type="button"
+                            onClick={() => {
+                              clearDeleteState();
+                              setConfirmingDelete({ kind: 'reply', id: reply.id });
+                            }}
+                            aria-label={tt('forum.detail.deleteReplyAria', {
+                              user: reply.author.username,
+                            })}
+                            className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
                           >
                             {tt('forum.detail.delete')}
                           </button>
@@ -373,6 +561,32 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                     <div className="mt-2">
                       <MarkdownView body={reply.body} />
                     </div>
+                    {confirmingThisReply ? (
+                      <DeleteConfirmGroup
+                        label={tt('forum.detail.confirmDeleteReply')}
+                        dangerLabel={
+                          deletingThisReply
+                            ? tt('forum.detail.deleting')
+                            : tt('forum.detail.delete')
+                        }
+                        cancelLabel={tt('forum.detail.deleteCancel')}
+                        disabled={deletingThisReply}
+                        cancelRef={cancelDeleteButtonRef}
+                        onConfirm={() => deleteReply.mutate({ id: reply.id })}
+                        onCancel={() => {
+                          setConfirmingDelete(null);
+                          focusDeleteButton({ kind: 'reply', id: reply.id });
+                        }}
+                      />
+                    ) : null}
+                    {deleteError?.kind === 'reply' && deleteError.id === reply.id ? (
+                      <p
+                        role="alert"
+                        className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                      >
+                        {deleteError.message}
+                      </p>
+                    ) : null}
                   </li>
                 );
               })}
@@ -442,7 +656,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
               <textarea
                 id="reply-body"
                 value={replyBody}
-                onChange={(e) => setReplyBody(e.target.value)}
+                onChange={(e) => {
+                  setReplyBody(e.target.value);
+                  clearDeleteState();
+                }}
                 placeholder={tt('forum.detail.replyPlaceholder')}
                 rows={4}
                 maxLength={5000}
@@ -478,3 +695,60 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     </PageShell>
   );
 });
+
+function DeleteConfirmGroup({
+  label,
+  dangerLabel,
+  cancelLabel,
+  disabled,
+  cancelRef,
+  onConfirm,
+  onCancel,
+}: {
+  label: string;
+  dangerLabel: string;
+  cancelLabel: string;
+  disabled: boolean;
+  cancelRef: RefObject<HTMLButtonElement | null>;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const promptId = useId();
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.stopPropagation();
+          if (!disabled) {
+            onCancel();
+          }
+        }
+      }}
+      className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs"
+    >
+      <span id={promptId} className="mr-auto text-red-700">
+        {label}
+      </span>
+      <button
+        type="button"
+        aria-describedby={promptId}
+        disabled={disabled}
+        onClick={onConfirm}
+        className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+      >
+        {dangerLabel}
+      </button>
+      <button
+        ref={cancelRef}
+        type="button"
+        disabled={disabled}
+        onClick={onCancel}
+        className="inline-flex min-h-6 items-center rounded px-1 text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {cancelLabel}
+      </button>
+    </div>
+  );
+}

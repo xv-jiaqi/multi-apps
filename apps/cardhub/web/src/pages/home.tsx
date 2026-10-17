@@ -1,8 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { APP_NAME, t } from '@repo/shared';
+import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
+import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { gradientFor } from '../lib/gradients';
@@ -16,11 +17,9 @@ export const HomePage = observer(function HomePage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('nav.home')} />
       <section className="grid gap-12 pb-16 pt-6 md:grid-cols-[1.2fr_1fr] md:items-center">
         <div className="space-y-6">
-          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white/70 px-3 py-1 text-xs font-medium text-neutral-600 backdrop-blur">
-            {APP_NAME} · MVP
-          </span>
           <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl md:text-6xl">
             {tt('welcome.title')}
           </h1>

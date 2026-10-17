@@ -5,6 +5,7 @@ import { Button } from '@repo/ui-web';
 import { t, type ListingKind } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from '../components/report-button';
@@ -43,6 +44,7 @@ export const TradeListPage = observer(function TradeListPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('trade.list.title')} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('trade.list.title') }]}
@@ -54,9 +56,9 @@ export const TradeListPage = observer(function TradeListPage() {
             <p className="text-neutral-600">{tt('trade.list.subtitle')}</p>
           </div>
           {session.isAuthenticated ? (
-            <Link to="/trade/new">
-              <Button>{tt('trade.list.publish')}</Button>
-            </Link>
+            <Button asChild>
+              <Link to="/trade/new">{tt('trade.list.publish')}</Link>
+            </Button>
           ) : (
             <Link
               to="/login"
@@ -243,5 +245,3 @@ export const TradeListPage = observer(function TradeListPage() {
     </PageShell>
   );
 });
-
-export const useTradeListPage = TradeListPage;

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -39,6 +40,7 @@ export const SearchPage = observer(function SearchPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('nav.search')} />
       <div className="space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('nav.search') }]}

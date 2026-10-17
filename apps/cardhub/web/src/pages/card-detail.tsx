@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -28,6 +29,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
   if (query.isLoading) {
     return (
       <PageShell>
+        <PageMeta title={tt('state.loading')} />
         <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
           <div className="aspect-[3/4] animate-pulse rounded-3xl bg-neutral-200" />
           <div className="space-y-4">
@@ -45,6 +47,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
     const isNotFound = query.error?.data?.code === 'NOT_FOUND';
     return (
       <PageShell>
+        <PageMeta title={cardSlug} />
         <div className="space-y-4">
           <Breadcrumbs
             items={[
@@ -66,6 +69,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
 
   return (
     <PageShell>
+      <PageMeta title={card.name} />
       <div className="space-y-8">
         <Breadcrumbs
           items={[

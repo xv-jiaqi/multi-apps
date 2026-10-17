@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { LISTING_KIND_VALUES, listingPublishInput, t, type ListingKind } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -38,6 +39,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
   if (!session.isAuthenticated) {
     return (
       <PageShell>
+        <PageMeta title={tt('trade.publish.title')} />
         <div className="mx-auto max-w-md space-y-4">
           <Breadcrumbs
             items={[
@@ -85,6 +87,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
 
   return (
     <PageShell>
+      <PageMeta title={tt('trade.publish.title')} />
       <div className="mx-auto max-w-2xl space-y-6">
         <Breadcrumbs
           items={[
@@ -268,5 +271,3 @@ function TextAreaField({
     </label>
   );
 }
-
-export const useTradePublishPage = TradePublishPage;
