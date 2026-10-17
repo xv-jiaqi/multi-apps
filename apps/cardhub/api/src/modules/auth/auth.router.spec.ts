@@ -46,12 +46,12 @@ function makeRouter() {
 }
 
 describe('AuthRouter.register', () => {
-  it('rejects an email longer than 254 characters', async () => {
+  it('rejects an email longer than 128 characters', async () => {
     const { caller, userMock } = makeRouter();
 
     await expect(
       caller.register({
-        email: `${'a'.repeat(250)}@b.co`,
+        email: `${'a'.repeat(117)}@example.com`,
         username: 'alice',
         password: TEST_PASSWORD,
       }),

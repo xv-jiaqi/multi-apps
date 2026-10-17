@@ -27,8 +27,8 @@ export const usernameSchema = z
   .max(24, '用户名最多 24 个字符')
   .regex(/^[A-Za-z0-9_-]+$/, '用户名只能包含字母、数字、下划线和连字符');
 
-/** RFC 5321 addr-spec maximum. The register form has no shorter cap. */
-export const EMAIL_MAX = 254;
+/** Same cap as the login identifier, so a registered email can be used to sign in. */
+export const EMAIL_MAX = 128;
 
 export const emailSchema = z.string().trim().max(EMAIL_MAX).toLowerCase().email('邮箱格式不正确');
 

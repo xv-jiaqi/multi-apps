@@ -45,9 +45,7 @@ function expectUnderBodyLimit(label: string, value: unknown) {
 
 describe('procedure input upper bounds', () => {
   it('accepts a max-length email and rejects one more character', () => {
-    const local = 'a'.repeat(64);
-    const domain = `${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(57)}.com`;
-    const email = `${local}@${domain}`;
+    const email = `${'a'.repeat(64)}@${'b'.repeat(59)}.com`;
     expect(email).toHaveLength(EMAIL_MAX);
     expect(emailSchema.safeParse(email).success).toBe(true);
     expect(emailSchema.safeParse(`${email}x`).success).toBe(false);
