@@ -146,7 +146,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             nextCursor: page.nextCursor === replyId ? previousInPage : page.nextCursor,
           };
         }),
-        pageParams: (current.pageParams ?? []).map(movePageParam),
+        pageParams: current.pageParams.map(movePageParam),
       };
     });
   }

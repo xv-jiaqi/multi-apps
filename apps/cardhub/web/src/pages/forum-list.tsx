@@ -28,9 +28,9 @@ export const ForumListPage = observer(function ForumListPage() {
 
   useEffect(() => {
     if ((location.state as { notice?: string } | null)?.notice !== 'topicDeleted') return;
-    setNotice(tt('forum.detail.topicDeleted'));
+    setNotice(t(locale.locale, 'forum.detail.topicDeleted'));
     navigate('.', { replace: true, state: null });
-  }, [location.state, navigate, tt]);
+  }, [location.state, locale.locale, navigate]);
 
   useEffect(() => {
     if (notice) {
