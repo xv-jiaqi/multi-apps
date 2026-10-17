@@ -51,6 +51,7 @@ export default observer(function SearchPage() {
           parsed.reason === 'unknownPrefix' ? 'search.unsupportedPrefix' : 'search.invalidRarity',
           {
             token: parsed.token,
+            value: parsed.token,
           },
         ),
       );

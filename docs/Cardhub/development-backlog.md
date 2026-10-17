@@ -57,7 +57,7 @@
 | CH-103 | 论坛完善：话题编辑、置顶、纯文本摘要            | P1     | M    | —                     | ✅ PR #70                                   |
 | CH-104 | 交易信息板：卡名、品相、筛选与缩略图            | P1     | M    | CH-105（缩略图部分）  | ✅ PR #68                                   |
 | CH-105 | 卡牌 / 系列真实图片渲染                         | P1     | S    | —                     | ✅ PR #65                                   |
-| CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 进行中（ch-106-api，API 部分）              |
+| CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 进行中（API #67、Web 待合并；trigram 未做） |
 | CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | API 已完成（PR #71）；Web 进行中（另开 PR） |
 | CH-108 | 文案清理、页面标题、小型无障碍修复              | P1     | S    | —                     | ✅ PR #61                                   |
 | CH-201 | 分类体系：品类、系列、子集、卡号与发售日期      | P2     | L    | CH-107                | 待领取                                      |
@@ -304,6 +304,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-106 全局搜索
 
+- **进度**（2026-10-17）：`search.global`（`cardLimit` / `seriesLimit`、系列 `cardCount` / `coverUrl`）和 `parseCardSearchQuery` 的结构化失败已在 #67 合并。Web 顶栏搜索与 `/search` 筛选随本 PR 提交。Prisma `pg_trgm` 索引仍未做，不要重复做 API 或 Web。
 - **背景**：PRD Story 2.5 和 UI 规范要求在醒目位置放搜索框；目前只能进入 `/search` 页面，且只搜卡牌名。`@@index([name])` 是 btree，对 `ILIKE '%q%'` 无效。Scryfall 的搜索是一整套键值语法，还包含正则、费用和赛制合法性。Cardhub 只借其中很小的一块，见 [industry-benchmark.md](industry-benchmark.md) 第 4 节。
 - **改动范围**
   - Prisma：在 schema 中用 `@@index([name(ops: raw("gin_trgm_ops"))], type: Gin)` 给 `Card.name`、`Series.title` 声明 trigram 索引，并在生成的 `migration.sql` 顶部手动加 `CREATE EXTENSION IF NOT EXISTS pg_trgm;`（部署用的官方 postgres 镜像中 `POSTGRES_USER` 是超级用户，有建扩展权限）。

@@ -32,6 +32,17 @@ const queryState = {
 
 vi.mock('../lib/trpc', () => ({
   trpc: {
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isFetching: false,
+          isError: false,
+          isSuccess: false,
+          refetch: vi.fn(),
+        }),
+      },
+    },
     forum: {
       topics: {
         list: {

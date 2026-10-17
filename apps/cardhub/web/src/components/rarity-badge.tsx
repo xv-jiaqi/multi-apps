@@ -26,6 +26,13 @@ const RARITY_STYLE: Record<
   },
 };
 
+export const RARITY_LABELS: Record<Rarity, { 'zh-CN': string; 'en-US': string }> = {
+  common: RARITY_STYLE.common.label,
+  rare: RARITY_STYLE.rare.label,
+  epic: RARITY_STYLE.epic.label,
+  legendary: RARITY_STYLE.legendary.label,
+};
+
 export function RarityBadge({ rarity, locale }: { rarity: Rarity; locale: 'zh-CN' | 'en-US' }) {
   const style = RARITY_STYLE[rarity];
   return (
