@@ -399,6 +399,40 @@ describe('AdminRouter.cards.create/update/delete', () => {
     });
   });
 
+  it('rejects attribute keys, values, and counts over the cap', async () => {
+    const { caller, userFindUnique, cardCreate } = makeRouter();
+    userFindUnique.mockResolvedValue({ id: 'u-admin', role: 'admin' });
+    const base = {
+      slug: 'new-card',
+      name: 'New Card',
+      rarity: 'common' as const,
+      seriesSlug: 'existing-series',
+    };
+
+    await expect(
+      caller(adminUser()).cards.create({
+        ...base,
+        attributes: { ['k'.repeat(65)]: 'ok' },
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await expect(
+      caller(adminUser()).cards.create({
+        ...base,
+        attributes: { lore: 'v'.repeat(501) },
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await expect(
+      caller(adminUser()).cards.create({
+        ...base,
+        attributes: Object.fromEntries(Array.from({ length: 41 }, (_, index) => [`k${index}`, 1])),
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    expect(cardCreate).not.toHaveBeenCalled();
+  });
+
   it('maps duplicate card slug to SLUG_TAKEN', async () => {
     const { caller, userFindUnique, seriesFindUnique, cardCreate } = makeRouter();
     userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });

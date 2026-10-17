@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { registerInput, loginInput } from '@repo/shared';
+import { authTokenSchema, registerInput, loginInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
@@ -72,7 +72,7 @@ export class AuthRouter {
         };
       }),
 
-      me: t.procedure.input(z.object({ token: z.string() })).query(async ({ input }) => {
+      me: t.procedure.input(z.object({ token: authTokenSchema })).query(async ({ input }) => {
         try {
           const payload = auth.verify(input.token);
           const user = await prisma.user.findUnique({
