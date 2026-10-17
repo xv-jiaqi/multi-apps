@@ -163,6 +163,28 @@ cache while still exercising Caddy, TLS, and routing. If verification fails
 after switching containers, the script attempts to roll back to the previously
 running immutable `sha-` tag and still fails the job.
 
+Before switching images, `remote-deploy.sh` records the environment's previous
+API and web `sha-` tags in `/opt/cardhub/<environment>/.deploy-state/`.
+After a successful deploy, `image-cleanup.sh` removes only stale
+`ghcr.io/xv-jiaqi/cardhub-api:sha-*` and
+`ghcr.io/xv-jiaqi/cardhub-web:sha-*` images. Cleanup keeps, independently for
+`cardhub-prod` and `cardhub-staging`:
+
+- the images currently referenced by that compose project's containers;
+- the previous API and web tags recorded in that environment's state file; and
+- any Cardhub image still referenced by any local Docker container, running or
+  stopped.
+
+This is intentionally cross-environment: a staging deploy scans both production
+and staging state before deleting anything, so staging cannot remove production's
+current image or production's rollback target. Cleanup is best-effort and logs a
+warning instead of failing the deployment if Docker cleanup fails. To inspect the
+decision without deleting images, run:
+
+```bash
+/opt/cardhub/staging/deploy/image-cleanup.sh --dry-run --root /opt/cardhub
+```
+
 Keep `CATALOG_SEED_CMD` empty for normal deploys so later catalog edits are not
 overwritten. On the first deploy of an empty database, run the catalog-only seed
 once after the API is healthy:

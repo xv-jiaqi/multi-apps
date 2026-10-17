@@ -158,7 +158,7 @@ jobs:
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
           remote_deploy_dir="/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy"
           remote_deploy_dir_q="$(printf '%q' "${remote_deploy_dir}")"
-          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh \
+          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh image-cleanup.sh \
             | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
                 "mkdir -p ${remote_deploy_dir_q} && tar -xzf - -C ${remote_deploy_dir_q}"
 
