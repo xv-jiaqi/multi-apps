@@ -125,6 +125,22 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    services:
+      # /health returns 503 unless Postgres answers SELECT 1, and the image
+      # runs `prisma migrate deploy` before it listens. A dummy DATABASE_URL
+      # cannot satisfy either check.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cardhub
+          POSTGRES_PASSWORD: cardhub
+          POSTGRES_DB: cardhub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U cardhub -d cardhub_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -141,7 +157,59 @@ jobs:
           context: .
           file: Dockerfile.api
           push: false
+          load: true
+          # The docker exporter cannot emit the default provenance manifest list.
+          provenance: false
+          tags: cardhub-api:ci
           build-args: |
             GIT_SHA=${{ github.sha }}
             BUILD_TIME=${{ steps.build-time.outputs.value }}
           cache-from: type=gha,scope=api
+
+      - name: Smoke test API image
+        run: |
+          set -euo pipefail
+          name=cardhub-api-smoke
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              echo "::group::API container logs"
+              docker logs "$name" || true
+              echo "::endgroup::"
+            fi
+            docker rm -f "$name" >/dev/null 2>&1 || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+
+          # --network host lets this container reach the job's Postgres
+          # service at 127.0.0.1:5432 and exposes :4000 to the runner.
+          # NODE_ENV=production is baked into the image, so JWT_SECRET must
+          # be at least 32 characters and not a banned placeholder.
+          docker run -d --name "$name" --network host \
+            -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
+            -e JWT_SECRET='0123456789abcdef0123456789abcdef' \
+            cardhub-api:ci
+
+          deadline=$((SECONDS + 60))
+          code=""
+          while true; do
+            code="$(curl -sS -o /tmp/api-health-body -w '%{http_code}' --max-time 2 http://127.0.0.1:4000/health || true)"
+            if [ "$code" = "200" ]; then
+              echo "API /health returned 200"
+              exit 0
+            fi
+            if ! docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null | grep -qx true; then
+              echo "API container exited before /health returned 200 (last HTTP status: ${code:-none})"
+              exit 1
+            fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "API /health did not return 200 within 60s (last HTTP status: ${code:-none})"
+              if [ -s /tmp/api-health-body ]; then
+                echo "Last /health body:"
+                cat /tmp/api-health-body
+              fi
+              exit 1
+            fi
+            sleep 2
+          done
