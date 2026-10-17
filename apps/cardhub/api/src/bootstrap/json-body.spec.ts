@@ -129,11 +129,36 @@ describe('json body limits', () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
+      error: {
+        message: '请求格式有误',
+        code: -32600,
+        data: {
+          code: 'BAD_REQUEST',
+          httpStatus: 400,
+          path: 'comments.create',
+        },
+      },
+    });
+    expect(JSON.stringify(response.body)).not.toContain('Unexpected');
+    expect(JSON.stringify(response.body)).not.toContain('is not valid JSON');
+    expect(harness.captureException).not.toHaveBeenCalled();
+    expect(harness.commentsReached()).toBe(false);
+  });
+
+  it('returns fixed JSON for a malformed body outside /trpc', async () => {
+    const harness = makeApp();
+    const response = await request(harness.app)
+      .post('/health')
+      .set('Content-Type', 'application/json')
+      .send('{"HEALTH_LEAK_MARKER":');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
       statusCode: 400,
       message: '请求格式有误',
     });
-    expect(harness.captureException).not.toHaveBeenCalled();
-    expect(harness.commentsReached()).toBe(false);
+    expect(JSON.stringify(response.body)).not.toContain('HEALTH_LEAK_MARKER');
+    expect(JSON.stringify(response.body)).not.toContain('Unterminated');
   });
 
   it('still reports a real 500 to Sentry', async () => {
