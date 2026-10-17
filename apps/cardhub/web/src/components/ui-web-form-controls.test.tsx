@@ -63,6 +63,7 @@ function ComboHarness({
   hint,
   inputRef,
   initialValue = null,
+  size = 'default',
 }: {
   mode?: 'select' | 'navigate';
   status?: 'idle' | 'loading' | 'error' | 'success';
@@ -75,12 +76,14 @@ function ComboHarness({
   hint?: React.ReactNode;
   inputRef?: React.Ref<HTMLInputElement>;
   initialValue?: Item | null;
+  size?: 'default' | 'sm';
 }) {
   const [query, setQuery] = React.useState('');
   const [value, setValue] = React.useState<Item | null>(initialValue);
   return (
     <Combobox
       mode={mode}
+      size={size}
       value={value}
       onValueChange={(item) => {
         setValue(item);
@@ -141,6 +144,16 @@ describe('ui-web Select', () => {
 });
 
 describe('ui-web Combobox', () => {
+  it('keeps the search icon padding when the small size sets horizontal padding', () => {
+    render(<ComboHarness size="sm" />);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveClass('pl-9');
+    expect(input).toHaveClass('pr-9');
+    expect(input).toHaveClass('h-8');
+    expect(input.className.indexOf('pl-9')).toBeGreaterThan(input.className.indexOf('px-2.5'));
+  });
+
   it('exposes combobox/listbox ARIA and selects the highlighted item', async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();

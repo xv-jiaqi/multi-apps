@@ -41,14 +41,10 @@ export function useArtImage({
   const resolved = resolveArtwork(src);
   const imageSrc = resolved.kind === 'image' ? resolved.src : null;
   const onErrorRef = useRef(onError);
-  onErrorRef.current = onError;
   const reportedError = useRef<{ src: string | null; done: boolean }>({
     src: imageSrc,
     done: false,
   });
-  if (reportedError.current.src !== imageSrc) {
-    reportedError.current = { src: imageSrc, done: false };
-  }
   const [imageState, setImageState] = useState<{
     src: string | null;
     status: 'loading' | 'loaded' | 'error';
@@ -56,6 +52,13 @@ export function useArtImage({
   const status = imageState.src === imageSrc ? imageState.status : 'loading';
 
   useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    if (reportedError.current.src !== imageSrc) {
+      reportedError.current = { src: imageSrc, done: false };
+    }
     setImageState({ src: imageSrc, status: 'loading' });
   }, [imageSrc]);
 

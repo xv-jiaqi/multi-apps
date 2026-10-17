@@ -160,6 +160,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       document.querySelector<HTMLInputElement>(`[data-attr-key="${row?.id}"]`)?.focus();
       return;
     }
+    const previousSeriesSlug = mode === 'edit' ? card?.seriesSlug : undefined;
     const input = {
       slug: mode === 'create' ? slugValue.trim() : routeSlug,
       name: name.trim(),
@@ -175,7 +176,6 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       } else {
         await update.mutateAsync(input);
       }
-      const previousSeriesSlug = mode === 'edit' ? card?.seriesSlug : undefined;
       void utils.admin.series.list.invalidate();
       void utils.series.bySlug.invalidate({ slug: seriesSlug });
       if (previousSeriesSlug && previousSeriesSlug !== seriesSlug) {

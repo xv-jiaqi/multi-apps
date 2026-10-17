@@ -78,6 +78,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   const [filter, setFilter] = useState<'all' | 'errors'>('errors');
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(false);
+  const [importedText, setImportedText] = useState<string | null>(null);
   const [phase, setPhase] = useState<'preview' | 'execute' | null>(null);
   const importCatalog = trpc.admin.catalog.import.useMutation();
   const pending = importCatalog.isPending;
@@ -89,13 +90,14 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   const nothing = Boolean(
     summary && summary.errors === 0 && summary.create === 0 && summary.update === 0,
   );
-  const canImport = Boolean(preview) && !stale && !blocked && !nothing && !done;
+  const sameAsImported = importedText !== null && text === importedText;
+  const canImport = Boolean(preview) && !stale && !blocked && !nothing && !sameAsImported;
 
   const onText = (value: string) => {
     setText(value);
     setParseError(null);
     setConfirming(false);
-    setDone(false);
+    if (importedText === null || value !== importedText) setDone(false);
     setNotice(null);
   };
 
@@ -114,7 +116,6 @@ const CatalogImportBody = observer(function CatalogImportBody() {
     setActionRows(null);
     setNotice(null);
     setConfirming(false);
-    setDone(false);
     let data: unknown;
     try {
       data = JSON.parse(text);
@@ -178,6 +179,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       setPreview({ ...preview, rows });
       setConfirming(false);
       setDone(true);
+      setImportedText(preview.text);
       setNotice(tt('admin.import.done', { create: counts.create, update: counts.update }));
     } catch (error) {
       if (isAccessRevoked(error)) {
