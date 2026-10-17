@@ -347,7 +347,7 @@ export function Combobox<T>({
               setFocused(false);
               setActiveIndex(-1);
             }}
-            className={cn(controlBase, 'pl-9 pr-9', size === 'sm' && controlSm)}
+            className={cn(controlBase, size === 'sm' && controlSm, 'pl-9 pr-9')}
           />
           <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
             {status === 'loading' ? (

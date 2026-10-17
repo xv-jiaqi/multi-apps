@@ -1,6 +1,6 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../../stores/root-store';
@@ -250,5 +250,29 @@ describe('catalog import', () => {
     expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: '预览' }));
     expect(screen.getByRole('button', { name: '导入' })).toBeEnabled();
+  });
+
+  it('stays disabled when the edited text or reselected file matches the imported content', async () => {
+    const user = userEvent.setup();
+    const created = [row({ status: 'created' }, 1)];
+    importImpl.current = async () => created;
+    renderPage();
+    const textbox = screen.getByRole('textbox', { name: 'JSON 内容' });
+    await user.click(textbox);
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    await user.click(screen.getByRole('button', { name: '导入' }));
+    await user.click(screen.getByRole('button', { name: '确认导入' }));
+    expect(await screen.findByText(/导入完成/)).toBeInTheDocument();
+
+    await user.type(textbox, 'x');
+    await user.keyboard('{Backspace}');
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+
+    const file = new File(['[]'], 'catalog.json', { type: 'application/json' });
+    await user.upload(screen.getByLabelText('选择文件'), file);
+    await waitFor(() => expect(textbox).toHaveValue('[]'));
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(calls.filter((call) => !call.dryRun)).toHaveLength(1);
   });
 });
