@@ -42,7 +42,11 @@ describe('seedCatalog', () => {
 
     await seedCatalog(prisma);
 
-    expect(seriesUpsert.mock.calls[0]?.[0]?.update).toEqual({});
-    expect(cardUpsert.mock.calls[0]?.[0]?.update).toEqual({});
+    const seriesCalls = seriesUpsert.mock.calls as unknown as Array<[{ update?: unknown }]>;
+    const cardCalls = cardUpsert.mock.calls as unknown as Array<[{ update?: unknown }]>;
+    const firstSeriesArgs = seriesCalls[0]?.[0];
+    const firstCardArgs = cardCalls[0]?.[0];
+    expect(firstSeriesArgs?.update).toEqual({});
+    expect(firstCardArgs?.update).toEqual({});
   });
 });

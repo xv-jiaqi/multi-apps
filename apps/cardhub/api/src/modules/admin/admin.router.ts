@@ -21,7 +21,7 @@ type Attributes = Record<string, AttributeValue>;
 type ImportStatus = 'created' | 'updated' | 'unchanged' | 'error';
 type ImportRowKind = 'series' | 'card';
 
-interface ImportRowSummary {
+export interface ImportRowSummary {
   row: number;
   type: ImportRowKind;
   slug: string | null;
@@ -29,12 +29,12 @@ interface ImportRowSummary {
   seriesSlug?: string | null;
 }
 
-interface ImportRowError {
+export interface ImportRowError {
   path: string;
   code: AdminCatalogErrorCode;
 }
 
-interface ImportRowResult {
+export interface ImportRowResult {
   row: ImportRowSummary;
   status: ImportStatus;
   errors: ImportRowError[];
@@ -213,7 +213,8 @@ function normalizeImport(data: unknown): NormalizedImport {
       row: rowNumber,
       type: 'series',
       slug: isPlainObject(rawSeries) && typeof rawSeries.slug === 'string' ? rawSeries.slug : null,
-      name: isPlainObject(rawSeries) && typeof rawSeries.title === 'string' ? rawSeries.title : null,
+      name:
+        isPlainObject(rawSeries) && typeof rawSeries.title === 'string' ? rawSeries.title : null,
     };
     const errors: ImportRowError[] = [];
 
@@ -228,7 +229,8 @@ function normalizeImport(data: unknown): NormalizedImport {
 
     if (slug === undefined || slug === '') addError(errors, `${seriesPath}.slug`, 'REQUIRED');
     else if (!isSlug(slug)) addError(errors, `${seriesPath}.slug`, 'SLUG_FORMAT');
-    else if (seenSeriesSlugs.has(slug)) addError(errors, `${seriesPath}.slug`, 'SLUG_DUPLICATE_IN_FILE');
+    else if (seenSeriesSlugs.has(slug))
+      addError(errors, `${seriesPath}.slug`, 'SLUG_DUPLICATE_IN_FILE');
 
     if (typeof title !== 'string' || title.trim() === '') {
       addError(errors, `${seriesPath}.title`, 'REQUIRED');
@@ -252,7 +254,9 @@ function normalizeImport(data: unknown): NormalizedImport {
         row,
         slug,
         title: title.trim(),
-        description: normalizeOptionalText(typeof description === 'string' ? description : undefined),
+        description: normalizeOptionalText(
+          typeof description === 'string' ? description : undefined,
+        ),
         coverUrl: normalizeImageUrl(typeof coverUrl === 'string' ? coverUrl : undefined),
       });
     }
@@ -293,7 +297,8 @@ function normalizeImport(data: unknown): NormalizedImport {
       const imageUrl = isPlainObject(rawCard) ? rawCard.imageUrl : undefined;
       const attributes = isPlainObject(rawCard) ? rawCard.attributes : undefined;
 
-      if (cardSlug === undefined || cardSlug === '') addError(cardErrors, `${cardPath}.slug`, 'REQUIRED');
+      if (cardSlug === undefined || cardSlug === '')
+        addError(cardErrors, `${cardPath}.slug`, 'REQUIRED');
       else if (!isSlug(cardSlug)) addError(cardErrors, `${cardPath}.slug`, 'SLUG_FORMAT');
       else if (seenCardSlugs.has(cardSlug)) {
         addError(cardErrors, `${cardPath}.slug`, 'SLUG_DUPLICATE_IN_FILE');
@@ -431,7 +436,10 @@ export class AdminRouter {
         if (!result || result.status === 'error') continue;
         if (!fileSeriesSlugs.has(card.seriesSlug) && !existingSeriesSlugs.has(card.seriesSlug)) {
           result.status = 'error';
-          result.errors.push({ path: `${card.row.type}[${card.row.row}].seriesSlug`, code: 'SERIES_NOT_FOUND' });
+          result.errors.push({
+            path: `${card.row.type}[${card.row.row}].seriesSlug`,
+            code: 'SERIES_NOT_FOUND',
+          });
           continue;
         }
         const existing = existingCardBySlug.get(card.slug);
