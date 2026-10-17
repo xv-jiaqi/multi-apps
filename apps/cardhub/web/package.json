@@ -6,8 +6,9 @@
   "description": "Cardhub Web frontend (Vite + React 19 + shadcn/ui + MobX + SWR + tRPC).",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b --noEmit && vite build && pnpm check:brand-css",
+    "build": "tsc -b --noEmit && vite build && pnpm check:brand-css && pnpm check:page-gutter-css",
     "check:brand-css": "node scripts/check-brand-css.mjs",
+    "check:page-gutter-css": "node scripts/check-page-gutter-css.mjs",
     "preview": "vite preview --port 5173",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

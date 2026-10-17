@@ -32,7 +32,7 @@ export const PageShell = observer(function PageShell({ children }: PropsWithChil
       <main
         id="main"
         tabIndex={-1}
-        className="app-safe-x app-safe-bottom relative mx-auto w-full max-w-6xl px-6 py-10 focus:outline-none"
+        className="app-safe-x app-safe-bottom relative mx-auto w-full max-w-6xl py-10 focus:outline-none"
       >
         {children}
       </main>
