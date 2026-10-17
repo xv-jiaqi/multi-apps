@@ -64,11 +64,13 @@ interface NormalizedImport {
   results: ImportRowResult[];
 }
 
+const seriesAdminInclude = {
+  _count: { select: { cards: true, comments: true } },
+  cards: { select: { _count: { select: { comments: true } } } },
+} as const;
+
 type SeriesListRow = Prisma.SeriesGetPayload<{
-  include: {
-    _count: { select: { cards: true } };
-    cards: { select: { _count: { select: { comments: true } } } };
-  };
+  include: typeof seriesAdminInclude;
 }>;
 
 type CardAdminRow = Prisma.CardGetPayload<{
@@ -166,7 +168,9 @@ function formatCard(card: CardAdminRow) {
 }
 
 function seriesCommentCount(series: SeriesListRow): number {
-  return series.cards.reduce((total, card) => total + card._count.comments, 0);
+  return (
+    series._count.comments + series.cards.reduce((total, card) => total + card._count.comments, 0)
+  );
 }
 
 function formatSeries(series: SeriesListRow) {
@@ -371,10 +375,7 @@ export class AdminRouter {
     const listSeries = t.adminProcedure.query(async () => {
       const series = await prisma.series.findMany({
         orderBy: [{ title: 'asc' }, { slug: 'asc' }],
-        include: {
-          _count: { select: { cards: true } },
-          cards: { select: { _count: { select: { comments: true } } } },
-        },
+        include: seriesAdminInclude,
       });
       return { items: series.map(formatSeries) };
     });
@@ -550,10 +551,7 @@ export class AdminRouter {
                 description: normalizeOptionalText(input.description),
                 coverUrl: normalizeImageUrl(input.coverUrl),
               },
-              include: {
-                _count: { select: { cards: true } },
-                cards: { select: { _count: { select: { comments: true } } } },
-              },
+              include: seriesAdminInclude,
             });
             return formatSeries(series);
           } catch (error) {
@@ -576,10 +574,7 @@ export class AdminRouter {
                 description: normalizeOptionalText(input.description),
                 coverUrl: normalizeImageUrl(input.coverUrl),
               },
-              include: {
-                _count: { select: { cards: true } },
-                cards: { select: { _count: { select: { comments: true } } } },
-              },
+              include: seriesAdminInclude,
             });
             return formatSeries(series);
           } catch (error) {
@@ -592,16 +587,13 @@ export class AdminRouter {
         delete: t.adminProcedure.input(adminSeriesDeleteInput).mutation(async ({ input }) => {
           const series = await prisma.series.findUnique({
             where: { slug: input.slug },
-            include: {
-              _count: { select: { cards: true } },
-              cards: { select: { _count: { select: { comments: true } } } },
-            },
+            include: seriesAdminInclude,
           });
           if (!series) throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
 
           const cardCount = series._count.cards;
           const commentCount = seriesCommentCount(series);
-          if (cardCount > 0 && !input.force) {
+          if ((cardCount > 0 || commentCount > 0) && !input.force) {
             throw new TRPCError({
               code: 'FORBIDDEN',
               message: 'SERIES_HAS_CARDS',

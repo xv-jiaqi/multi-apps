@@ -189,7 +189,7 @@ describe('AdminRouter.series.list', () => {
         coverUrl: 'gradient:cover',
         createdAt: new Date('2026-05-01T00:00:00Z'),
         updatedAt: new Date('2026-05-02T00:00:00Z'),
-        _count: { cards: 2 },
+        _count: { cards: 2, comments: 0 },
         cards: [{ _count: { comments: 2 } }, { _count: { comments: 3 } }],
       },
     ]);
@@ -199,7 +199,7 @@ describe('AdminRouter.series.list', () => {
     expect(seriesFindMany).toHaveBeenCalledWith({
       orderBy: [{ title: 'asc' }, { slug: 'asc' }],
       include: {
-        _count: { select: { cards: true } },
+        _count: { select: { cards: true, comments: true } },
         cards: { select: { _count: { select: { comments: true } } } },
       },
     });
@@ -265,7 +265,7 @@ describe('AdminRouter.series.create/update', () => {
       coverUrl: null,
       createdAt: new Date('2026-05-01T00:00:00Z'),
       updatedAt: new Date('2026-05-01T00:00:00Z'),
-      _count: { cards: 0 },
+      _count: { cards: 0, comments: 0 },
       cards: [],
     });
 
@@ -313,7 +313,7 @@ describe('AdminRouter.series.create/update', () => {
       coverUrl: 'https://example.test/cover.png',
       createdAt: new Date('2026-05-01T00:00:00Z'),
       updatedAt: new Date('2026-05-02T00:00:00Z'),
-      _count: { cards: 1 },
+      _count: { cards: 1, comments: 0 },
       cards: [{ _count: { comments: 2 } }],
     });
 
@@ -648,7 +648,7 @@ describe('AdminRouter.series.delete', () => {
     userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
     seriesFindUnique.mockResolvedValueOnce({
       slug: 'celestial-dawn',
-      _count: { cards: 2 },
+      _count: { cards: 2, comments: 0 },
       cards: [{ _count: { comments: 2 } }, { _count: { comments: 3 } }],
     });
 
@@ -662,12 +662,50 @@ describe('AdminRouter.series.delete', () => {
     expect(seriesDelete).not.toHaveBeenCalled();
   });
 
+  it('counts series comments when a cardless series is deleted', async () => {
+    const withoutForce = makeRouter();
+    withoutForce.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    withoutForce.seriesFindUnique.mockResolvedValueOnce({
+      slug: 'empty-series',
+      _count: { cards: 0, comments: 3 },
+      cards: [],
+    });
+
+    await expect(
+      withoutForce.caller(adminUser()).series.delete({ slug: 'empty-series', force: false }),
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'SERIES_HAS_CARDS',
+      cause: { code: 'SERIES_HAS_CARDS', cardCount: 0, commentCount: 3 },
+    });
+    expect(withoutForce.seriesDelete).not.toHaveBeenCalled();
+
+    const withForce = makeRouter();
+    withForce.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    withForce.seriesFindUnique.mockResolvedValueOnce({
+      slug: 'empty-series',
+      _count: { cards: 0, comments: 3 },
+      cards: [],
+    });
+    withForce.seriesDelete.mockResolvedValueOnce({});
+
+    await expect(
+      withForce.caller(adminUser()).series.delete({ slug: 'empty-series', force: true }),
+    ).resolves.toEqual({
+      ok: true,
+      slug: 'empty-series',
+      cardCount: 0,
+      commentCount: 3,
+    });
+    expect(withForce.seriesDelete).toHaveBeenCalledWith({ where: { slug: 'empty-series' } });
+  });
+
   it('force deletes series and returns deleted card/comment counts', async () => {
     const { caller, userFindUnique, seriesFindUnique, seriesDelete } = makeRouter();
     userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
     seriesFindUnique.mockResolvedValueOnce({
       slug: 'celestial-dawn',
-      _count: { cards: 1 },
+      _count: { cards: 1, comments: 0 },
       cards: [{ _count: { comments: 2 } }],
     });
     seriesDelete.mockResolvedValueOnce({});
@@ -689,7 +727,7 @@ describe('AdminRouter HTTP error formatting', () => {
     router.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
     router.seriesFindUnique.mockResolvedValueOnce({
       slug: 'celestial-dawn',
-      _count: { cards: 2 },
+      _count: { cards: 2, comments: 0 },
       cards: [{ _count: { comments: 2 } }, { _count: { comments: 3 } }],
     });
 
