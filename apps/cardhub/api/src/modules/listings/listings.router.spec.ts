@@ -239,6 +239,19 @@ describe('ListingsRouter.list', () => {
     });
   });
 
+  it('filters by currency alone without a price range or price sort', async () => {
+    const { caller, listingFindMany, cardFindMany } = makeRouter();
+    listingFindMany.mockResolvedValueOnce([listingRow()]);
+    cardFindMany.mockResolvedValueOnce([]);
+
+    await caller(null).list({ limit: 20, currency: 'CNY', sort: 'newest' });
+
+    const args = listingFindMany.mock.calls[0]?.[0];
+    expect(args.where.currency).toBe('CNY');
+    expect(args.where.price).toBeUndefined();
+    expect(args.orderBy[0]).toEqual({ createdAt: 'desc' });
+  });
+
   it('filters price ranges to the selected currency and non-null prices', async () => {
     const { caller, listingFindMany, cardFindMany } = makeRouter();
     listingFindMany.mockResolvedValueOnce([listingRow()]);

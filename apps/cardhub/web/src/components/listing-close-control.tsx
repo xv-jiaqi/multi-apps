@@ -1,8 +1,29 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { observer } from 'mobx-react-lite';
 import { t } from '@repo/shared';
 import { trpc } from '../lib/trpc';
 import { useStores } from '../stores/root-store';
+
+// One confirm bar per page. Opening another listing closes the previous one.
+let openConfirmId: string | null = null;
+const confirmListeners = new Set<() => void>();
+
+function subscribeOpenConfirm(listener: () => void) {
+  confirmListeners.add(listener);
+  return () => {
+    confirmListeners.delete(listener);
+  };
+}
+
+function getOpenConfirmId() {
+  return openConfirmId;
+}
+
+function setOpenConfirm(id: string | null) {
+  if (openConfirmId === id) return;
+  openConfirmId = id;
+  for (const listener of confirmListeners) listener();
+}
 
 export const ListingCloseControl = observer(function ListingCloseControl({
   listingId,
@@ -16,23 +37,30 @@ export const ListingCloseControl = observer(function ListingCloseControl({
   const promptId = useId();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const cancelRef = useRef<HTMLButtonElement | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  const openId = useSyncExternalStore(subscribeOpenConfirm, getOpenConfirmId, () => null);
+  const confirming = openId === listingId;
   const [errorKey, setErrorKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (getOpenConfirmId() === listingId) setOpenConfirm(null);
+    };
+  }, [listingId]);
 
   const close = trpc.listings.close.useMutation({
     onSuccess() {
-      setConfirming(false);
+      if (getOpenConfirmId() === listingId) setOpenConfirm(null);
       setErrorKey(null);
       onClosed?.(listingId);
     },
     onError(error) {
       if (error.data?.code === 'NOT_FOUND') {
-        setConfirming(false);
+        if (getOpenConfirmId() === listingId) setOpenConfirm(null);
         setErrorKey(null);
         onClosed?.(listingId);
         return;
       }
-      setConfirming(false);
+      if (getOpenConfirmId() === listingId) setOpenConfirm(null);
       setErrorKey(error.data?.code === 'FORBIDDEN' ? 'trade.closeForbidden' : 'trade.closeFailed');
       requestAnimationFrame(() => triggerRef.current?.focus());
     },
@@ -46,7 +74,7 @@ export const ListingCloseControl = observer(function ListingCloseControl({
 
   const cancel = () => {
     if (close.isPending) return;
-    setConfirming(false);
+    setOpenConfirm(null);
     requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
@@ -96,7 +124,7 @@ export const ListingCloseControl = observer(function ListingCloseControl({
         aria-label={tt('trade.closeAria')}
         onClick={() => {
           setErrorKey(null);
-          setConfirming(true);
+          setOpenConfirm(listingId);
         }}
         className="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >

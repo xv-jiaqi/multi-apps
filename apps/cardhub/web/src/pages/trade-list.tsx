@@ -81,10 +81,17 @@ export const TradeListPage = observer(function TradeListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [priceDraft, setPriceDraft] = useState({
-    min: searchParams.get('min') ?? '',
-    max: searchParams.get('max') ?? '',
-  });
+  // True only after the user picks a currency. Price-sort defaults and a
+  // range that copies that default stay false, so leaving those modes can
+  // drop the currency query param.
+  const [currencyChosenByUser, setCurrencyChosenByUser] = useState(() =>
+    isTradeCurrency(searchParams.get('currency')),
+  );
+  const [priceDraft, setPriceDraft] = useState(() =>
+    isTradeCurrency(searchParams.get('currency'))
+      ? { min: searchParams.get('min') ?? '', max: searchParams.get('max') ?? '' }
+      : { min: '', max: '' },
+  );
   const [closedNotice, setClosedNotice] = useState(false);
   const noticeRef = useRef<HTMLParagraphElement | null>(null);
   const utils = trpc.useUtils();
@@ -107,9 +114,10 @@ export const TradeListPage = observer(function TradeListPage() {
     : undefined;
   const sort: ListingSort = isSort(rawSort) ? rawSort : 'newest';
   const priceSort = sort === 'price_asc' || sort === 'price_desc';
-  // A shared price sort without a currency is not a valid API query. Default
-  // the request (and the currency control) to CNY. A price range still needs
-  // an explicit currency in the URL, so a bare min/max is not sent.
+  // A price sort without a currency is not a valid API query. Default the
+  // request (and the currency control) to CNY, but do not write that default
+  // into the URL. A price range still needs currency in the URL, so a bare
+  // min/max is not sent and is not shown as an active filter.
   const currencyFilter: TradeCurrency | undefined =
     currencyInUrl ?? (priceSort ? 'CNY' : undefined);
   const minPrice = currencyInUrl ? parsePrice(searchParams.get('min')) : undefined;
@@ -122,6 +130,10 @@ export const TradeListPage = observer(function TradeListPage() {
     minPrice > maxPrice;
 
   useEffect(() => {
+    if (!isTradeCurrency(searchParams.get('currency'))) {
+      setPriceDraft({ min: '', max: '' });
+      return;
+    }
     setPriceDraft({ min: searchParams.get('min') ?? '', max: searchParams.get('max') ?? '' });
   }, [searchParams]);
   useEffect(() => {
@@ -178,9 +190,12 @@ export const TradeListPage = observer(function TradeListPage() {
     setSearchParams(next, { replace: true });
   }
   function clearAllFilters() {
+    setCurrencyChosenByUser(false);
+    setPriceDraft({ min: '', max: '' });
     setSearchParams(new URLSearchParams(), { replace: true });
   }
   function clearCurrency() {
+    setCurrencyChosenByUser(false);
     setPriceDraft({ min: '', max: '' });
     updateParams({
       currency: null,
@@ -189,15 +204,31 @@ export const TradeListPage = observer(function TradeListPage() {
       ...(priceSort ? { sort: null } : {}),
     });
   }
+  function clearAutoCurrency() {
+    return currencyChosenByUser ? {} : { currency: null as string | null };
+  }
+  function leavePriceSort() {
+    updateParams({ sort: null, ...clearAutoCurrency() });
+  }
+  function clearPriceRange() {
+    setPriceDraft({ min: '', max: '' });
+    updateParams({ min: null, max: null, ...clearAutoCurrency() });
+  }
   function commitPriceRange() {
     if (!currencyFilter) return;
+    const min = priceDraft.min.trim();
+    const max = priceDraft.max.trim();
+    if (!min && !max) {
+      clearPriceRange();
+      return;
+    }
     // A price sort defaults the control to CNY without putting currency in the
     // URL. min/max are ignored unless currency is present, so write that
     // default together with the range (shared links like ?sort=price_asc).
     updateParams({
-      currency: currencyFilter,
-      min: priceDraft.min.trim(),
-      max: priceDraft.max.trim(),
+      currency: currencyInUrl ?? currencyFilter,
+      min,
+      max,
     });
   }
   const priceRangeLabel =
@@ -338,7 +369,7 @@ export const TradeListPage = observer(function TradeListPage() {
                   disabled={!currencyFilter}
                   aria-invalid={priceInvalid}
                   aria-label={tt('trade.filter.minPrice')}
-                  value={priceDraft.min}
+                  value={currencyFilter ? priceDraft.min : ''}
                   onChange={(event) =>
                     setPriceDraft((draft) => ({ ...draft, min: event.target.value }))
                   }
@@ -357,7 +388,7 @@ export const TradeListPage = observer(function TradeListPage() {
                   disabled={!currencyFilter}
                   aria-invalid={priceInvalid}
                   aria-label={tt('trade.filter.maxPrice')}
-                  value={priceDraft.max}
+                  value={currencyFilter ? priceDraft.max : ''}
                   onChange={(event) =>
                     setPriceDraft((draft) => ({ ...draft, max: event.target.value }))
                   }
@@ -371,10 +402,13 @@ export const TradeListPage = observer(function TradeListPage() {
                   value={currencyFilter ?? 'any'}
                   onValueChange={(value) => {
                     if (value === 'any') clearCurrency();
-                    else updateParams({ currency: value });
+                    else {
+                      setCurrencyChosenByUser(true);
+                      updateParams({ currency: value });
+                    }
                   }}
                 >
-                  <SelectTrigger className="w-28">
+                  <SelectTrigger className="w-28" aria-label={tt('trade.publish.currency')}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -405,11 +439,8 @@ export const TradeListPage = observer(function TradeListPage() {
                 value={sort}
                 onValueChange={(value) => {
                   const nextSort = value as ListingSort;
-                  updateParams({
-                    sort: nextSort === 'newest' ? null : nextSort,
-                    currency:
-                      nextSort === 'newest' ? (currencyFilter ?? null) : (currencyFilter ?? 'CNY'),
-                  });
+                  if (nextSort === 'newest') leavePriceSort();
+                  else updateParams({ sort: nextSort });
                 }}
               >
                 <SelectTrigger>
@@ -475,14 +506,14 @@ export const TradeListPage = observer(function TradeListPage() {
                 <FilterChip
                   label={priceRangeLabel}
                   clearLabel={tt('trade.filter.clear', { label: tt('trade.filter.priceRange') })}
-                  onClear={() => updateParams({ min: null, max: null })}
+                  onClear={clearPriceRange}
                 />
               ) : null}
               {sort !== 'newest' ? (
                 <FilterChip
                   label={tt(`trade.sort.${sort}`)}
                   clearLabel={tt('trade.filter.clear', { label: tt('trade.sort.label') })}
-                  onClear={() => updateParams({ sort: null })}
+                  onClear={leavePriceSort}
                 />
               ) : null}
               <Button type="button" variant="link" size="sm" onClick={clearAllFilters}>
@@ -505,7 +536,12 @@ export const TradeListPage = observer(function TradeListPage() {
         {query.isLoading ? (
           <ListingSkeleton />
         ) : query.isError ? (
-          <ErrorBox message={query.error.message} retry={() => query.refetch()} />
+          <ErrorBox
+            title={tt('state.error')}
+            message={query.error.message}
+            retryLabel={tt('state.retry')}
+            retry={() => query.refetch()}
+          />
         ) : items.length === 0 ? (
           <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
             <p>{hasAnyFilter ? tt('trade.filter.empty') : tt('trade.list.empty')}</p>
@@ -724,6 +760,52 @@ function KindChip({ kind, label }: { kind: ListingKind; label: string }) {
     </span>
   );
 }
+function PhotoFallbackLink({ url, label }: { url: string; label: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex h-16 items-center rounded-md border border-neutral-200 bg-white px-2 text-xs text-brand-600 hover:underline"
+    >
+      {label}
+    </a>
+  );
+}
+function TradePhoto({
+  url,
+  index,
+  total,
+  tt,
+}: {
+  url: string;
+  index: number;
+  total: number;
+  tt: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const fallback = tt('trade.list.photoFallback', { index: index + 1 });
+  if (!isHttpsImageUrl(url) || failed) return <PhotoFallbackLink url={url} label={fallback} />;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={tt('trade.list.photoOpen', { index: index + 1, total })}
+      className="block size-16 overflow-hidden rounded-md bg-neutral-100 ring-1 ring-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+    >
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        className="size-full object-cover"
+        onError={() => setFailed(true)}
+      />
+    </a>
+  );
+}
 function PhotoList({
   urls,
   tt,
@@ -736,33 +818,7 @@ function PhotoList({
     <ul className="flex flex-wrap gap-2" aria-label={tt('trade.list.photos')}>
       {urls.map((url, index) => (
         <li key={`${url}-${index}`}>
-          {isHttpsImageUrl(url) ? (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={tt('trade.list.photoOpen', { index: index + 1, total: urls.length })}
-              className="block size-16 overflow-hidden rounded-md bg-neutral-100 ring-1 ring-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-            >
-              <img
-                src={url}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                className="size-full object-cover"
-              />
-            </a>
-          ) : (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-16 items-center rounded-md border border-neutral-200 bg-white px-2 text-xs text-brand-600 hover:underline"
-            >
-              {tt('trade.list.photoFallback', { index: index + 1 })}
-            </a>
-          )}
+          <TradePhoto url={url} index={index} total={urls.length} tt={tt} />
         </li>
       ))}
     </ul>
@@ -786,17 +842,27 @@ function ListingSkeleton() {
     </ul>
   );
 }
-function ErrorBox({ message, retry }: { message: string; retry: () => void }) {
+function ErrorBox({
+  title,
+  message,
+  retryLabel,
+  retry,
+}: {
+  title: string;
+  message: string;
+  retryLabel: string;
+  retry: () => void;
+}) {
   return (
     <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-      <p className="font-medium">加载失败</p>
+      <p className="font-medium">{title}</p>
       <p className="mt-1 break-all text-xs opacity-80">{message}</p>
       <button
         type="button"
         onClick={retry}
         className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
       >
-        重试
+        {retryLabel}
       </button>
     </div>
   );
