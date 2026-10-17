@@ -598,6 +598,36 @@ describe('ForumDetailPage replies pagination', () => {
     ).toEqual(['duration-1000']);
   });
 
+  it('drops a pending reply focus when the loaded row never mounts', async () => {
+    const user = userEvent.setup();
+    const view = renderPage();
+    fetchNextPage.mockImplementation(async () => ({
+      data: {
+        pages: [{ items: [makeReply(21)], nextCursor: 'reply-21' }],
+        pageParams: [topicState.data?.replyNextCursor],
+      },
+    }));
+
+    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    expect(await screen.findByText('已加载 1 条回帖')).toBeInTheDocument();
+    expect(screen.queryByText('Reply 21')).not.toBeInTheDocument();
+
+    topicState.data = {
+      ...topicState.data!,
+      replies: [...topicState.data!.replies, makeReply(21)],
+    };
+    view.rerender(
+      <MemoryRouter initialEntries={['/forum/test-topic']}>
+        <Routes>
+          <Route path="/forum/:slug" element={<ForumDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const lateReply = await screen.findByText('Reply 21');
+    expect(lateReply.closest('li')).not.toHaveFocus();
+  });
+
   it('moves focus to the first newly loaded reply when more pages remain', async () => {
     const user = userEvent.setup();
     renderPage();

@@ -136,6 +136,7 @@ pnpm dev
 
 - API 单元测试位于 `apps/cardhub/api/src/**/*.spec.ts`，集成测试位于 `apps/cardhub/api/test/**/*.e2e-spec.ts`。
 - Web 测试位于 `apps/cardhub/web/src/**/*.{test,spec}.{ts,tsx}`，setup 在 `apps/cardhub/web/test/setup.ts`。
+- 本地跑 Web browser mode（含 ui-web Combobox）需要已安装 Chromium：`pnpm exec playwright install chromium`。
 - 覆盖率门槛：全局 60% / `auth/*` 80%，CI 不达标会失败。
 - 运行 e2e 时记得用独立的测试库：
 
