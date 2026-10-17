@@ -187,12 +187,13 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 - **背景**：schema 注释承诺管理员可以删评论，但 `comments` 没有删除接口；`comments.create` 也没有限流。
 - **改动范围**
   - API：`comments.delete({ id })`，本人或 admin；`rate-limiters.ts` 新增 `commentCreate`（匹配 `comments.create`，1 小时 30 次）。
-  - Web：`apps/cardhub/web/src/components/comment-section.tsx` 对本人和 admin 显示“删除”，二次确认后调用，成功后 invalidate `comments.listForCard`。
-  - i18n：`card.detail.commentDelete`、`card.detail.confirmDeleteComment`。
+  - Web：`apps/cardhub/web/src/components/comment-section.tsx` 对本人和 admin 显示“删除”，二次确认后调用，成功后 invalidate `comments.listForCard`。评论列表加载失败时显示 `role="alert"` 红框（`rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700`），文案 `state.error`，重试 `state.retry`，点击重新拉取，不展示服务端原文。
+  - i18n：`card.detail.commentDelete`、`card.detail.confirmDeleteComment`；加载失败复用 `state.error` / `state.retry`。
 - **验收标准**
   1. 作者能删自己的评论；admin 能删任意评论；其他人返回 `FORBIDDEN`，界面也不显示按钮。
   2. 同一 IP 一小时内第 31 次发评论返回 `TOO_MANY_REQUESTS`，前端显示错误信息。
-- **测试**：`comments.router.spec.ts` 补删除的三种权限；`rate-limit-proxy.spec.ts` 补新限流器。
+  3. 卡牌和系列评论列表加载失败时显示上述红框和 `state.error` / `state.retry`，点重试重新请求。
+- **测试**：`comments.router.spec.ts` 补删除的三种权限；`rate-limit-proxy.spec.ts` 补新限流器；`comment-section.test.tsx` 覆盖加载失败的 alert 与重试。
 - **依赖**：无。小程序同步放在 CH-301。
 
 #### CH-003 话题详情回帖翻页
