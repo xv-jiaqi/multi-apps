@@ -41,6 +41,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [replyStatusMessage, setReplyStatusMessage] = useState('');
   const [focusReplyId, setFocusReplyId] = useState<string | null>(null);
   const [pendingCreatedReplyId, setPendingCreatedReplyId] = useState<string | null>(null);
+  const [autoLoadFailedReplyId, setAutoLoadFailedReplyId] = useState<string | null>(null);
   const replyRefs = useRef(new Map<string, HTMLLIElement>());
   const previousReplyNextCursorRef = useRef<string | null>(null);
 
@@ -72,6 +73,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       setReplyError(null);
       setShowLoadedReplyPages(true);
       setPendingCreatedReplyId(created.id);
+      setAutoLoadFailedReplyId(null);
       await Promise.all([
         utils.forum.topics.bySlug.invalidate({ slug }),
         utils.forum.replies.list.invalidate({ topicId }),
@@ -103,6 +105,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setReplyStatusMessage('');
     setFocusReplyId(null);
     setPendingCreatedReplyId(null);
+    setAutoLoadFailedReplyId(null);
     previousReplyNextCursorRef.current = null;
   }, [topicId]);
 
@@ -122,8 +125,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   useEffect(() => {
     if (!pendingCreatedReplyId) return;
+    if (autoLoadFailedReplyId === pendingCreatedReplyId) return;
     if (repliesQuery.hasNextPage && !repliesQuery.isFetchingNextPage) {
-      void repliesQuery.fetchNextPage();
+      void repliesQuery.fetchNextPage().catch(() => {
+        setAutoLoadFailedReplyId(pendingCreatedReplyId);
+      });
       return;
     }
     const createdReplyIsVisible = visibleReplies.some(
@@ -136,6 +142,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     }
   }, [
     pendingCreatedReplyId,
+    autoLoadFailedReplyId,
     repliesQuery.hasNextPage,
     repliesQuery.isFetchingNextPage,
     repliesQuery.fetchNextPage,
@@ -176,7 +183,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const topic = topicQuery.data;
   const isOwner = session.user?.id === topic.author.id;
   const canDeleteTopic = isOwner || session.isAdmin;
-  const loadedReplyIds = new Set(visibleReplies.map((reply) => reply.id));
+  const showLoadMoreError = repliesQuery.isFetchNextPageError || autoLoadFailedReplyId !== null;
 
   const onSubmitReply = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -192,7 +199,13 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const onLoadMoreReplies = async () => {
     const beforeIds = new Set(visibleReplies.map((reply) => reply.id));
     setShowLoadedReplyPages(true);
-    const result = await repliesQuery.fetchNextPage();
+    setAutoLoadFailedReplyId(null);
+    let result: Awaited<ReturnType<typeof repliesQuery.fetchNextPage>>;
+    try {
+      result = await repliesQuery.fetchNextPage();
+    } catch {
+      return;
+    }
     const pages = result.data?.pages ?? [];
     const mergedLoadedReplies = mergeReplies(pages.flatMap((page) => page.items));
     const newReplies = mergedLoadedReplies.filter((reply) => !beforeIds.has(reply.id));
@@ -313,7 +326,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           )}
 
           {replyNextCursor ? (
-            repliesQuery.isFetchNextPageError ? (
+            showLoadMoreError ? (
               <div
                 role="alert"
                 className="flex items-center justify-center gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
@@ -321,15 +334,18 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 <span>{tt('forum.detail.loadMoreFailed')}</span>
                 <button
                   type="button"
-                  onClick={() => void repliesQuery.fetchNextPage()}
+                  onClick={() => {
+                    setAutoLoadFailedReplyId(null);
+                    void repliesQuery.fetchNextPage().catch(() => {
+                      setAutoLoadFailedReplyId(pendingCreatedReplyId ?? 'manual');
+                    });
+                  }}
                   className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
                 >
                   {tt('state.retry')}
                 </button>
               </div>
-            ) : showLoadedReplyPages &&
-              !repliesQuery.hasNextPage &&
-              hiddenLoadedReplies.every((reply) => loadedReplyIds.has(reply.id)) ? (
+            ) : showLoadedReplyPages && !repliesQuery.hasNextPage ? (
               <p className="text-center text-xs text-neutral-500">
                 {tt('forum.detail.allRepliesShown')}
               </p>

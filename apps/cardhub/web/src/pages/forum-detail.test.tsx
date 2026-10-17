@@ -292,4 +292,31 @@ describe('ForumDetailPage replies pagination', () => {
       });
     });
   });
+
+  it('stops automatic post-create pagination after one failed fetch', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'user-current', username: 'alice' });
+    createReplyMutate.mockImplementation((_input, handlers) =>
+      handlers.onSuccess?.({
+        id: 'reply-new',
+        body: 'new reply',
+        createdAt: '2026-05-01T00:30:00.000Z',
+        author: { id: 'user-current', username: 'alice' },
+      }),
+    );
+    fetchNextPage.mockImplementation(async () => {
+      repliesQueryState.isFetchNextPageError = true;
+      throw new Error('network failed');
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
+    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+
+    await waitFor(() => {
+      expect(fetchNextPage).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('回帖加载失败');
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+  });
 });
