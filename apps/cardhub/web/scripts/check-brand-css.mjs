@@ -111,11 +111,11 @@ if (missing.length > 0 || missingRules.length > 0) {
   process.exit(1);
 }
 
-console.log(`Verified ${brandClasses.length} brand utilities in built CSS:`);
+console.info(`Verified ${brandClasses.length} brand utilities in built CSS:`);
 for (const className of brandClasses) {
-  console.log(`- ${className}`);
+  console.info(`- ${className}`);
 }
-console.log(`Verified ${requiredCssRules.length} required CSS rule:`);
+console.info(`Verified ${requiredCssRules.length} required CSS rule:`);
 for (const { className, description } of requiredCssRules) {
-  console.log(`- ${description}: ${className}`);
+  console.info(`- ${description}: ${className}`);
 }
