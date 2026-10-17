@@ -56,5 +56,11 @@ describe('catalog import limits', () => {
     expect(t('en-US', 'error.payloadTooLarge')).toBe(
       'This content is too large. Shorten it and try again.',
     );
+    expect(t('zh-CN', 'error.malformedRequest')).toBe('请求格式有误');
+    expect(t('en-US', 'error.malformedRequest')).toBe('The request format is invalid.');
+    expect(t('zh-CN', 'error.unsupportedMedia')).toBe('不支持这种内容格式');
+    expect(t('en-US', 'error.unsupportedMedia')).toBe('This content format is not supported.');
+    expect(t('zh-CN', 'error.requestRejected')).toBe('请求未能通过校验');
+    expect(t('en-US', 'error.requestRejected')).toBe('The request could not be verified.');
   });
 });

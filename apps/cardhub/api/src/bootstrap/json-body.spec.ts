@@ -128,6 +128,10 @@ describe('json body limits', () => {
       .send('{');
 
     expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: '请求格式有误',
+    });
     expect(harness.captureException).not.toHaveBeenCalled();
     expect(harness.commentsReached()).toBe(false);
   });
