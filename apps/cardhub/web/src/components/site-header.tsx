@@ -24,7 +24,7 @@ export const SiteHeader = observer(function SiteHeader() {
 
   return (
     <header className="app-safe-top sticky top-0 z-30 border-b border-white/40 bg-white/60 backdrop-blur-xl">
-      <div className="app-safe-x mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
+      <div className="app-safe-x mx-auto flex h-16 w-full max-w-6xl items-center gap-4">
         <Link
           to="/"
           className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
