@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -7,6 +7,7 @@ import { rootStore } from '../stores/root-store';
 const utilsInvalidate = vi.fn();
 const mutateMock = vi.fn();
 const deleteMutateMock = vi.fn();
+const refetchMock = vi.fn();
 
 // useState-like holder so different tests can swap the responses returned by
 // the mocked tRPC hooks without restructuring the mock itself.
@@ -22,11 +23,13 @@ const queryState: {
   isLoading: boolean;
   isError: boolean;
   error: { message: string } | null;
+  refetch: () => void;
 } = {
   data: undefined,
   isLoading: false,
   isError: false,
   error: null,
+  refetch: refetchMock,
 };
 const mutationState: { isPending: boolean } = { isPending: false };
 const deleteMutationState: { isPending: boolean; variables: { id: string } | undefined } = {
@@ -125,6 +128,8 @@ beforeEach(() => {
   utilsInvalidate.mockClear();
   mutateMock.mockClear();
   deleteMutateMock.mockClear();
+  refetchMock.mockClear();
+  rootStore.locale.setLocale('zh-CN');
   rootStore.session.signOut();
   queryState.data = [];
   queryState.isLoading = false;
@@ -141,6 +146,35 @@ describe('CommentSection (unauthenticated)', () => {
     expect(screen.getByRole('link', { name: /登录后即可发表评论/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /发布评论/ })).not.toBeInTheDocument();
   });
+
+  it.each([
+    ['card', () => renderShell()],
+    ['series', () => renderSeriesShell()],
+  ] as const)(
+    'shows a retryable alert when %s comments fail to load',
+    async (_kind, renderTarget) => {
+      const user = userEvent.setup();
+      queryState.isError = true;
+      queryState.error = { message: 'Internal server error (QA mock)' };
+      renderTarget();
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('加载失败');
+      expect(alert).not.toHaveTextContent('Internal server error');
+      expect(alert).toHaveClass('border-red-200', 'bg-red-50', 'text-red-700');
+
+      await user.click(screen.getByRole('button', { name: '重试' }));
+      expect(refetchMock).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        rootStore.locale.setLocale('en-US');
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Failed to load');
+        expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+      });
+    },
+  );
 
   it('still surfaces existing comments for anonymous viewers', () => {
     queryState.data = [

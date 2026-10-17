@@ -234,7 +234,21 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       {list.isLoading ? (
         <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
       ) : list.isError ? (
-        <p className="text-sm text-red-600">{list.error.message}</p>
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+        >
+          {tt('state.error')}
+          <button
+            type="button"
+            onClick={() => {
+              void list.refetch();
+            }}
+            className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {tt('state.retry')}
+          </button>
+        </div>
       ) : !list.data || list.data.length === 0 ? (
         <p
           tabIndex={-1}
