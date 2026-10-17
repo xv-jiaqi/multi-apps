@@ -1,28 +1,99 @@
 import { observer } from 'mobx-react-lite';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { LISTING_KIND_VALUES, listingPublishInput, t, type ListingKind } from '@repo/shared';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SegmentedControl,
+} from '@repo/ui-web';
+import {
+  LISTING_CONDITION_VALUES,
+  LISTING_KIND_VALUES,
+  LISTING_LANGUAGE_VALUES,
+  TRADE_CURRENCY_VALUES,
+  listingPublishInput,
+  t,
+  type ListingCondition,
+  type ListingKind,
+  type ListingLanguage,
+  type TradeCurrency,
+} from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
+import { CardPicker, type CardPickerItem } from '../components/card-picker';
+import { CardThumb, isHttpsImageUrl } from '../components/card-thumb';
+import { RarityBadge } from '../components/rarity-badge';
+
+type FieldErrors = Partial<Record<'card' | 'price' | 'imageUrls' | 'contact', string>>;
+
+function isKnownRarity(rarity: string | null): rarity is 'common' | 'rare' | 'epic' | 'legendary' {
+  return rarity === 'common' || rarity === 'rare' || rarity === 'epic' || rarity === 'legendary';
+}
+function toPickerItem(card: {
+  slug: string;
+  name: string;
+  rarity: string | null;
+  imageUrl: string | null;
+  seriesSlug: string;
+  seriesTitle: string;
+}): CardPickerItem {
+  return {
+    slug: card.slug,
+    name: card.name,
+    rarity: card.rarity,
+    imageUrl: card.imageUrl,
+    seriesSlug: card.seriesSlug,
+    seriesTitle: card.seriesTitle,
+  };
+}
 
 export const TradePublishPage = observer(function TradePublishPage() {
   const navigate = useNavigate();
   const { locale, session } = useStores();
   const [searchParams] = useSearchParams();
-  const tt = (key: string) => t(locale.locale, key);
-
+  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [kind, setKind] = useState<ListingKind>('SELL');
-  const [cardSlug, setCardSlug] = useState(searchParams.get('cardSlug') ?? '');
+  const [selectedCard, setSelectedCard] = useState<CardPickerItem | null>(null);
+  const [changingCard, setChangingCard] = useState(true);
+  const [condition, setCondition] = useState<ListingCondition | undefined>();
+  const [language, setLanguage] = useState<ListingLanguage | undefined>();
+  const [variantNote, setVariantNote] = useState('');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState('CNY');
+  const [currency, setCurrency] = useState<TradeCurrency>('CNY');
   const [imageUrlsRaw, setImageUrlsRaw] = useState('');
   const [contact, setContact] = useState('');
   const [note, setNote] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const cardInputRef = useRef<HTMLInputElement | null>(null);
+  const priceRef = useRef<HTMLInputElement | null>(null);
+  const imageRef = useRef<HTMLTextAreaElement | null>(null);
+  const contactRef = useRef<HTMLInputElement | null>(null);
+  const prefillSlug = searchParams.get('cardSlug') ?? '';
+  const prefillQuery = trpc.cards.bySlug.useQuery(
+    { slug: prefillSlug },
+    { enabled: prefillSlug.length > 0, retry: false },
+  );
+
+  useEffect(() => {
+    if (prefillQuery.data && !selectedCard) {
+      setSelectedCard(toPickerItem(prefillQuery.data));
+      setChangingCard(false);
+    }
+  }, [prefillQuery.data, selectedCard]);
 
   const utils = trpc.useUtils();
   const mutation = trpc.listings.publish.useMutation({
@@ -32,7 +103,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
       navigate('/trade', { replace: true });
     },
     onError(err) {
-      setError(err.message);
+      setFormError(err.message);
     },
   });
 
@@ -62,26 +133,63 @@ export const TradePublishPage = observer(function TradePublishPage() {
     );
   }
 
+  const imageUrls = imageUrlsRaw
+    .split('\n')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const imageError =
+    imageUrls.length > 4
+      ? tt('trade.publish.error.tooManyImages')
+      : imageUrls.some((url) => !url.toLowerCase().startsWith('https://'))
+        ? tt('trade.publish.error.imageUrl')
+        : undefined;
+
+  function focusFirstError(errors: FieldErrors) {
+    if (errors.card) cardInputRef.current?.focus();
+    else if (errors.price) priceRef.current?.focus();
+    else if (errors.imageUrls) imageRef.current?.focus();
+    else if (errors.contact) contactRef.current?.focus();
+  }
+
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
-    const imageUrls = imageUrlsRaw
-      .split('\n')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    const parsed = listingPublishInput.safeParse({
-      cardSlug: cardSlug.trim(),
-      kind,
-      price: price.trim().length > 0 ? price.trim() : undefined,
-      currency: currency.trim().length > 0 ? currency.trim() : 'CNY',
-      imageUrls,
-      contact: contact.trim(),
-      note: note.trim().length > 0 ? note.trim() : undefined,
-    });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tt('state.error'));
+    setFormError(null);
+    const errors: FieldErrors = {};
+    if (!selectedCard) errors.card = tt('trade.publish.error.cardRequired');
+    if (price.trim() && !Number.isFinite(Number(price.trim())))
+      errors.price = tt('trade.publish.error.price');
+    if (imageError) errors.imageUrls = imageError;
+    if (contact.trim().length < 2 || contact.trim().length > 200)
+      errors.contact = tt('trade.publish.error.contact');
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      focusFirstError(errors);
       return;
     }
+    const parsed = listingPublishInput.safeParse({
+      cardSlug: selectedCard!.slug,
+      kind,
+      price: price.trim() ? price.trim() : undefined,
+      currency,
+      imageUrls,
+      contact: contact.trim(),
+      note: note.trim() ? note.trim() : undefined,
+      condition,
+      language,
+      variantNote: variantNote.trim() ? variantNote.trim() : undefined,
+    });
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const mapped: FieldErrors = {};
+      if (issue?.path[0] === 'imageUrls') mapped.imageUrls = tt(issue.message);
+      else if (issue?.path[0] === 'price') mapped.price = tt('trade.publish.error.price');
+      else if (issue?.path[0] === 'contact') mapped.contact = tt('trade.publish.error.contact');
+      else mapped.card = tt('trade.publish.error.cardRequired');
+      setFieldErrors(mapped);
+      focusFirstError(mapped);
+      return;
+    }
+    setFieldErrors({});
     mutation.mutate(parsed.data);
   };
 
@@ -96,7 +204,6 @@ export const TradePublishPage = observer(function TradePublishPage() {
             { label: tt('trade.publish.title') },
           ]}
         />
-
         <Card className="border-white/60 bg-white/80 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-2xl">{tt('trade.publish.title')}</CardTitle>
@@ -106,82 +213,237 @@ export const TradePublishPage = observer(function TradePublishPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-4">
-              <fieldset className="space-y-1 text-sm">
-                <legend className="text-xs font-medium uppercase tracking-widest text-neutral-500">
-                  {tt('trade.publish.kind')}
-                </legend>
-                <div className="inline-flex overflow-hidden rounded-md border border-neutral-200">
-                  {LISTING_KIND_VALUES.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setKind(option)}
-                      aria-pressed={kind === option}
-                      className={`px-4 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-                        kind === option
-                          ? 'bg-neutral-900 text-white'
-                          : 'bg-white text-neutral-700 hover:bg-neutral-100'
-                      }`}
-                    >
-                      {tt(option === 'SELL' ? 'trade.publish.kindSell' : 'trade.publish.kindBuy')}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              <Field
-                label={tt('trade.publish.cardSlug')}
-                hint={tt('trade.publish.cardSlugHint')}
-                value={cardSlug}
-                onChange={setCardSlug}
-                required
+              <SegmentedControl
+                legend={tt('trade.publish.kind')}
+                name="publish-kind"
+                value={kind}
+                onValueChange={(value) => setKind(value as ListingKind)}
+                options={LISTING_KIND_VALUES.map((value) => ({
+                  value,
+                  label: tt(value === 'SELL' ? 'trade.publish.kindSell' : 'trade.publish.kindBuy'),
+                }))}
               />
-
-              <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
-                <Field
-                  label={tt('trade.publish.price')}
-                  type="text"
-                  inputMode="decimal"
-                  value={price}
-                  onChange={setPrice}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-neutral-600">
+                  {tt('trade.publish.card')}
+                </label>
+                {prefillQuery.isLoading && !selectedCard ? (
+                  <div className="flex items-center gap-3 rounded-md border border-neutral-300 bg-white p-3">
+                    <div className="aspect-[63/88] w-16 animate-pulse rounded-sm bg-neutral-200" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-4 w-1/2 rounded bg-neutral-200" />
+                      <div className="h-3 w-2/3 rounded bg-neutral-200" />
+                    </div>
+                  </div>
+                ) : selectedCard && !changingCard ? (
+                  <div className="flex items-center gap-3 rounded-md border border-neutral-300 bg-white p-3">
+                    <CardThumb src={selectedCard.imageUrl} slug={selectedCard.slug} width="w-16" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{selectedCard.name}</p>
+                      <p className="truncate text-xs text-neutral-600">
+                        {selectedCard.seriesTitle}
+                      </p>
+                      {isKnownRarity(selectedCard.rarity) ? (
+                        <RarityBadge rarity={selectedCard.rarity} locale={locale.locale} />
+                      ) : null}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setChangingCard(true);
+                        setSelectedCard(null);
+                        window.requestAnimationFrame(() => cardInputRef.current?.focus());
+                      }}
+                    >
+                      {tt('trade.publish.cardChange')}
+                    </Button>
+                  </div>
+                ) : (
+                  <CardPicker
+                    locale={locale.locale}
+                    value={selectedCard}
+                    onValueChange={(card) => {
+                      setSelectedCard(card);
+                      setChangingCard(false);
+                    }}
+                    id="trade-card"
+                    ariaInvalid={Boolean(fieldErrors.card)}
+                    ariaDescribedBy={fieldErrors.card ? 'trade-card-error' : undefined}
+                    inputRef={cardInputRef}
+                  />
+                )}
+                {prefillQuery.isError && !selectedCard ? (
+                  <p className="text-xs text-red-700">{tt('trade.publish.cardNotFound')}</p>
+                ) : null}
+                {fieldErrors.card ? (
+                  <p id="trade-card-error" className="text-xs text-red-700">
+                    {fieldErrors.card}
+                  </p>
+                ) : null}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SelectField
+                  label={tt('trade.condition.label')}
+                  value={condition ?? 'none'}
+                  onValueChange={(value) =>
+                    setCondition(value === 'none' ? undefined : (value as ListingCondition))
+                  }
+                  options={[
+                    { value: 'none', label: tt('trade.publish.notSpecified') },
+                    ...LISTING_CONDITION_VALUES.map((value) => ({
+                      value,
+                      label: tt(`trade.condition.${value}`),
+                    })),
+                  ]}
                 />
-                <Field
-                  label={tt('trade.publish.currency')}
-                  value={currency}
-                  onChange={(v) => setCurrency(v.toUpperCase())}
-                  maxLength={3}
+                <SelectField
+                  label={tt('trade.language.label')}
+                  value={language ?? 'none'}
+                  onValueChange={(value) =>
+                    setLanguage(value === 'none' ? undefined : (value as ListingLanguage))
+                  }
+                  options={[
+                    { value: 'none', label: tt('trade.publish.notSpecified') },
+                    ...LISTING_LANGUAGE_VALUES.map((value) => ({
+                      value,
+                      label: tt(`trade.language.${value}`),
+                    })),
+                  ]}
                 />
               </div>
-
-              <TextAreaField
-                label={tt('trade.publish.imageUrls')}
-                value={imageUrlsRaw}
-                onChange={setImageUrlsRaw}
-                rows={3}
-                placeholder={'https://...\nhttps://...'}
-              />
-
-              <Field
-                label={tt('trade.publish.contact')}
-                value={contact}
-                onChange={setContact}
-                required
-              />
-
-              <TextAreaField
-                label={tt('trade.publish.note')}
-                value={note}
-                onChange={setNote}
-                rows={3}
-                maxLength={500}
-              />
-
-              {error ? (
-                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {error}
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-neutral-600">
+                  {tt('trade.publish.variantNote')}
+                </span>
+                <Input
+                  value={variantNote}
+                  onChange={(event) => setVariantNote(event.target.value)}
+                  maxLength={40}
+                  placeholder={tt('trade.publish.variantNotePlaceholder')}
+                />
+                <span className="block text-right text-xs text-neutral-500" aria-live="off">
+                  {variantNote.length}/40
+                </span>
+              </label>
+              <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
+                <label className="block space-y-1">
+                  <span className="text-xs font-medium text-neutral-600">
+                    {tt('trade.publish.price')}
+                  </span>
+                  <Input
+                    ref={priceRef}
+                    inputMode="decimal"
+                    value={price}
+                    aria-invalid={Boolean(fieldErrors.price)}
+                    aria-describedby={fieldErrors.price ? 'trade-price-error' : undefined}
+                    onChange={(event) => setPrice(event.target.value)}
+                  />
+                  {fieldErrors.price ? (
+                    <p id="trade-price-error" className="text-xs text-red-700">
+                      {fieldErrors.price}
+                    </p>
+                  ) : null}
+                </label>
+                <SelectField
+                  label={tt('trade.publish.currency')}
+                  value={currency}
+                  onValueChange={(value) => setCurrency(value as TradeCurrency)}
+                  options={TRADE_CURRENCY_VALUES.map((value) => ({ value, label: value }))}
+                />
+              </div>
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-neutral-600">
+                  {tt('trade.publish.imageUrls')}
+                </span>
+                <textarea
+                  ref={imageRef}
+                  value={imageUrlsRaw}
+                  onChange={(event) => setImageUrlsRaw(event.target.value)}
+                  rows={3}
+                  placeholder="https://...\nhttps://..."
+                  aria-invalid={Boolean(fieldErrors.imageUrls || imageError)}
+                  aria-describedby="trade-images-hint trade-images-error"
+                  className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600"
+                />
+                <p id="trade-images-hint" className="text-xs text-neutral-500">
+                  {tt('trade.publish.imageUrlsHint')}
+                </p>
+                {fieldErrors.imageUrls || imageError ? (
+                  <p id="trade-images-error" className="text-xs text-red-700">
+                    {fieldErrors.imageUrls ?? imageError}
+                  </p>
+                ) : null}
+                {imageUrls.length > 0 ? (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-neutral-600">
+                      {tt('trade.publish.imagePreview')}
+                    </p>
+                    <ul className="flex flex-wrap gap-2">
+                      {imageUrls.slice(0, 4).map((url, index) => (
+                        <li
+                          key={`${url}-${index}`}
+                          className="size-16 overflow-hidden rounded-md bg-neutral-100 ring-1 ring-black/5"
+                        >
+                          {isHttpsImageUrl(url) ? (
+                            <img
+                              src={url}
+                              alt=""
+                              loading="lazy"
+                              decoding="async"
+                              referrerPolicy="no-referrer"
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            <span className="flex size-full items-center justify-center px-2 text-xs text-brand-600">
+                              {tt('trade.list.photoFallback', { index: index + 1 })}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </label>
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-neutral-600">
+                  {tt('trade.publish.contact')}
+                </span>
+                <Input
+                  ref={contactRef}
+                  value={contact}
+                  onChange={(event) => setContact(event.target.value)}
+                  required
+                  aria-invalid={Boolean(fieldErrors.contact)}
+                  aria-describedby={fieldErrors.contact ? 'trade-contact-error' : undefined}
+                />
+                {fieldErrors.contact ? (
+                  <p id="trade-contact-error" className="text-xs text-red-700">
+                    {fieldErrors.contact}
+                  </p>
+                ) : null}
+              </label>
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-neutral-600">
+                  {tt('trade.publish.note')}
+                </span>
+                <textarea
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                />
+              </label>
+              {formError ? (
+                <p
+                  role="alert"
+                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                >
+                  {formError}
                 </p>
               ) : null}
-
               <div className="flex flex-wrap items-center justify-end gap-3">
                 <Button asChild variant="outline">
                   <Link to="/trade">{tt('trade.publish.cancel')}</Link>
@@ -198,76 +460,34 @@ export const TradePublishPage = observer(function TradePublishPage() {
   );
 });
 
-interface FieldProps {
-  label: string;
-  hint?: string;
-  type?: 'text' | 'email' | 'password';
-  inputMode?: 'decimal' | 'text';
-  value: string;
-  onChange: (v: string) => void;
-  required?: boolean;
-  maxLength?: number;
-}
-
-function Field({
-  label,
-  hint,
-  type = 'text',
-  inputMode,
-  value,
-  onChange,
-  required,
-  maxLength,
-}: FieldProps) {
-  return (
-    <label className="block space-y-1 text-sm">
-      <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
-        {label}
-      </span>
-      <input
-        type={type}
-        inputMode={inputMode}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        maxLength={maxLength}
-        className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
-      />
-      {hint ? <span className="text-xs text-neutral-500">{hint}</span> : null}
-    </label>
-  );
-}
-
-interface TextAreaFieldProps {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  rows?: number;
-  placeholder?: string;
-  maxLength?: number;
-}
-
-function TextAreaField({
+function SelectField({
   label,
   value,
-  onChange,
-  rows = 3,
-  placeholder,
-  maxLength,
-}: TextAreaFieldProps) {
+  onValueChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
   return (
-    <label className="block space-y-1 text-sm">
-      <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
-        {label}
-      </span>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={rows}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
-      />
+    <label className="block space-y-1">
+      <span className="text-xs font-medium text-neutral-600">{label}</span>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </label>
   );
 }

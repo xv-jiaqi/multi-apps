@@ -131,6 +131,21 @@ enum ListingStatus {
   CLOSED
 }
 
+enum ListingCondition {
+  NEAR_MINT
+  LIGHTLY_PLAYED
+  MODERATELY_PLAYED
+  HEAVILY_PLAYED
+  DAMAGED
+}
+
+enum ListingLanguage {
+  ZH
+  EN
+  JA
+  OTHER
+}
+
 enum ReportTargetType {
   LISTING
   TOPIC
@@ -144,36 +159,40 @@ enum ReportStatus {
 }
 
 model Listing {
-  id        String        @id @default(uuid())
-  userId    String
+  id          String            @id @default(uuid())
+  userId      String
   // cardSlug is stored as a string instead of a Card relation because a
   // listing may reference a card slug that was reseeded / renamed; keeping
   // the link soft means we never silently delete user-posted listings when
   // the catalog churns. The web side filters by slug and shows a plain
   // disclaimer if the card is missing.
-  cardSlug  String
-  kind      ListingKind
+  cardSlug    String
+  kind        ListingKind
   // Decimal(12,2) covers values up to 9_999_999_999.99 in any single
   // currency. Stored as Decimal so frontend math (currency conversions,
   // sorting) stays accurate; tRPC 11 serialises Decimal as a string.
-  price     Decimal?      @db.Decimal(12, 2)
+  price       Decimal?          @db.Decimal(12, 2)
   // ISO 4217 currency code. Defaults to CNY because the dominant audience
   // is mainland China; international users override per-listing.
-  currency  String        @default("CNY")
+  currency    String            @default("CNY")
   // Postgres text[] capped at 4 entries by zod on the api side. Cardhub
   // does not host its own image pipeline yet (see backlog) so urls must
   // be external — typically an image host or a card scan.
-  imageUrls String[]      @default([])
-  contact   String
-  note      String?
-  status    ListingStatus @default(OPEN)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  imageUrls   String[]          @default([])
+  contact     String
+  note        String?
+  condition   ListingCondition?
+  language    ListingLanguage?
+  variantNote String?
+  status      ListingStatus     @default(OPEN)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([cardSlug])
   @@index([status, createdAt])
+  @@index([status, currency, price])
   @@map("listings")
 }
 
