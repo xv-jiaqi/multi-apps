@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { slugSchema } from '@repo/shared';
+import { hasCardSearchConditions, parseCardSearchQuery, slugSchema } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { assertParsedSearch, buildCardSearchWhere } from '../search/search-query';
 
 type CardSearchRow = Prisma.CardGetPayload<{
   include: { series: { select: { slug: true; title: true } } };
@@ -57,15 +58,25 @@ export class CardsRouter {
       search: t.procedure
         .input(
           z.object({
-            q: z.string().trim().min(1).max(80),
+            q: z.string().trim().min(1).max(200),
             limit: z.number().int().min(1).max(50).default(20),
+            rarity: z.enum(['common', 'rare', 'epic', 'legendary']).optional(),
+            seriesSlug: slugSchema.optional(),
           }),
         )
         .query(async ({ input }) => {
-          // Postgres ILIKE = case-insensitive, also unicode-friendly so this
-          // handles 中英 search out of the box (FR1 + Story 2.4 acceptance #3).
+          const parsed = assertParsedSearch(parseCardSearchQuery(input.q));
+          const effectiveParsed = {
+            ...parsed,
+            ...(input.rarity ? { rarity: input.rarity } : {}),
+            ...(input.seriesSlug ? { seriesSlug: input.seriesSlug } : {}),
+          };
+          if (!hasCardSearchConditions(effectiveParsed)) {
+            return { query: input.q, results: [] };
+          }
+          const where = buildCardSearchWhere(effectiveParsed);
           const cards = await prisma.card.findMany({
-            where: { name: { contains: input.q, mode: 'insensitive' } },
+            where,
             include: { series: { select: { slug: true, title: true } } },
             take: input.limit,
             orderBy: { name: 'asc' },

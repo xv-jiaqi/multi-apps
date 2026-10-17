@@ -74,3 +74,117 @@ export function slugify(input: string, suffixLength = 6): string {
   }
   return `${base}-${suffix}`;
 }
+
+export const CARD_RARITY_VALUES = ['common', 'rare', 'epic', 'legendary'] as const;
+export type CardRarity = (typeof CARD_RARITY_VALUES)[number];
+
+export type CardSearchParseErrorReason = 'unknownPrefix' | 'invalidRarity';
+export type CardSearchParseResult =
+  | {
+      ok: true;
+      rarity?: CardRarity;
+      seriesSlug?: string;
+      includeGroups: string[][];
+      excludeTerms: string[];
+    }
+  | {
+      ok: false;
+      reason: CardSearchParseErrorReason;
+      token: string;
+    };
+
+const RESERVED_PREFIXES = new Set(['r', 's']);
+const RESERVED_FUTURE_PREFIXES = new Set(['c', 'y']);
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function appendNameToken(groups: string[][], token: string): void {
+  if (groups.length === 0) groups.push([]);
+  groups[groups.length - 1]!.push(token);
+}
+
+export function parseCardSearchQuery(query: string): CardSearchParseResult {
+  const tokens = query
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+
+  let rarity: CardRarity | undefined;
+  let seriesSlug: string | undefined;
+  const includeGroups: string[][] = [[]];
+  const excludeTerms: string[] = [];
+
+  for (const rawToken of tokens) {
+    if (rawToken === 'OR') {
+      if (includeGroups[includeGroups.length - 1]!.length > 0) {
+        includeGroups.push([]);
+      }
+      continue;
+    }
+
+    const token = rawToken.trim();
+    const prefixMatch = token.match(/^([A-Za-z]+):(.+)$/);
+    const incompletePrefixMatch = token.match(/^([A-Za-z]+):$/);
+
+    if (incompletePrefixMatch) {
+      const prefix = incompletePrefixMatch[1]!.toLowerCase();
+      if (RESERVED_PREFIXES.has(prefix)) continue;
+      return { ok: false, reason: 'unknownPrefix', token };
+    }
+
+    if (prefixMatch) {
+      const prefix = prefixMatch[1]!.toLowerCase();
+      const value = prefixMatch[2]!;
+      if (prefix === 'r') {
+        if (!(CARD_RARITY_VALUES as readonly string[]).includes(value)) {
+          return { ok: false, reason: 'invalidRarity', token };
+        }
+        if (!rarity) rarity = value as CardRarity;
+        continue;
+      }
+      if (prefix === 's') {
+        if (!seriesSlug && SLUG_PATTERN.test(value)) {
+          seriesSlug = value;
+        }
+        continue;
+      }
+      if (RESERVED_FUTURE_PREFIXES.has(prefix) || /^[A-Za-z]+$/.test(prefix)) {
+        return { ok: false, reason: 'unknownPrefix', token };
+      }
+    }
+
+    if (/^[A-Za-z]+[<>=]/.test(token)) {
+      return { ok: false, reason: 'unknownPrefix', token };
+    }
+
+    if (token.startsWith('-') && token.length > 1) {
+      excludeTerms.push(token.slice(1));
+      continue;
+    }
+
+    appendNameToken(includeGroups, token);
+  }
+
+  return {
+    ok: true,
+    ...(rarity ? { rarity } : {}),
+    ...(seriesSlug ? { seriesSlug } : {}),
+    includeGroups: includeGroups.filter((group) => group.length > 0),
+    excludeTerms,
+  };
+}
+
+export function hasCardSearchConditions(
+  parsed: Extract<CardSearchParseResult, { ok: true }>,
+): boolean {
+  return (
+    Boolean(parsed.rarity) ||
+    Boolean(parsed.seriesSlug) ||
+    parsed.includeGroups.length > 0 ||
+    parsed.excludeTerms.length > 0
+  );
+}
+
+export function shouldRequestCardSearchQuery(query: string): boolean {
+  const parsed = parseCardSearchQuery(query);
+  return parsed.ok && hasCardSearchConditions(parsed);
+}

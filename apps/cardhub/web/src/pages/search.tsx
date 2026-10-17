@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router';
 import { useEffect, useState } from 'react';
-import { t } from '@repo/shared';
+import { hasCardSearchConditions, parseCardSearchQuery, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -29,13 +29,20 @@ function useDebounced<T>(value: T, delayMs: number): T {
 
 export const SearchPage = observer(function SearchPage() {
   const { locale } = useStores();
-  const tt = (key: string) => t(locale.locale, key);
+  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [query, setQuery] = useState('');
   const debounced = useDebounced(query.trim(), 250);
+  const parsed = parseCardSearchQuery(debounced);
+  const hasSearchConditions = parsed.ok && hasCardSearchConditions(parsed);
+  const parseErrorMessage = parsed.ok
+    ? null
+    : tt(parsed.reason === 'unknownPrefix' ? 'search.unsupportedPrefix' : 'search.invalidRarity', {
+        token: parsed.token,
+      });
 
   const results = trpc.cards.search.useQuery(
     { q: debounced, limit: 30 },
-    { enabled: debounced.length > 0 },
+    { enabled: debounced.length > 0 && hasSearchConditions },
   );
 
   return (
@@ -60,6 +67,10 @@ export const SearchPage = observer(function SearchPage() {
 
         {debounced === '' ? (
           <p className="text-sm text-neutral-500">{tt('search.placeholder')}</p>
+        ) : !parsed.ok ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+            {parseErrorMessage}
+          </p>
         ) : results.isLoading ? (
           <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
         ) : results.isError ? (

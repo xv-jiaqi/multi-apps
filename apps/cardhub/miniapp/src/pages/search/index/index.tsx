@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { ScrollView, View, Text, Input } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, Link, RarityBadge, Skeleton, type Rarity } from '@repo/ui-mini';
-import { t } from '@repo/shared';
+import { hasCardSearchConditions, parseCardSearchQuery, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { gradientFor } from '../../../lib/gradients';
@@ -20,7 +20,7 @@ function normalizeRarity(rarity: string | null): Rarity {
 
 export default observer(function SearchPage() {
   const { locale } = useStores();
-  const tt = (key: string) => t(locale.locale, key);
+  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -41,6 +41,26 @@ export default observer(function SearchPage() {
   useEffect(() => {
     if (debounced.length === 0) {
       setResults(null);
+      setError(null);
+      return;
+    }
+    const parsed = parseCardSearchQuery(debounced);
+    if (!parsed.ok) {
+      setError(
+        tt(
+          parsed.reason === 'unknownPrefix' ? 'search.unsupportedPrefix' : 'search.invalidRarity',
+          {
+            token: parsed.token,
+          },
+        ),
+      );
+      setLoading(false);
+      return;
+    }
+    if (!hasCardSearchConditions(parsed)) {
+      setResults(null);
+      setError(null);
+      setLoading(false);
       return;
     }
     let cancelled = false;

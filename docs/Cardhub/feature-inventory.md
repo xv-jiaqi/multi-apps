@@ -51,11 +51,11 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 ### 3.2 搜索
 
-| 能力                              | 状态 | 入口      | 接口           | 说明                                                                                                       |
-| --------------------------------- | ---- | --------- | -------------- | ---------------------------------------------------------------------------------------------------------- |
-| 卡牌名模糊搜索（不区分大小写）    | ✅   | `/search` | `cards.search` | Postgres `ILIKE '%q%'`，最多 50 条，前端 250ms 防抖；`@@index([name])` 是 btree，对 `%q%` 无加速（CH-106） |
-| Header 常驻搜索框 / 下拉建议      | ❌   | —         | —              | PRD Story 2.5 AC1 与 UI 规范主导航要求“醒目位置的搜索框”，目前只有导航链接（CH-106）                       |
-| 搜索系列、描述，按稀有度/系列筛选 | ❌   | —         | —              | CH-106                                                                                                     |
+| 能力                              | 状态 | 入口      | 接口                             | 说明                                                                                                                              |
+| --------------------------------- | ---- | --------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 卡牌名模糊搜索（不区分大小写）    | ✅   | `/search` | `cards.search`                   | Postgres `ILIKE '%q%'`，最多 50 条，前端 250ms 防抖；`@@index([name])` 是 btree，对 `%q%` 无加速（CH-106）                        |
+| Header 常驻搜索框 / 下拉建议      | ❌   | —         | —                                | PRD Story 2.5 AC1 与 UI 规范主导航要求“醒目位置的搜索框”，目前只有导航链接（CH-106）                                              |
+| 搜索系列、描述，按稀有度/系列筛选 | 🟡   | `/search` | `search.global` / `cards.search` | API 已支持全局搜索、系列结果与稀有度 / 系列解析；Header 搜索框、`/search` 筛选 UI 和 trigram 索引仍在 CH-106 后续前端 / 数据库 PR |
 
 ### 3.3 账户与会话
 
@@ -186,7 +186,8 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `series.list`          | query    | 公开                    | `{ page?=1, pageSize?=20(≤100) }`                                         | `{ items[{…, cardCount}], page, pageSize, total }`                                            |
 | `series.bySlug`        | query    | 公开                    | `{ slug }`                                                                | 系列 + `cards[{ id, slug, name, rarity, imageUrl }]`                                          |
 | `cards.bySlug`         | query    | 公开                    | `{ slug }`                                                                | 卡牌 + 扁平 `attributes` + `seriesSlug / seriesTitle`                                         |
-| `cards.search`         | query    | 公开                    | `{ q(1–80), limit=20(≤50) }`                                              | `{ query, results[] }`                                                                        |
+| `cards.search`         | query    | 公开                    | `{ q(1–200), limit=20(≤50), rarity?, seriesSlug? }`                       | `{ query, results[] }`，支持 `r:` / `s:` 解析；旧调用只传 `q + limit` 仍可用                  |
+| `search.global`        | query    | 公开                    | `{ q(1–200), limit=20(≤50), cardLimit?(≤50), seriesLimit?(≤20) }`         | `{ query, cards[], series[{…, cardCount, coverUrl}] }`，`limit` 作为两个分组的兜底            |
 | `auth.register`        | mutation | 公开（限流）            | `{ email, username, password }`                                           | `{ token, user{ id, email, username, role } }`                                                |
 | `auth.login`           | mutation | 公开（限流）            | `{ identifier, password }`                                                | 同上                                                                                          |
 | `auth.me`              | query    | 公开（token 走 input）  | `{ token }`                                                               | `user`                                                                                        |

@@ -3,8 +3,7 @@ import { CardsRouter } from './cards.router';
 import type { PrismaService } from '../prisma/prisma.service';
 
 /**
- * Verifies that cards.search delegates to a case-insensitive Prisma query
- * (Story 2.4 acceptance #3) and shapes results without leaking the recursive
+ * Verifies that cards.search shapes results without leaking the recursive
  * Prisma JsonValue type that previously broke the client (TS2589 — see
  * docs/Cardhub/handoff-context.md §6.7).
  */
@@ -26,7 +25,7 @@ function makeRouter() {
 }
 
 describe('CardsRouter.search', () => {
-  it('uses case-insensitive ILIKE contains on the name column', async () => {
+  it('uses parsed case-insensitive name filters', async () => {
     const { caller, findMany } = makeRouter();
     findMany.mockResolvedValueOnce([]);
 
@@ -34,10 +33,57 @@ describe('CardsRouter.search', () => {
 
     expect(findMany).toHaveBeenCalledTimes(1);
     const args = findMany.mock.calls[0]?.[0];
-    expect(args.where).toEqual({ name: { contains: '极光', mode: 'insensitive' } });
+    expect(args.where).toEqual({
+      AND: [
+        {
+          OR: [
+            {
+              AND: [{ name: { contains: '极光', mode: 'insensitive' } }],
+            },
+          ],
+        },
+      ],
+    });
     expect(args.take).toBe(5);
     expect(args.orderBy).toEqual({ name: 'asc' });
   });
+
+  it('accepts explicit rarity and series filters without changing result shape', async () => {
+    const { caller, findMany } = makeRouter();
+    findMany.mockResolvedValueOnce([]);
+
+    await caller.search({
+      q: '龙',
+      limit: 5,
+      rarity: 'legendary',
+      seriesSlug: 'celestial-dawn',
+    });
+
+    expect(findMany.mock.calls[0]?.[0].where).toEqual({
+      AND: [
+        { rarity: 'legendary' },
+        { series: { slug: 'celestial-dawn' } },
+        {
+          OR: [
+            {
+              AND: [{ name: { contains: '龙', mode: 'insensitive' } }],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it.each(['r:', 'OR', 's:天穹黎明'])(
+    'returns empty results without querying Prisma for no-condition input %s',
+    async (q) => {
+      const { caller, findMany } = makeRouter();
+
+      await expect(caller.search({ q, limit: 5 })).resolves.toEqual({ query: q, results: [] });
+
+      expect(findMany).not.toHaveBeenCalled();
+    },
+  );
 
   it('flattens series relation into seriesSlug / seriesTitle', async () => {
     const { caller, findMany } = makeRouter();
