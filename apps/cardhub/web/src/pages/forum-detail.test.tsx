@@ -11,6 +11,7 @@ const createReplyMutate = vi.fn();
 const deleteReplyMutate = vi.fn();
 const deleteTopicMutate = vi.fn();
 const setPinnedMutate = vi.fn();
+let setPinnedIsPending = false;
 const fetchNextPage = vi.fn();
 const repliesReset = vi.fn();
 const topicSetData = vi.fn();
@@ -129,7 +130,7 @@ vi.mock('../lib/trpc', () => ({
             onError?: (error: { data?: { code?: string } }) => void;
           }) => ({
             mutate: (input: unknown) => setPinnedMutate(input, { onSuccess, onError }),
-            isPending: false,
+            isPending: setPinnedIsPending,
           }),
         },
         list: {
@@ -271,6 +272,7 @@ beforeEach(() => {
   deleteTopicMutate.mockReset();
   deleteTopicMutate.mockImplementation((_input, handlers) => handlers.onSuccess?.());
   setPinnedMutate.mockReset();
+  setPinnedIsPending = false;
   fetchNextPage.mockReset();
   repliesQueryInputs.length = 0;
   latestInitialCursor = undefined;
@@ -718,20 +720,41 @@ describe('ForumDetailPage CH-103 topic controls', () => {
       role: 'admin',
     });
     setPinnedMutate.mockImplementation((_input, handlers) => {
+      setPinnedIsPending = true;
       void handlers.onSuccess?.({ pinned: true });
     });
     const user = userEvent.setup();
-    renderPage();
+    const view = renderPage();
 
     const pinButton = screen.getByRole('button', { name: '置顶' });
     await user.click(pinButton);
+    view.rerender(
+      <MemoryRouter initialEntries={['/forum/test-topic']}>
+        <Routes>
+          <Route path="/forum/:slug" element={<ForumDetailPage />} />
+          <Route path="/forum" element={<ForumLanding />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     expect(setPinnedMutate.mock.calls[0]?.[0]).toEqual({
       id: '00000000-0000-0000-0000-000000000001',
       pinned: true,
     });
     expect(await screen.findByText('已置顶，话题会显示在列表最前')).toBeInTheDocument();
-    expect(pinButton).toHaveFocus();
+    expect(screen.getByRole('button', { name: '正在置顶…' })).toBeDisabled();
+
+    setPinnedIsPending = false;
+    view.rerender(
+      <MemoryRouter initialEntries={['/forum/test-topic']}>
+        <Routes>
+          <Route path="/forum/:slug" element={<ForumDetailPage />} />
+          <Route path="/forum" element={<ForumLanding />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: '置顶' })).toHaveFocus();
     expect(topicsListInvalidate).toHaveBeenCalled();
   });
 });

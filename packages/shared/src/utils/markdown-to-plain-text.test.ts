@@ -51,4 +51,14 @@ describe('markdownToPlainText', () => {
       `Use snake_case, ${url}, and 5 * 3.`,
     );
   });
+
+  it('handles malicious unclosed tags and links quickly after truncating input', () => {
+    const malicious = `${'[link]('.repeat(2500)} ${'<article '.repeat(2500)}safe text`;
+    const startedAt = Date.now();
+
+    const result = markdownToPlainText(malicious, 120);
+
+    expect(Date.now() - startedAt).toBeLessThan(100);
+    expect(Array.from(result).length).toBeLessThanOrEqual(121);
+  });
 });

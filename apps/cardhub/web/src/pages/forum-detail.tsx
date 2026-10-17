@@ -74,6 +74,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [topicNotice, setTopicNotice] = useState('');
   const [topicError, setTopicError] = useState('');
   const [showEditAction, setShowEditAction] = useState(false);
+  const [restorePinFocus, setRestorePinFocus] = useState(false);
   const replyRefs = useRef(new Map<string, HTMLLIElement>());
   const replyDeleteButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const topicDeleteButtonRef = useRef<HTMLButtonElement>(null);
@@ -215,11 +216,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     async onSuccess(updated) {
       setTopicError('');
       setTopicNotice(updated.pinned ? tt('forum.detail.pinned') : tt('forum.detail.unpinned'));
+      setRestorePinFocus(true);
       await Promise.all([
         utils.forum.topics.bySlug.invalidate({ slug }),
         utils.forum.topics.list.invalidate(),
       ]);
-      pinButtonRef.current?.focus();
     },
     onError(err) {
       setTopicNotice('');
@@ -228,7 +229,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           ? tt('forum.detail.pinForbidden')
           : tt('forum.detail.pinFailed'),
       );
-      pinButtonRef.current?.focus();
+      setRestorePinFocus(true);
     },
   });
 
@@ -298,6 +299,12 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       replyStatusRef.current?.focus();
     }
   }, [replyStatus.visible, replyStatus.message]);
+
+  useEffect(() => {
+    if (!restorePinFocus || setPinned.isPending) return;
+    pinButtonRef.current?.focus();
+    setRestorePinFocus(false);
+  }, [restorePinFocus, setPinned.isPending]);
 
   useEffect(() => {
     const state = location.state as { notice?: string } | null;
