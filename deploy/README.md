@@ -201,7 +201,8 @@ To inspect the decision without deleting images, run:
 
 Keep `CATALOG_SEED_CMD` empty for normal deploys so later catalog edits are not
 overwritten. On the first deploy of an empty database, run the catalog-only seed
-once after the API is healthy:
+once after the API is healthy. The seed script only inserts missing series and
+cards by slug; existing rows are left untouched.
 
 ```bash
 docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env exec -T api node dist/scripts/seed-catalog.js

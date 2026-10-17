@@ -46,7 +46,7 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 | 稀有度                   | ✅   | 各列表与详情          | `Card.rarity`                       | `common / rare / epic / legendary`，标签写在 `rarity-badge.tsx`（Web）和 `@repo/ui-mini`（小程序）                                                                                                                                        |
 | 卡牌 / 系列图片          | 🟡   | 全站图位              | `Card.imageUrl` / `Series.coverUrl` | Web / Tauri 已支持 https 真实图片：加载中固定灰底、加载完淡入、坏链或 `gradient:` 回退原渐变；卡牌详情用 63:88 contain，其余卡图按 63:88 cover，系列封面按 2:1 或现有背景容器 cover。现有 seed 仍是 `gradient:...`，小程序同步留给 CH-301 |
 | 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                   | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）。平行版本与限量编号见 CH-213                                                                                                                                                             |
-| 内容维护                 | 🟡   | —                     | `seed:catalog`                      | 只能修改 `apps/cardhub/api/src/scripts/seed-data.ts` 后重跑 seed；seed 按 slug upsert 会覆盖同名记录（CH-107）                                                                                                                            |
+| 内容维护                 | 🟡   | —                     | `admin.*` / `seed:catalog`          | CH-107 API 部分已提供管理员目录写接口与 JSON 导入；后台 Web 页面待后续 PR。`seed:catalog` 只插入缺失记录，不覆盖后台编辑                                                                                                                  |
 | 面包屑                   | ✅   | 所有深层页面          | —                                   |                                                                                                                                                                                                                                           |
 
 ### 3.2 搜索
@@ -215,6 +215,15 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `users.me`             | query    | 登录                    | —                                                                         | 资料 + `listingCount`（开放）/ `listingTotalCount`（含已关闭）/ 话题 / 回帖 / 评论计数        |
 | `users.myTopics`       | query    | 登录                    | `{ pageCursor?, limit }`                                                  | 本人话题 cursor 分页；每条含 `slug / title / replyCount / createdAt`                          |
 | `users.myComments`     | query    | 登录                    | `{ pageCursor?, limit }`                                                  | 本人评论 cursor 分页；`target` 为卡牌（含 `imageUrl`）或系列                                  |
+| `admin.series.list`    | query    | admin                   | —                                                                         | 全部系列，含原始 `coverUrl`、`updatedAt`、`cardCount`、`commentCount`                         |
+| `admin.series.create`  | mutation | admin                   | `{ slug, title, description?, coverUrl? }`                                | 新系列；slug 冲突返回 `SLUG_TAKEN`                                                            |
+| `admin.series.update`  | mutation | admin                   | `{ slug, title, description?, coverUrl? }`                                | 按 slug 更新；slug 不可改                                                                     |
+| `admin.series.delete`  | mutation | admin                   | `{ slug, force? }`                                                        | 有卡牌或系列评论且未 force 时拒绝并返回 `SERIES_HAS_CARDS` 计数；force 级联删卡和评论         |
+| `admin.cards.get`      | query    | admin                   | `{ slug }`                                                                | 原始 `imageUrl`、`attributes`、`updatedAt`、`commentCount`                                    |
+| `admin.cards.create`   | mutation | admin                   | `{ slug, name, description?, rarity, imageUrl?, attributes, seriesSlug }`  | 新卡牌；slug 冲突返回 `SLUG_TAKEN`                                                            |
+| `admin.cards.update`   | mutation | admin                   | 同 create                                                                 | 按 slug 更新；可移动所属系列                                                                  |
+| `admin.cards.delete`   | mutation | admin                   | `{ slug }`                                                                | 删除卡牌并级联评论                                                                            |
+| `admin.catalog.import` | mutation | admin                   | `{ data, dryRun }`                                                        | dryRun 逐行返回 `created/updated/unchanged/error`；正式导入在单个 `$transaction` 内执行       |
 
 另有 NestJS REST 端点 `GET /health`（不经过 tRPC，跳过全局 Throttler）。
 

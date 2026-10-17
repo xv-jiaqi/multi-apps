@@ -11,6 +11,7 @@ import { ListingsModule } from '../modules/listings/listings.module';
 import { ReportsModule } from '../modules/reports/reports.module';
 import { UsersModule } from '../modules/users/users.module';
 import { SearchModule } from '../modules/search/search.module';
+import { AdminModule } from '../modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SearchModule } from '../modules/search/search.module';
     ReportsModule,
     UsersModule,
     SearchModule,
+    AdminModule,
   ],
   providers: [TrpcService],
   exports: [TrpcService],
