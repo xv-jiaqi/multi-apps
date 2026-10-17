@@ -11,6 +11,16 @@ export function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
 }
 
+export type ResolvedArtwork = { kind: 'image'; src: string } | { kind: 'placeholder' };
+
+export function resolveArtwork(url: string | null | undefined): ResolvedArtwork {
+  const src = url?.trim();
+  if (src && src.toLowerCase().startsWith('https://')) {
+    return { kind: 'image', src };
+  }
+  return { kind: 'placeholder' };
+}
+
 /**
  * Convert an arbitrary string into a kebab-case slug:
  * - lowercase ASCII

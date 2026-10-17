@@ -6,6 +6,8 @@ import { Breadcrumbs } from '../components/breadcrumbs';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
+import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
+import { cn } from '@repo/ui-web';
 import { gradientFor } from '../lib/gradients';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
@@ -14,6 +16,82 @@ function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
     return rarity as (typeof RARITY_ORDER)[number];
   }
   return 'common';
+}
+
+type SeriesHeroProps = {
+  series: { slug: string; title: string; description: string; coverUrl: string };
+  alt: string;
+  cardCountLabel: string;
+};
+
+function SeriesHero({ series, alt, cardCountLabel }: SeriesHeroProps) {
+  const art = useArtImage({
+    src: series.coverUrl,
+    alt,
+    fit: 'cover',
+    priority: true,
+    className: 'absolute inset-0',
+  });
+  const hasImage = art.mode === 'image';
+
+  return (
+    <header
+      className={cn(
+        'relative overflow-hidden rounded-3xl border border-white/60 p-8 text-white shadow-lg',
+        hasImage ? 'bg-neutral-800' : `bg-gradient-to-br ${gradientFor(series.slug)}`,
+      )}
+    >
+      {hasImage ? <img key={series.coverUrl} {...art.imgProps} /> : null}
+      <div className={cn('absolute inset-0', hasImage ? 'bg-black/65' : 'bg-black/15')} aria-hidden />
+      <div className="relative space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{series.title}</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-white/90">{series.description}</p>
+        <p className="text-xs uppercase tracking-widest text-white/80">{cardCountLabel}</p>
+      </div>
+    </header>
+  );
+}
+
+type SeriesCardArtProps = {
+  card: { slug: string; name: string; imageUrl: string | null };
+};
+
+function SeriesCardArt({ card }: SeriesCardArtProps) {
+  const art = useArtImage({
+    src: card.imageUrl,
+    alt: '',
+    fit: 'cover',
+    className: 'absolute inset-0',
+  });
+  const hasImage = art.mode === 'image';
+
+  return (
+    <div
+      className={cn(
+        'relative flex h-44 items-center justify-center bg-gradient-to-br',
+        gradientFor(card.slug),
+        hasImage && 'py-3',
+      )}
+      aria-hidden
+    >
+      {hasImage ? (
+        <div
+          className={cn(
+            'relative h-full overflow-hidden rounded-md shadow-md',
+            ART_ASPECT.card,
+            ART_SURFACE,
+            'ring-1 ring-black/10',
+          )}
+        >
+          <img key={card.imageUrl ?? card.slug} {...art.imgProps} />
+        </div>
+      ) : (
+        <span className="text-3xl font-black uppercase tracking-widest text-white/70">
+          {card.name.slice(0, 1)}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export const SeriesDetailPage = observer(function SeriesDetailPage() {
@@ -71,18 +149,11 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           ]}
         />
 
-        <header
-          className={`relative overflow-hidden rounded-3xl border border-white/60 bg-gradient-to-br ${gradientFor(series.slug)} p-8 text-white shadow-lg`}
-        >
-          <div className="absolute inset-0 bg-black/15" aria-hidden />
-          <div className="relative space-y-3">
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{series.title}</h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-white/90">{series.description}</p>
-            <p className="text-xs uppercase tracking-widest text-white/80">
-              {tt('series.cardCount', { count: series.cards.length })}
-            </p>
-          </div>
-        </header>
+        <SeriesHero
+          series={series}
+          alt={tt('artwork.seriesAlt', { title: series.title })}
+          cardCountLabel={tt('series.cardCount', { count: series.cards.length })}
+        />
 
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">{tt('series.detail.cardsTitle')}</h2>
@@ -93,14 +164,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
                   to={`/cards/${card.slug}`}
                   className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div
-                    className={`relative flex h-44 items-center justify-center bg-gradient-to-br ${gradientFor(card.slug)}`}
-                    aria-hidden
-                  >
-                    <span className="text-3xl font-black uppercase tracking-widest text-white/70">
-                      {card.name.slice(0, 1)}
-                    </span>
-                  </div>
+                  <SeriesCardArt card={card} />
                   <div className="flex items-center justify-between p-4">
                     <span className="text-base font-semibold text-neutral-900">{card.name}</span>
                     <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />

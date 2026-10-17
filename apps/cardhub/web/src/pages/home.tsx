@@ -6,6 +6,45 @@ import { PageShell } from '../components/page-shell';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { gradientFor } from '../lib/gradients';
+import { useArtImage } from '../components/artwork';
+
+type FeaturedSeries = {
+  slug: string;
+  title: string;
+  description: string;
+  coverUrl: string;
+};
+
+function FeaturedSeriesTile({ series, featured }: { series: FeaturedSeries; featured: boolean }) {
+  const art = useArtImage({
+    src: series.coverUrl,
+    alt: '',
+    fit: 'cover',
+    priority: featured,
+  });
+  const hasImage = art.mode === 'image';
+
+  return (
+    <Link
+      to={`/series/${series.slug}`}
+      className={`group relative overflow-hidden rounded-2xl border border-white/60 bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-transform hover:-translate-y-1 ${
+        featured ? 'col-span-2' : ''
+      }`}
+    >
+      {hasImage ? (
+        <div className="absolute inset-0 -z-10 opacity-30">
+          <img key={series.coverUrl} {...art.imgProps} />
+        </div>
+      ) : (
+        <div
+          className={`absolute inset-0 -z-10 bg-gradient-to-br ${gradientFor(series.slug)} opacity-30 transition-opacity group-hover:opacity-50`}
+        />
+      )}
+      <h3 className="text-lg font-semibold text-neutral-900">{series.title}</h3>
+      <p className="mt-1 line-clamp-2 text-xs text-neutral-700">{series.description}</p>
+    </Link>
+  );
+}
 
 export const HomePage = observer(function HomePage() {
   const { locale } = useStores();
@@ -53,21 +92,11 @@ export const HomePage = observer(function HomePage() {
                   />
                 ))
               : featured.map((series, idx) => (
-                  <Link
+                  <FeaturedSeriesTile
                     key={series.slug}
-                    to={`/series/${series.slug}`}
-                    className={`group relative overflow-hidden rounded-2xl border border-white/60 bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-transform hover:-translate-y-1 ${
-                      idx === 0 ? 'col-span-2' : ''
-                    }`}
-                  >
-                    <div
-                      className={`absolute inset-0 -z-10 bg-gradient-to-br ${gradientFor(series.slug)} opacity-30 transition-opacity group-hover:opacity-50`}
-                    />
-                    <h3 className="text-lg font-semibold text-neutral-900">{series.title}</h3>
-                    <p className="mt-1 line-clamp-2 text-xs text-neutral-700">
-                      {series.description}
-                    </p>
-                  </Link>
+                    series={series}
+                    featured={idx === 0}
+                  />
                 ))}
           </div>
         </div>
