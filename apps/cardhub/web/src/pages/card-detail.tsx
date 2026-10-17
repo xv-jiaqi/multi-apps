@@ -28,7 +28,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
   if (query.isLoading) {
     return (
       <PageShell>
-        <div className="grid gap-8 md:grid-cols-[minmax(0,18rem),1fr]">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
           <div className="aspect-[3/4] animate-pulse rounded-3xl bg-neutral-200" />
           <div className="space-y-4">
             <div className="h-8 w-2/3 animate-pulse rounded bg-neutral-200" />
@@ -76,7 +76,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
           ]}
         />
 
-        <div className="grid gap-8 md:grid-cols-[minmax(0,18rem),1fr]">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
           <div
             className={`relative aspect-[3/4] overflow-hidden rounded-3xl border border-white/60 bg-gradient-to-br ${gradientFor(card.slug)} shadow-xl`}
             aria-hidden

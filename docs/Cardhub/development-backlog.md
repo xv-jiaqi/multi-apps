@@ -298,6 +298,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - Web：新增 `apps/cardhub/web/src/components/artwork.tsx`，替换首页精选、系列列表、系列头图、系列卡牌网格、卡牌详情、搜索结果中的渐变块。`<img>` 使用 `loading="lazy"`、`decoding="async"` 和固定宽高比（避免布局抖动）；`alt` 用卡名或系列名；加载失败退回渐变。
   - 小程序：用 Taro `Image`（`mode="aspectFill"`、`lazyLoad`），同样的回退逻辑。
 - **验收标准**：数据里是 https 图片时显示图片；坏链接回退渐变；现有 `gradient:` 数据显示不变；没有明显布局抖动。
+- **预修记录**：§0 的 Web 卡牌详情双栏 grid 模板已改为 Tailwind v4 有效写法，并加入构建后 CSS 防回归检查；CH-105 其余范围仍待做。
 - **注意**：小程序加载外部图片需要配置 `downloadFile` 合法域名（记入 CH-302）；将来启用 CSP 时 `img-src` 要放行图片域名（CH-309）。
 - **依赖**：无。真实图片的来源由 CH-107（后台填 URL）和 CH-208（上传）提供。
 

@@ -16,7 +16,7 @@ export const HomePage = observer(function HomePage() {
 
   return (
     <PageShell>
-      <section className="grid gap-12 pb-16 pt-6 md:grid-cols-[1.2fr,1fr] md:items-center">
+      <section className="grid gap-12 pb-16 pt-6 md:grid-cols-[1.2fr_1fr] md:items-center">
         <div className="space-y-6">
           <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white/70 px-3 py-1 text-xs font-medium text-neutral-600 backdrop-blur">
             {APP_NAME} · MVP
