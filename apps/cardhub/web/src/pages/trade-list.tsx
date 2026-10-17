@@ -173,7 +173,7 @@ export const TradeListPage = observer(function TradeListPage() {
                       </div>
                     </div>
 
-                    <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[6rem,1fr]">
+                    <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[6rem_1fr]">
                       <dt className="text-xs uppercase tracking-widest text-neutral-500">
                         {tt('trade.list.contact')}
                       </dt>

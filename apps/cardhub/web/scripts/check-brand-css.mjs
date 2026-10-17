@@ -63,6 +63,13 @@ function escapeClassName(className) {
 
 const brandClasses = collectBrandClasses();
 const cssFiles = collectCssFiles();
+const requiredCssRules = [
+  {
+    className: 'md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]',
+    declaration: 'grid-template-columns:minmax(0,18rem) minmax(0,1fr)',
+    description: 'card detail responsive grid columns',
+  },
+];
 
 if (brandClasses.length === 0) {
   console.error('No brand-* utilities were found in Cardhub web or shared UI source.');
@@ -76,11 +83,30 @@ if (cssFiles.length === 0 || cssFiles.some((file) => !existsSync(file) || !statS
 
 const builtCss = cssFiles.map((file) => readFileSync(file, 'utf8')).join('\n');
 const missing = brandClasses.filter((className) => !builtCss.includes(`.${escapeClassName(className)}`));
+const missingRules = requiredCssRules.filter(({ className, declaration }) => {
+  const selector = `.${escapeClassName(className)}`;
+  const selectorIndex = builtCss.indexOf(selector);
+  if (selectorIndex === -1) return true;
 
-if (missing.length > 0) {
-  console.error('Missing brand utilities in built CSS:');
-  for (const className of missing) {
-    console.error(`- ${className}`);
+  const ruleEnd = builtCss.indexOf('}', selectorIndex);
+  if (ruleEnd === -1) return true;
+
+  return !builtCss.slice(selectorIndex, ruleEnd).includes(declaration);
+});
+
+if (missing.length > 0 || missingRules.length > 0) {
+  if (missingRules.length > 0) {
+    console.error('Missing required CSS rules in built CSS:');
+    for (const { className, description } of missingRules) {
+      console.error(`- ${description}: ${className}`);
+    }
+  }
+
+  if (missing.length > 0) {
+    console.error('Missing brand utilities in built CSS:');
+    for (const className of missing) {
+      console.error(`- ${className}`);
+    }
   }
   process.exit(1);
 }
@@ -88,4 +114,8 @@ if (missing.length > 0) {
 console.log(`Verified ${brandClasses.length} brand utilities in built CSS:`);
 for (const className of brandClasses) {
   console.log(`- ${className}`);
+}
+console.log(`Verified ${requiredCssRules.length} required CSS rule:`);
+for (const { className, description } of requiredCssRules) {
+  console.log(`- ${description}: ${className}`);
 }

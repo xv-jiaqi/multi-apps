@@ -134,7 +134,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                 required
               />
 
-              <div className="grid gap-4 sm:grid-cols-[1fr,8rem]">
+              <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
                 <Field
                   label={tt('trade.publish.price')}
                   type="text"
