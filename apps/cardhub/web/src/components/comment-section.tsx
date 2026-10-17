@@ -241,12 +241,14 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
           {tt('state.error')}
           <button
             type="button"
+            disabled={list.isFetching}
+            aria-busy={list.isFetching || undefined}
             onClick={() => {
               void list.refetch();
             }}
-            className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:pointer-events-none disabled:opacity-50"
           >
-            {tt('state.retry')}
+            {list.isFetching ? tt('state.loading') : tt('state.retry')}
           </button>
         </div>
       ) : !list.data || list.data.length === 0 ? (

@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
-import { t } from '@repo/shared';
+import { catalogImportLimit, t } from '@repo/shared';
 import { Button, SegmentedControl } from '@repo/ui-web';
 import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
@@ -89,7 +89,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   const nothing = Boolean(
     summary && summary.errors === 0 && summary.create === 0 && summary.update === 0,
   );
-  const canImport = Boolean(preview) && !stale && !blocked && !nothing;
+  const canImport = Boolean(preview) && !stale && !blocked && !nothing && !done;
 
   const onText = (value: string) => {
     setText(value);
@@ -123,9 +123,19 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       setParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message), message }));
       return;
     }
+    const previewInput = { data, dryRun: true as const };
+    const previewLimit = catalogImportLimit(previewInput);
+    if (previewLimit) {
+      setParseError(
+        previewLimit.reason === 'tooManyRows'
+          ? tt('admin.import.tooManyRows', { count: previewLimit.count })
+          : tt('admin.import.tooLarge'),
+      );
+      return;
+    }
     setPhase('preview');
     try {
-      const rows = await importCatalog.mutateAsync({ data, dryRun: true });
+      const rows = await importCatalog.mutateAsync(previewInput);
       const nextRows = rows as ImportRowResult[];
       setPreview({ text, data, rows: nextRows });
       setFilter(nextRows.some((row) => row.status === 'error') ? 'errors' : 'all');
@@ -147,14 +157,23 @@ const CatalogImportBody = observer(function CatalogImportBody() {
 
   const executeImport = async () => {
     if (!preview || !canImport) return;
+    const executeInput = { data: preview.data, dryRun: false as const };
+    const executeLimit = catalogImportLimit(executeInput);
+    if (executeLimit) {
+      setActionError(
+        executeLimit.reason === 'tooManyRows'
+          ? tt('admin.import.tooManyRows', { count: executeLimit.count })
+          : tt('admin.import.tooLarge'),
+      );
+      setActionRows(null);
+      setConfirming(false);
+      return;
+    }
     setActionError(null);
     setActionRows(null);
     setPhase('execute');
     try {
-      const rows = (await importCatalog.mutateAsync({
-        data: preview.data,
-        dryRun: false,
-      })) as ImportRowResult[];
+      const rows = (await importCatalog.mutateAsync(executeInput)) as ImportRowResult[];
       const counts = summarizeImport(rows);
       setPreview({ ...preview, rows });
       setConfirming(false);
@@ -259,7 +278,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           role="alert"
           className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
         >
-          <p>{tt('admin.import.failed')}</p>
+          <p>{actionError}</p>
           {actionRows?.flatMap((row) =>
             row.errors.map((error) => (
               <p key={`${row.row.row}-${error.path}-${error.code}`} className="mt-1 text-xs">

@@ -201,4 +201,54 @@ describe('catalog import', () => {
     expect(alert).toHaveTextContent('series[0].slug');
     expect(alert).toHaveTextContent('slug 只能包含小写字母、数字和连字符');
   });
+
+  it('shows the same breadcrumb trail as the other admin pages', () => {
+    renderPage();
+    const nav = screen.getByRole('navigation', { name: '面包屑导航' });
+    expect(nav).toHaveTextContent('首页');
+    expect(nav).toHaveTextContent('管理');
+    expect(nav).toHaveTextContent('内容管理');
+    expect(nav).toHaveTextContent('导入 JSON');
+    expect(nav.querySelector('a[href="/admin/catalog"]')).toBeTruthy();
+  });
+
+  it('blocks an oversized or over-row import before calling the API', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const textbox = screen.getByRole('textbox', { name: 'JSON 内容' });
+    const cards = Array.from({ length: 500 }, (_, index) => ({ slug: `c${index}` }));
+    await user.click(textbox);
+    await user.paste(JSON.stringify([{ slug: 's', cards }]));
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('一次最多导入 500 行，当前 501 行');
+    expect(calls).toHaveLength(0);
+
+    await user.clear(textbox);
+    await user.click(textbox);
+    await user.paste(JSON.stringify([{ slug: 's', blob: 'x'.repeat(1024 * 1024) }]));
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('一次最多导入 1MB');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('disables another import of the same content until the input changes', async () => {
+    const user = userEvent.setup();
+    const created = [row({ status: 'created' }, 1)];
+    importImpl.current = async () => created;
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    await user.click(screen.getByRole('button', { name: '导入' }));
+    await user.click(screen.getByRole('button', { name: '确认导入' }));
+
+    expect(await screen.findByText(/导入完成/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(calls.filter((call) => !call.dryRun)).toHaveLength(1);
+
+    await user.type(screen.getByRole('textbox', { name: 'JSON 内容' }), ' ');
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    expect(screen.getByRole('button', { name: '导入' })).toBeEnabled();
+  });
 });

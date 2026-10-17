@@ -42,6 +42,13 @@ export function useArtImage({
   const imageSrc = resolved.kind === 'image' ? resolved.src : null;
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  const reportedError = useRef<{ src: string | null; done: boolean }>({
+    src: imageSrc,
+    done: false,
+  });
+  if (reportedError.current.src !== imageSrc) {
+    reportedError.current = { src: imageSrc, done: false };
+  }
   const [imageState, setImageState] = useState<{
     src: string | null;
     status: 'loading' | 'loaded' | 'error';
@@ -53,7 +60,13 @@ export function useArtImage({
   }, [imageSrc]);
 
   const fail = useCallback(() => {
-    setImageState({ src: imageSrc, status: 'error' });
+    setImageState((current) =>
+      current.src === imageSrc && current.status === 'error'
+        ? current
+        : { src: imageSrc, status: 'error' },
+    );
+    if (reportedError.current.done && reportedError.current.src === imageSrc) return;
+    reportedError.current = { src: imageSrc, done: true };
     onErrorRef.current?.();
   }, [imageSrc]);
 

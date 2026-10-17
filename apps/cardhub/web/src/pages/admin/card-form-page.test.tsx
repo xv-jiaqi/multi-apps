@@ -29,6 +29,7 @@ const seriesState = {
 const createImpl: { current: (input: unknown) => Promise<unknown> } = {
   current: async (input) => input,
 };
+const invalidateSeriesBySlug = vi.hoisted(() => vi.fn());
 
 const cardState = {
   data: null as unknown,
@@ -77,7 +78,7 @@ vi.mock('../../lib/trpc', () => ({
         series: { list: { invalidate: vi.fn() } },
         cards: { get: { invalidate: vi.fn() } },
       },
-      series: { bySlug: { invalidate: vi.fn() } },
+      series: { bySlug: { invalidate: invalidateSeriesBySlug } },
     }),
   },
 }));
@@ -100,7 +101,21 @@ beforeEach(() => {
   cardState.data = null;
   cardState.isLoading = false;
   cardState.isError = false;
+  seriesState.items = [
+    {
+      id: 's1',
+      slug: 'celestial-dawn',
+      title: '天穹黎明',
+      description: null,
+      coverUrl: null,
+      cardCount: 1,
+      commentCount: 0,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    },
+  ];
   createImpl.current = async (input) => input;
+  invalidateSeriesBySlug.mockClear();
 });
 
 describe('attributes editor', () => {
@@ -224,5 +239,51 @@ describe('card form server validation', () => {
       'attributes.cost: Invalid input: expected number, received object',
     );
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
+  });
+
+  it('invalidates the previous series list when the card moves', async () => {
+    const user = userEvent.setup();
+    seriesState.items = [
+      ...seriesState.items,
+      {
+        id: 's2',
+        slug: 'forge-of-titans',
+        title: '泰坦熔炉',
+        description: null,
+        coverUrl: null,
+        cardCount: 0,
+        commentCount: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+    cardState.data = {
+      id: 'c1',
+      slug: 'aurora-knight',
+      name: '极光骑士',
+      description: '',
+      imageUrl: '',
+      rarity: 'legendary',
+      attributes: {},
+      seriesSlug: 'celestial-dawn',
+      seriesTitle: '天穹黎明',
+      commentCount: 0,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    };
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/cards/aurora-knight/edit']}>
+        <Routes>
+          <Route path="/admin/catalog/cards/:slug/edit" element={<EditCardPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('combobox', { name: '所属系列' }));
+    await user.click(screen.getByRole('option', { name: '泰坦熔炉' }));
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+
+    expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'forge-of-titans' });
+    expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'celestial-dawn' });
   });
 });

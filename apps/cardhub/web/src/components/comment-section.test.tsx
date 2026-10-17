@@ -21,12 +21,14 @@ const queryState: {
       }>
     | undefined;
   isLoading: boolean;
+  isFetching: boolean;
   isError: boolean;
   error: { message: string } | null;
   refetch: () => void;
 } = {
   data: undefined,
   isLoading: false,
+  isFetching: false,
   isError: false,
   error: null,
   refetch: refetchMock,
@@ -133,6 +135,7 @@ beforeEach(() => {
   rootStore.session.signOut();
   queryState.data = [];
   queryState.isLoading = false;
+  queryState.isFetching = false;
   queryState.isError = false;
   queryState.error = null;
   mutationState.isPending = false;
@@ -175,6 +178,24 @@ describe('CommentSection (unauthenticated)', () => {
       });
     },
   );
+
+  it('disables retry and shows the loading label while comments are refetching', () => {
+    queryState.isError = true;
+    queryState.isFetching = true;
+    queryState.error = { message: 'Internal server error (QA mock)' };
+    renderShell();
+
+    const button = screen.getByRole('button', { name: '加载中…' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent('加载失败');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Internal server error');
+
+    act(() => {
+      rootStore.locale.setLocale('en-US');
+    });
+    expect(screen.getByRole('button', { name: 'Loading…' })).toBeDisabled();
+  });
 
   it('still surfaces existing comments for anonymous viewers', () => {
     queryState.data = [

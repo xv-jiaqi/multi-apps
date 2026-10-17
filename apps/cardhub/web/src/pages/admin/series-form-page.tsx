@@ -132,15 +132,20 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
     try {
       if (mode === 'create') {
         await create.mutateAsync(input);
-        void utils.admin.series.list.invalidate();
-        navigate('/admin/catalog', {
-          state: { notice: tt('admin.series.created', { title: input.title }) },
-        });
       } else {
         await update.mutateAsync(input);
-        void utils.admin.series.list.invalidate();
-        navigate('/admin/catalog', { state: { notice: tt('admin.saved') } });
       }
+      void utils.admin.series.list.invalidate();
+      void utils.series.list.invalidate();
+      void utils.series.bySlug.invalidate({ slug: input.slug });
+      navigate('/admin/catalog', {
+        state: {
+          notice:
+            mode === 'create'
+              ? tt('admin.series.created', { title: input.title })
+              : tt('admin.saved'),
+        },
+      });
     } catch (error) {
       if (isAccessRevoked(error)) {
         reportForbidden();
