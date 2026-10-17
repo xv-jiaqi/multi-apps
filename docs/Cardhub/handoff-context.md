@@ -187,12 +187,12 @@ pnpm --filter @cardhub/api prisma migrate reset --force --skip-seed
 
 ### 6.13 Sentry 守卫式初始化
 
-API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../../apps/cardhub/web/src/main.tsx) 都用 `if (DSN)` 守卫包住 `Sentry.init()`，**dev 留空 DSN 时不上报、不增加任何运行时开销**。当 `SENTRY_DSN` / `VITE_SENTRY_DSN` 设置后：
+API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../../apps/cardhub/web/src/main.tsx) 都用 `if (DSN)` 守卫包住 `Sentry.init()`，**dev 留空 DSN 时不上报、不增加任何运行时开销**。当 API `SENTRY_DSN` 或 Web `WEB_SENTRY_DSN` 设置后：
 
 - API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）；environment 取 `SENTRY_ENVIRONMENT`（compose 中等于 `ENV_NAME`），release 取 `GIT_SHA`。
 - Web：`ErrorBoundary` 的 `onError` 调 `Sentry.captureException`。
 
-DSN 不要写进 `.env.example`。API 的 DSN 放在 VPS 的 `/opt/cardhub/<environment>/<environment>.env`。Web 目前只在**构建时**读取 `VITE_SENTRY_DSN`，而 `images.yml` 没有传对应的 build arg，所以生产 Web 端实际不上报；改为运行时注入见 backlog CH-005。
+真实 DSN 不要写进仓库。API 的 DSN 放在 VPS 的 `/opt/cardhub/<environment>/<environment>.env` 的 `SENTRY_DSN`；Web 的 DSN 放在同一 env 文件的 `WEB_SENTRY_DSN`。Web Docker 入口脚本会把 `WEB_SENTRY_DSN`、`SENTRY_ENVIRONMENT` 和镜像 `GIT_SHA` 写入运行时 `/config.js`，因此同一个 Web 镜像可同时用于 staging 和 production。`VITE_SENTRY_DSN` 仅保留给非容器静态构建 fallback，不用于 Docker 部署。
 
 ### 6.14 tRPC URL 解析（Web / Tauri）
 
