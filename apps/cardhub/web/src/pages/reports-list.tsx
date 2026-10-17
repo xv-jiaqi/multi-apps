@@ -8,6 +8,10 @@ import { Breadcrumbs } from '../components/breadcrumbs';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
+function formatDateTime(value: string, locale: Locale) {
+  return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 const STATUS_FILTERS: Array<{ key: 'all' | ReportStatus; tKey: string }> = [
   { key: 'all', tKey: 'reports.filterAll' },
   { key: 'PENDING', tKey: 'reports.filterPending' },
@@ -31,6 +35,7 @@ type ReportItem =
       targetType: 'LISTING';
       target: {
         cardSlug: string;
+        cardName?: string;
         status: string;
         sellerUsername: string | null;
       } | null;
@@ -66,7 +71,8 @@ export const ReportsListPage = observer(function ReportsListPage() {
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [statusFilter, setStatusFilter] = useState<'all' | ReportStatus>('all');
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{ id: number; text: string } | null>(null);
+  const statusMessageIdRef = useRef(0);
   const statusRef = useRef<HTMLParagraphElement>(null);
 
   const query = trpc.reports.list.useInfiniteQuery(
@@ -82,7 +88,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
     if (statusMessage) {
       statusRef.current?.focus();
     }
-  }, [statusMessage]);
+  }, [statusMessage?.id]);
 
   function handleFilterChange(next: 'all' | ReportStatus) {
     setStatusMessage(null);
@@ -126,7 +132,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
                     type="button"
                     onClick={() => handleFilterChange(filter.key)}
                     aria-pressed={active}
-                    className={`rounded-full px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                    className={`min-h-9 rounded-full px-4 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:min-h-0 sm:px-3 ${
                       active ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
                     }`}
                   >
@@ -143,7 +149,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
                 tabIndex={-1}
                 className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
-                {statusMessage}
+                {statusMessage.text}
               </p>
             ) : null}
 
@@ -163,9 +169,11 @@ export const ReportsListPage = observer(function ReportsListPage() {
                 <button
                   type="button"
                   onClick={() => query.refetch()}
-                  className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                  disabled={query.isFetching}
+                  aria-busy={query.isFetching}
+                  className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:pointer-events-none disabled:opacity-50"
                 >
-                  {tt('state.retry')}
+                  {query.isFetching ? tt('state.loading') : tt('state.retry')}
                 </button>
               </div>
             ) : items.length === 0 ? (
@@ -180,7 +188,9 @@ export const ReportsListPage = observer(function ReportsListPage() {
                       key={report.id}
                       report={report}
                       locale={locale.locale}
-                      onResolved={(message) => setStatusMessage(message)}
+                      onResolved={(message) =>
+                        setStatusMessage({ id: ++statusMessageIdRef.current, text: message })
+                      }
                     />
                   ))}
                 </ul>
@@ -222,9 +232,12 @@ function ReportListItem({
   const [error, setError] = useState<string | null>(null);
   const [submittingAction, setSubmittingAction] = useState<ReportResolveAction | null>(null);
   const utils = trpc.useUtils();
+  const markButtonRef = useRef<HTMLButtonElement>(null);
   const removeButtonRef = useRef<HTMLButtonElement>(null);
+  const confirmRemoveButtonRef = useRef<HTMLButtonElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const reasonId = `report-reason-${report.id}`;
+  const confirmMessageId = `report-confirm-${report.id}`;
   const noteId = `resolution-${report.id}`;
   const isBusy = submittingAction !== null;
 
@@ -242,11 +255,21 @@ function ReportListItem({
         onResolved(tt('reports.resolve.successRemoved'));
       }
     },
-    onError(err) {
+    onError(err, variables) {
+      const failedAction = variables.action;
       setSubmittingAction(null);
       setError(
-        err.data?.code === 'FORBIDDEN' ? tt('reports.adminOnly') : tt('reports.resolve.failed'),
+        err.data?.code === 'FORBIDDEN'
+          ? tt('reports.resolve.forbidden')
+          : tt('reports.resolve.failed'),
       );
+      window.requestAnimationFrame(() => {
+        if (failedAction === 'REMOVE_TARGET') {
+          confirmRemoveButtonRef.current?.focus();
+        } else {
+          markButtonRef.current?.focus();
+        }
+      });
     },
   });
 
@@ -284,7 +307,7 @@ function ReportListItem({
       className="space-y-4 rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
               {tt(`reports.target.${report.targetType.toLowerCase()}`)}
@@ -303,11 +326,9 @@ function ReportListItem({
             {report.reason}
           </p>
         </div>
-        <div className="text-right text-xs text-neutral-500">
+        <div className="flex flex-wrap gap-x-2 text-xs text-neutral-500 sm:block sm:text-right">
           <p>@{report.reporter.username}</p>
-          <time dateTime={report.createdAt}>
-            {new Date(report.createdAt).toLocaleString(locale)}
-          </time>
+          <time dateTime={report.createdAt}>{formatDateTime(report.createdAt, locale)}</time>
         </div>
       </div>
 
@@ -334,7 +355,7 @@ function ReportListItem({
                 readOnly={isBusy}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder={tt('reports.resolve.notePlaceholder')}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
               />
               <p className="text-xs text-neutral-500">{note.length} / 500</p>
             </div>
@@ -343,15 +364,16 @@ function ReportListItem({
               <div
                 role="alertdialog"
                 aria-labelledby={reasonId}
+                aria-describedby={confirmMessageId}
                 onKeyDown={(event) => {
-                  if (event.key === 'Escape') {
+                  if (event.key === 'Escape' && !isBusy) {
                     event.stopPropagation();
                     cancelConfirm();
                   }
                 }}
-                className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:flex sm:items-center sm:justify-between sm:space-y-0 sm:gap-3"
               >
-                <p>
+                <p id={confirmMessageId}>
                   {tt(
                     report.targetType === 'LISTING'
                       ? 'reports.resolve.confirmClose'
@@ -360,6 +382,7 @@ function ReportListItem({
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                   <Button
+                    ref={confirmRemoveButtonRef}
                     type="button"
                     className="w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
                     disabled={isBusy}
@@ -377,7 +400,7 @@ function ReportListItem({
                     ref={cancelButtonRef}
                     type="button"
                     variant="ghost"
-                    className="w-full sm:w-auto"
+                    className="w-full text-neutral-700 hover:bg-red-100 hover:text-neutral-900 sm:w-auto"
                     disabled={isBusy}
                     onClick={cancelConfirm}
                   >
@@ -392,6 +415,7 @@ function ReportListItem({
                 className="flex flex-col gap-2 sm:flex-row sm:justify-end"
               >
                 <Button
+                  ref={markButtonRef}
                   type="button"
                   variant="outline"
                   className="h-10 w-full sm:w-auto"
@@ -411,7 +435,11 @@ function ReportListItem({
                     disabled={isBusy}
                     onClick={() => setConfirmingRemove(true)}
                   >
-                    {tt('reports.resolve.removeTarget')}
+                    {tt(
+                      report.targetType === 'LISTING'
+                        ? 'reports.resolve.closeTarget'
+                        : 'reports.resolve.removeTarget',
+                    )}
                   </Button>
                 ) : null}
               </div>
@@ -437,16 +465,19 @@ function ReportListItem({
 function ResolvedReportDetails({ report, locale }: { report: ReportItem; locale: Locale }) {
   const tt = (key: string) => t(locale, key);
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-      <dt className="text-neutral-500">{tt('reports.resolve.resolvedBy')}</dt>
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 text-xs">
+      <dt className="whitespace-nowrap text-neutral-500">{tt('reports.resolve.resolvedBy')}</dt>
       <dd className="text-neutral-800">
         {report.resolver ? `@${report.resolver.username}` : tt('reports.resolve.deletedUser')}
       </dd>
-      <dt className="text-neutral-500">{tt('reports.resolve.resolvedAt')}</dt>
+      <dt className="whitespace-nowrap text-neutral-500">{tt('reports.resolve.resolvedAt')}</dt>
       <dd className="text-neutral-800">
         {report.resolvedAt ? (
-          <time dateTime={report.resolvedAt}>
-            {new Date(report.resolvedAt).toLocaleString(locale)}
+          <time
+            dateTime={report.resolvedAt}
+            title={new Date(report.resolvedAt).toLocaleString(locale)}
+          >
+            {formatDateTime(report.resolvedAt, locale)}
           </time>
         ) : (
           '—'
@@ -454,8 +485,8 @@ function ResolvedReportDetails({ report, locale }: { report: ReportItem; locale:
       </dd>
       {report.resolution ? (
         <>
-          <dt className="text-neutral-500">{tt('reports.resolve.resolution')}</dt>
-          <dd className="whitespace-pre-wrap break-words text-sm text-neutral-800">
+          <dt className="whitespace-nowrap text-neutral-500">{tt('reports.resolve.resolution')}</dt>
+          <dd className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere] text-sm text-neutral-800">
             {report.resolution}
           </dd>
         </>
@@ -468,15 +499,21 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
   const tt = (key: string) => t(locale, key);
 
   if (report.targetType === 'LISTING' && report.target) {
+    const listingIsOpen = report.target.status === 'OPEN';
     return (
       <div className="space-y-1">
-        <Link to="/trade" className="font-medium text-brand-600 hover:underline">
-          {tt('reports.openTarget')}
+        <Link
+          to={`/cards/${report.target.cardSlug}`}
+          className="font-medium text-brand-600 hover:underline"
+        >
+          {report.target.cardName ?? report.target.cardSlug}
         </Link>
-        <p className="text-neutral-800">
-          {report.target.cardSlug} · @{report.target.sellerUsername ?? '-'}
+        <p className="text-xs text-neutral-500">
+          @{report.target.sellerUsername ?? '-'} ·{' '}
+          <span className={listingIsOpen ? 'text-emerald-700' : 'text-neutral-500'}>
+            {tt(listingIsOpen ? 'trade.list.statusOpen' : 'trade.list.statusClosed')}
+          </span>
         </p>
-        <p className="text-xs text-neutral-500">{report.target.status}</p>
       </div>
     );
   }

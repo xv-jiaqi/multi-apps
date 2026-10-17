@@ -45,7 +45,7 @@ export const ReportButton = observer(function ReportButton({
       <Link
         to="/login"
         state={{ from: `${location.pathname}${location.search}${location.hash}` }}
-        className="text-xs text-neutral-500 hover:text-neutral-900 hover:underline"
+        className="inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-500 hover:text-neutral-900 hover:underline"
       >
         {tt('report.button')}
       </Link>
@@ -61,7 +61,7 @@ export const ReportButton = observer(function ReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-neutral-500 hover:text-neutral-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-500 hover:text-neutral-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         {tt('report.button')}
       </button>

@@ -65,6 +65,7 @@ graph TD
 
 - **设计系统方法:** 采用组合式设计系统，使用 **shadcn/ui** 作为基础，通过 **TailwindCSS** 进行深度定制，以实现独特的品牌风格。
 - **核心组件清单:** Button, Input/Search Bar, Card (UI容器), Navigation, Dialog/Modal, Comment等。
+- **表单提交禁用规则:** 写作类表单（评论、话题、回帖）在内容为空时禁用提交按钮；结构化表单（登录、注册、交易意向）保持按钮可用，在提交时展示字段级或表单级校验反馈。所有禁用态沿用 Button 的 `disabled:opacity-50` 视觉，不新增禁用色。
 
 #### **6. 品牌与风格指南 (Branding & Style Guide)**
 

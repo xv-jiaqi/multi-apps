@@ -179,13 +179,10 @@ export const TradePublishPage = observer(function TradePublishPage() {
                 </p>
               ) : null}
 
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <Link
-                  to="/trade"
-                  className="text-sm text-neutral-500 hover:text-neutral-900 hover:underline"
-                >
-                  {tt('trade.publish.cancel')}
-                </Link>
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <Button asChild variant="outline">
+                  <Link to="/trade">{tt('trade.publish.cancel')}</Link>
+                </Button>
                 <Button type="submit" disabled={mutation.isPending}>
                   {mutation.isPending ? tt('trade.publish.submitting') : tt('trade.publish.submit')}
                 </Button>
