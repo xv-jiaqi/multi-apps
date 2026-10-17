@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ImgHTMLAttributes } from 'react';
 import { resolveArtwork, t } from '@repo/shared';
 import { cn } from '@repo/ui-web';
@@ -18,6 +18,7 @@ type ArtImageProps = {
   fit: ArtFit;
   priority?: boolean;
   className?: string;
+  onError?: () => void;
 };
 
 type UseArtImageResult = {
@@ -35,9 +36,12 @@ export function useArtImage({
   fit,
   priority,
   className,
+  onError,
 }: ArtImageProps): UseArtImageResult {
   const resolved = resolveArtwork(src);
   const imageSrc = resolved.kind === 'image' ? resolved.src : null;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
   const [imageState, setImageState] = useState<{
     src: string | null;
     status: 'loading' | 'loaded' | 'error';
@@ -48,15 +52,21 @@ export function useArtImage({
     setImageState({ src: imageSrc, status: 'loading' });
   }, [imageSrc]);
 
+  const fail = useCallback(() => {
+    setImageState({ src: imageSrc, status: 'error' });
+    onErrorRef.current?.();
+  }, [imageSrc]);
+
   const ref = useCallback(
     (img: HTMLImageElement | null) => {
       if (!img?.complete) return;
-      setImageState({
-        src: imageSrc,
-        status: img.naturalWidth > 0 ? 'loaded' : 'error',
-      });
+      if (img.naturalWidth > 0) {
+        setImageState({ src: imageSrc, status: 'loaded' });
+        return;
+      }
+      fail();
     },
-    [imageSrc],
+    [fail, imageSrc],
   );
 
   const mode = resolved.kind === 'image' && status !== 'error' ? 'image' : 'placeholder';
@@ -79,7 +89,7 @@ export function useArtImage({
         className,
       ),
       onLoad: () => setImageState({ src: imageSrc, status: 'loaded' }),
-      onError: () => setImageState({ src: imageSrc, status: 'error' }),
+      onError: () => fail(),
     },
   };
 }
@@ -101,6 +111,7 @@ type ArtworkProps = {
   decorative?: boolean;
   priority?: boolean;
   placeholderInitial?: 'none' | 'center' | 'bottom-left';
+  onError?: () => void;
   className?: string;
 };
 
@@ -148,6 +159,7 @@ export function Artwork({
   decorative,
   priority,
   placeholderInitial = 'none',
+  onError,
   className,
 }: ArtworkProps) {
   const { locale } = useStores();
@@ -156,7 +168,7 @@ export function Artwork({
     : kind === 'card'
       ? t(locale.locale, 'artwork.cardAlt', { name })
       : t(locale.locale, 'artwork.seriesAlt', { title: name });
-  const { mode, imgProps } = useArtImage({ src, alt, fit, priority });
+  const { mode, imgProps } = useArtImage({ src, alt, fit, priority, onError });
 
   return (
     <div className={cn('relative overflow-hidden', ART_ASPECT[kind], ART_SURFACE, className)}>

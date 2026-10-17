@@ -100,15 +100,17 @@ export class ListingsRouter {
 
         // Default surface is "OPEN, newest first". Closed listings stay
         // browseable via listings.mine but don't pollute the public board.
+        // Currency alone (newest, no min/max) still narrows the board.
+        // Price ranges and price sorts additionally drop unpriced rows.
         const where: Prisma.ListingWhereInput = {
           status: 'OPEN',
           ...(input.cardSlug ? { cardSlug: input.cardSlug } : {}),
           ...(input.kind ? { kind: input.kind } : {}),
           ...(input.condition ? { condition: input.condition } : {}),
           ...(input.language ? { language: input.language } : {}),
+          ...(input.currency ? { currency: input.currency } : {}),
           ...(usesPriceFilter || usesPriceSort
             ? {
-                currency: input.currency,
                 price: {
                   not: null,
                   ...(input.minPrice !== undefined

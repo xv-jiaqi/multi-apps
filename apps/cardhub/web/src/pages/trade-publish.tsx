@@ -42,6 +42,40 @@ type FieldErrors = Partial<Record<'card' | 'price' | 'imageUrls' | 'contact', st
 function isKnownRarity(rarity: string | null): rarity is 'common' | 'rare' | 'epic' | 'legendary' {
   return rarity === 'common' || rarity === 'rare' || rarity === 'epic' || rarity === 'legendary';
 }
+function PublishImagePreview({ url, fallback }: { url: string; fallback: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!isHttpsImageUrl(url) || failed) {
+    const className =
+      'flex size-full items-center justify-center px-2 text-xs text-brand-600 hover:underline';
+    if (failed && isHttpsImageUrl(url)) {
+      return (
+        <a href={url} target="_blank" rel="noopener noreferrer" className={className}>
+          {fallback}
+        </a>
+      );
+    }
+    return (
+      <span className="flex size-full items-center justify-center px-2 text-xs text-brand-600">
+        {fallback}
+      </span>
+    );
+  }
+  return (
+    <img
+      ref={(img) => {
+        if (img?.complete && img.naturalWidth === 0) setFailed(true);
+      }}
+      src={url}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      referrerPolicy="no-referrer"
+      className="size-full object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function toPickerItem(card: {
   slug: string;
   name: string;
@@ -103,7 +137,9 @@ export const TradePublishPage = observer(function TradePublishPage() {
       navigate('/trade', { replace: true });
     },
     onError(err) {
-      setFormError(err.message);
+      setFormError(
+        err.data?.code === 'TOO_MANY_REQUESTS' ? tt('trade.publish.rateLimited') : err.message,
+      );
     },
   });
 
@@ -212,7 +248,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form onSubmit={onSubmit} noValidate className="space-y-4">
               <SegmentedControl
                 legend={tt('trade.publish.kind')}
                 name="publish-kind"
@@ -362,7 +398,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                   value={imageUrlsRaw}
                   onChange={(event) => setImageUrlsRaw(event.target.value)}
                   rows={3}
-                  placeholder="https://...\nhttps://..."
+                  placeholder={'https://...\nhttps://...'}
                   aria-invalid={Boolean(fieldErrors.imageUrls || imageError)}
                   aria-describedby="trade-images-hint trade-images-error"
                   className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600"
@@ -386,20 +422,10 @@ export const TradePublishPage = observer(function TradePublishPage() {
                           key={`${url}-${index}`}
                           className="size-16 overflow-hidden rounded-md bg-neutral-100 ring-1 ring-black/5"
                         >
-                          {isHttpsImageUrl(url) ? (
-                            <img
-                              src={url}
-                              alt=""
-                              loading="lazy"
-                              decoding="async"
-                              referrerPolicy="no-referrer"
-                              className="size-full object-cover"
-                            />
-                          ) : (
-                            <span className="flex size-full items-center justify-center px-2 text-xs text-brand-600">
-                              {tt('trade.list.photoFallback', { index: index + 1 })}
-                            </span>
-                          )}
+                          <PublishImagePreview
+                            url={url}
+                            fallback={tt('trade.list.photoFallback', { index: index + 1 })}
+                          />
                         </li>
                       ))}
                     </ul>
@@ -414,7 +440,6 @@ export const TradePublishPage = observer(function TradePublishPage() {
                   ref={contactRef}
                   value={contact}
                   onChange={(event) => setContact(event.target.value)}
-                  required
                   aria-invalid={Boolean(fieldErrors.contact)}
                   aria-describedby={fieldErrors.contact ? 'trade-contact-error' : undefined}
                 />

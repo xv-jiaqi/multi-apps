@@ -55,7 +55,7 @@
 | CH-101 | 系列页评论（PRD FR4）                           | P1     | M    | CH-002（建议）        | ✅ PR #64                                             |
 | CH-102 | 个人中心 `/me`                                  | P1     | M    | —                     | ✅ PR #72                                             |
 | CH-103 | 论坛完善：话题编辑、置顶、纯文本摘要            | P1     | M    | —                     | ✅ PR #70                                             |
-| CH-104 | 交易信息板：卡名、品相、筛选与缩略图            | P1     | M    | CH-105（缩略图部分）  | ✅ PR #68                                             |
+| CH-104 | 交易信息板：卡名、品相、筛选与缩略图            | P1     | M    | CH-105（缩略图部分）  | ✅ PR #68、#78                                        |
 | CH-105 | 卡牌 / 系列真实图片渲染                         | P1     | S    | —                     | ✅ PR #65                                             |
 | CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 进行中（API #67、Web #77；trigram 未做）              |
 | CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | ✅ PR #71 + #76（未保存拦截、保存并新建下一张待后续） |
@@ -279,8 +279,9 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - API：`listings.list / byCard / mine` 输出增加 `card: { name, seriesSlug, seriesTitle, imageUrl } | null`，用一次 `card.findMany({ where: { slug: { in } } })` 批量补齐；卡牌已不存在时为 `null`（`cardSlug` 是软指针）。
   - Prisma：`Listing` 增加可空字段 `condition`（枚举 `NEAR_MINT`、`LIGHTLY_PLAYED`、`MODERATELY_PLAYED`、`HEAVILY_PLAYED`、`DAMAGED`）、`language`（枚举 `ZH`、`EN`、`JA`、`OTHER`）、`variantNote String?`。迁移名 `add_listing_facets`。旧数据这三列都是空。若列表会按状态、货币和价格一起过滤，补 `@@index([status, currency, price])`。
   - shared：`packages/shared/src/zod/index.ts` 的 `listingPublishInput` 与 `listingListInput` 增加上述可选字段。`variantNote` 去空白后最长 40 字。列表增加 `minPrice?`、`maxPrice?`、`sort: 'newest' | 'price_asc' | 'price_desc'`，默认 `newest`。
-  - 价格排序只比较同一种货币。`sort` 为价格时，请求必须带 `currency`（默认 `CNY`），只返回该货币且价格非空的意向。`newest` 仍返回全部货币。不做汇率换算。
+  - 价格排序只比较同一种货币。`sort` 为价格时，请求必须带 `currency`（默认 `CNY`），只返回该货币且价格非空的意向。只传 `currency`、不传价格区间、排序为 `newest` 时，也只返回该货币（含面议）。没有 `currency` 的 `newest` 返回全部货币。不做汇率换算。
   - **WARN-5（已定，按 A）**：自动带上的 `currency` 在切回最新发布或清空价格区间时去掉；用户主动选的保留。
+  - 分享链接只有 `min` / `max`、没有 `currency` 时，忽略价格区间，并用 replace 从 URL 去掉 `min` 和 `max`。
   - Web：`apps/cardhub/web/src/pages/trade-list.tsx`、`trade-publish.tsx` 和 `apps/cardhub/web/src/components/listings-for-card.tsx`。列表项显示卡名和系列并链接到卡牌页；把“按 slug 筛选”换成卡牌搜索选择器（基于 `cards.search`，250ms 防抖，键盘可选），保留 `/trade/new?cardSlug=` 预填；发布页使用同一选择器并显示所选卡牌预览。图片显示为最多 4 张缩略图（`loading="lazy"`、`referrerPolicy="no-referrer"`，加载失败退回链接），点击新窗口打开原图。发布表单增加品相、语言和版本备注，三者都可空。列表增加这三项筛选、价格区间和排序。已填写的品相和语言显示在卡片上。
   - i18n：品相五档的中文是近全新、轻微使用、中度使用、重度使用、破损。语言是中文、英文、日文、其他。新 key 放在 `trade.*`。
   - 边界：不建商品 SKU、库存数量、购物车、站内支付、卖家等级或市场价。版本备注是自由短句，不是工艺目录。小程序留到 CH-301，本卡只保证 Web 上的新字段能从接口读到。
