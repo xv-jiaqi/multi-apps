@@ -10,19 +10,15 @@ import { ReportButton } from './report-button';
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
 
 interface CommentSectionProps {
-  target?: CommentTarget;
-  cardSlug?: string;
+  target: CommentTarget;
 }
 
 function formatDateTime(value: string, locale: string) {
   return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-export const CommentSection = observer(function CommentSection({
-  target,
-  cardSlug,
-}: CommentSectionProps) {
-  const commentTarget: CommentTarget = target ?? { kind: 'card', slug: cardSlug ?? '' };
+export const CommentSection = observer(function CommentSection({ target }: CommentSectionProps) {
+  const commentTarget = target;
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
@@ -77,27 +73,25 @@ export const CommentSection = observer(function CommentSection({
     },
   });
 
+  function markDeleted() {
+    setConfirmingId(null);
+    setDeleteError(null);
+    setStatusMessage(tt('card.detail.commentDeleted'));
+    if (commentTarget.kind === 'card') {
+      void utils.comments.listForCard.invalidate({ cardSlug: commentTarget.slug });
+    } else {
+      void utils.comments.listForSeries.invalidate({ seriesSlug: commentTarget.slug });
+    }
+  }
+
   const deleteComment = trpc.comments.delete.useMutation({
     onSuccess() {
-      setConfirmingId(null);
-      setDeleteError(null);
-      setStatusMessage(tt('card.detail.commentDeleted'));
-      if (commentTarget.kind === 'card') {
-        void utils.comments.listForCard.invalidate({ cardSlug: commentTarget.slug });
-      } else {
-        void utils.comments.listForSeries.invalidate({ seriesSlug: commentTarget.slug });
-      }
+      markDeleted();
     },
     onError(err, variables) {
       const code = err.data?.code;
       if (code === 'NOT_FOUND') {
-        setConfirmingId(null);
-        setDeleteError(null);
-        if (commentTarget.kind === 'card') {
-          void utils.comments.listForCard.invalidate({ cardSlug: commentTarget.slug });
-        } else {
-          void utils.comments.listForSeries.invalidate({ seriesSlug: commentTarget.slug });
-        }
+        markDeleted();
         return;
       }
 

@@ -76,7 +76,6 @@ export const ReportsListPage = observer(function ReportsListPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | ReportStatus>('all');
   const [statusMessage, setStatusMessage] = useState<{ id: number; text: string } | null>(null);
   const statusMessageIdRef = useRef(0);
-  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
 
   const query = trpc.reports.list.useInfiniteQuery(
@@ -96,7 +95,6 @@ export const ReportsListPage = observer(function ReportsListPage() {
 
   function handleFilterChange(next: 'all' | ReportStatus) {
     setStatusMessage(null);
-    setLoadMoreError(null);
     setStatusFilter(next);
   }
 
@@ -206,26 +204,12 @@ export const ReportsListPage = observer(function ReportsListPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={async () => {
-                        setLoadMoreError(null);
-                        const result = await query.fetchNextPage();
-                        if (result.isError) {
-                          setLoadMoreError(result.error?.message ?? tt('state.error'));
-                        }
-                      }}
+                      onClick={() => void query.fetchNextPage()}
                       disabled={query.isFetchingNextPage}
                     >
                       {query.isFetchingNextPage ? tt('state.loading') : tt('reports.loadMore')}
                     </Button>
                   </div>
-                ) : null}
-                {loadMoreError ? (
-                  <p
-                    role="alert"
-                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
-                  >
-                    {loadMoreError}
-                  </p>
                 ) : null}
               </>
             )}

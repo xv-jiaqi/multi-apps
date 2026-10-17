@@ -42,13 +42,18 @@ type TopicFixture = {
   createdAt: string;
 };
 
+type CommentTargetFixture =
+  | { kind: 'card'; slug: string; name: string; imageUrl: string | null }
+  | { kind: 'series'; slug: string; title: string };
+
 type CommentFixture = {
   id: string;
   body: string;
   createdAt: string;
-  cardSlug: string;
-  cardName: string;
+  cardSlug: string | null;
+  cardName: string | null;
   cardImageUrl: string | null;
+  target: CommentTargetFixture;
 };
 
 function makeInfiniteState<T>(fn = vi.fn): InfiniteState<T> {
@@ -250,6 +255,12 @@ beforeEach(() => {
             cardSlug: 'aurora-knight',
             cardName: 'Aurora Knight',
             cardImageUrl: 'https://img.cardhub.test/a.jpg',
+            target: {
+              kind: 'card',
+              slug: 'aurora-knight',
+              name: 'Aurora Knight',
+              imageUrl: 'https://img.cardhub.test/a.jpg',
+            },
             createdAt: '2026-05-03T00:00:00.000Z',
           },
         ],
@@ -377,6 +388,34 @@ describe('MePage', () => {
 
     expect(await screen.findByText('card-2')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('card-2').closest('li')).toHaveFocus());
+  });
+
+  it('links a series comment to the series page and uses the gradient placeholder', () => {
+    commentState.data = {
+      pages: [
+        {
+          items: [
+            {
+              id: 'comment-series',
+              body: 'Great series',
+              cardSlug: null,
+              cardName: null,
+              cardImageUrl: null,
+              target: { kind: 'series', slug: 'sky-dawn', title: '天穹黎明' },
+              createdAt: '2026-05-04T00:00:00.000Z',
+            },
+          ],
+          nextCursor: null,
+        },
+      ],
+    };
+
+    renderMe();
+
+    const link = screen.getByRole('link', { name: '天穹黎明' });
+    expect(link).toHaveAttribute('href', '/series/sky-dawn');
+    expect(link.closest('li')?.querySelector('img')).toBeNull();
+    expect(screen.getByText('Great series')).toBeInTheDocument();
   });
 
   it('renders /me links in the desktop header and mobile drawer', async () => {

@@ -202,4 +202,27 @@ describe('rate limit proxy IP handling', () => {
       await app.close();
     }
   });
+
+  it('throttles comments.createForSeries with the same comment bucket', async () => {
+    const app = await makeTestApp();
+    try {
+      for (let i = 0; i < 30; i += 1) {
+        await request(app.getHttpServer())
+          .get('/trpc/comments.createForSeries')
+          .set('X-Forwarded-For', '203.0.113.21')
+          .expect((res) => expect(res.status).not.toBe(429));
+      }
+
+      await request(app.getHttpServer())
+        .get('/trpc/comments.createForSeries')
+        .set('X-Forwarded-For', '203.0.113.21')
+        .expect(429)
+        .expect((res) => {
+          expect(res.body.error.data.code).toBe('TOO_MANY_REQUESTS');
+          expect(res.body.error.data.path).toBe('comments.createForSeries');
+        });
+    } finally {
+      await app.close();
+    }
+  });
 });
