@@ -15,9 +15,18 @@ function makeRouter() {
   const cardFindUnique = jest.fn();
   const commentFindMany = jest.fn();
   const commentCreate = jest.fn();
+  const commentFindUnique = jest.fn();
+  const commentDelete = jest.fn();
+  const userFindUnique = jest.fn();
   const prisma = {
     card: { findUnique: cardFindUnique },
-    comment: { findMany: commentFindMany, create: commentCreate },
+    comment: {
+      findMany: commentFindMany,
+      create: commentCreate,
+      findUnique: commentFindUnique,
+      delete: commentDelete,
+    },
+    user: { findUnique: userFindUnique },
   } as unknown as PrismaService;
 
   const router = new CommentsRouter(new TrpcBase(), prisma);
@@ -31,7 +40,15 @@ function makeRouter() {
     });
   }
 
-  return { caller, cardFindUnique, commentFindMany, commentCreate };
+  return {
+    caller,
+    cardFindUnique,
+    commentFindMany,
+    commentCreate,
+    commentFindUnique,
+    commentDelete,
+    userFindUnique,
+  };
 }
 
 describe('CommentsRouter.listForCard', () => {
@@ -115,5 +132,72 @@ describe('CommentsRouter.create', () => {
         content: 'hi',
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('CommentsRouter.delete', () => {
+  it('allows the comment author to delete their own comment without an admin lookup', async () => {
+    const { caller, commentFindUnique, commentDelete, userFindUnique } = makeRouter();
+    commentFindUnique.mockResolvedValueOnce({ id: 'cm-1', userId: 'u-alice' });
+    commentDelete.mockResolvedValueOnce({ id: 'cm-1' });
+
+    await expect(
+      caller({ sub: 'u-alice', username: 'alice' }).delete({
+        id: '11111111-1111-4111-8111-111111111111',
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(userFindUnique).not.toHaveBeenCalled();
+    expect(commentDelete).toHaveBeenCalledWith({
+      where: { id: '11111111-1111-4111-8111-111111111111' },
+    });
+  });
+
+  it('allows an admin to delete another user comment', async () => {
+    const { caller, commentFindUnique, commentDelete, userFindUnique } = makeRouter();
+    commentFindUnique.mockResolvedValueOnce({ id: 'cm-1', userId: 'u-alice' });
+    userFindUnique.mockResolvedValueOnce({ role: 'admin' });
+    commentDelete.mockResolvedValueOnce({ id: 'cm-1' });
+
+    await expect(
+      caller({ sub: 'u-admin', username: 'admin' }).delete({
+        id: '22222222-2222-4222-8222-222222222222',
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(userFindUnique).toHaveBeenCalledWith({
+      where: { id: 'u-admin' },
+      select: { role: true },
+    });
+    expect(commentDelete).toHaveBeenCalledWith({
+      where: { id: '22222222-2222-4222-8222-222222222222' },
+    });
+  });
+
+  it('rejects a non-admin deleting someone else comment', async () => {
+    const { caller, commentFindUnique, commentDelete, userFindUnique } = makeRouter();
+    commentFindUnique.mockResolvedValueOnce({ id: 'cm-1', userId: 'u-alice' });
+    userFindUnique.mockResolvedValueOnce({ role: 'user' });
+
+    await expect(
+      caller({ sub: 'u-bob', username: 'bob' }).delete({
+        id: '33333333-3333-4333-8333-333333333333',
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    expect(commentDelete).not.toHaveBeenCalled();
+  });
+
+  it('returns NOT_FOUND when the comment is already gone', async () => {
+    const { caller, commentFindUnique, commentDelete } = makeRouter();
+    commentFindUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      caller({ sub: 'u-alice', username: 'alice' }).delete({
+        id: '44444444-4444-4444-8444-444444444444',
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+
+    expect(commentDelete).not.toHaveBeenCalled();
   });
 });

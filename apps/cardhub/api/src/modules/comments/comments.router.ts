@@ -81,6 +81,35 @@ export class CommentsRouter {
           user: created.user,
         };
       }),
+
+      delete: t.authedProcedure
+        .input(z.object({ id: z.string().uuid() }))
+        .mutation(async ({ ctx, input }) => {
+          if (!ctx.user) {
+            throw new TRPCError({ code: 'UNAUTHORIZED' });
+          }
+
+          const comment = await prisma.comment.findUnique({
+            where: { id: input.id },
+            select: { id: true, userId: true },
+          });
+          if (!comment) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: '评论不存在' });
+          }
+
+          if (comment.userId !== ctx.user.sub) {
+            const requester = await prisma.user.findUnique({
+              where: { id: ctx.user.sub },
+              select: { role: true },
+            });
+            if (requester?.role !== 'admin') {
+              throw new TRPCError({ code: 'FORBIDDEN', message: '没有删除权限' });
+            }
+          }
+
+          await prisma.comment.delete({ where: { id: input.id } });
+          return { ok: true };
+        }),
     });
   }
 }

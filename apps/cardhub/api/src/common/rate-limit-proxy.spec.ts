@@ -7,6 +7,7 @@ async function makeTestApp(): Promise<INestApplication> {
   const app = await createApp({
     rateLimitOverrides: {
       authMutation: { limit: 1, windowMs: 60_000 },
+      commentCreate: { limit: 30, windowMs: 60_000 },
     },
   });
   jest.spyOn(app.get(HealthService), 'check').mockResolvedValue({
@@ -158,6 +159,39 @@ describe('rate limit proxy IP handling', () => {
         .get('/trpc/auth.login')
         .set('X-Forwarded-For', '198.51.100.250, 203.0.113.10')
         .expect(429);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('throttles comments.create on the 31st request per IP', async () => {
+    const app = await makeTestApp();
+    try {
+      for (let i = 0; i < 30; i += 1) {
+        await request(app.getHttpServer())
+          .get('/trpc/comments.create')
+          .set('X-Forwarded-For', '203.0.113.20')
+          .expect((res) => expect(res.status).not.toBe(429));
+      }
+
+      await request(app.getHttpServer())
+        .get('/trpc/comments.create')
+        .set('X-Forwarded-For', '203.0.113.20')
+        .expect('Content-Type', /application\/json/)
+        .expect(429)
+        .expect((res) => {
+          expect(res.body).toEqual({
+            error: {
+              message: 'Too many requests',
+              code: -32029,
+              data: {
+                code: 'TOO_MANY_REQUESTS',
+                httpStatus: 429,
+                path: 'comments.create',
+              },
+            },
+          });
+        });
     } finally {
       await app.close();
     }
