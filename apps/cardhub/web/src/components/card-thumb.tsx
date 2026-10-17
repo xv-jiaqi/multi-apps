@@ -8,13 +8,11 @@ export function isHttpsImageUrl(src: string | null | undefined): src is string {
 export function CardThumb({
   src,
   slug,
-  name,
   width,
   onError,
 }: {
   src?: string | null;
   slug?: string | null;
-  name?: string;
   width: string;
   onError?: () => void;
 }) {
@@ -23,7 +21,7 @@ export function CardThumb({
       kind="card"
       src={src}
       slug={slug}
-      name={name ?? ''}
+      name=""
       decorative
       onError={onError}
       className={cn('shrink-0 rounded-sm', width)}

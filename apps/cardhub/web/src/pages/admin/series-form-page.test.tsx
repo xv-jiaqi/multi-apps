@@ -18,6 +18,13 @@ const createCalls: unknown[] = [];
 const createImpl: { current: (input: unknown) => Promise<unknown> } = {
   current: async (input) => input,
 };
+const { invalidateAdminSeriesList, invalidateSeriesList, invalidateSeriesBySlug } = vi.hoisted(
+  () => ({
+    invalidateAdminSeriesList: vi.fn(),
+    invalidateSeriesList: vi.fn(),
+    invalidateSeriesBySlug: vi.fn(),
+  }),
+);
 
 vi.mock('../../lib/trpc', () => ({
   trpc: {
@@ -56,7 +63,11 @@ vi.mock('../../lib/trpc', () => ({
       },
     },
     useUtils: () => ({
-      admin: { series: { list: { invalidate: vi.fn() } } },
+      admin: { series: { list: { invalidate: invalidateAdminSeriesList } } },
+      series: {
+        list: { invalidate: invalidateSeriesList },
+        bySlug: { invalidate: invalidateSeriesBySlug },
+      },
     }),
   },
 }));
@@ -83,6 +94,9 @@ beforeEach(() => {
   seriesState.isError = false;
   createCalls.length = 0;
   createImpl.current = async (input) => input;
+  invalidateAdminSeriesList.mockClear();
+  invalidateSeriesList.mockClear();
+  invalidateSeriesBySlug.mockClear();
 });
 
 describe('series form', () => {
@@ -127,6 +141,8 @@ describe('series form', () => {
       title: '新系列',
       coverUrl: expected,
     });
+    expect(invalidateSeriesList).toHaveBeenCalledTimes(1);
+    expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'new-series' });
   });
 
   it('rejects http image links on blur and blocks submit', async () => {
@@ -207,5 +223,42 @@ describe('series form', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('出错了：封面链接最长 2048 个字符');
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
+  });
+
+  it('uses the generic save failure when the server message is only the tRPC code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw { message: 'BAD_REQUEST', data: { code: 'BAD_REQUEST' } };
+    };
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
+        <Routes>
+          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('保存失败，请重试');
+    expect(screen.queryByText(/出错了/)).not.toBeInTheDocument();
+  });
+
+  it('invalidates the public series list and detail after editing', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/admin/catalog/series/celestial-dawn/edit']}>
+        <Routes>
+          <Route path="/admin/catalog/series/:slug/edit" element={<EditSeriesPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+    expect(invalidateSeriesList).toHaveBeenCalledTimes(1);
+    expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'celestial-dawn' });
+    expect(invalidateAdminSeriesList).toHaveBeenCalledTimes(1);
   });
 });

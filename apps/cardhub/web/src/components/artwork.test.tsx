@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ART_ASPECT, ART_EDGE, Artwork, useArtImage } from './artwork';
 import { rootStore } from '../stores/root-store';
 
@@ -86,12 +86,12 @@ describe('Artwork', () => {
   });
 });
 
-function ModeProbe({ src }: { src: string }) {
-  const art = useArtImage({ src, alt: 'probe', fit: 'cover' });
+function ModeProbe({ src, onError }: { src: string; onError?: () => void }) {
+  const art = useArtImage({ src, alt: 'probe', fit: 'cover', onError });
   return (
     <div>
       <span data-testid="mode">{art.mode}</span>
-      {art.mode === 'image' ? <img key={src} {...art.imgProps} /> : null}
+      <img key={src} {...art.imgProps} />
     </div>
   );
 }
@@ -110,6 +110,31 @@ describe('useArtImage', () => {
     render(<ModeProbe src="http://img.cardhub.test/card.webp" />);
 
     expect(screen.getByTestId('mode')).toHaveTextContent('placeholder');
+  });
+
+  it('reports a cached broken image once when onError and the naturalWidth check both run', () => {
+    const onError = vi.fn();
+    const imageProto = HTMLImageElement.prototype;
+    const complete = Object.getOwnPropertyDescriptor(imageProto, 'complete');
+    const naturalWidth = Object.getOwnPropertyDescriptor(imageProto, 'naturalWidth');
+    Object.defineProperty(imageProto, 'complete', { configurable: true, get: () => true });
+    Object.defineProperty(imageProto, 'naturalWidth', { configurable: true, get: () => 0 });
+    try {
+      const { rerender } = render(
+        <ModeProbe src="https://img.cardhub.test/cached-broken.webp" onError={onError} />,
+      );
+      fireEvent.error(screen.getByAltText('probe'));
+      expect(onError).toHaveBeenCalledTimes(1);
+
+      rerender(<ModeProbe src="https://img.cardhub.test/cached-broken-2.webp" onError={onError} />);
+      fireEvent.error(screen.getByAltText('probe'));
+      expect(onError).toHaveBeenCalledTimes(2);
+    } finally {
+      if (complete) Object.defineProperty(imageProto, 'complete', complete);
+      else delete imageProto.complete;
+      if (naturalWidth) Object.defineProperty(imageProto, 'naturalWidth', naturalWidth);
+      else delete imageProto.naturalWidth;
+    }
   });
 
   it('resets loaded state when the image URL changes', () => {

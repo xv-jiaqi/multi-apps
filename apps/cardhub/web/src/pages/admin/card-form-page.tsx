@@ -175,8 +175,12 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       } else {
         await update.mutateAsync(input);
       }
+      const previousSeriesSlug = mode === 'edit' ? card?.seriesSlug : undefined;
       void utils.admin.series.list.invalidate();
       void utils.series.bySlug.invalidate({ slug: seriesSlug });
+      if (previousSeriesSlug && previousSeriesSlug !== seriesSlug) {
+        void utils.series.bySlug.invalidate({ slug: previousSeriesSlug });
+      }
       void utils.admin.cards.get.invalidate({ slug: input.slug });
       navigate(`/admin/catalog/series/${seriesSlug}`, {
         state: {

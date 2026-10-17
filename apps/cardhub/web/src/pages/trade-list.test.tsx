@@ -34,7 +34,9 @@ const listHarness = vi.hoisted(() => ({
   inputs: [] as ListInput[],
   items: [] as Array<Record<string, unknown>>,
   isError: false,
+  isFetching: false,
   errorMessage: 'network down',
+  refetch: vi.fn(),
 }));
 
 vi.mock('../lib/trpc', () => ({
@@ -79,10 +81,11 @@ vi.mock('../lib/trpc', () => ({
             data: { pages: [{ items: listHarness.items, nextCursor: null }] },
             isLoading: false,
             isError: listHarness.isError,
+            isFetching: listHarness.isFetching,
             isFetchingNextPage: false,
             hasNextPage: false,
             error: listHarness.isError ? { message: listHarness.errorMessage } : null,
-            refetch: vi.fn(),
+            refetch: listHarness.refetch,
             fetchNextPage: vi.fn(),
           };
         },
@@ -170,7 +173,9 @@ describe('TradeListPage price filters', () => {
     listHarness.inputs.length = 0;
     listHarness.items = [];
     listHarness.isError = false;
+    listHarness.isFetching = false;
     listHarness.errorMessage = 'network down';
+    listHarness.refetch.mockClear();
     rootStore.session.signOut();
     rootStore.locale.setLocale('zh-CN');
   });
@@ -448,6 +453,29 @@ describe('TradeListPage price filters', () => {
     }
   });
 
+  it('retries a failed load without the server message', async () => {
+    const user = userEvent.setup();
+    listHarness.isError = true;
+    renderTrade();
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('加载失败');
+    expect(alert).not.toHaveTextContent('network down');
+    await user.click(screen.getByRole('button', { name: '重试' }));
+    expect(listHarness.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables retry and shows the loading label while listings are refetching', () => {
+    listHarness.isError = true;
+    listHarness.isFetching = true;
+    renderTrade();
+
+    const button = screen.getByRole('button', { name: '加载中…' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('network down');
+  });
+
   it('localizes the load error in English', async () => {
     listHarness.isError = true;
     rootStore.locale.setLocale('en-US');
@@ -457,5 +485,6 @@ describe('TradeListPage price filters', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.queryByText('加载失败')).not.toBeInTheDocument();
     expect(screen.queryByText('重试')).not.toBeInTheDocument();
+    expect(screen.queryByText('network down')).not.toBeInTheDocument();
   });
 });

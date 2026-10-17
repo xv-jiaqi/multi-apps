@@ -548,9 +548,12 @@ export const TradeListPage = observer(function TradeListPage() {
         ) : query.isError ? (
           <ErrorBox
             title={tt('state.error')}
-            message={query.error.message}
             retryLabel={tt('state.retry')}
-            retry={() => query.refetch()}
+            loadingLabel={tt('state.loading')}
+            retrying={query.isFetching}
+            retry={() => {
+              void query.refetch();
+            }}
           />
         ) : items.length === 0 ? (
           <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
@@ -866,25 +869,31 @@ function ListingSkeleton() {
 }
 function ErrorBox({
   title,
-  message,
   retryLabel,
+  loadingLabel,
+  retrying,
   retry,
 }: {
   title: string;
-  message: string;
   retryLabel: string;
+  loadingLabel: string;
+  retrying: boolean;
   retry: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+    <div
+      role="alert"
+      className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+    >
       <p className="font-medium">{title}</p>
-      <p className="mt-1 break-all text-xs opacity-80">{message}</p>
       <button
         type="button"
         onClick={retry}
-        className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+        disabled={retrying}
+        aria-busy={retrying || undefined}
+        className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:pointer-events-none disabled:opacity-50"
       >
-        {retryLabel}
+        {retrying ? loadingLabel : retryLabel}
       </button>
     </div>
   );

@@ -113,30 +113,6 @@ export function failureText(locale: Locale, error: unknown, fallbackKey: string)
   return t(locale, fallbackKey);
 }
 
-const TRPC_CODE_MESSAGES = new Set([
-  'PARSE_ERROR',
-  'BAD_REQUEST',
-  'INTERNAL_SERVER_ERROR',
-  'NOT_IMPLEMENTED',
-  'BAD_GATEWAY',
-  'SERVICE_UNAVAILABLE',
-  'GATEWAY_TIMEOUT',
-  'UNAUTHORIZED',
-  'PAYMENT_REQUIRED',
-  'FORBIDDEN',
-  'NOT_FOUND',
-  'METHOD_NOT_SUPPORTED',
-  'TIMEOUT',
-  'CONFLICT',
-  'PRECONDITION_FAILED',
-  'PAYLOAD_TOO_LARGE',
-  'UNSUPPORTED_MEDIA_TYPE',
-  'UNPROCESSABLE_CONTENT',
-  'PRECONDITION_REQUIRED',
-  'TOO_MANY_REQUESTS',
-  'CLIENT_CLOSED_REQUEST',
-]);
-
 const KNOWN_FIELDS = new Set([
   'slug',
   'title',
@@ -244,7 +220,7 @@ export function readValidationFeedback(
   }
 
   const raw = failure.message.trim();
-  if (raw && !TRPC_CODE_MESSAGES.has(raw)) {
+  if (raw && raw !== failure.trpcCode) {
     return { fields: {}, message: t(locale, 'admin.error.unknown', { message: raw }) };
   }
   return { fields: {}, message: t(locale, fallbackKey) };

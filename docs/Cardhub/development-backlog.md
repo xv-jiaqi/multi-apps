@@ -58,7 +58,7 @@
 | CH-104 | 交易信息板：卡名、品相、筛选与缩略图            | P1     | M    | CH-105（缩略图部分）  | ✅ PR #68、#78                                        |
 | CH-105 | 卡牌 / 系列真实图片渲染                         | P1     | S    | —                     | ✅ PR #65                                             |
 | CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 进行中（API #67、Web #77；trigram 未做）              |
-| CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | ✅ PR #71 + #76（未保存拦截、保存并新建下一张待后续） |
+| CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | ✅ PR #71 + #76（未保存拦截仍待后续；缓存与限额跟进） |
 | CH-108 | 文案清理、页面标题、小型无障碍修复              | P1     | S    | —                     | ✅ PR #61                                             |
 | CH-109 | 卡牌详情页 CLS                                  | P1     | S    | —                     | 待领取                                                |
 | CH-201 | 分类体系：品类、系列、子集、卡号与发售日期      | P2     | L    | CH-107                | 待领取                                                |
@@ -187,12 +187,12 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 - **背景**：schema 注释承诺管理员可以删评论，但 `comments` 没有删除接口；`comments.create` 也没有限流。
 - **改动范围**
   - API：`comments.delete({ id })`，本人或 admin；`rate-limiters.ts` 新增 `commentCreate`（匹配 `comments.create`，1 小时 30 次）。
-  - Web：`apps/cardhub/web/src/components/comment-section.tsx` 对本人和 admin 显示“删除”，二次确认后调用，成功后 invalidate `comments.listForCard`。评论列表加载失败时显示 `role="alert"` 红框（`rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700`），文案 `state.error`，重试 `state.retry`，点击重新拉取，不展示服务端原文。
+  - Web：`apps/cardhub/web/src/components/comment-section.tsx` 对本人和 admin 显示“删除”，二次确认后调用，成功后 invalidate `comments.listForCard`。评论列表加载失败时显示 `role="alert"` 红框（`rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700`），文案 `state.error`，重试 `state.retry`，点击重新拉取，不展示服务端原文。重试进行中（`list.isFetching`）按钮禁用并显示 `state.loading`。
   - i18n：`card.detail.commentDelete`、`card.detail.confirmDeleteComment`；加载失败复用 `state.error` / `state.retry`。
 - **验收标准**
   1. 作者能删自己的评论；admin 能删任意评论；其他人返回 `FORBIDDEN`，界面也不显示按钮。
   2. 同一 IP 一小时内第 31 次发评论返回 `TOO_MANY_REQUESTS`，前端显示错误信息。
-  3. 卡牌和系列评论列表加载失败时显示上述红框和 `state.error` / `state.retry`，点重试重新请求。
+  3. 卡牌和系列评论列表加载失败时显示上述红框和 `state.error` / `state.retry`，点重试重新请求。重试进行中按钮禁用并显示 `state.loading`。
 - **测试**：`comments.router.spec.ts` 补删除的三种权限；`rate-limit-proxy.spec.ts` 补新限流器；`comment-section.test.tsx` 覆盖加载失败的 alert 与重试。
 - **依赖**：无。小程序同步放在 CH-301。
 
@@ -338,7 +338,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
     - 当前 `seed-catalog` 按 slug upsert 会**覆盖**后台编辑。改为“只插入不存在的记录”（`update: {}`），同步更新 `seed-catalog.spec.ts`，并在 deploy/README.md 注明。
     - 导入最多 500 行 / 1MB。超出整批拒绝，不写入任何行。
   - Web：新增 `/admin/catalog`（admin）：系列表格 + 新建 / 编辑表单；进入系列后是卡牌表格 + 表单（attributes 用键值对编辑器）；JSON 导入页（粘贴或上传文件，先预览再执行）。Header 把“举报队列”和“内容管理”收进一个“管理”入口。
-- **验收标准**：admin 不改代码即可新增、编辑、删除系列和卡牌，前台立即可见；非 admin 调用全部返回 `FORBIDDEN`；导入同一份 JSON 两次结果一致；重跑 `seed:catalog` 不会覆盖后台的修改。
+- **验收标准**：admin 不改代码即可新增、编辑、删除系列和卡牌，前台立即可见；非 admin 调用全部返回 `FORBIDDEN`；导入同一份 JSON 两次结果一致；重跑 `seed:catalog` 不会覆盖后台的修改。改卡牌所属系列后，旧系列和新系列的 `series.bySlug` 都失效。新建或编辑系列后，前台 `series.list` 和 `series.bySlug` 失效。导入超过 500 行或 1MB 时前端不提交，并显示 `admin.import.tooManyRows` / `admin.import.tooLarge`。同一次成功导入在内容或所选文件变化前不能再次执行。
 - **依赖**：无。完成后解锁 CH-201、CH-206、CH-209、CH-210。
 
 #### CH-108 文案清理、页面标题、小型无障碍修复
