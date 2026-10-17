@@ -218,9 +218,10 @@ export function Combobox<T>({
         }
         return;
       }
-      setActiveIndex((index) =>
-        flatItems.length === 0 ? -1 : Math.min(index + 1, flatItems.length - 1),
-      );
+      setActiveIndex((index) => {
+        if (flatItems.length === 0 || index >= flatItems.length - 1) return -1;
+        return index + 1;
+      });
       return;
     }
 
@@ -327,7 +328,7 @@ export function Combobox<T>({
             }}
             role="combobox"
             aria-autocomplete="list"
-            aria-expanded={open}
+            aria-expanded={hasListbox}
             aria-controls={hasListbox ? listboxId : undefined}
             aria-activedescendant={activeOptionId}
             aria-invalid={ariaInvalid}
@@ -375,6 +376,11 @@ export function Combobox<T>({
           sideOffset={4}
           onOpenAutoFocus={(event) => event.preventDefault()}
           onMouseDown={(event) => event.preventDefault()}
+          // DismissableLayer listens for Escape on `document` in the capture
+          // phase and dismisses before the input's keydown. Cancelling that
+          // leaves the two-step Escape behaviour (close, then clear or restore)
+          // with the input, which still sees the list as open.
+          onEscapeKeyDown={(event) => event.preventDefault()}
           className={cn(
             popoverSurface,
             'w-[var(--radix-popover-trigger-width)] p-0',

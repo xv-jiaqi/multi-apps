@@ -7,6 +7,6 @@
     },
     "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*", "test/**/*", "vite.config.ts"],
+  "include": ["src/**/*", "test/**/*", "vite.config.ts", "vitest.browser.config.ts"],
   "references": []
 }
