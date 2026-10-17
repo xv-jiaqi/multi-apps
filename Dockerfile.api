@@ -66,9 +66,15 @@ COPY --from=prod-deps --chown=app:app /app/node_modules ./node_modules
 COPY --from=builder --chown=app:app /repo/apps/cardhub/api/prisma/schema.prisma ./prisma/schema.prisma
 COPY --from=builder --chown=app:app /repo/apps/cardhub/api/prisma/migrations ./prisma/migrations
 RUN npx --no-install prisma generate --schema=./prisma/schema.prisma
-COPY --from=builder --chown=app:app /repo/packages/shared/dist ./node_modules/.pnpm/@repo+shared@file+packages+shared/node_modules/@repo/shared/dist
+COPY --from=builder /repo/packages/shared/dist /tmp/shared-dist
+RUN shared_path="$(node -p "require('fs').realpathSync('node_modules/@repo/shared')")" \
+  && mkdir -p "${shared_path}/dist" \
+  && cp -R /tmp/shared-dist/. "${shared_path}/dist/" \
+  && chown -R app:app "${shared_path}/dist" \
+  && rm -rf /tmp/shared-dist
 COPY --from=builder --chown=app:app /repo/apps/cardhub/api/dist ./dist
 USER app
+RUN node -e "require('@repo/shared'); require('@prisma/client')"
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"

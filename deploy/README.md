@@ -178,8 +178,15 @@ After a successful deploy, `image-cleanup.sh` removes only stale
 This is intentionally cross-environment: a staging deploy scans both production
 and staging state before deleting anything, so staging cannot remove production's
 current image or production's rollback target. Cleanup is best-effort and logs a
-warning instead of failing the deployment if Docker cleanup fails. To inspect the
-decision without deleting images, run:
+warning instead of failing the deployment if Docker cleanup fails. Cleanup takes
+a non-blocking lock at `/opt/cardhub/.image-cleanup.lock`; if staging and
+production deploy concurrently, whichever cleanup starts second skips its cleanup
+attempt and the deploy still succeeds. The script is scoped to Cardhub API/Web
+`sha-*` tags and does not run a machine-wide dangling image prune. Docker frees
+layers that become unreferenced by the removed Cardhub tags, while unrelated
+dangling images are left alone.
+
+To inspect the decision without deleting images, run:
 
 ```bash
 /opt/cardhub/staging/deploy/image-cleanup.sh --dry-run --root /opt/cardhub

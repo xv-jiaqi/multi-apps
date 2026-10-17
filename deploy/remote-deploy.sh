@@ -239,10 +239,10 @@ on_error() {
   rollback
   exit "${rc}"
 }
+record_previous_images
 trap on_error ERR
 
 rollback_armed=1
-record_previous_images
 ENV_NAME="${env_name}" IMAGE_TAG="${image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" pull api web
 ENV_NAME="${env_name}" IMAGE_TAG="${image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" up -d postgres redis api web
 

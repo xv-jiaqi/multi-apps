@@ -45,6 +45,14 @@ repos=(
   "ghcr.io/xv-jiaqi/cardhub-web"
 )
 
+mkdir -p "${root}"
+lock_file="${root}/.image-cleanup.lock"
+exec 9>"${lock_file}"
+if ! flock -n 9; then
+  echo "Image cleanup already running; skipping"
+  exit 0
+fi
+
 declare -A keep_refs=()
 declare -A used_refs=()
 declare -A candidate_refs=()
@@ -141,8 +149,4 @@ else
   done < <(printf '%s\n' "${!candidate_refs[@]}" | sort)
 fi
 
-if [ "${dry_run}" -eq 1 ]; then
-  echo "DRY-RUN PRUNE dangling layers"
-else
-  "${docker_bin}" image prune -f
-fi
+echo "Cleanup is scoped to cardhub-api/cardhub-web sha-* image tags; skipping machine-wide dangling image prune"
