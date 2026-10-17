@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { keepPreviousData } from '@tanstack/react-query';
-import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router';
+import { Link, MemoryRouter, Route, Routes, useNavigate, useSearchParams } from 'react-router';
 import { rootStore } from '../stores/root-store';
 import { SearchPage } from './search';
 
@@ -58,7 +58,7 @@ const sampleCards = [
     id: 'c2',
     slug: 'glacier-sentinel',
     name: '冰川哨兵',
-    rarity: 'rare',
+    rarity: null,
     imageUrl: null,
     seriesSlug: 'celestial-dawn',
     seriesTitle: '天穹黎明',
@@ -77,6 +77,23 @@ const sampleSeries = [
 ];
 
 function currentResult(query: string) {
+  if (query.includes('冰川')) {
+    return {
+      query,
+      cards: [
+        {
+          id: 'c-ice',
+          slug: 'glacier-witch',
+          name: '冰川巫女',
+          rarity: 'epic',
+          imageUrl: null,
+          seriesSlug: 'celestial-dawn',
+          seriesTitle: '天穹黎明',
+        },
+      ],
+      series: [],
+    };
+  }
   return {
     query,
     cards: sampleCards,
@@ -230,6 +247,24 @@ function SearchProbe() {
   return <output aria-label="search">{params.toString()}</output>;
 }
 
+function HistoryBack() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(-1)}>
+      后退
+    </button>
+  );
+}
+
+function HistoryForward() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(1)}>
+      前进
+    </button>
+  );
+}
+
 function renderSearch(search = '') {
   render(
     <MemoryRouter initialEntries={[`/search${search}`]}>
@@ -240,6 +275,28 @@ function renderSearch(search = '') {
             <>
               <SearchPage />
               <SearchProbe />
+              <Link to="/search?q=冰川">去冰川</Link>
+              <HistoryBack />
+            </>
+          }
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+function renderSearchHistory(entries: string[], index: number) {
+  render(
+    <MemoryRouter initialEntries={entries} initialIndex={index}>
+      <Routes>
+        <Route
+          path="/search"
+          element={
+            <>
+              <SearchPage />
+              <SearchProbe />
+              <HistoryBack />
+              <HistoryForward />
             </>
           }
         />
@@ -290,6 +347,12 @@ describe('SearchPage', () => {
       '/series/celestial-dawn',
     );
     expect(screen.getByText('找到 2 张卡牌、1 个系列')).toBeInTheDocument();
+    expect(screen.getByText('传说')).toBeInTheDocument();
+    expect(screen.queryByText('普通')).not.toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(urlQuery()).toBe('极光');
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('极光');
+    expect(enabledPageCalls().every((call) => call.input.q === '极光')).toBe(true);
     expect(enabledPageCalls().some((call) => call.input.q === '极光')).toBe(true);
     expect(pageCalls().some((call) => call.options?.placeholderData === keepPreviousData)).toBe(
       true,
@@ -338,13 +401,68 @@ describe('SearchPage', () => {
     await user.clear(input);
     await user.type(input, 'r:mythic');
     expect(
-      screen.getByText('没有「r:mythic」这个稀有度，可选 common、rare、epic、legendary'),
+      screen.getByText('没有「mythic」这个稀有度，可选 common、rare、epic、legendary'),
     ).toBeInTheDocument();
     expect(screen.queryByText('invalidRarity')).not.toBeInTheDocument();
 
     await new Promise((resolve) => setTimeout(resolve, 350));
     expect(enabledPageCalls().some((call) => call.input.q === 'usd<1')).toBe(false);
     expect(enabledPageCalls().some((call) => call.input.q === 'r:mythic')).toBe(false);
+  });
+
+  it('follows an external query without writing the previous value back', async () => {
+    const user = userEvent.setup();
+    renderSearch('?q=极光');
+
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('极光');
+    expect(await screen.findByText('极光骑士')).toBeInTheDocument();
+    const beforeNavigation = enabledPageCalls().length;
+
+    await user.click(screen.getByRole('link', { name: '去冰川' }));
+
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('冰川');
+    expect(await screen.findByText('冰川巫女')).toBeInTheDocument();
+    expect(screen.queryByText('极光骑士')).not.toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(urlQuery()).toBe('冰川');
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('冰川');
+    const navigatedCalls = enabledPageCalls().slice(beforeNavigation);
+    expect(navigatedCalls.length).toBeGreaterThan(0);
+    expect(navigatedCalls.every((call) => call.input.q === '冰川')).toBe(true);
+  });
+
+  it('follows browser back and forward without rewriting q', async () => {
+    const user = userEvent.setup();
+    renderSearchHistory(['/search?q=极光', '/search?q=冰川'], 1);
+
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('冰川');
+    expect(await screen.findByText('冰川巫女')).toBeInTheDocument();
+    const beforeBack = enabledPageCalls().length;
+
+    await user.click(screen.getByRole('button', { name: '后退' }));
+
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('极光');
+    expect(await screen.findByText('极光骑士')).toBeInTheDocument();
+    expect(screen.queryByText('冰川巫女')).not.toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(urlQuery()).toBe('极光');
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('极光');
+    const backCalls = enabledPageCalls().slice(beforeBack);
+    expect(backCalls.length).toBeGreaterThan(0);
+    expect(backCalls.every((call) => call.input.q === '极光')).toBe(true);
+
+    const beforeForward = enabledPageCalls().length;
+    await user.click(screen.getByRole('button', { name: '前进' }));
+
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('冰川');
+    expect(await screen.findByText('冰川巫女')).toBeInTheDocument();
+    expect(screen.queryByText('极光骑士')).not.toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(urlQuery()).toBe('冰川');
+    expect(screen.getByRole('searchbox', { name: '全站搜索' })).toHaveValue('冰川');
+    const forwardCalls = enabledPageCalls().slice(beforeForward);
+    expect(forwardCalls.length).toBeGreaterThan(0);
+    expect(forwardCalls.every((call) => call.input.q === '冰川')).toBe(true);
   });
 
   it('writes the debounced query to the URL and keeps previous results while refreshing', async () => {

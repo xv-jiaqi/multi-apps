@@ -3,6 +3,11 @@ import { Info } from 'lucide-react';
 import { t, type CardSearchParseErrorReason } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 
+function valueAfterColon(token: string): string {
+  const colon = token.indexOf(':');
+  return colon >= 0 ? token.slice(colon + 1) : token;
+}
+
 export const SEARCH_SYNTAX_EXAMPLES = [
   'r:legendary',
   's:celestial-dawn',
@@ -58,7 +63,7 @@ export const UnsupportedHint = observer(function UnsupportedHint({
   const message =
     error.reason === 'unknownPrefix'
       ? tt('search.unsupportedPrefix', { token: error.token })
-      : tt('search.invalidRarity', { value: error.token });
+      : tt('search.invalidRarity', { value: valueAfterColon(error.token) });
 
   return (
     <p id={id} role="status" className="flex items-start gap-1.5 text-xs text-neutral-700">

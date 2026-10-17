@@ -2,7 +2,9 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData } from '@tanstack/react-query';
+import type { inferRouterOutputs } from '@trpc/server';
 import { Search } from 'lucide-react';
+import type { AppRouter } from '@repo/trpc-contract';
 import {
   CARD_RARITY_VALUES,
   parseCardSearchQuery,
@@ -29,6 +31,7 @@ import { SeriesMark } from '../components/series-mark';
 import { SyntaxExamples, UnsupportedHint } from '../components/search-syntax';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
+import { useDebounced } from '../lib/use-debounced';
 import {
   clearRarityAndSeries,
   firstPrefixedValue,
@@ -38,16 +41,17 @@ import {
 } from '../lib/search-query';
 
 const SEARCH_DEBOUNCE_MS = 250;
+type GlobalSearchResult = inferRouterOutputs<AppRouter>['search']['global'];
 const RESULT_LIST_CLASS =
   'divide-y divide-neutral-200/60 overflow-hidden rounded-2xl border border-white/60 bg-white/70 backdrop-blur';
 const RESULT_LINK_CLASS =
   'flex items-center gap-4 p-4 hover:bg-neutral-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500';
 
-function normalizeRarity(rarity: string | null): CardRarity {
+function knownRarity(rarity: string | null): CardRarity | null {
   if (rarity && (CARD_RARITY_VALUES as readonly string[]).includes(rarity)) {
     return rarity as CardRarity;
   }
-  return 'common';
+  return null;
 }
 
 function Field({
@@ -93,43 +97,41 @@ export const SearchPage = observer(function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') ?? '';
   const [query, setQuery] = useState(urlQuery);
-  const [debounced, setDebounced] = useState(urlQuery);
+  const [trackedUrl, setTrackedUrl] = useState(urlQuery);
+  const debounced = useDebounced(query, SEARCH_DEBOUNCE_MS);
+  const urlQueryRef = useRef(urlQuery);
+  const setSearchParamsRef = useRef(setSearchParams);
   const writtenQuery = useRef<string | null>(null);
-  const queryRef = useRef(query);
-  queryRef.current = query;
+  urlQueryRef.current = urlQuery;
+  setSearchParamsRef.current = setSearchParams;
   const rarityId = useId();
   const seriesId = useId();
 
+  // The address bar is the source of truth. Adopt a new ?q= during render so
+  // the input and the request both use it before paint. Typing still debounces
+  // into the URL, and that write must not be adopted back over the input.
+  const urlChanged = urlQuery !== trackedUrl;
+  const adoptingUrl = urlChanged && writtenQuery.current !== urlQuery;
+  if (urlChanged) {
+    setTrackedUrl(urlQuery);
+    if (adoptingUrl) setQuery(urlQuery);
+  }
+  const visibleQuery = adoptingUrl ? urlQuery : query;
+
   useEffect(() => {
-    const id = window.setTimeout(() => setDebounced(query), SEARCH_DEBOUNCE_MS);
-    return () => window.clearTimeout(id);
-  }, [query]);
+    if (writtenQuery.current === urlQuery) writtenQuery.current = null;
+  }, [urlQuery]);
 
   useEffect(() => {
     const next = debounced.trim();
-    if (next === urlQuery) return;
+    if (next === urlQueryRef.current) return;
     writtenQuery.current = next;
-    setSearchParams(next ? { q: next } : {}, { replace: true });
-  }, [debounced, setSearchParams, urlQuery]);
+    setSearchParamsRef.current(next ? { q: next } : {}, { replace: true });
+  }, [debounced]);
 
-  useEffect(() => {
-    if (writtenQuery.current === urlQuery) {
-      writtenQuery.current = null;
-      return;
-    }
-    if (urlQuery === queryRef.current) return;
-    setQuery(urlQuery);
-    setDebounced(urlQuery);
-  }, [urlQuery]);
-
-  const replaceQuery = (next: string) => {
-    setQuery(next);
-    setDebounced(next);
-  };
-
-  const requested = debounced.trim();
-  const liveParsed = parseCardSearchQuery(query);
-  const liveCanRequest = shouldRequestCardSearchQuery(query);
+  const requested = (visibleQuery.trim() === urlQuery ? visibleQuery : debounced).trim();
+  const liveParsed = parseCardSearchQuery(visibleQuery);
+  const liveCanRequest = shouldRequestCardSearchQuery(visibleQuery);
   const canRequest = shouldRequestCardSearchQuery(requested);
   const results = trpc.search.global.useQuery(
     { q: requested, limit: 30 },
@@ -142,14 +144,14 @@ export const SearchPage = observer(function SearchPage() {
     return [...items].sort((left, right) => left.title.localeCompare(right.title, locale.locale));
   }, [locale.locale, seriesList.data]);
 
-  const rarityValue = selectedRarity(query);
-  const seriesSlug = firstPrefixedValue(query, 's');
+  const rarityValue = selectedRarity(visibleQuery);
+  const seriesSlug = firstPrefixedValue(visibleQuery, 's');
   const seriesValue =
     seriesSlug && seriesOptions.some((item) => item.slug === seriesSlug) ? seriesSlug : 'any';
-  const hasFilters = hasRarityOrSeriesFilter(query);
-  const titleQuery = query.trim();
+  const hasFilters = hasRarityOrSeriesFilter(visibleQuery);
+  const titleQuery = visibleQuery.trim();
 
-  const clearFilters = () => replaceQuery(clearRarityAndSeries(query));
+  const clearFilters = () => setQuery(clearRarityAndSeries(visibleQuery));
 
   const statusText =
     canRequest && results.isFetching
@@ -180,7 +182,7 @@ export const SearchPage = observer(function SearchPage() {
             />
             <Input
               type="search"
-              value={query}
+              value={visibleQuery}
               onChange={(event) => setQuery(event.target.value)}
               aria-label={tt('search.headerLabel')}
               aria-describedby={liveParsed.ok ? 'search-syntax' : 'search-syntax search-hint'}
@@ -188,7 +190,7 @@ export const SearchPage = observer(function SearchPage() {
               className="pl-9"
             />
           </div>
-          <SyntaxExamples id="search-syntax" onExample={replaceQuery} />
+          <SyntaxExamples id="search-syntax" onExample={setQuery} />
           {!liveParsed.ok ? <UnsupportedHint id="search-hint" error={liveParsed} /> : null}
         </div>
 
@@ -197,7 +199,7 @@ export const SearchPage = observer(function SearchPage() {
             <Select
               value={rarityValue}
               onValueChange={(value) =>
-                replaceQuery(replacePrefixedValue(query, 'r', value === 'any' ? null : value))
+                setQuery(replacePrefixedValue(visibleQuery, 'r', value === 'any' ? null : value))
               }
             >
               <SelectTrigger id={rarityId}>
@@ -220,7 +222,7 @@ export const SearchPage = observer(function SearchPage() {
               value={seriesValue}
               disabled={seriesList.isLoading}
               onValueChange={(value) =>
-                replaceQuery(replacePrefixedValue(query, 's', value === 'any' ? null : value))
+                setQuery(replacePrefixedValue(visibleQuery, 's', value === 'any' ? null : value))
               }
             >
               <SelectTrigger id={seriesId}>
@@ -250,7 +252,7 @@ export const SearchPage = observer(function SearchPage() {
         </p>
 
         <SearchResults
-          query={query}
+          query={visibleQuery}
           liveCanRequest={liveCanRequest}
           parsedOk={liveParsed.ok}
           canRequest={canRequest}
@@ -293,23 +295,7 @@ function SearchResults({
   hasFilters: boolean;
   isLoading: boolean;
   isError: boolean;
-  data:
-    | {
-        cards: Array<{
-          slug: string;
-          name: string;
-          rarity: string | null;
-          imageUrl: string | null;
-          seriesTitle: string;
-        }>;
-        series: Array<{
-          slug: string;
-          title: string;
-          cardCount: number;
-          coverUrl: string | null;
-        }>;
-      }
-    | undefined;
+  data: GlobalSearchResult | undefined;
   onRetry: () => void;
   retryPending: boolean;
   onClearFilters: () => void;
@@ -375,23 +361,7 @@ function ResultLists({
   hasFilters,
   onClearFilters,
 }: {
-  data:
-    | {
-        cards: Array<{
-          slug: string;
-          name: string;
-          rarity: string | null;
-          imageUrl: string | null;
-          seriesTitle: string;
-        }>;
-        series: Array<{
-          slug: string;
-          title: string;
-          cardCount: number;
-          coverUrl: string | null;
-        }>;
-      }
-    | undefined;
+  data: GlobalSearchResult | undefined;
   locale: 'zh-CN' | 'en-US';
   tt: (key: string, vars?: Record<string, string | number>) => string;
   hasFilters: boolean;
@@ -444,22 +414,25 @@ function ResultLists({
             {tt('search.cardsHeading', { count: cards.length })}
           </h2>
           <ul className={RESULT_LIST_CLASS}>
-            {cards.map((card) => (
-              <li key={card.slug}>
-                <Link to={`/cards/${card.slug}`} className={RESULT_LINK_CLASS}>
-                  <CardThumb src={card.imageUrl} slug={card.slug} width="w-10" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-neutral-900">
-                      {card.name}
+            {cards.map((card) => {
+              const rarity = knownRarity(card.rarity);
+              return (
+                <li key={card.slug}>
+                  <Link to={`/cards/${card.slug}`} className={RESULT_LINK_CLASS}>
+                    <CardThumb src={card.imageUrl} slug={card.slug} width="w-10" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-neutral-900">
+                        {card.name}
+                      </span>
+                      <span className="block truncate text-xs text-neutral-600">
+                        {card.seriesTitle}
+                      </span>
                     </span>
-                    <span className="block truncate text-xs text-neutral-600">
-                      {card.seriesTitle}
-                    </span>
-                  </span>
-                  <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale} />
-                </Link>
-              </li>
-            ))}
+                    {rarity ? <RarityBadge rarity={rarity} locale={locale} /> : null}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}
