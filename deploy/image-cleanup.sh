@@ -47,10 +47,14 @@ repos=(
 
 mkdir -p "${root}"
 lock_file="${root}/.image-cleanup.lock"
-exec 9>"${lock_file}"
-if ! flock -n 9; then
-  echo "Image cleanup already running; skipping"
-  exit 0
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"${lock_file}"
+  if ! flock -n 9; then
+    echo "Image cleanup already running; skipping"
+    exit 0
+  fi
+else
+  echo "Warning: flock not found; running image cleanup without concurrency lock" >&2
 fi
 
 declare -A keep_refs=()

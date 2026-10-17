@@ -74,7 +74,18 @@ RUN shared_path="$(node -p "require('fs').realpathSync('node_modules/@repo/share
   && rm -rf /tmp/shared-dist
 COPY --from=builder --chown=app:app /repo/apps/cardhub/api/dist ./dist
 USER app
-RUN node -e "require('@repo/shared'); require('@prisma/client')"
+RUN node <<'NODE'
+const fs = require('fs');
+const path = require('path');
+
+const repoScope = path.join(process.cwd(), 'node_modules', '@repo');
+if (fs.existsSync(repoScope)) {
+  for (const packageName of fs.readdirSync(repoScope)) {
+    require(`@repo/${packageName}`);
+  }
+}
+require('@prisma/client');
+NODE
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
