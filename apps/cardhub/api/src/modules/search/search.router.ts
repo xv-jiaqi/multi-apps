@@ -40,6 +40,7 @@ export class SearchRouter {
         }
         const cardLimit = input.cardLimit ?? input.limit;
         const seriesLimit = input.seriesLimit ?? input.limit;
+        const shouldSearchSeries = Boolean(parsed.seriesSlug) || parsed.includeGroups.length > 0;
 
         const [cards, series] = await Promise.all([
           prisma.card.findMany({
@@ -48,12 +49,14 @@ export class SearchRouter {
             take: cardLimit,
             orderBy: { name: 'asc' },
           }),
-          prisma.series.findMany({
-            where: buildSeriesSearchWhere(parsed),
-            include: { _count: { select: { cards: true } } },
-            take: seriesLimit,
-            orderBy: { title: 'asc' },
-          }),
+          shouldSearchSeries
+            ? prisma.series.findMany({
+                where: buildSeriesSearchWhere(parsed),
+                include: { _count: { select: { cards: true } } },
+                take: seriesLimit,
+                orderBy: { title: 'asc' },
+              })
+            : Promise.resolve([]),
         ]);
 
         return {

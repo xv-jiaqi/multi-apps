@@ -90,6 +90,23 @@ describe('SearchRouter.global', () => {
     expect(seriesFindMany.mock.calls[0]?.[0].take).toBe(3);
   });
 
+  it.each(['r:legendary', '-幼体'])(
+    'does not query series when input has no series or positive name condition: %s',
+    async (q) => {
+      const { caller, cardFindMany, seriesFindMany } = makeRouter();
+      cardFindMany.mockResolvedValueOnce([]);
+
+      await expect(caller.global({ q, limit: 5 })).resolves.toEqual({
+        query: q,
+        cards: [],
+        series: [],
+      });
+
+      expect(cardFindMany).toHaveBeenCalledTimes(1);
+      expect(seriesFindMany).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(['r:', 'OR', 's:天穹黎明'])(
     'returns empty results without querying Prisma for no-condition input %s',
     async (q) => {
