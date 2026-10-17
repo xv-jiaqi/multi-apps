@@ -275,8 +275,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   useEffect(() => {
     if (!pendingLoadedReplyFocusId) return;
     const node = replyRefs.current.get(pendingLoadedReplyFocusId);
-    if (!node) return;
-    node.focus();
+    if (node) node.focus();
+    // Clear even when the row never mounts. A leftover id would focus a later
+    // reply that reuses it (nothing renderable, or the item was removed).
     setPendingLoadedReplyFocusId(null);
   }, [pendingLoadedReplyFocusId, visibleReplies]);
 
