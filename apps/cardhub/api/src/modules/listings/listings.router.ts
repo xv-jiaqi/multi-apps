@@ -11,26 +11,69 @@ type ListingWithUser = Prisma.ListingGetPayload<{
   include: { user: { select: { id: true; username: true } } };
 }>;
 
+type ListingCardSummary = {
+  slug: string;
+  name: string;
+  imageUrl: string | null;
+  seriesSlug: string;
+  seriesTitle: string;
+};
+
 /**
  * Decimal -> string keeps tRPC's inferred type stable (tRPC 11 serialises
  * Decimal to string already, but typing the conversion explicitly
  * means the client never has to disambiguate `string | Decimal`).
  */
-function mapListing(row: ListingWithUser) {
+function mapListing(
+  row: ListingWithUser,
+  cardsBySlug: Map<string, ListingCardSummary> = new Map(),
+) {
   return {
     id: row.id,
     cardSlug: row.cardSlug,
+    card: cardsBySlug.get(row.cardSlug) ?? null,
     kind: row.kind,
     price: row.price === null ? null : row.price.toFixed(2),
     currency: row.currency,
     imageUrls: row.imageUrls,
     contact: row.contact,
     note: row.note,
+    condition: row.condition,
+    language: row.language,
+    variantNote: row.variantNote,
     status: row.status,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     seller: row.user ?? null,
   };
+}
+
+async function loadListingCards(prisma: PrismaService, cardSlugs: string[]) {
+  const uniqueSlugs = [...new Set(cardSlugs)];
+  if (uniqueSlugs.length === 0) return new Map<string, ListingCardSummary>();
+
+  const cards = await prisma.card.findMany({
+    where: { slug: { in: uniqueSlugs } },
+    select: {
+      slug: true,
+      name: true,
+      imageUrl: true,
+      series: { select: { slug: true, title: true } },
+    },
+  });
+
+  return new Map(
+    cards.map((card) => [
+      card.slug,
+      {
+        slug: card.slug,
+        name: card.name,
+        imageUrl: card.imageUrl,
+        seriesSlug: card.series.slug,
+        seriesTitle: card.series.title,
+      },
+    ]),
+  );
 }
 
 @Injectable()
@@ -46,24 +89,59 @@ export class ListingsRouter {
 
     return t.router({
       list: t.procedure.input(listingListInput).query(async ({ input }) => {
+        const usesPriceFilter = input.minPrice !== undefined || input.maxPrice !== undefined;
+        const usesPriceSort = input.sort === 'price_asc' || input.sort === 'price_desc';
+        if ((usesPriceFilter || usesPriceSort) && !input.currency) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'trade.filter.priceNeedsCurrency',
+          });
+        }
+
         // Default surface is "OPEN, newest first". Closed listings stay
         // browseable via listings.mine but don't pollute the public board.
         const where: Prisma.ListingWhereInput = {
           status: 'OPEN',
           ...(input.cardSlug ? { cardSlug: input.cardSlug } : {}),
           ...(input.kind ? { kind: input.kind } : {}),
+          ...(input.condition ? { condition: input.condition } : {}),
+          ...(input.language ? { language: input.language } : {}),
+          ...(usesPriceFilter || usesPriceSort
+            ? {
+                currency: input.currency,
+                price: {
+                  not: null,
+                  ...(input.minPrice !== undefined
+                    ? { gte: new Decimal(input.minPrice.toString()) }
+                    : {}),
+                  ...(input.maxPrice !== undefined
+                    ? { lte: new Decimal(input.maxPrice.toString()) }
+                    : {}),
+                },
+              }
+            : {}),
         };
+        const orderBy: Prisma.ListingOrderByWithRelationInput[] =
+          input.sort === 'price_asc'
+            ? [{ price: 'asc' }, { createdAt: 'desc' }, { id: 'desc' }]
+            : input.sort === 'price_desc'
+              ? [{ price: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }]
+              : [{ createdAt: 'desc' }, { id: 'desc' }];
         const items = await prisma.listing.findMany({
           where,
           take: input.limit + 1,
-          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          orderBy,
           ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
           include: { user: { select: { id: true, username: true } } },
         });
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
+        const cardsBySlug = await loadListingCards(
+          prisma,
+          sliced.map((row) => row.cardSlug),
+        );
         return {
-          items: sliced.map((row: ListingWithUser) => mapListing(row)),
+          items: sliced.map((row: ListingWithUser) => mapListing(row, cardsBySlug)),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),
@@ -85,7 +163,11 @@ export class ListingsRouter {
             orderBy: [{ createdAt: 'desc' }],
             include: { user: { select: { id: true, username: true } } },
           });
-          return items.map((row: ListingWithUser) => mapListing(row));
+          const cardsBySlug = await loadListingCards(
+            prisma,
+            items.map((row) => row.cardSlug),
+          );
+          return items.map((row: ListingWithUser) => mapListing(row, cardsBySlug));
         }),
 
       mine: t.authedProcedure.input(listingMineInput).query(async ({ ctx, input }) => {
@@ -100,8 +182,12 @@ export class ListingsRouter {
         });
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
+        const cardsBySlug = await loadListingCards(
+          prisma,
+          sliced.map((row) => row.cardSlug),
+        );
         return {
-          items: sliced.map((row: ListingWithUser) => mapListing(row)),
+          items: sliced.map((row: ListingWithUser) => mapListing(row, cardsBySlug)),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),
@@ -132,10 +218,14 @@ export class ListingsRouter {
             imageUrls: input.imageUrls,
             contact: input.contact,
             note: input.note ?? null,
+            condition: input.condition ?? null,
+            language: input.language ?? null,
+            variantNote: input.variantNote ?? null,
           },
           include: { user: { select: { id: true, username: true } } },
         });
-        return mapListing(created);
+        const cardsBySlug = await loadListingCards(prisma, [created.cardSlug]);
+        return mapListing(created, cardsBySlug);
       }),
 
       close: t.authedProcedure

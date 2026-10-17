@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from '@repo/ui-web';
 import { gradientFor } from '../lib/gradients';
 
-function isHttps(src: string | null | undefined): src is string {
+export function isHttpsImageUrl(src: string | null | undefined): src is string {
   return src?.trim().toLowerCase().startsWith('https://') ?? false;
 }
 
@@ -24,7 +24,7 @@ export function CardThumb({
         width,
       )}
     >
-      {isHttps(src) && !failed ? (
+      {isHttpsImageUrl(src) && !failed ? (
         <img
           src={src.trim()}
           alt=""
