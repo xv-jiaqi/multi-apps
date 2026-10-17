@@ -2,7 +2,12 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
 import { CATALOG_IMPORT_MAX_BYTES, t } from '@repo/shared';
 
-/** Nest's Express default. Kept for every route except catalog import. */
+/**
+ * Nest's 100kb default for every route except catalog import.
+ * The largest bounded procedure (forum topic update, 10k-char body) fits
+ * inside a tRPC batch envelope with headroom. Catalog import is the only
+ * route above this cap.
+ */
 export const DEFAULT_JSON_BODY_LIMIT = '100kb';
 
 /**
@@ -40,10 +45,12 @@ function isPayloadTooLarge(error: unknown): boolean {
   );
 }
 
-function catalogImportTooLargeError(path: string | undefined) {
+function payloadTooLargeError(path: string | undefined) {
+  const messageKey =
+    path === CATALOG_IMPORT_PROCEDURE ? 'admin.import.tooLarge' : 'error.payloadTooLarge';
   return {
     error: {
-      message: t('zh-CN', 'admin.import.tooLarge'),
+      message: t('zh-CN', messageKey),
       code: -32013,
       data: {
         code: 'PAYLOAD_TOO_LARGE',
@@ -54,12 +61,26 @@ function catalogImportTooLargeError(path: string | undefined) {
   };
 }
 
+function rejectPayloadTooLarge(req: Request, res: Response): void {
+  const paths = trpcPaths(req);
+  const isBatch = req.query.batch === '1';
+  const payload = isBatch
+    ? paths.map((path) => payloadTooLargeError(path))
+    : payloadTooLargeError(paths[0]);
+  res.status(413).type('application/json').send(payload);
+}
+
 /**
  * JSON (and urlencoded) parser with Nest's 100kb default, except
  * `admin.catalog.import`. That route's HTTP limit is 1MB plus 16KB so a tRPC
- * batch envelope can wrap a procedure input that is still under 1MB. Bodies
- * above that cap are rejected here — before zod and before any catalog write —
- * with the shared Chinese message. Other routes keep the 100kb cap.
+ * batch envelope can wrap a procedure input that is still under 1MB.
+ *
+ * Any route whose body exceeds its cap is rejected here with 413 and the
+ * shared tRPC `PAYLOAD_TOO_LARGE` shape — before the handler and before
+ * Sentry. Catalog import keeps the import-specific message; every other
+ * route uses the generic one. Other body-parser 4xx errors (malformed JSON)
+ * are forwarded so `SentryExceptionFilter` can answer with that status
+ * without an ERROR event.
  *
  * Nest's built-in parser is a single global limit, so `createApp` disables
  * it (`bodyParser: false`) and mounts this instead.
@@ -69,20 +90,25 @@ export function jsonBodyParser(): RequestHandler {
     const importRoute = isAdminCatalogImportRequest(req);
     const limit = importRoute ? CATALOG_IMPORT_HTTP_BODY_LIMIT : DEFAULT_JSON_BODY_LIMIT;
     express.json({ limit })(req, res, (jsonError: unknown) => {
-      if (!jsonError) {
-        express.urlencoded({ extended: true, limit })(req, res, next);
+      if (jsonError) {
+        if (isPayloadTooLarge(jsonError)) {
+          rejectPayloadTooLarge(req, res);
+          return;
+        }
+        next(jsonError as Error);
         return;
       }
-      if (importRoute && isPayloadTooLarge(jsonError)) {
-        const paths = trpcPaths(req);
-        const isBatch = req.query.batch === '1';
-        const payload = isBatch
-          ? paths.map((path) => catalogImportTooLargeError(path))
-          : catalogImportTooLargeError(paths[0]);
-        res.status(413).type('application/json').send(payload);
-        return;
-      }
-      next(jsonError as Error);
+      express.urlencoded({ extended: true, limit })(req, res, (urlError: unknown) => {
+        if (!urlError) {
+          next();
+          return;
+        }
+        if (isPayloadTooLarge(urlError)) {
+          rejectPayloadTooLarge(req, res);
+          return;
+        }
+        next(urlError as Error);
+      });
     });
   };
 }

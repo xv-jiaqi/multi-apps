@@ -472,6 +472,7 @@ const zhCN: Dictionary = {
   'admin.import.failed': '导入失败，没有任何记录被修改',
   'admin.import.tooManyRows': '一次最多导入 500 行，当前 {count} 行',
   'admin.import.tooLarge': '一次最多导入 1MB',
+  'error.payloadTooLarge': '内容太大，请精简后重试',
   'admin.import.back': '返回内容管理',
   'admin.import.already': '这份内容已经导入过，请修改后再导入',
   // Miniapp-specific copy (reused across weapp/alipay/h5).
@@ -965,6 +966,7 @@ const enUS: Dictionary = {
   'admin.import.failed': 'Import failed. Nothing was changed.',
   'admin.import.tooManyRows': 'You can import at most 500 rows at a time (this file has {count})',
   'admin.import.tooLarge': 'You can import at most 1MB at a time',
+  'error.payloadTooLarge': 'This content is too large. Shorten it and try again.',
   'admin.import.back': 'Back to catalog',
   'admin.import.already': 'This content was already imported. Change it before importing again.',
   'miniapp.home.browse': 'Browse series',

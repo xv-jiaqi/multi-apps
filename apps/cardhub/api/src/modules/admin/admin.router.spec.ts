@@ -1032,7 +1032,7 @@ describe('AdminRouter HTTP error formatting', () => {
     expect(router.transaction).not.toHaveBeenCalled();
   });
 
-  it('keeps the 100kb body cap on routes other than catalog import', async () => {
+  it('returns a tRPC 413 when a non-import route exceeds the default cap', async () => {
     const router = makeRouter();
     const body = JSON.stringify({ blob: 'x'.repeat(150_000) });
     expect(Buffer.byteLength(body)).toBeGreaterThan(100 * 1024);
@@ -1043,7 +1043,17 @@ describe('AdminRouter HTTP error formatting', () => {
       .send(body);
 
     expect(response.status).toBe(413);
-    expect(JSON.stringify(response.body)).not.toContain('一次最多导入 1MB');
+    expect(response.body).toEqual({
+      error: {
+        message: '内容太大，请精简后重试',
+        code: -32013,
+        data: {
+          code: 'PAYLOAD_TOO_LARGE',
+          httpStatus: 413,
+          path: 'admin.series.list',
+        },
+      },
+    });
     expect(router.userFindUnique).not.toHaveBeenCalled();
   });
 });
