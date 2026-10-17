@@ -7,9 +7,9 @@ import { Breadcrumbs } from '../components/breadcrumbs';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
-import { gradientFor } from '../lib/gradients';
 import { CommentSection } from '../components/comment-section';
 import { ListingsForCard } from '../components/listings-for-card';
+import { Artwork } from '../components/artwork';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
 function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
@@ -29,7 +29,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
     return (
       <PageShell>
         <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-          <div className="aspect-[3/4] animate-pulse rounded-3xl bg-neutral-200" />
+          <div className="aspect-[63/88] animate-pulse rounded-3xl bg-neutral-200" />
           <div className="space-y-4">
             <div className="h-8 w-2/3 animate-pulse rounded bg-neutral-200" />
             <div className="h-4 w-full animate-pulse rounded bg-neutral-200" />
@@ -77,15 +77,16 @@ export const CardDetailPage = observer(function CardDetailPage() {
         />
 
         <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-          <div
-            className={`relative aspect-[3/4] overflow-hidden rounded-3xl border border-white/60 bg-gradient-to-br ${gradientFor(card.slug)} shadow-xl`}
-            aria-hidden
-          >
-            <div className="absolute inset-0 bg-black/10" />
-            <span className="absolute bottom-6 left-6 text-5xl font-black uppercase tracking-widest text-white/70">
-              {card.name.slice(0, 1)}
-            </span>
-          </div>
+          <Artwork
+            kind="card"
+            src={card.imageUrl}
+            slug={card.slug}
+            name={card.name}
+            fit="contain"
+            priority
+            placeholderInitial="bottom-left"
+            className="rounded-3xl border border-white/60 shadow-xl"
+          />
 
           <div className="space-y-6">
             <div className="space-y-3">

@@ -1,0 +1,170 @@
+import { useCallback, useEffect, useState } from 'react';
+import type { ImgHTMLAttributes } from 'react';
+import { resolveArtwork, t } from '@repo/shared';
+import { cn } from '@repo/ui-web';
+import { useStores } from '../stores/root-store';
+import { gradientFor } from '../lib/gradients';
+
+// CH-105: component-local constants. Do not promote to design-tokens yet.
+export const ART_ASPECT = { card: 'aspect-[63/88]', series: 'aspect-[2/1]' } as const;
+export const ART_SURFACE = 'bg-neutral-100';
+export const ART_EDGE = 'ring-1 ring-black/5';
+
+type ArtFit = 'cover' | 'contain';
+
+type ArtImageProps = {
+  src: string | null | undefined;
+  alt: string;
+  fit: ArtFit;
+  priority?: boolean;
+  className?: string;
+};
+
+type UseArtImageResult = {
+  mode: 'image' | 'placeholder';
+  imgProps: ImgHTMLAttributes<HTMLImageElement> & {
+    ref: (img: HTMLImageElement | null) => void;
+    fetchPriority?: 'high';
+    'data-loaded'?: true;
+  };
+};
+
+export function useArtImage({
+  src,
+  alt,
+  fit,
+  priority,
+  className,
+}: ArtImageProps): UseArtImageResult {
+  const resolved = resolveArtwork(src);
+  const imageSrc = resolved.kind === 'image' ? resolved.src : null;
+  const [imageState, setImageState] = useState<{
+    src: string | null;
+    status: 'loading' | 'loaded' | 'error';
+  }>({ src: imageSrc, status: 'loading' });
+  const status = imageState.src === imageSrc ? imageState.status : 'loading';
+
+  useEffect(() => {
+    setImageState({ src: imageSrc, status: 'loading' });
+  }, [imageSrc]);
+
+  const ref = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (!img?.complete) return;
+      setImageState({
+        src: imageSrc,
+        status: img.naturalWidth > 0 ? 'loaded' : 'error',
+      });
+    },
+    [imageSrc],
+  );
+
+  const mode = resolved.kind === 'image' && status !== 'error' ? 'image' : 'placeholder';
+
+  return {
+    mode,
+    imgProps: {
+      ref,
+      src: imageSrc ?? undefined,
+      alt,
+      loading: priority ? 'eager' : 'lazy',
+      fetchPriority: priority ? 'high' : undefined,
+      decoding: 'async',
+      referrerPolicy: 'no-referrer',
+      draggable: false,
+      'data-loaded': status === 'loaded' ? true : undefined,
+      className: cn(
+        'absolute inset-0 size-full opacity-0 transition-opacity duration-200 motion-reduce:transition-none data-loaded:opacity-100',
+        fit === 'contain' ? 'object-contain' : 'object-cover',
+        className,
+      ),
+      onLoad: () => setImageState({ src: imageSrc, status: 'loaded' }),
+      onError: () => setImageState({ src: imageSrc, status: 'error' }),
+    },
+  };
+}
+
+export function ArtImage(props: ArtImageProps) {
+  const { mode, imgProps } = useArtImage(props);
+
+  if (mode === 'placeholder') return null;
+
+  return <img key={typeof props.src === 'string' ? props.src : 'placeholder'} {...imgProps} />;
+}
+
+type ArtworkProps = {
+  kind: 'card' | 'series';
+  src: ArtImageProps['src'];
+  slug: string | null | undefined;
+  name: string;
+  fit?: ArtFit;
+  decorative?: boolean;
+  priority?: boolean;
+  placeholderInitial?: 'none' | 'center' | 'bottom-left';
+  className?: string;
+};
+
+function ArtworkPlaceholder({
+  kind,
+  slug,
+  name,
+  initial,
+}: Pick<ArtworkProps, 'kind' | 'slug' | 'name'> & {
+  initial: NonNullable<ArtworkProps['placeholderInitial']>;
+}) {
+  const showInitial = kind === 'card' && initial !== 'none';
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        'absolute inset-0 bg-gradient-to-br',
+        gradientFor(slug),
+        showInitial && initial === 'center' && 'flex items-center justify-center',
+      )}
+    >
+      {showInitial ? (
+        <>
+          <div className="absolute inset-0 bg-black/10" />
+          <span
+            className={cn(
+              'font-black uppercase tracking-widest text-white/70',
+              initial === 'bottom-left' ? 'absolute bottom-6 left-6 text-5xl' : 'relative text-3xl',
+            )}
+          >
+            {name.slice(0, 1)}
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+export function Artwork({
+  kind,
+  src,
+  slug,
+  name,
+  fit = 'cover',
+  decorative,
+  priority,
+  placeholderInitial = 'none',
+  className,
+}: ArtworkProps) {
+  const { locale } = useStores();
+  const alt = decorative
+    ? ''
+    : kind === 'card'
+      ? t(locale.locale, 'artwork.cardAlt', { name })
+      : t(locale.locale, 'artwork.seriesAlt', { title: name });
+  const { mode, imgProps } = useArtImage({ src, alt, fit, priority });
+
+  return (
+    <div className={cn('relative overflow-hidden', ART_ASPECT[kind], ART_SURFACE, className)}>
+      {mode === 'image' ? (
+        <img key={typeof src === 'string' ? src : 'placeholder'} {...imgProps} />
+      ) : (
+        <ArtworkPlaceholder kind={kind} slug={slug} name={name} initial={placeholderInitial} />
+      )}
+    </div>
+  );
+}

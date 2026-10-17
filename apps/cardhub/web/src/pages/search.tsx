@@ -7,7 +7,7 @@ import { Breadcrumbs } from '../components/breadcrumbs';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
-import { gradientFor } from '../lib/gradients';
+import { ART_EDGE, Artwork } from '../components/artwork';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
 function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
@@ -72,9 +72,13 @@ export const SearchPage = observer(function SearchPage() {
                   to={`/cards/${card.slug}`}
                   className="flex items-center gap-4 p-4 transition-colors hover:bg-neutral-50/80"
                 >
-                  <div
-                    className={`h-12 w-12 shrink-0 rounded-lg bg-gradient-to-br ${gradientFor(card.slug)}`}
-                    aria-hidden
+                  <Artwork
+                    kind="card"
+                    src={card.imageUrl}
+                    slug={card.slug}
+                    name={card.name}
+                    decorative
+                    className={`w-10 shrink-0 rounded-sm ${ART_EDGE}`}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-neutral-900">{card.name}</p>

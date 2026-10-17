@@ -5,7 +5,7 @@ import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
-import { gradientFor } from '../lib/gradients';
+import { Artwork } from '../components/artwork';
 
 export const SeriesListPage = observer(function SeriesListPage() {
   const { locale } = useStores();
@@ -52,10 +52,15 @@ export const SeriesListPage = observer(function SeriesListPage() {
                   to={`/series/${s.slug}`}
                   className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-lg"
                 >
-                  <div
-                    className={`relative h-32 bg-gradient-to-br ${gradientFor(s.slug)}`}
-                    aria-hidden
-                  >
+                  <div className="relative" aria-hidden>
+                    <Artwork
+                      kind="series"
+                      src={s.coverUrl}
+                      slug={s.slug}
+                      name={s.title}
+                      decorative
+                      className="w-full"
+                    />
                     <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                   </div>
                   <div className="space-y-2 p-5">
