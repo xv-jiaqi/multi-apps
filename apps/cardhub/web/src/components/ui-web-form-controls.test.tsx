@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   Combobox,
@@ -62,6 +62,7 @@ function ComboHarness({
   emptyQueryContent,
   hint,
   inputRef,
+  initialValue = null,
 }: {
   mode?: 'select' | 'navigate';
   status?: 'idle' | 'loading' | 'error' | 'success';
@@ -73,9 +74,10 @@ function ComboHarness({
   emptyQueryContent?: React.ReactNode;
   hint?: React.ReactNode;
   inputRef?: React.Ref<HTMLInputElement>;
+  initialValue?: Item | null;
 }) {
   const [query, setQuery] = React.useState('');
-  const [value, setValue] = React.useState<Item | null>(null);
+  const [value, setValue] = React.useState<Item | null>(initialValue);
   return (
     <Combobox
       mode={mode}
@@ -163,6 +165,123 @@ describe('ui-web Combobox', () => {
     expect(input).toHaveValue('Alpha');
   });
 
+  it('closes on first Escape, reopens after more typing, and clears on second Escape', async () => {
+    const user = userEvent.setup();
+    render(<ComboHarness />);
+
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'pika');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(input).toHaveValue('pika');
+
+    await user.type(input, 'chu');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(input).toHaveValue('pikachu');
+
+    await user.keyboard('{Escape}');
+    expect(input).toHaveValue('');
+  });
+
+  it('keeps select-mode value while editing and restores it on Escape', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<ComboHarness initialValue={alpha} onValueChange={onValueChange} />);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveValue('Alpha');
+
+    await user.type(input, 'p');
+    expect(onValueChange).not.toHaveBeenCalledWith(null);
+    expect(input).toHaveValue('Alphap');
+
+    await user.keyboard('{Escape}');
+    expect(input).toHaveValue('Alpha');
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it('closes hint popovers on outside interaction', async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <ComboHarness hint={<span>Unsupported prefix</span>} />
+        <button type="button">Outside</button>
+      </div>,
+    );
+
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'foo:bar');
+    expect(await screen.findByRole('status')).toHaveTextContent('Unsupported prefix');
+
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('clears highlight with ArrowUp at the top, leaves Home/End to the input, and clears on mouse leave', async () => {
+    const user = userEvent.setup();
+    render(<ComboHarness />);
+
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'a');
+    const listbox = await screen.findByRole('listbox');
+
+    await user.keyboard('{ArrowDown}');
+    const activeId = input.getAttribute('aria-activedescendant');
+    expect(activeId).toBeTruthy();
+
+    await user.keyboard('{Home}{End}');
+    expect(input).toHaveAttribute('aria-activedescendant', activeId);
+
+    await user.keyboard('{ArrowUp}');
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+
+    await user.keyboard('{ArrowDown}');
+    expect(input).toHaveAttribute('aria-activedescendant');
+    fireEvent.mouseLeave(listbox);
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+  });
+
+  it('does not reopen an empty dismissed popover with ArrowDown', async () => {
+    const user = userEvent.setup();
+    render(<ComboHarness groups={[]} />);
+
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'z');
+    expect(await screen.findByRole('status')).toHaveTextContent('No results');
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    await user.keyboard('{ArrowDown}');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('keeps option ids unique when item keys repeat across groups', async () => {
+    const user = userEvent.setup();
+    render(
+      <ComboHarness
+        groups={[
+          { key: 'cards', label: 'Cards', items: [alpha] },
+          { key: 'series', label: 'Series', items: [alpha] },
+        ]}
+      />,
+    );
+
+    await user.type(screen.getByRole('combobox'), 'a');
+
+    const options = await screen.findAllByRole('option', { name: 'Alpha' });
+    expect(options).toHaveLength(2);
+    expect(options[0]!.id).not.toBe(options[1]!.id);
+  });
+
   it('does not select an item on Tab', async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -210,8 +329,9 @@ describe('ui-web Combobox', () => {
     expect(await screen.findByRole('option', { name: 'Alpha' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Load' }));
+    fireEvent.focus(input);
 
-    expect(screen.getByRole('option', { name: 'Alpha' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: 'Alpha' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Loading');
   });
 

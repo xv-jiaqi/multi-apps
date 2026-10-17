@@ -55,6 +55,7 @@ export interface ComboboxProps<T> {
 interface FlatItem<T> {
   item: T;
   key: string;
+  compositeKey: string;
   optionId: string;
 }
 
@@ -105,7 +106,7 @@ export function Combobox<T>({
   const inputId = id ?? `${generatedId}-input`;
   const listboxId = `${generatedId}-listbox`;
   const [focused, setFocused] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
+  const [dismissed, setDismissed] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState(-1);
   const [isEditingSelection, setIsEditingSelection] = React.useState(false);
   const internalInputRef = React.useRef<HTMLInputElement>(null);
@@ -124,25 +125,37 @@ export function Combobox<T>({
   const displayCount = groupCount(displayGroups);
   const showsEmptyQueryContent = focused && inputValue.length === 0 && Boolean(emptyQueryContent);
   const canOpenForQuery = focused && query.length >= minChars;
-  const shouldOpen = !disabled && (Boolean(hint) || showsEmptyQueryContent || canOpenForQuery);
+  const shouldOpen =
+    !disabled && focused && (Boolean(hint) || showsEmptyQueryContent || canOpenForQuery);
+  const open = shouldOpen && !dismissed;
 
   React.useEffect(() => {
-    setOpen(shouldOpen);
     if (!shouldOpen) {
       setActiveIndex(-1);
+      setDismissed(false);
     }
   }, [shouldOpen]);
 
   const flatItems = React.useMemo<Array<FlatItem<T>>>(() => {
     const items: Array<FlatItem<T>> = [];
     displayGroups.forEach((group) => {
-      group.items.forEach((item) => {
+      group.items.forEach((item, itemIndex) => {
         const key = getKey(item);
-        items.push({ item, key, optionId: `${generatedId}-option-${items.length}` });
+        const compositeKey = `${group.key}\u0000${key}\u0000${itemIndex}`;
+        items.push({
+          item,
+          key,
+          compositeKey,
+          optionId: `${generatedId}-option-${items.length}`,
+        });
       });
     });
     return items;
   }, [displayGroups, generatedId, getKey]);
+
+  const flatItemsByCompositeKey = React.useMemo(() => {
+    return new Map(flatItems.map((item, index) => [item.compositeKey, { ...item, index }]));
+  }, [flatItems]);
 
   React.useEffect(() => {
     if (activeIndex >= flatItems.length) {
@@ -156,6 +169,7 @@ export function Combobox<T>({
       ? getItemText(value)
       : inputValue;
   const activeOptionId = activeIndex >= 0 ? flatItems[activeIndex]?.optionId : undefined;
+  const hasListbox = open && !showsEmptyQueryContent && !hint && displayCount > 0;
 
   function focusInput() {
     internalInputRef.current?.focus();
@@ -171,7 +185,7 @@ export function Combobox<T>({
       onInputValueChange('');
     }
     setActiveIndex(-1);
-    setOpen(false);
+    setDismissed(true);
     requestAnimationFrame(focusInput);
   }
 
@@ -182,23 +196,26 @@ export function Combobox<T>({
       onValueChange?.(null);
     }
     setActiveIndex(-1);
+    setDismissed(false);
     requestAnimationFrame(focusInput);
   }
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     if (mode === 'select' && value != null) {
-      onValueChange?.(null);
       setIsEditingSelection(true);
     }
     onInputValueChange(event.target.value);
     setActiveIndex(-1);
+    setDismissed(false);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       if (!open) {
-        setOpen(true);
+        if (flatItems.length > 0 && shouldOpen) {
+          setDismissed(false);
+        }
         return;
       }
       setActiveIndex((index) =>
@@ -210,7 +227,9 @@ export function Combobox<T>({
     if (event.key === 'ArrowUp') {
       event.preventDefault();
       if (!open) {
-        setOpen(true);
+        if (flatItems.length > 0 && shouldOpen) {
+          setDismissed(false);
+        }
         return;
       }
       setActiveIndex((index) => (index <= 0 ? -1 : index - 1));
@@ -238,7 +257,7 @@ export function Combobox<T>({
     if (event.key === 'Escape') {
       event.preventDefault();
       if (open) {
-        setOpen(false);
+        setDismissed(true);
         setActiveIndex(-1);
         if (mode === 'select' && value != null) {
           setIsEditingSelection(false);
@@ -251,7 +270,7 @@ export function Combobox<T>({
     }
 
     if (event.key === 'Tab') {
-      setOpen(false);
+      setDismissed(true);
       setActiveIndex(-1);
     }
   }
@@ -283,7 +302,17 @@ export function Combobox<T>({
   })();
 
   return (
-    <PopoverPrimitive.Root open={open}>
+    <PopoverPrimitive.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          setDismissed(true);
+          setActiveIndex(-1);
+        } else {
+          setDismissed(false);
+        }
+      }}
+    >
       <PopoverPrimitive.Anchor asChild>
         <div className="relative">
           <Search
@@ -299,7 +328,7 @@ export function Combobox<T>({
             role="combobox"
             aria-autocomplete="list"
             aria-expanded={open}
-            aria-controls={listboxId}
+            aria-controls={hasListbox ? listboxId : undefined}
             aria-activedescendant={activeOptionId}
             aria-invalid={ariaInvalid}
             aria-describedby={ariaDescribedBy}
@@ -309,7 +338,10 @@ export function Combobox<T>({
             value={displayValue}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onFocus={() => setFocused(true)}
+            onFocus={() => {
+              setFocused(true);
+              setDismissed(false);
+            }}
             onBlur={() => {
               setFocused(false);
               setActiveIndex(-1);
@@ -360,7 +392,12 @@ export function Combobox<T>({
           ) : (
             <>
               {displayCount > 0 ? (
-                <div id={listboxId} role="listbox" className="max-h-80 overflow-y-auto p-1">
+                <div
+                  id={listboxId}
+                  role="listbox"
+                  className="max-h-80 overflow-y-auto p-1"
+                  onMouseLeave={() => setActiveIndex(-1)}
+                >
                   {displayGroups.map((group) => (
                     <div key={group.key} role="group" aria-label={group.label}>
                       {group.label ? (
@@ -368,15 +405,17 @@ export function Combobox<T>({
                           {group.label}
                         </div>
                       ) : null}
-                      {group.items.map((item) => {
+                      {group.items.map((item, itemIndex) => {
                         const key = getKey(item);
-                        const index = flatItems.findIndex((flatItem) => flatItem.key === key);
-                        const highlighted = index === activeIndex;
+                        const compositeKey = `${group.key}\u0000${key}\u0000${itemIndex}`;
+                        const flatItem = flatItemsByCompositeKey.get(compositeKey);
+                        const index = flatItem?.index ?? -1;
+                        const highlighted = index >= 0 && index === activeIndex;
                         const selected = selectedKey === key;
                         return (
                           <div
-                            key={key}
-                            id={flatItems[index]?.optionId}
+                            key={compositeKey}
+                            id={flatItem?.optionId}
                             role="option"
                             aria-selected={selected}
                             data-highlighted={highlighted ? '' : undefined}
