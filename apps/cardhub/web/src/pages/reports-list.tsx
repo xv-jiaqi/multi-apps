@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { t, type Locale, type ReportStatus } from '@repo/shared';
+import { t, type Locale, type ReportResolveAction, type ReportStatus } from '@repo/shared';
 import { Button } from '@repo/ui-web';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -20,6 +20,9 @@ interface ReportBase {
   reason: string;
   status: ReportStatus;
   createdAt: string;
+  resolvedAt: string | null;
+  resolver: { id: string; username: string } | null;
+  resolution: string | null;
   reporter: { id: string; username: string };
 }
 
@@ -63,6 +66,8 @@ export const ReportsListPage = observer(function ReportsListPage() {
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [statusFilter, setStatusFilter] = useState<'all' | ReportStatus>('all');
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const statusRef = useRef<HTMLParagraphElement>(null);
 
   const query = trpc.reports.list.useInfiniteQuery(
     { limit: 20, status: statusFilter === 'all' ? undefined : statusFilter },
@@ -73,6 +78,16 @@ export const ReportsListPage = observer(function ReportsListPage() {
   );
 
   const items = (query.data?.pages.flatMap((page) => page.items) ?? []) as ReportItem[];
+  useEffect(() => {
+    if (statusMessage) {
+      statusRef.current?.focus();
+    }
+  }, [statusMessage]);
+
+  function handleFilterChange(next: 'all' | ReportStatus) {
+    setStatusMessage(null);
+    setStatusFilter(next);
+  }
 
   return (
     <PageShell>
@@ -109,7 +124,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
                   <button
                     key={filter.key}
                     type="button"
-                    onClick={() => setStatusFilter(filter.key)}
+                    onClick={() => handleFilterChange(filter.key)}
                     aria-pressed={active}
                     className={`rounded-full px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                       active ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
@@ -120,6 +135,17 @@ export const ReportsListPage = observer(function ReportsListPage() {
                 );
               })}
             </div>
+
+            {statusMessage ? (
+              <p
+                ref={statusRef}
+                role="status"
+                tabIndex={-1}
+                className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                {statusMessage}
+              </p>
+            ) : null}
 
             {query.isLoading ? (
               <ul className="space-y-3">
@@ -150,48 +176,12 @@ export const ReportsListPage = observer(function ReportsListPage() {
               <>
                 <ul className="space-y-3">
                   {items.map((report) => (
-                    <li
+                    <ReportListItem
                       key={report.id}
-                      className="space-y-4 rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
-                              {tt(`reports.target.${report.targetType.toLowerCase()}`)}
-                            </span>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                report.status === 'PENDING'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-emerald-100 text-emerald-800'
-                              }`}
-                            >
-                              {tt(
-                                report.status === 'PENDING'
-                                  ? 'reports.filterPending'
-                                  : 'reports.filterResolved',
-                              )}
-                            </span>
-                          </div>
-                          <p className="text-sm text-neutral-900">{report.reason}</p>
-                        </div>
-                        <div className="text-right text-xs text-neutral-500">
-                          <p>@{report.reporter.username}</p>
-                          <time dateTime={report.createdAt}>
-                            {new Date(report.createdAt).toLocaleString(locale.locale)}
-                          </time>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl border border-neutral-200 bg-white/80 p-4 text-sm">
-                        {report.target ? (
-                          <TargetSummary report={report} locale={locale.locale} />
-                        ) : (
-                          <p className="text-neutral-500">{tt('reports.targetMissing')}</p>
-                        )}
-                      </div>
-                    </li>
+                      report={report}
+                      locale={locale.locale}
+                      onResolved={(message) => setStatusMessage(message)}
+                    />
                   ))}
                 </ul>
 
@@ -215,6 +205,264 @@ export const ReportsListPage = observer(function ReportsListPage() {
     </PageShell>
   );
 });
+
+function ReportListItem({
+  report,
+  locale,
+  onResolved,
+}: {
+  report: ReportItem;
+  locale: Locale;
+  onResolved: (message: string) => void;
+}) {
+  const tt = (key: string) => t(locale, key);
+  const [note, setNote] = useState('');
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [restoreRemoveFocus, setRestoreRemoveFocus] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submittingAction, setSubmittingAction] = useState<ReportResolveAction | null>(null);
+  const utils = trpc.useUtils();
+  const removeButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const reasonId = `report-reason-${report.id}`;
+  const noteId = `resolution-${report.id}`;
+  const isBusy = submittingAction !== null;
+
+  const resolveReport = trpc.reports.resolve.useMutation({
+    async onSuccess(_, variables) {
+      await utils.reports.list.invalidate();
+      setError(null);
+      setConfirmingRemove(false);
+      setSubmittingAction(null);
+      if (variables.action === 'MARK_RESOLVED') {
+        onResolved(tt('reports.resolve.successMarked'));
+      } else if (report.targetType === 'LISTING') {
+        onResolved(tt('reports.resolve.successClosed'));
+      } else {
+        onResolved(tt('reports.resolve.successRemoved'));
+      }
+    },
+    onError(err) {
+      setSubmittingAction(null);
+      setError(
+        err.data?.code === 'FORBIDDEN' ? tt('reports.adminOnly') : tt('reports.resolve.failed'),
+      );
+    },
+  });
+
+  useEffect(() => {
+    if (confirmingRemove) {
+      cancelButtonRef.current?.focus();
+    }
+  }, [confirmingRemove]);
+
+  useEffect(() => {
+    if (!confirmingRemove && restoreRemoveFocus) {
+      removeButtonRef.current?.focus();
+      setRestoreRemoveFocus(false);
+    }
+  }, [confirmingRemove, restoreRemoveFocus]);
+
+  function submit(action: ReportResolveAction) {
+    setError(null);
+    setSubmittingAction(action);
+    resolveReport.mutate({
+      id: report.id,
+      action,
+      resolution: note.trim() || undefined,
+    });
+  }
+
+  function cancelConfirm() {
+    setRestoreRemoveFocus(true);
+    setConfirmingRemove(false);
+  }
+
+  return (
+    <li
+      aria-busy={isBusy || undefined}
+      className="space-y-4 rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
+              {tt(`reports.target.${report.targetType.toLowerCase()}`)}
+            </span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                report.status === 'PENDING'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {tt(report.status === 'PENDING' ? 'reports.filterPending' : 'reports.filterResolved')}
+            </span>
+          </div>
+          <p id={reasonId} className="text-sm text-neutral-900">
+            {report.reason}
+          </p>
+        </div>
+        <div className="text-right text-xs text-neutral-500">
+          <p>@{report.reporter.username}</p>
+          <time dateTime={report.createdAt}>
+            {new Date(report.createdAt).toLocaleString(locale)}
+          </time>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-neutral-200 bg-white/80 p-4 text-sm">
+        {report.target ? (
+          <TargetSummary report={report} locale={locale} />
+        ) : (
+          <p className="text-neutral-500">{tt('reports.targetMissing')}</p>
+        )}
+      </div>
+
+      <div className="space-y-3 border-t border-neutral-200 pt-4">
+        {report.status === 'PENDING' ? (
+          <>
+            <div className="space-y-1">
+              <label htmlFor={noteId} className="block text-xs font-medium text-neutral-700">
+                {tt('reports.resolve.noteLabel')}
+              </label>
+              <textarea
+                id={noteId}
+                rows={2}
+                maxLength={500}
+                value={note}
+                readOnly={isBusy}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder={tt('reports.resolve.notePlaceholder')}
+                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+              />
+              <p className="text-xs text-neutral-500">{note.length} / 500</p>
+            </div>
+
+            {confirmingRemove ? (
+              <div
+                role="alertdialog"
+                aria-labelledby={reasonId}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.stopPropagation();
+                    cancelConfirm();
+                  }
+                }}
+                className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+              >
+                <p>
+                  {tt(
+                    report.targetType === 'LISTING'
+                      ? 'reports.resolve.confirmClose'
+                      : 'reports.resolve.confirmRemove',
+                  )}
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    className="w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
+                    disabled={isBusy}
+                    onClick={() => submit('REMOVE_TARGET')}
+                  >
+                    {submittingAction === 'REMOVE_TARGET'
+                      ? tt('reports.resolve.submitting')
+                      : tt(
+                          report.targetType === 'LISTING'
+                            ? 'reports.resolve.confirmCloseAction'
+                            : 'reports.resolve.confirmRemoveAction',
+                        )}
+                  </Button>
+                  <Button
+                    ref={cancelButtonRef}
+                    type="button"
+                    variant="ghost"
+                    className="w-full sm:w-auto"
+                    disabled={isBusy}
+                    onClick={cancelConfirm}
+                  >
+                    {tt('reports.resolve.cancel')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div
+                role="group"
+                aria-labelledby={reasonId}
+                className="flex flex-col gap-2 sm:flex-row sm:justify-end"
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 w-full sm:w-auto"
+                  disabled={isBusy}
+                  onClick={() => submit('MARK_RESOLVED')}
+                >
+                  {submittingAction === 'MARK_RESOLVED'
+                    ? tt('reports.resolve.submitting')
+                    : tt('reports.resolve.markResolved')}
+                </Button>
+                {report.target ? (
+                  <Button
+                    ref={removeButtonRef}
+                    type="button"
+                    variant="outline"
+                    className="h-10 w-full border-red-200 text-red-600 hover:bg-red-50 sm:w-auto"
+                    disabled={isBusy}
+                    onClick={() => setConfirmingRemove(true)}
+                  >
+                    {tt('reports.resolve.removeTarget')}
+                  </Button>
+                ) : null}
+              </div>
+            )}
+
+            {error ? (
+              <p
+                role="alert"
+                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+              >
+                {error}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <ResolvedReportDetails report={report} locale={locale} />
+        )}
+      </div>
+    </li>
+  );
+}
+
+function ResolvedReportDetails({ report, locale }: { report: ReportItem; locale: Locale }) {
+  const tt = (key: string) => t(locale, key);
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+      <dt className="text-neutral-500">{tt('reports.resolve.resolvedBy')}</dt>
+      <dd className="text-neutral-800">
+        {report.resolver ? `@${report.resolver.username}` : tt('reports.resolve.deletedUser')}
+      </dd>
+      <dt className="text-neutral-500">{tt('reports.resolve.resolvedAt')}</dt>
+      <dd className="text-neutral-800">
+        {report.resolvedAt ? (
+          <time dateTime={report.resolvedAt}>
+            {new Date(report.resolvedAt).toLocaleString(locale)}
+          </time>
+        ) : (
+          '—'
+        )}
+      </dd>
+      {report.resolution ? (
+        <>
+          <dt className="text-neutral-500">{tt('reports.resolve.resolution')}</dt>
+          <dd className="whitespace-pre-wrap break-words text-sm text-neutral-800">
+            {report.resolution}
+          </dd>
+        </>
+      ) : null}
+    </dl>
+  );
+}
 
 function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale }) {
   const tt = (key: string) => t(locale, key);

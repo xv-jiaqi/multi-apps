@@ -104,6 +104,9 @@ export type ReportTargetType = (typeof REPORT_TARGET_VALUES)[number];
 export const REPORT_STATUS_VALUES = ['PENDING', 'RESOLVED'] as const;
 export type ReportStatus = (typeof REPORT_STATUS_VALUES)[number];
 
+export const REPORT_RESOLVE_ACTION_VALUES = ['MARK_RESOLVED', 'REMOVE_TARGET'] as const;
+export type ReportResolveAction = (typeof REPORT_RESOLVE_ACTION_VALUES)[number];
+
 // ISO 4217 codes are exactly three uppercase letters. We don't enumerate the
 // full set because cardhub's audience picks per-listing (CNY default with
 // USD/JPY common second). The format check at least catches typos.
@@ -156,3 +159,10 @@ export const reportListInput = cursorPaginationInput.extend({
   status: z.enum(REPORT_STATUS_VALUES).optional(),
 });
 export type ReportListInput = z.infer<typeof reportListInput>;
+
+export const reportResolveInput = z.object({
+  id: z.string().uuid(),
+  action: z.enum(REPORT_RESOLVE_ACTION_VALUES),
+  resolution: z.string().trim().max(500, '处理说明最多 500 字').optional(),
+});
+export type ReportResolveInput = z.infer<typeof reportResolveInput>;
