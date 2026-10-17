@@ -188,3 +188,58 @@ export function shouldRequestCardSearchQuery(query: string): boolean {
   const parsed = parseCardSearchQuery(query);
   return parsed.ok && hasCardSearchConditions(parsed);
 }
+
+export function markdownToPlainText(markdown: string, maxLength: number): string {
+  if (maxLength <= 0) return '';
+
+  const source = Array.from(markdown).slice(0, 2000).join('');
+  const lines: string[] = [];
+  let fence: '```' | '~~~' | null = null;
+  for (const line of source.split(/\r?\n/)) {
+    const trimmed = line.trimStart();
+    if (fence) {
+      if (trimmed.startsWith(fence)) fence = null;
+      continue;
+    }
+    if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
+      fence = trimmed.startsWith('```') ? '```' : '~~~';
+      continue;
+    }
+    if (/^(?: {4}|\t)/.test(line)) continue;
+    if (/^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(line)) continue;
+    lines.push(line);
+  }
+
+  const plain = lines
+    .join('\n')
+    // Images and raw HTML do not contribute to forum list summaries.
+    .replace(/!\[[^\]\n]{0,200}]\([^)\n]{0,500}\)/g, ' ')
+    .replace(/<((?:https?:\/\/|mailto:)[^>\s]{0,500})>/g, '$1')
+    .replace(
+      /<[A-Za-z][A-Za-z0-9-]*(?:\s[^>\n]{0,200})?>[^<\n]{0,1000}<\/[A-Za-z][A-Za-z0-9-]*>/g,
+      ' ',
+    )
+    .replace(/<\/?[A-Za-z][^>\n]{0,200}>/g, ' ')
+    // Keep useful inline text while stripping Markdown delimiters.
+    .replace(/\[([^\]\n]{1,500})]\([^)\n]{0,500}\)/g, '$1')
+    .replace(/`([^`\n]{1,500})`/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}>\s?/gm, '')
+    .replace(/(^|\s)[-*+]\s+\[[ xX]\]\s+/g, ' ')
+    .replace(/^\s{0,3}(?:[-*+]|\d+[.)])\s+/gm, '')
+    .replace(/\[[ xX]\]\s+/g, '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    .replace(/(^|[\s([{"'])\*([^*\s][^*\n]*?)\*(?=$|[\s)\]}.,!?;:'"])/g, '$1$2')
+    .replace(/(^|[\s([{"'])_([^_\s][^_\n]*?)_(?=$|[\s)\]}.,!?;:'"])/g, '$1$2')
+    .replace(/~~([^~\n]+)~~/g, '$1')
+    .replace(/\|/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plain) return '';
+
+  const chars = Array.from(plain);
+  if (chars.length <= maxLength) return plain;
+  return `${chars.slice(0, maxLength).join('').trimEnd()}…`;
+}

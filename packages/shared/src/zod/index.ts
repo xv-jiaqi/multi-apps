@@ -94,6 +94,12 @@ export const topicUpdateInput = z.object({
 });
 export type TopicUpdateInput = z.infer<typeof topicUpdateInput>;
 
+export const topicSetPinnedInput = z.object({
+  id: z.string().uuid(),
+  pinned: z.boolean(),
+});
+export type TopicSetPinnedInput = z.infer<typeof topicSetPinnedInput>;
+
 export const replyCreateInput = z.object({
   topicId: z.string().uuid(),
   body: replyBodySchema,

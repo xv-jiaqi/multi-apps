@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import { Pin } from 'lucide-react';
 import { Button } from '@repo/ui-web';
 import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
@@ -15,6 +16,7 @@ export const ForumListPage = observer(function ForumListPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [notice, setNotice] = useState('');
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false);
   const noticeRef = useRef<HTMLParagraphElement>(null);
 
   // useInfiniteQuery on the cursor-based topics.list — getNextPageParam
@@ -37,6 +39,12 @@ export const ForumListPage = observer(function ForumListPage() {
       noticeRef.current?.focus();
     }
   }, [notice]);
+
+  const onLoadMore = async () => {
+    setLoadMoreFailed(false);
+    const result = await query.fetchNextPage();
+    if (result.isError) setLoadMoreFailed(true);
+  };
 
   return (
     <PageShell>
@@ -88,7 +96,6 @@ export const ForumListPage = observer(function ForumListPage() {
         ) : query.isError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
             <p className="font-medium">{tt('state.error')}</p>
-            <p className="mt-1 break-all text-xs opacity-80">{query.error.message}</p>
             <button
               type="button"
               onClick={() => query.refetch()}
@@ -111,18 +118,31 @@ export const ForumListPage = observer(function ForumListPage() {
                     className="group block rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-brand-700">
-                        {topic.title}
-                      </h3>
+                      <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-neutral-900 group-hover:text-brand-700">
+                        {topic.pinned ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                            <Pin className="size-3" aria-hidden />
+                            {tt('forum.badge.pinned')}
+                          </span>
+                        ) : null}
+                        <span>{topic.title}</span>
+                      </h2>
                       <span className="shrink-0 text-xs text-neutral-500">
                         {tt('forum.list.replyCount', { count: topic.replyCount })}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-neutral-600">{topic.body}</p>
+                    {topic.excerpt ? (
+                      <p className="mt-2 line-clamp-2 text-sm text-neutral-600 [overflow-wrap:anywhere]">
+                        {topic.excerpt}
+                      </p>
+                    ) : null}
                     <div className="mt-3 flex items-center gap-3 text-xs text-neutral-500">
                       <span className="font-medium text-neutral-700">@{topic.author.username}</span>
                       <time dateTime={topic.createdAt}>
-                        {new Date(topic.createdAt).toLocaleString(locale.locale)}
+                        {new Date(topic.createdAt).toLocaleString(locale.locale, {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
                       </time>
                     </div>
                   </Link>
@@ -131,11 +151,20 @@ export const ForumListPage = observer(function ForumListPage() {
             </ul>
 
             {query.hasNextPage ? (
-              <div className="flex justify-center">
+              <div className="space-y-2">
+                {loadMoreFailed ? (
+                  <p
+                    role="alert"
+                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-red-700"
+                  >
+                    {tt('state.error')}
+                  </p>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => void query.fetchNextPage()}
+                  className="mx-auto flex"
+                  onClick={() => void onLoadMore()}
                   disabled={query.isFetchingNextPage}
                 >
                   {query.isFetchingNextPage ? tt('state.loading') : tt('forum.list.loadMore')}

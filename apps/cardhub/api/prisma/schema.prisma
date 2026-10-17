@@ -95,6 +95,7 @@ model Topic {
   // pinned topics float to the top of the timeline. Only admins set this in
   // M6 — there is no UI for ordinary users.
   pinned    Boolean  @default(false)
+  editedAt  DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -102,6 +103,7 @@ model Topic {
   replies Reply[]
 
   @@index([createdAt])
+  @@index([pinned, createdAt, id])
   @@index([userId])
   @@map("topics")
 }

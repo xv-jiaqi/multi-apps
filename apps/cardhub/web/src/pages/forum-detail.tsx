@@ -9,7 +9,8 @@ import {
   type FormEvent,
   type RefObject,
 } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { Pin } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { replyBodySchema, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
@@ -50,6 +51,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const { slug = '' } = useParams<{ slug: string }>();
   const { locale, session } = useStores();
   const navigate = useNavigate();
+  const location = useLocation();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
   const topicQuery = trpc.forum.topics.bySlug.useQuery({ slug }, { enabled: !!slug });
@@ -69,6 +71,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState<ConfirmingDelete | null>(null);
   const [restoreDeleteFocus, setRestoreDeleteFocus] = useState<DeleteFocusTarget | null>(null);
   const [deleteError, setDeleteError] = useState<DeleteError | null>(null);
+  const [topicNotice, setTopicNotice] = useState('');
+  const [topicError, setTopicError] = useState('');
+  const [showEditAction, setShowEditAction] = useState(false);
+  const [restorePinFocus, setRestorePinFocus] = useState(false);
   const replyRefs = useRef(new Map<string, HTMLLIElement>());
   const replyDeleteButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const topicDeleteButtonRef = useRef<HTMLButtonElement>(null);
@@ -76,6 +82,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const replyStatusRef = useRef<HTMLParagraphElement>(null);
   const loadMoreButtonRef = useRef<HTMLButtonElement>(null);
   const retryButtonRef = useRef<HTMLButtonElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const editLinkRef = useRef<HTMLAnchorElement>(null);
+  const pinButtonRef = useRef<HTMLButtonElement>(null);
+  const topicNoticeRef = useRef<HTMLParagraphElement>(null);
 
   // Valid UUID placeholder keeps the query input shape stable while `enabled`
   // prevents requests before the topic has loaded.
@@ -102,6 +112,12 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   function clearDeleteState() {
     setDeleteError(null);
     setReplyStatus((current) => (current.visible ? { message: '', visible: false } : current));
+  }
+
+  function clearTopicFeedback() {
+    setTopicNotice('');
+    setTopicError('');
+    clearDeleteState();
   }
 
   function focusDeleteButton(target: DeleteFocusTarget) {
@@ -196,6 +212,27 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     },
   });
 
+  const setPinned = trpc.forum.topics.setPinned.useMutation({
+    async onSuccess(updated) {
+      setTopicError('');
+      setTopicNotice(updated.pinned ? tt('forum.detail.pinned') : tt('forum.detail.unpinned'));
+      setRestorePinFocus(true);
+      await Promise.all([
+        utils.forum.topics.bySlug.invalidate({ slug }),
+        utils.forum.topics.list.invalidate(),
+      ]);
+    },
+    onError(err) {
+      setTopicNotice('');
+      setTopicError(
+        err.data?.code === 'FORBIDDEN'
+          ? tt('forum.detail.pinForbidden')
+          : tt('forum.detail.pinFailed'),
+      );
+      setRestorePinFocus(true);
+    },
+  });
+
   const deleteReply = trpc.forum.replies.delete.useMutation({
     onSuccess(_data, variables) {
       removeReplyFromCache(variables.id);
@@ -262,6 +299,21 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       replyStatusRef.current?.focus();
     }
   }, [replyStatus.visible, replyStatus.message]);
+
+  useEffect(() => {
+    if (!restorePinFocus || setPinned.isPending) return;
+    pinButtonRef.current?.focus();
+    setRestorePinFocus(false);
+  }, [restorePinFocus, setPinned.isPending]);
+
+  useEffect(() => {
+    const state = location.state as { notice?: string } | null;
+    if (state?.notice !== 'topicEdited') return;
+    setTopicError('');
+    setTopicNotice(t(locale.locale, 'forum.detail.topicEdited'));
+    window.setTimeout(() => topicNoticeRef.current?.focus(), 0);
+    navigate('.', { replace: true, state: null });
+  }, [location.state, locale.locale, navigate]);
 
   useEffect(() => {
     if (!focusReplyId) return;
@@ -356,6 +408,28 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setRestoreLoadMoreButtonFocus(false);
   }, [isLoadingMoreReplies, restoreLoadMoreButtonFocus]);
 
+  useEffect(() => {
+    const topic = topicQuery.data;
+    if (!topic || session.user?.id !== topic.author.id) {
+      setShowEditAction(false);
+      return;
+    }
+    const serverOffsetMs = Date.parse(topic.serverNow) - Date.now();
+    const editableUntilMs = Date.parse(topic.editableUntil);
+    const update = () => {
+      const stillEditable = Date.now() + serverOffsetMs < editableUntilMs;
+      setShowEditAction(stillEditable);
+      if (!stillEditable && document.activeElement === editLinkRef.current) {
+        titleRef.current?.focus();
+      }
+      return stillEditable;
+    };
+    if (!update()) return;
+    const delay = Math.max(0, editableUntilMs - (Date.now() + serverOffsetMs));
+    const timeout = window.setTimeout(update, delay);
+    return () => window.clearTimeout(timeout);
+  }, [session.user?.id, topicQuery.data]);
+
   if (topicQuery.isLoading) {
     return (
       <PageShell>
@@ -392,6 +466,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const topic = topicQuery.data;
   const isOwner = session.user?.id === topic.author.id;
   const canDeleteTopic = isOwner || session.isAdmin;
+  const editableUntilTime = new Date(topic.editableUntil).toLocaleTimeString(locale.locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   const onSubmitReply = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -454,32 +532,108 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         >
           <CardHeader className="space-y-2">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <CardTitle className="text-2xl">{topic.title}</CardTitle>
-              <div className="flex items-center gap-2">
-                {!isOwner ? <ReportButton targetType="TOPIC" targetId={topic.id} /> : null}
-                {canDeleteTopic && confirmingDelete?.kind !== 'topic' ? (
-                  <button
-                    ref={topicDeleteButtonRef}
-                    type="button"
-                    onClick={() => {
-                      clearDeleteState();
-                      setConfirmingDelete({ kind: 'topic' });
-                    }}
-                    disabled={deleteTopic.isPending}
-                    aria-label={tt('forum.detail.deleteTopicAria')}
-                    className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
-                  >
-                    {tt('forum.detail.delete')}
-                  </button>
+              <div className="flex flex-wrap items-center gap-2">
+                {topic.pinned ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                    <Pin className="size-3" aria-hidden />
+                    {tt('forum.badge.pinned')}
+                  </span>
                 ) : null}
+                <CardTitle ref={titleRef} tabIndex={-1} className="text-2xl">
+                  {topic.title}
+                </CardTitle>
               </div>
+              {confirmingDelete?.kind !== 'topic' ? (
+                <div className="flex items-center gap-2">
+                  {!isOwner ? <ReportButton targetType="TOPIC" targetId={topic.id} /> : null}
+                  {showEditAction ? (
+                    <Link
+                      ref={editLinkRef}
+                      to="edit"
+                      aria-label={tt('forum.detail.editAria')}
+                      onClick={clearTopicFeedback}
+                      className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      {tt('forum.detail.edit')}
+                    </Link>
+                  ) : null}
+                  {session.isAdmin ? (
+                    <button
+                      ref={pinButtonRef}
+                      type="button"
+                      onClick={() => {
+                        clearTopicFeedback();
+                        setPinned.mutate({ id: topic.id, pinned: !topic.pinned });
+                      }}
+                      disabled={setPinned.isPending}
+                      className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                    >
+                      {setPinned.isPending
+                        ? topic.pinned
+                          ? tt('forum.detail.unpinning')
+                          : tt('forum.detail.pinning')
+                        : topic.pinned
+                          ? tt('forum.detail.unpin')
+                          : tt('forum.detail.pin')}
+                    </button>
+                  ) : null}
+                  {canDeleteTopic ? (
+                    <button
+                      ref={topicDeleteButtonRef}
+                      type="button"
+                      onClick={() => {
+                        clearTopicFeedback();
+                        setConfirmingDelete({ kind: 'topic' });
+                      }}
+                      disabled={deleteTopic.isPending}
+                      aria-label={tt('forum.detail.deleteTopicAria')}
+                      className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                    >
+                      {tt('forum.detail.delete')}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
               <span className="font-medium text-neutral-700">@{topic.author.username}</span>
               <time dateTime={topic.createdAt} className="whitespace-nowrap">
                 {new Date(topic.createdAt).toLocaleString(locale.locale)}
               </time>
+              {topic.editedAt ? (
+                <span className="text-neutral-600">
+                  · {tt('forum.detail.edited')}
+                  <time dateTime={topic.editedAt} className="sr-only">
+                    {new Date(topic.editedAt).toLocaleString(locale.locale)}
+                  </time>
+                </span>
+              ) : null}
+              {showEditAction ? (
+                <span className="text-neutral-600">
+                  · {tt('forum.detail.editableUntil', { time: editableUntilTime })}
+                </span>
+              ) : null}
             </div>
+            <p
+              ref={topicNoticeRef}
+              role="status"
+              tabIndex={-1}
+              className={
+                topicNotice
+                  ? 'mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                  : 'sr-only'
+              }
+            >
+              {topicNotice}
+            </p>
+            {topicError ? (
+              <p
+                role="alert"
+                className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+              >
+                {topicError}
+              </p>
+            ) : null}
             {confirmingDelete?.kind === 'topic' ? (
               <DeleteConfirmGroup
                 label={tt('forum.detail.confirmDelete')}
