@@ -1,13 +1,9 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
+import { Catch, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { t } from '@repo/shared';
 import type { Request, Response } from 'express';
+import { isAdminCatalogImportRequest } from '../bootstrap/json-body';
 
 /**
  * Forwards uncaught NestJS exceptions to Sentry while preserving the default
@@ -18,15 +14,44 @@ import type { Request, Response } from 'express';
  * Note: tRPC errors flow through the Express middleware bypass, not Nest's
  * exception pipeline. They are reported separately by the tRPC `onError`
  * hook in `create-app.ts` so we capture both pipelines without double
- * reporting. Body-parser 4xx errors (413 / malformed JSON) keep their status
- * and are logged as warnings; only 5xx is sent to Sentry as an error.
+ * reporting.
+ *
+ * Only known body-parser / http-errors `type` values are treated as client
+ * errors. Each type gets a fixed message — never `exception.message`, which
+ * can include parser snippets or other internal detail. Every other error,
+ * including a plain Error that merely carries a 4xx `status`, is answered
+ * with generic copy and reported to Sentry when it is a 5xx.
  */
-function clientErrorStatus(exception: unknown): number | undefined {
+const PARSER_CLIENT_ERRORS: Record<string, 400 | 403 | 413 | 415> = {
+  'entity.too.large': 413,
+  'parameters.too.many': 413,
+  'entity.parse.failed': 400,
+  'request.aborted': 400,
+  'request.size.invalid': 400,
+  'querystring.parse.rangeError': 400,
+  'entity.verify.failed': 403,
+  'charset.unsupported': 415,
+  'encoding.unsupported': 415,
+};
+
+function parserClientStatus(exception: unknown): number | undefined {
   if (typeof exception !== 'object' || exception === null) return undefined;
-  const record = exception as { statusCode?: unknown; status?: unknown };
-  const status = record.statusCode ?? record.status;
-  if (typeof status !== 'number' || status < 400 || status >= 500) return undefined;
-  return status;
+  const type = (exception as { type?: unknown }).type;
+  if (typeof type !== 'string') return undefined;
+  return PARSER_CLIENT_ERRORS[type];
+}
+
+function parserClientMessage(status: number, request: Request | undefined): string {
+  if (status === 413) {
+    const key =
+      request && isAdminCatalogImportRequest(request)
+        ? 'admin.import.tooLarge'
+        : 'error.payloadTooLarge';
+    return t('zh-CN', key);
+  }
+  if (status === 415) return t('zh-CN', 'error.unsupportedMedia');
+  if (status === 403) return t('zh-CN', 'error.requestRejected');
+  return t('zh-CN', 'error.malformedRequest');
 }
 
 @Catch()
@@ -45,12 +70,12 @@ export class SentryExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       body = exception.getResponse();
     } else {
-      const clientStatus = clientErrorStatus(exception);
+      const clientStatus = parserClientStatus(exception);
       if (clientStatus !== undefined) {
         status = clientStatus;
         body = {
           statusCode: clientStatus,
-          message: exception instanceof Error ? exception.message : 'Bad Request',
+          message: parserClientMessage(clientStatus, request),
         };
       }
     }
@@ -70,7 +95,6 @@ export class SentryExceptionFilter implements ExceptionFilter {
         },
       });
     } else if (!(exception instanceof HttpException) && exception instanceof Error) {
-      // Body-parser 413/400 and other client errors are not server failures.
       this.logger.warn(exception.message);
     }
 
