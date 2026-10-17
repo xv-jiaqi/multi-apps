@@ -1,6 +1,8 @@
 import express from 'express';
 import request from 'supertest';
 import * as trpcExpress from '@trpc/server/adapters/express';
+import { CATALOG_IMPORT_MAX_BYTES, CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
+import { jsonBodyParser } from '../../bootstrap/json-body';
 import { TrpcBase } from '../../trpc/trpc-base';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { TrpcContext } from '../../trpc/context';
@@ -83,12 +85,27 @@ function makeHttpApp(prisma: PrismaService) {
   const t = new TrpcBase(prisma);
   const appRouter = t.router({ admin: new AdminRouter(t, prisma).build() });
 
+  app.use(jsonBodyParser());
   app.use(
     '/trpc',
     trpcExpress.createExpressMiddleware({
       router: appRouter,
       createContext: ({ req, res }) => ({ req, res, user: adminUser() }),
     }),
+  );
+  app.use(
+    (
+      error: { status?: number; statusCode?: number; message?: string },
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction,
+    ) => {
+      const status = error.status ?? error.statusCode ?? 500;
+      res
+        .status(status)
+        .type('text/plain')
+        .send(error.message ?? 'error');
+    },
   );
 
   return app;
@@ -584,6 +601,103 @@ describe('AdminRouter.catalog.import dryRun', () => {
   });
 });
 
+function importSeries(cardCount: number) {
+  return [
+    {
+      slug: 'imported-series',
+      title: 'Imported Series',
+      cards: Array.from({ length: cardCount }, (_, index) => ({
+        slug: `imported-card-${index}`,
+        name: `Imported Card ${index}`,
+        rarity: 'common' as const,
+        imageUrl: 'gradient:imported',
+        attributes: { cost: index },
+      })),
+    },
+  ];
+}
+
+describe('AdminRouter.catalog.import limits', () => {
+  it('rejects 501 rows in one batch and writes nothing', async () => {
+    const {
+      caller,
+      userFindUnique,
+      seriesFindMany,
+      cardFindMany,
+      seriesUpsert,
+      cardUpsert,
+      transaction,
+    } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+
+    await expect(
+      caller(adminUser()).catalog.import({
+        dryRun: false,
+        data: importSeries(CATALOG_IMPORT_MAX_ROWS),
+      }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: `一次最多导入 500 行，当前 ${CATALOG_IMPORT_MAX_ROWS + 1} 行`,
+    });
+
+    expect(seriesFindMany).not.toHaveBeenCalled();
+    expect(cardFindMany).not.toHaveBeenCalled();
+    expect(seriesUpsert).not.toHaveBeenCalled();
+    expect(cardUpsert).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects a serialized body over 1MB and writes nothing', async () => {
+    const {
+      caller,
+      userFindUnique,
+      seriesFindMany,
+      cardFindMany,
+      seriesUpsert,
+      cardUpsert,
+      transaction,
+    } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    const input = {
+      dryRun: false,
+      data: [
+        {
+          slug: 'oversized-series',
+          title: 'Oversized',
+          blob: 'x'.repeat(CATALOG_IMPORT_MAX_BYTES),
+        },
+      ],
+    };
+
+    await expect(caller(adminUser()).catalog.import(input)).rejects.toMatchObject({
+      code: 'PAYLOAD_TOO_LARGE',
+      message: '一次最多导入 1MB',
+    });
+
+    expect(seriesFindMany).not.toHaveBeenCalled();
+    expect(cardFindMany).not.toHaveBeenCalled();
+    expect(seriesUpsert).not.toHaveBeenCalled();
+    expect(cardUpsert).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it('still accepts exactly 500 rows', async () => {
+    const { caller, userFindUnique, seriesFindMany, cardFindMany, transaction } = makeRouter();
+    userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    seriesFindMany.mockResolvedValue([]);
+    cardFindMany.mockResolvedValue([]);
+
+    const result = await caller(adminUser()).catalog.import({
+      dryRun: true,
+      data: importSeries(CATALOG_IMPORT_MAX_ROWS - 1),
+    });
+
+    expect(result).toHaveLength(CATALOG_IMPORT_MAX_ROWS);
+    expect(result.every((row) => row.status === 'created')).toBe(true);
+    expect(transaction).not.toHaveBeenCalled();
+  });
+});
+
 describe('AdminRouter.catalog.import execute', () => {
   it('runs writes inside one transaction so mid-batch failures roll back at the database layer', async () => {
     const {
@@ -797,5 +911,108 @@ describe('AdminRouter HTTP error formatting', () => {
         ],
       }),
     ]);
+  });
+
+  it('rejects an HTTP body over 1MB before any catalog write', async () => {
+    const router = makeRouter();
+    const body = JSON.stringify({
+      dryRun: false,
+      data: [
+        {
+          slug: 'oversized-series',
+          title: 'Oversized',
+          blob: 'x'.repeat(CATALOG_IMPORT_MAX_BYTES),
+        },
+      ],
+    });
+    expect(Buffer.byteLength(body)).toBeGreaterThan(CATALOG_IMPORT_MAX_BYTES);
+
+    const response = await request(makeHttpApp(router.prisma))
+      .post('/trpc/admin.catalog.import')
+      .set('Content-Type', 'application/json')
+      .send(body);
+
+    expect(response.status).toBe(413);
+    expect(response.body.error.message).toBe('一次最多导入 1MB');
+    expect(response.body.error.data.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(router.userFindUnique).not.toHaveBeenCalled();
+    expect(router.seriesUpsert).not.toHaveBeenCalled();
+    expect(router.cardUpsert).not.toHaveBeenCalled();
+    expect(router.transaction).not.toHaveBeenCalled();
+  });
+
+  it('returns a batched tRPC error when the import body exceeds 1MB', async () => {
+    const router = makeRouter();
+    const body = JSON.stringify({
+      0: {
+        dryRun: false,
+        data: [
+          {
+            slug: 'oversized-series',
+            title: 'Oversized',
+            blob: 'x'.repeat(CATALOG_IMPORT_MAX_BYTES),
+          },
+        ],
+      },
+    });
+
+    const response = await request(makeHttpApp(router.prisma))
+      .post('/trpc/admin.catalog.import?batch=1')
+      .set('Content-Type', 'application/json')
+      .send(body);
+
+    expect(response.status).toBe(413);
+    expect(response.body).toEqual([
+      {
+        error: {
+          message: '一次最多导入 1MB',
+          code: -32013,
+          data: {
+            code: 'PAYLOAD_TOO_LARGE',
+            httpStatus: 413,
+            path: 'admin.catalog.import',
+          },
+        },
+      },
+    ]);
+    expect(router.userFindUnique).not.toHaveBeenCalled();
+    expect(router.transaction).not.toHaveBeenCalled();
+  });
+
+  it('still parses an import body between the default 100kb cap and 1MB', async () => {
+    const router = makeRouter();
+    router.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    router.seriesFindMany.mockResolvedValue([]);
+    const description = 'x'.repeat(150_000);
+    const body = JSON.stringify({
+      dryRun: true,
+      data: [{ slug: 'wide-series', title: 'Wide', description }],
+    });
+    expect(Buffer.byteLength(body)).toBeGreaterThan(100 * 1024);
+    expect(Buffer.byteLength(body)).toBeLessThan(CATALOG_IMPORT_MAX_BYTES);
+
+    const response = await request(makeHttpApp(router.prisma))
+      .post('/trpc/admin.catalog.import')
+      .set('Content-Type', 'application/json')
+      .send(body);
+
+    expect(response.status).toBe(200);
+    expect(router.seriesUpsert).not.toHaveBeenCalled();
+    expect(router.transaction).not.toHaveBeenCalled();
+  });
+
+  it('keeps the 100kb body cap on routes other than catalog import', async () => {
+    const router = makeRouter();
+    const body = JSON.stringify({ blob: 'x'.repeat(150_000) });
+    expect(Buffer.byteLength(body)).toBeGreaterThan(100 * 1024);
+
+    const response = await request(makeHttpApp(router.prisma))
+      .post('/trpc/admin.series.list')
+      .set('Content-Type', 'application/json')
+      .send(body);
+
+    expect(response.status).toBe(413);
+    expect(JSON.stringify(response.body)).not.toContain('一次最多导入 1MB');
+    expect(router.userFindUnique).not.toHaveBeenCalled();
   });
 });

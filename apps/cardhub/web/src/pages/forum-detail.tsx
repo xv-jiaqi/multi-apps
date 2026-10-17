@@ -505,6 +505,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         // The button is still disabled while this fetch's loading flag is
         // true, so focusing it drops focus to <body>. The new row is
         // focusable (tabIndex=-1) once it commits.
+        // Must be set only after this page is in the query cache, or focus cannot find that reply's ref.
         setPendingLoadedReplyFocusId(newReplies[0].id);
       } else {
         setFocusReplyId(newReplies[0].id);

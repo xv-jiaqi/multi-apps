@@ -330,6 +330,9 @@ const zhCN: Dictionary = {
   'reports.resolve.resolvedAt': '处理时间',
   'reports.resolve.resolution': '处理说明',
   'reports.resolve.deletedUser': '已注销用户',
+  // Admin catalog import (CH-107).
+  'admin.import.tooManyRows': '一次最多导入 500 行，当前 {count} 行',
+  'admin.import.tooLarge': '一次最多导入 1MB',
   // Miniapp-specific copy (reused across weapp/alipay/h5).
   'miniapp.home.browse': '浏览系列',
   'miniapp.home.search': '搜索卡牌',
@@ -674,6 +677,8 @@ const enUS: Dictionary = {
   'reports.resolve.resolvedAt': 'Resolved at',
   'reports.resolve.resolution': 'Note',
   'reports.resolve.deletedUser': 'Deleted user',
+  'admin.import.tooManyRows': 'You can import at most 500 rows at a time (this file has {count})',
+  'admin.import.tooLarge': 'You can import at most 1MB at a time',
   'miniapp.home.browse': 'Browse series',
   'miniapp.home.search': 'Search cards',
   'miniapp.home.login': 'Sign in',
