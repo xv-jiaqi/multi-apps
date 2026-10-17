@@ -136,7 +136,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
                     type="button"
                     onClick={() => handleFilterChange(filter.key)}
                     aria-pressed={active}
-                    className={`min-h-9 rounded-full px-4 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:min-h-0 sm:px-3 ${
+                    className={`min-h-9 rounded-full px-4 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 ${
                       active ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
                     }`}
                   >
@@ -330,7 +330,7 @@ function ReportListItem({
             {report.reason}
           </p>
         </div>
-        <div className="flex flex-wrap gap-x-2 text-xs text-neutral-500 sm:block sm:text-right">
+        <div className="flex w-full flex-wrap gap-x-2 text-xs text-neutral-500 sm:block sm:w-auto sm:text-right">
           <p>@{report.reporter.username}</p>
           <time dateTime={report.createdAt}>{formatDateTime(report.createdAt, locale)}</time>
         </div>

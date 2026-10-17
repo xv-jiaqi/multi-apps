@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -200,6 +200,7 @@ function renderMe(initialEntry = '/me') {
 }
 
 beforeEach(() => {
+  rootStore.locale.setLocale('zh-CN');
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
   window.matchMedia = vi.fn().mockReturnValue({ matches: true });
   rootStore.session.signOut();
@@ -282,6 +283,18 @@ describe('MePage', () => {
     renderMe('/me?tab=1#me-comments');
 
     expect(screen.getByTestId('login-from')).toHaveTextContent('/me?tab=1#me-comments');
+  });
+
+  it('sets the document title from the shared me.title copy', async () => {
+    renderMe();
+    expect(document.title).toBe('个人中心 · Cardhub');
+
+    act(() => {
+      rootStore.locale.setLocale('en-US');
+    });
+    await waitFor(() => {
+      expect(document.title).toBe('My account · Cardhub');
+    });
   });
 
   it('uses listingTotalCount for overview and listing anchor counts', () => {

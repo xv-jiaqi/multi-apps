@@ -58,6 +58,25 @@ function ComboHarness({
   );
 }
 
+function NavigateHarness() {
+  const [query, setQuery] = useState('');
+
+  return (
+    <Combobox
+      mode="navigate"
+      inputValue={query}
+      onInputValueChange={setQuery}
+      groups={[{ key: 'cards', label: 'Cards', items: [alpha, beta] }]}
+      getKey={(item) => item.id}
+      renderItem={(item) => <span>{item.name}</span>}
+      getItemText={(item) => item.name}
+      status="success"
+      labels={labels}
+      placeholder="Search cards"
+    />
+  );
+}
+
 function input() {
   return screen.getByRole('combobox') as HTMLInputElement;
 }
@@ -128,6 +147,26 @@ describe('Combobox keyboard in Chromium', () => {
 
     await expect.poll(() => input().hasAttribute('aria-activedescendant')).toBe(false);
     await expect.poll(() => document.activeElement).toBe(input());
+  });
+
+  it('closes navigate mode on the first Escape and clears on the second', async () => {
+    render(<NavigateHarness />);
+
+    await userEvent.click(input());
+    await userEvent.keyboard('for');
+
+    await expect.poll(() => screen.queryByRole('listbox')).toBeTruthy();
+    await expect.poll(() => input().value).toBe('for');
+
+    await userEvent.keyboard('{Escape}');
+
+    await expect.poll(() => screen.queryByRole('listbox')).toBeNull();
+    await expect.poll(() => input().value).toBe('for');
+    await expect.poll(() => document.activeElement).toBe(input());
+
+    await userEvent.keyboard('{Escape}');
+
+    await expect.poll(() => input().value).toBe('');
   });
 
   it('does not mark the combobox expanded when there are no results', async () => {

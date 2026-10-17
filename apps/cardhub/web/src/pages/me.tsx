@@ -13,6 +13,7 @@ import { Button, Card, CardContent, CardHeader } from '@repo/ui-web';
 import { t, type ListingKind, type ListingStatus } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
+import { PageMeta } from '../components/page-meta';
 import { CardThumb } from '../components/card-thumb';
 import { ListingCloseControl } from '../components/listing-close-control';
 import { trpc } from '../lib/trpc';
@@ -342,7 +343,7 @@ export const MePage = observer(function MePage() {
 
   return (
     <PageShell>
-      <title>{tt('me.title')} · Cardhub</title>
+      <PageMeta title={tt('me.title')} />
       <div className="mx-auto max-w-3xl space-y-6">
         <Breadcrumbs
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('me.title') }]}
