@@ -120,6 +120,7 @@ jobs:
           bash deploy/backup-password.test.sh
           bash deploy/backup-status.test.sh
           bash deploy/check-backup-log.test.sh
+          bash deploy/sync-whitelist.test.sh
 
   audit:
     name: pnpm audit (high+)
