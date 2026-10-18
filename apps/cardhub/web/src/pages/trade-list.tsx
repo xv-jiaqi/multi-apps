@@ -179,10 +179,15 @@ export const TradeListPage = observer(function TradeListPage() {
       maxPrice: Number.isFinite(maxPrice) ? maxPrice : undefined,
       sort,
     },
-    { enabled: !priceInvalid, getNextPageParam: (last) => last.nextCursor ?? undefined },
+    {
+      enabled: !priceInvalid,
+      getNextPageParam: (last) => last.nextCursor ?? undefined,
+      retry: (count, error) => error.data?.code !== 'BAD_REQUEST' && count < 1,
+    },
   );
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
   const listView = queryFallback(query);
+  const filterInvalid = query.error?.data?.code === 'BAD_REQUEST';
   useFocusOnRecovery(listView, titleRef);
   const activeFilterCount = [
     kindFilter !== 'all',
@@ -207,6 +212,10 @@ export const TradeListPage = observer(function TradeListPage() {
     setCurrencyChosenByUser(false);
     setPriceDraft({ min: '', max: '' });
     setSearchParams(new URLSearchParams(), { replace: true });
+  }
+  function clearInvalidFilters() {
+    clearAllFilters();
+    titleRef.current?.focus({ preventScroll: true });
   }
   function clearCurrency() {
     setCurrencyChosenByUser(false);
@@ -554,7 +563,17 @@ export const TradeListPage = observer(function TradeListPage() {
             {tt('trade.closed')}
           </p>
         ) : null}
-        {listView === 'error' ? (
+        {filterInvalid ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-dashed border-neutral-300 p-8 text-center"
+          >
+            <p className="font-medium text-neutral-700">{tt('trade.filter.invalid')}</p>
+            <Button type="button" variant="outline" className="mt-4" onClick={clearInvalidFilters}>
+              {tt('trade.filter.clearInvalid')}
+            </Button>
+          </div>
+        ) : listView === 'error' ? (
           <ErrorBox
             title={tt('state.error')}
             retryLabel={tt('state.retry')}
