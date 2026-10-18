@@ -12,24 +12,55 @@ OUT="${BACKUP_DIR}/${PROJECT}-${TIMESTAMP}.sql.gz"
 tmp_sql=""
 tmp_gz=""
 tmp_rclone_env=""
+backup_fail_reason=""
+rc=0
 
 # shellcheck disable=SC2317
-on_exit() {
-  rc="$?"
+finish_backup() {
+  # rc was captured by the EXIT trap before this function runs.
+  set +e
   unset PGPASSWORD || true
   [ -z "${tmp_sql}" ] || rm -f "${tmp_sql}"
   [ -z "${tmp_gz}" ] || rm -f "${tmp_gz}"
   [ -z "${tmp_rclone_env}" ] || rm -f "${tmp_rclone_env}"
+  local ts reason
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  if [ "${rc}" -eq 0 ]; then
+    printf 'BACKUP_RESULT=ok project=%s ts=%s file=%s\n' \
+      "${PROJECT}" "${ts}" "$(basename "${OUT}")"
+  else
+    reason="${backup_fail_reason:-command-failed}"
+    printf 'BACKUP_RESULT=fail project=%s ts=%s rc=%s reason=%s\n' \
+      "${PROJECT}" "${ts}" "${rc}" "${reason}"
+  fi
   if [ -n "${BACKUP_PING_URL:-}" ]; then
     if [ "${rc}" -eq 0 ]; then
-      curl -fsS -m 10 "${BACKUP_PING_URL}" >/dev/null || true
+      curl -fsS -m 10 -- "${BACKUP_PING_URL}" >/dev/null || true
     else
-      curl -fsS -m 10 "${BACKUP_PING_URL%/}/fail" >/dev/null || true
+      curl -fsS -m 10 -- "${BACKUP_PING_URL%/}/fail" >/dev/null || true
     fi
   fi
   exit "${rc}"
 }
-trap on_exit EXIT
+
+# shellcheck disable=SC2317
+on_term() {
+  backup_fail_reason=sigterm
+  exit 143
+}
+
+# shellcheck disable=SC2317
+on_int() {
+  backup_fail_reason=sigint
+  exit 130
+}
+
+# The first statement has to be rc=$? . A command before it, including the
+# function call itself, would see status 0 and could record a false success
+# after set -e, pipefail, or a signal.
+trap 'rc=$?; finish_backup' EXIT
+trap on_term TERM
+trap on_int INT
 
 # Last assignment in the env file wins. Values are not printed.
 read_env_var() {
@@ -72,15 +103,38 @@ read_offsite_var() {
 }
 
 push_offsite() {
-  if [ ! -f "${OFFSITE_ENV_FILE}" ]; then
-    return 0
+  if [ ! -e "${OFFSITE_ENV_FILE}" ]; then
+    echo "Off-site backup env file is missing: ${OFFSITE_ENV_FILE}" >&2
+    backup_fail_reason=offsite-env-missing
+    return 1
+  fi
+  if [ ! -f "${OFFSITE_ENV_FILE}" ] || [ ! -r "${OFFSITE_ENV_FILE}" ]; then
+    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
+    backup_fail_reason=offsite-env-unreadable
+    return 1
   fi
 
   local oss_access_key_id oss_access_key_secret oss_bucket oss_endpoint
-  oss_access_key_id="$(read_offsite_var OSS_ACCESS_KEY_ID)"
-  oss_access_key_secret="$(read_offsite_var OSS_ACCESS_KEY_SECRET)"
-  oss_bucket="$(read_offsite_var OSS_BUCKET)"
-  oss_endpoint="$(read_offsite_var OSS_ENDPOINT)"
+  if ! oss_access_key_id="$(read_offsite_var OSS_ACCESS_KEY_ID)"; then
+    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
+    backup_fail_reason=offsite-env-unreadable
+    return 1
+  fi
+  if ! oss_access_key_secret="$(read_offsite_var OSS_ACCESS_KEY_SECRET)"; then
+    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
+    backup_fail_reason=offsite-env-unreadable
+    return 1
+  fi
+  if ! oss_bucket="$(read_offsite_var OSS_BUCKET)"; then
+    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
+    backup_fail_reason=offsite-env-unreadable
+    return 1
+  fi
+  if ! oss_endpoint="$(read_offsite_var OSS_ENDPOINT)"; then
+    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
+    backup_fail_reason=offsite-env-unreadable
+    return 1
+  fi
 
   local required_var required_value
   for required_var in OSS_ACCESS_KEY_ID OSS_ACCESS_KEY_SECRET OSS_BUCKET OSS_ENDPOINT; do
@@ -92,6 +146,7 @@ push_offsite() {
     esac
     if [ -z "${required_value}" ]; then
       echo "Off-site backup env file is missing ${required_var}" >&2
+      backup_fail_reason="missing-${required_var}"
       return 1
     fi
   done
@@ -120,6 +175,7 @@ push_offsite() {
     "${RCLONE_IMAGE}" \
     copyto "${container_backup}" "${remote_path}" --s3-no-check-bucket; then
     echo "Off-site backup upload failed for ${backup_name}" >&2
+    backup_fail_reason=offsite-upload-failed
     return 1
   fi
 
@@ -130,6 +186,7 @@ push_offsite() {
     "${RCLONE_IMAGE}" \
     check --one-way /backup "${remote_dir}" --include "/${backup_name}" --s3-no-check-bucket; then
     echo "Off-site backup verification failed for ${backup_name}" >&2
+    backup_fail_reason=offsite-verify-failed
     return 1
   fi
 }
@@ -199,6 +256,10 @@ fi
 export PGDUMP_USER="${dump_user}"
 export PGDUMP_DB="${dump_db}"
 export PGPASSWORD="${dump_password}"
+# pg_dump is the left side of this pipe. With pipefail, its non-zero status
+# fails the script even when tee exits 0 and keeps a partial copy. The copy
+# is what the size check reads after a successful dump.
+backup_fail_reason=pipefail
 docker run --rm --network "${pg_network}" \
   -e PGPASSWORD \
   -e PGDUMP_USER \
@@ -206,7 +267,8 @@ docker run --rm --network "${pg_network}" \
   --entrypoint sh \
   "${postgres_image}" \
   -c 'pg_dump --no-password -h postgres -U "$PGDUMP_USER" -d "$PGDUMP_DB"' \
-  > "${tmp_sql}"
+  | tee "${tmp_sql}" >/dev/null
+backup_fail_reason=""
 unset PGPASSWORD PGDUMP_USER PGDUMP_DB
 dump_password=""
 

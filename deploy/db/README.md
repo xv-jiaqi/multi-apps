@@ -399,8 +399,11 @@ this image; a wrong password on that path would still dump. A failed password
 check exits non-zero and does not upload.
 
 The postgres healthcheck (`pg_isready -U "$POSTGRES_USER"`) does not
-authenticate. Sentry and the optional healthchecks.io backup ping do not open
-a database connection. There is no separate SQL exporter in this repo.
+authenticate. Sentry does not open a database connection for backups. No
+`BACKUP_PING_URL` is configured, so backup failures are not sent to
+healthchecks.io. Patrol the shared `/opt/cardhub/backups/backup.log` with
+`deploy/check-backup-log.sh` (see [deploy/README.md](../README.md#backups)).
+There is no separate SQL exporter in this repo.
 
 On a fresh cluster the three roles do not exist yet. A dump taken after the
 split contains `OWNER TO cardhub_migrator` and `GRANT`s to the runtime and
