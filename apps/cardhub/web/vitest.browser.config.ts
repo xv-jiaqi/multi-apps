@@ -38,6 +38,24 @@ const uninstallCachedGifRoute: BrowserCommand<[]> = async (context) => {
   await page.unroute(CACHED_GIF_URL).catch(() => undefined);
 };
 
+const setViewport: BrowserCommand<[number, number]> = async (context, width, height) => {
+  const page = playwrightPage(context);
+  await page.setViewportSize({ width: Math.max(width, 800), height: Math.max(height, 900) });
+  await page.evaluate(
+    ({ width: nextWidth, height: nextHeight }) => {
+      const iframe = document.querySelector('iframe[data-vitest="true"]');
+      if (!(iframe instanceof HTMLIFrameElement)) {
+        throw new Error('missing vitest iframe');
+      }
+      iframe.style.width = `${nextWidth}px`;
+      iframe.style.height = `${nextHeight}px`;
+      iframe.style.maxWidth = `${nextWidth}px`;
+      iframe.style.transform = 'none';
+    },
+    { width, height },
+  );
+};
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -74,6 +92,7 @@ export default defineConfig({
       commands: {
         installCachedGifRoute,
         uninstallCachedGifRoute,
+        setViewport,
       },
     },
   },

@@ -42,6 +42,7 @@ describe('ErrorBoundary fallback', () => {
       'text-red-700',
     );
     expect(alert.className).not.toMatch(/rounded-2xl/);
+    expect(alert.parentElement).toHaveClass('app-safe-x');
     const title = screen.getByText('页面出错了');
     expect(title).toHaveClass('font-medium');
     expect(title.className).not.toMatch(/font-semibold/);
