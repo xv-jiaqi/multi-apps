@@ -27,13 +27,18 @@ on:
 
 permissions: {}
 
+# One in-progress app deploy per environment. The shared edge job below has
+# its own group so staging and production cannot apply Caddy at the same time.
+# cancel-in-progress is false: a new run does not cancel the running one.
+# GitHub's default queue is single, so a group still holds only one pending
+# run; a third arrival cancels that pending run and takes its place.
 concurrency:
   group: deploy-${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy Cardhub
+  edge:
+    name: Sync shared edge
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (
@@ -42,10 +47,16 @@ jobs:
         github.event.workflow_run.head_repository.full_name == github.repository
       )
     runs-on: ubuntu-latest
+    concurrency:
+      group: cardhub-edge
+      cancel-in-progress: false
     environment: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
     permissions:
       contents: read
-      packages: read
+    outputs:
+      environment: ${{ steps.deploy-inputs.outputs.environment }}
+      image_tag: ${{ steps.deploy-inputs.outputs.image_tag }}
+      expected_sha: ${{ steps.deploy-inputs.outputs.expected_sha }}
     env:
       EVENT_NAME: ${{ github.event_name }}
       INPUT_ENVIRONMENT: ${{ inputs.environment }}
@@ -58,59 +69,125 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
       - name: Validate deploy inputs
         id: deploy-inputs
         shell: bash
+        run: bash deploy/resolve-deploy-inputs.sh
+
+      - name: Configure SSH with pinned host key
+        shell: bash
         run: |
           set -euo pipefail
-
-          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
-            deploy_environment="staging"
-            expected_sha="${WORKFLOW_RUN_HEAD_SHA}"
-            image_tag="sha-${expected_sha}"
-          else
-            deploy_environment="${INPUT_ENVIRONMENT}"
-            image_tag="${INPUT_IMAGE_TAG}"
-
-            if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
-              echo "Manual deploys must be run from refs/heads/main, got ${GITHUB_REF}" >&2
-              exit 1
-            fi
-
-            if [[ "${deploy_environment}" != "staging" && "${deploy_environment}" != "production" ]]; then
-              echo "Invalid environment: ${deploy_environment}" >&2
-              exit 1
-            fi
-
-            if [[ "${deploy_environment}" == "staging" && "${image_tag}" == "main" ]]; then
-              expected_sha="$(git ls-remote origin refs/heads/main | awk '{ print $1 }')"
-              image_tag="sha-${expected_sha}"
-            elif [[ "${image_tag}" =~ ^sha-[0-9a-f]{40}$ ]]; then
-              expected_sha="${image_tag#sha-}"
-            else
-              echo "Invalid image_tag '${image_tag}'. Production requires sha-<40 hex>; staging accepts sha-<40 hex> or main." >&2
-              exit 1
-            fi
+          if [[ -z "${DEPLOY_KNOWN_HOSTS}" ]]; then
+            echo "DEPLOY_KNOWN_HOSTS is required" >&2
+            exit 1
           fi
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          install -m 600 /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > ~/.ssh/known_hosts
 
-          if [[ ! "${expected_sha}" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "Could not resolve a full deployment SHA" >&2
+      - name: Sync edge files
+        shell: bash
+        env:
+          # workflow_run has no inputs. Only an explicit manual true may recreate.
+          RECREATE_EDGE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.recreate_edge == 'true' }}
+          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
+          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]; then
+            echo "Refusing to sync edge files from $(git rev-parse HEAD); workflow ref is ${GITHUB_SHA}" >&2
+            exit 1
+          fi
+          echo "Syncing edge files from workflow ref ${GITHUB_SHA}; image tag ${DEPLOY_IMAGE_TAG} is not a git checkout"
+
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          edge_dir="/opt/cardhub/edge/deploy/edge"
+          edge_parent="/opt/cardhub/edge"
+          edge_dir_q="$(printf '%q' "${edge_dir}")"
+          parent_q="$(printf '%q' "${edge_parent}")"
+          pending_q="$(printf '%q' "${edge_parent}/.edge-sync-pending")"
+          stamp_q="$(printf '%q' "${edge_parent}/.applied-tree-sha256")"
+
+          ssh_edge() {
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" "$@"
+          }
+
+          tree_hash() {
+            ssh_edge "cd ${edge_dir_q} 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 || true"
+          }
+
+          # Read the previous attempt before this run rewrites the marker.
+          pending="$(ssh_edge "cat ${pending_q} 2>/dev/null || true" | tr -d '\r\n')"
+          applied="$(ssh_edge "cat ${stamp_q} 2>/dev/null || true" | tr -d '\r\n')"
+          before="$(tree_hash | tr -d '\r\n')"
+
+          ssh_edge "mkdir -p ${parent_q} && printf '%s\n' in-progress > ${pending_q}"
+
+          tar -C deploy/edge -czf - . \
+            | ssh_edge "mkdir -p ${edge_dir_q} && tar -xzf - -C ${edge_dir_q}"
+
+          after="$(tree_hash | tr -d '\r\n')"
+          if [[ ! "${after}" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "Edge tree hash missing after sync" >&2
+            exit 1
+          fi
+          ssh_edge "printf '%s\n' ${after} > ${pending_q}"
+
+          changed="$(bash deploy/plan-edge-apply.sh \
+            --before "${before}" \
+            --after "${after}" \
+            --pending "${pending}" \
+            --applied "${applied}")"
+          flags=""
+          if [ "${RECREATE_EDGE}" = "true" ]; then
+            flags="${flags} --recreate"
+          fi
+          if [ "${changed}" = "1" ]; then
+            flags="${flags} --changed"
+          elif [ "${changed}" != "0" ]; then
+            echo "Unexpected edge plan result: ${changed}" >&2
             exit 1
           fi
 
-          git fetch --no-tags origin main:refs/remotes/origin/main
-          if ! git merge-base --is-ancestor "${expected_sha}" origin/main; then
-            echo "Refusing to deploy ${expected_sha}: SHA is not reachable from origin/main" >&2
-            exit 1
-          fi
+          env_q="$(printf '%q' "${DEPLOY_ENVIRONMENT}")"
+          tag_q="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
+          ssh_edge "EDGE_ENVIRONMENT=${env_q} EDGE_IMAGE_TAG=${tag_q} bash ${edge_dir_q}/apply-edge-config.sh${flags}"
+          ssh_edge "printf '%s\n' ${after} > ${stamp_q}.tmp && mv ${stamp_q}.tmp ${stamp_q} && rm -f ${pending_q}"
+          echo "Edge apply succeeded for tree ${after}"
 
-          git checkout --detach "${expected_sha}"
+  deploy:
+    name: Deploy Cardhub
+    needs: edge
+    if: needs.edge.result == 'success'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.edge.outputs.environment }}
+    permissions:
+      contents: read
+      packages: read
+    env:
+      EVENT_NAME: ${{ github.event_name }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_ENVIRONMENT: ${{ needs.edge.outputs.environment }}
+      DEPLOY_IMAGE_TAG: ${{ needs.edge.outputs.image_tag }}
+      DEPLOY_EXPECTED_SHA: ${{ needs.edge.outputs.expected_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
 
-          echo "environment=${deploy_environment}" >> "$GITHUB_OUTPUT"
-          echo "image_tag=${image_tag}" >> "$GITHUB_OUTPUT"
-          echo "expected_sha=${expected_sha}" >> "$GITHUB_OUTPUT"
+      - name: Check infra ref and image tag
+        shell: bash
+        run: bash deploy/resolve-deploy-inputs.sh --assert
 
       - name: Configure SSH with pinned host key
         shell: bash
@@ -135,8 +212,6 @@ jobs:
 
       - name: Wait for GHCR images
         shell: bash
-        env:
-          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
         run: |
           set -euo pipefail
           for image in ghcr.io/xv-jiaqi/cardhub-api ghcr.io/xv-jiaqi/cardhub-web; do
@@ -156,10 +231,13 @@ jobs:
 
       - name: Sync deploy files
         shell: bash
-        env:
-          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
         run: |
           set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]; then
+            echo "Refusing to sync deploy files from $(git rev-parse HEAD); workflow ref is ${GITHUB_SHA}" >&2
+            exit 1
+          fi
+          echo "Syncing app deploy files from workflow ref ${GITHUB_SHA}; containers will use ${DEPLOY_IMAGE_TAG}"
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
           remote_deploy_dir="/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy"
           remote_deploy_dir_q="$(printf '%q' "${remote_deploy_dir}")"
@@ -167,46 +245,8 @@ jobs:
             | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
                 "mkdir -p ${remote_deploy_dir_q} && tar -xzf - -C ${remote_deploy_dir_q}"
 
-      - name: Sync edge files
-        shell: bash
-        env:
-          # workflow_run has no inputs. Only an explicit manual true may recreate.
-          RECREATE_EDGE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.recreate_edge == 'true' }}
-          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
-          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
-        run: |
-          set -euo pipefail
-          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
-          edge_dir="/opt/cardhub/edge/deploy/edge"
-          edge_dir_q="$(printf '%q' "${edge_dir}")"
-          before="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "cd ${edge_dir_q} 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 || true")"
-
-          tar -C deploy/edge -czf - . \
-            | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-                "mkdir -p ${edge_dir_q} && tar -xzf - -C ${edge_dir_q}"
-
-          after="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "cd ${edge_dir_q} 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 || true")"
-
-          flags=""
-          if [ "${RECREATE_EDGE}" = "true" ]; then
-            flags="${flags} --recreate"
-          fi
-          if [ -n "${before}" ] && [ "${before}" != "${after}" ]; then
-            flags="${flags} --changed"
-          fi
-          env_q="$(printf '%q' "${DEPLOY_ENVIRONMENT}")"
-          tag_q="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "EDGE_ENVIRONMENT=${env_q} EDGE_IMAGE_TAG=${tag_q} bash ${edge_dir_q}/apply-edge-config.sh${flags}"
-
       - name: Deploy on VPS
         shell: bash
-        env:
-          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
-          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
-          DEPLOY_EXPECTED_SHA: ${{ steps.deploy-inputs.outputs.expected_sha }}
         run: |
           set -euo pipefail
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"

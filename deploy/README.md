@@ -114,7 +114,9 @@ docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d caddy
 
 Compose bind-mounts this directory at `/etc/caddy`. A push to `main` syncs
 those files and reloads Caddy only when the running container already sees
-them. It does not recreate the container. The container still running from
+them. It does not recreate the container. A manual run with an older
+`image_tag` still syncs this directory from the workflow ref, not from the
+image commit. The container still running from
 the old single-file `Caddyfile` mount cannot see a replaced file; the deploy
 stops there, before the app rollout, and leaves that container running.
 Switch it once, when a few seconds of downtime for every domain is acceptable:
@@ -169,6 +171,12 @@ on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
 and passwords in each env file. Production deploys are manual; staging can be
 redeployed automatically by GitHub Actions after CI and image builds succeed on
 main. Production deploys require an explicit immutable `sha-<full-git-sha>` tag.
+That tag selects the API and web images only. The workflow checks out
+`github.sha` (the main commit this run is pinned to) and syncs
+`deploy/docker-compose.yml`, `remote-deploy.sh`, and `deploy/edge/` from that
+commit. It does not check out the image tag. Rolling an older image back
+cannot replace the shared Caddyfile or the rolling deploy script with the
+copies stored in that older commit.
 
 ### Zero-downtime rollout
 
@@ -246,7 +254,8 @@ every other method uses a second `reverse_proxy` with `lb_try_duration 0s`.
 tRPC mutations are POST and are not retried. Hostnames and redirects are
 unchanged.
 
-The deploy workflow syncs `deploy/` files for the deployed SHA to the VPS before
+The deploy workflow syncs `deploy/` files from the workflow ref (`github.sha`
+on main), not from the image tag, to the VPS before
 running `/opt/cardhub/<environment>/deploy/remote-deploy.sh`. The script polls
 `https://<API_DOMAIN>/health` through Caddy with `curl --resolve
 <API_DOMAIN>:443:127.0.0.1` until `gitSha` equals the deployed SHA and fails on
