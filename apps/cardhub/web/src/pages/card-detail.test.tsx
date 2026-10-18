@@ -195,6 +195,9 @@ describe('card detail data errors', () => {
     renderCard();
 
     expect(document.querySelector('[aria-busy="true"]')).toBeTruthy();
+    expect(document.querySelector('[aria-busy="true"] .animate-pulse')).toHaveClass(
+      'motion-reduce:animate-none',
+    );
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
     expect(screen.queryByText('卡牌加载失败')).not.toBeInTheDocument();
   });
