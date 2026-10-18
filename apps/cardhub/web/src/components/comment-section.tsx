@@ -253,7 +253,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
           />
         </div>
       ) : commentsView === 'loading' ? (
-        <p className="text-sm text-neutral-500">{tt('state.loading')}</p>
+        <p className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500">
+          {tt('state.loading')}
+        </p>
       ) : !list.data || list.data.length === 0 ? (
         <p
           ref={(node) => {

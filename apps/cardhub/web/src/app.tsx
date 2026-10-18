@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
 import { ErrorBoundary } from './components/error-boundary';
+import { CardDetailSkeleton } from './components/card-detail-skeleton';
 import { HomePage } from './pages/home';
 
 const SeriesListPage = lazy(() =>
@@ -108,7 +109,16 @@ export const appRoutes: RouteObject[] = [
       { path: '/', element: <HomePage /> },
       { path: '/series', element: lazyPage(<SeriesListPage />) },
       { path: '/series/:seriesSlug', element: lazyPage(<SeriesDetailPage />) },
-      { path: '/cards/:cardSlug', element: lazyPage(<CardDetailPage />) },
+      {
+        path: '/cards/:cardSlug',
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<CardDetailSkeleton />}>
+              <CardDetailPage />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
       { path: '/search', element: lazyPage(<SearchPage />) },
       { path: '/login', element: lazyPage(<LoginPage />) },
       { path: '/register', element: lazyPage(<RegisterPage />) },
