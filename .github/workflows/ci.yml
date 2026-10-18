@@ -82,7 +82,7 @@ jobs:
         run: pnpm --filter @cardhub/api db:generate
 
       - name: Apply Prisma migrations to the test database
-        run: pnpm --filter @cardhub/api prisma migrate deploy
+        run: pnpm --filter @cardhub/api db:migrate:deploy
 
       - name: Lint
         run: pnpm lint
