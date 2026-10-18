@@ -88,6 +88,7 @@ export const HomePage = observer(function HomePage() {
           <div className="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-br from-indigo-200/60 via-fuchsia-200/40 to-amber-200/40 blur-2xl" />
           <div
             ref={gridRef}
+            role="group"
             tabIndex={-1}
             aria-label={tt('series.list.title')}
             className={`grid grid-cols-2 gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${

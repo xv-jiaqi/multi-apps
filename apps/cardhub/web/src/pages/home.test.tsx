@@ -256,6 +256,7 @@ describe('home series data states', () => {
     await waitFor(() => {
       expect(document.activeElement).toHaveAttribute('aria-label', '所有系列');
     });
+    expect(document.activeElement).toHaveAttribute('role', 'group');
     expect(document.activeElement?.tagName).not.toBe('H2');
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
   });
