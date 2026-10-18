@@ -269,8 +269,10 @@ describe('ui-web Combobox', () => {
   it('scrolls the highlighted option into view when ArrowDown moves the highlight', async () => {
     const user = userEvent.setup();
     const scrollIntoView = vi.fn();
-    const original = Element.prototype.scrollIntoView;
+    const originalElement = Element.prototype.scrollIntoView;
+    const originalHtml = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
     Element.prototype.scrollIntoView = scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
     const items = ['One', 'Two', 'Three', 'Four', 'Five', 'Six'].map((name) => ({
       id: name.toLowerCase(),
       name,
@@ -294,7 +296,12 @@ describe('ui-web Combobox', () => {
       expect(nearestCalls.at(-1)?.instance).toBe(sixth);
       expect(nearestCalls.at(-1)?.args[0]).toEqual({ block: 'nearest' });
     } finally {
-      Element.prototype.scrollIntoView = original;
+      Element.prototype.scrollIntoView = originalElement;
+      if (originalHtml) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalHtml);
+      } else {
+        delete HTMLElement.prototype.scrollIntoView;
+      }
     }
   });
 
