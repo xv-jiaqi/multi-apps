@@ -53,28 +53,28 @@ describe('SiteHeader admin navigation', () => {
     expect(screen.queryByRole('link', { name: '举报队列' })).not.toBeInTheDocument();
   });
 
-  it('includes the visible EN label in the language button name', () => {
+  it('names the language button EN，切换到英文 while it shows EN', () => {
     rootStore.locale.setLocale('zh-CN');
     render(
       <MemoryRouter>
         <SiteHeader />
       </MemoryRouter>,
     );
-    const button = screen.getByRole('button', { name: /EN/ });
+    const button = screen.getByRole('button', { name: 'EN，切换到英文' });
     expect(button).toHaveTextContent('EN');
-    expect(button).toHaveAttribute('aria-label', 'EN – 切换界面语言');
+    expect(button).toHaveAccessibleName('EN，切换到英文');
   });
 
-  it('includes the visible 中 label in the language button name', () => {
+  it('names the language button 中, Switch to Chinese while it shows 中', () => {
     rootStore.locale.setLocale('en-US');
     render(
       <MemoryRouter>
         <SiteHeader />
       </MemoryRouter>,
     );
-    const button = screen.getByRole('button', { name: /中/ });
+    const button = screen.getByRole('button', { name: '中, Switch to Chinese' });
     expect(button).toHaveTextContent('中');
-    expect(button).toHaveAttribute('aria-label', '中 – Switch language');
+    expect(button).toHaveAccessibleName('中, Switch to Chinese');
   });
 
   it('hides the admin entry from non-admins', () => {
