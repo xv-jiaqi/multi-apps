@@ -69,6 +69,10 @@ describe('route error element', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('页面出错了');
+    expect(screen.getByRole('button', { name: '重试' })).toHaveClass(
+      'focus-visible:ring-2',
+      'focus-visible:ring-brand-500',
+    );
     expect(alert).not.toHaveTextContent('首页渲染失败');
     expect(alert).not.toHaveTextContent('Something went wrong');
     expect(

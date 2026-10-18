@@ -47,6 +47,10 @@ describe('ErrorBoundary fallback', () => {
     expect(alert).not.toHaveTextContent('Something went wrong');
     expect(alert).not.toHaveTextContent('boundary-secret');
     expect(screen.getByRole('link', { name: '返回首页' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('button', { name: '重试' })).toHaveClass(
+      'focus-visible:ring-2',
+      'focus-visible:ring-brand-500',
+    );
     expect(consoleError).toHaveBeenCalled();
 
     fail = false;
