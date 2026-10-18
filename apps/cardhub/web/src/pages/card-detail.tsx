@@ -11,6 +11,7 @@ import { trpc } from '../lib/trpc';
 import { CommentSection } from '../components/comment-section';
 import { ListingsForCard } from '../components/listings-for-card';
 import { Artwork } from '../components/artwork';
+import { CardDetailSkeleton } from '../components/card-detail-skeleton';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
 function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
@@ -28,18 +29,10 @@ export const CardDetailPage = observer(function CardDetailPage() {
 
   if (query.isLoading) {
     return (
-      <PageShell>
+      <>
         <PageMeta title={tt('state.loading')} />
-        <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-          <div className="aspect-[63/88] animate-pulse rounded-3xl bg-neutral-200" />
-          <div className="space-y-4">
-            <div className="h-8 w-2/3 animate-pulse rounded bg-neutral-200" />
-            <div className="h-4 w-full animate-pulse rounded bg-neutral-200" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-neutral-200" />
-            <div className="h-32 animate-pulse rounded-2xl bg-white/60" />
-          </div>
-        </div>
-      </PageShell>
+        <CardDetailSkeleton />
+      </>
     );
   }
 
