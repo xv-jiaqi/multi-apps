@@ -24,6 +24,7 @@ describe('resolvePostAuthRedirect', () => {
     expect(resolvePostAuthRedirect({ from: '//evil.example/phish' })).toBe('/');
     expect(resolvePostAuthRedirect({ from: 'https://evil.example/phish' })).toBe('/');
     expect(resolvePostAuthRedirect('javascript:alert(1)')).toBe('/');
+    expect(resolvePostAuthRedirect({ from: '/\\evil.example/phish' })).toBe('/');
     expect(
       resolvePostAuthRedirect({
         from: { pathname: '//evil.example', search: '', hash: '' },
