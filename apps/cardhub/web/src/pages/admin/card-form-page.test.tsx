@@ -1,8 +1,8 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { rootStore } from '../../stores/root-store';
 
 const seriesState = {
@@ -85,14 +85,21 @@ vi.mock('../../lib/trpc', () => ({
 
 import { EditCardPage, NewCardPage } from './card-form-page';
 
-function renderNew() {
-  return render(
-    <MemoryRouter initialEntries={['/admin/catalog/series/celestial-dawn/cards/new']}>
-      <Routes>
-        <Route path="/admin/catalog/series/:slug/cards/new" element={<NewCardPage />} />
-      </Routes>
-    </MemoryRouter>,
+function renderCard(path: string) {
+  const router = createMemoryRouter(
+    [
+      { path: '/admin/catalog/series/:slug/cards/new', element: <NewCardPage /> },
+      { path: '/admin/catalog/cards/:slug/edit', element: <EditCardPage /> },
+      { path: '/admin/catalog/series/:slug', element: <h1>系列卡牌</h1> },
+      { path: '/admin/catalog', element: <h1>目录</h1> },
+    ],
+    { initialEntries: [path] },
   );
+  return { router, ...render(<RouterProvider router={router} />) };
+}
+
+function renderNew() {
+  return renderCard('/admin/catalog/series/celestial-dawn/cards/new');
 }
 
 beforeEach(() => {
@@ -134,13 +141,7 @@ describe('attributes editor', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-05-01T00:00:00.000Z',
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/cards/aurora-knight/edit']}>
-        <Routes>
-          <Route path="/admin/catalog/cards/:slug/edit" element={<EditCardPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderCard('/admin/catalog/cards/aurora-knight/edit');
 
     expect(screen.getByText('aurora-knight')).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: 'slug' })).not.toBeInTheDocument();
@@ -199,13 +200,7 @@ describe('attributes editor', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-05-01T00:00:00.000Z',
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/cards/aurora-knight/edit']}>
-        <Routes>
-          <Route path="/admin/catalog/cards/:slug/edit" element={<EditCardPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderCard('/admin/catalog/cards/aurora-knight/edit');
 
     const add = screen.getByRole('button', { name: '添加属性' });
     expect(add).toBeDisabled();
@@ -233,13 +228,7 @@ describe('attributes editor', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-05-01T00:00:00.000Z',
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/cards/aurora-knight/edit']}>
-        <Routes>
-          <Route path="/admin/catalog/cards/:slug/edit" element={<EditCardPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderCard('/admin/catalog/cards/aurora-knight/edit');
 
     expect(screen.getByText('已有 41 个属性，最多 40 个')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '保存修改' }));
@@ -432,13 +421,7 @@ describe('card form server validation', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-05-01T00:00:00.000Z',
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/cards/aurora-knight/edit']}>
-        <Routes>
-          <Route path="/admin/catalog/cards/:slug/edit" element={<EditCardPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderCard('/admin/catalog/cards/aurora-knight/edit');
 
     await user.click(screen.getByRole('combobox', { name: '所属系列' }));
     await user.click(screen.getByRole('option', { name: '泰坦熔炉' }));
@@ -446,5 +429,67 @@ describe('card form server validation', () => {
 
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'forge-of-titans' });
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'celestial-dawn' });
+  });
+});
+
+describe('card form unsaved changes', () => {
+  const savedCard = {
+    id: 'c1',
+    slug: 'aurora-knight',
+    name: '极光骑士',
+    description: '',
+    imageUrl: '',
+    rarity: 'legendary' as const,
+    attributes: { cost: 4, type: '随从', taunt: true },
+    seriesSlug: 'celestial-dawn',
+    seriesTitle: '天穹黎明',
+    commentCount: 0,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-05-01T00:00:00.000Z',
+  };
+
+  it('treats an attribute value that is changed and restored as clean', async () => {
+    const user = userEvent.setup();
+    cardState.data = savedCard;
+    const { router } = renderCard('/admin/catalog/cards/aurora-knight/edit');
+    const value = screen.getByRole('textbox', { name: '第 2 行的值' });
+    expect(value).toHaveValue('随从');
+
+    await user.type(value, 'x');
+    await user.click(screen.getByRole('link', { name: '取消' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '继续编辑' }));
+    expect(value).toHaveValue('随从x');
+
+    await user.type(value, '{Backspace}');
+    await user.click(screen.getByRole('link', { name: '取消' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn');
+  });
+
+  it('asks when a blank attribute row was added, and keeps it if the user stays', async () => {
+    const user = userEvent.setup();
+    const { router } = renderNew();
+    await user.click(screen.getByRole('button', { name: '添加属性' }));
+    await user.click(screen.getByRole('link', { name: '取消' }));
+
+    expect(screen.getByRole('alertdialog', { name: '放弃未保存的修改？' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn/cards/new');
+    await user.click(screen.getByRole('button', { name: '继续编辑' }));
+    expect(screen.getByRole('textbox', { name: '第 1 行属性名' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn/cards/new');
+  });
+
+  it('does not ask after a successful create navigates to the series', async () => {
+    const user = userEvent.setup();
+    const { router } = renderNew();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'aurora-knight');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '极光骑士');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn');
+    });
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 });

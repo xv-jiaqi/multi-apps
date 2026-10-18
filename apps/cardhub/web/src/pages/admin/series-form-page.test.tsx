@@ -1,8 +1,8 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { rootStore } from '../../stores/root-store';
 
 const seriesState = {
@@ -74,6 +74,20 @@ vi.mock('../../lib/trpc', () => ({
 
 import { EditSeriesPage, NewSeriesPage } from './series-form-page';
 
+function renderSeries(path: string, entries?: string[]) {
+  const initialEntries = entries ?? [path];
+  const router = createMemoryRouter(
+    [
+      { path: '/admin/catalog/series/new', element: <NewSeriesPage /> },
+      { path: '/admin/catalog/series/:slug/edit', element: <EditSeriesPage /> },
+      { path: '/admin/catalog', element: <h1>目录</h1> },
+      { path: '/', element: <h1>首页</h1> },
+    ],
+    { initialEntries, initialIndex: initialEntries.length - 1 },
+  );
+  return { router, ...render(<RouterProvider router={router} />) };
+}
+
 const existing = {
   id: 's1',
   slug: 'celestial-dawn',
@@ -102,13 +116,7 @@ beforeEach(() => {
 
 describe('series form', () => {
   it('shows the slug as read-only text when editing', () => {
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/celestial-dawn/edit']}>
-        <Routes>
-          <Route path="/admin/catalog/series/:slug/edit" element={<EditSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/celestial-dawn/edit');
 
     expect(screen.getByText('celestial-dawn')).toBeInTheDocument();
     expect(screen.getByText('创建后不能修改（网址和交易意向都依赖它）')).toBeInTheDocument();
@@ -121,13 +129,7 @@ describe('series form', () => {
     ['gradient:from-sky-400', 'gradient:from-sky-400'],
   ])('accepts image value %j', async (value, expected) => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
-        <Routes>
-          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/new');
 
     await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
@@ -148,13 +150,7 @@ describe('series form', () => {
 
   it('rejects http image links on blur and blocks submit', async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
-        <Routes>
-          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/new');
 
     await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
@@ -184,13 +180,7 @@ describe('series form', () => {
         data: { code: 'BAD_REQUEST' },
       };
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
-        <Routes>
-          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/new');
 
     await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
@@ -213,13 +203,7 @@ describe('series form', () => {
         data: { code: 'BAD_REQUEST' },
       };
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
-        <Routes>
-          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/new');
 
     await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
@@ -238,13 +222,7 @@ describe('series form', () => {
         data: { code: 'BAD_REQUEST' },
       };
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
-        <Routes>
-          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/new');
 
     await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
@@ -259,13 +237,7 @@ describe('series form', () => {
     createImpl.current = async () => {
       throw { message: 'BAD_REQUEST', data: { code: 'BAD_REQUEST' } };
     };
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/new']}>
-        <Routes>
-          <Route path="/admin/catalog/series/new" element={<NewSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/new');
 
     await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
     await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
@@ -277,17 +249,129 @@ describe('series form', () => {
 
   it('invalidates the public series list and detail after editing', async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={['/admin/catalog/series/celestial-dawn/edit']}>
-        <Routes>
-          <Route path="/admin/catalog/series/:slug/edit" element={<EditSeriesPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderSeries('/admin/catalog/series/celestial-dawn/edit');
 
     await user.click(screen.getByRole('button', { name: '保存修改' }));
     expect(invalidateSeriesList).toHaveBeenCalledTimes(1);
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'celestial-dawn' });
     expect(invalidateAdminSeriesList).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('series form unsaved changes', () => {
+  it('asks on cancel, breadcrumb, and header links, and keeps the draft when staying', async () => {
+    const user = userEvent.setup();
+    const { router } = renderSeries('/admin/catalog/series/new');
+    const title = screen.getByRole('textbox', { name: '标题' });
+    await user.type(title, '草稿');
+
+    await user.click(screen.getByRole('link', { name: '取消' }));
+    expect(screen.getByRole('alertdialog', { name: '放弃未保存的修改？' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '继续编辑' })).toHaveFocus();
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/new');
+    await user.click(screen.getByRole('button', { name: '继续编辑' }));
+    expect(title).toHaveValue('草稿');
+
+    const crumbs = within(screen.getByRole('navigation', { name: '面包屑导航' }));
+    await user.click(crumbs.getByRole('link', { name: '内容管理' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(crumbs.getByRole('link', { name: '内容管理' })).toHaveFocus();
+    expect(title).toHaveValue('草稿');
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/new');
+
+    const home = screen.getAllByRole('link', { name: '首页' })[0];
+    expect(home).toBeDefined();
+    await user.click(home!);
+    await user.click(screen.getByRole('button', { name: '放弃修改' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/');
+  });
+
+  it('does not ask when an edit is reverted to the loaded value', async () => {
+    const user = userEvent.setup();
+    const { router } = renderSeries('/admin/catalog/series/celestial-dawn/edit');
+    const title = screen.getByRole('textbox', { name: '标题' });
+    expect(title).toHaveValue('天穹黎明');
+
+    await user.type(title, 'x');
+    await user.click(screen.getByRole('link', { name: '取消' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '继续编辑' }));
+    expect(title).toHaveValue('天穹黎明x');
+
+    await user.type(title, '{Backspace}');
+    await user.click(screen.getByRole('link', { name: '取消' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/catalog');
+  });
+
+  it('does not ask after a successful create navigates away', async () => {
+    const user = userEvent.setup();
+    const { router } = renderSeries('/admin/catalog/series/new');
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin/catalog');
+    });
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('blocks browser back until the draft is discarded', async () => {
+    const user = userEvent.setup();
+    const { router } = renderSeries('/admin/catalog/series/new', [
+      '/admin/catalog',
+      '/admin/catalog/series/new',
+    ]);
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '草稿');
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/new');
+    const key = router.state.location.key;
+
+    await user.click(screen.getByRole('button', { name: '继续编辑' }));
+    expect(screen.getByRole('textbox', { name: '标题' })).toHaveValue('草稿');
+    expect(router.state.location.key).toBe(key);
+
+    await act(async () => {
+      await router.navigate(1);
+    });
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/new');
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+    await user.click(screen.getByRole('button', { name: '放弃修改' }));
+    expect(router.state.location.pathname).toBe('/admin/catalog');
+  });
+
+  it('registers beforeunload only after the series form changes', async () => {
+    const user = userEvent.setup();
+    const added: EventListener[] = [];
+    const originalAdd = window.addEventListener.bind(window);
+    const addSpy = vi
+      .spyOn(window, 'addEventListener')
+      .mockImplementation((type, listener, options) => {
+        if (type === 'beforeunload' && typeof listener === 'function') added.push(listener);
+        originalAdd(type, listener, options);
+      });
+
+    renderSeries('/admin/catalog/series/new');
+    expect(added).toHaveLength(0);
+    const clean = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(clean);
+    expect(clean.defaultPrevented).toBe(false);
+
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '草稿');
+    expect(added).toHaveLength(1);
+    const dirty = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(dirty);
+    expect(dirty.defaultPrevented).toBe(true);
+    addSpy.mockRestore();
   });
 });

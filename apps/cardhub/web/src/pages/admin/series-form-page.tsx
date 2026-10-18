@@ -11,6 +11,7 @@ import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate
 import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
 import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
+import { useUnsavedChanges } from '../../components/admin/use-unsaved-changes';
 import {
   applyValidationFeedback,
   isAccessRevoked,
@@ -47,6 +48,20 @@ const SeriesForm = observer(function SeriesForm({ mode }: { mode: 'create' | 'ed
   );
 });
 
+interface SeriesBaseline {
+  slug: string;
+  title: string;
+  description: string;
+  coverUrl: string;
+}
+
+const emptySeriesBaseline: SeriesBaseline = {
+  slug: '',
+  title: '',
+  description: '',
+  coverUrl: '',
+};
+
 const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'create' | 'edit' }) {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
@@ -67,6 +82,9 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [ready, setReady] = useState(mode === 'create');
+  const [baseline, setBaseline] = useState<SeriesBaseline | null>(
+    mode === 'create' ? emptySeriesBaseline : null,
+  );
   const headingRef = useRef<HTMLHeadingElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -83,12 +101,27 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
 
   useEffect(() => {
     if (mode !== 'edit' || !existing || ready) return;
-    setSlugValue(existing.slug);
-    setTitle(existing.title);
-    setDescription(existing.description ?? '');
-    setCoverUrl(existing.coverUrl ?? '');
+    const next = {
+      slug: existing.slug,
+      title: existing.title,
+      description: existing.description ?? '',
+      coverUrl: existing.coverUrl ?? '',
+    };
+    setSlugValue(next.slug);
+    setTitle(next.title);
+    setDescription(next.description);
+    setCoverUrl(next.coverUrl);
+    setBaseline(next);
     setReady(true);
   }, [existing, mode, ready]);
+
+  const dirty =
+    baseline !== null &&
+    (slugValue !== baseline.slug ||
+      title !== baseline.title ||
+      description !== baseline.description ||
+      coverUrl !== baseline.coverUrl);
+  const unsaved = useUnsavedChanges(dirty);
 
   const pageTitle = mode === 'create' ? tt('admin.series.new') : tt('admin.series.edit');
 
@@ -143,6 +176,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
       void utils.admin.series.list.invalidate();
       void utils.series.list.invalidate();
       void utils.series.bySlug.invalidate({ slug: submittedSlug });
+      unsaved.allowLeave();
       navigate('/admin/catalog', {
         state: {
           notice:
@@ -179,6 +213,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
 
   return (
     <>
+      {unsaved.dialog}
       <Breadcrumbs
         items={[
           { label: tt('breadcrumb.home'), to: '/' },

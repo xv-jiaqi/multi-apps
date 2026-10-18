@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router';
+import { Outlet, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
 import { ErrorBoundary } from './components/error-boundary';
 import { HomePage } from './pages/home';
@@ -88,189 +88,46 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function App() {
+function AppLayout() {
   return (
     <>
       <AuthBootstrap />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route
-          path="/series"
-          element={
-            <LazyRoute>
-              <SeriesListPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/series/:seriesSlug"
-          element={
-            <LazyRoute>
-              <SeriesDetailPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/cards/:cardSlug"
-          element={
-            <LazyRoute>
-              <CardDetailPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/search"
-          element={
-            <LazyRoute>
-              <SearchPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <LazyRoute>
-              <LoginPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <LazyRoute>
-              <RegisterPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/forum"
-          element={
-            <LazyRoute>
-              <ForumListPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/forum/new"
-          element={
-            <LazyRoute>
-              <ForumNewPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/forum/:slug/edit"
-          element={
-            <LazyRoute>
-              <ForumEditPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/forum/:slug"
-          element={
-            <LazyRoute>
-              <ForumDetailPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/trade"
-          element={
-            <LazyRoute>
-              <TradeListPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/trade/new"
-          element={
-            <LazyRoute>
-              <TradePublishPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <LazyRoute>
-              <ReportsListPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/admin/catalog"
-          element={
-            <LazyRoute>
-              <CatalogSeriesPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/admin/catalog/import"
-          element={
-            <LazyRoute>
-              <CatalogImportPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/admin/catalog/series/new"
-          element={
-            <LazyRoute>
-              <NewSeriesPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/admin/catalog/series/:slug/edit"
-          element={
-            <LazyRoute>
-              <EditSeriesPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/admin/catalog/series/:slug/cards/new"
-          element={
-            <LazyRoute>
-              <NewCardPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/admin/catalog/series/:slug"
-          element={
-            <LazyRoute>
-              <CatalogSeriesDetailPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/admin/catalog/cards/:slug/edit"
-          element={
-            <LazyRoute>
-              <EditCardPage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="/me"
-          element={
-            <LazyRoute>
-              <MePage />
-            </LazyRoute>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <LazyRoute>
-              <NotFoundPage />
-            </LazyRoute>
-          }
-        />
-      </Routes>
+      <Outlet />
     </>
   );
 }
+
+function lazyPage(page: React.ReactNode): React.ReactNode {
+  return <LazyRoute>{page}</LazyRoute>;
+}
+
+export const appRoutes: RouteObject[] = [
+  {
+    element: <AppLayout />,
+    children: [
+      { path: '/', element: <HomePage /> },
+      { path: '/series', element: lazyPage(<SeriesListPage />) },
+      { path: '/series/:seriesSlug', element: lazyPage(<SeriesDetailPage />) },
+      { path: '/cards/:cardSlug', element: lazyPage(<CardDetailPage />) },
+      { path: '/search', element: lazyPage(<SearchPage />) },
+      { path: '/login', element: lazyPage(<LoginPage />) },
+      { path: '/register', element: lazyPage(<RegisterPage />) },
+      { path: '/forum', element: lazyPage(<ForumListPage />) },
+      { path: '/forum/new', element: lazyPage(<ForumNewPage />) },
+      { path: '/forum/:slug/edit', element: lazyPage(<ForumEditPage />) },
+      { path: '/forum/:slug', element: lazyPage(<ForumDetailPage />) },
+      { path: '/trade', element: lazyPage(<TradeListPage />) },
+      { path: '/trade/new', element: lazyPage(<TradePublishPage />) },
+      { path: '/reports', element: lazyPage(<ReportsListPage />) },
+      { path: '/admin/catalog', element: lazyPage(<CatalogSeriesPage />) },
+      { path: '/admin/catalog/import', element: lazyPage(<CatalogImportPage />) },
+      { path: '/admin/catalog/series/new', element: lazyPage(<NewSeriesPage />) },
+      { path: '/admin/catalog/series/:slug/edit', element: lazyPage(<EditSeriesPage />) },
+      { path: '/admin/catalog/series/:slug/cards/new', element: lazyPage(<NewCardPage />) },
+      { path: '/admin/catalog/series/:slug', element: lazyPage(<CatalogSeriesDetailPage />) },
+      { path: '/admin/catalog/cards/:slug/edit', element: lazyPage(<EditCardPage />) },
+      { path: '/me', element: lazyPage(<MePage />) },
+      { path: '*', element: lazyPage(<NotFoundPage />) },
+    ],
+  },
+];
