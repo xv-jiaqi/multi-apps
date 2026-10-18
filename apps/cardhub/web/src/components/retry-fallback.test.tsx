@@ -7,7 +7,7 @@ import {
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, type ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { RetryButton, queryFallback, useFocusOnRecovery } from './retry-button';
 
 type Gate<T> = {
@@ -287,5 +287,22 @@ describe('queryFallback with a real QueryClient', () => {
     const heading = await screen.findByRole('heading', { name: 'loaded' });
     expect(heading).toHaveFocus();
     expect(document.activeElement).toBe(heading);
+  });
+});
+
+describe('RetryButton', () => {
+  it('does not retry or move focus when the button is aria-disabled', async () => {
+    const onRetry = vi.fn();
+    const user = userEvent.setup();
+    render(<RetryButton retrying label="重试" retryingLabel="重试中" onRetry={onRetry} />);
+
+    const button = screen.getByRole('button', { name: '重试中' });
+    button.focus();
+    await user.click(button);
+
+    expect(onRetry).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(button);
+    expect(button).toHaveClass('cursor-not-allowed');
+    expect(button).not.toHaveClass('pointer-events-none');
   });
 });

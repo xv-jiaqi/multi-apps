@@ -266,6 +266,49 @@ describe('ui-web Combobox', () => {
     expect(input).toHaveFocus();
   });
 
+  it('scrolls the highlighted option into view when ArrowDown moves the highlight', async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    const originalElement = Element.prototype.scrollIntoView;
+    const originalHtml = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+    Element.prototype.scrollIntoView = scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const items = ['One', 'Two', 'Three', 'Four', 'Five', 'Six'].map((name) => ({
+      id: name.toLowerCase(),
+      name,
+    }));
+    try {
+      render(<ComboHarness groups={[{ key: 'cards', label: 'Cards', items }]} />);
+      const input = screen.getByRole('combobox');
+      await user.type(input, 'a');
+      await screen.findByRole('listbox');
+      scrollIntoView.mockClear();
+
+      for (let step = 0; step < 6; step += 1) {
+        await user.keyboard('{ArrowDown}');
+      }
+
+      const sixth = screen.getByRole('option', { name: 'Six' });
+      const nearestCalls = scrollIntoView.mock.calls
+        .map((args, index) => ({ args, instance: scrollIntoView.mock.instances[index] }))
+        .filter((call) => call.args[0]?.block === 'nearest');
+      expect(nearestCalls.length).toBeGreaterThan(0);
+      expect(nearestCalls.at(-1)?.instance).toBe(sixth);
+      expect(nearestCalls.at(-1)?.args[0]).toEqual({ block: 'nearest' });
+    } finally {
+      Element.prototype.scrollIntoView = originalElement;
+      if (originalHtml) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalHtml);
+      } else {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+          configurable: true,
+          writable: true,
+          value: originalElement,
+        });
+      }
+    }
+  });
+
   it('does not reopen an empty dismissed popover with ArrowDown', async () => {
     const user = userEvent.setup();
     render(<ComboHarness groups={[]} />);

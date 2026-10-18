@@ -62,6 +62,16 @@ export const ForumEditPage = observer(function ForumEditPage() {
     if (!topic?.serverNow) return 0;
     return Date.parse(topic.serverNow) - Date.now();
   }, [topic?.serverNow]);
+
+  useEffect(() => {
+    if (!topic?.editableUntil) return;
+    const deadline = Date.parse(topic.editableUntil) - serverOffsetMs;
+    const delay = deadline - Date.now();
+    if (delay <= 0) return;
+    const id = window.setTimeout(() => setTick((value) => value + 1), delay);
+    return () => window.clearTimeout(id);
+  }, [serverOffsetMs, topic?.editableUntil]);
+
   const remainingMs = useMemo(() => {
     if (!topic?.editableUntil) return 0;
     return Date.parse(topic.editableUntil) - (Date.now() + serverOffsetMs);
