@@ -254,9 +254,10 @@ stays protected for the next cleanup.
 ### Schema compatibility
 
 The one-shot `migrate` container runs `prisma migrate deploy` before the new
-API container starts, while the previous API process is still serving. A
-failed migration aborts the deploy and leaves that previous container in
-place. Migrations have to be additive. The old release reads and writes the
+API container starts, while the previous API process is still serving. Before
+Prisma runs it logs `Migrating as current_user=<role> rolsuper=<true|false>`.
+That line is the role name and a boolean, not a URL or a password. A failed
+migration aborts the deploy and leaves that previous container in place. Migrations have to be additive. The old release reads and writes the
 database after the new migration has committed, for the whole overlap. Do not
 rename, retype, or drop columns, tables, or constraints that the running
 version uses. Ship that kind of change in a later release, after no running
@@ -410,10 +411,14 @@ healthcheck is `pg_isready` as `POSTGRES_USER` and does not authenticate.
 `backup.sh` dumps as `PGDUMP_USER` / `PGDUMP_PASSWORD` from the env file when
 both are set (the read-only `cardhub_backup` role after the split). When both
 are empty it uses `POSTGRES_USER` / `POSTGRES_PASSWORD`, which is the historical
-superuser path. It does not print either password. A dump taken as
-`cardhub_backup` includes table data, sequences, `pg_trgm`, and
-`_prisma_migrations`. Restore still runs as the admin superuser, because the
-backup role cannot replay DDL.
+superuser path. It does not print either password. `pg_dump` runs in a separate
+container and connects to the compose service host `postgres`, so the password
+is checked. A dump exec'd inside the postgres container would use the local
+socket, which this image trusts, and a wrong password would still succeed. A
+failed password check exits before the backup file is kept and before any OSS
+upload. A dump taken as `cardhub_backup` includes table data, sequences,
+`pg_trgm`, and `_prisma_migrations`. Restore still runs as the admin superuser,
+because the backup role cannot replay DDL.
 
 On a fresh cluster the migrator, runtime, and backup roles do not exist. A
 dump taken after the split contains `OWNER TO` and `GRANT` for those roles.

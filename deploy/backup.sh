@@ -16,6 +16,7 @@ tmp_rclone_env=""
 # shellcheck disable=SC2317
 on_exit() {
   rc="$?"
+  unset PGPASSWORD || true
   [ -z "${tmp_sql}" ] || rm -f "${tmp_sql}"
   [ -z "${tmp_gz}" ] || rm -f "${tmp_gz}"
   [ -z "${tmp_rclone_env}" ] || rm -f "${tmp_rclone_env}"
@@ -156,14 +157,57 @@ if [ -z "${dump_user}" ] || [ -z "${dump_password}" ]; then
 fi
 
 echo "Dumping ${PROJECT} as database role ${dump_user}"
+
+# pg_dump inside the postgres container uses the local socket. This image's
+# pg_hba trusts local and 127.0.0.1, so a wrong password would still succeed.
+# A second container on the compose network connects to host "postgres" over
+# TCP, which requires the password. Do not exec, and do not use --network host.
+dump_db="$(read_env_var "${ENV_FILE}" POSTGRES_DB)"
+if [ -z "${dump_db}" ]; then
+  echo "POSTGRES_DB is missing from ${ENV_FILE}" >&2
+  exit 1
+fi
+postgres_ids="$(
+  docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps -q postgres \
+    | awk 'NF'
+)" || {
+  echo "Could not list the postgres container; refusing to dump" >&2
+  exit 1
+}
+postgres_count="$(printf '%s\n' "${postgres_ids}" | awk 'NF { n++ } END { print n + 0 }')"
+if [ "${postgres_count}" -ne 1 ]; then
+  echo "Refusing to dump: expected exactly one postgres container, found ${postgres_count}" >&2
+  exit 1
+fi
+postgres_id="${postgres_ids}"
+postgres_image="$(docker inspect -f '{{.Config.Image}}' "${postgres_id}")" || {
+  echo "Could not read the postgres image; refusing to dump" >&2
+  exit 1
+}
+pg_network="$(
+  docker inspect -f '{{range $name, $conf := .NetworkSettings.Networks}}{{range $conf.Aliases}}{{if eq . "postgres"}}{{$name}}{{"\n"}}{{end}}{{end}}{{end}}' "${postgres_id}" \
+    | awk 'NF' | head -n 1
+)" || {
+  echo "Could not read the postgres network; refusing to dump" >&2
+  exit 1
+}
+if [ -z "${postgres_image}" ] || [ -z "${pg_network}" ]; then
+  echo "Could not find the postgres image or compose network; refusing to dump" >&2
+  exit 1
+fi
+
 export PGDUMP_USER="${dump_user}"
+export PGDUMP_DB="${dump_db}"
 export PGPASSWORD="${dump_password}"
-docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T \
-  -e PGDUMP_USER \
+docker run --rm --network "${pg_network}" \
   -e PGPASSWORD \
-  postgres \
-  sh -c 'pg_dump --no-password -U "${PGDUMP_USER}" -d "${POSTGRES_DB}"' > "${tmp_sql}"
-unset PGPASSWORD PGDUMP_USER
+  -e PGDUMP_USER \
+  -e PGDUMP_DB \
+  --entrypoint sh \
+  "${postgres_image}" \
+  -c 'pg_dump --no-password -h postgres -U "$PGDUMP_USER" -d "$PGDUMP_DB"' \
+  > "${tmp_sql}"
+unset PGPASSWORD PGDUMP_USER PGDUMP_DB
 dump_password=""
 
 sql_size="$(wc -c < "${tmp_sql}")"
