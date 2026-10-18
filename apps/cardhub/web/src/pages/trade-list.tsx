@@ -27,7 +27,8 @@ import {
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
-import { RetryButton, queryFallback, useFocusOnRecovery } from '../components/retry-button';
+import { ErrorBox } from '../components/error-box';
+import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ReportButton } from '../components/report-button';
@@ -875,34 +876,5 @@ function ListingSkeleton() {
         </li>
       ))}
     </ul>
-  );
-}
-function ErrorBox({
-  title,
-  retryLabel,
-  retryingLabel,
-  retrying,
-  retry,
-}: {
-  title: string;
-  retryLabel: string;
-  retryingLabel: string;
-  retrying: boolean;
-  retry: () => void;
-}) {
-  return (
-    <div
-      role="alert"
-      className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
-    >
-      <p className="font-medium">{title}</p>
-      <RetryButton
-        retrying={retrying}
-        label={retryLabel}
-        retryingLabel={retryingLabel}
-        onRetry={retry}
-        className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-      />
-    </div>
   );
 }
