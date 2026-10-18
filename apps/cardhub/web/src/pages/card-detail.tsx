@@ -106,7 +106,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
           ]}
         />
 
-        <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
           <Artwork
             kind="card"
             src={card.imageUrl}
