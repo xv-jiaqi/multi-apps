@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { observer } from 'mobx-react-lite';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { loginInput, t } from '@repo/shared';
+import { appErrorMessage, loginInput, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -30,7 +30,7 @@ export const LoginPage = observer(function LoginPage() {
       navigate(redirectTo, { replace: true });
     },
     onError(err) {
-      setError(err.message);
+      setError(appErrorMessage(locale.locale, err.data?.appCode));
     },
   });
 

@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { t, topicCreateInput } from '@repo/shared';
+import { appErrorMessage, t, topicCreateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -24,7 +24,7 @@ export const ForumNewPage = observer(function ForumNewPage() {
       navigate(`/forum/${topic.slug}`);
     },
     onError(err) {
-      setError(err.message);
+      setError(appErrorMessage(locale.locale, err.data?.appCode));
     },
   });
 

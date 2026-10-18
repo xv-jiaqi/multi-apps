@@ -78,16 +78,18 @@ export function formatAdminCount(
 
 export function readTrpcFailure(error: unknown): {
   trpcCode?: string;
+  appCode?: string;
   message: string;
   admin?: AdminCatalogDetails;
 } {
   if (!error || typeof error !== 'object') return { message: '' };
   const record = error as {
     message?: unknown;
-    data?: { code?: unknown; adminCatalogError?: AdminCatalogDetails };
+    data?: { code?: unknown; appCode?: unknown; adminCatalogError?: AdminCatalogDetails };
   };
   return {
     trpcCode: typeof record.data?.code === 'string' ? record.data.code : undefined,
+    appCode: typeof record.data?.appCode === 'string' ? record.data.appCode : undefined,
     message: typeof record.message === 'string' ? record.message : '',
     admin: record.data?.adminCatalogError,
   };

@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
-import { catalogImportLimit, t } from '@repo/shared';
+import { appErrorMessage, catalogImportLimit, t } from '@repo/shared';
 import { Button, SegmentedControl } from '@repo/ui-web';
 import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
@@ -147,7 +147,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       setParseError(
         failure.admin?.code
           ? adminErrorText(locale.locale, failure.admin.code, failure.message)
-          : tt('state.error'),
+          : appErrorMessage(locale.locale, failure.appCode),
       );
     } finally {
       setPhase(null);

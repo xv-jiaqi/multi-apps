@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { t } from './index';
+import { appErrorMessage, t } from './index';
 
 const counts = [0, 1, 2] as const;
 
@@ -10,6 +10,18 @@ function searchSummary(locale: 'zh-CN' | 'en-US', cards: number, series: number)
     results: t(locale, 'form.resultsCount', { count: cards + series }),
   });
 }
+
+describe('app error copy', () => {
+  it('maps a known code and hides unknown codes behind the generic sentence', () => {
+    expect(appErrorMessage('zh-CN', 'VALIDATION')).toBe('填写的内容不符合要求，请修改后再试');
+    expect(appErrorMessage('en-US', 'VALIDATION')).toBe(
+      'Some fields need to be changed before you can continue.',
+    );
+    expect(appErrorMessage('zh-CN', 'NOT_A_REAL_CODE')).toBe('出了点问题，请稍后再试');
+    expect(appErrorMessage('zh-CN', undefined)).toBe('出了点问题，请稍后再试');
+    expect(appErrorMessage('zh-CN', 'VALIDATION')).not.toContain('VALIDATION');
+  });
+});
 
 describe('search result plurals', () => {
   it('uses one result for 1 and results for 0 and 2 in English', () => {

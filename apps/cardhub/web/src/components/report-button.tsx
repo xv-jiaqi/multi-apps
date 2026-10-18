@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Button } from '@repo/ui-web';
-import { reportCreateInput, t, type ReportTargetType } from '@repo/shared';
+import { appErrorMessage, reportCreateInput, t, type ReportTargetType } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -36,7 +36,7 @@ export const ReportButton = observer(function ReportButton({
       setReason('');
     },
     onError(err) {
-      setError(err.message);
+      setError(appErrorMessage(locale.locale, err.data?.appCode));
     },
   });
 

@@ -1,4 +1,4 @@
-import type { Locale } from '../constants';
+import { isAppErrorCode, type Locale } from '../constants';
 
 type Dictionary = Record<string, string>;
 
@@ -503,7 +503,31 @@ const zhCN: Dictionary = {
   'admin.import.tooLarge': '一次最多导入 1MB',
   'error.payloadTooLarge': '内容太大，请精简后重试',
   'error.malformedRequest': '请求格式有误',
-  'error.internal': '服务暂时不可用，请稍后再试',
+  'error.internal': '出了点问题，请稍后再试',
+  'error.app.PARSE_ERROR': '请求无法解析，请重试',
+  'error.app.BAD_REQUEST': '请求无效，请检查后再试',
+  'error.app.VALIDATION': '填写的内容不符合要求，请修改后再试',
+  'error.app.INTERNAL_SERVER_ERROR': '出了点问题，请稍后再试',
+  'error.app.NOT_IMPLEMENTED': '这个功能还不可用',
+  'error.app.BAD_GATEWAY': '服务暂时不可用，请稍后再试',
+  'error.app.SERVICE_UNAVAILABLE': '服务暂时不可用，请稍后再试',
+  'error.app.GATEWAY_TIMEOUT': '服务响应超时，请稍后再试',
+  'error.app.UNAUTHORIZED': '登录没有成功，请检查账号和密码',
+  'error.app.FORBIDDEN': '没有权限进行这个操作',
+  'error.app.NOT_FOUND': '内容不存在或已被删除',
+  'error.app.METHOD_NOT_SUPPORTED': '请求方式不正确',
+  'error.app.TIMEOUT': '请求超时，请稍后再试',
+  'error.app.CONFLICT': '注册没有成功，请换一个邮箱或用户名',
+  'error.app.PRECONDITION_FAILED': '当前状态不允许这个操作',
+  'error.app.PAYLOAD_TOO_LARGE': '内容太长，请缩短后再试',
+  'error.app.UNSUPPORTED_MEDIA_TYPE': '不支持这种内容格式',
+  'error.app.UNPROCESSABLE_CONTENT': '无法处理提交的内容',
+  'error.app.TOO_MANY_REQUESTS': '操作太频繁，请稍后再试',
+  'error.app.CLIENT_CLOSED_REQUEST': '请求已取消',
+  'error.app.WRONG_PASSWORD': '当前密码不正确',
+  'error.app.SAME_PASSWORD': '新密码不能和当前密码相同',
+  'error.app.UNKNOWN': '出了点问题，请稍后再试',
+  'error.app.unknown': '出了点问题，请稍后再试',
   'error.unsupportedMedia': '不支持这种内容格式',
   'error.requestRejected': '请求未能通过校验',
   'admin.import.back': '返回内容管理',
@@ -1056,7 +1080,31 @@ const enUS: Dictionary = {
   'admin.import.tooLarge': 'You can import at most 1MB at a time',
   'error.payloadTooLarge': 'This content is too large. Shorten it and try again.',
   'error.malformedRequest': 'The request format is invalid.',
-  'error.internal': 'Something went wrong. Try again in a moment.',
+  'error.internal': 'Something went wrong. Please try again.',
+  'error.app.PARSE_ERROR': 'The request could not be read. Try again.',
+  'error.app.BAD_REQUEST': 'The request is invalid. Check it and try again.',
+  'error.app.VALIDATION': 'Some fields need to be changed before you can continue.',
+  'error.app.INTERNAL_SERVER_ERROR': 'Something went wrong. Please try again.',
+  'error.app.NOT_IMPLEMENTED': 'This action is not available yet.',
+  'error.app.BAD_GATEWAY': 'The service is temporarily unavailable. Try again later.',
+  'error.app.SERVICE_UNAVAILABLE': 'The service is temporarily unavailable. Try again later.',
+  'error.app.GATEWAY_TIMEOUT': 'The service took too long to respond. Try again.',
+  'error.app.UNAUTHORIZED': 'Sign-in did not succeed. Check the account and password.',
+  'error.app.FORBIDDEN': 'You do not have permission to do that.',
+  'error.app.NOT_FOUND': 'That content does not exist or was removed.',
+  'error.app.METHOD_NOT_SUPPORTED': 'That request method is not supported.',
+  'error.app.TIMEOUT': 'The request timed out. Try again.',
+  'error.app.CONFLICT': 'Registration did not succeed. Try a different email or username.',
+  'error.app.PRECONDITION_FAILED': 'This action is not allowed in the current state.',
+  'error.app.PAYLOAD_TOO_LARGE': 'That content is too long. Shorten it and try again.',
+  'error.app.UNSUPPORTED_MEDIA_TYPE': 'That content format is not supported.',
+  'error.app.UNPROCESSABLE_CONTENT': 'The submitted content could not be processed.',
+  'error.app.TOO_MANY_REQUESTS': 'Too many attempts. Try again later.',
+  'error.app.CLIENT_CLOSED_REQUEST': 'The request was cancelled.',
+  'error.app.WRONG_PASSWORD': 'The current password is incorrect.',
+  'error.app.SAME_PASSWORD': 'The new password must be different from the current one.',
+  'error.app.UNKNOWN': 'Something went wrong. Please try again.',
+  'error.app.unknown': 'Something went wrong. Please try again.',
   'error.unsupportedMedia': 'This content format is not supported.',
   'error.requestRejected': 'The request could not be verified.',
   'admin.import.back': 'Back to catalog',
@@ -1109,4 +1157,14 @@ export function t(locale: Locale, key: string, vars?: Record<string, string | nu
   return raw.replace(/\{(\w+)\}/g, (_, name: string) =>
     name in vars ? String(vars[name]) : `{${name}}`,
   );
+}
+
+/** Localized copy for `error.data.appCode`. Unknown codes use the generic sentence. */
+export function appErrorMessage(locale: Locale, appCode: unknown): string {
+  if (isAppErrorCode(appCode)) {
+    const key = `error.app.${appCode}`;
+    const text = t(locale, key);
+    if (text !== key) return text;
+  }
+  return t(locale, 'error.app.unknown');
 }

@@ -26,7 +26,7 @@ if (typeof ResizeObserver === 'undefined') {
 
 const publishHarness = vi.hoisted(() => ({
   onError: undefined as
-    | ((error: { message: string; data?: { code?: string } }) => void)
+    | ((error: { message: string; data?: { code?: string; appCode?: string } }) => void)
     | undefined,
 }));
 
@@ -80,7 +80,10 @@ vi.mock('../lib/trpc', () => ({
     listings: {
       publish: {
         useMutation: (options?: {
-          onError?: (error: { message: string; data?: { code?: string } }) => void;
+          onError?: (error: {
+            message: string;
+            data?: { code?: string; appCode?: string };
+          }) => void;
         }) => {
           publishHarness.onError = options?.onError;
           return { mutate: vi.fn(), isPending: false };
@@ -148,6 +151,27 @@ describe('TradePublishPage', () => {
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('发布太频繁，请稍后再试');
+  });
+
+  it('shows the mapped validation copy instead of the raw server text', async () => {
+    render(
+      <MemoryRouter initialEntries={['/trade/new']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      publishHarness.onError?.({
+        message: 'Must be a kebab-case slug',
+        data: { code: 'BAD_REQUEST', appCode: 'VALIDATION' },
+      });
+    });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('填写的内容不符合要求，请修改后再试');
+    expect(alert).not.toHaveTextContent('kebab-case');
+    expect(alert).not.toHaveTextContent('VALIDATION');
+    expect(alert).not.toHaveTextContent('BAD_REQUEST');
   });
 
   it('falls back to a text link when a preview image fails to load', async () => {
