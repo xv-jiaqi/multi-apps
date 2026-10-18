@@ -57,7 +57,7 @@
 | CH-103 | 论坛完善：话题编辑、置顶、纯文本摘要            | P1     | M    | —                     | ✅ PR #70；编辑页有标题                               |
 | CH-104 | 交易信息板：卡名、品相、筛选与缩略图            | P1     | M    | CH-105（缩略图部分）  | ✅ PR #68、#78；重试留错误框                          |
 | CH-105 | 卡牌 / 系列真实图片渲染                         | P1     | S    | —                     | ✅ PR #65                                             |
-| CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 进行中（API #67、Web #77；trigram 未做）              |
+| CH-106 | 全局搜索：Header 搜索框、系列搜索、trigram 索引 | P1     | M    | —                     | 进行中（API #67、Web #77；trigram 索引本 PR）         |
 | CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | ✅ PR #71 + #76 + #81（未保存拦截仍待后续；属性上限） |
 | CH-108 | 文案清理、页面标题、小型无障碍修复              | P1     | S    | —                     | ✅ PR #61                                             |
 | CH-109 | 卡牌详情页 CLS                                  | P1     | S    | —                     | 待领取                                                |
@@ -309,7 +309,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-106 全局搜索
 
-- **进度**（2026-10-17）：`search.global`（`cardLimit` / `seriesLimit`、系列 `cardCount` / `coverUrl`）和 `parseCardSearchQuery` 的结构化失败已在 #67 合并。Web 顶栏搜索与 `/search` 筛选在 #77。Prisma `pg_trgm` 索引仍未做，不要重复做 API 或 Web。
+- **进度**（2026-10-18）：`search.global`（`cardLimit` / `seriesLimit`、系列 `cardCount` / `coverUrl`）和 `parseCardSearchQuery` 的结构化失败已在 #67 合并。Web 顶栏搜索与 `/search` 筛选在 #77。`cards.name`、`series.title` 已加 `pg_trgm` GIN 索引（`cards_name_trgm_idx`、`series_title_trgm_idx`）。不要重复做 API、Web 或这组索引。
 - **背景**：PRD Story 2.5 和 UI 规范要求在醒目位置放搜索框；目前只能进入 `/search` 页面，且只搜卡牌名。`@@index([name])` 是 btree，对 `ILIKE '%q%'` 无效。Scryfall 的搜索是一整套键值语法，还包含正则、费用和赛制合法性。Cardhub 只借其中很小的一块，见 [industry-benchmark.md](industry-benchmark.md) 第 4 节。
 - **改动范围**
   - Prisma：在 schema 中用 `@@index([name(ops: raw("gin_trgm_ops"))], type: Gin)` 给 `Card.name`、`Series.title` 声明 trigram 索引，并在生成的 `migration.sql` 顶部手动加 `CREATE EXTENSION IF NOT EXISTS pg_trgm;`（部署用的官方 postgres 镜像中 `POSTGRES_USER` 是超级用户，有建扩展权限）。
