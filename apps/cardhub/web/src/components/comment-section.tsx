@@ -18,6 +18,28 @@ function formatDateTime(value: string, locale: string) {
   return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/** Three rows in the same shape as a comment: avatar circle and two text bars. */
+function CommentListSkeleton() {
+  return (
+    <ul className="space-y-3">
+      {Array.from({ length: 3 }, (_, index) => (
+        <li
+          key={index}
+          className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-8 shrink-0 animate-pulse rounded-full bg-neutral-200" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-4 w-1/3 animate-pulse rounded bg-neutral-200" />
+              <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-200" />
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export const CommentSection = observer(function CommentSection({ target }: CommentSectionProps) {
   const commentTarget = target;
   const { locale, session } = useStores();
@@ -163,8 +185,10 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const commentsView = queryFallback(list);
   useFocusOnRecovery(commentsView, commentsRef);
 
+  const commentsLoading = commentsView === 'loading';
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-busy={commentsLoading ? true : undefined}>
       {session.isAuthenticated ? (
         <form
           onSubmit={onSubmit}
@@ -252,10 +276,8 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           />
         </div>
-      ) : commentsView === 'loading' ? (
-        <p className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500">
-          {tt('state.loading')}
-        </p>
+      ) : commentsLoading ? (
+        <CommentListSkeleton />
       ) : !list.data || list.data.length === 0 ? (
         <p
           ref={(node) => {

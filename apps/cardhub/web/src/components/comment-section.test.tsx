@@ -144,6 +144,25 @@ beforeEach(() => {
 });
 
 describe('CommentSection (unauthenticated)', () => {
+  it('renders three skeleton rows and aria-busy while comments load', () => {
+    queryState.isLoading = true;
+    queryState.data = undefined;
+    const { container } = renderShell();
+
+    const section = container.querySelector('[aria-busy="true"]');
+    expect(section).not.toBeNull();
+    const rows = screen.getAllByRole('listitem');
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      expect(row.querySelector('.animate-pulse.rounded-full')).toBeTruthy();
+      expect(row.querySelectorAll('.animate-pulse.bg-neutral-200')).toHaveLength(3);
+      expect(row).not.toHaveClass('border-dashed');
+    }
+    expect(section?.querySelector('ul')).not.toHaveClass('border-dashed');
+    expect(screen.queryByText('还没有评论，来抢沙发吧')).not.toBeInTheDocument();
+    expect(screen.queryByText('加载中…')).not.toBeInTheDocument();
+  });
+
   it('renders the sign-in prompt and no form', () => {
     renderShell();
     expect(screen.getByRole('link', { name: /登录后即可发表评论/ })).toBeInTheDocument();
