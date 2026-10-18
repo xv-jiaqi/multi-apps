@@ -94,6 +94,20 @@ jobs:
           install -m 600 /dev/null ~/.ssh/known_hosts
           printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > ~/.ssh/known_hosts
 
+      # Keep this step immediately above "Sync edge files". A main commit that
+      # changes deploy/ between the earlier resolve and this fetch must fail
+      # here, before the tar is uploaded.
+      - name: Re-check deploy tree before sync
+        shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
+          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
+          DEPLOY_EXPECTED_SHA: ${{ steps.deploy-inputs.outputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          bash deploy/resolve-deploy-inputs.sh --assert
+
       - name: Sync edge files
         shell: bash
         env:
@@ -233,6 +247,16 @@ jobs:
               exit 1
             fi
           done
+
+      # Keep this step immediately above "Sync deploy files". The GHCR wait
+      # above can run for about 10 minutes after the first --assert; this
+      # fetch is the check that still matches origin/main at upload time.
+      - name: Re-check deploy tree before sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          bash deploy/resolve-deploy-inputs.sh --assert
 
       - name: Sync deploy files
         shell: bash

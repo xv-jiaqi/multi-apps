@@ -187,6 +187,23 @@ commit can start after main has already published a newer `deploy/` tree.
 Either case would otherwise sync old compose files, `remote-deploy.sh`, and
 the shared edge, then reload Caddy.
 
+The first check is not the one that guards the upload. The deploy job then
+waits up to about 10 minutes for the GHCR image. The edge job configures SSH
+before it packs `deploy/edge`. Each job runs `git fetch origin main` and
+`deploy/resolve-deploy-inputs.sh --assert` again as the step immediately
+before the step that syncs those files. Nothing slow runs between that second
+assert and the tar. If `deploy/` changed on main during the wait, the second
+assert exits 1 and the job does not upload the checkout's compose,
+`remote-deploy.sh`, or edge.
+
+### Re-running Cardhub Deploy
+
+Runs created before this guard merged (#110) use the old workflow file baked
+into that run. That file has no `deploy/` tree check, and GitHub will keep
+offering Re-run for about 30 days. Until roughly 2026-11-17, do not re-run any
+Cardhub Deploy run created before #110's merge. After #110, re-running is safe
+only because the guard rejects a stale `deploy/` tree.
+
 ### Zero-downtime rollout
 
 `remote-deploy.sh` pulls the new API and web images, starts Postgres and Redis

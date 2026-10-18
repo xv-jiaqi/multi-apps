@@ -102,6 +102,7 @@ jobs:
         run: |
           bash deploy/plan-edge-apply.test.sh
           bash deploy/deploy-tree-guard.test.sh
+          bash deploy/recheck-before-sync.test.sh
           bash deploy/rollback-preserves-previous-image.test.sh
 
   audit:
