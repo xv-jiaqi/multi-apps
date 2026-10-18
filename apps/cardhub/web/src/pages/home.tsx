@@ -38,11 +38,11 @@ function FeaturedSeriesTile({ series, featured }: { series: FeaturedSeries; feat
         </div>
       ) : (
         <div
-          className={`absolute inset-0 -z-10 bg-gradient-to-br ${gradientFor(series.slug)} opacity-30 transition-opacity group-hover:opacity-50`}
+          className={`absolute inset-0 -z-10 bg-gradient-to-br ${gradientFor(series.slug)} opacity-30`}
         />
       )}
       <h3 className="text-lg font-semibold text-neutral-900">{series.title}</h3>
-      <p className="mt-1 line-clamp-2 text-xs text-neutral-700">{series.description ?? ''}</p>
+      <p className="mt-1 line-clamp-2 text-xs text-neutral-800">{series.description ?? ''}</p>
     </Link>
   );
 }
