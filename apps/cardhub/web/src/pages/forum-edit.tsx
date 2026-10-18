@@ -91,8 +91,8 @@ export const ForumEditPage = observer(function ForumEditPage() {
       <PageShell>
         <PageMeta title={tt('forum.edit.title')} />
         <div className="space-y-4">
-          <div className="h-10 w-1/3 animate-pulse rounded-md bg-neutral-200" />
-          <div className="h-64 animate-pulse rounded-md bg-neutral-200" />
+          <div className="h-10 w-1/3 animate-pulse motion-reduce:animate-none rounded-md bg-neutral-200" />
+          <div className="h-64 animate-pulse motion-reduce:animate-none rounded-md bg-neutral-200" />
         </div>
       </PageShell>
     );

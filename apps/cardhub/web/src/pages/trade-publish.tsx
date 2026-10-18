@@ -281,7 +281,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                 </label>
                 {prefillQuery.isLoading && !selectedCard ? (
                   <div className="flex items-center gap-3 rounded-md border border-neutral-300 bg-white p-3">
-                    <div className="aspect-[63/88] w-16 animate-pulse rounded-sm bg-neutral-200" />
+                    <div className="aspect-[63/88] w-16 animate-pulse motion-reduce:animate-none rounded-sm bg-neutral-200" />
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="h-4 w-1/2 rounded bg-neutral-200" />
                       <div className="h-3 w-2/3 rounded bg-neutral-200" />

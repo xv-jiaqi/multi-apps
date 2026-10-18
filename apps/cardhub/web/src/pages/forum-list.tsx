@@ -89,7 +89,7 @@ export const ForumListPage = observer(function ForumListPage() {
             {Array.from({ length: 4 }).map((_, idx) => (
               <li
                 key={idx}
-                className="h-24 animate-pulse rounded-2xl border border-white/60 bg-white/50"
+                className="h-24 animate-pulse motion-reduce:animate-none rounded-2xl border border-white/60 bg-white/50"
               />
             ))}
           </ul>
