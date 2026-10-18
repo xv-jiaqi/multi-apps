@@ -26,17 +26,20 @@ if (typeof ResizeObserver === 'undefined') {
 type ListInput = {
   sort?: string;
   currency?: string;
+  cardSlug?: string;
   minPrice?: number;
   maxPrice?: number;
 };
 
 const listHarness = vi.hoisted(() => ({
   inputs: [] as ListInput[],
+  options: [] as Array<{ retry?: (count: number, error: { data?: { code?: string } }) => boolean }>,
   items: [] as Array<Record<string, unknown>>,
   isError: false,
   isLoading: false,
   isFetching: false,
   errorMessage: 'network down',
+  errorCode: null as string | null,
   refetch: vi.fn(),
 }));
 
@@ -76,16 +79,30 @@ vi.mock('../lib/trpc', () => ({
     },
     listings: {
       list: {
-        useInfiniteQuery: (input: ListInput) => {
+        useInfiniteQuery: (
+          input: ListInput,
+          options: { retry?: (count: number, error: { data?: { code?: string } }) => boolean },
+        ) => {
           listHarness.inputs.push(input);
+          listHarness.options.push(options);
           return {
-            data: { pages: [{ items: listHarness.items, nextCursor: null }] },
+            data: listHarness.isLoading
+              ? undefined
+              : { pages: [{ items: listHarness.items, nextCursor: null }] },
             isLoading: listHarness.isLoading,
+            isPending: listHarness.isLoading,
             isError: listHarness.isError,
             isFetching: listHarness.isFetching,
             isFetchingNextPage: false,
             hasNextPage: false,
-            error: listHarness.isError ? { message: listHarness.errorMessage } : null,
+            error: listHarness.isError
+              ? {
+                  message: listHarness.errorMessage,
+                  data: listHarness.errorCode ? { code: listHarness.errorCode } : undefined,
+                }
+              : null,
+            errorUpdateCount: listHarness.isError ? 1 : 0,
+            dataUpdatedAt: listHarness.isError ? 0 : 1,
             refetch: listHarness.refetch,
             fetchNextPage: vi.fn(),
           };
@@ -172,11 +189,13 @@ function listingWithPhoto(imageUrls: string[]) {
 describe('TradeListPage price filters', () => {
   beforeEach(() => {
     listHarness.inputs.length = 0;
+    listHarness.options.length = 0;
     listHarness.items = [];
     listHarness.isError = false;
     listHarness.isLoading = false;
     listHarness.isFetching = false;
     listHarness.errorMessage = 'network down';
+    listHarness.errorCode = null;
     listHarness.refetch.mockClear();
     rootStore.session.signOut();
     rootStore.locale.setLocale('zh-CN');
@@ -477,5 +496,101 @@ describe('TradeListPage price filters', () => {
     expect(screen.queryByText('加载失败')).not.toBeInTheDocument();
     expect(screen.queryByText('重试')).not.toBeInTheDocument();
     expect(screen.queryByText('network down')).not.toBeInTheDocument();
+  });
+
+  it('shows a dashed invalid-filter box for BAD_REQUEST and does not retry it', async () => {
+    const user = userEvent.setup();
+    listHarness.isError = true;
+    listHarness.errorCode = 'BAD_REQUEST';
+    listHarness.errorMessage = 'String must be kebab-case QA-INJECTED 400 BAD_REQUEST';
+    renderTrade('?card=a%26b');
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('筛选条件无效');
+    expect(alert).toHaveClass(
+      'rounded-lg',
+      'border',
+      'border-dashed',
+      'border-neutral-300',
+      'p-8',
+      'text-center',
+    );
+    expect(alert.querySelector('p')).toHaveClass('font-medium', 'text-neutral-700');
+    const clear = screen.getByRole('button', { name: '清除筛选' });
+    expect(clear).toHaveClass('mt-4', 'h-10', 'border-neutral-300', 'bg-white');
+    expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument();
+    expect(screen.queryByText('加载失败')).not.toBeInTheDocument();
+    expect(alert).not.toHaveTextContent('kebab');
+    expect(alert).not.toHaveTextContent('400');
+    expect(alert).not.toHaveTextContent('BAD_REQUEST');
+    expect(alert).not.toHaveTextContent('QA-INJECTED');
+    expect(screen.getByText('a&b')).toBeInTheDocument();
+
+    const retry = listHarness.options.at(-1)?.retry;
+    expect(retry).toEqual(expect.any(Function));
+    expect(retry?.(0, { data: { code: 'BAD_REQUEST' } })).toBe(false);
+    expect(retry?.(0, { data: { code: 'TOO_MANY_REQUESTS' } })).toBe(true);
+    expect(retry?.(0, { data: { code: 'INTERNAL_SERVER_ERROR' } })).toBe(true);
+    expect(retry?.(1, { data: { code: 'INTERNAL_SERVER_ERROR' } })).toBe(false);
+    expect(retry?.(0, {})).toBe(true);
+
+    await user.click(clear);
+    expect(searchText()).toBe('');
+    expect(latestInput().cardSlug).toBeUndefined();
+  });
+
+  it('uses the English invalid-filter copy', () => {
+    listHarness.isError = true;
+    listHarness.errorCode = 'BAD_REQUEST';
+    listHarness.errorMessage = 'QA-INJECTED';
+    rootStore.locale.setLocale('en-US');
+    renderTrade('?currency=CNY&min=-5');
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent("These filters aren't valid");
+    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Failed to load')).not.toBeInTheDocument();
+    expect(alert).not.toHaveTextContent('QA-INJECTED');
+  });
+
+  it.each([
+    ['TOO_MANY_REQUESTS', 'rate limited QA-INJECTED'],
+    ['INTERNAL_SERVER_ERROR', 'Internal server error QA-INJECTED'],
+  ])('keeps the retry box for %s', async (code, message) => {
+    const user = userEvent.setup();
+    listHarness.isError = true;
+    listHarness.errorCode = code;
+    listHarness.errorMessage = message;
+    renderTrade('?card=a%26b');
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('加载失败');
+    expect(screen.getByRole('button', { name: '重试' })).toBeInTheDocument();
+    expect(screen.queryByText('筛选条件无效')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '清除筛选' })).not.toBeInTheDocument();
+    expect(alert).not.toHaveTextContent('QA-INJECTED');
+    expect(alert).not.toHaveTextContent(code);
+    await user.click(screen.getByRole('button', { name: '重试' }));
+    expect(listHarness.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no alert while listings load or after they succeed', () => {
+    listHarness.isLoading = true;
+    const loading = render(
+      <MemoryRouter initialEntries={['/trade']}>
+        <Routes>
+          <Route path="/trade" element={<TradeListPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.queryAllByRole('alert')).toHaveLength(0);
+    loading.unmount();
+
+    listHarness.isLoading = false;
+    listHarness.items = [listingWithPhoto([])];
+    renderTrade();
+    expect(screen.getByText('极光骑士')).toBeInTheDocument();
+    expect(screen.queryAllByRole('alert')).toHaveLength(0);
   });
 });
