@@ -196,13 +196,18 @@ export const MePage = observer(function MePage() {
   const topicRefs = useRef(new Map<string, HTMLLIElement>());
   const commentRefs = useRef(new Map<string, HTMLLIElement>());
 
+  const arrivedSignedIn = useRef(session.isAuthenticated);
+
   useEffect(() => {
-    if (!session.isAuthenticated) {
-      navigate('/login', {
-        replace: true,
-        state: { from: `/me${location.search}${location.hash}` },
-      });
+    if (session.isAuthenticated) {
+      arrivedSignedIn.current = true;
+      return;
     }
+    if (arrivedSignedIn.current) return;
+    navigate('/login', {
+      replace: true,
+      state: { from: `/me${location.search}${location.hash}` },
+    });
   }, [session.isAuthenticated, navigate, location.search, location.hash]);
 
   const me = trpc.users.me.useQuery(undefined, { enabled: session.isAuthenticated, retry: false });
@@ -778,18 +783,33 @@ export const MePage = observer(function MePage() {
                 tabIndex={-1}
                 className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
-                {tt('me.password.success')}
+                {tt('me.password.changed')}
               </p>
             ) : null
           }
         >
-          <p className="text-sm text-neutral-600">{tt('me.security.intro')}</p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Button asChild>
-              <Link to="/me/password">{tt('me.security.changePassword')}</Link>
-            </Button>
-            <SignOutAllDialog />
-          </div>
+          <ul className="divide-y divide-neutral-200/70">
+            <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <h3 className="text-sm font-semibold text-neutral-900">
+                  {tt('me.security.password')}
+                </h3>
+                <p className="text-sm text-neutral-600">{tt('me.security.passwordHint')}</p>
+              </div>
+              <Button variant="outline" asChild className="w-full shrink-0 sm:w-auto">
+                <Link to="/me/password">{tt('me.security.changePassword')}</Link>
+              </Button>
+            </li>
+            <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <h3 className="text-sm font-semibold text-neutral-900">
+                  {tt('me.security.signOutAll')}
+                </h3>
+                <p className="text-sm text-neutral-600">{tt('me.security.signOutAllHint')}</p>
+              </div>
+              <SignOutAllDialog onOpen={() => setPasswordNotice(false)} />
+            </li>
+          </ul>
         </MeSection>
       </div>
     </PageShell>

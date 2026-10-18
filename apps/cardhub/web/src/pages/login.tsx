@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { observer } from 'mobx-react-lite';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
@@ -19,13 +19,28 @@ export const LoginPage = observer(function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const notice = (location.state as { notice?: string } | null)?.notice;
+  const incoming = location.state as { from?: unknown; notice?: string } | null;
+  const incomingNotice = incoming?.notice;
+  const [notice] = useState(
+    incomingNotice === 'signedOutAll' || incomingNotice === 'sessionExpired'
+      ? incomingNotice
+      : null,
+  );
+  const noticeRef = useRef<HTMLParagraphElement>(null);
+  const clearedNotice = useRef(false);
   const noticeText =
     notice === 'signedOutAll'
       ? tt('auth.notice.signedOutAll')
       : notice === 'sessionExpired'
         ? tt('auth.notice.sessionExpired')
         : null;
+
+  useEffect(() => {
+    if (!notice || clearedNotice.current) return;
+    clearedNotice.current = true;
+    noticeRef.current?.focus();
+    navigate('.', { replace: true, state: { from: incoming?.from } });
+  }, [incoming?.from, navigate, notice]);
 
   // Pages that redirect anonymous visitors should call navigate('/login',
   // { state: { from: location } }) so we can restore them post-login.
@@ -73,11 +88,13 @@ export const LoginPage = observer(function LoginPage() {
           <CardContent>
             {noticeText ? (
               <p
+                ref={noticeRef}
                 role="status"
+                tabIndex={-1}
                 className={
                   notice === 'signedOutAll'
-                    ? 'mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800'
-                    : 'mb-4 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700'
+                    ? 'mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                    : 'mb-4 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
                 }
               >
                 {noticeText}

@@ -490,7 +490,7 @@ describe('MePage', () => {
     );
 
     const notice = await screen.findByRole('status');
-    expect(notice).toHaveTextContent('密码已更新');
+    expect(notice).toHaveTextContent('密码已修改，其他设备已退出登录。');
     await waitFor(() => expect(notice).toHaveFocus());
   });
 });

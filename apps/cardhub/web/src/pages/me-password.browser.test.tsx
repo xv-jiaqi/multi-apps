@@ -62,8 +62,8 @@ afterEach(() => {
 
 describe('change password at 375', () => {
   it.each([
-    ['zh-CN', '保存密码', '显示密码'],
-    ['en-US', 'Save password', 'Show password'],
+    ['zh-CN', '修改密码', '显示当前密码'],
+    ['en-US', 'Change password', 'Show current password'],
   ] as const)('keeps the form inside the viewport (%s)', async (locale, submit, show) => {
     rootStore.locale.setLocale(locale);
     render(

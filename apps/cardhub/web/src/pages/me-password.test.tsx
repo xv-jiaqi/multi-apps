@@ -123,25 +123,30 @@ describe('ChangePasswordPage', () => {
     const user = userEvent.setup();
     renderPassword();
 
-    await user.click(screen.getByRole('button', { name: '保存密码' }));
-    expect(screen.getByText('请填写当前密码')).toBeInTheDocument();
-    expect(screen.getByText('请填写新密码')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '修改密码' }));
+    expect(screen.getByText('请输入当前密码')).toBeInTheDocument();
+    expect(screen.getByText('密码至少 8 位')).toBeInTheDocument();
+    expect(screen.getByText('请再输入一次新密码')).toBeInTheDocument();
     expect(screen.getByLabelText('当前密码')).toHaveFocus();
 
     await user.type(screen.getByLabelText('当前密码'), 'old-password');
+    expect(screen.queryByText('请输入当前密码')).not.toBeInTheDocument();
+    expect(screen.getByText('密码至少 8 位')).toBeInTheDocument();
+    expect(screen.getByText('请再输入一次新密码')).toBeInTheDocument();
+
     await user.type(screen.getByLabelText('新密码'), 'short');
-    await user.click(screen.getByRole('button', { name: '保存密码' }));
-    expect(screen.getByText('新密码需要 8 到 72 个字符')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '修改密码' }));
+    expect(screen.getByText('密码至少 8 位')).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText('新密码'));
-    await user.type(screen.getByLabelText('新密码'), 'a'.repeat(73));
-    await user.click(screen.getByRole('button', { name: '保存密码' }));
-    expect(screen.getByText('新密码需要 8 到 72 个字符')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('新密码'), 'a'.repeat(129));
+    await user.click(screen.getByRole('button', { name: '修改密码' }));
+    expect(screen.getByText('密码最长 128 位')).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText('新密码'));
     await user.type(screen.getByLabelText('新密码'), 'new-password');
     await user.type(screen.getByLabelText('确认新密码'), 'other-password');
-    await user.click(screen.getByRole('button', { name: '保存密码' }));
+    await user.click(screen.getByRole('button', { name: '修改密码' }));
     expect(screen.getByText('两次输入的新密码不一致')).toBeInTheDocument();
     expect(mutatePassword).not.toHaveBeenCalled();
   });
@@ -150,7 +155,7 @@ describe('ChangePasswordPage', () => {
     const user = userEvent.setup();
     renderPassword();
     const current = screen.getByLabelText('当前密码');
-    const toggles = screen.getAllByRole('button', { name: '显示密码' });
+    const toggles = screen.getAllByRole('button', { name: '显示当前密码' });
     expect(current).toHaveAttribute('type', 'password');
     await user.click(toggles[0]!);
     expect(current).toHaveAttribute('type', 'text');
@@ -164,7 +169,7 @@ describe('ChangePasswordPage', () => {
     await user.type(screen.getByLabelText('当前密码'), 'old-password');
     await user.type(screen.getByLabelText('新密码'), 'new-password');
     await user.type(screen.getByLabelText('确认新密码'), 'new-password');
-    await user.click(screen.getByRole('button', { name: '保存密码' }));
+    await user.click(screen.getByRole('button', { name: '修改密码' }));
 
     act(() => {
       const error = {
@@ -174,7 +179,8 @@ describe('ChangePasswordPage', () => {
       passwordHandlers.onError?.(error);
       noteTrpcFailure(error);
     });
-    expect(screen.getByLabelText('当前密码')).toBeInTheDocument();
+    expect(screen.getByLabelText('当前密码')).toHaveValue('');
+    expect(screen.getByLabelText('当前密码')).toHaveFocus();
     expect(screen.getByText('当前密码不正确')).toBeInTheDocument();
     expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
     expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
@@ -194,12 +200,13 @@ describe('ChangePasswordPage', () => {
         data: { code: 'TOO_MANY_REQUESTS', appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
       });
     });
-    expect(screen.getByRole('alert')).toHaveTextContent('操作太频繁，请稍后再试');
+    expect(screen.getByRole('alert')).toHaveTextContent('尝试次数过多，请稍后再试');
+    expect(screen.getByRole('button', { name: '修改密码' })).toHaveFocus();
 
     act(() => {
       rootStore.locale.setLocale('en-US');
     });
-    await screen.findByRole('button', { name: 'Save password' });
+    await screen.findByRole('button', { name: 'Change password' });
     act(() => {
       passwordHandlers.onError?.({
         message: '出了点问题，请稍后再试',
@@ -218,7 +225,7 @@ describe('ChangePasswordPage', () => {
     await user.type(screen.getByLabelText('当前密码'), 'old-password');
     await user.type(screen.getByLabelText('新密码'), 'new-password');
     await user.type(screen.getByLabelText('确认新密码'), 'new-password');
-    await user.click(screen.getByRole('button', { name: '保存密码' }));
+    await user.click(screen.getByRole('button', { name: '修改密码' }));
 
     act(() => {
       passwordHandlers.onSuccess?.({ token: 'next-token' });
@@ -239,17 +246,35 @@ describe('login session notices', () => {
       </MemoryRouter>,
     );
     const signedOut = screen.getByRole('status');
-    expect(signedOut).toHaveTextContent('已退出所有设备，请重新登录');
+    expect(signedOut).toHaveTextContent('已退出所有设备，请重新登录。');
+    expect(signedOut).toHaveAttribute('tabIndex', '-1');
+    expect(signedOut).toHaveFocus();
     expect(signedOut.className).toContain('bg-emerald-50');
     unmount();
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/login', state: { notice: 'sessionExpired' } }]}>
-        <LoginPage />
+      <MemoryRouter
+        initialEntries={[
+          { pathname: '/login', state: { from: '/forum/topic', notice: 'sessionExpired' } },
+        ]}
+      >
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <>
+                <LoginPage />
+                <Probe />
+              </>
+            }
+          />
+        </Routes>
       </MemoryRouter>,
     );
     const expired = screen.getByRole('status');
-    expect(expired).toHaveTextContent('登录已失效，请重新登录');
+    expect(expired).toHaveTextContent('登录已失效，请重新登录。');
+    expect(expired).toHaveFocus();
+    expect(screen.getByTestId('probe')).toHaveTextContent('/login|{"from":"/forum/topic"}');
     expect(expired.className).toContain('bg-neutral-50');
     expect(expired.className).not.toContain('bg-red-50');
   });
@@ -283,6 +308,8 @@ describe('SignOutAllDialog', () => {
     });
     expect(rootStore.session.token).toBeNull();
     expect(clearActiveQueryClient).toHaveBeenCalled();
-    expect(screen.getByTestId('probe')).toHaveTextContent('/login|{"notice":"signedOutAll"}');
+    expect(screen.getByTestId('probe')).toHaveTextContent(
+      '/login|{"from":"/me","notice":"signedOutAll"}',
+    );
   });
 });

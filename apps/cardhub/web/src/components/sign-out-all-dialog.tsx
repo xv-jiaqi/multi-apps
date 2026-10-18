@@ -15,7 +15,11 @@ import { APP_ERROR_CODES, t } from '@repo/shared';
 import { clearActiveQueryClient, trpc } from '../lib/trpc';
 import { useStores } from '../stores/root-store';
 
-export const SignOutAllDialog = observer(function SignOutAllDialog() {
+export const SignOutAllDialog = observer(function SignOutAllDialog({
+  onOpen,
+}: {
+  onOpen?: () => void;
+}) {
   const navigate = useNavigate();
   const { locale, session } = useStores();
   const tt = (key: string) => t(locale.locale, key);
@@ -26,18 +30,23 @@ export const SignOutAllDialog = observer(function SignOutAllDialog() {
   const mutation = trpc.auth.signOutAll.useMutation();
   const busy = mutation.isPending;
 
+  const finish = () => {
+    session.signOut();
+    clearActiveQueryClient();
+    setOpen(false);
+    navigate('/login', { replace: true, state: { from: '/me', notice: 'signedOutAll' } });
+  };
+
   const onConfirm = () => {
     setFormError(null);
     mutation.mutate(undefined, {
       onSuccess() {
-        session.signOut();
-        clearActiveQueryClient();
-        setOpen(false);
-        navigate('/login', { replace: true, state: { notice: 'signedOutAll' } });
+        finish();
       },
       onError(error) {
         const data = error.data;
         if (data?.appCode === APP_ERROR_CODES.UNAUTHORIZED) {
+          finish();
           return;
         }
         setFormError(tt('me.signOutAll.failed'));
@@ -55,8 +64,17 @@ export const SignOutAllDialog = observer(function SignOutAllDialog() {
         if (!next) setFormError(null);
       }}
     >
-      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
-        {tt('me.signOutAll.button')}
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full shrink-0 sm:w-auto"
+        onClick={() => {
+          onOpen?.();
+          setFormError(null);
+          setOpen(true);
+        }}
+      >
+        {tt('me.security.signOutAll')}
       </Button>
       <AlertDialogContent
         variant="destructive"
@@ -92,7 +110,7 @@ export const SignOutAllDialog = observer(function SignOutAllDialog() {
             disabled={busy}
             onClick={onConfirm}
           >
-            {tt('me.signOutAll.confirm')}
+            {busy ? tt('me.signOutAll.pending') : tt('me.signOutAll.confirm')}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -28,8 +28,10 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <SessionExpiryWatcher />
       <Routes>
+        <Route path="/forum" element={<Probe />} />
         <Route path="/forum/topic" element={<Probe />} />
         <Route path="/login" element={<Probe />} />
+        <Route path="/me" element={<Probe />} />
         <Route path="/me/password" element={<Probe />} />
       </Routes>
     </MemoryRouter>,
@@ -44,7 +46,7 @@ beforeEach(() => {
 
 describe('SessionExpiryWatcher', () => {
   it('sends a protected page to login when the session appCode is rejected', () => {
-    renderAt('/forum/topic');
+    renderAt('/me');
     act(() => {
       noteTrpcFailure({
         data: {
@@ -58,8 +60,25 @@ describe('SessionExpiryWatcher', () => {
     expect(rootStore.session.token).toBeNull();
     expect(clearActiveQueryClient).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('probe')).toHaveTextContent(
-      '/login|{"from":"/forum/topic","notice":"sessionExpired"}',
+      '/login|{"from":"/me","notice":"sessionExpired"}',
     );
+  });
+
+  it('signs out on a public page without leaving it', () => {
+    renderAt('/forum');
+    act(() => {
+      noteTrpcFailure({
+        data: {
+          code: 'UNAUTHORIZED',
+          httpStatus: 401,
+          appCode: APP_ERROR_CODES.UNAUTHORIZED,
+          path: 'auth.me',
+        },
+      });
+    });
+    expect(rootStore.session.token).toBeNull();
+    expect(clearActiveQueryClient).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('probe')).toHaveTextContent('/forum|null');
   });
 
   it('does not sign out on HTTP 401 alone', () => {
