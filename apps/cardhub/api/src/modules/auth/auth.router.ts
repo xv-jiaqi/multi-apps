@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
+import * as Sentry from '@sentry/node';
 import { z } from 'zod';
 import { APP_ERROR_CODES, changePasswordInput, loginInput, registerInput } from '@repo/shared';
 import { passwordPrehashWriteEnabled } from '../../config/env.validation';
@@ -10,6 +11,8 @@ import { hashPassword, verifyPassword } from './password-hash';
 
 @Injectable()
 export class AuthRouter {
+  private readonly logger = new Logger(AuthRouter.name);
+
   constructor(
     private readonly t: TrpcBase,
     private readonly prisma: PrismaService,
@@ -80,10 +83,16 @@ export class AuthRouter {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
         }
         if (check.upgradedHash) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { password: check.upgradedHash },
-          });
+          try {
+            await prisma.user.updateMany({
+              where: { id: user.id, password: user.password },
+              data: { password: check.upgradedHash },
+            });
+          } catch (error) {
+            const reported = error instanceof Error ? error : new Error(String(error));
+            this.logger.error(reported.message, reported.stack);
+            Sentry.captureException(reported);
+          }
         }
 
         const token = auth.sign({ sub: user.id, username: user.username, ver: user.tokenVersion });

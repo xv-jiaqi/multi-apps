@@ -1,4 +1,4 @@
-import type { INestApplication } from '@nestjs/common';
+import { Logger, type INestApplication } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { createApp } from '../src/bootstrap/create-app';
@@ -358,5 +358,88 @@ describe('password pre-hash writes enabled', () => {
       select: { password: true },
     });
     expect(stored?.password.startsWith(NEW_HASH_PREFIX)).toBe(true);
+  });
+
+  it('does not overwrite a password changed after the legacy hash was read', async () => {
+    const identity = nextIdentity('cas');
+    const password = 'legacy-before-change';
+    const nextPassword = 'changed-while-login';
+    const legacyHash = await bcrypt.hash(password, 4);
+    const replacement = await hashPassword(nextPassword, { prehash: true });
+
+    const prisma = app.get(PrismaService);
+    const created = await prisma.user.create({
+      data: {
+        email: identity.email,
+        username: identity.username,
+        password: legacyHash,
+      },
+      select: { id: true },
+    });
+
+    const findFirst = prisma.user.findFirst.bind(prisma.user);
+    const read = jest.spyOn(prisma.user, 'findFirst').mockImplementation(async (args) => {
+      const found = await findFirst(args);
+      if (found && 'password' in found && found.id === created.id) {
+        await prisma.user.update({
+          where: { id: created.id },
+          data: { password: replacement },
+        });
+      }
+      return found;
+    });
+
+    try {
+      const inFlight = await login(app, identity, password);
+      expect(inFlight.status).toBe(200);
+
+      const stored = await prisma.user.findUnique({
+        where: { id: created.id },
+        select: { password: true },
+      });
+      expect(stored?.password).toBe(replacement);
+
+      const withNext = await login(app, identity, nextPassword);
+      expect(withNext.status).toBe(200);
+      const withOld = await login(app, identity, password);
+      expect(withOld.status).toBe(401);
+    } finally {
+      read.mockRestore();
+    }
+  });
+
+  it('logs in when the upgrade write fails and reports the error', async () => {
+    const identity = nextIdentity('upgrade-fail');
+    const password = 'legacy-write-fails';
+    const legacyHash = await bcrypt.hash(password, 4);
+    const prisma = app.get(PrismaService);
+    const created = await prisma.user.create({
+      data: {
+        email: identity.email,
+        username: identity.username,
+        password: legacyHash,
+      },
+      select: { id: true },
+    });
+
+    const updateMany = jest
+      .spyOn(prisma.user, 'updateMany')
+      .mockRejectedValueOnce(new Error('upgrade write failed'));
+    const loggerError = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+    try {
+      const signedIn = await login(app, identity, password);
+      expect(signedIn.status).toBe(200);
+      expect(loggerError).toHaveBeenCalledWith('upgrade write failed', expect.any(String));
+
+      const stored = await prisma.user.findUnique({
+        where: { id: created.id },
+        select: { password: true },
+      });
+      expect(stored?.password).toBe(legacyHash);
+    } finally {
+      updateMany.mockRestore();
+      loggerError.mockRestore();
+    }
   });
 });
