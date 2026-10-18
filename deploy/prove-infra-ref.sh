@@ -2,6 +2,8 @@
 # Dry-run of a production dispatch with an older image tag.
 # Shows that resolve-deploy-inputs.sh keeps HEAD on the workflow ref and that
 # the files the workflow tars are that ref's blobs, not the image commit's.
+# The checkout's deploy/ tree must already match origin/main; a branch that
+# edits deploy/ is refused on purpose.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
