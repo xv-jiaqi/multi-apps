@@ -115,6 +115,33 @@ describe('localized API error codes', () => {
     }
   });
 
+  it.each([
+    'connect ECONNREFUSED 172.18.0.4:6379',
+    'getaddrinfo ENOTFOUND redis.internal',
+    'Reached the max retries per request limit',
+  ])('hides %s on a production 500', async (internalText) => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    const spy = jest.spyOn(prisma.comment, 'create').mockRejectedValueOnce(new Error(internalText));
+    try {
+      const response = await post('comments.create', { cardSlug, content: '一条评论' }, token);
+      const serialized = JSON.stringify(response.body);
+      expect(response.status).toBe(500);
+      expect(response.body.error.message).toBe(t('zh-CN', 'error.internal'));
+      expect(serialized).not.toContain(internalText);
+      expect(serialized).not.toContain('ECONNREFUSED');
+      expect(serialized).not.toContain('ENOTFOUND');
+      expect(serialized).not.toContain('172.18.0.4');
+      expect(serialized).not.toContain('6379');
+      expect(serialized).not.toContain('ioredis');
+      expect(response.body.error.data.stack).toBeUndefined();
+    } finally {
+      spy.mockRestore();
+      if (previous === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previous;
+    }
+  });
+
   it('forum topic zod failure returns VALIDATION', async () => {
     const response = await post('forum.topics.create', { title: '', body: '正文足够长' }, token);
     expectAppCode(response, 400, APP_ERROR_CODES.VALIDATION, 'BAD_REQUEST');

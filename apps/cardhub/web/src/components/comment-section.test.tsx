@@ -555,7 +555,10 @@ describe('CommentSection (authenticated)', () => {
       ) => {
         callbacks.onError({
           message: 'Too many requests',
-          data: { code: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+          data: {
+            code: 'TOO_MANY_REQUESTS',
+            appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+          },
         });
       },
     );
@@ -575,6 +578,13 @@ describe('CommentSection (authenticated)', () => {
       appCode: 'INTERNAL_SERVER_ERROR',
       code: 'INTERNAL_SERVER_ERROR',
       shown: '出了点问题，请稍后再试',
+    },
+    {
+      name: 'expired session',
+      message: '凭据无效或已过期',
+      appCode: 'UNAUTHORIZED',
+      code: 'UNAUTHORIZED',
+      shown: '登录已失效，请重新登录',
     },
     {
       name: 'zod validation',
@@ -607,6 +617,7 @@ describe('CommentSection (authenticated)', () => {
 
       const alert = screen.getByRole('alert');
       expect(alert).toHaveTextContent(shown);
+      expect(alert).not.toHaveTextContent('登录没有成功，请检查账号和密码');
       expect(alert).not.toHaveTextContent(message);
       expect(alert).not.toHaveTextContent(appCode);
       expect(alert).not.toHaveTextContent(code);

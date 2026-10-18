@@ -146,7 +146,7 @@ describe('TradePublishPage', () => {
     act(() => {
       publishHarness.onError?.({
         message: 'Too many requests',
-        data: { code: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+        data: { code: 'TOO_MANY_REQUESTS', appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
       });
     });
 
