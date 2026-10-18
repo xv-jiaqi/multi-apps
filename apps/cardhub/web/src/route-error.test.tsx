@@ -32,7 +32,8 @@ describe('route error element', () => {
     const router = createMemoryRouter(
       [
         {
-          ...layout,
+          element: layout.element,
+          errorElement: layout.errorElement,
           children: [{ path: '/boom', element: <ThrowOnRender /> }],
         },
       ],
