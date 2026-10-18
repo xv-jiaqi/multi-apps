@@ -8,7 +8,13 @@ type RedirectState =
 
 /** Same-site path: one leading slash, not protocol-relative (`//` or `/\`). */
 function isSameSiteRelativePath(path: string): boolean {
-  return path.startsWith('/') && !path.startsWith('//') && !path.startsWith('/\\');
+  // Control characters are stripped by browsers, so "/\t/evil" becomes "//evil".
+  return (
+    path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !path.startsWith('/\\') &&
+    !/[\u0000-\u001f]/.test(path)
+  );
 }
 
 export function resolvePostAuthRedirect(state: RedirectState, fallback = '/'): string {

@@ -31,4 +31,10 @@ describe('resolvePostAuthRedirect', () => {
       }),
     ).toBe('/');
   });
+
+  it('rejects a tab that browsers collapse into a protocol-relative path', () => {
+    const hidden = `/${'\t'}/evil.example`;
+    expect(resolvePostAuthRedirect(hidden)).toBe('/');
+    expect(resolvePostAuthRedirect({ from: hidden })).toBe('/');
+  });
 });
