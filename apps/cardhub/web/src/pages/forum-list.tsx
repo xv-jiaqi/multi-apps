@@ -132,7 +132,7 @@ export const ForumListPage = observer(function ForumListPage() {
                       </span>
                     </div>
                     {topic.excerpt ? (
-                      <p className="mt-2 line-clamp-2 text-sm text-neutral-600 [overflow-wrap:anywhere]">
+                      <p className="mt-2 line-clamp-2 text-sm text-neutral-600 wrap-anywhere">
                         {topic.excerpt}
                       </p>
                     ) : null}

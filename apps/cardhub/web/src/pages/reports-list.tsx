@@ -490,7 +490,7 @@ function ResolvedReportDetails({ report, locale }: { report: ReportItem; locale:
       {report.resolution ? (
         <>
           <dt className="whitespace-nowrap text-neutral-500">{tt('reports.resolve.resolution')}</dt>
-          <dd className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere] text-sm text-neutral-800">
+          <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere text-sm text-neutral-800">
             {report.resolution}
           </dd>
         </>

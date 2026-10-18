@@ -391,7 +391,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
 
     expect(screen.getByRole('group', { name: '删除这条评论？' })).toHaveClass('bg-red-50');
-    expect(screen.getByText('L'.repeat(80))).toHaveClass('[overflow-wrap:anywhere]');
+    expect(screen.getByText('L'.repeat(80))).toHaveClass('wrap-anywhere');
     expect(screen.getByRole('button', { name: '删除中…' })).toHaveClass('disabled:no-underline');
   });
 

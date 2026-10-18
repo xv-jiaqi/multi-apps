@@ -746,7 +746,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                         ) : null}
                       </div>
                     </div>
-                    <div className="mt-2">
+                    <div className="mt-2 min-w-0">
                       <MarkdownView body={reply.body} />
                     </div>
                     {confirmingThisReply ? (

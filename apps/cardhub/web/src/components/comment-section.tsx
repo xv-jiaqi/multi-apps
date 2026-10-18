@@ -319,7 +319,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                     </div>
                   ) : null}
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 [overflow-wrap:anywhere]">
+                <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
                   {comment.content}
                 </p>
                 {isConfirming ? (

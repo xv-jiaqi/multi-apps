@@ -387,7 +387,7 @@ export const MePage = observer(function MePage() {
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-sm text-neutral-600 [overflow-wrap:anywhere]">
+                    <p className="text-sm text-neutral-600 wrap-anywhere">
                       {me.data.email} ·{' '}
                       {tt('me.joinedAt', {
                         date: new Date(me.data.createdAt).toLocaleDateString(locale.locale, {
@@ -636,7 +636,7 @@ export const MePage = observer(function MePage() {
                   >
                     <Link
                       to={`/forum/${topic.slug}`}
-                      className="block text-sm font-semibold text-neutral-900 hover:underline [overflow-wrap:anywhere]"
+                      className="block text-sm font-semibold text-neutral-900 hover:underline wrap-anywhere"
                     >
                       {topic.title}
                     </Link>
@@ -733,7 +733,7 @@ export const MePage = observer(function MePage() {
                             {formatDateTime(comment.createdAt, locale.locale)}
                           </time>
                         </p>
-                        <p className="line-clamp-2 whitespace-pre-wrap text-sm text-neutral-800 [overflow-wrap:anywhere]">
+                        <p className="line-clamp-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
                           {comment.body}
                         </p>
                       </div>

@@ -1,10 +1,26 @@
-import ReactMarkdown from 'react-markdown';
+import type { ComponentProps } from 'react';
+import ReactMarkdown, { type ExtraProps } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 
 interface MarkdownViewProps {
   body: string;
   className?: string;
+}
+
+const codeBlockClass =
+  'max-w-full overflow-x-auto whitespace-pre rounded-md bg-neutral-50 p-3 font-mono text-xs';
+
+function MarkdownPre({ node: _node, ...props }: ComponentProps<'pre'> & ExtraProps) {
+  return <pre {...props} className={codeBlockClass} />;
+}
+
+function MarkdownTable({ node: _node, ...props }: ComponentProps<'table'> & ExtraProps) {
+  return (
+    <div className="max-w-full overflow-x-auto">
+      <table {...props} />
+    </div>
+  );
 }
 
 /**
@@ -16,13 +32,20 @@ interface MarkdownViewProps {
  * NEVER replace this with `dangerouslySetInnerHTML` — losing the sanitize
  * pass would let a single malicious topic body run JS in every reader's
  * session.
+ *
+ * Long URLs and inline code use `wrap-anywhere` (overflow-wrap: anywhere).
+ * Fenced code stays on one line and scrolls inside its own `pre`.
  */
 export function MarkdownView({ body, className }: MarkdownViewProps) {
   return (
     <div
-      className={`prose prose-sm prose-neutral max-w-none break-words text-neutral-800 ${className ?? ''}`}
+      className={['min-w-0 wrap-anywhere text-neutral-800', className].filter(Boolean).join(' ')}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeSanitize]}
+        components={{ pre: MarkdownPre, table: MarkdownTable }}
+      >
         {body}
       </ReactMarkdown>
     </div>

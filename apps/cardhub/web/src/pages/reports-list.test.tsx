@@ -372,7 +372,7 @@ describe('ReportsListPage resolution controls', () => {
 
     const resolution = screen.getByText(longResolution);
     expect(resolution).toHaveClass('min-w-0');
-    expect(resolution).toHaveClass('[overflow-wrap:anywhere]');
+    expect(resolution).toHaveClass('wrap-anywhere');
     expect(screen.getByText('处理说明')).toHaveClass('whitespace-nowrap');
   });
 });
