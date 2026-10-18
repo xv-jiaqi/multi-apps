@@ -30,7 +30,7 @@ export const LoginPage = observer(function LoginPage() {
       navigate(redirectTo, { replace: true });
     },
     onError(err) {
-      if (err.data?.appCode === APP_ERROR_CODES.UNAUTHORIZED) {
+      if (err.data?.appCode === APP_ERROR_CODES.INVALID_CREDENTIALS) {
         setError(tt('auth.login.unauthorized'));
         return;
       }

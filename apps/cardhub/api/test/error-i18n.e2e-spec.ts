@@ -76,10 +76,21 @@ describe('localized API error codes', () => {
     expect(conflict.body.error.message).toBe('该邮箱已被注册');
   });
 
-  it('login failure returns UNAUTHORIZED', async () => {
-    const response = await post('auth.login', { identifier: username, password: 'wrong-password' });
-    expectAppCode(response, 401, APP_ERROR_CODES.UNAUTHORIZED, 'UNAUTHORIZED');
-    expect(response.body.error.message).toBe('用户名或密码错误');
+  it('login failure returns INVALID_CREDENTIALS, not UNAUTHORIZED', async () => {
+    const wrongPassword = await post('auth.login', {
+      identifier: username,
+      password: 'wrong-password',
+    });
+    expectAppCode(wrongPassword, 401, APP_ERROR_CODES.INVALID_CREDENTIALS, 'UNAUTHORIZED');
+    expect(wrongPassword.body.error.data.appCode).not.toBe(APP_ERROR_CODES.UNAUTHORIZED);
+    expect(wrongPassword.body.error.message).toBe('用户名或密码错误');
+
+    const unknownUser = await post('auth.login', {
+      identifier: `missing-${suffix}`,
+      password: 'wrong-password',
+    });
+    expectAppCode(unknownUser, 401, APP_ERROR_CODES.INVALID_CREDENTIALS, 'UNAUTHORIZED');
+    expect(unknownUser.body.error.data.appCode).not.toBe(APP_ERROR_CODES.UNAUTHORIZED);
   });
 
   it('comment zod failure returns VALIDATION', async () => {

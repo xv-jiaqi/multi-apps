@@ -129,7 +129,7 @@ describe('mapped API error copy', () => {
         <LoginPage />
       </MemoryRouter>,
     );
-    show('用户名或密码错误', 'UNAUTHORIZED', 'UNAUTHORIZED');
+    show('用户名或密码错误', 'INVALID_CREDENTIALS', 'UNAUTHORIZED');
     expect(screen.getByText('登录没有成功，请检查账号和密码')).toBeInTheDocument();
     expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
     expect(screen.queryByText('用户名或密码错误')).not.toBeInTheDocument();
