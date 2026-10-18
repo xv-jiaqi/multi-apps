@@ -619,7 +619,7 @@ describe('CommentSection (authenticated)', () => {
 
       const alert = screen.getByRole('alert');
       expect(alert).toHaveTextContent(shown);
-      expect(alert).not.toHaveTextContent('登录没有成功，请检查账号和密码');
+      expect(alert).not.toHaveTextContent('账号或密码不正确');
       expect(alert).not.toHaveTextContent(message);
       expect(alert).not.toHaveTextContent(appCode);
       expect(alert).not.toHaveTextContent(code);

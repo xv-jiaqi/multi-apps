@@ -21,7 +21,7 @@ describe('app error copy', () => {
     expect(appErrorMessage('zh-CN', undefined)).toBe('出了点问题，请稍后再试');
     expect(appErrorMessage('zh-CN', 'VALIDATION')).not.toContain('VALIDATION');
     expect(appErrorMessage('en-US', 'INTERNAL_SERVER_ERROR')).toBe(
-      'Something went wrong. Please try again.',
+      'Something went wrong. Try again later.',
     );
     expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).toBe(
       'Something went wrong. Please try again.',

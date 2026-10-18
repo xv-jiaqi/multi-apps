@@ -103,8 +103,8 @@ describe('mapped API error copy', () => {
       </MemoryRouter>,
     );
     show('该邮箱已被注册', 'CONFLICT', 'CONFLICT');
-    expect(screen.getByText('注册没有成功，请换一个邮箱或用户名')).toBeInTheDocument();
-    expect(screen.queryByText('这条内容和已有数据冲突，请修改后再试')).not.toBeInTheDocument();
+    expect(screen.getByText('邮箱或用户名已被使用，请换一个')).toBeInTheDocument();
+    expect(screen.queryByText('已经有相同的内容，请修改后再试')).not.toBeInTheDocument();
     expect(screen.queryByText('该邮箱已被注册')).not.toBeInTheDocument();
     expect(screen.queryByText('CONFLICT')).not.toBeInTheDocument();
   });
@@ -130,7 +130,7 @@ describe('mapped API error copy', () => {
       </MemoryRouter>,
     );
     show('用户名或密码错误', 'INVALID_CREDENTIALS', 'UNAUTHORIZED');
-    expect(screen.getByText('登录没有成功，请检查账号和密码')).toBeInTheDocument();
+    expect(screen.getByText('账号或密码不正确')).toBeInTheDocument();
     expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
     expect(screen.queryByText('用户名或密码错误')).not.toBeInTheDocument();
     expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
