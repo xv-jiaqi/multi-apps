@@ -87,32 +87,34 @@ export const ErrorFallback = observer(function ErrorFallback({
   const tt = (key: string) => t(locale.locale, key);
 
   return (
-    <div
-      role="alert"
-      className="mx-auto mt-6 max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
-    >
-      <p className="font-medium">{tt('state.crashTitle')}</p>
-      <p className="mt-1">{tt('state.crashBody')}</p>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <RetryButton
-          retrying={false}
-          label={tt('state.retry')}
-          retryingLabel={tt('state.retrying')}
-          onRetry={() => {
-            if (isChunkLoadError(error)) {
-              window.location.reload();
-              return;
-            }
-            onRetry();
-          }}
-          className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 min-h-6"
-        />
-        <a
-          href="/"
-          className="inline-flex min-h-6 items-center rounded px-1 font-medium text-brand-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-        >
-          {tt('state.crashHome')}
-        </a>
+    <div className="app-safe-x">
+      <div
+        role="alert"
+        className="mx-auto mt-6 max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+      >
+        <p className="font-medium">{tt('state.crashTitle')}</p>
+        <p className="mt-1">{tt('state.crashBody')}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <RetryButton
+            retrying={false}
+            label={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+            onRetry={() => {
+              if (isChunkLoadError(error)) {
+                window.location.reload();
+                return;
+              }
+              onRetry();
+            }}
+            className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 min-h-6"
+          />
+          <a
+            href="/"
+            className="inline-flex min-h-6 items-center rounded px-1 font-medium text-brand-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {tt('state.crashHome')}
+          </a>
+        </div>
       </div>
     </div>
   );

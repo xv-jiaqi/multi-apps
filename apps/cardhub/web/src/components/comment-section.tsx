@@ -311,8 +311,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 aria-busy={isDeleting ? true : undefined}
                 className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
               >
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-500">
-                  <span className="min-w-0 truncate font-semibold text-neutral-900">
+                <div className="flex min-h-6 items-center justify-between gap-x-3 text-xs text-neutral-500">
+                  <span
+                    title={`@${comment.user.username}`}
+                    className="min-w-0 truncate font-semibold text-neutral-900"
+                  >
                     @{comment.user.username}
                   </span>
                   {!isConfirming ? (

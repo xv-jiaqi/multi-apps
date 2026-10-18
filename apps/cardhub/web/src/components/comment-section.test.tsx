@@ -228,6 +228,39 @@ describe('CommentSection (unauthenticated)', () => {
     expect(screen.getByText('great card')).toBeInTheDocument();
     expect(screen.getByText('@alice')).toBeInTheDocument();
   });
+
+  it('keeps an extra-long username on one header row and exposes the full name', () => {
+    const username = 'W'.repeat(60);
+    queryState.data = [
+      {
+        id: 'cm-long',
+        content: 'QA单行',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username },
+      },
+    ];
+    renderShell();
+
+    const name = screen.getByText(`@${username}`);
+    const header = name.parentElement;
+    expect(header).not.toBeNull();
+    expect(header).toHaveClass(
+      'flex',
+      'min-h-6',
+      'items-center',
+      'justify-between',
+      'gap-x-3',
+      'text-xs',
+      'text-neutral-500',
+    );
+    expect(header).not.toHaveClass('flex-wrap');
+    expect(header).not.toHaveClass('gap-y-1');
+    expect(header?.childElementCount).toBe(2);
+    expect(name).toHaveClass('min-w-0', 'truncate');
+    expect(name).toHaveAttribute('title', `@${username}`);
+    expect(header?.querySelector('time')).toHaveClass('whitespace-nowrap');
+    expect(header?.querySelector('.shrink-0')).toBeTruthy();
+  });
 });
 
 describe('CommentSection (authenticated)', () => {
