@@ -26,9 +26,11 @@ function isSameSiteRelativePath(path: string): boolean {
 }
 
 /**
- * Check every decoded layer, then return the original string. Only a decode
- * failure on the raw input falls back. A later layer that cannot be decoded
- * (for example "100%" after "100%25") keeps the original value.
+ * Check every decoded layer, then return the original string. If decoding
+ * fails, keep that original only when it is already a same-site path and at
+ * least one layer decoded (for example "100%" after "100%25"). A raw value
+ * that cannot be decoded, or any layer that is not a same-site path, falls
+ * back.
  */
 function acceptPath(path: string, fallback: string): string {
   let current = path;
@@ -38,7 +40,8 @@ function acceptPath(path: string, fallback: string): string {
     try {
       decoded = decodeURIComponent(current);
     } catch {
-      return i === 0 ? fallback : path;
+      if (i > 0 && isSameSiteRelativePath(path)) return path;
+      return fallback;
     }
     if (decoded === current) return path;
     current = decoded;
