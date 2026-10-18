@@ -1,23 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react';
+import { stubReload } from '../../test/stub-reload';
 import { rootStore } from '../stores/root-store';
 import { ErrorBoundary } from './error-boundary';
-
-function stubReload() {
-  const reload = vi.fn();
-  const descriptor = Object.getOwnPropertyDescriptor(window, 'location');
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: { reload },
-  });
-  return {
-    reload,
-    restore() {
-      if (descriptor) Object.defineProperty(window, 'location', descriptor);
-    },
-  };
-}
 
 beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
@@ -62,29 +48,83 @@ describe('ErrorBoundary fallback', () => {
     reload.restore();
   });
 
-  it('reloads the page when a chunk fails to load', async () => {
+  it.each([
+    [
+      'ChunkLoadError',
+      () => {
+        const error = new Error('missing asset');
+        error.name = 'ChunkLoadError';
+        return error;
+      },
+    ],
+    [
+      'Failed to fetch dynamically imported module',
+      () => new Error('Failed to fetch dynamically imported module: /assets/card.js'),
+    ],
+    [
+      'error loading dynamically imported module',
+      () => new Error('error loading dynamically imported module: /assets/card.js'),
+    ],
+    ['Importing a module script failed', () => new TypeError('Importing a module script failed.')],
+    ['Unable to preload CSS for', () => new Error('Unable to preload CSS for /assets/card.css')],
+    ['Loading chunk', () => new Error('Loading chunk 12 failed.')],
+    ['Loading CSS chunk', () => new Error('Loading CSS chunk 4 failed.')],
+  ] as const)('reloads when the failure is %s', async (label, makeError) => {
     const user = userEvent.setup();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const reload = stubReload();
 
     function Child(): never {
-      const error = new Error('Loading chunk 12 failed');
-      error.name = 'ChunkLoadError';
-      throw error;
+      throw makeError();
     }
 
-    render(
-      <ErrorBoundary>
-        <Child />
-      </ErrorBoundary>,
-    );
+    try {
+      render(
+        <ErrorBoundary>
+          <Child />
+        </ErrorBoundary>,
+      );
 
-    expect(screen.getByRole('alert')).not.toHaveTextContent('Loading chunk 12 failed');
-    await user.click(screen.getByRole('button', { name: '重试' }));
-    expect(reload.reload).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('alert')).not.toHaveTextContent(label);
+      await user.click(screen.getByRole('button', { name: '重试' }));
+      expect(reload.reload).toHaveBeenCalledTimes(1);
+    } finally {
+      consoleError.mockRestore();
+      reload.restore();
+    }
+  });
 
-    consoleError.mockRestore();
-    reload.restore();
+  it.each([
+    ['a string', 'plain failure'],
+    ['null', null],
+    ['a plain object', { reason: 'nope' }],
+  ] as const)('does not reload when %s is thrown', async (_label, thrown) => {
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const reload = stubReload();
+    let fail = true;
+
+    function Child() {
+      if (fail) throw thrown;
+      return <p>recovered</p>;
+    }
+
+    try {
+      render(
+        <ErrorBoundary>
+          <Child />
+        </ErrorBoundary>,
+      );
+
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      fail = false;
+      await user.click(screen.getByRole('button', { name: '重试' }));
+      expect(screen.getByText('recovered')).toBeInTheDocument();
+      expect(reload.reload).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+      reload.restore();
+    }
   });
 
   it('shows only the active language', async () => {

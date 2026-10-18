@@ -5,30 +5,40 @@ import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { RetryButton } from './retry-button';
 
-/** Webpack names the failure `ChunkLoadError`. Vite puts the phrase in the message. */
-export function isChunkLoadError(error: Error): boolean {
-  const message = error.message;
+/**
+ * Webpack names the failure `ChunkLoadError`. Vite, Firefox, and WebKit only
+ * put a phrase in the message. `message` may be missing when the throw is not
+ * an Error, so coerce it before calling `includes`.
+ */
+export function isChunkLoadError(error: unknown): boolean {
+  const candidate = error as { name?: unknown; message?: unknown } | null | undefined;
+  const message = String(candidate?.message ?? '');
   return (
-    error.name === 'ChunkLoadError' ||
+    candidate?.name === 'ChunkLoadError' ||
     message.includes('dynamically imported module') ||
-    message.includes('Failed to fetch dynamically imported module')
+    message.includes('Importing a module script failed') ||
+    message.includes('Unable to preload CSS') ||
+    message.includes('Loading CSS chunk') ||
+    message.includes('Loading chunk')
   );
 }
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   /** Override the default fallback UI; receives the captured error. */
-  fallback?: (error: Error, reset: () => void) => ReactNode;
+  fallback?: (error: unknown, reset: () => void) => ReactNode;
   /**
    * Side-effect hook invoked once when the boundary catches an error.
    * Wire this up to Sentry / Datadog / etc. once observability lands
    * (see plan v2 milestone M2.5).
    */
-  onError?: (error: Error, info: ErrorInfo) => void;
+  onError?: (error: unknown, info: ErrorInfo) => void;
 }
 
 interface ErrorBoundaryState {
-  error: Error | null;
+  /** Separate from `error` so a thrown `null` still shows the fallback. */
+  hasError: boolean;
+  error: unknown;
 }
 
 /**
@@ -37,13 +47,13 @@ interface ErrorBoundaryState {
  * page failure from taking down the whole app shell.
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  override state: ErrorBoundaryState = { error: null };
+  override state: ErrorBoundaryState = { hasError: false, error: null };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { error };
+  static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
-  override componentDidCatch(error: Error, info: ErrorInfo): void {
+  override componentDidCatch(error: unknown, info: ErrorInfo): void {
     this.props.onError?.(error, info);
     if (typeof console !== 'undefined') {
       // eslint-disable-next-line no-console
@@ -52,11 +62,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   reset = (): void => {
-    this.setState({ error: null });
+    this.setState({ hasError: false, error: null });
   };
 
   override render(): ReactNode {
-    if (this.state.error) {
+    if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback(this.state.error, this.reset);
       }
@@ -71,7 +81,7 @@ export const ErrorFallback = observer(function ErrorFallback({
   error,
   onRetry,
 }: {
-  error: Error;
+  error: unknown;
   onRetry: () => void;
 }) {
   const { locale } = useStores();

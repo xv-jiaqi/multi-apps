@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import * as Sentry from '@sentry/react';
 import { act, type ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
+import { stubReload } from '../test/stub-reload';
 import { appRoutes } from './app';
 import { TrpcProvider } from './lib/trpc';
 import { rootStore } from './stores/root-store';
@@ -14,21 +15,6 @@ vi.mock('@sentry/react', () => ({
 
 function ThrowOnRender(): never {
   throw new Error('首页渲染失败');
-}
-
-function stubReload() {
-  const reload = vi.fn();
-  const descriptor = Object.getOwnPropertyDescriptor(window, 'location');
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: { reload },
-  });
-  return {
-    reload,
-    restore() {
-      if (descriptor) Object.defineProperty(window, 'location', descriptor);
-    },
-  };
 }
 
 function renderBoom(element: ReactNode) {
