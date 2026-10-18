@@ -104,7 +104,7 @@ export class ReportsRouter {
         });
         if (recent >= 10) {
           throw new TRPCError({
-            code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+            code: 'TOO_MANY_REQUESTS',
             message: '今日举报次数已达上限，请明天再试',
             cause: { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
           });

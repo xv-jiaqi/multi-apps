@@ -137,7 +137,7 @@ export class AuthRouter {
       }),
 
       me: t.authedProcedure
-        .input(z.object({ token: z.string() }).optional())
+        .input(z.object({ token: z.string().max(4096) }).optional())
         .query(async ({ ctx }) => {
           if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
           const user = await prisma.user.findUnique({

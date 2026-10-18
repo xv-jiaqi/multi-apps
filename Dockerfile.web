@@ -45,7 +45,7 @@ ENV VITE_TRPC_URL=${BUILDTIME_VITE_TRPC_URL} \
 # so `turbo run build --filter=@cardhub/web` still schedules @cardhub/api#build.
 # Prisma Client must exist before Nest/tsc can compile the API — same as
 # Dockerfile.api / CI (prisma generate does not need DATABASE_URL).
-RUN pnpm --filter @cardhub/api db:generate \
+RUN pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:generate \
   && pnpm turbo run build --filter=@cardhub/web
 
 ############################

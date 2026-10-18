@@ -185,6 +185,13 @@ describe('auth session revocation', () => {
     ]);
     expect(inputOnly.status).toBe(401);
     expect(inputOnly.body.error.data).not.toHaveProperty('appCode');
+
+    const oversizeToken = await request(app.getHttpServer())
+      .get('/trpc/auth.me')
+      .query({ input: JSON.stringify({ token: 't'.repeat(4097) }) })
+      .set('Authorization', `Bearer ${registered.token}`);
+    expect(oversizeToken.status).toBe(400);
+    expect(oversizeToken.body.error.data).not.toHaveProperty('appCode');
   });
 
   it('returns WRONG_PASSWORD and SAME_PASSWORD on error.data.appCode', async () => {

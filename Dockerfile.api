@@ -24,7 +24,7 @@ RUN corepack enable && corepack prepare pnpm@10.18.2 --activate
 COPY --from=pruner /repo/out/json/ .
 COPY --from=pruner /repo/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter @cardhub/api deploy --prod --legacy /app
+  && pnpm --filter @cardhub/api --fail-if-no-match deploy --prod --legacy /app
 
 ############################
 # Stage 3 — install & build
@@ -41,7 +41,7 @@ COPY --from=pruner /repo/out/full/ .
 # NestJS tsc step runs. A bare `pnpm --filter @cardhub/api build` would
 # resolve `@repo/shared` to its empty `dist/` (gitignored) and fail with
 # "Cannot find module '@repo/shared'".
-RUN pnpm --filter @cardhub/api db:generate \
+RUN pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:generate \
   && pnpm turbo run build --filter=@cardhub/api
 
 ############################
