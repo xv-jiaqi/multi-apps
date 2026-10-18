@@ -54,11 +54,20 @@ describe('route error element', () => {
     renderBoom(<ThrowOnRender />);
 
     const alert = screen.getByRole('alert');
+    const retry = screen.getByRole('button', { name: '重试' });
+    const home = screen.getByRole('link', { name: '返回首页' });
     expect(alert).toHaveTextContent('页面出错了');
-    expect(screen.getByRole('button', { name: '重试' })).toHaveClass(
-      'focus-visible:ring-2',
-      'focus-visible:ring-brand-500',
-    );
+    expect(alert).toHaveClass('rounded-lg', 'border-red-200', 'bg-red-50');
+    expect(alert.className).not.toMatch(/rounded-2xl/);
+    expect(screen.getByText('页面出错了')).toHaveClass('font-medium');
+    expect(screen.getByText('页面出错了').className).not.toMatch(/font-semibold/);
+    expect(screen.getByText('请重试，或返回首页。')).toHaveClass('mt-1');
+    expect(retry.parentElement).toHaveClass('mt-4', 'flex', 'flex-wrap', 'items-center', 'gap-3');
+    expect(home).toHaveAttribute('href', '/');
+    expect(retry).toHaveClass('border-red-300', 'text-red-700');
+    expect(retry.className).not.toMatch(/ring-offset/);
+    expect(home).toHaveClass('min-h-6');
+    expect(home.className).not.toMatch(/ring-offset/);
     expect(alert).not.toHaveTextContent('首页渲染失败');
     expect(alert).not.toHaveTextContent('Something went wrong');
     expect(
