@@ -23,6 +23,7 @@ type MockPrismaUser = {
   findUnique: jest.Mock;
   create: jest.Mock;
   update: jest.Mock;
+  updateMany: jest.Mock;
 };
 
 function makeRouter(user: TrpcContext['user'] = null, prehashWrite = false) {
@@ -31,6 +32,7 @@ function makeRouter(user: TrpcContext['user'] = null, prehashWrite = false) {
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
   };
   const prisma = { user: userMock } as unknown as PrismaService;
 
@@ -228,6 +230,7 @@ describe('AuthRouter.login', () => {
     });
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u1', username: 'alice', ver: 4 });
     expect(userMock.update).not.toHaveBeenCalled();
+    expect(userMock.updateMany).not.toHaveBeenCalled();
   });
 
   it('upgrades a legacy hash when prehash writes are enabled', async () => {
@@ -244,8 +247,9 @@ describe('AuthRouter.login', () => {
 
     await caller.login({ identifier: 'alice', password: TEST_PASSWORD });
 
-    const update = userMock.update.mock.calls[0]?.[0];
-    expect(update.where).toEqual({ id: 'u1' });
+    expect(userMock.update).not.toHaveBeenCalled();
+    const update = userMock.updateMany.mock.calls[0]?.[0];
+    expect(update.where).toEqual({ id: 'u1', password: hashedPassword });
     expect(update.data.password.startsWith('sha256$')).toBe(true);
     expect(update.data.tokenVersion).toBeUndefined();
   });
