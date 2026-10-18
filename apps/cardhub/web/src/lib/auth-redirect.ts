@@ -6,9 +6,25 @@ type RedirectState =
   | null
   | undefined;
 
+/**
+ * Browsers drop U+0000–U+001F, so `/\t/evil.example` becomes `//evil.example`.
+ * Detect by code point. A control-character regex trips no-control-regex.
+ */
+function hasControlCharacter(path: string): boolean {
+  for (const char of path) {
+    if (char.charCodeAt(0) <= 0x1f) return true;
+  }
+  return false;
+}
+
 /** Same-site path: one leading slash, not protocol-relative (`//` or `/\`). */
 function isSameSiteRelativePath(path: string): boolean {
-  return path.startsWith('/') && !path.startsWith('//') && !path.startsWith('/\\');
+  return (
+    path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !path.startsWith('/\\') &&
+    !hasControlCharacter(path)
+  );
 }
 
 export function resolvePostAuthRedirect(state: RedirectState, fallback = '/'): string {
