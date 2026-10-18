@@ -356,9 +356,7 @@ describe('SiteHeader search entry points', () => {
     expect(inline).toHaveClass('ml-auto', 'hidden', 'lg:block', 'xl:w-72');
     const searchLink = screen.getByRole('link', { name: '搜索' });
     expect(searchLink.className).toContain('lg:hidden');
-    expect(screen.getByRole('button', { name: '切换界面语言' }).parentElement).toHaveClass(
-      'lg:ml-0',
-    );
+    expect(screen.getByRole('button', { name: /EN/ }).parentElement).toHaveClass('lg:ml-0');
 
     await user.click(screen.getByRole('button', { name: '打开导航菜单' }));
     const drawer = document.getElementById('mobile-nav');

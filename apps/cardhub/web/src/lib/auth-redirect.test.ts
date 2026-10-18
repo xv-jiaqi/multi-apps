@@ -67,4 +67,23 @@ describe('resolvePostAuthRedirect', () => {
     expect(resolvePostAuthRedirect(hidden)).toBe('/');
     expect(resolvePostAuthRedirect({ from: hidden })).toBe('/');
   });
+
+  it('decodes the target before checking and keeps a plain same-site path', () => {
+    expect(resolvePostAuthRedirect('/%09/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect({ from: '/%09/evil.com' })).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '/%09/evil.com', search: '', hash: '' },
+      }),
+    ).toBe('/');
+    expect(resolvePostAuthRedirect('/%0a/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%0d/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%00/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('//evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/\\evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('https://evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%2509/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%E0%A4%A')).toBe('/');
+    expect(resolvePostAuthRedirect('/cards/1?x=1#y')).toBe('/cards/1?x=1#y');
+  });
 });

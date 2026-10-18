@@ -53,6 +53,30 @@ describe('SiteHeader admin navigation', () => {
     expect(screen.queryByRole('link', { name: '举报队列' })).not.toBeInTheDocument();
   });
 
+  it('includes the visible EN label in the language button name', () => {
+    rootStore.locale.setLocale('zh-CN');
+    render(
+      <MemoryRouter>
+        <SiteHeader />
+      </MemoryRouter>,
+    );
+    const button = screen.getByRole('button', { name: /EN/ });
+    expect(button).toHaveTextContent('EN');
+    expect(button).toHaveAttribute('aria-label', 'EN – 切换界面语言');
+  });
+
+  it('includes the visible 中 label in the language button name', () => {
+    rootStore.locale.setLocale('en-US');
+    render(
+      <MemoryRouter>
+        <SiteHeader />
+      </MemoryRouter>,
+    );
+    const button = screen.getByRole('button', { name: /中/ });
+    expect(button).toHaveTextContent('中');
+    expect(button).toHaveAttribute('aria-label', '中 – Switch language');
+  });
+
   it('hides the admin entry from non-admins', () => {
     rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
     render(
