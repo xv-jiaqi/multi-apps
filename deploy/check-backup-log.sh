@@ -43,15 +43,27 @@ last_line="$(
       sub(/\r$/, "")
       n = split($0, fields, /[[:space:]]+/)
       has_project = 0
-      has_result = 0
+      nproj = 0
       for (i = 1; i <= n; i++) {
         if (fields[i] == want) has_project = 1
-        if (fields[i] == "BACKUP_RESULT=ok" || fields[i] == "BACKUP_RESULT=fail") has_result = 1
+        if (fields[i] ~ /^project=/) nproj++
       }
-      if (index($0, "BACKUP_RESULT=") > 0 && has_project && $0 !~ /^BACKUP_RESULT=/) {
-        malformed = 1
+      # Line-start status must be exactly ok or fail, and the line may contain
+      # only one BACKUP_RESULT=, one project=, and one ts=. Anything else is
+      # malformed, including a later duplicate that would otherwise hide a fail.
+      # A later well-formed line for this project clears an older malformed one.
+      if (index($0, "BACKUP_RESULT=") > 0 && has_project) {
+        nres = gsub(/BACKUP_RESULT=/, "&")
+        nts = 0
+        for (i = 1; i <= n; i++) if (fields[i] ~ /^ts=/) nts++
+        if ((fields[1] != "BACKUP_RESULT=ok" && fields[1] != "BACKUP_RESULT=fail") || nres != 1 || nts != 1 || nproj != 1) {
+          malformed = 1
+          last = ""
+        } else {
+          malformed = 0
+          last = $0
+        }
       }
-      if (has_project && has_result && $0 ~ /^BACKUP_RESULT=/) last = $0
     }
     END {
       if (malformed) printf "%s", "MALFORMED"
@@ -75,11 +87,18 @@ ts=""
 set -f
 read -r -a fields <<< "${last_line}"
 set +f
+# The line-start token is the result. A later BACKUP_RESULT= on the same
+# line must not replace it. ts= is the first timestamp token only.
+case "${fields[0]}" in
+  BACKUP_RESULT=ok) result="ok" ;;
+  BACKUP_RESULT=fail) result="fail" ;;
+esac
 for field in "${fields[@]}"; do
   case "${field}" in
-    BACKUP_RESULT=ok) result="ok" ;;
-    BACKUP_RESULT=fail) result="fail" ;;
-    ts=*) ts="${field#ts=}" ;;
+    ts=*)
+      ts="${field#ts=}"
+      break
+      ;;
   esac
 done
 

@@ -43,9 +43,41 @@ run_check() {
   CASE_RC="${rc}"
 }
 
+# Freeze date +%s so a +301s timestamp stays on the failing side of -300.
+run_check_frozen() {
+  local log="$1"
+  local project="$2"
+  local hours="$3"
+  local now_epoch="$4"
+  local work rc stub
+  work="$(mktemp -d)"
+  stub="${work}/bin"
+  mkdir -p "${stub}"
+  cat > "${stub}/date" << EOF
+#!/bin/bash
+if [ "\$1" = "-u" ] && [ "\$2" = "+%s" ]; then
+  printf '%s\n' "${now_epoch}"
+  exit 0
+fi
+exec ${real_date} "\$@"
+EOF
+  chmod 755 "${stub}/date"
+  CASE_OUT="${work}/out"
+  CASE_ERR="${work}/err"
+  CASE_DUMPED=0
+  rc=0
+  PATH="${stub}:${PATH}" bash "${checker}" "${log}" "${project}" "${hours}" > "${CASE_OUT}" 2> "${CASE_ERR}" || rc=$?
+  CASE_RC="${rc}"
+}
+
+real_date="$(command -v date)"
 fresh="$(iso_ago 60)"
 old="$(iso_ago $((48 * 3600)))"
 soon="$(date -u -d "@$(( $(date -u +%s) + 60 ))" +%Y-%m-%dT%H:%M:%SZ)"
+frozen_now="$(date -u +%s)"
+future_301="$(date -u -d "@$((frozen_now + 301))" +%Y-%m-%dT%H:%M:%SZ)"
+future_290="$(date -u -d "@$((frozen_now + 290))" +%Y-%m-%dT%H:%M:%SZ)"
+age_26h60="$(date -u -d "@$((frozen_now - (26 * 3600 + 60)))" +%Y-%m-%dT%H:%M:%SZ)"
 
 work="$(mktemp -d)"
 log="${work}/backup.log"
@@ -134,6 +166,23 @@ printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n
 run_check "${log}" cardhub-prod 26
 assert "near future ok exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 
+echo "CASE future +301s"
+printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n' "${future_301}" > "${log}"
+run_check_frozen "${log}" cardhub-prod 26 "${frozen_now}"
+assert "future +301s exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "future +301s explains why" "$(grep -F -q 'ts is in the future' "${CASE_ERR}" && echo 0 || echo 1)"
+
+echo "CASE future +290s"
+printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n' "${future_290}" > "${log}"
+run_check_frozen "${log}" cardhub-prod 26 "${frozen_now}"
+assert "future +290s exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
+
+echo "CASE age 26h+60s"
+printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n' "${age_26h60}" > "${log}"
+run_check_frozen "${log}" cardhub-prod 26 "${frozen_now}"
+assert "age 26h+60s exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "age 26h+60s explains why" "$(grep -F -q 'too old' "${CASE_ERR}" && echo 0 || echo 1)"
+
 echo "CASE prefixed ok only"
 printf 'WARN BACKUP_RESULT=ok project=cardhub-prod ts=%s\n' "${fresh}" > "${log}"
 run_check "${log}" cardhub-prod 26
@@ -150,6 +199,55 @@ run_check "${log}" cardhub-prod 26
 assert "prefixed fail exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
 assert "prefixed fail is unanchored" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
 assert "prefixed fail does not fall back to older ok" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
+echo "CASE duplicate result token"
+printf 'BACKUP_RESULT=fail project=cardhub-prod ts=%s BACKUP_RESULT=ok\n' "${fresh}" > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "duplicate result exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "duplicate result is malformed" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "duplicate result is not a pass" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
+echo "CASE duplicate ts"
+printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s ts=%s\n' "${old}" "${fresh}" > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "duplicate ts exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "duplicate ts is malformed" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "duplicate ts is not a pass" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
+echo "CASE duplicate project token"
+printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s project=cardhub-prod\n' "${fresh}" > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "duplicate project exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "duplicate project is malformed" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "duplicate project is not a pass" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
+echo "CASE status FAILED"
+{
+  printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-earlier.sql.gz\n' "${fresh}"
+  printf 'BACKUP_RESULT=FAILED project=cardhub-prod ts=%s\n' "${fresh}"
+} > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "FAILED status exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "FAILED status is malformed" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "FAILED status does not fall back to older ok" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
+echo "CASE empty status"
+{
+  printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-earlier.sql.gz\n' "${fresh}"
+  printf 'BACKUP_RESULT= project=cardhub-prod ts=%s\n' "${fresh}"
+} > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "empty status exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "empty status is malformed" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "empty status does not fall back to older ok" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
+echo "CASE later ok clears malformed"
+{
+  printf 'BACKUP_RESULT=FAILED project=cardhub-prod ts=%s\n' "${fresh}"
+  printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-new.sql.gz\n' "${fresh}"
+} > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "later ok exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 
 echo "CASE unterminated output then fail, glued ok ignored"
 {

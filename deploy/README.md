@@ -431,14 +431,21 @@ only on success. `reason` is one token, for example `offsite-env-missing`,
 Patrol over SSH once per project. A staging success does not cover production:
 both jobs share `/opt/cardhub/backups/backup.log`, and the checker matches
 `project=<name>` as a whole token (`cardhub-prod` does not match
-`cardhub-prod-old`). Only a line that starts with `BACKUP_RESULT=` counts.
+`cardhub-prod-old`). A line counts only when it starts with exactly
+`BACKUP_RESULT=ok` or `BACKUP_RESULT=fail`, and it contains one
+`BACKUP_RESULT=` token, one `project=` token, and one `ts=` token. The
+checker reads that line-start result and the first `ts=`. A duplicate
+`BACKUP_RESULT=`, `project=`, or `ts=` token is malformed. So is a prefixed
+line, an empty `BACKUP_RESULT=`, or any other status such as
+`BACKUP_RESULT=FAILED`. Those lines fail the check instead of falling back
+to an older ok.
 `backup.log` lines must not be prefixed: no timestamps or other log prefixes
 before `BACKUP_RESULT`. A line that contains `BACKUP_RESULT=` and that exact
 `project=` token but does not start with `BACKUP_RESULT=` fails the check.
-It exits 0 only when that project's latest line is `ok`, `ts` is within the
-max age, and `ts` is not more than five minutes in the future. Use 26 hours
-so a missed night fails the next morning patrol, while a backup from 02:20
-still passes a same-day check.
+It exits 0 only when that project's latest well-formed line is `ok`, `ts` is
+within the max age, and `ts` is not more than five minutes in the future. Use
+26 hours so a missed night fails the next morning patrol, while a backup from
+02:20 still passes a same-day check.
 
 ```bash
 ssh deploy@<host> /opt/cardhub/production/deploy/check-backup-log.sh /opt/cardhub/backups/backup.log cardhub-staging 26
@@ -448,8 +455,14 @@ ssh deploy@<host> /opt/cardhub/production/deploy/check-backup-log.sh /opt/cardhu
 The checker exits non-zero, with a reason, when the log is missing or
 unreadable, the project has no `BACKUP_RESULT` line, `ts` cannot be parsed,
 the latest line is `fail`, that `ok` is older than the max age, `ts` is
-more than five minutes in the future, or a `BACKUP_RESULT` for that project
-is not at the start of the line.
+more than five minutes in the future, or a line for that project is malformed
+(unanchored, an unknown status, or a duplicate `BACKUP_RESULT=`, `project=`,
+or `ts=` token).
+
+A malformed-line failure is handled by the ops on-call (守夜人). Patrol
+alerts, then inspect `backup.log` and run a fresh backup so a new anchored
+ok is written. Never hand-edit or delete log lines to clear it. A later
+anchored `BACKUP_RESULT=ok` for that project is what clears the alert.
 
 The backup script can ping `BACKUP_PING_URL` on success and `<url>/fail` on
 failure if that variable is set. This host does not set it. Do not treat a
