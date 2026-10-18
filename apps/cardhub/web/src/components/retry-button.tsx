@@ -75,7 +75,7 @@ export function RetryButton({
         if (retrying) return;
         onRetry();
       }}
-      className={cn(className, retrying && 'pointer-events-none opacity-50')}
+      className={cn(className, retrying && 'cursor-not-allowed opacity-50')}
     >
       {retrying ? retryingLabel : label}
     </button>

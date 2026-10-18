@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -135,6 +135,32 @@ beforeEach(() => {
 });
 
 describe('ForumEditPage', () => {
+  it('disables save and shows the amber alert as soon as editableUntil is reached', async () => {
+    vi.useFakeTimers();
+    try {
+      const now = new Date('2026-10-18T00:00:00.000Z');
+      vi.setSystemTime(now);
+      topicState.data = makeTopic({
+        editableUntil: new Date(now.getTime() + 45_000).toISOString(),
+        serverNow: now.toISOString(),
+      });
+      renderPage();
+
+      fireEvent.change(screen.getByLabelText('正文'), { target: { value: 'Changed body' } });
+      expect(screen.getByRole('button', { name: '保存修改' })).toBeEnabled();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(45_000);
+      });
+
+      expect(screen.getByRole('button', { name: '保存修改' })).toBeDisabled();
+      expect(screen.getByRole('alert')).toHaveTextContent('已超过 5 分钟编辑时限');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('disables save when title and body are unchanged', () => {
     renderPage();
 

@@ -171,6 +171,11 @@ export function Combobox<T>({
   const activeOptionId = activeIndex >= 0 ? flatItems[activeIndex]?.optionId : undefined;
   const hasListbox = open && !showsEmptyQueryContent && !hint && displayCount > 0;
 
+  React.useEffect(() => {
+    if (!activeOptionId) return;
+    document.getElementById(activeOptionId)?.scrollIntoView({ block: 'nearest' });
+  }, [activeOptionId]);
+
   function focusInput() {
     internalInputRef.current?.focus();
   }
