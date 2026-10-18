@@ -11,6 +11,8 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 4000
+      # Runtime DML role only. Do not put MIGRATE_DATABASE_URL here: tini is
+      # PID 1 (init: true) and node can read /proc/1/environ.
       DATABASE_URL: ${DATABASE_URL}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
@@ -41,6 +43,24 @@ services:
       timeout: 5s
       retries: 3
       start_period: 45s
+
+  # One-shot. Not started by `up` (profile). remote-deploy.sh runs
+  # `docker compose run --rm --no-deps migrate` before the API rollout.
+  # This is the only service that receives MIGRATE_DATABASE_URL. An empty
+  # value makes migrate-entrypoint.sh fall back to DATABASE_URL.
+  migrate:
+    image: ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}
+    profiles: ['migrate']
+    restart: 'no'
+    command: ['/usr/local/bin/migrate-entrypoint.sh']
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      MIGRATE_DATABASE_URL: ${MIGRATE_DATABASE_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      default:
 
   web:
     image: ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}

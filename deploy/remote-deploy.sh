@@ -103,6 +103,102 @@ main() {
     ENV_NAME="${env_name}" IMAGE_TAG="${active_image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" "$@"
   }
 
+  # Last assignment wins. The value is not printed.
+  read_env_file_var() {
+    local file="$1"
+    local key="$2"
+    awk -v key="$key" '
+      BEGIN { found = "" }
+      /^[[:space:]]*#/ { next }
+      /^[[:space:]]*$/ { next }
+      {
+        eq = index($0, "=")
+        if (eq == 0) next
+        name = substr($0, 1, eq - 1)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
+        if (name != key) next
+        value = substr($0, eq + 1)
+        gsub(/\r$/, "", value)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+        if (length(value) >= 2 && substr(value, 1, 1) == "\"" && substr(value, length(value), 1) == "\"") {
+          value = substr(value, 2, length(value) - 2)
+        }
+        q = sprintf("%c", 39)
+        if (length(value) >= 2 && substr(value, 1, 1) == q && substr(value, length(value), 1) == q) {
+          value = substr(value, 2, length(value) - 2)
+        }
+        found = value
+      }
+      END { printf "%s", found }
+    ' "${file}"
+  }
+
+  # Status is the `docker run` status of the classification script.
+  # 0: both split entrypoints exist and are executable.
+  # 10: both files are absent, so the image is from before the split.
+  #     A dangling symlink counts as present (`! -e` is not enough).
+  # 3: at least one file exists, but the pair is incomplete (the other is
+  #    missing, or a file is present and not executable).
+  # Docker itself returns 1 for an attach or stream error, so 1 is not an
+  # old image. Any status other than 0, 10, or 3 aborts before a container
+  # changes.
+  probe_split_entrypoint() {
+    docker run --rm --network none --entrypoint sh "${api_image}" -c '
+      api=/usr/local/bin/api-entrypoint.sh
+      mig=/usr/local/bin/migrate-entrypoint.sh
+      if [ ! -e "$api" ] && [ ! -L "$api" ] && [ ! -e "$mig" ] && [ ! -L "$mig" ]; then
+        exit 10
+      fi
+      test -x "$api" && test -x "$mig" || exit 3
+    '
+  }
+
+  # Empty only when this service has no container. "No such object" from
+  # inspect is that case. Any other inspect or list failure exits 1 before
+  # rollback is armed.
+  read_previous_image() {
+    local svc="$1"
+    local ids id image err rc listed
+    if ! ids="$(compose ps -aq "${svc}")"; then
+      echo "Refusing deploy: could not list ${svc} containers. The running API was not replaced." >&2
+      exit 1
+    fi
+    ids="$(printf '%s\n' "${ids}" | awk 'NF' | sort -u)"
+    if [ -z "${ids}" ]; then
+      if ! listed="$(docker ps -a --filter "name=^${project}-${svc}-[0-9]+\$" --format '{{.ID}}')"; then
+        echo "Refusing deploy: docker ps failed while checking for a ${svc} container. The running API was not replaced." >&2
+        exit 1
+      fi
+      listed="$(printf '%s\n' "${listed}" | awk 'NF')"
+      if [ -n "${listed}" ]; then
+        echo "Refusing deploy: compose listed no ${svc} container, but docker ps still shows one. The running API was not replaced." >&2
+        exit 1
+      fi
+      printf '%s' ""
+      return 0
+    fi
+    if [ "$(count_lines "${ids}")" -ne 1 ]; then
+      echo "Refusing deploy: ${svc} has $(count_lines "${ids}") containers; cannot choose a rollback image. The running API was not replaced." >&2
+      exit 1
+    fi
+    id="$(printf '%s\n' "${ids}" | head -n 1)"
+    err="$(mktemp)"
+    rc=0
+    image="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>"${err}")" || rc=$?
+    if [ "${rc}" -ne 0 ]; then
+      if grep -Eq 'No such (object|container)' "${err}"; then
+        rm -f "${err}"
+        printf '%s' ""
+        return 0
+      fi
+      echo "Refusing deploy: docker inspect of the previous ${svc} container exited ${rc}. The running API was not replaced." >&2
+      rm -f "${err}"
+      exit 1
+    fi
+    rm -f "${err}"
+    printf '%s' "${image}"
+  }
+
   service_ids() {
     compose ps -aq "$1" | awk 'NF' | sort -u
   }
@@ -134,8 +230,8 @@ main() {
     fi
   done
 
-  previous_api_image="$(compose ps -q api | xargs -r docker inspect -f '{{.Config.Image}}' 2>/dev/null || true)"
-  previous_web_image="$(compose ps -q web | xargs -r docker inspect -f '{{.Config.Image}}' 2>/dev/null || true)"
+  previous_api_image="$(read_previous_image api)"
+  previous_web_image="$(read_previous_image web)"
   previous_tag=""
   previous_api_tag=""
   previous_web_tag=""
@@ -445,6 +541,34 @@ main() {
     return 1
   }
 
+  # Classify the image before rollback is armed and before compose pull
+  # or compose up. Old means both split entrypoint files are absent.
+  # An incomplete pair is not an old image, even when MIGRATE_DATABASE_URL
+  # is empty. A daemon error must not skip migrations and roll the API forward.
+  local migrate_database_url api_image entrypoint_rc
+  migrate_database_url="$(read_env_file_var "${env_file}" MIGRATE_DATABASE_URL)"
+  api_image="ghcr.io/xv-jiaqi/cardhub-api:${image_tag}"
+  if ! docker pull "${api_image}"; then
+    echo "Failed to pull ${api_image}; the running API was not replaced" >&2
+    exit 1
+  fi
+  entrypoint_rc=0
+  probe_split_entrypoint || entrypoint_rc=$?
+  if [ "${entrypoint_rc}" -eq 3 ]; then
+    echo "Refusing deploy: ${image_tag} has an incomplete split entrypoint pair (one of /usr/local/bin/api-entrypoint.sh or /usr/local/bin/migrate-entrypoint.sh is missing or not executable). The running API was not replaced." >&2
+    exit 1
+  fi
+  if [ "${entrypoint_rc}" -ne 0 ] && [ "${entrypoint_rc}" -ne 10 ]; then
+    echo "Refusing deploy: entrypoint probe exited ${entrypoint_rc}, not 0 (both entrypoints executable), 10 (both absent), or 3 (incomplete pair). The running API was not replaced." >&2
+    exit 1
+  fi
+  if [ -n "${migrate_database_url}" ] && [ "${entrypoint_rc}" -eq 10 ]; then
+    echo "Refusing deploy: MIGRATE_DATABASE_URL is set, but ${image_tag} is an old image (both split entrypoints are absent)." >&2
+    echo "The running API was not replaced. Switch DATABASE_URL back to the admin superuser, clear MIGRATE_DATABASE_URL, then deploy an older image." >&2
+    exit 1
+  fi
+  unset migrate_database_url
+
   trap on_error ERR
   rollback_armed=1
 
@@ -453,7 +577,20 @@ main() {
   wait_for_container_healthy "$(service_ids postgres | head -n 1)" postgres
   wait_for_container_healthy "$(service_ids redis | head -n 1)" redis
 
-  # One extra container at a time: finish API (migrate + cutover) before web.
+  # Migrations finish before the API swap. A failure here exits without
+  # calling rollback, so the container that is already serving stays up.
+  # Images from before the split migrate inside their own command instead.
+  if [ "${entrypoint_rc}" -eq 0 ]; then
+    echo "Running database migrations before the API rollout"
+    if ! compose run --rm -T --no-deps migrate; then
+      echo "Migrations failed; the running API was not replaced" >&2
+      exit 1
+    fi
+  else
+    echo "Target image has no migrate entrypoint; it migrates inside the API container"
+  fi
+
+  # One extra container at a time: finish API before web.
   rollout_service api
   rollout_service web
 

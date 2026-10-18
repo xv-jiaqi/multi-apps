@@ -52,9 +52,14 @@ Caddy publishes host ports.
    should point at that
    environment's API `/trpc` endpoint. Use separate database names:
    `POSTGRES_DB=cardhub_prod` for production and
-   `POSTGRES_DB=cardhub_staging` for staging. `POSTGRES_PASSWORD` must match
-   the password embedded in `DATABASE_URL` and be URL-safe; hex from
-   `openssl rand -hex 32` is recommended.
+   `POSTGRES_DB=cardhub_staging` for staging. Database passwords are lowercase
+   hex from `openssl rand -hex 32`.
+   `POSTGRES_USER` / `POSTGRES_PASSWORD` are the admin superuser (data-directory
+   init, restore, emergency admin). `DATABASE_URL` is the runtime role and
+   `MIGRATE_DATABASE_URL` is the schema owner. Leave `MIGRATE_DATABASE_URL`
+   empty, and keep `DATABASE_URL` on the superuser, until the cutover in
+   [db/README.md](db/README.md). Do not put database passwords in GitHub
+   Environments.
 5. Create `/opt/cardhub/edge/edge.env` with only the edge routing vars:
    ```dotenv
    ENV_NAME=prod
@@ -191,8 +196,10 @@ The first check is not the one that guards the upload. The deploy job then
 waits up to about 10 minutes for the GHCR image. The edge job configures SSH
 before it packs `deploy/edge`. Each job runs `git fetch origin main` and
 `deploy/resolve-deploy-inputs.sh --assert` again as the step immediately
-before the step that syncs those files. Nothing slow runs between that second
-assert and the tar. If `deploy/` changed on main during the wait, the second
+before the step that syncs those files. The deploy job's next command is
+the tar. The edge job first reads three values over ssh (the pending marker,
+the applied hash, and the tree hash); those reads take seconds, then it
+tars. If `deploy/` changed on main during the wait, the second
 assert exits 1 and the job does not upload the checkout's compose,
 `remote-deploy.sh`, or edge.
 
@@ -207,8 +214,9 @@ only because the guard rejects a stale `deploy/` tree.
 ### Zero-downtime rollout
 
 `remote-deploy.sh` pulls the new API and web images, starts Postgres and Redis
-if needed, and waits until those two are healthy. It then rolls API and web
-one service at a time:
+if needed, and waits until those two are healthy. It then runs the one-shot
+`migrate` container (`prisma migrate deploy`) and, only if that exits 0,
+rolls API and web one service at a time:
 
 1. `docker compose up -d --no-deps --scale <service>=2 --no-recreate` starts
    the new container next to the old one. Both attach to the external `edge`
@@ -245,28 +253,32 @@ stays protected for the next cleanup.
 
 ### Schema compatibility
 
-The new API container runs `prisma migrate deploy` before it becomes healthy,
-while the previous API process is still serving. Migrations have to be
-additive. The old release reads and writes the database after the new
-migration has committed, for the whole overlap. Do not rename, retype, or drop
-columns, tables, or constraints that the running version uses. Ship that kind
-of change in a later release, after no running code depends on the old shape.
-Prisma does not roll a migration back automatically; a failed deploy that
-rolls the containers back does not undo the schema.
+The one-shot `migrate` container runs `prisma migrate deploy` before the new
+API container starts, while the previous API process is still serving. A
+failed migration aborts the deploy and leaves that previous container in
+place. Migrations have to be additive. The old release reads and writes the
+database after the new migration has committed, for the whole overlap. Do not
+rename, retype, or drop columns, tables, or constraints that the running
+version uses. Ship that kind of change in a later release, after no running
+code depends on the old shape. Prisma does not roll a migration back
+automatically; a failed deploy that rolls the containers back does not undo
+the schema.
 
 ### Stopping the old API container
 
-The API image runs `prisma migrate deploy` and then `exec node`, so the server
-is not left under a shell. That is not enough on its own: Node has no SIGTERM
-listener unless the app installs one (`enableShutdownHooks` is intentionally
-unchanged here), and PID 1 ignores a signal it does not handle. `docker stop`
-then waits out the grace period and sends SIGKILL. Compose sets `init: true`
-on `api` so tini is PID 1 and forwards SIGTERM to node, which is not PID 1 and
-therefore exits. `stop_grace_period` and the script's `docker stop -t` are
-30 seconds. That is the ceiling for in-flight requests once shutdown hooks
-drain them. Today the process exits as soon as SIGTERM arrives, so the 30
-seconds are not spent sleeping, and in-flight requests on that container are
-not drained.
+The API entrypoint `exec`s node, so the server is not left under a shell.
+Migrations run in a separate one-shot container and are not in this process.
+That is not enough on its own: Node has no SIGTERM listener unless the app
+installs one (`enableShutdownHooks` is intentionally unchanged here), and PID
+1 ignores a signal it does not handle. `docker stop` then waits out the grace
+period and sends SIGKILL. Compose sets `init: true` on `api` so tini is PID 1
+and forwards SIGTERM to node, which is not PID 1 and therefore exits.
+`stop_grace_period` and the script's `docker stop -t` are 30 seconds. That is
+the ceiling for in-flight requests once shutdown hooks drain them. Today the
+process exits as soon as SIGTERM arrives, so the 30 seconds are not spent
+sleeping, and in-flight requests on that container are not drained. tini is
+the same uid as node and keeps the container environment, which is why
+`MIGRATE_DATABASE_URL` is not set on the `api` service.
 
 Containers that were started before `init: true` still have node as PID 1.
 The first stop of those containers still ends in SIGKILL after the grace
@@ -368,6 +380,17 @@ the previous API keeps serving after `prisma migrate deploy` has committed, so
 the migration itself has to stay compatible with that previous release. See
 "Schema compatibility" above.
 
+## Database roles
+
+The API must not connect as the Postgres superuser. The cutover, grants, and
+rollback are in [db/README.md](db/README.md). Short version: `cardhub` stays a
+superuser for admin only; `cardhub_migrator` owns the schema and runs
+`prisma migrate deploy` in the one-shot `migrate` container;
+`cardhub_runtime` is the API (DML only); `cardhub_backup` is the read-only
+`pg_dump` role. `pg_trgm` created before the split stays owned by `cardhub`
+(PostgreSQL 16 has no `ALTER EXTENSION ... OWNER TO`);
+`ALTER EXTENSION pg_trgm UPDATE` on that extension uses the admin account.
+
 ## Backups
 
 Run a daily compressed `pg_dump`. The script writes to temporary files, verifies
@@ -380,7 +403,32 @@ successful backup.
 ```
 
 `BACKUP_PING_URL` is optional; when set, success pings the URL and failure pings
-`<url>/fail` for healthchecks.io-style alerting.
+`<url>/fail` for healthchecks.io-style alerting. That ping is HTTP only. Nothing
+else in this repo opens a monitoring session to Postgres. The container
+healthcheck is `pg_isready` as `POSTGRES_USER` and does not authenticate.
+
+`backup.sh` dumps as `PGDUMP_USER` / `PGDUMP_PASSWORD` from the env file when
+both are set (the read-only `cardhub_backup` role after the split). When both
+are empty it uses `POSTGRES_USER` / `POSTGRES_PASSWORD`, which is the historical
+superuser path. It does not print either password. A dump taken as
+`cardhub_backup` includes table data, sequences, `pg_trgm`, and
+`_prisma_migrations`. Restore still runs as the admin superuser, because the
+backup role cannot replay DDL.
+
+On a fresh cluster the migrator, runtime, and backup roles do not exist. A
+dump taken after the split contains `OWNER TO` and `GRANT` for those roles.
+Run `db/split-roles.sh` first so those statements succeed, then restore with
+`ON_ERROR_STOP`, then run `db/split-roles.sh` again so grants match the
+restored objects. The full order is in [db/README.md](db/README.md#backups-and-monitoring).
+
+Restore example (admin superuser inside the postgres container, after the
+roles exist):
+
+```bash
+gzip -dc /opt/cardhub/backups/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz \
+  | docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env -f /opt/cardhub/production/deploy/docker-compose.yml exec -T postgres sh -c \
+    'PGPASSWORD="$POSTGRES_PASSWORD" psql -w -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
 
 ### Optional off-site OSS copy
 
@@ -471,14 +519,6 @@ docker run --rm --env-file /tmp/cardhub-oss-rclone.env \
   copyto oss:replace-with-bucket-name/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz \
   /restore/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz --s3-no-check-bucket
 rm -f /tmp/cardhub-oss-rclone.env
-```
-
-Restore example:
-
-```bash
-gzip -dc /opt/cardhub/backups/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz \
-  | docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env -f /opt/cardhub/production/deploy/docker-compose.yml exec -T postgres sh -c \
-    'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
 ## Logs and health

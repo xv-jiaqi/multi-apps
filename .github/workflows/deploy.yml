@@ -70,9 +70,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-          # Full history so resolve-deploy-inputs.sh can compare HEAD:deploy
-          # with origin/main:deploy. A shallow checkout has no tree to compare
-          # and the script refuses.
+          # Full history so the ancestor check in resolve-deploy-inputs.sh
+          # stays stable. A depth-1 fetch can still compare the deploy tree.
           fetch-depth: 0
 
       - name: Validate deploy inputs
@@ -270,7 +269,7 @@ jobs:
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
           remote_deploy_dir="/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy"
           remote_deploy_dir_q="$(printf '%q' "${remote_deploy_dir}")"
-          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh image-cleanup.sh \
+          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh image-cleanup.sh db \
             | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
                 "mkdir -p ${remote_deploy_dir_q} && tar -xzf - -C ${remote_deploy_dir_q}"
 
