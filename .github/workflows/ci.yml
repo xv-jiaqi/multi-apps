@@ -46,8 +46,15 @@ jobs:
 
       - name: Validate Cardhub deploy compose
         run: |
-          ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config
-          ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config
+          set -euo pipefail
+          # Rendered config contains placeholder database URLs. Do not print it.
+          tmp="$(mktemp)"
+          ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
+          ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example --profile migrate config >"${tmp}"
+          ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
+          rm -f "${tmp}"
+          bash -n deploy/backup.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh
+          sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -103,6 +110,7 @@ jobs:
           bash deploy/plan-edge-apply.test.sh
           bash deploy/deploy-tree-guard.test.sh
           bash deploy/recheck-before-sync.test.sh
+          bash deploy/remote-deploy-entrypoint.test.sh
           bash deploy/rollback-preserves-previous-image.test.sh
 
   audit:
@@ -139,9 +147,9 @@ jobs:
     permissions:
       contents: read
     services:
-      # /health returns 503 unless Postgres answers SELECT 1, and the image
-      # runs `prisma migrate deploy` before it listens. A dummy DATABASE_URL
-      # cannot satisfy either check.
+      # /health returns 503 unless Postgres answers SELECT 1. Migrations run
+      # in a one-shot container before the API process starts. A dummy
+      # DATABASE_URL cannot satisfy either check.
       postgres:
         image: postgres:16-alpine
         env:
@@ -195,10 +203,17 @@ jobs:
           }
           trap cleanup EXIT
 
-          # --network host lets this container reach the job's Postgres
+          # --network host lets these containers reach the job's Postgres
           # service at 127.0.0.1:5432 and exposes :4000 to the runner.
           # NODE_ENV=production is baked into the image, so JWT_SECRET must
           # be at least 32 characters and not a banned placeholder.
+          # MIGRATE_DATABASE_URL is unset: migrate falls back to DATABASE_URL,
+          # and the API container must not receive the migrator URL.
+          docker run --rm --network host \
+            -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
+            --entrypoint /usr/local/bin/migrate-entrypoint.sh \
+            cardhub-api:ci
+
           docker run -d --name "$name" --network host \
             -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
             -e JWT_SECRET='0123456789abcdef0123456789abcdef' \
@@ -210,6 +225,10 @@ jobs:
             code="$(curl -sS -o /tmp/api-health-body -w '%{http_code}' --max-time 2 http://127.0.0.1:4000/health || true)"
             if [ "$code" = "200" ]; then
               echo "API /health returned 200"
+              if docker exec "$name" sh -c 'tr "\0" "\n" < /proc/1/environ' | grep -q '^MIGRATE_DATABASE_URL='; then
+                echo "API PID 1 environment contains MIGRATE_DATABASE_URL"
+                exit 1
+              fi
               exit 0
             fi
             if ! docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null | grep -qx true; then

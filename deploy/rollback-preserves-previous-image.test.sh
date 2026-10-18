@@ -64,6 +64,11 @@ fi
 
 cat > "${bin}/docker" <<EOF
 #!/bin/bash
+# The lab images are already built locally. A bare \`docker pull\` of the
+# ghcr.io tag must not reach GHCR.
+if [ "\${1:-}" = "pull" ]; then
+  exit 0
+fi
 if [ "\${1:-}" = "compose" ]; then
   for arg in "\$@"; do
     if [ "\${arg}" = "pull" ]; then

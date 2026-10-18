@@ -180,4 +180,47 @@ if [ -e "${sync_marker}" ]; then
   exit 1
 fi
 echo "OK sync marker absent; nothing was uploaded"
+
+# Re-check and Sync must not grow an if: or continue-on-error. Either one
+# would let a failed assert fall through into the upload.
+step_keys() {
+  local job="$1"
+  local step="$2"
+  awk -v job="${job}" -v step="${step}" '
+    BEGIN { header = "  " job ":" }
+    $0 == header { in_job = 1; next }
+    in_job && /^  [^ ]/ { exit }
+    in_job { print }
+  ' "${workflow}" | awk -v step="${step}" '
+    /^      - name: / {
+      if (capturing) exit
+      name = substr($0, 15)
+      gsub(/^"|"$/, "", name)
+      if (name == step) capturing = 1
+    }
+    capturing { print }
+  '
+}
+
+for pair in \
+  "deploy|Re-check deploy tree before sync" \
+  "deploy|Sync deploy files" \
+  "edge|Re-check deploy tree before sync" \
+  "edge|Sync edge files"
+do
+  job="${pair%%|*}"
+  step="${pair#*|}"
+  block="$(step_keys "${job}" "${step}")"
+  if [ -z "${block}" ]; then
+    echo "FAIL ${job}: missing step ${step}" >&2
+    exit 1
+  fi
+  if printf '%s\n' "${block}" | grep -Eq '^        (if:|continue-on-error:)'; then
+    echo "FAIL ${job}: ${step} has if: or continue-on-error" >&2
+    printf '%s\n' "${block}" >&2
+    exit 1
+  fi
+  echo "OK ${job}: ${step} has no if: or continue-on-error"
+done
+
 echo "recheck-before-sync tests passed"

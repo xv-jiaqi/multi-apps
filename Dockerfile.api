@@ -87,12 +87,13 @@ LABEL org.opencontainers.image.source="https://github.com/xv-jiaqi/multi-apps"
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-# Run pending Prisma migrations on every container boot, then start Nest. We
-# rely on Prisma's `migrate deploy` instead of `migrate dev` because the
-# command is non-interactive (no prompt for migration name) and is safe to run
-# concurrently — it acquires an advisory lock on `_prisma_migrations`.
-# The shell only exists to sequence migrate. `exec` replaces it with node so
-# the server is the init process's direct child. Signal delivery still needs
-# compose `init: true`: without a JS SIGTERM listener, node ignores SIGTERM
-# when it is PID 1 and `docker stop` SIGKILLs it after the grace period.
-CMD ["sh", "-c", "npx --no-install prisma migrate deploy && exec node dist/main.js"]
+# Migrations are not part of this process. deploy/migrate-entrypoint.sh runs
+# `prisma migrate deploy` in a one-shot container, which is the only process
+# that receives MIGRATE_DATABASE_URL. An empty MIGRATE_DATABASE_URL falls
+# back to DATABASE_URL. This command replaces the shell with node so the
+# server is tini's direct child. Signal delivery still needs compose
+# `init: true`: without a JS SIGTERM listener, node ignores SIGTERM when it
+# is PID 1 and `docker stop` SIGKILLs it after the grace period.
+COPY --chmod=555 deploy/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
+COPY --chmod=555 deploy/migrate-entrypoint.sh /usr/local/bin/migrate-entrypoint.sh
+CMD ["/usr/local/bin/api-entrypoint.sh"]

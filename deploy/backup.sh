@@ -30,6 +30,36 @@ on_exit() {
 }
 trap on_exit EXIT
 
+# Last assignment in the env file wins. Values are not printed.
+read_env_var() {
+  local file="$1"
+  local key="$2"
+  awk -v key="$key" '
+    BEGIN { found = "" }
+    /^[[:space:]]*#/ { next }
+    /^[[:space:]]*$/ { next }
+    {
+      eq = index($0, "=")
+      if (eq == 0) next
+      name = substr($0, 1, eq - 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
+      if (name != key) next
+      value = substr($0, eq + 1)
+      gsub(/\r$/, "", value)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+      if (length(value) >= 2 && substr(value, 1, 1) == "\"" && substr(value, length(value), 1) == "\"") {
+        value = substr(value, 2, length(value) - 2)
+      }
+      q = sprintf("%c", 39)
+      if (length(value) >= 2 && substr(value, 1, 1) == q && substr(value, length(value), 1) == q) {
+        value = substr(value, 2, length(value) - 2)
+      }
+      found = value
+    }
+    END { printf "%s", found }
+  ' "${file}"
+}
+
 read_offsite_var() {
   local var_name="$1"
   (
@@ -108,8 +138,33 @@ mkdir -p "${BACKUP_DIR}"
 tmp_sql="$(mktemp "${BACKUP_DIR}/.${PROJECT}.${TIMESTAMP}.sql.XXXXXX")"
 tmp_gz="$(mktemp "${BACKUP_DIR}/.${PROJECT}.${TIMESTAMP}.sql.gz.XXXXXX")"
 
-docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T postgres sh -c \
-  'PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"' > "${tmp_sql}"
+# Prefer the read-only backup role. Fall back to the admin superuser when
+# PGDUMP_USER and PGDUMP_PASSWORD are both unset, so existing servers keep
+# dumping until the role split is applied. Never print these values.
+dump_user="$(read_env_var "${ENV_FILE}" PGDUMP_USER)"
+dump_password="$(read_env_var "${ENV_FILE}" PGDUMP_PASSWORD)"
+if [ -z "${dump_user}" ] && [ -z "${dump_password}" ]; then
+  dump_user="$(read_env_var "${ENV_FILE}" POSTGRES_USER)"
+  dump_password="$(read_env_var "${ENV_FILE}" POSTGRES_PASSWORD)"
+elif [ -z "${dump_user}" ] || [ -z "${dump_password}" ]; then
+  echo "Set both PGDUMP_USER and PGDUMP_PASSWORD, or leave both empty to use POSTGRES_USER" >&2
+  exit 1
+fi
+if [ -z "${dump_user}" ] || [ -z "${dump_password}" ]; then
+  echo "Backup credentials are missing from ${ENV_FILE}" >&2
+  exit 1
+fi
+
+echo "Dumping ${PROJECT} as database role ${dump_user}"
+export PGDUMP_USER="${dump_user}"
+export PGPASSWORD="${dump_password}"
+docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T \
+  -e PGDUMP_USER \
+  -e PGPASSWORD \
+  postgres \
+  sh -c 'pg_dump --no-password -U "${PGDUMP_USER}" -d "${POSTGRES_DB}"' > "${tmp_sql}"
+unset PGPASSWORD PGDUMP_USER
+dump_password=""
 
 sql_size="$(wc -c < "${tmp_sql}")"
 if [ "${sql_size}" -lt 1024 ]; then
