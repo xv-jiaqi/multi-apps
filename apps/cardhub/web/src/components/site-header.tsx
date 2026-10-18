@@ -150,11 +150,13 @@ export const SiteHeader = observer(function SiteHeader() {
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
           <button
             type="button"
-            aria-label={tt('a11y.toggleLocale')}
+            aria-label={
+              locale.locale === 'zh-CN' ? tt('a11y.localeSwitchToEn') : tt('a11y.localeSwitchToZh')
+            }
             onClick={() => locale.setLocale(locale.locale === 'zh-CN' ? 'en-US' : 'zh-CN')}
             className="rounded-full border border-neutral-200 px-3 py-1 text-xs text-neutral-600 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
-            {locale.locale === 'zh-CN' ? 'EN' : '中'}
+            {locale.locale === 'zh-CN' ? tt('a11y.localeEn') : tt('a11y.localeZh')}
           </button>
 
           {/* Auth controls (desktop) */}

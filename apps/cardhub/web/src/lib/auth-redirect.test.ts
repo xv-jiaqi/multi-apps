@@ -67,4 +67,35 @@ describe('resolvePostAuthRedirect', () => {
     expect(resolvePostAuthRedirect(hidden)).toBe('/');
     expect(resolvePostAuthRedirect({ from: hidden })).toBe('/');
   });
+
+  it('decodes the target before checking and keeps a plain same-site path', () => {
+    expect(resolvePostAuthRedirect('/%09/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect({ from: '/%09/evil.com' })).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '/%09/evil.com', search: '', hash: '' },
+      }),
+    ).toBe('/');
+    expect(resolvePostAuthRedirect('/%0a/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%0d/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%00/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('//evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/\\evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('https://evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%2509/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%2F/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%252F/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%5Cevil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%E0%A4%A')).toBe('/');
+    expect(resolvePostAuthRedirect('/cards/1?x=1#y')).toBe('/cards/1?x=1#y');
+  });
+
+  it('returns encoded query values unchanged when every decoded layer is same-site', () => {
+    expect(resolvePostAuthRedirect('/trade?card=a%26b&kind=sell')).toBe(
+      '/trade?card=a%26b&kind=sell',
+    );
+    expect(resolvePostAuthRedirect('/trade?card=foo%23bar')).toBe('/trade?card=foo%23bar');
+    expect(resolvePostAuthRedirect('/trade?card=100%25')).toBe('/trade?card=100%25');
+    expect(resolvePostAuthRedirect('/trade?card=a%2Bb')).toBe('/trade?card=a%2Bb');
+  });
 });
