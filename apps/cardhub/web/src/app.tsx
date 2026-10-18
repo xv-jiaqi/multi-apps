@@ -3,6 +3,7 @@ import { Outlet, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
 import { ErrorBoundary } from './components/error-boundary';
 import { CardDetailSkeleton } from './components/card-detail-skeleton';
+import { RouteErrorFallback } from './components/route-error';
 import { HomePage } from './pages/home';
 
 const SeriesListPage = lazy(() =>
@@ -105,6 +106,7 @@ function lazyPage(page: React.ReactNode): React.ReactNode {
 export const appRoutes: RouteObject[] = [
   {
     element: <AppLayout />,
+    errorElement: <RouteErrorFallback />,
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/series', element: lazyPage(<SeriesListPage />) },

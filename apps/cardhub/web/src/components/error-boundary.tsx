@@ -45,23 +45,28 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) {
         return this.props.fallback(this.state.error, this.reset);
       }
-      return (
-        <div
-          role="alert"
-          className="m-6 max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
-        >
-          <p className="font-semibold">出现了错误 / Something went wrong</p>
-          <p className="mt-1 break-all text-xs opacity-80">{this.state.error.message}</p>
-          <button
-            type="button"
-            onClick={this.reset}
-            className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
-          >
-            重试 / Retry
-          </button>
-        </div>
-      );
+      return <ErrorFallback error={this.state.error} onRetry={this.reset} />;
     }
     return this.props.children;
   }
+}
+
+/** Shared fallback for the root boundary and the data-router errorElement. */
+export function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="m-6 max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+    >
+      <p className="font-semibold">出现了错误 / Something went wrong</p>
+      <p className="mt-1 break-all text-xs opacity-80">{error.message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+      >
+        重试 / Retry
+      </button>
+    </div>
+  );
 }

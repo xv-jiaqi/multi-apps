@@ -1,9 +1,10 @@
 import '../../pages/admin/test-dom';
-import { act, useState } from 'react';
+import { act, useEffect, useRef, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryRouter, Link, RouterProvider, useNavigate } from 'react-router';
-import { rootStore } from '../../stores/root-store';
+import { observer } from 'mobx-react-lite';
+import { createMemoryRouter, Link, Outlet, RouterProvider, useNavigate } from 'react-router';
+import { rootStore, useStores } from '../../stores/root-store';
 import { useUnsavedChanges } from './use-unsaved-changes';
 
 function Harness() {
@@ -223,4 +224,130 @@ describe('useUnsavedChanges', () => {
     expect(screen.getByRole('button', { name: 'Keep editing' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument();
   });
+
+  it('lets a permission-loss or session-expiry redirect through and still asks while the admin session is intact', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
+    const router = createMemoryRouter(
+      [
+        { path: '/form', element: <SessionRedirectHarness /> },
+        { path: '/elsewhere', element: <h1>别处</h1> },
+        { path: '/revoked', element: <h1>权限已撤销</h1> },
+        { path: '/login', element: <h1>登录</h1> },
+      ],
+      { initialEntries: ['/form'] },
+    );
+    render(<RouterProvider router={router} />);
+    await user.type(screen.getByRole('textbox', { name: '草稿' }), '草稿');
+
+    await user.click(screen.getByRole('link', { name: '离开' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '继续编辑' }));
+    expect(router.state.location.pathname).toBe('/form');
+
+    act(() => {
+      rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'user' });
+    });
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '权限已撤销' })).toBeInTheDocument();
+    rootStore.session.signOut();
+  });
+
+  it('lets a session-expiry redirect through without asking', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
+    const router = createMemoryRouter(
+      [
+        { path: '/form', element: <SessionRedirectHarness /> },
+        { path: '/login', element: <h1>登录</h1> },
+        { path: '/revoked', element: <h1>权限已撤销</h1> },
+        { path: '/elsewhere', element: <h1>别处</h1> },
+      ],
+      { initialEntries: ['/form'] },
+    );
+    render(<RouterProvider router={router} />);
+    await user.type(screen.getByRole('textbox', { name: '草稿' }), '草稿');
+
+    act(() => {
+      rootStore.session.signOut();
+    });
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(screen.getByRole('heading', { name: '登录' })).toBeInTheDocument();
+  });
+
+  it('asks again after a bypassed save navigation', async () => {
+    const user = userEvent.setup();
+    const router = createMemoryRouter(
+      [
+        {
+          element: <StayMountedEditor />,
+          children: [
+            { path: '/form', element: <h1>表单</h1> },
+            { path: '/next', element: <h1>下一张</h1> },
+            { path: '/elsewhere', element: <h1>别处</h1> },
+          ],
+        },
+      ],
+      { initialEntries: ['/form'] },
+    );
+    render(<RouterProvider router={router} />);
+
+    await user.click(screen.getByRole('button', { name: '保存并新建' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '下一张' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: '离开' }));
+    expect(screen.getByRole('alertdialog', { name: '放弃未保存的修改？' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/next');
+  });
 });
+
+const SessionRedirectHarness = observer(function SessionRedirectHarness() {
+  const { session } = useStores();
+  const [value, setValue] = useState('');
+  const navigate = useNavigate();
+  const unsaved = useUnsavedChanges(value.length > 0);
+  const hadAdmin = useRef(session.isAdmin);
+  if (session.isAdmin) hadAdmin.current = true;
+
+  useEffect(() => {
+    if (!hadAdmin.current || !value) return;
+    if (session.isAuthenticated && session.isAdmin) return;
+    navigate(session.isAuthenticated ? '/revoked' : '/login', { replace: true });
+  }, [navigate, session.isAdmin, session.isAuthenticated, value]);
+
+  return (
+    <>
+      <label>
+        草稿
+        <input value={value} onChange={(event) => setValue(event.target.value)} />
+      </label>
+      <Link to="/elsewhere">离开</Link>
+      {unsaved.dialog}
+    </>
+  );
+});
+
+function StayMountedEditor() {
+  const [value] = useState('草稿');
+  const navigate = useNavigate();
+  const unsaved = useUnsavedChanges(value.length > 0);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          unsaved.allowLeave();
+          navigate('/next');
+        }}
+      >
+        保存并新建
+      </button>
+      <Link to="/elsewhere">离开</Link>
+      <Outlet />
+      {unsaved.dialog}
+    </>
+  );
+}

@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { useBlocker, type BlockerFunction, type Location } from 'react-router';
+import {
+  useBlocker,
+  useLocation,
+  useNavigate,
+  type BlockerFunction,
+  type Location,
+} from 'react-router';
 import { t } from '@repo/shared';
 import {
   AlertDialog,
@@ -54,17 +60,32 @@ export function useUnsavedChanges(dirty: boolean): {
   allowLeave: () => void;
   dialog: ReactNode;
 } {
-  const { locale } = useStores();
+  const { locale, session } = useStores();
+  const location = useLocation();
   const tt = (key: string) => t(locale.locale, key);
   const dirtyRef = useRef(dirty);
   const bypassRef = useRef(false);
   const leavingRef = useRef(false);
   const triggerRef = useRef<HTMLElement | null>(null);
   const sawBlockedRef = useRef(false);
+  const accessRef = useRef({ authed: session.isAuthenticated, admin: session.isAdmin });
+  const forcedRef = useRef(false);
   dirtyRef.current = dirty;
 
+  // Losing the session or the admin role makes saving impossible. Latch it so
+  // a system redirect in the same commit is not asked to confirm.
+  const lostAccess =
+    (accessRef.current.authed && !session.isAuthenticated) ||
+    (accessRef.current.admin && !session.isAdmin);
+  if (session.isAuthenticated && session.isAdmin) {
+    forcedRef.current = false;
+  } else if (lostAccess) {
+    forcedRef.current = true;
+  }
+  accessRef.current = { authed: session.isAuthenticated, admin: session.isAdmin };
+
   const shouldBlock = useCallback<BlockerFunction>(({ currentLocation, nextLocation }) => {
-    if (bypassRef.current || !dirtyRef.current) return false;
+    if (forcedRef.current || bypassRef.current || !dirtyRef.current) return false;
     return !isSamePlace(currentLocation, nextLocation);
   }, []);
   const blocker = useBlocker(shouldBlock);
@@ -84,11 +105,18 @@ export function useUnsavedChanges(dirty: boolean): {
     if (!dirty) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
+      // Older Safari still shows the prompt only when returnValue is set.
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [dirty]);
+
+  // allowLeave() is one navigation wide. Clear it once that navigation lands
+  // so a later edit (including "save and create the next one") asks again.
+  useEffect(() => {
+    bypassRef.current = false;
+  }, [location.key]);
 
   const allowLeave = useCallback(() => {
     bypassRef.current = true;
@@ -146,4 +174,25 @@ export function useUnsavedChanges(dirty: boolean): {
   );
 
   return { allowLeave, dialog };
+}
+
+/**
+ * Session expiry while an admin form is open. Anonymous visitors who land
+ * here still see the in-page login link; only a session that disappears
+ * mid-edit is sent to /login. The unsaved guard lets this redirect through.
+ */
+export function useRedirectOnSessionExpiry() {
+  const { session } = useStores();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const hadSession = useRef(session.isAuthenticated);
+  if (session.isAuthenticated) hadSession.current = true;
+
+  useEffect(() => {
+    if (!hadSession.current || session.isAuthenticated) return;
+    navigate('/login', {
+      replace: true,
+      state: { from: `${location.pathname}${location.search}${location.hash}` },
+    });
+  }, [session.isAuthenticated, navigate, location.pathname, location.search, location.hash]);
 }

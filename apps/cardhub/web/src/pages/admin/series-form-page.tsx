@@ -11,7 +11,10 @@ import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate
 import { AdminEmpty, AdminErrorBox } from '../../components/admin/admin-table';
 import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
-import { useUnsavedChanges } from '../../components/admin/use-unsaved-changes';
+import {
+  useRedirectOnSessionExpiry,
+  useUnsavedChanges,
+} from '../../components/admin/use-unsaved-changes';
 import {
   applyValidationFeedback,
   isAccessRevoked,
@@ -35,6 +38,7 @@ const SeriesForm = observer(function SeriesForm({ mode }: { mode: 'create' | 'ed
   const { locale } = useStores();
   const tt = (key: string) => t(locale.locale, key);
   const title = mode === 'create' ? tt('admin.series.new') : tt('admin.series.edit');
+  useRedirectOnSessionExpiry();
 
   return (
     <PageShell>
