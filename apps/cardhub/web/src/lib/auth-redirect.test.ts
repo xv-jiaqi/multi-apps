@@ -19,4 +19,16 @@ describe('resolvePostAuthRedirect', () => {
       }),
     ).toBe('/reports?status=PENDING#latest');
   });
+
+  it('rejects protocol-relative paths and URLs with a scheme', () => {
+    expect(resolvePostAuthRedirect({ from: '//evil.example/phish' })).toBe('/');
+    expect(resolvePostAuthRedirect({ from: 'https://evil.example/phish' })).toBe('/');
+    expect(resolvePostAuthRedirect('javascript:alert(1)')).toBe('/');
+    expect(resolvePostAuthRedirect({ from: '/\\evil.example/phish' })).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '//evil.example', search: '', hash: '' },
+      }),
+    ).toBe('/');
+  });
 });

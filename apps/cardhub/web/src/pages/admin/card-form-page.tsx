@@ -17,6 +17,7 @@ import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-f
 import {
   attributeSnapshots,
   sameAttributeRows,
+  useRedirectOnSessionExpiry,
   useUnsavedChanges,
   type AttributeSnapshot,
 } from '../../components/admin/use-unsaved-changes';
@@ -49,6 +50,7 @@ const CardForm = observer(function CardForm({ mode }: { mode: 'create' | 'edit' 
   const { locale } = useStores();
   const tt = (key: string) => t(locale.locale, key);
   const title = mode === 'create' ? tt('admin.cards.new') : tt('admin.cards.edit');
+  useRedirectOnSessionExpiry();
   return (
     <PageShell>
       <PageMeta title={title} />

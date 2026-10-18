@@ -82,6 +82,7 @@ function renderSeries(path: string, entries?: string[]) {
       { path: '/admin/catalog/series/:slug/edit', element: <EditSeriesPage /> },
       { path: '/admin/catalog', element: <h1>目录</h1> },
       { path: '/', element: <h1>首页</h1> },
+      { path: '/login', element: <h1>登录</h1> },
     ],
     { initialEntries, initialIndex: initialEntries.length - 1 },
   );
@@ -348,6 +349,35 @@ describe('series form unsaved changes', () => {
     });
     await user.click(screen.getByRole('button', { name: '放弃修改' }));
     expect(router.state.location.pathname).toBe('/admin/catalog');
+  });
+
+  it('sends an expired session to login without the unsaved dialog', async () => {
+    const user = userEvent.setup();
+    const { router } = renderSeries('/admin/catalog/series/new');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '草稿');
+
+    act(() => {
+      rootStore.session.signOut();
+    });
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/login');
+  });
+
+  it('drops the unsaved dialog when admin permission is revoked', async () => {
+    const user = userEvent.setup();
+    const { router } = renderSeries('/admin/catalog/series/new');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '草稿');
+    await user.click(screen.getByRole('link', { name: '取消' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+
+    act(() => {
+      rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'user' });
+    });
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByText('仅管理员可以管理内容')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/catalog/series/new');
   });
 
   it('registers beforeunload only after the series form changes', async () => {
