@@ -53,7 +53,7 @@ jobs:
           ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example --profile migrate config >"${tmp}"
           ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
           rm -f "${tmp}"
-          bash -n deploy/backup.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh
+          bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh
           sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
 
       - name: Install pnpm
@@ -118,6 +118,8 @@ jobs:
           bash deploy/migrate-entrypoint.test.sh
           bash deploy/read-previous-image.test.sh
           bash deploy/backup-password.test.sh
+          bash deploy/backup-status.test.sh
+          bash deploy/check-backup-log.test.sh
 
   audit:
     name: pnpm audit (high+)
