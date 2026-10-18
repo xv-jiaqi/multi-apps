@@ -269,10 +269,29 @@ jobs:
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
           remote_deploy_dir="/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy"
           remote_deploy_dir_q="$(printf '%q' "${remote_deploy_dir}")"
-          # Remote side, after extract. Cron and the backup patrol run these
-          # from /opt/cardhub/<env>/deploy; a missing execute bit fails the deploy.
-          remote_assert='for script in check-backup-log.sh backup.sh; do path="${deploy_dir}/${script}"; if [ ! -f "${path}" ] || [ ! -x "${path}" ]; then printf "deploy sync failed: %s is missing or not executable\n" "${path}" >&2; exit 1; fi; done'
-          tar -C deploy -czf - docker-compose.yml remote-deploy.sh backup.sh check-backup-log.sh image-cleanup.sh db \
+          # One list. remote_assert walks every *.sh in it after extract, so a
+          # new server script is checked on the VPS without a second name list.
+          # The remote shell may be dash; the loop body is POSIX.
+          sync_members=(
+            docker-compose.yml
+            remote-deploy.sh
+            backup.sh
+            check-backup-log.sh
+            image-cleanup.sh
+            db
+          )
+          sh_scripts=()
+          for member in "${sync_members[@]}"; do
+            case "${member}" in
+              *.sh) sh_scripts+=("${member}") ;;
+            esac
+          done
+          if [ "${#sh_scripts[@]}" -eq 0 ]; then
+            echo "Sync deploy files whitelist has no scripts" >&2
+            exit 1
+          fi
+          remote_assert="for script in ${sh_scripts[*]}; do path=\"\${deploy_dir}/\${script}\"; if [ ! -f \"\${path}\" ] || [ ! -x \"\${path}\" ]; then printf 'deploy sync failed: %s is missing or not executable\n' \"\${path}\" >&2; exit 1; fi; done"
+          tar -C deploy -czf - "${sync_members[@]}" \
             | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
                 "mkdir -p ${remote_deploy_dir_q} && tar -xzf - -C ${remote_deploy_dir_q} && deploy_dir=${remote_deploy_dir_q} && ${remote_assert}"
 
