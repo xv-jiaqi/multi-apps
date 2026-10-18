@@ -1,13 +1,31 @@
+# GET/HEAD may be retried for a few seconds. Dial errors bypass lb_retry_match
+# and are retried for every method while lb_try_duration is non-zero, so any
+# other method (including tRPC POST mutations) is a separate proxy with
+# retries disabled.
+(cardhub_upstream) {
+	@cardhub_read method GET HEAD
+	reverse_proxy @cardhub_read {args[0]} {
+		lb_try_duration 5s
+		lb_try_interval 250ms
+		lb_retry_match {
+			method GET HEAD
+		}
+	}
+	reverse_proxy {args[0]} {
+		lb_try_duration 0s
+	}
+}
+
 import optional/root-web.caddy
 
 {$API_DOMAIN} {
-	reverse_proxy {$ENV_NAME}-api:4000
+	import cardhub_upstream {$ENV_NAME}-api:4000
 }
 
 {$STAGING_WEB_DOMAIN} {
-	reverse_proxy staging-web:8080
+	import cardhub_upstream staging-web:8080
 }
 
 {$STAGING_API_DOMAIN} {
-	reverse_proxy staging-api:4000
+	import cardhub_upstream staging-api:4000
 }

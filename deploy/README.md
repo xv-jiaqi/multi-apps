@@ -142,17 +142,95 @@ secret isolation requires a separate staging host.
 
 ## Deploy
 
+Production and staging deploys go through `remote-deploy.sh`. A plain
+`docker compose up -d` on `api` or `web` stops the old container before the new
+one is listening, and the shared edge Caddy then has nothing to dial.
+
 ```bash
-cd /opt/cardhub/production/deploy
-IMAGE_TAG=sha-<full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env pull api web
-IMAGE_TAG=sha-<full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env up -d postgres redis api web
+/opt/cardhub/production/deploy/remote-deploy.sh production sha-<full-git-sha> <full-git-sha>
 ```
 
-Use `cardhub-staging` with `/opt/cardhub/staging/staging.env` for staging. If both run
+Use `staging` with `/opt/cardhub/staging/staging.env` for staging. If both run
 on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
 and passwords in each env file. Production deploys are manual; staging can be
 redeployed automatically by GitHub Actions after CI and image builds succeed on
 main. Production deploys require an explicit immutable `sha-<full-git-sha>` tag.
+
+### Zero-downtime rollout
+
+`remote-deploy.sh` pulls the new API and web images, starts Postgres and Redis
+if needed, and waits until those two are healthy. It then rolls API and web
+one service at a time:
+
+1. `docker compose up -d --no-deps --scale <service>=2 --no-recreate` starts
+   the new container next to the old one. Both attach to the external `edge`
+   network with the same alias (`prod-api`, `staging-web`, and so on), so
+   Docker DNS answers that name with both addresses.
+2. The script waits until the new container's Docker healthcheck is `healthy`.
+   It then probes that container directly: web must serve `/healthz`, and API
+   `/health` must report `gitSha` equal to the deployed SHA. The probe does
+   not go through Caddy, because Caddy can still reach the old replica.
+3. It stops the old container by ID (`docker stop` with a 30s grace) and
+   removes it, then returns the service to one replica with
+   `--scale <service>=1 --no-recreate` so Compose does not recreate the
+   survivor.
+4. After both services are on the new tag, it still checks
+   `https://<API_DOMAIN>/health` through Caddy until `gitSha` matches.
+
+API is cut over before web, and web is not scaled up until API is back to one
+container. The script holds `/opt/cardhub/.rollout.lock` for the whole
+operation, so production and staging cannot add a replica at the same time.
+The VPS is 4GB RAM plus 2GB swap and runs both environments; the peak extra
+is one API container or one web container, not one of each and not one per
+environment.
+
+If the new container fails its healthcheck or SHA probe, the script deletes
+that container and exits non-zero. The old container is still running. The
+existing rollback then runs `docker compose up -d` with the previous
+immutable `sha-` tag. A replica that is already on that tag is left in place,
+and a mismatched extra replica is removed. If the failure happens after the
+cutover (the public health check or `CATALOG_SEED_CMD`), rollback recreates
+API and web on the previous tag. `previous-images.env` is still written
+before the switch and still records the tags that were running.
+
+### Schema compatibility
+
+The new API container runs `prisma migrate deploy` before it becomes healthy,
+while the previous API process is still serving. Migrations have to be
+additive. The old release reads and writes the database after the new
+migration has committed, for the whole overlap. Do not rename, retype, or drop
+columns, tables, or constraints that the running version uses. Ship that kind
+of change in a later release, after no running code depends on the old shape.
+Prisma does not roll a migration back automatically; a failed deploy that
+rolls the containers back does not undo the schema.
+
+### Stopping the old API container
+
+The API image runs `prisma migrate deploy` and then `exec node`, so the server
+is not left under a shell. That is not enough on its own: Node has no SIGTERM
+listener unless the app installs one (`enableShutdownHooks` is intentionally
+unchanged here), and PID 1 ignores a signal it does not handle. `docker stop`
+then waits out the grace period and sends SIGKILL. Compose sets `init: true`
+on `api` so tini is PID 1 and forwards SIGTERM to node, which is not PID 1 and
+therefore exits. `stop_grace_period` and the script's `docker stop -t` are
+30 seconds. That is the ceiling for in-flight requests once shutdown hooks
+drain them. Today the process exits as soon as SIGTERM arrives, so the 30
+seconds are not spent sleeping, and in-flight requests on that container are
+not drained.
+
+Containers that were started before `init: true` still have node as PID 1.
+The first stop of those containers still ends in SIGKILL after the grace
+period. Later deploys stop a container that was created with tini.
+
+### Edge retries
+
+The shared Caddy retries only GET and HEAD, for up to 5 seconds
+(`lb_try_duration 5s`, `lb_try_interval 250ms`, `lb_retry_match` limited to
+those methods). Dial failures are retried for every method when
+`lb_try_duration` is non-zero, and `lb_retry_match` does not apply to them, so
+every other method uses a second `reverse_proxy` with `lb_try_duration 0s`.
+tRPC mutations are POST and are not retried. Hostnames and redirects are
+unchanged.
 
 The deploy workflow syncs `deploy/` files for the deployed SHA to the VPS before
 running `/opt/cardhub/<environment>/deploy/remote-deploy.sh`. The script polls
@@ -178,9 +256,10 @@ After a successful deploy, `image-cleanup.sh` removes only stale
 `cardhub-prod` and `cardhub-staging`:
 
 - the images currently referenced by that compose project's containers;
-- the previous API and web tags recorded in that environment's state file; and
+- the previous API and web tags recorded in that environment's state file;
 - any Cardhub image still referenced by any local Docker container, running or
-  stopped.
+  stopped, including both the old and new replica while a rollout overlaps; and
+- any tag whose image ID is the image of such a container.
 
 This is intentionally cross-environment: a staging deploy scans both production
 and staging state before deleting anything, so staging cannot remove production's
@@ -231,7 +310,10 @@ IMAGE_TAG=sha-<older-full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod 
 ```
 
 Prisma migrations are not automatically rolled back. Handle schema reversions
-manually if a rollback crosses a database migration.
+manually if a rollback crosses a database migration. During a normal rollout
+the previous API keeps serving after `prisma migrate deploy` has committed, so
+the migration itself has to stay compatible with that previous release. See
+"Schema compatibility" above.
 
 ## Backups
 

@@ -7,7 +7,8 @@ Usage: image-cleanup.sh [--dry-run] [--root /opt/cardhub]
 
 Deletes old ghcr.io/xv-jiaqi/cardhub-api and cardhub-web sha-* images that are
 not the current or previous image for production or staging and are not used by
-any local container.
+any local container. A rollout's old and new replicas are both containers, so
+both of their image tags and image IDs are kept.
 EOF
 }
 
@@ -60,6 +61,7 @@ fi
 declare -A keep_refs=()
 declare -A used_refs=()
 declare -A candidate_refs=()
+declare -A keep_ids=()
 
 is_sha_tag() {
   [[ "$1" =~ ^sha-[0-9a-f]{40}$ ]]
@@ -118,6 +120,21 @@ while IFS= read -r image; do
   used_refs["${image}"]=1
 done < <("${docker_bin}" ps -a --format '{{.Image}}' 2>/dev/null || true)
 
+# Image IDs catch a replica whose Config.Image string does not match the tag
+# we would otherwise delete (old and new containers during a rollout).
+while IFS= read -r cid; do
+  [ -n "${cid}" ] || continue
+  image_id="$("${docker_bin}" inspect -f '{{.Image}}' "${cid}" 2>/dev/null || true)"
+  config_image="$("${docker_bin}" inspect -f '{{.Config.Image}}' "${cid}" 2>/dev/null || true)"
+  if [ -n "${image_id}" ]; then
+    keep_ids["${image_id}"]=1
+  fi
+  if [ -n "${config_image}" ]; then
+    add_keep_ref "${config_image}" "container ${cid:0:12}"
+    used_refs["${config_image}"]=1
+  fi
+done < <("${docker_bin}" ps -aq 2>/dev/null || true)
+
 for repo in "${repos[@]}"; do
   while IFS= read -r ref; do
     [ -n "${ref}" ] || continue
@@ -131,6 +148,10 @@ done
 for ref in "${!candidate_refs[@]}"; do
   if [ -n "${used_refs[${ref}]:-}" ]; then
     keep_refs["${ref}"]="${keep_refs[${ref}]:-container in use}"
+  fi
+  image_id="$("${docker_bin}" image inspect -f '{{.Id}}' "${ref}" 2>/dev/null || true)"
+  if [ -n "${image_id}" ] && [ -n "${keep_ids[${image_id}]:-}" ]; then
+    keep_refs["${ref}"]="${keep_refs[${ref}]:-image id in use by a container}"
   fi
 done
 
