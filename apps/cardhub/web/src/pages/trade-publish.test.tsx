@@ -2,7 +2,7 @@ import { APP_ERROR_CODES } from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
 import { TradePublishPage } from './trade-publish';
 
@@ -26,11 +26,12 @@ if (typeof ResizeObserver === 'undefined') {
 
 const publishHarness = vi.hoisted(() => ({
   onError: undefined as
-    | ((error: { message: string; data?: { code?: string } }) => void)
+    | ((error: { message: string; data?: { code?: string; appCode?: string } }) => void)
     | undefined,
 }));
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       listings: {
@@ -80,7 +81,10 @@ vi.mock('../lib/trpc', () => ({
     listings: {
       publish: {
         useMutation: (options?: {
-          onError?: (error: { message: string; data?: { code?: string } }) => void;
+          onError?: (error: {
+            message: string;
+            data?: { code?: string; appCode?: string };
+          }) => void;
         }) => {
           publishHarness.onError = options?.onError;
           return { mutate: vi.fn(), isPending: false };
@@ -143,11 +147,47 @@ describe('TradePublishPage', () => {
     act(() => {
       publishHarness.onError?.({
         message: 'Too many requests',
-        data: { code: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+        data: {
+          code: 'TOO_MANY_REQUESTS',
+          appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+        },
       });
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('发布太频繁，请稍后再试');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Too many requests');
+  });
+
+  it('clears the session and returns to login when publishing is rejected', () => {
+    function Where() {
+      const location = useLocation();
+      return (
+        <p data-testid="where">
+          {location.pathname}|{JSON.stringify(location.state)}
+        </p>
+      );
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/trade/new']}>
+        <TradePublishPage />
+        <Where />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      publishHarness.onError?.({
+        message: 'UNAUTHORIZED',
+        data: { code: 'UNAUTHORIZED', appCode: APP_ERROR_CODES.UNAUTHORIZED },
+      });
+    });
+
+    expect(rootStore.session.token).toBeNull();
+    expect(screen.getByTestId('where')).toHaveTextContent(
+      '/login|{"from":"/trade/new","notice":"sessionExpired"}',
+    );
+    expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('falls back to a text link when a preview image fails to load', async () => {

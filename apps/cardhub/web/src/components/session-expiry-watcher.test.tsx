@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
+import { APP_ERROR_CODES } from '@repo/shared';
 import { rootStore } from '../stores/root-store';
 
 const clearActiveQueryClient = vi.fn();
@@ -42,16 +43,35 @@ beforeEach(() => {
 });
 
 describe('SessionExpiryWatcher', () => {
-  it('sends a protected page to login when the bearer token is rejected', () => {
+  it('sends a protected page to login when the session appCode is rejected', () => {
     renderAt('/forum/topic');
     act(() => {
-      noteTrpcFailure({ data: { code: 'UNAUTHORIZED', path: 'comments.create' } });
+      noteTrpcFailure({
+        data: {
+          code: 'UNAUTHORIZED',
+          httpStatus: 401,
+          appCode: APP_ERROR_CODES.UNAUTHORIZED,
+          path: 'comments.create',
+        },
+      });
     });
     expect(rootStore.session.token).toBeNull();
     expect(clearActiveQueryClient).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('probe')).toHaveTextContent(
       '/login|{"from":"/forum/topic","notice":"sessionExpired"}',
     );
+  });
+
+  it('does not sign out on HTTP 401 alone', () => {
+    renderAt('/forum/topic');
+    act(() => {
+      noteTrpcFailure({
+        data: { code: 'UNAUTHORIZED', httpStatus: 401, path: 'comments.create' },
+      });
+    });
+    expect(rootStore.session.token).toBe('token');
+    expect(clearActiveQueryClient).not.toHaveBeenCalled();
+    expect(screen.getByTestId('probe')).toHaveTextContent('/forum/topic|null');
   });
 
   it('leaves a wrong-password response on the password page', () => {

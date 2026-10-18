@@ -8,11 +8,13 @@ import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { TopicForm } from '../components/topic-form';
 import { useStores } from '../stores/root-store';
+import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
 
 export const ForumNewPage = observer(function ForumNewPage() {
   const { locale, session } = useStores();
   const navigate = useNavigate();
+  const presentError = useAppMutationError();
   const tt = (key: string) => t(locale.locale, key);
 
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,8 @@ export const ForumNewPage = observer(function ForumNewPage() {
       navigate(`/forum/${topic.slug}`);
     },
     onError(err) {
-      setError(err.message);
+      const message = presentError(err);
+      if (message) setError(message);
     },
   });
 

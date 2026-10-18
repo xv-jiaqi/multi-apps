@@ -37,7 +37,7 @@ export const SignOutAllDialog = observer(function SignOutAllDialog() {
       },
       onError(error) {
         const data = error.data;
-        if (data?.code === 'UNAUTHORIZED' && data.appCode !== APP_ERROR_CODES.WRONG_PASSWORD) {
+        if (data?.appCode === APP_ERROR_CODES.UNAUTHORIZED) {
           return;
         }
         setFormError(tt('me.signOutAll.failed'));

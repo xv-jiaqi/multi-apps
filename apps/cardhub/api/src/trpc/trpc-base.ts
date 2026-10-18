@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { initTRPC, TRPCError } from '@trpc/server';
 import {
   ADMIN_CATALOG_ERROR_CODES,
+  APP_ERROR_CODES,
   isAppErrorCode,
   t,
   type AdminCatalogErrorCode,
@@ -148,6 +149,14 @@ function sanitizeAdminCatalogError(cause: unknown): AdminCatalogErrorDetails | u
   return Object.keys(details).length > 0 ? details : undefined;
 }
 
+/** Bearer token missing, revoked, or no longer matching tokenVersion. */
+function sessionRejected(): TRPCError {
+  return new TRPCError({
+    code: 'UNAUTHORIZED',
+    cause: { appCode: APP_ERROR_CODES.UNAUTHORIZED },
+  });
+}
+
 const trpc = initTRPC.context<TrpcContext>().create({
   errorFormatter({ shape, error }) {
     const adminCatalogError = sanitizeAdminCatalogError(error.cause);
@@ -186,14 +195,14 @@ export class TrpcBase {
 
   readonly authedProcedure: TrpcProcedure = trpc.procedure.use(({ ctx, next }) => {
     if (!ctx.user) {
-      throw new TRPCError({ code: 'UNAUTHORIZED' });
+      throw sessionRejected();
     }
     return next({ ctx: { ...ctx, user: ctx.user } });
   }) as unknown as TrpcProcedure;
 
   readonly adminProcedure: TrpcProcedure = trpc.procedure.use(({ ctx, next }) => {
     if (!ctx.user) {
-      throw new TRPCError({ code: 'UNAUTHORIZED' });
+      throw sessionRejected();
     }
     if (ctx.user.role !== 'admin') {
       throw new TRPCError({ code: 'FORBIDDEN', message: '仅管理员可管理内容' });

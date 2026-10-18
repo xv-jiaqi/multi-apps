@@ -1,3 +1,4 @@
+import { APP_ERROR_CODES } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { CommentsRouter } from './comments.router';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -134,7 +135,10 @@ describe('CommentsRouter.create', () => {
     const { caller } = makeRouter();
     await expect(
       caller(null).create({ cardSlug: 'aurora-knight', content: 'hi' }),
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      cause: { appCode: APP_ERROR_CODES.UNAUTHORIZED },
+    });
   });
 
   it('persists the comment with userId resolved from ctx.user.sub', async () => {

@@ -123,7 +123,7 @@ export const ChangePasswordPage = observer(function ChangePasswordPage() {
       const data = (error as PasswordError).data;
       const appCode = data?.appCode;
       const code = data?.code;
-      if (code === 'UNAUTHORIZED' && appCode !== APP_ERROR_CODES.WRONG_PASSWORD) return;
+      if (appCode === APP_ERROR_CODES.UNAUTHORIZED) return;
 
       if (appCode === APP_ERROR_CODES.WRONG_PASSWORD) {
         setFieldErrors({ current: tt('me.password.errors.wrong') });

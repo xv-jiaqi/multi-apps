@@ -33,6 +33,7 @@ import {
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
+import { useAppMutationError } from '../lib/app-mutation-error';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { CardPicker, type CardPickerItem } from '../components/card-picker';
@@ -100,6 +101,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
   const navigate = useNavigate();
   const { locale, session } = useStores();
   const [searchParams] = useSearchParams();
+  const presentError = useAppMutationError();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [kind, setKind] = useState<ListingKind>('SELL');
   const [selectedCard, setSelectedCard] = useState<CardPickerItem | null>(null);
@@ -139,11 +141,10 @@ export const TradePublishPage = observer(function TradePublishPage() {
       navigate('/trade', { replace: true });
     },
     onError(err) {
-      setFormError(
-        err.data?.code === APP_ERROR_CODES.TOO_MANY_REQUESTS
-          ? tt('trade.publish.rateLimited')
-          : err.message,
-      );
+      const message = presentError(err, {
+        [APP_ERROR_CODES.TOO_MANY_REQUESTS]: tt('trade.publish.rateLimited'),
+      });
+      if (message) setFormError(message);
     },
   });
 

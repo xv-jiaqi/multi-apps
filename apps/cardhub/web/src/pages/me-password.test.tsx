@@ -74,6 +74,8 @@ vi.mock('../lib/trpc', () => ({
 import { ChangePasswordPage } from './me-password';
 import { LoginPage } from './login';
 import { SignOutAllDialog } from '../components/sign-out-all-dialog';
+import { SessionExpiryWatcher } from '../components/session-expiry-watcher';
+import { noteTrpcFailure } from '../lib/session-expiry';
 
 function Probe() {
   const location = useLocation();
@@ -88,6 +90,7 @@ function Probe() {
 function renderPassword() {
   return render(
     <MemoryRouter initialEntries={['/me/password']}>
+      <SessionExpiryWatcher />
       <Routes>
         <Route path="/me/password" element={<ChangePasswordPage />} />
         <Route path="/login" element={<Probe />} />
@@ -164,13 +167,18 @@ describe('ChangePasswordPage', () => {
     await user.click(screen.getByRole('button', { name: '保存密码' }));
 
     act(() => {
-      passwordHandlers.onError?.({
+      const error = {
         message: '当前密码不正确',
-        data: { code: 'UNAUTHORIZED', appCode: APP_ERROR_CODES.WRONG_PASSWORD },
-      });
+        data: { code: 'UNAUTHORIZED', httpStatus: 401, appCode: APP_ERROR_CODES.WRONG_PASSWORD },
+      };
+      passwordHandlers.onError?.(error);
+      noteTrpcFailure(error);
     });
+    expect(screen.getByLabelText('当前密码')).toBeInTheDocument();
     expect(screen.getByText('当前密码不正确')).toBeInTheDocument();
+    expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
     expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
+    expect(rootStore.session.token).toBe('token');
 
     act(() => {
       passwordHandlers.onError?.({

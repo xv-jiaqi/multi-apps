@@ -9,10 +9,12 @@ export const DEFAULT_LOCALE: Locale = 'zh-CN';
  * Add new codes here. Do not copy these strings into api or web.
  */
 export const APP_ERROR_CODES = {
+  UNAUTHORIZED: 'UNAUTHORIZED',
   WRONG_PASSWORD: 'WRONG_PASSWORD',
   SAME_PASSWORD: 'SAME_PASSWORD',
   TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 } satisfies {
+  readonly UNAUTHORIZED: 'UNAUTHORIZED';
   readonly WRONG_PASSWORD: 'WRONG_PASSWORD';
   readonly SAME_PASSWORD: 'SAME_PASSWORD';
   readonly TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS';
@@ -21,6 +23,7 @@ export const APP_ERROR_CODES = {
 export type AppErrorCode = (typeof APP_ERROR_CODES)[keyof typeof APP_ERROR_CODES];
 
 const APP_ERROR_CODE_VALUES: readonly AppErrorCode[] = [
+  APP_ERROR_CODES.UNAUTHORIZED,
   APP_ERROR_CODES.WRONG_PASSWORD,
   APP_ERROR_CODES.SAME_PASSWORD,
   APP_ERROR_CODES.TOO_MANY_REQUESTS,

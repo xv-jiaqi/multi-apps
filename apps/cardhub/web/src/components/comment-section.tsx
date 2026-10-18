@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { Button } from '@repo/ui-web';
 import { APP_ERROR_CODES, commentInput, seriesCommentInput, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
+import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { ReportButton } from './report-button';
@@ -46,6 +47,7 @@ function CommentListSkeleton({ label }: { label: string }) {
 export const CommentSection = observer(function CommentSection({ target }: CommentSectionProps) {
   const commentTarget = target;
   const { locale, session } = useStores();
+  const presentError = useAppMutationError();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
   const cardList = trpc.comments.listForCard.useQuery(
@@ -77,13 +79,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     }
   };
 
-  const handleCreateError = (err: { message: string; data?: { code?: string } | null }) => {
-    const code = err.data?.code;
-    setError(
-      code === APP_ERROR_CODES.TOO_MANY_REQUESTS
-        ? tt('card.detail.commentRateLimited')
-        : err.message,
-    );
+  const handleCreateError = (err: unknown) => {
+    const message = presentError(err, {
+      [APP_ERROR_CODES.TOO_MANY_REQUESTS]: tt('card.detail.commentRateLimited'),
+    });
+    if (message) setError(message);
   };
 
   const createForCard = trpc.comments.create.useMutation({
