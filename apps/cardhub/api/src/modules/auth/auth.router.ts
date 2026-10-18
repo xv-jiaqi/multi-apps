@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import { APP_ERROR_CODES, changePasswordInput, loginInput, registerInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
-
-const BCRYPT_ROUNDS = 10;
+import { hashPassword, verifyPassword } from './password-hash';
 
 @Injectable()
 export class AuthRouter {
@@ -34,7 +32,7 @@ export class AuthRouter {
           throw new TRPCError({ code, message });
         }
 
-        const hashed = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
+        const hashed = await hashPassword(input.password);
         const user = await prisma.user.create({
           data: {
             email: input.email,
@@ -70,9 +68,15 @@ export class AuthRouter {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
         }
 
-        const ok = await bcrypt.compare(input.password, user.password);
-        if (!ok) {
+        const check = await verifyPassword(input.password, user.password);
+        if (!check.ok) {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
+        }
+        if (check.upgradedHash) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { password: check.upgradedHash },
+          });
         }
 
         const token = auth.sign({ sub: user.id, username: user.username, ver: user.tokenVersion });
@@ -94,8 +98,8 @@ export class AuthRouter {
             throw new TRPCError({ code: 'UNAUTHORIZED', message: '凭据无效或已过期' });
           }
 
-          const matches = await bcrypt.compare(input.currentPassword, user.password);
-          if (!matches) {
+          const matches = await verifyPassword(input.currentPassword, user.password);
+          if (!matches.ok) {
             throw new TRPCError({
               code: 'UNAUTHORIZED',
               message: '当前密码不正确',
@@ -110,7 +114,7 @@ export class AuthRouter {
             });
           }
 
-          const hashed = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
+          const hashed = await hashPassword(input.newPassword);
           const updated = await prisma.user.update({
             where: { id: user.id },
             data: {
