@@ -68,15 +68,12 @@ const ERROR_KEYS: Record<string, string> = {
   SERIES_NOT_FOUND: 'admin.error.seriesNotFound',
 };
 
-const pluralRules = new Intl.PluralRules('en-US');
-
 export function formatAdminCount(
   locale: Locale,
   kind: 'cards' | 'comments' | 'seriesComments',
   count: number,
 ): string {
-  const category = pluralRules.select(count) === 'one' ? 'one' : 'other';
-  return t(locale, `admin.count.${kind}_${category}`, { count });
+  return t(locale, `admin.count.${kind}`, { count });
 }
 
 export function readTrpcFailure(error: unknown): {

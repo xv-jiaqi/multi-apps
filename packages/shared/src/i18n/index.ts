@@ -103,7 +103,9 @@ const zhCN: Dictionary = {
   'search.prompt': '输入卡牌或系列名称开始搜索',
   'search.cardsHeading': '卡牌（{count}）',
   'search.seriesHeading': '系列（{count}）',
-  'search.resultsSummary': '找到 {cards} 张卡牌、{series} 个系列',
+  'search.summary.cards': '{count} 张卡牌',
+  'search.summary.series': '{count} 个系列',
+  'search.resultsSummary': '找到 {cards}、{series}',
   'form.clear': '清除',
   'form.searching': '搜索中…',
   'form.searchFailed': '搜索失败',
@@ -457,8 +459,12 @@ const zhCN: Dictionary = {
   'admin.import.preview': '预览',
   'admin.import.previewing': '正在预览…',
   'admin.import.parseError': '第 {line} 行附近的 JSON 格式有误：{message}',
-  'admin.import.summary':
-    '新增 {newSeries} 个系列、{newCards} 张卡牌；更新 {updSeries} 个系列、{updCards} 张卡牌；{errors} 处错误',
+  'admin.import.summary': '新增 {newSeries}、{newCards}；更新 {updSeries}、{updCards}；{errors}',
+  'admin.import.summary.series': '{count} 个系列',
+  'admin.import.summary.cards': '{count} 张卡牌',
+  'admin.import.summary.updatedSeries': '{count} 个系列',
+  'admin.import.summary.updatedCards': '{count} 张卡牌',
+  'admin.import.summary.errors': '{count} 处错误',
   'admin.import.caption': '导入预览',
   'admin.import.colKind': '类型',
   'admin.import.colResult': '结果',
@@ -539,6 +545,8 @@ const enUS: Dictionary = {
   'series.list.title': 'All series',
   'series.list.subtitle': 'Explore every card series indexed in Cardhub',
   'series.cardCount': '{count} cards inside',
+  'series.cardCount_one': '{count} card inside',
+  'series.cardCount_other': '{count} cards inside',
   'series.empty': 'No series yet',
   'series.detail.cardsTitle': 'Cards in this series',
   'series.detail.commentsTitle': 'Series comments',
@@ -602,12 +610,20 @@ const enUS: Dictionary = {
   'search.clearFilters': 'Clear filters',
   'search.prompt': 'Type a card or series name to start',
   'search.cardsHeading': 'Cards ({count})',
+  'search.cardsHeading_one': 'Card ({count})',
+  'search.cardsHeading_other': 'Cards ({count})',
   'search.seriesHeading': 'Series ({count})',
-  'search.resultsSummary': 'Found {cards} cards and {series} series',
+  'search.summary.cards': '{count} cards',
+  'search.summary.cards_one': '{count} card',
+  'search.summary.cards_other': '{count} cards',
+  'search.summary.series': '{count} series',
+  'search.resultsSummary': '{results}. Found {cards} and {series}.',
   'form.clear': 'Clear',
   'form.searching': 'Searching…',
   'form.searchFailed': 'Search failed',
   'form.resultsCount': '{count} results',
+  'form.resultsCount_one': '{count} result',
+  'form.resultsCount_other': '{count} results',
   'state.loading': 'Loading…',
   'state.error': 'Failed to load',
   'state.notFound': 'Not found',
@@ -620,8 +636,12 @@ const enUS: Dictionary = {
   'forum.list.loginToPost': 'Sign in to post a topic',
   'forum.list.loadMore': 'Load more',
   'forum.list.replyCount': '{count} replies',
+  'forum.list.replyCount_one': '{count} reply',
+  'forum.list.replyCount_other': '{count} replies',
   'forum.badge.pinned': 'Pinned',
   'forum.detail.repliesTitle': 'Replies ({count})',
+  'forum.detail.repliesTitle_one': 'Reply ({count})',
+  'forum.detail.repliesTitle_other': 'Replies ({count})',
   'forum.detail.noReplies': 'No replies yet — be the first to chime in',
   'forum.detail.replyLabel': 'Write a reply',
   'forum.detail.replyPlaceholder': 'Add to the discussion…',
@@ -655,7 +675,9 @@ const enUS: Dictionary = {
   'forum.detail.confirmDelete': 'Delete this topic? This cannot be undone.',
   'forum.detail.confirmDeleteReply': 'Delete this reply? This cannot be undone.',
   'forum.detail.loadMoreReplies': 'Load more replies',
-  'forum.detail.repliesLoaded': 'More replies loaded: {count}',
+  'forum.detail.repliesLoaded': 'Loaded {count} replies',
+  'forum.detail.repliesLoaded_one': 'Loaded {count} reply',
+  'forum.detail.repliesLoaded_other': 'Loaded {count} replies',
   'forum.detail.allRepliesShown': 'All replies shown',
   'forum.detail.loadMoreFailed': "Couldn't load replies",
   'forum.new.title': 'Start a new topic',
@@ -752,6 +774,8 @@ const enUS: Dictionary = {
   'trade.filter.any': 'Any',
   'trade.filter.toggle': 'Filters & sort',
   'trade.filter.toggleCount': 'Filters & sort ({count})',
+  'trade.filter.toggleCount_one': 'Filter & sort ({count})',
+  'trade.filter.toggleCount_other': 'Filters & sort ({count})',
   'trade.filter.priceRange': 'Price range',
   'trade.filter.minPrice': 'Min price',
   'trade.filter.maxPrice': 'Max price',
@@ -947,6 +971,8 @@ const enUS: Dictionary = {
   'admin.attrs.errorKeyLength': 'Names can be at most {max} characters',
   'admin.attrs.errorValueLength': 'Values can be at most {max} characters',
   'admin.attrs.atLimit': 'This card has {count} attributes (limit {max})',
+  'admin.attrs.atLimit_one': 'This card has {count} attribute (limit {max})',
+  'admin.attrs.atLimit_other': 'This card has {count} attributes (limit {max})',
   'admin.attrs.colKey': 'Name',
   'admin.attrs.colType': 'Type',
   'admin.attrs.colValue': 'Value',
@@ -963,8 +989,18 @@ const enUS: Dictionary = {
   'admin.import.preview': 'Preview',
   'admin.import.previewing': 'Previewing…',
   'admin.import.parseError': 'JSON error near line {line}: {message}',
-  'admin.import.summary':
-    '{newSeries} new series, {newCards} new cards; {updSeries} series and {updCards} cards updated; {errors} errors',
+  'admin.import.summary': '{newSeries}, {newCards}; {updSeries} and {updCards} updated; {errors}',
+  'admin.import.summary.series': '{count} new series',
+  'admin.import.summary.cards': '{count} new cards',
+  'admin.import.summary.cards_one': '{count} new card',
+  'admin.import.summary.cards_other': '{count} new cards',
+  'admin.import.summary.updatedSeries': '{count} series',
+  'admin.import.summary.updatedCards': '{count} cards',
+  'admin.import.summary.updatedCards_one': '{count} card',
+  'admin.import.summary.updatedCards_other': '{count} cards',
+  'admin.import.summary.errors': '{count} errors',
+  'admin.import.summary.errors_one': '{count} error',
+  'admin.import.summary.errors_other': '{count} errors',
   'admin.import.caption': 'Import preview',
   'admin.import.colKind': 'Type',
   'admin.import.colResult': 'Result',
@@ -978,6 +1014,8 @@ const enUS: Dictionary = {
   'admin.import.all': 'All',
   'admin.import.errorsOnly': 'Errors only',
   'admin.import.blocked': 'Fix {count} errors before importing',
+  'admin.import.blocked_one': 'Fix {count} error before importing',
+  'admin.import.blocked_other': 'Fix {count} errors before importing',
   'admin.import.stale': 'The JSON changed. Preview it again.',
   'admin.import.nothing': 'Nothing to import',
   'admin.import.execute': 'Import',
@@ -1013,8 +1051,32 @@ export const dictionaries: Record<Locale, Dictionary> = {
   'en-US': enUS,
 };
 
+const pluralRulesByLocale = new Map<Locale, Intl.PluralRules>();
+
+function pluralRulesFor(locale: Locale): Intl.PluralRules {
+  const cached = pluralRulesByLocale.get(locale);
+  if (cached) return cached;
+  const rules = new Intl.PluralRules(locale);
+  pluralRulesByLocale.set(locale, rules);
+  return rules;
+}
+
+/** Pick `key_<category>` from Intl.PluralRules when `{count}` is a number. */
+function pluralMessage(locale: Locale, key: string, count: number): string | undefined {
+  const dictionary = dictionaries[locale];
+  if (!dictionary) return undefined;
+  const category = pluralRulesFor(locale).select(count);
+  return dictionary[`${key}_${category}`] ?? dictionary[`${key}_other`];
+}
+
+/**
+ * Interpolates `{name}` from `vars`. Plural keys are chosen only when `count` is a number.
+ * A formatted string such as `"1,234"` stays on the base key.
+ */
 export function t(locale: Locale, key: string, vars?: Record<string, string | number>): string {
-  const raw = dictionaries[locale]?.[key] ?? key;
+  const count = vars?.count;
+  const plural = typeof count === 'number' ? pluralMessage(locale, key, count) : undefined;
+  const raw = plural ?? dictionaries[locale]?.[key] ?? key;
   if (!vars) return raw;
   return raw.replace(/\{(\w+)\}/g, (_, name: string) =>
     name in vars ? String(vars[name]) : `{${name}}`,

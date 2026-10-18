@@ -153,13 +153,16 @@ export const SearchPage = observer(function SearchPage() {
 
   const clearFilters = () => setQuery(clearRarityAndSeries(visibleQuery));
 
+  const cardTotal = results.data?.cards.length ?? 0;
+  const seriesTotal = results.data?.series.length ?? 0;
   const statusText =
     canRequest && results.isFetching
       ? tt('form.searching')
       : canRequest && results.isSuccess && !results.isFetching
         ? tt('search.resultsSummary', {
-            cards: results.data?.cards.length ?? 0,
-            series: results.data?.series.length ?? 0,
+            cards: tt('search.summary.cards', { count: cardTotal }),
+            series: tt('search.summary.series', { count: seriesTotal }),
+            results: tt('form.resultsCount', { count: cardTotal + seriesTotal }),
           })
         : '';
 

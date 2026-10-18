@@ -294,11 +294,11 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           {stale ? <p className="text-sm text-neutral-700">{tt('admin.import.stale')}</p> : null}
           <p role="status">
             {tt('admin.import.summary', {
-              newSeries: summary.newSeries,
-              newCards: summary.newCards,
-              updSeries: summary.updSeries,
-              updCards: summary.updCards,
-              errors: summary.errors,
+              newSeries: tt('admin.import.summary.series', { count: summary.newSeries }),
+              newCards: tt('admin.import.summary.cards', { count: summary.newCards }),
+              updSeries: tt('admin.import.summary.updatedSeries', { count: summary.updSeries }),
+              updCards: tt('admin.import.summary.updatedCards', { count: summary.updCards }),
+              errors: tt('admin.import.summary.errors', { count: summary.errors }),
             })}
           </p>
           {summary.errors > 0 ? (
