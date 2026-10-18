@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { authTokenSchema, registerInput, loginInput } from '@repo/shared';
+import { APP_ERROR_CODES, changePasswordInput, loginInput, registerInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
@@ -41,11 +41,14 @@ export class AuthRouter {
             username: input.username,
             password: hashed,
           },
-          select: { id: true, email: true, username: true, role: true },
+          select: { id: true, email: true, username: true, role: true, tokenVersion: true },
         });
 
-        const token = auth.sign({ sub: user.id, username: user.username });
-        return { token, user };
+        const token = auth.sign({ sub: user.id, username: user.username, ver: user.tokenVersion });
+        return {
+          token,
+          user: { id: user.id, email: user.email, username: user.username, role: user.role },
+        };
       }),
 
       login: t.procedure.input(loginInput).mutation(async ({ input }) => {
@@ -54,7 +57,14 @@ export class AuthRouter {
           where: isEmail
             ? { email: input.identifier.toLowerCase() }
             : { username: input.identifier },
-          select: { id: true, email: true, username: true, password: true, role: true },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            password: true,
+            role: true,
+            tokenVersion: true,
+          },
         });
         if (!user) {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
@@ -65,26 +75,80 @@ export class AuthRouter {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
         }
 
-        const token = auth.sign({ sub: user.id, username: user.username });
+        const token = auth.sign({ sub: user.id, username: user.username, ver: user.tokenVersion });
         return {
           token,
           user: { id: user.id, email: user.email, username: user.username, role: user.role },
         };
       }),
 
-      me: t.procedure.input(z.object({ token: authTokenSchema })).query(async ({ input }) => {
-        try {
-          const payload = auth.verify(input.token);
+      changePassword: t.authedProcedure
+        .input(changePasswordInput)
+        .mutation(async ({ ctx, input }) => {
+          if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
           const user = await prisma.user.findUnique({
-            where: { id: payload.sub },
+            where: { id: ctx.user.sub },
+            select: { id: true, username: true, password: true },
+          });
+          if (!user) {
+            throw new TRPCError({ code: 'UNAUTHORIZED', message: '凭据无效或已过期' });
+          }
+
+          const matches = await bcrypt.compare(input.currentPassword, user.password);
+          if (!matches) {
+            throw new TRPCError({
+              code: 'UNAUTHORIZED',
+              message: '当前密码不正确',
+              cause: { appCode: APP_ERROR_CODES.WRONG_PASSWORD },
+            });
+          }
+          if (input.currentPassword === input.newPassword) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: '新密码不能和当前密码相同',
+              cause: { appCode: APP_ERROR_CODES.SAME_PASSWORD },
+            });
+          }
+
+          const hashed = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
+          const updated = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              password: hashed,
+              tokenVersion: { increment: 1 },
+            },
+            select: { id: true, username: true, tokenVersion: true },
+          });
+          const token = auth.sign({
+            sub: updated.id,
+            username: updated.username,
+            ver: updated.tokenVersion,
+          });
+          return { token };
+        }),
+
+      signOutAll: t.authedProcedure.mutation(async ({ ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        await prisma.user.update({
+          where: { id: ctx.user.sub },
+          data: { tokenVersion: { increment: 1 } },
+        });
+        return { ok: true };
+      }),
+
+      me: t.authedProcedure
+        .input(z.object({ token: z.string() }).optional())
+        .query(async ({ ctx }) => {
+          if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          const user = await prisma.user.findUnique({
+            where: { id: ctx.user.sub },
             select: { id: true, email: true, username: true, role: true },
           });
-          if (!user) throw new Error('user gone');
+          if (!user) {
+            throw new TRPCError({ code: 'UNAUTHORIZED', message: '凭据无效或已过期' });
+          }
           return user;
-        } catch {
-          throw new TRPCError({ code: 'UNAUTHORIZED', message: '凭据无效或已过期' });
-        }
-      }),
+        }),
     });
   }
 }

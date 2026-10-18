@@ -117,7 +117,7 @@ describe('ListingsRouter.publish', () => {
     cardFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u1', username: 'alice' }).publish({
+      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
         cardSlug: 'no-such-card',
         kind: 'SELL',
         price: 100,
@@ -160,7 +160,12 @@ describe('ListingsRouter.publish', () => {
       },
     ]);
 
-    const result = await caller({ sub: 'u-alice', username: 'alice' }).publish({
+    const result = await caller({
+      sub: 'u-alice',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).publish({
       cardSlug: 'aurora-knight',
       kind: 'SELL',
       price: 199.5,
@@ -202,7 +207,7 @@ describe('ListingsRouter.publish', () => {
     const tooLongUrl = `${prefix}${'a'.repeat(2049 - prefix.length)}`;
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).publish({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         currency: 'CNY',
@@ -212,7 +217,7 @@ describe('ListingsRouter.publish', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).publish({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         currency: 'CNY',
@@ -222,7 +227,7 @@ describe('ListingsRouter.publish', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).publish({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         price: '0'.repeat(65),
@@ -243,7 +248,9 @@ describe('ListingsRouter.publish', () => {
       code: 'BAD_REQUEST',
     });
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).mine({ pageCursor: 'x'.repeat(37) }),
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).mine({
+        pageCursor: 'x'.repeat(37),
+      }),
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
 
     expect(listingFindMany).not.toHaveBeenCalled();
@@ -253,7 +260,7 @@ describe('ListingsRouter.publish', () => {
     const { caller, cardFindUnique, listingCreate } = makeRouter();
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).publish({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         currency: 'CNY',
@@ -369,7 +376,7 @@ describe('ListingsRouter.close', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'user' });
 
     await expect(
-      caller({ sub: 'u-other', username: 'other' }).close({
+      caller({ sub: 'u-other', username: 'other', role: 'user', tokenVersion: 0 }).close({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
@@ -384,7 +391,12 @@ describe('ListingsRouter.close', () => {
     });
     listingUpdate.mockResolvedValueOnce({ id: 'l1', status: 'CLOSED' });
 
-    const result = await caller({ sub: 'u-alice', username: 'alice' }).close({
+    const result = await caller({
+      sub: 'u-alice',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).close({
       id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
     });
     expect(result).toEqual({ ok: true });
@@ -402,7 +414,12 @@ describe('ListingsRouter.close', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'admin' });
     listingUpdate.mockResolvedValueOnce({ id: 'l1', status: 'CLOSED' });
 
-    const result = await caller({ sub: 'u-admin', username: 'admin' }).close({
+    const result = await caller({
+      sub: 'u-admin',
+      username: 'admin',
+      role: 'admin',
+      tokenVersion: 0,
+    }).close({
       id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
     });
     expect(result).toEqual({ ok: true });
@@ -417,7 +434,12 @@ describe('ListingsRouter.close', () => {
       status: 'CLOSED',
     });
 
-    const result = await caller({ sub: 'u-alice', username: 'alice' }).close({
+    const result = await caller({
+      sub: 'u-alice',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).close({
       id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
     });
     expect(result).toEqual({ ok: true });

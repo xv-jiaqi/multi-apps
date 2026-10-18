@@ -1,5 +1,6 @@
 import type { Request, RequestHandler, Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { APP_ERROR_CODES } from '@repo/shared';
 
 type RateLimitConfig = {
   windowMs: number;
@@ -50,7 +51,8 @@ function trpcTooManyRequestsError(path: string | undefined) {
       message: 'Too many requests',
       code: -32029,
       data: {
-        code: 'TOO_MANY_REQUESTS',
+        code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+        appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
         httpStatus: 429,
         ...(path ? { path } : {}),
       },
@@ -82,7 +84,11 @@ export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> 
     limit: 10,
     skip: (req) => {
       const url = req.originalUrl ?? req.url ?? '';
-      return !url.includes('auth.register') && !url.includes('auth.login');
+      return (
+        !url.includes('auth.register') &&
+        !url.includes('auth.login') &&
+        !url.includes('auth.changePassword')
+      );
     },
   },
   commentCreate: {

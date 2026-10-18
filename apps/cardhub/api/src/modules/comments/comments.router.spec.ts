@@ -147,7 +147,12 @@ describe('CommentsRouter.create', () => {
       user: { id: 'u-alice', username: 'alice' },
     });
 
-    const result = await caller({ sub: 'u-alice', username: 'alice' }).create({
+    const result = await caller({
+      sub: 'u-alice',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).create({
       cardSlug: 'aurora-knight',
       content: 'great card',
     });
@@ -170,7 +175,7 @@ describe('CommentsRouter.create', () => {
     const { caller, cardFindUnique } = makeRouter();
     cardFindUnique.mockResolvedValueOnce(null);
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).create({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).create({
         cardSlug: 'ghost-card',
         content: 'hi',
       }),
@@ -196,7 +201,12 @@ describe('CommentsRouter.createForSeries', () => {
       user: { id: 'u-alice', username: 'alice' },
     });
 
-    const result = await caller({ sub: 'u-alice', username: 'alice' }).createForSeries({
+    const result = await caller({
+      sub: 'u-alice',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).createForSeries({
       seriesSlug: 'sky-dawn',
       content: 'great series',
     });
@@ -219,7 +229,7 @@ describe('CommentsRouter.createForSeries', () => {
     seriesFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).createForSeries({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).createForSeries({
         seriesSlug: 'ghost-series',
         content: 'hi',
       }),
@@ -234,7 +244,7 @@ describe('CommentsRouter.delete', () => {
     commentDelete.mockResolvedValueOnce({ id: 'cm-1' });
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).delete({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).delete({
         id: '11111111-1111-4111-8111-111111111111',
       }),
     ).resolves.toEqual({ ok: true });
@@ -252,7 +262,7 @@ describe('CommentsRouter.delete', () => {
     commentDelete.mockResolvedValueOnce({ id: 'cm-1' });
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin' }).delete({
+      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).delete({
         id: '22222222-2222-4222-8222-222222222222',
       }),
     ).resolves.toEqual({ ok: true });
@@ -272,7 +282,7 @@ describe('CommentsRouter.delete', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'user' });
 
     await expect(
-      caller({ sub: 'u-bob', username: 'bob' }).delete({
+      caller({ sub: 'u-bob', username: 'bob', role: 'user', tokenVersion: 0 }).delete({
         id: '33333333-3333-4333-8333-333333333333',
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
@@ -285,7 +295,7 @@ describe('CommentsRouter.delete', () => {
     commentFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice' }).delete({
+      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).delete({
         id: '44444444-4444-4444-8444-444444444444',
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });

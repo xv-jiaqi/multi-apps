@@ -58,17 +58,17 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 
 ### 3.3 账户与会话
 
-| 能力                         | 状态 | 入口                 | 接口            | 说明                                                                                                                        |
-| ---------------------------- | ---- | -------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 注册（邮箱 + 用户名 + 密码） | ✅   | `/register`          | `auth.register` | bcryptjs 10 轮；邮箱或用户名重复返回 `CONFLICT`                                                                             |
-| 登录（邮箱或用户名）         | ✅   | `/login`             | `auth.login`    | 邮箱转小写匹配，**用户名区分大小写**；登录后按 `location.state.from` 回跳                                                   |
-| 会话恢复                     | ✅   | 全局 `AuthBootstrap` | `auth.me`       | 启动时用本地 token 拉取最新 `role`；返回 `UNAUTHORIZED` 自动登出。`auth.me` 用 **input** 传 token，而不是读请求头（CH-212） |
-| 登出                         | ✅   | Header               | —               | 只清本地存储，服务端不吊销 token                                                                                            |
-| 角色                         | ✅   | —                    | `User.role`     | `user` / `admin`。admin 目前只能直接改库或由 demo seed 创建                                                                 |
-| 个人中心                     | ✅   | `/me`                | `users.me`      | 概览显示资料和本人话题 / 回帖 / 评论 / 交易意向计数；交易意向计数使用包含已关闭的新字段 `listingTotalCount`；wrap-anywhere  |
-| 资料编辑、改密码、找回密码   | ❌   | —                    | —               | CH-212 / CH-310                                                                                                             |
+| 能力                         | 状态 | 入口                 | 接口                                      | 说明                                                                                                                                                                     |
+| ---------------------------- | ---- | -------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 注册（邮箱 + 用户名 + 密码） | ✅   | `/register`          | `auth.register`                           | bcryptjs 10 轮；邮箱或用户名重复返回 `CONFLICT`                                                                                                                          |
+| 登录（邮箱或用户名）         | ✅   | `/login`             | `auth.login`                              | 邮箱转小写匹配，**用户名区分大小写**；登录后按 `location.state.from` 回跳                                                                                                |
+| 会话恢复                     | ✅   | 全局 `AuthBootstrap` | `auth.me`                                 | 启动时带 `Authorization` 拉取最新 `role`；返回 `UNAUTHORIZED` 自动登出。input 里的 token 被忽略，身份只看请求头。JWT 带 `ver`，与 `User.tokenVersion` 不一致则视为未登录 |
+| 登出                         | ✅   | Header               | —                                         | 只清本地存储，服务端不吊销 token                                                                                                                                         |
+| 角色                         | ✅   | —                    | `User.role`                               | `user` / `admin`。admin 目前只能直接改库或由 demo seed 创建                                                                                                              |
+| 个人中心                     | ✅   | `/me`                | `users.me`                                | 概览显示资料和本人话题 / 回帖 / 评论 / 交易意向计数；交易意向计数使用包含已关闭的新字段 `listingTotalCount`；wrap-anywhere                                               |
+| 资料编辑、改密码、找回密码   | ❌   | —                    | `auth.changePassword` / `auth.signOutAll` | API 已能改密码并吊销全部会话；页面仍待做（CH-212）。找回密码是 CH-310                                                                                                    |
 
-Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web 存在 `localStorage['cardhub:session']`，小程序存在 `Taro.setStorageSync`。
+Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载荷含 `ver`（缺省按 0）。`User.tokenVersion` 默认 0，改密码或 `auth.signOutAll` 时加 1，旧 token 随后返回 401。Web 存在 `localStorage['cardhub:session']`，小程序存在 `Taro.setStorageSync`。顶栏退出仍只清本地。
 
 ### 3.4 卡牌评论
 
@@ -193,7 +193,9 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `search.global`            | query    | 公开                    | `{ q(1–200), limit=20(≤50), cardLimit?(≤50), seriesLimit?(≤20) }`                                                     | `{ query, cards[], series[{…, cardCount, coverUrl}] }`，`limit` 作为两个分组的兜底                                       |
 | `auth.register`            | mutation | 公开（限流）            | `{ email, username, password }`                                                                                       | `{ token, user{ id, email, username, role } }`                                                                           |
 | `auth.login`               | mutation | 公开（限流）            | `{ identifier, password }`                                                                                            | 同上                                                                                                                     |
-| `auth.me`                  | query    | 公开（token 走 input）  | `{ token }`                                                                                                           | `user`                                                                                                                   |
+| `auth.me`                  | query    | 登录                    | `{ token: string }?`（整段忽略）                                                                                      | `{ id, email, username, role }`，身份来自 `Authorization`                                                                |
+| `auth.changePassword`      | mutation | 登录（与登录同一限流）  | `{ currentPassword, newPassword }`（各 8–128）                                                                        | `{ token }`。错误 `error.data.appCode`：`WRONG_PASSWORD`、`SAME_PASSWORD`、`TOO_MANY_REQUESTS`                           |
+| `auth.signOutAll`          | mutation | 登录                    | —                                                                                                                     | `{ ok: true }`，所有旧 token 失效                                                                                        |
 | `comments.listForCard`     | query    | 公开                    | `{ cardSlug, limit=50(≤100) }`                                                                                        | `[{ id, content, createdAt, user }]`                                                                                     |
 | `comments.listForSeries`   | query    | 公开                    | `{ seriesSlug, limit=50(≤100) }`                                                                                      | `[{ id, content, createdAt, user }]`                                                                                     |
 | `comments.create`          | mutation | 登录（限流）            | `{ cardSlug, content }`                                                                                               | 新评论                                                                                                                   |

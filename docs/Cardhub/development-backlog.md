@@ -500,8 +500,8 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 #### CH-212 会话安全
 
 - **改动范围**
-  - Prisma：`User.tokenVersion Int @default(0)`。JWT 载荷增加 `tv`；`makeCreateContext` 校验 `tv` 与数据库一致（每个已登录请求多一次查询，当前规模可接受；CH-210 完成后可加短 TTL 缓存）。
-  - API：`auth.changePassword({ currentPassword, newPassword })` 成功后递增 `tokenVersion` 并返回新 token；`auth.logoutAll`；`auth.me` 改为不带 input、从请求头读取身份（只有 Web 的 `AuthBootstrap` 在用，小程序没有调用）。
+  - Prisma：`User.tokenVersion Int @default(0)`。JWT 载荷增加 `ver`（没有 `ver` 的旧 token 按 0）；`makeCreateContext` 校验 `ver` 与数据库一致，并查出 `role` 供 `adminProcedure` 复用（每个已登录请求这一次用户查询；CH-210 完成后可加短 TTL 缓存）。
+  - API：`auth.changePassword({ currentPassword, newPassword })` 成功后递增 `tokenVersion` 并返回新 token；`auth.signOutAll`；`auth.me` 的 input 改为可选并忽略，身份从请求头读取（只有 Web 的 `AuthBootstrap` 在用，小程序没有调用）。业务错误码在 `error.data.appCode`，常量在 `packages/shared` 的 `APP_ERROR_CODES`。
   - Web：`/me` 增加“修改密码”和“退出所有设备”。
   - 不做 refresh token：保留 7 天 access token，在 handoff 文档注明这一决定。
 - **依赖**：CH-102。

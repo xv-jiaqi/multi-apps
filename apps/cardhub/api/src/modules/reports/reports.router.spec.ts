@@ -1,3 +1,4 @@
+import { APP_ERROR_CODES } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { ReportsRouter } from './reports.router';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -96,12 +97,15 @@ describe('ReportsRouter.create', () => {
     reportCount.mockResolvedValueOnce(10);
 
     await expect(
-      caller({ sub: 'u1', username: 'alice' }).create({
+      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).create({
         targetType: 'COMMENT',
         targetId: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         reason: 'still spam',
       }),
-    ).rejects.toMatchObject({ code: 'TOO_MANY_REQUESTS' });
+    ).rejects.toMatchObject({
+      code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+      cause: { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+    });
     expect(reportCreate).not.toHaveBeenCalled();
   });
 
@@ -114,7 +118,12 @@ describe('ReportsRouter.create', () => {
       createdAt: new Date('2026-05-01T00:00:00Z'),
     });
 
-    const result = await caller({ sub: 'u1', username: 'alice' }).create({
+    const result = await caller({
+      sub: 'u1',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).create({
       targetType: 'LISTING',
       targetId: 'f3a78b1c-8d4e-4f1a-9b2c-7c8d4e1f5a3b',
       reason: 'price obviously fake',
@@ -135,7 +144,7 @@ describe('ReportsRouter.create', () => {
     commentFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u1', username: 'alice' }).create({
+      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).create({
         targetType: 'COMMENT',
         targetId: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         reason: 'already gone',
@@ -151,7 +160,7 @@ describe('ReportsRouter.resolve', () => {
     userFindUnique.mockResolvedValueOnce({ id: 'u1', role: 'user' });
 
     await expect(
-      caller({ sub: 'u1', username: 'alice' }).resolve({
+      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
       }),
@@ -171,7 +180,7 @@ describe('ReportsRouter.resolve', () => {
     reportUpdate.mockResolvedValueOnce({});
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
         resolution: ' handled ',
@@ -195,7 +204,7 @@ describe('ReportsRouter.resolve', () => {
     reportFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
       }),
@@ -217,7 +226,7 @@ describe('ReportsRouter.resolve', () => {
     reportUpdate.mockResolvedValueOnce({});
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
       }),
@@ -236,7 +245,7 @@ describe('ReportsRouter.resolve', () => {
     const { caller, userFindUnique, reportFindUnique } = makeRouter();
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
         id: 'not-a-uuid',
         action: 'MARK_RESOLVED',
       }),
@@ -272,11 +281,13 @@ describe('ReportsRouter.resolve', () => {
       router.reportUpdateMany.mockResolvedValueOnce({ count: 2 });
 
       await expect(
-        router.caller({ sub: 'u-admin', username: 'admin' }).resolve({
-          id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
-          action: 'REMOVE_TARGET',
-          resolution: 'confirmed',
-        }),
+        router
+          .caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 })
+          .resolve({
+            id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
+            action: 'REMOVE_TARGET',
+            resolution: 'confirmed',
+          }),
       ).resolves.toEqual({ ok: true });
 
       expect(router[actionMock]).toHaveBeenCalled();
@@ -304,7 +315,7 @@ describe('ReportsRouter.resolve', () => {
     commentFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'REMOVE_TARGET',
       }),
@@ -324,7 +335,7 @@ describe('ReportsRouter.resolve', () => {
     });
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin' }).resolve({
+      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'REMOVE_TARGET',
       }),
@@ -340,7 +351,7 @@ describe('ReportsRouter.list', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'user' });
 
     await expect(
-      caller({ sub: 'u1', username: 'alice' }).list({ limit: 20 }),
+      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).list({ limit: 20 }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
@@ -367,7 +378,12 @@ describe('ReportsRouter.list', () => {
       },
     ]);
 
-    const result = await caller({ sub: 'u-admin', username: 'admin' }).list({ limit: 20 });
+    const result = await caller({
+      sub: 'u-admin',
+      username: 'admin',
+      role: 'admin',
+      tokenVersion: 0,
+    }).list({ limit: 20 });
     expect(result.items).toHaveLength(1);
     expect(result.items[0]).toMatchObject({
       id: 'r1',
@@ -407,7 +423,12 @@ describe('ReportsRouter.list', () => {
     ]);
     cardFindMany.mockResolvedValueOnce([{ slug: 'forge-titan', name: 'Forge Titan' }]);
 
-    const result = await caller({ sub: 'u-admin', username: 'admin' }).list({ limit: 20 });
+    const result = await caller({
+      sub: 'u-admin',
+      username: 'admin',
+      role: 'admin',
+      tokenVersion: 0,
+    }).list({ limit: 20 });
 
     expect(cardFindMany).toHaveBeenCalledWith({
       where: { slug: { in: ['forge-titan'] } },
@@ -445,7 +466,12 @@ describe('ReportsRouter.list', () => {
       },
     ]);
 
-    const result = await caller({ sub: 'u-admin', username: 'admin' }).list({ limit: 20 });
+    const result = await caller({
+      sub: 'u-admin',
+      username: 'admin',
+      role: 'admin',
+      tokenVersion: 0,
+    }).list({ limit: 20 });
 
     expect(result.items[0]).toMatchObject({
       targetType: 'COMMENT',
