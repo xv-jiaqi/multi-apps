@@ -137,7 +137,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token，Web
 | ------------------------------------------ | ---- | --------------------------------------------------------------------------------------------------------------- |
 | 响应式布局 + 移动端汉堡菜单                | ✅   | 375 宽用户内容 wrap-anywhere，代码块只在框内横向滚动（W-REG-1 / AC1-4）                                         |
 | skip-to-content、focus-visible、aria 标注  | ✅   | 开发模式下 `@axe-core/react` 自动扫描                                                                           |
-| 路由懒加载 + 双层 ErrorBoundary            | ✅   |                                                                                                                 |
+| 路由懒加载 + 双层 ErrorBoundary            | ✅   | 崩溃页按当前语言显示；chunk 失败整页刷新，原始错误只进控制台                                                    |
 | 加载 / 错误 / 空状态、骨架屏               | ✅   | 卡牌详情主包预留 63:88 骨架，避免路由 chunk 到达前跳动（CH-109）                                                |
 | 刘海屏 safe-area + 页面横向留白            | ✅   | `.app-safe-top / .app-safe-x / .app-safe-bottom`；`.app-safe-x` 同时保证页面最小横向留白（< sm 16px，sm+ 24px） |
 | 页面级 `<title>` / description             | 🟡   | 页面 `<title>` 已按 `{页面名} · Cardhub` 设置；description 留给 CH-207                                          |
