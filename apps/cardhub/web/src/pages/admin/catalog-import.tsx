@@ -225,7 +225,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
         <summary className={`cursor-pointer text-sm font-medium text-neutral-800 ${focusRing}`}>
           {tt('admin.import.example')}
         </summary>
-        <pre className="mt-3 overflow-x-auto rounded-md bg-neutral-50 p-3 font-mono text-xs">
+        <pre className="mt-3 max-w-full overflow-x-auto whitespace-pre rounded-md bg-neutral-50 p-3 font-mono text-xs">
           {IMPORT_EXAMPLE}
         </pre>
       </details>
@@ -281,7 +281,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           {actionRows?.flatMap((row) =>
             row.errors.map((error) => (
               <p key={`${row.row.row}-${error.path}-${error.code}`} className="mt-1 text-xs">
-                <span className="font-mono">{error.path}</span>
+                <span className="font-mono wrap-anywhere">{error.path}</span>
                 {locale.locale === 'zh-CN' ? '：' : ': '}
                 {adminErrorText(locale.locale, error.code, error.message ?? '')}
               </p>
@@ -353,7 +353,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                     <td className="px-3 py-2 align-middle text-xs text-red-700">
                       {row.errors.map((error) => (
                         <p key={`${error.path}-${error.code}`}>
-                          <span className="font-mono">{error.path}</span>
+                          <span className="font-mono wrap-anywhere">{error.path}</span>
                           {locale.locale === 'zh-CN' ? '：' : ': '}
                           {adminErrorText(locale.locale, error.code, error.message ?? '')}
                         </p>

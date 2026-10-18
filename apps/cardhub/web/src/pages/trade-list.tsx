@@ -654,7 +654,7 @@ export const TradeListPage = observer(function TradeListPage() {
                             <dt className="text-xs uppercase tracking-widest text-neutral-500">
                               {tt('trade.list.contact')}
                             </dt>
-                            <dd className="font-mono text-neutral-800 [overflow-wrap:anywhere]">
+                            <dd className="min-w-0 font-mono text-neutral-800 wrap-anywhere">
                               {listing.contact === null ? (
                                 <Link
                                   to="/login"
@@ -672,7 +672,7 @@ export const TradeListPage = observer(function TradeListPage() {
                                 <dt className="text-xs uppercase tracking-widest text-neutral-500">
                                   {tt('trade.list.note')}
                                 </dt>
-                                <dd className="whitespace-pre-wrap text-neutral-700 [overflow-wrap:anywhere]">
+                                <dd className="min-w-0 whitespace-pre-wrap text-neutral-700 wrap-anywhere">
                                   {listing.note}
                                 </dd>
                               </>

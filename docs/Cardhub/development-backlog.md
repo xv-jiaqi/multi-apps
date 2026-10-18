@@ -91,6 +91,8 @@
 | CH-313 | 用户自报价格记录与走势                          | P3     | L    | CH-102；D8 确认前不做 | 待领取                                                |
 | CH-314 | 赛事与卡组数据库                                | P3     | L    | CH-107；D9 确认前不做 | 待领取                                                |
 
+窄屏长内容（W-REG-1，AC1-4）：论坛正文和回帖、评论、交易联系方式与备注使用 `wrap-anywhere`；代码块使用 `max-w-full overflow-x-auto whitespace-pre`，只在自己的框里横向滚动。只改 Web / Tauri。
+
 ## 3. 推荐执行顺序
 
 ```mermaid
