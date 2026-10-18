@@ -52,6 +52,14 @@ const pressEnterInFrame: BrowserCommand<[string]> = async (context, name) => {
   await frameButton(context, name).press('Enter');
 };
 
+const emulateReducedMotion: BrowserCommand<['reduce' | 'no-preference']> = async (
+  context,
+  reducedMotion,
+) => {
+  const page = playwrightPage(context);
+  await page.emulateMedia({ reducedMotion });
+};
+
 const setViewport: BrowserCommand<[number, number]> = async (context, width, height) => {
   const page = playwrightPage(context);
   await page.setViewportSize({ width: Math.max(width, 800), height: Math.max(height, 900) });
@@ -111,6 +119,7 @@ export default defineConfig({
         clickInFrame,
         pressEnterInFrame,
         setViewport,
+        emulateReducedMotion,
       },
     },
   },
