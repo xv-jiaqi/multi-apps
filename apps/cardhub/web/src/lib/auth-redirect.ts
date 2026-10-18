@@ -6,14 +6,22 @@ type RedirectState =
   | null
   | undefined;
 
+/** U+0000–U+001F. Browsers strip these, so "/\t/evil" becomes "//evil". */
+function hasControlCharacter(path: string): boolean {
+  for (const char of path) {
+    const code = char.charCodeAt(0);
+    if (code <= 0x1f) return true;
+  }
+  return false;
+}
+
 /** Same-site path: one leading slash, not protocol-relative (`//` or `/\`). */
 function isSameSiteRelativePath(path: string): boolean {
-  // Control characters are stripped by browsers, so "/\t/evil" becomes "//evil".
   return (
     path.startsWith('/') &&
     !path.startsWith('//') &&
     !path.startsWith('/\\') &&
-    !/[\u0000-\u001f]/.test(path)
+    !hasControlCharacter(path)
   );
 }
 
