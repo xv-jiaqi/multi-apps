@@ -165,7 +165,12 @@ main() {
     fi
     ids="$(printf '%s\n' "${ids}" | awk 'NF' | sort -u)"
     if [ -z "${ids}" ]; then
-      if ! listed="$(docker ps -a --filter "name=^${project}-${svc}-[0-9]+\$" --format '{{.ID}}')"; then
+      # A name match is not enough: another compose project can reuse
+      # cardhub-staging-api-1. Only this project's service counts.
+      if ! listed="$(docker ps -a \
+        --filter "label=com.docker.compose.project=${project}" \
+        --filter "label=com.docker.compose.service=${svc}" \
+        --format '{{.ID}}')"; then
         echo "Refusing deploy: docker ps failed while checking for a ${svc} container. The running API was not replaced." >&2
         exit 1
       fi
@@ -232,6 +237,13 @@ main() {
 
   previous_api_image="$(read_previous_image api)"
   previous_web_image="$(read_previous_image web)"
+  # Stub-docker tests set this to print the lookup and stop before rollback
+  # is armed. Production leaves it unset.
+  if [ "${CARDHUB_STOP_AFTER_PREVIOUS_IMAGE:-}" = 1 ]; then
+    printf 'previous_api_image=%s\n' "${previous_api_image}"
+    printf 'previous_web_image=%s\n' "${previous_web_image}"
+    exit 0
+  fi
   previous_tag=""
   previous_api_tag=""
   previous_web_tag=""

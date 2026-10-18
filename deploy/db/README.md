@@ -189,8 +189,10 @@ The same rollout from GitHub: Actions → Cardhub Deploy → Run workflow →
 environment `staging`, image tag `sha-<40hex>` (that same tag).
 
 `prisma migrate deploy` runs as `cardhub_migrator` (advisory lock included)
-and the container exits. The API process is `exec node` under tini
-(`init: true`) with the runtime URL.
+and the container exits. Before Prisma runs, the migrate container logs
+`Migrating as current_user=<role> rolsuper=<true|false>` (the role name and a
+boolean only). The API process is `exec node` under tini (`init: true`) with
+the runtime URL.
 
 Wait until the new container is healthy and the public `/health` body reports
 `"services":{"db":true,...}`.
@@ -390,7 +392,11 @@ curl -fsS https://api-staging.card-hub.app/health
 the API. After step 3 it uses `cardhub_backup`. `SELECT` on every table,
 including `_prisma_migrations`, plus default privileges for tables the
 migrator creates later, is enough for `pg_dump` to capture schema and data.
-The script logs the role name and not the password.
+The script logs the role name and not the password. `pg_dump` runs in a
+separate container and connects to host `postgres` on the compose network, so
+`PGDUMP_PASSWORD` is checked. The local socket and `127.0.0.1` are trust in
+this image; a wrong password on that path would still dump. A failed password
+check exits non-zero and does not upload.
 
 The postgres healthcheck (`pg_isready -U "$POSTGRES_USER"`) does not
 authenticate. Sentry and the optional healthchecks.io backup ping do not open
