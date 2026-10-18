@@ -198,22 +198,74 @@ describe('CommentSection (unauthenticated)', () => {
       renderTarget();
 
       const alert = screen.getByRole('alert');
-      expect(alert).toHaveTextContent('加载失败');
+      expect(alert).toHaveTextContent('评论加载失败');
       expect(alert).not.toHaveTextContent('Internal server error');
-      expect(alert).toHaveClass('border-red-200', 'bg-red-50', 'text-red-700');
+      expect(alert).not.toHaveTextContent('QA mock');
+      expect(alert).toHaveClass(
+        'rounded-lg',
+        'border-red-200',
+        'bg-red-50',
+        'p-6',
+        'text-sm',
+        'text-red-700',
+      );
+      expect(alert.querySelector('h1')).toBeNull();
+      expect(alert.querySelector('p')).toHaveClass('font-medium');
+      const retry = screen.getByRole('button', { name: '重试' });
+      expect(retry).toHaveClass('mt-3', 'min-h-6', 'border-red-300', 'bg-white', 'text-red-700');
+      expect(retry).not.toHaveClass('text-brand-600');
+      expect(retry.className).not.toMatch(/ring-offset/);
+      expect(screen.getByRole('link', { name: '登录后即可发表评论' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: '重试' }));
+      await user.click(retry);
       expect(refetchMock).toHaveBeenCalledTimes(1);
 
       act(() => {
         rootStore.locale.setLocale('en-US');
       });
       await waitFor(() => {
-        expect(screen.getByRole('alert')).toHaveTextContent('Failed to load');
+        expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load comments");
         expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
       });
+      expect(screen.getByRole('alert')).not.toHaveTextContent('QA mock');
     },
   );
+
+  it('keeps the comment form above the load-failure box when signed in', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'u1', username: 'alice' });
+    queryState.isError = true;
+    queryState.error = { message: 'QA-INJECTED-xyz' };
+    renderShell();
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('评论加载失败');
+    expect(alert).not.toHaveTextContent('QA-INJECTED-xyz');
+    const form = screen.getByRole('button', { name: '发布评论' }).closest('form');
+    expect(form).not.toBeNull();
+    expect(screen.getByLabelText('撰写评论')).toBeInTheDocument();
+    expect(form!.compareDocumentPosition(alert) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('shows no alert while comments load or after they succeed', () => {
+    queryState.isLoading = true;
+    queryState.data = undefined;
+    const loading = renderShell();
+    expect(screen.queryAllByRole('alert')).toHaveLength(0);
+    loading.unmount();
+
+    queryState.isLoading = false;
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'great card',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    renderShell();
+    expect(screen.getByText('great card')).toBeInTheDocument();
+    expect(screen.queryAllByRole('alert')).toHaveLength(0);
+  });
 
   it('still surfaces existing comments for anonymous viewers', () => {
     queryState.data = [
