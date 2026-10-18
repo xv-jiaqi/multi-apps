@@ -551,7 +551,9 @@ describe('CommentSection (authenticated)', () => {
     mutateMock.mockImplementationOnce(
       (
         _input: unknown,
-        callbacks: { onError: (error: { message: string; data?: { code?: string } }) => void },
+        callbacks: {
+          onError: (error: { message: string; data?: { code?: string; appCode?: string } }) => void;
+        },
       ) => {
         callbacks.onError({
           message: 'Too many requests',
