@@ -882,7 +882,7 @@ function ListingSkeleton() {
       {Array.from({ length: 4 }).map((_, index) => (
         <li
           key={index}
-          className="animate-pulse rounded-2xl border border-white/60 bg-white/50 p-4 sm:p-5"
+          className="animate-pulse motion-reduce:animate-none rounded-2xl border border-white/60 bg-white/50 p-4 sm:p-5"
         >
           <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-4">
             <div className="aspect-[63/88] w-16 rounded-sm bg-neutral-200" />

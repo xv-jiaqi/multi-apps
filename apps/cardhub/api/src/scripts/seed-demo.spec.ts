@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
 
+import { verifyPassword } from '../modules/auth/password-hash';
 import { seedDemo } from './seed-demo';
 import { CATALOG_SERIES, DEMO_USERS } from './seed-data';
 
@@ -61,9 +62,45 @@ describe('seedDemo', () => {
     }
     expect(aliceCall.create.password).not.toBe(userPassword);
     expect(adminCall.create.password).not.toBe(adminPassword);
+    expect(aliceCall.create.password.startsWith('$2')).toBe(true);
+    expect(adminCall.create.password.startsWith('$2')).toBe(true);
     await expect(bcrypt.compare(userPassword, aliceCall.create.password)).resolves.toBe(true);
-    await expect(bcrypt.compare(adminPassword, adminCall.create.password)).resolves.toBe(true);
+    await expect(verifyPassword(userPassword, aliceCall.create.password)).resolves.toMatchObject({
+      ok: true,
+      upgradedHash: null,
+    });
     expect(aliceCall.update.password).toBe(aliceCall.create.password);
     expect(adminCall.update.password).toBe(adminCall.create.password);
+  });
+
+  it('stores the pre-hashed format when PASSWORD_PREHASH_WRITE is true', async () => {
+    const { prisma, userUpsert } = makePrisma();
+    const userPassword = randomUUID();
+    const adminPassword = randomUUID();
+
+    await seedDemo(prisma, {
+      DEMO_USER_PASSWORD: userPassword,
+      DEMO_ADMIN_PASSWORD: adminPassword,
+      PASSWORD_PREHASH_WRITE: 'true',
+    });
+
+    const upsertArgs = userUpsert.mock.calls.map(([arg]) => arg);
+    const aliceCall = upsertArgs.find((arg) => arg.where.username === 'alice');
+    const adminCall = upsertArgs.find((arg) => arg.where.username === 'admin');
+    if (!aliceCall || !adminCall) {
+      throw new Error('Expected demo seed to upsert both alice and admin');
+    }
+
+    expect(aliceCall.create.password.startsWith('sha256$')).toBe(true);
+    expect(adminCall.create.password.startsWith('sha256$')).toBe(true);
+    await expect(verifyPassword(userPassword, aliceCall.create.password)).resolves.toMatchObject({
+      ok: true,
+      upgradedHash: null,
+    });
+    await expect(verifyPassword(adminPassword, adminCall.create.password)).resolves.toMatchObject({
+      ok: true,
+      upgradedHash: null,
+    });
+    await expect(bcrypt.compare(userPassword, aliceCall.create.password)).resolves.toBe(false);
   });
 });

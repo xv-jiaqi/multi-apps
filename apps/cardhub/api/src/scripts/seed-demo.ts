@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 
+import { passwordPrehashWriteEnabled } from '../config/env.validation';
+import { hashPassword } from '../modules/auth/password-hash';
 import { DEMO_USERS } from './seed-data';
 import { seedCatalog } from './seed-catalog';
 
@@ -27,7 +28,9 @@ export async function seedDemo(prisma: PrismaClient, env: DemoSeedEnv = process.
   const catalogCounts = await seedCatalog(prisma);
 
   for (const seed of DEMO_USERS) {
-    const password = await bcrypt.hash(demoPasswords.get(seed.username) ?? '', 10);
+    const password = await hashPassword(demoPasswords.get(seed.username) ?? '', {
+      prehash: passwordPrehashWriteEnabled(env),
+    });
     await prisma.user.upsert({
       where: { username: seed.username },
       update: { email: seed.email, password, role: seed.role },

@@ -1,7 +1,9 @@
 import type { INestApplication } from '@nestjs/common';
+import bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { APP_ERROR_CODES, t } from '@repo/shared';
 import { createApp } from '../src/bootstrap/create-app';
+import { hashPassword } from '../src/modules/auth/password-hash';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 
 function resultData(body: { result?: { data?: unknown } }): Record<string, unknown> {
@@ -77,20 +79,49 @@ describe('localized API error codes', () => {
   });
 
   it('login failure returns INVALID_CREDENTIALS, not UNAUTHORIZED', async () => {
-    const wrongPassword = await post('auth.login', {
-      identifier: username,
-      password: 'wrong-password',
-    });
-    expectAppCode(wrongPassword, 401, APP_ERROR_CODES.INVALID_CREDENTIALS, 'UNAUTHORIZED');
-    expect(wrongPassword.body.error.data.appCode).not.toBe(APP_ERROR_CODES.UNAUTHORIZED);
-    expect(wrongPassword.body.error.message).toBe('用户名或密码错误');
-
     const unknownUser = await post('auth.login', {
       identifier: `missing-${suffix}`,
       password: 'wrong-password',
     });
     expectAppCode(unknownUser, 401, APP_ERROR_CODES.INVALID_CREDENTIALS, 'UNAUTHORIZED');
     expect(unknownUser.body.error.data.appCode).not.toBe(APP_ERROR_CODES.UNAUTHORIZED);
+    expect(unknownUser.body.error.message).toBe('用户名或密码错误');
+
+    const legacyName = `l${suffix}`.slice(0, 24);
+    const legacyHash = await bcrypt.hash('legacy-secret', 4);
+    expect(legacyHash.startsWith('sha256$')).toBe(false);
+    await prisma.user.create({
+      data: {
+        email: `leg-${suffix}@cardhub.test`,
+        username: legacyName,
+        password: legacyHash,
+      },
+    });
+    const legacyWrong = await post('auth.login', {
+      identifier: legacyName,
+      password: 'wrong-password',
+    });
+    expectAppCode(legacyWrong, 401, APP_ERROR_CODES.INVALID_CREDENTIALS, 'UNAUTHORIZED');
+    expect(legacyWrong.body.error.data.appCode).not.toBe(APP_ERROR_CODES.UNAUTHORIZED);
+    expect(legacyWrong.body.error.message).toBe('用户名或密码错误');
+
+    const newName = `n${suffix}`.slice(0, 24);
+    const newHash = await hashPassword('new-secret', { prehash: true });
+    expect(newHash.startsWith('sha256$')).toBe(true);
+    await prisma.user.create({
+      data: {
+        email: `new-${suffix}@cardhub.test`,
+        username: newName,
+        password: newHash,
+      },
+    });
+    const newWrong = await post('auth.login', {
+      identifier: newName,
+      password: 'wrong-password',
+    });
+    expectAppCode(newWrong, 401, APP_ERROR_CODES.INVALID_CREDENTIALS, 'UNAUTHORIZED');
+    expect(newWrong.body.error.data.appCode).not.toBe(APP_ERROR_CODES.UNAUTHORIZED);
+    expect(newWrong.body.error.message).toBe('用户名或密码错误');
   });
 
   it('comment zod failure returns VALIDATION', async () => {

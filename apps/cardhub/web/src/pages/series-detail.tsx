@@ -113,11 +113,14 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
       <PageShell>
         <PageMeta title={tt('state.loading')} />
         <div className="space-y-6">
-          <div className="h-4 w-40 animate-pulse rounded bg-neutral-200" />
-          <div className="h-48 animate-pulse rounded-3xl bg-neutral-200/60" />
+          <div className="h-4 w-40 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
+          <div className="h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200/60" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="h-64 animate-pulse rounded-2xl bg-white/50" />
+              <div
+                key={idx}
+                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+              />
             ))}
           </div>
         </div>
