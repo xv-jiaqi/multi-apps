@@ -64,7 +64,10 @@ describe('validateEnv', () => {
   );
 
   it('accepts production startup when JWT_SECRET and DATABASE_URL are valid', () => {
-    expect(validateEnv(VALID_PRODUCTION_ENV)).toBe(VALID_PRODUCTION_ENV);
+    expect(validateEnv(VALID_PRODUCTION_ENV)).toEqual({
+      ...VALID_PRODUCTION_ENV,
+      PASSWORD_PREHASH_WRITE: false,
+    });
   });
 
   it.each(['development', 'test', undefined])(
@@ -75,7 +78,31 @@ describe('validateEnv', () => {
         JWT_SECRET: 'dev-insecure-secret',
       };
 
-      expect(validateEnv(config)).toBe(config);
+      expect(validateEnv(config)).toEqual({
+        ...config,
+        PASSWORD_PREHASH_WRITE: false,
+      });
     },
   );
+
+  it('enables PASSWORD_PREHASH_WRITE only for the exact string true', () => {
+    expect(
+      validateEnv({ ...VALID_PRODUCTION_ENV, PASSWORD_PREHASH_WRITE: 'true' })
+        .PASSWORD_PREHASH_WRITE,
+    ).toBe(true);
+  });
+
+  it.each(['1', 'TRUE', 'yes', '', 'True', ' true ', true, false])(
+    'leaves PASSWORD_PREHASH_WRITE off for %j',
+    (flag) => {
+      expect(
+        validateEnv({ ...VALID_PRODUCTION_ENV, PASSWORD_PREHASH_WRITE: flag })
+          .PASSWORD_PREHASH_WRITE,
+      ).toBe(false);
+    },
+  );
+
+  it('leaves PASSWORD_PREHASH_WRITE off when the variable is unset', () => {
+    expect(validateEnv({ ...VALID_PRODUCTION_ENV }).PASSWORD_PREHASH_WRITE).toBe(false);
+  });
 });

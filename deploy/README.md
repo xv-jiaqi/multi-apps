@@ -33,8 +33,8 @@ Caddy publishes host ports.
    sudo chmod 750 /opt/cardhub /opt/cardhub/production /opt/cardhub/staging /opt/cardhub/edge /opt/cardhub/backups
    ```
 3. Copy `deploy/docker-compose.yml`, `deploy/remote-deploy.sh`,
-   and `deploy/backup.sh` into each app env's `deploy/` directory. Copy
-   `deploy/edge/` into `/opt/cardhub/edge/deploy/edge/`.
+   `deploy/backup.sh`, and `deploy/check-backup-log.sh` into each app env's
+   `deploy/` directory. Copy `deploy/edge/` into `/opt/cardhub/edge/deploy/edge/`.
 4. Create app env files from `.env.example`:
    ```bash
    cp deploy/.env.example /opt/cardhub/production/production.env
@@ -54,6 +54,10 @@ Caddy publishes host ports.
    `POSTGRES_DB=cardhub_prod` for production and
    `POSTGRES_DB=cardhub_staging` for staging. Database passwords are lowercase
    hex from `openssl rand -hex 32`.
+   `PASSWORD_PREHASH_WRITE` must be the exact string `true` to store the
+   pre-hashed password format. Leave it `false` in `production.env`. Set it
+   to `true` in `staging.env`. The API compose service lists the variable
+   explicitly; putting it only in the env file does not inject it.
    `POSTGRES_USER` / `POSTGRES_PASSWORD` are the admin superuser (data-directory
    init, restore, emergency admin). `DATABASE_URL` is the runtime role and
    `MIGRATE_DATABASE_URL` is the schema owner. Leave `MIGRATE_DATABASE_URL`
@@ -376,7 +380,13 @@ IMAGE_TAG=sha-<older-full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod 
 ```
 
 Prisma migrations are not automatically rolled back. Handle schema reversions
-manually if a rollback crosses a database migration. During a normal rollout
+manually if a rollback crosses a database migration. Password hashes have no
+schema change. While `PASSWORD_PREHASH_WRITE` is not the exact string `true`,
+new hashes stay legacy bcrypt and a rolled-back API can still verify them.
+After the flag has been `true`, hashes written as `sha256$...` do not verify
+on the previous release until that release is restored or the password is
+reset. Legacy passwords longer than 72 UTF-8 bytes are not upgraded on login.
+During a normal rollout
 the previous API keeps serving after `prisma migrate deploy` has committed, so
 the migration itself has to stay compatible with that previous release. See
 "Schema compatibility" above.
@@ -399,14 +409,78 @@ the dump and gzip, then atomically renames the backup on success. It keeps the
 latest 7 daily backups plus 4 weekly backups and never deletes the newest
 successful backup.
 
+Staging and production append to the same log. These cron times are
+Asia/Shanghai (UTC+8): staging at 02:15, production at 02:20. No
+`BACKUP_PING_URL` is configured in cron, in the env files, or in GitHub
+Actions, so a missed run does not call healthchecks.io. Patrol the log
+instead.
+
 ```cron
-15 2 * * * PROJECT=cardhub-prod ENV_FILE=/opt/cardhub/production/production.env COMPOSE_FILE=/opt/cardhub/production/deploy/docker-compose.yml BACKUP_PING_URL=https://hc-ping.com/<uuid> /opt/cardhub/production/deploy/backup.sh >> /opt/cardhub/backups/backup.log 2>&1
+CRON_TZ=Asia/Shanghai
+15 2 * * * PROJECT=cardhub-staging ENV_FILE=/opt/cardhub/staging/staging.env COMPOSE_FILE=/opt/cardhub/staging/deploy/docker-compose.yml /opt/cardhub/staging/deploy/backup.sh >> /opt/cardhub/backups/backup.log 2>&1
+20 2 * * * PROJECT=cardhub-prod ENV_FILE=/opt/cardhub/production/production.env COMPOSE_FILE=/opt/cardhub/production/deploy/docker-compose.yml /opt/cardhub/production/deploy/backup.sh >> /opt/cardhub/backups/backup.log 2>&1
 ```
 
-`BACKUP_PING_URL` is optional; when set, success pings the URL and failure pings
-`<url>/fail` for healthchecks.io-style alerting. That ping is HTTP only. Nothing
-else in this repo opens a monitoring session to Postgres. The container
-healthcheck is `pg_isready` as `POSTGRES_USER` and does not authenticate.
+Every exit appends exactly one status line. Success:
+
+```text
+BACKUP_RESULT=ok project=cardhub-prod ts=2026-10-18T18:20:01Z file=cardhub-prod-20261018T182001Z.sql.gz
+```
+
+Failure:
+
+```text
+BACKUP_RESULT=fail project=cardhub-prod ts=2026-10-18T18:20:01Z rc=1 reason=offsite-env-missing
+```
+
+`ts` is UTC (`YYYY-MM-DDTHH:MM:SSZ`). `file` is the local dump name and appears
+only on success. `reason` is one token, for example `offsite-env-missing`,
+`offsite-env-unreadable`, `missing-OSS_BUCKET`, `pipefail`, `sigterm`,
+`sigint`, or `command-failed`. `rc` is the script exit status.
+
+Patrol over SSH once per project. A staging success does not cover production:
+both jobs share `/opt/cardhub/backups/backup.log`, and the checker matches
+`project=<name>` as a whole token (`cardhub-prod` does not match
+`cardhub-prod-old`). A line counts only when it starts with exactly
+`BACKUP_RESULT=ok` or `BACKUP_RESULT=fail`, and it contains one
+`BACKUP_RESULT=` token, one `project=` token, and one `ts=` token. The
+checker reads that line-start result and the first `ts=`. A duplicate
+`BACKUP_RESULT=`, `project=`, or `ts=` token is malformed. So is a prefixed
+line, an empty `BACKUP_RESULT=`, or any other status such as
+`BACKUP_RESULT=FAILED`. Those lines fail the check instead of falling back
+to an older ok.
+`backup.log` lines must not be prefixed: no timestamps or other log prefixes
+before `BACKUP_RESULT`. A line that contains `BACKUP_RESULT=` and that exact
+`project=` token but does not start with `BACKUP_RESULT=` fails the check.
+It exits 0 only when that project's latest well-formed line is `ok`, `ts` is
+within the max age, and `ts` is not more than five minutes in the future. Use
+26 hours so a missed night fails the next morning patrol, while a backup from
+02:20 still passes a same-day check.
+
+```bash
+ssh deploy@<host> /opt/cardhub/production/deploy/check-backup-log.sh /opt/cardhub/backups/backup.log cardhub-staging 26
+ssh deploy@<host> /opt/cardhub/production/deploy/check-backup-log.sh /opt/cardhub/backups/backup.log cardhub-prod 26
+```
+
+The checker exits non-zero, with a reason, when the log is missing or
+unreadable, the project has no `BACKUP_RESULT` line, `ts` cannot be parsed,
+the latest line is `fail`, that `ok` is older than the max age, `ts` is
+more than five minutes in the future, or a line for that project is malformed
+(unanchored, an unknown status, or a duplicate `BACKUP_RESULT=`, `project=`,
+or `ts=` token).
+
+A malformed-line failure is handled by the ops on-call (守夜人). Patrol
+alerts, then inspect `backup.log` and run a fresh backup so a new anchored
+ok is written. Never hand-edit or delete log lines to clear it. A later
+anchored `BACKUP_RESULT=ok` for that project is what clears the alert.
+
+The backup script can ping `BACKUP_PING_URL` on success and `<url>/fail` on
+failure if that variable is set. This host does not set it. Do not treat a
+missing ping as a healthy backup. A missing or unreadable off-site env, or a
+missing OSS key, must not send the success ping. The ping is HTTP only.
+Nothing else in this repo opens a monitoring session to Postgres. The
+container healthcheck is `pg_isready` as `POSTGRES_USER` and does not
+authenticate.
 
 `backup.sh` dumps as `PGDUMP_USER` / `PGDUMP_PASSWORD` from the env file when
 both are set (the read-only `cardhub_backup` role after the split). When both
@@ -435,17 +509,22 @@ gzip -dc /opt/cardhub/backups/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz 
     'PGPASSWORD="$POSTGRES_PASSWORD" psql -w -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
-### Optional off-site OSS copy
+### Off-site OSS copy (required)
 
 After a local dump is finalized and before local retention pruning, the backup
-script optionally uploads that single `.sql.gz` file to Alibaba Cloud OSS using
-the official `rclone/rclone:1.75.2` Docker image pinned by digest in the script.
-It never deletes or syncs remote objects; remote retention must be handled by an
-OSS lifecycle rule.
+script uploads that single `.sql.gz` file to Alibaba Cloud OSS using the
+official `rclone/rclone:1.75.2` Docker image pinned by digest in the script.
+The upload is mandatory. There is no switch to skip it. If `OFFSITE_ENV_FILE`
+is missing or unreadable, or if any of `OSS_ACCESS_KEY_ID`,
+`OSS_ACCESS_KEY_SECRET`, `OSS_BUCKET`, or `OSS_ENDPOINT` is empty, the script
+exits non-zero, writes `BACKUP_RESULT=fail`, and does not send a success ping.
+The local dump stays. Upload and `rclone check` failures fail the same way.
+The script never deletes or syncs remote objects; remote retention must be
+handled by an OSS lifecycle rule.
 
-The off-site copy is disabled unless `OFFSITE_ENV_FILE` exists. The default path
-is `/opt/cardhub/backups/offsite.env`; override it in the cron environment only
-if the file lives elsewhere.
+The default path is `/opt/cardhub/backups/offsite.env`. Override
+`OFFSITE_ENV_FILE` only when that file lives somewhere else. Both cron jobs
+use this one file.
 
 Create the off-site env file with placeholders replaced by real OSS values:
 

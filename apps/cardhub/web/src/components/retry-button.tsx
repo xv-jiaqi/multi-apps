@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type RefObject } from 'react';
+import { forwardRef, useLayoutEffect, useRef, type RefObject } from 'react';
 import { cn } from '@repo/ui-web';
 
 /**
@@ -53,21 +53,34 @@ export function useFocusOnRecovery(view: QueryView, targetRef: RefObject<HTMLEle
   }, [view, targetRef]);
 }
 
-export function RetryButton({
-  retrying,
-  label,
-  retryingLabel,
-  onRetry,
-  className,
-}: {
-  retrying: boolean;
-  label: string;
-  retryingLabel: string;
-  onRetry: () => void;
-  className?: string;
-}) {
+/**
+ * A crash box that remounts because Retry still failed. The first error
+ * leaves focus alone. `focus()` omits `focusVisible` so the ring follows
+ * `:focus-visible` (keyboard yes, pointer no).
+ */
+export function useFocusOnPersistentError(
+  restore: boolean,
+  targetRef: RefObject<HTMLElement | null>,
+) {
+  useLayoutEffect(() => {
+    if (!restore) return;
+    targetRef.current?.focus({ preventScroll: true });
+  }, [restore, targetRef]);
+}
+
+export const RetryButton = forwardRef<
+  HTMLButtonElement,
+  {
+    retrying: boolean;
+    label: string;
+    retryingLabel: string;
+    onRetry: () => void;
+    className?: string;
+  }
+>(function RetryButton({ retrying, label, retryingLabel, onRetry, className }, ref) {
   return (
     <button
+      ref={ref}
       type="button"
       aria-disabled={retrying || undefined}
       aria-busy={retrying || undefined}
@@ -80,4 +93,4 @@ export function RetryButton({
       {retrying ? retryingLabel : label}
     </button>
   );
-}
+});

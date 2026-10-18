@@ -296,7 +296,7 @@ API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次
 - `.github/workflows/images.yml`：CI 在 main push 成功后构建 API + Web 镜像，推送到 GHCR，标签为 `sha-<full sha>` 与 `main`。
 - `.github/workflows/deploy.yml`：手动部署 staging / production；自动 staging 仅接受同仓库 main push 的 CI workflow_run。production 和 staging 的部署 SHA 都必须可从 `origin/main` 到达。
 - 部署脚本会同步已验证 commit 的 `deploy/` 文件到 `/opt/cardhub/<environment>/deploy`，再运行远端部署。健康校验要求 API `/health.gitSha` 等于目标 SHA，并等待 Web Docker health 为 `healthy` 且 `/healthz` 可访问。部署、健康检查或 seed 失败会尝试回滚到上一个不可变 `sha-` tag 并让 job 失败。
-- 备份：`deploy/backup.sh` 由 cron 每日执行，保留 7 份日备份 + 4 份周备份；配置 `/opt/cardhub/backups/offsite.env` 后会额外上传到阿里云 OSS（香港）。
+- 备份：`deploy/backup.sh` 由 cron 每日执行（Asia/Shanghai 02:15 staging、02:20 prod），保留 7 份日备份 + 4 份周备份。两条任务追加到同一个 `/opt/cardhub/backups/backup.log`。阿里云 OSS（香港）上传是强制的：`offsite.env` 缺失、不可读，或缺少 `OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET` / `OSS_BUCKET` / `OSS_ENDPOINT` 任一键，脚本非零退出并留下本地 dump。每次退出写一行 `BACKUP_RESULT=ok|fail`。没有配置 `BACKUP_PING_URL`，巡检对每个 project 跑 `deploy/check-backup-log.sh`（`project=` 整词匹配，staging 成功不能掩盖 prod 失败）。
 
 ### 7.5.3 本地验证生产构建
 

@@ -38,6 +38,28 @@ const uninstallCachedGifRoute: BrowserCommand<[]> = async (context) => {
   await page.unroute(CACHED_GIF_URL).catch(() => undefined);
 };
 
+function frameButton(context: { provider: unknown; sessionId: string }, name: string) {
+  return playwrightPage(context)
+    .frameLocator('iframe[data-vitest="true"]')
+    .getByRole('button', { name, exact: true });
+}
+
+const clickInFrame: BrowserCommand<[string]> = async (context, name) => {
+  await frameButton(context, name).click();
+};
+
+const pressEnterInFrame: BrowserCommand<[string]> = async (context, name) => {
+  await frameButton(context, name).press('Enter');
+};
+
+const emulateReducedMotion: BrowserCommand<['reduce' | 'no-preference']> = async (
+  context,
+  reducedMotion,
+) => {
+  const page = playwrightPage(context);
+  await page.emulateMedia({ reducedMotion });
+};
+
 const setViewport: BrowserCommand<[number, number]> = async (context, width, height) => {
   const page = playwrightPage(context);
   await page.setViewportSize({ width: Math.max(width, 800), height: Math.max(height, 900) });
@@ -67,6 +89,8 @@ export default defineConfig({
     include: [
       '@testing-library/jest-dom/vitest',
       '@testing-library/react',
+      '@testing-library/user-event',
+      '@sentry/react',
       '@repo/shared',
       '@repo/stores',
       'mobx',
@@ -92,7 +116,10 @@ export default defineConfig({
       commands: {
         installCachedGifRoute,
         uninstallCachedGifRoute,
+        clickInFrame,
+        pressEnterInFrame,
         setViewport,
+        emulateReducedMotion,
       },
     },
   },

@@ -19,6 +19,10 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      # Only the exact string true writes sha256$ password hashes. Anything
+      # else, including an empty value, stays on legacy bcrypt. Staging sets
+      # true; production stays false until an operator enables it.
+      PASSWORD_PREHASH_WRITE: ${PASSWORD_PREHASH_WRITE:-false}
       CORS_ORIGIN: ${CORS_ORIGIN}
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-${ENV_NAME:-}}

@@ -1,8 +1,8 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useRef, type ErrorInfo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
 import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
-import { RetryButton } from './retry-button';
+import { RetryButton, useFocusOnPersistentError } from './retry-button';
 
 /**
  * Webpack names the failure `ChunkLoadError`. Vite, Firefox, and WebKit only
@@ -38,6 +38,11 @@ interface ErrorBoundaryState {
   /** Separate from `error` so a thrown `null` still shows the fallback. */
   hasError: boolean;
   error: unknown;
+  /**
+   * Set when Reset runs, kept when that render throws again, cleared once
+   * the children render. The first catch stays false.
+   */
+  restoreFocus: boolean;
 }
 
 /**
@@ -46,30 +51,41 @@ interface ErrorBoundaryState {
  * page failure from taking down the whole app shell.
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  override state: ErrorBoundaryState = { hasError: false, error: null };
+  override state: ErrorBoundaryState = { hasError: false, error: null, restoreFocus: false };
 
-  static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+  static getDerivedStateFromError(error: unknown): Pick<ErrorBoundaryState, 'hasError' | 'error'> {
     return { hasError: true, error };
   }
 
   override componentDidCatch(error: unknown, info: ErrorInfo): void {
     this.props.onError?.(error, info);
     if (typeof console !== 'undefined') {
-      // eslint-disable-next-line no-console
       console.error('[ErrorBoundary]', error, info);
     }
   }
 
   reset = (): void => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, restoreFocus: true });
   };
+
+  override componentDidUpdate(): void {
+    if (!this.state.hasError && this.state.restoreFocus) {
+      this.setState({ restoreFocus: false });
+    }
+  }
 
   override render(): ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback(this.state.error, this.reset);
       }
-      return <ErrorFallback error={this.state.error} onRetry={this.reset} />;
+      return (
+        <ErrorFallback
+          error={this.state.error}
+          onRetry={this.reset}
+          restoreFocus={this.state.restoreFocus}
+        />
+      );
     }
     return this.props.children;
   }
@@ -79,12 +95,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 export const ErrorFallback = observer(function ErrorFallback({
   error,
   onRetry,
+  restoreFocus = false,
 }: {
   error: unknown;
   onRetry: () => void;
+  restoreFocus?: boolean;
 }) {
   const { locale } = useStores();
   const tt = (key: string) => t(locale.locale, key);
+  const retryRef = useRef<HTMLButtonElement>(null);
+  useFocusOnPersistentError(restoreFocus, retryRef);
 
   return (
     <div className="app-safe-x">
@@ -96,6 +116,7 @@ export const ErrorFallback = observer(function ErrorFallback({
         <p className="mt-1">{tt('state.crashBody')}</p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <RetryButton
+            ref={retryRef}
             retrying={false}
             label={tt('state.retry')}
             retryingLabel={tt('state.retrying')}

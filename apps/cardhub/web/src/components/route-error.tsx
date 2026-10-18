@@ -26,12 +26,28 @@ export function RouteErrorFallback() {
     captureSentryException(error);
   }, [error]);
 
+  const crashRetry = readCrashRetry(location.state);
+
   return (
     <ErrorFallback
       error={error}
+      restoreFocus={crashRetry > 0}
       onRetry={() => {
-        navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true });
+        const previous =
+          typeof location.state === 'object' && location.state !== null
+            ? (location.state as Record<string, unknown>)
+            : {};
+        navigate(`${location.pathname}${location.search}${location.hash}`, {
+          replace: true,
+          state: { ...previous, crashRetry: crashRetry + 1 },
+        });
       }}
     />
   );
+}
+
+function readCrashRetry(state: unknown): number {
+  if (typeof state !== 'object' || state === null || !('crashRetry' in state)) return 0;
+  const value = state.crashRetry;
+  return typeof value === 'number' && value > 0 ? value : 0;
 }

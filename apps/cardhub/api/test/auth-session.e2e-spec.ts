@@ -446,7 +446,11 @@ describe('production error messages', () => {
     const identity = nextIdentity('prod');
     const registered = await register(app, identity);
     const prisma = app.get(PrismaService);
-    await prisma.$executeRawUnsafe('ALTER TABLE "users" DROP COLUMN "tokenVersion"');
+    const boom = new Error(
+      'Invalid `prisma.user.findUnique()` invocation:\n\nThe column `tokenVersion` does not exist in the current database.',
+    );
+    boom.name = 'PrismaClientKnownRequestError';
+    const findUnique = jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(boom);
 
     try {
       const leaked = await usersMe(app, registered.token);
@@ -469,10 +473,8 @@ describe('production error messages', () => {
       expect(response.body.error.data).not.toHaveProperty('appCode');
       expect(leakedText).not.toBe(serialized);
     } finally {
+      findUnique.mockRestore();
       process.env.NODE_ENV = previousNodeEnv;
-      await prisma.$executeRawUnsafe(
-        'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "tokenVersion" INTEGER NOT NULL DEFAULT 0',
-      );
     }
   });
 });
