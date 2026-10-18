@@ -23,14 +23,16 @@ type MockPrismaUser = {
   findUnique: jest.Mock;
   create: jest.Mock;
   update: jest.Mock;
+  updateMany: jest.Mock;
 };
 
-function makeRouter(user: TrpcContext['user'] = null) {
+function makeRouter(user: TrpcContext['user'] = null, prehashWrite = false) {
   const userMock: MockPrismaUser = {
     findFirst: jest.fn(),
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
   };
   const prisma = { user: userMock } as unknown as PrismaService;
 
@@ -39,12 +41,19 @@ function makeRouter(user: TrpcContext['user'] = null) {
     verify: jest.fn(),
   } as unknown as AuthService;
 
+  const previous = process.env.PASSWORD_PREHASH_WRITE;
+  process.env.PASSWORD_PREHASH_WRITE = prehashWrite ? 'true' : 'false';
   const router = new AuthRouter(new TrpcBase(), prisma, auth);
   const caller = router.build().createCaller({
     req: {} as never,
     res: {} as never,
     user,
   });
+  if (previous === undefined) {
+    delete process.env.PASSWORD_PREHASH_WRITE;
+  } else {
+    process.env.PASSWORD_PREHASH_WRITE = previous;
+  }
 
   return { caller, userMock, auth };
 }
@@ -140,8 +149,31 @@ describe('AuthRouter.register', () => {
 
     const createCall = userMock.create.mock.calls[0]?.[0];
     expect(createCall.data.password).not.toBe(TEST_PASSWORD);
-    expect(createCall.data.password.length).toBeGreaterThan(20);
+    expect(createCall.data.password.startsWith('$2')).toBe(true);
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u-new', username: 'alice', ver: 0 });
+  });
+
+  it('stores a pre-hashed password when writes are enabled', async () => {
+    const { caller, userMock } = makeRouter(null, true);
+    userMock.findFirst.mockResolvedValueOnce(null);
+    userMock.create.mockImplementationOnce(({ data }) =>
+      Promise.resolve({
+        id: 'u-new',
+        email: data.email,
+        username: data.username,
+        role: 'user',
+        tokenVersion: 0,
+      }),
+    );
+
+    await caller.register({
+      email: 'alice@cardhub.test',
+      username: 'alice',
+      password: TEST_PASSWORD,
+    });
+
+    const createCall = userMock.create.mock.calls[0]?.[0];
+    expect(createCall.data.password.startsWith('sha256$')).toBe(true);
   });
 });
 
@@ -197,6 +229,29 @@ describe('AuthRouter.login', () => {
       role: 'admin',
     });
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u1', username: 'alice', ver: 4 });
+    expect(userMock.update).not.toHaveBeenCalled();
+    expect(userMock.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('upgrades a legacy hash when prehash writes are enabled', async () => {
+    const { caller, userMock } = makeRouter(null, true);
+    const hashedPassword = await bcrypt.hash(TEST_PASSWORD, 4);
+    userMock.findFirst.mockResolvedValueOnce({
+      id: 'u1',
+      email: 'alice@cardhub.test',
+      username: 'alice',
+      password: hashedPassword,
+      role: 'admin',
+      tokenVersion: 4,
+    });
+
+    await caller.login({ identifier: 'alice', password: TEST_PASSWORD });
+
+    expect(userMock.update).not.toHaveBeenCalled();
+    const update = userMock.updateMany.mock.calls[0]?.[0];
+    expect(update.where).toEqual({ id: 'u1', password: hashedPassword });
+    expect(update.data.password.startsWith('sha256$')).toBe(true);
+    expect(update.data.tokenVersion).toBeUndefined();
   });
 
   it('treats identifier with @ as email lookup', async () => {
@@ -296,6 +351,24 @@ describe('AuthRouter.changePassword', () => {
     expect(auth.sign).not.toHaveBeenCalled();
   });
 
+  it('returns SAME_PASSWORD without writing even when prehash writes are enabled', async () => {
+    const { caller, userMock, auth } = makeRouter(signedInUser, true);
+    userMock.findUnique.mockResolvedValueOnce({
+      id: 'u1',
+      username: 'alice',
+      password: await bcrypt.hash(TEST_PASSWORD, 4),
+    });
+
+    await expect(
+      caller.changePassword({ currentPassword: TEST_PASSWORD, newPassword: TEST_PASSWORD }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.SAME_PASSWORD },
+    });
+    expect(userMock.update).not.toHaveBeenCalled();
+    expect(auth.sign).not.toHaveBeenCalled();
+  });
+
   it('stores the new hash and increments tokenVersion in one update', async () => {
     const { caller, userMock, auth } = makeRouter(signedInUser);
     userMock.findUnique.mockResolvedValueOnce({
@@ -312,8 +385,27 @@ describe('AuthRouter.changePassword', () => {
     const update = userMock.update.mock.calls[0]?.[0];
     expect(update.where).toEqual({ id: 'u1' });
     expect(update.data.tokenVersion).toEqual({ increment: 1 });
-    expect(update.data.password).not.toBe('another-password');
+    expect(update.data.password.startsWith('$2')).toBe(true);
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u1', username: 'alice', ver: 3 });
+  });
+
+  it('stores a pre-hashed password when writes are enabled', async () => {
+    const { caller, userMock } = makeRouter(signedInUser, true);
+    userMock.findUnique.mockResolvedValueOnce({
+      id: 'u1',
+      username: 'alice',
+      password: await bcrypt.hash(TEST_PASSWORD, 4),
+    });
+    userMock.update.mockResolvedValueOnce({ id: 'u1', username: 'alice', tokenVersion: 3 });
+
+    await caller.changePassword({
+      currentPassword: TEST_PASSWORD,
+      newPassword: 'another-password',
+    });
+
+    const update = userMock.update.mock.calls[0]?.[0];
+    expect(update.data.password.startsWith('sha256$')).toBe(true);
+    expect(update.data.tokenVersion).toEqual({ increment: 1 });
   });
 });
 

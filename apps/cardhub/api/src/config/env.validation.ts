@@ -10,7 +10,18 @@ const envSchema = z.looseObject({
   NODE_ENV: z.string().optional(),
   JWT_SECRET: z.string().optional(),
   DATABASE_URL: z.string().optional(),
+  PASSWORD_PREHASH_WRITE: z.union([z.boolean(), z.string(), z.null()]).optional(),
 });
+
+/**
+ * Only the exact string "true" enables writes of the pre-hashed format.
+ * "TRUE", "1", "yes", empty, and unset all stay off.
+ */
+const passwordPrehashWriteSchema = z.unknown().transform((value) => value === 'true');
+
+export function passwordPrehashWriteEnabled(source: { PASSWORD_PREHASH_WRITE?: unknown }): boolean {
+  return passwordPrehashWriteSchema.parse(source.PASSWORD_PREHASH_WRITE);
+}
 
 function envString(value: string | undefined): string {
   return value?.trim() ?? '';
@@ -26,9 +37,14 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
     throw new Error(`Invalid Cardhub API environment configuration:\n- ${messages.join('\n- ')}`);
   }
 
+  const normalized = {
+    ...config,
+    PASSWORD_PREHASH_WRITE: passwordPrehashWriteSchema.parse(config.PASSWORD_PREHASH_WRITE),
+  };
+
   const nodeEnv = envString(parsed.data.NODE_ENV);
   if (nodeEnv !== 'production') {
-    return config;
+    return normalized;
   }
 
   const messages: string[] = [];
@@ -59,5 +75,5 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
     throw new Error(`Invalid Cardhub API environment configuration:\n- ${messages.join('\n- ')}`);
   }
 
-  return config;
+  return normalized;
 }
