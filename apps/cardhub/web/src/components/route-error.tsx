@@ -22,6 +22,7 @@ export function RouteErrorFallback() {
   const location = useLocation();
 
   useEffect(() => {
+    console.error(error);
     captureSentryException(error);
   }, [error]);
 
