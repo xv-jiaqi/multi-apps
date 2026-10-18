@@ -54,6 +54,10 @@ Caddy publishes host ports.
    `POSTGRES_DB=cardhub_prod` for production and
    `POSTGRES_DB=cardhub_staging` for staging. Database passwords are lowercase
    hex from `openssl rand -hex 32`.
+   `PASSWORD_PREHASH_WRITE` must be the exact string `true` to store the
+   pre-hashed password format. Leave it `false` in `production.env`. Set it
+   to `true` in `staging.env`. The API compose service lists the variable
+   explicitly; putting it only in the env file does not inject it.
    `POSTGRES_USER` / `POSTGRES_PASSWORD` are the admin superuser (data-directory
    init, restore, emergency admin). `DATABASE_URL` is the runtime role and
    `MIGRATE_DATABASE_URL` is the schema owner. Leave `MIGRATE_DATABASE_URL`
@@ -376,7 +380,13 @@ IMAGE_TAG=sha-<older-full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod 
 ```
 
 Prisma migrations are not automatically rolled back. Handle schema reversions
-manually if a rollback crosses a database migration. During a normal rollout
+manually if a rollback crosses a database migration. Password hashes have no
+schema change. While `PASSWORD_PREHASH_WRITE` is not the exact string `true`,
+new hashes stay legacy bcrypt and a rolled-back API can still verify them.
+After the flag has been `true`, hashes written as `sha256$...` do not verify
+on the previous release until that release is restored or the password is
+reset. Legacy passwords longer than 72 UTF-8 bytes are not upgraded on login.
+During a normal rollout
 the previous API keeps serving after `prisma migrate deploy` has committed, so
 the migration itself has to stay compatible with that previous release. See
 "Schema compatibility" above.

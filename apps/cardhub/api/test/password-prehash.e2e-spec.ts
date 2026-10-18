@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { createApp } from '../src/bootstrap/create-app';
+import { hashPassword } from '../src/modules/auth/password-hash';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 
 const NEW_HASH_PREFIX = 'sha256$';
@@ -66,16 +67,98 @@ function login(app: INestApplication, identity: ReturnType<typeof nextIdentity>,
     .send({ identifier: identity.username, password });
 }
 
-describe('password pre-hash', () => {
+function withPrehashWrite(enabled: boolean) {
+  const previous = process.env.PASSWORD_PREHASH_WRITE;
+  process.env.PASSWORD_PREHASH_WRITE = enabled ? 'true' : 'false';
+  return () => {
+    if (previous === undefined) {
+      delete process.env.PASSWORD_PREHASH_WRITE;
+    } else {
+      process.env.PASSWORD_PREHASH_WRITE = previous;
+    }
+  };
+}
+
+describe('password pre-hash writes disabled', () => {
   let app: INestApplication;
+  let restoreEnv: () => void;
 
   beforeAll(async () => {
+    restoreEnv = withPrehashWrite(false);
     app = await createApp();
     await app.init();
   });
 
   afterAll(async () => {
     await app?.close();
+    restoreEnv();
+  });
+
+  it('writes legacy hashes, does not upgrade on login, and still verifies a new hash', async () => {
+    const identity = nextIdentity('flag-off');
+    const password = 'legacy-write-password';
+    const nextPassword = 'legacy-write-password-2';
+
+    const registered = await register(app, identity, password);
+    const prisma = app.get(PrismaService);
+    const created = await prisma.user.findUnique({
+      where: { id: registered.id },
+      select: { password: true },
+    });
+    expect(created?.password.startsWith('$2')).toBe(true);
+    expect(created?.password.startsWith(NEW_HASH_PREFIX)).toBe(false);
+
+    const signedIn = await login(app, identity, password);
+    expect(signedIn.status).toBe(200);
+    const afterLogin = await prisma.user.findUnique({
+      where: { id: registered.id },
+      select: { password: true },
+    });
+    expect(afterLogin?.password).toBe(created?.password);
+
+    const planted = await hashPassword(password, { prehash: true });
+    await prisma.user.update({
+      where: { id: registered.id },
+      data: { password: planted },
+    });
+    const newFormatLogin = await login(app, identity, password);
+    expect(newFormatLogin.status).toBe(200);
+    const afterNewFormat = await prisma.user.findUnique({
+      where: { id: registered.id },
+      select: { password: true },
+    });
+    expect(afterNewFormat?.password).toBe(planted);
+
+    const changed = await request(app.getHttpServer())
+      .post('/trpc/auth.changePassword')
+      .set('Content-Type', 'application/json')
+      .set('Authorization', `Bearer ${registered.token}`)
+      .set('X-Forwarded-For', identity.ip)
+      .send({ currentPassword: password, newPassword: nextPassword });
+    expect(changed.status).toBe(200);
+    const afterChange = await prisma.user.findUnique({
+      where: { id: registered.id },
+      select: { password: true },
+    });
+    expect(afterChange?.password.startsWith('$2')).toBe(true);
+    expect(afterChange?.password.startsWith(NEW_HASH_PREFIX)).toBe(false);
+    await expect(bcrypt.compare(nextPassword, afterChange?.password ?? '')).resolves.toBe(true);
+  });
+});
+
+describe('password pre-hash writes enabled', () => {
+  let app: INestApplication;
+  let restoreEnv: () => void;
+
+  beforeAll(async () => {
+    restoreEnv = withPrehashWrite(true);
+    app = await createApp();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    restoreEnv();
   });
 
   it('rejects a password that matches only the first 72 bytes, including a Chinese tail', async () => {
@@ -159,6 +242,119 @@ describe('password pre-hash', () => {
 
     const stored = await app.get(PrismaService).user.findUnique({
       where: { id: registered.id },
+      select: { password: true },
+    });
+    expect(stored?.password.startsWith(NEW_HASH_PREFIX)).toBe(true);
+  });
+
+  it('does not upgrade a legacy hash when the password is longer than 72 bytes', async () => {
+    const identity = nextIdentity('long-legacy');
+    const password = '密'.repeat(25);
+    expect(password.length).toBeLessThanOrEqual(72);
+    expect(Buffer.byteLength(password)).toBeGreaterThan(72);
+    const legacyHash = await bcrypt.hash(password, 4);
+
+    const prisma = app.get(PrismaService);
+    const created = await prisma.user.create({
+      data: {
+        email: identity.email,
+        username: identity.username,
+        password: legacyHash,
+      },
+      select: { id: true },
+    });
+
+    const signedIn = await login(app, identity, password);
+    expect(signedIn.status).toBe(200);
+
+    const stored = await prisma.user.findUnique({
+      where: { id: created.id },
+      select: { password: true },
+    });
+    expect(stored?.password).toBe(legacyHash);
+    expect(stored?.password.startsWith('$2')).toBe(true);
+  });
+
+  it('still accepts the real password after a same-prefix impostor logs in', async () => {
+    const identity = nextIdentity('impostor');
+    const head = 'd'.repeat(72);
+    const password = `${head}真密码`;
+    const impostor = `${head}假密码`;
+    expect(Buffer.byteLength(password)).toBeGreaterThan(72);
+    expect(Buffer.byteLength(impostor)).toBeGreaterThan(72);
+    expect(
+      Buffer.from(password).subarray(0, 72).equals(Buffer.from(impostor).subarray(0, 72)),
+    ).toBe(true);
+    const legacyHash = await bcrypt.hash(password, 4);
+
+    const prisma = app.get(PrismaService);
+    const created = await prisma.user.create({
+      data: {
+        email: identity.email,
+        username: identity.username,
+        password: legacyHash,
+      },
+      select: { id: true },
+    });
+
+    const asImpostor = await login(app, identity, impostor);
+    expect(asImpostor.status).toBe(200);
+    const afterImpostor = await prisma.user.findUnique({
+      where: { id: created.id },
+      select: { password: true },
+    });
+    expect(afterImpostor?.password).toBe(legacyHash);
+
+    const asOwner = await login(app, identity, password);
+    expect(asOwner.status).toBe(200);
+    const afterOwner = await prisma.user.findUnique({
+      where: { id: created.id },
+      select: { password: true },
+    });
+    expect(afterOwner?.password).toBe(legacyHash);
+  });
+
+  it('rejects the same-prefix impostor after changePassword', async () => {
+    const identity = nextIdentity('changed-long');
+    const head = 'e'.repeat(72);
+    const password = `${head}真密码`;
+    const impostor = `${head}假密码`;
+    const nextPassword = `${head}新密码`;
+    expect(Buffer.byteLength(password)).toBeGreaterThan(72);
+    expect(Buffer.byteLength(nextPassword)).toBeGreaterThan(72);
+    expect(
+      Buffer.from(password).subarray(0, 72).equals(Buffer.from(impostor).subarray(0, 72)),
+    ).toBe(true);
+    const legacyHash = await bcrypt.hash(password, 4);
+
+    const prisma = app.get(PrismaService);
+    await prisma.user.create({
+      data: {
+        email: identity.email,
+        username: identity.username,
+        password: legacyHash,
+      },
+    });
+
+    const signedIn = await login(app, identity, password);
+    expect(signedIn.status).toBe(200);
+    const token = expectString(resultData(signedIn.body).token);
+
+    const changed = await request(app.getHttpServer())
+      .post('/trpc/auth.changePassword')
+      .set('Content-Type', 'application/json')
+      .set('Authorization', `Bearer ${token}`)
+      .set('X-Forwarded-For', identity.ip)
+      .send({ currentPassword: password, newPassword: nextPassword });
+    expect(changed.status).toBe(200);
+
+    const rejected = await login(app, identity, impostor);
+    expect(rejected.status).toBe(401);
+    const accepted = await login(app, identity, nextPassword);
+    expect(accepted.status).toBe(200);
+
+    const stored = await prisma.user.findUnique({
+      where: { username: identity.username },
       select: { password: true },
     });
     expect(stored?.password.startsWith(NEW_HASH_PREFIX)).toBe(true);

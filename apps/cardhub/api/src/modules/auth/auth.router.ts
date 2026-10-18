@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { APP_ERROR_CODES, changePasswordInput, loginInput, registerInput } from '@repo/shared';
+import { passwordPrehashWriteEnabled } from '../../config/env.validation';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
@@ -19,6 +20,10 @@ export class AuthRouter {
     const t = this.t;
     const prisma = this.prisma;
     const auth = this.auth;
+    // Read at router build (process start), not from the ConfigModule snapshot.
+    // forRoot() validates once per process; tests start a second app after
+    // flipping PASSWORD_PREHASH_WRITE.
+    const prehashWrite = passwordPrehashWriteEnabled(process.env);
 
     return t.router({
       register: t.procedure.input(registerInput).mutation(async ({ input }) => {
@@ -32,7 +37,7 @@ export class AuthRouter {
           throw new TRPCError({ code, message });
         }
 
-        const hashed = await hashPassword(input.password);
+        const hashed = await hashPassword(input.password, { prehash: prehashWrite });
         const user = await prisma.user.create({
           data: {
             email: input.email,
@@ -68,7 +73,9 @@ export class AuthRouter {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
         }
 
-        const check = await verifyPassword(input.password, user.password);
+        const check = await verifyPassword(input.password, user.password, {
+          upgrade: prehashWrite,
+        });
         if (!check.ok) {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
         }
@@ -114,7 +121,7 @@ export class AuthRouter {
             });
           }
 
-          const hashed = await hashPassword(input.newPassword);
+          const hashed = await hashPassword(input.newPassword, { prehash: prehashWrite });
           const updated = await prisma.user.update({
             where: { id: user.id },
             data: {
