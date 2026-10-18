@@ -17,6 +17,8 @@ describe('app routes', () => {
     );
     expect(path('/admin/catalog/series/celestial-dawn')).toBe('/admin/catalog/series/:slug');
     expect(path('/admin/catalog/cards/aurora-knight/edit')).toBe('/admin/catalog/cards/:slug/edit');
+    expect(path('/me/password')).toBe('/me/password');
+    expect(path('/me')).toBe('/me');
     expect(path('/missing')).toBe('*');
   });
 });

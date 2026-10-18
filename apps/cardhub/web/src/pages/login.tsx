@@ -19,6 +19,13 @@ export const LoginPage = observer(function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const notice = (location.state as { notice?: string } | null)?.notice;
+  const noticeText =
+    notice === 'signedOutAll'
+      ? tt('auth.notice.signedOutAll')
+      : notice === 'sessionExpired'
+        ? tt('auth.notice.sessionExpired')
+        : null;
 
   // Pages that redirect anonymous visitors should call navigate('/login',
   // { state: { from: location } }) so we can restore them post-login.
@@ -64,6 +71,18 @@ export const LoginPage = observer(function LoginPage() {
             <p className="text-sm text-neutral-600">{tt('auth.login.subtitle')}</p>
           </CardHeader>
           <CardContent>
+            {noticeText ? (
+              <p
+                role="status"
+                className={
+                  notice === 'signedOutAll'
+                    ? 'mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800'
+                    : 'mb-4 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700'
+                }
+              >
+                {noticeText}
+              </p>
+            ) : null}
             <form onSubmit={onSubmit} className="space-y-4">
               <label className="block space-y-1 text-sm">
                 <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">

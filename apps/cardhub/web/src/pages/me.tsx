@@ -16,10 +16,11 @@ import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { CardThumb } from '../components/card-thumb';
 import { ListingCloseControl } from '../components/listing-close-control';
+import { SignOutAllDialog } from '../components/sign-out-all-dialog';
 import { trpc } from '../lib/trpc';
 import { useStores } from '../stores/root-store';
 
-type SectionId = 'me-listings' | 'me-topics' | 'me-comments';
+type SectionId = 'me-listings' | 'me-topics' | 'me-comments' | 'me-security';
 type LoadMoreQuery = {
   fetchNextPage: () => Promise<{
     isError: boolean;
@@ -178,13 +179,16 @@ export const MePage = observer(function MePage() {
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [hash, setHash] = useState(location.hash);
   const [successNoticeId, setSuccessNoticeId] = useState(0);
+  const [passwordNotice, setPasswordNotice] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{
     id: string;
     section: SectionId;
   } | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const successRef = useRef<HTMLParagraphElement | null>(null);
+  const passwordNoticeRef = useRef<HTMLParagraphElement | null>(null);
   const loadedHashRef = useRef<string | null>(null);
+  const consumedPasswordNotice = useRef(false);
   const listingLoadMoreRef = useRef<HTMLButtonElement | null>(null);
   const topicLoadMoreRef = useRef<HTMLButtonElement | null>(null);
   const commentLoadMoreRef = useRef<HTMLButtonElement | null>(null);
@@ -217,28 +221,12 @@ export const MePage = observer(function MePage() {
   const utils = trpc.useUtils();
 
   useEffect(() => {
-    const unauthorized =
-      me.error?.data?.code === 'UNAUTHORIZED' ||
-      listings.error?.data?.code === 'UNAUTHORIZED' ||
-      topics.error?.data?.code === 'UNAUTHORIZED' ||
-      comments.error?.data?.code === 'UNAUTHORIZED';
-    if (unauthorized) {
-      session.signOut();
-      navigate('/login', {
-        replace: true,
-        state: { from: `/me${location.search}${location.hash}` },
-      });
-    }
-  }, [
-    comments.error,
-    listings.error,
-    location.hash,
-    location.search,
-    me.error,
-    navigate,
-    session,
-    topics.error,
-  ]);
+    const state = location.state as { notice?: string } | null;
+    if (state?.notice !== 'passwordChanged' || consumedPasswordNotice.current) return;
+    consumedPasswordNotice.current = true;
+    setPasswordNotice(true);
+    navigate(`${location.pathname}${location.search}#me-security`, { replace: true, state: null });
+  }, [location.pathname, location.search, location.state, navigate]);
 
   const listingItems = listings.data?.pages.flatMap((page) => page.items) ?? [];
   const topicItems = topics.data?.pages.flatMap((page) => page.items) ?? [];
@@ -258,13 +246,20 @@ export const MePage = observer(function MePage() {
     const target = location.hash as `#${SectionId}` | '';
     if (!target || loadedHashRef.current === target) return;
     const id = target.slice(1);
-    if (!['me-listings', 'me-topics', 'me-comments'].includes(id)) return;
+    if (!['me-listings', 'me-topics', 'me-comments', 'me-security'].includes(id)) return;
     loadedHashRef.current = target;
     requestAnimationFrame(() => {
       document.getElementById(id)?.scrollIntoView({ block: 'start' });
-      document.getElementById(`${id}-title`)?.focus();
+      if (!(id === 'me-security' && passwordNotice)) {
+        document.getElementById(`${id}-title`)?.focus();
+      }
     });
-  }, [location.hash, me.isSuccess]);
+  }, [location.hash, me.isSuccess, passwordNotice]);
+
+  useEffect(() => {
+    if (!passwordNotice) return;
+    requestAnimationFrame(() => passwordNoticeRef.current?.focus());
+  }, [passwordNotice]);
 
   useEffect(() => {
     if (successNoticeId > 0) {
@@ -437,6 +432,10 @@ export const MePage = observer(function MePage() {
                 id: 'me-comments' as const,
                 label: tt('me.comments.title'),
                 count: sectionCounts.comments,
+              },
+              {
+                id: 'me-security' as const,
+                label: tt('me.security.title'),
               },
             ].map((section) => (
               <li key={section.id}>
@@ -766,6 +765,31 @@ export const MePage = observer(function MePage() {
               ) : null}
             </>
           ) : null}
+        </MeSection>
+
+        <MeSection
+          id="me-security"
+          title={tt('me.security.title')}
+          notice={
+            passwordNotice ? (
+              <p
+                ref={passwordNoticeRef}
+                role="status"
+                tabIndex={-1}
+                className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                {tt('me.password.success')}
+              </p>
+            ) : null
+          }
+        >
+          <p className="text-sm text-neutral-600">{tt('me.security.intro')}</p>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Button asChild>
+              <Link to="/me/password">{tt('me.security.changePassword')}</Link>
+            </Button>
+            <SignOutAllDialog />
+          </div>
         </MeSection>
       </div>
     </PageShell>

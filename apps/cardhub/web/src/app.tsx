@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
+import { SessionExpiryWatcher } from './components/session-expiry-watcher';
 import { ErrorBoundary } from './components/error-boundary';
 import { CardDetailSkeleton } from './components/card-detail-skeleton';
 import { RouteErrorFallback } from './components/route-error';
@@ -68,6 +69,9 @@ const CatalogImportPage = lazy(() =>
   import('./pages/admin/catalog-import').then((m) => ({ default: m.CatalogImportPage })),
 );
 const MePage = lazy(() => import('./pages/me').then((m) => ({ default: m.MePage })));
+const ChangePasswordPage = lazy(() =>
+  import('./pages/me-password').then((m) => ({ default: m.ChangePasswordPage })),
+);
 
 function RouteFallback() {
   return (
@@ -94,6 +98,7 @@ function AppLayout() {
   return (
     <>
       <AuthBootstrap />
+      <SessionExpiryWatcher />
       <Outlet />
     </>
   );
@@ -138,6 +143,7 @@ export const appRoutes: RouteObject[] = [
       { path: '/admin/catalog/series/:slug/cards/new', element: lazyPage(<NewCardPage />) },
       { path: '/admin/catalog/series/:slug', element: lazyPage(<CatalogSeriesDetailPage />) },
       { path: '/admin/catalog/cards/:slug/edit', element: lazyPage(<EditCardPage />) },
+      { path: '/me/password', element: lazyPage(<ChangePasswordPage />) },
       { path: '/me', element: lazyPage(<MePage />) },
       { path: '*', element: lazyPage(<NotFoundPage />) },
     ],

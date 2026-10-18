@@ -1,8 +1,9 @@
 import type { PropsWithChildren } from 'react';
 import { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createTRPCReact, httpBatchLink } from '@trpc/react-query';
 import type { AppRouter } from '@repo/trpc-contract';
+import { noteTrpcFailure } from './session-expiry';
 import { rootStore } from '../stores/root-store';
 
 export const trpc = createTRPCReact<AppRouter>();
@@ -61,18 +62,31 @@ function resolveTrpcUrl(): string {
 
 const TRPC_URL = resolveTrpcUrl();
 
+let activeQueryClient: QueryClient | null = null;
+
+export function clearActiveQueryClient(): void {
+  activeQueryClient?.clear();
+}
+
 export function TrpcProvider({ children }: PropsWithChildren) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30_000,
-            retry: 1,
-          },
-        },
+  const [queryClient] = useState(() => {
+    const client = new QueryClient({
+      queryCache: new QueryCache({
+        onError: (error) => noteTrpcFailure(error),
       }),
-  );
+      mutationCache: new MutationCache({
+        onError: (error) => noteTrpcFailure(error),
+      }),
+      defaultOptions: {
+        queries: {
+          staleTime: 30_000,
+          retry: 1,
+        },
+      },
+    });
+    activeQueryClient = client;
+    return client;
+  });
 
   const [trpcClient] = useState(() =>
     trpc.createClient({
