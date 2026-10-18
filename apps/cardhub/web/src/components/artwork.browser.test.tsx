@@ -1,12 +1,18 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { cdp } from 'vitest/browser';
+import { commands } from 'vitest/browser';
 import { useArtImage } from './artwork';
 import '../styles/globals.css';
 
-const GIF_BASE64 = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const SRC = 'https://img.cardhub.test/cached.gif';
+
+declare module 'vitest/browser' {
+  interface BrowserCommands {
+    installCachedGifRoute: () => Promise<void>;
+    uninstallCachedGifRoute: () => Promise<void>;
+  }
+}
 
 function Probe({ src }: { src: string }) {
   const art = useArtImage({ src, alt: 'probe', fit: 'cover' });
@@ -16,43 +22,27 @@ function Probe({ src }: { src: string }) {
 function preload(src: string) {
   return new Promise<void>((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error(`preload failed for ${src}`));
-    img.src = src;
-  });
-}
-
-async function fulfillCachedGif() {
-  const session = cdp();
-  await session.send('Fetch.enable', {
-    patterns: [{ urlPattern: '*img.cardhub.test/cached.gif*', requestStage: 'Request' }],
-  });
-  session.on('Fetch.requestPaused', (event) => {
-    const paused = event as {
-      requestId: string;
-      request: { url: string };
+    let settled = false;
+    const succeed = () => {
+      if (settled || img.naturalWidth === 0) return;
+      settled = true;
+      resolve();
     };
-    if (!paused.request.url.includes('img.cardhub.test/cached.gif')) {
-      void session.send('Fetch.continueRequest', { requestId: paused.requestId });
-      return;
-    }
-    void session.send('Fetch.fulfillRequest', {
-      requestId: paused.requestId,
-      responseCode: 200,
-      responseHeaders: [
-        { name: 'Content-Type', value: 'image/gif' },
-        { name: 'Cache-Control', value: 'public, max-age=86400' },
-      ],
-      body: GIF_BASE64,
-    });
+    const fail = () => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`preload failed for ${src}`));
+    };
+    img.onload = succeed;
+    img.onerror = fail;
+    img.src = src;
+    if (img.complete) succeed();
   });
 }
 
 afterEach(async () => {
   cleanup();
-  await cdp()
-    .send('Fetch.disable')
-    .catch(() => undefined);
+  await commands.uninstallCachedGifRoute();
 });
 
 describe('cached artwork in Chromium', () => {
@@ -63,7 +53,7 @@ describe('cached artwork in Chromium', () => {
     expect(getComputedStyle(swatch).opacity).toBe('0');
     swatch.remove();
 
-    await fulfillCachedGif();
+    await commands.installCachedGifRoute();
     await preload(SRC);
 
     const { unmount } = render(<Probe src={SRC} />);

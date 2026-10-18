@@ -1,8 +1,42 @@
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import type { Page } from 'playwright';
 import { playwright } from '@vitest/browser-playwright';
+import type { BrowserCommand } from 'vitest/node';
 import { defineConfig } from 'vitest/config';
+
+const CACHED_GIF = Buffer.from(
+  'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+  'base64',
+);
+const CACHED_GIF_URL = /https:\/\/img\.cardhub\.test\/cached\.gif(?:\?.*)?$/;
+
+function playwrightPage(context: { provider: unknown; sessionId: string }) {
+  const provider = context.provider as { getPage?: (sessionId: string) => Page };
+  if (!provider.getPage) {
+    throw new Error('Playwright page is not available');
+  }
+  return provider.getPage(context.sessionId);
+}
+
+const installCachedGifRoute: BrowserCommand<[]> = async (context) => {
+  const page = playwrightPage(context);
+  await page.unroute(CACHED_GIF_URL).catch(() => undefined);
+  await page.route(CACHED_GIF_URL, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/gif',
+      headers: { 'cache-control': 'public, max-age=86400' },
+      body: CACHED_GIF,
+    });
+  });
+};
+
+const uninstallCachedGifRoute: BrowserCommand<[]> = async (context) => {
+  const page = playwrightPage(context);
+  await page.unroute(CACHED_GIF_URL).catch(() => undefined);
+};
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -37,6 +71,10 @@ export default defineConfig({
       headless: true,
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
+      commands: {
+        installCachedGifRoute,
+        uninstallCachedGifRoute,
+      },
     },
   },
 });
