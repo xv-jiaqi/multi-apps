@@ -134,12 +134,29 @@ printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n
 run_check "${log}" cardhub-prod 26
 assert "near future ok exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 
+echo "CASE prefixed ok only"
+printf 'WARN BACKUP_RESULT=ok project=cardhub-prod ts=%s\n' "${fresh}" > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "prefixed ok exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "prefixed ok is unanchored" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "prefixed ok is not a pass" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
+echo "CASE older ok then prefixed fail"
+{
+  printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-earlier.sql.gz\n' "${fresh}"
+  printf 'WARN BACKUP_RESULT=fail project=cardhub-prod ts=%s rc=1 reason=pipefail\n' "${fresh}"
+} > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "prefixed fail exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "prefixed fail is unanchored" "$(grep -F -q 'malformed/unanchored BACKUP_RESULT line' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "prefixed fail does not fall back to older ok" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
+
 echo "CASE unterminated output then fail, glued ok ignored"
 {
   printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-earlier.sql.gz\n' "${fresh}"
   printf 'partial output without newline'
   printf '\nBACKUP_RESULT=fail project=cardhub-prod ts=%s rc=1 reason=pipefail\n' "${fresh}"
-  printf 'xxxBACKUP_RESULT=ok project=cardhub-prod ts=%s file=sneaky.sql.gz\n' "${fresh}"
+  printf 'xxxBACKUP_RESULT=ok project=cardhub-staging ts=%s file=sneaky.sql.gz\n' "${fresh}"
 } > "${log}"
 run_check "${log}" cardhub-prod 26
 assert "unterminated then fail exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"

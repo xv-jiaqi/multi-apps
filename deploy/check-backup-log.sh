@@ -37,10 +37,10 @@ last_line="$(
     BEGIN {
       want = "project=" ENVIRON["CHECK_PROJECT"]
       last = ""
+      malformed = 0
     }
     {
       sub(/\r$/, "")
-      if ($0 !~ /^BACKUP_RESULT=/) next
       n = split($0, fields, /[[:space:]]+/)
       has_project = 0
       has_result = 0
@@ -48,11 +48,22 @@ last_line="$(
         if (fields[i] == want) has_project = 1
         if (fields[i] == "BACKUP_RESULT=ok" || fields[i] == "BACKUP_RESULT=fail") has_result = 1
       }
-      if (has_project && has_result) last = $0
+      if (index($0, "BACKUP_RESULT=") > 0 && has_project && $0 !~ /^BACKUP_RESULT=/) {
+        malformed = 1
+      }
+      if (has_project && has_result && $0 ~ /^BACKUP_RESULT=/) last = $0
     }
-    END { printf "%s", last }
+    END {
+      if (malformed) printf "%s", "MALFORMED"
+      else printf "%s", last
+    }
   ' "${log_file}"
 )"
+
+if [ "${last_line}" = "MALFORMED" ]; then
+  echo "malformed/unanchored BACKUP_RESULT line for project ${project}" >&2
+  exit 1
+fi
 
 if [ -z "${last_line}" ]; then
   echo "no BACKUP_RESULT line for project ${project}" >&2

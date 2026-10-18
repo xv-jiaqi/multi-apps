@@ -23,19 +23,20 @@ finish_backup() {
   [ -z "${tmp_sql}" ] || rm -f "${tmp_sql}"
   [ -z "${tmp_gz}" ] || rm -f "${tmp_gz}"
   [ -z "${tmp_rclone_env}" ] || rm -f "${tmp_rclone_env}"
-  local ts reason
+  local ts reason kind tail
   ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  # A preceding command may have written stdout without a trailing newline.
-  # Start a new line so BACKUP_RESULT is never glued onto that output.
-  printf '\n'
   if [ "${rc}" -eq 0 ]; then
-    printf 'BACKUP_RESULT=ok project=%s ts=%s file=%s\n' \
-      "${PROJECT}" "${ts}" "$(basename "${OUT}")"
+    kind=ok
+    tail=" file=$(basename "${OUT}")"
   else
     reason="${backup_fail_reason:-command-failed}"
-    printf 'BACKUP_RESULT=fail project=%s ts=%s rc=%s reason=%s\n' \
-      "${PROJECT}" "${ts}" "${rc}" "${reason}"
+    kind=fail
+    tail=" rc=${rc} reason=${reason}"
   fi
+  # One printf, one write. Staging and prod append to the same backup.log;
+  # a separate newline write and result write can interleave.
+  printf '\nBACKUP_RESULT=%s project=%s ts=%s%s\n' \
+    "${kind}" "${PROJECT}" "${ts}" "${tail}"
   if [ -n "${BACKUP_PING_URL:-}" ]; then
     if [ "${rc}" -eq 0 ]; then
       curl -fsS -m 10 -- "${BACKUP_PING_URL}" >/dev/null || true

@@ -442,6 +442,8 @@ assert_fail_line "pipefail" pipefail 1
 assert "pipefail saw pg_dump error" "$(grep -F -q 'pg_dump: write error after partial dump' "${CASE_LOG}" && echo 0 || echo 1)"
 assert "pipefail result is not glued" "$(grep -F -q 'partial-dumpBACKUP_RESULT=' "${CASE_LOG}" && echo 1 || echo 0)"
 assert "pipefail result starts a new line" "$(awk 'BEGIN{RS=""} index($0, "partial-dump\nBACKUP_RESULT=fail "){ok=1} END{exit ok?0:1}' "${CASE_LOG}" && echo 0 || echo 1)"
+result_printfs="$(grep -F -c "printf '\\nBACKUP_RESULT=" "${backup_script}" || true)"
+assert "result is one printf" "$([ "${result_printfs}" -eq 1 ] && echo 0 || echo 1)"
 assert "pipefail is not a size rejection" "$(grep -F -q 'unexpectedly small' "${CASE_LOG}" && echo 1 || echo 0)"
 assert "pipefail writes no backup" "$([ "$(backup_count)" -eq 0 ] && echo 0 || echo 1)"
 assert "pipefail does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
