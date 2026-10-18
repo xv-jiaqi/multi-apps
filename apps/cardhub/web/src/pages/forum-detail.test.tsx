@@ -526,7 +526,7 @@ describe('ForumDetailPage replies pagination', () => {
     await user.type(screen.getByLabelText('撰写回帖'), 'reply to a deleted topic');
     await user.click(screen.getByRole('button', { name: '发布回帖' }));
 
-    const notice = await screen.findByText('这条内容不存在，或已经被删除');
+    const notice = await screen.findByText('内容不存在或已被删除');
     expect(notice).not.toHaveTextContent('重试');
     expect(notice).not.toHaveTextContent('再试');
     expect(notice.textContent ?? '').not.toMatch(/retry|try again/i);
