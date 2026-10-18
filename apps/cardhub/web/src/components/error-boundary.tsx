@@ -1,6 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
-import { buttonVariants } from '@repo/ui-web';
 import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { RetryButton } from './retry-button';
@@ -106,11 +105,11 @@ export const ErrorFallback = observer(function ErrorFallback({
             }
             onRetry();
           }}
-          className={buttonVariants({ variant: 'outline' })}
+          className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 min-h-6"
         />
         <a
           href="/"
-          className="font-medium text-brand-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className="inline-flex min-h-6 items-center rounded px-1 font-medium text-brand-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('state.crashHome')}
         </a>

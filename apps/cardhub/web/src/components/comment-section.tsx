@@ -30,10 +30,10 @@ function CommentListSkeleton({ label }: { label: string }) {
             className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
           >
             <div className="flex h-6 items-center">
-              <div className="h-3 w-24 animate-pulse rounded bg-neutral-200" />
+              <div className="h-3 w-24 animate-pulse rounded bg-neutral-200 motion-reduce:animate-none" />
             </div>
             <div className="mt-2 flex h-5 items-center">
-              <div className="h-4 w-full animate-pulse rounded bg-neutral-200" />
+              <div className="h-4 w-full animate-pulse rounded bg-neutral-200 motion-reduce:animate-none" />
             </div>
           </li>
         ))}

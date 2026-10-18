@@ -32,11 +32,18 @@ describe('ErrorBoundary fallback', () => {
     expect(alert).toHaveTextContent('请重试，或返回首页。');
     expect(alert).not.toHaveTextContent('Something went wrong');
     expect(alert).not.toHaveTextContent('boundary-secret');
-    expect(screen.getByRole('link', { name: '返回首页' })).toHaveAttribute('href', '/');
-    expect(screen.getByRole('button', { name: '重试' })).toHaveClass(
+    const retry = screen.getByRole('button', { name: '重试' });
+    const home = screen.getByRole('link', { name: '返回首页' });
+    expect(home).toHaveAttribute('href', '/');
+    expect(retry).toHaveClass(
+      'border-red-300',
+      'text-red-700',
       'focus-visible:ring-2',
       'focus-visible:ring-brand-500',
     );
+    expect(retry.className).not.toMatch(/ring-offset/);
+    expect(home).toHaveClass('min-h-6', 'focus-visible:ring-2', 'focus-visible:ring-brand-500');
+    expect(home.className).not.toMatch(/ring-offset/);
     expect(consoleError).toHaveBeenCalled();
 
     fail = false;
