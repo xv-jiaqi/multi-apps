@@ -45,7 +45,7 @@ run_check() {
 
 fresh="$(iso_ago 60)"
 old="$(iso_ago $((48 * 3600)))"
-future="$(date -u -d "@$(( $(date -u +%s) + 120 ))" +%Y-%m-%dT%H:%M:%SZ)"
+soon="$(date -u -d "@$(( $(date -u +%s) + 60 ))" +%Y-%m-%dT%H:%M:%SZ)"
 
 work="$(mktemp -d)"
 log="${work}/backup.log"
@@ -124,9 +124,27 @@ assert "fresh ok exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 assert "fresh ok is quiet on stderr" "$([ ! -s "${CASE_ERR}" ] && echo 0 || echo 1)"
 
 echo "CASE future ok"
-printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n' "${future}" > "${log}"
+printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n' '2099-01-01T00:00:00Z' > "${log}"
 run_check "${log}" cardhub-prod 26
-assert "future ok exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
+assert "future ok exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "future ok explains why" "$(grep -F -q 'ts is in the future' "${CASE_ERR}" && echo 0 || echo 1)"
+
+echo "CASE near future ok"
+printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-x.sql.gz\n' "${soon}" > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "near future ok exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
+
+echo "CASE unterminated output then fail, glued ok ignored"
+{
+  printf 'BACKUP_RESULT=ok project=cardhub-prod ts=%s file=cardhub-prod-earlier.sql.gz\n' "${fresh}"
+  printf 'partial output without newline'
+  printf '\nBACKUP_RESULT=fail project=cardhub-prod ts=%s rc=1 reason=pipefail\n' "${fresh}"
+  printf 'xxxBACKUP_RESULT=ok project=cardhub-prod ts=%s file=sneaky.sql.gz\n' "${fresh}"
+} > "${log}"
+run_check "${log}" cardhub-prod 26
+assert "unterminated then fail exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "unterminated then fail is the fail line" "$(grep -F -q 'last backup failed for project cardhub-prod' "${CASE_ERR}" && echo 0 || echo 1)"
+assert "unterminated then fail does not accept the older ok" "$(grep -F -q 'backup log ok' "${CASE_OUT}" && echo 1 || echo 0)"
 
 echo "CASE interleaved prod fail then staging ok"
 cat > "${log}" << EOF

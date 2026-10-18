@@ -25,6 +25,9 @@ finish_backup() {
   [ -z "${tmp_rclone_env}" ] || rm -f "${tmp_rclone_env}"
   local ts reason
   ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  # A preceding command may have written stdout without a trailing newline.
+  # Start a new line so BACKUP_RESULT is never glued onto that output.
+  printf '\n'
   if [ "${rc}" -eq 0 ]; then
     printf 'BACKUP_RESULT=ok project=%s ts=%s file=%s\n' \
       "${PROJECT}" "${ts}" "$(basename "${OUT}")"
@@ -92,14 +95,34 @@ read_env_var() {
   ' "${file}"
 }
 
+# Prints the value. Returns 1 when the file cannot be read or sourced.
+# Callers run under if/||, which disables set -e, so a failing source must
+# exit explicitly. An empty value is success: the caller reports a missing key.
 read_offsite_var() {
   local var_name="$1"
+  if [ ! -r "${OFFSITE_ENV_FILE}" ]; then
+    return 1
+  fi
   (
-    set -euo pipefail
+    set -u
     # shellcheck source=/dev/null
-    . "${OFFSITE_ENV_FILE}"
+    . "${OFFSITE_ENV_FILE}" || exit 1
     printf '%s' "${!var_name:-}"
   )
+}
+
+load_offsite_var() {
+  local dest="$1"
+  local key="$2"
+  local value rc
+  rc=0
+  value="$(read_offsite_var "${key}")" || rc=$?
+  if [ "${rc}" -ne 0 ]; then
+    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
+    backup_fail_reason=offsite-env-unreadable
+    return 1
+  fi
+  printf -v "${dest}" '%s' "${value}"
 }
 
 push_offsite() {
@@ -114,27 +137,11 @@ push_offsite() {
     return 1
   fi
 
-  local oss_access_key_id oss_access_key_secret oss_bucket oss_endpoint
-  if ! oss_access_key_id="$(read_offsite_var OSS_ACCESS_KEY_ID)"; then
-    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
-    backup_fail_reason=offsite-env-unreadable
-    return 1
-  fi
-  if ! oss_access_key_secret="$(read_offsite_var OSS_ACCESS_KEY_SECRET)"; then
-    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
-    backup_fail_reason=offsite-env-unreadable
-    return 1
-  fi
-  if ! oss_bucket="$(read_offsite_var OSS_BUCKET)"; then
-    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
-    backup_fail_reason=offsite-env-unreadable
-    return 1
-  fi
-  if ! oss_endpoint="$(read_offsite_var OSS_ENDPOINT)"; then
-    echo "Off-site backup env file is unreadable: ${OFFSITE_ENV_FILE}" >&2
-    backup_fail_reason=offsite-env-unreadable
-    return 1
-  fi
+  local oss_access_key_id="" oss_access_key_secret="" oss_bucket="" oss_endpoint=""
+  load_offsite_var oss_access_key_id OSS_ACCESS_KEY_ID || return 1
+  load_offsite_var oss_access_key_secret OSS_ACCESS_KEY_SECRET || return 1
+  load_offsite_var oss_bucket OSS_BUCKET || return 1
+  load_offsite_var oss_endpoint OSS_ENDPOINT || return 1
 
   local required_var required_value
   for required_var in OSS_ACCESS_KEY_ID OSS_ACCESS_KEY_SECRET OSS_BUCKET OSS_ENDPOINT; do

@@ -40,6 +40,7 @@ last_line="$(
     }
     {
       sub(/\r$/, "")
+      if ($0 !~ /^BACKUP_RESULT=/) next
       n = split($0, fields, /[[:space:]]+/)
       has_project = 0
       has_result = 0
@@ -94,6 +95,12 @@ fi
 now_epoch="$(date -u +%s)"
 age_seconds="$(( now_epoch - ts_epoch ))"
 max_seconds="$(( max_age_hours * 3600 ))"
+# Five minutes of clock skew is allowed. Further ahead means a future ok
+# could stay green until that timestamp even if later backups never run.
+if [ "${age_seconds}" -lt -300 ]; then
+  echo "backup timestamp for project ${project} ts is in the future: ts=${ts} age_seconds=${age_seconds}" >&2
+  exit 1
+fi
 if [ "${age_seconds}" -gt "${max_seconds}" ]; then
   echo "last backup for project ${project} is too old: ts=${ts} age_seconds=${age_seconds} max_age_hours=${max_age_hours}" >&2
   exit 1

@@ -200,6 +200,7 @@ if [ "${cmd}" = "run" ]; then
           exit 99
         fi
         echo "pg_dump: write error after partial dump" >&2
+        printf 'partial-dump' >&2
         exit 1
         ;;
       ok)
@@ -285,6 +286,10 @@ EOF
       ;;
     blank)
       : > "${offsite}"
+      ;;
+    source-fail)
+      # Readable, but not valid shell, so sourcing must not look like a missing key.
+      printf '%s\n' 'OSS_ACCESS_KEY_ID=$((' > "${offsite}"
       ;;
     omit)
       {
@@ -435,6 +440,8 @@ invoke_backup
 assert "pipefail exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
 assert_fail_line "pipefail" pipefail 1
 assert "pipefail saw pg_dump error" "$(grep -F -q 'pg_dump: write error after partial dump' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "pipefail result is not glued" "$(grep -F -q 'partial-dumpBACKUP_RESULT=' "${CASE_LOG}" && echo 1 || echo 0)"
+assert "pipefail result starts a new line" "$(awk 'BEGIN{RS=""} index($0, "partial-dump\nBACKUP_RESULT=fail "){ok=1} END{exit ok?0:1}' "${CASE_LOG}" && echo 0 || echo 1)"
 assert "pipefail is not a size rejection" "$(grep -F -q 'unexpectedly small' "${CASE_LOG}" && echo 1 || echo 0)"
 assert "pipefail writes no backup" "$([ "$(backup_count)" -eq 0 ] && echo 0 || echo 1)"
 assert "pipefail does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
@@ -506,6 +513,23 @@ else
     assert_no_secret "unreadable offsite.env output" "${CASE_LOG}"
     assert_no_secret "unreadable offsite.env docker argv" "${CASE_DOCKER}"
   fi
+fi
+
+echo "CASE offsite.env source failure"
+prepare_case "${right_password}" cardhub-prod ok source-fail "" ok 1
+if [ ! -r "${CASE_OFFSITE}" ]; then
+  echo "FAIL offsite.env source failure fixture is not readable" >&2
+  failed=1
+else
+  invoke_backup
+  assert "offsite.env source failure exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+  assert_fail_line "offsite.env source failure" offsite-env-unreadable 1
+  assert "offsite.env source failure explains why" "$(grep -F -q "Off-site backup env file is unreadable: ${CASE_OFFSITE}" "${CASE_LOG}" && echo 0 || echo 1)"
+  assert "offsite.env source failure is not a missing key" "$(grep -F -q 'Off-site backup env file is missing OSS_' "${CASE_LOG}" && echo 1 || echo 0)"
+  assert "offsite.env source failure keeps the local dump" "$([ "$(backup_count)" -eq 1 ] && echo 0 || echo 1)"
+  assert "offsite.env source failure does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
+  assert_curl "offsite.env source failure" "${ping_url}/fail"
+  assert_no_secret "offsite.env source failure output" "${CASE_LOG}"
 fi
 
 echo "CASE blank offsite.env"

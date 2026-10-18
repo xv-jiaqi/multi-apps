@@ -431,9 +431,11 @@ only on success. `reason` is one token, for example `offsite-env-missing`,
 Patrol over SSH once per project. A staging success does not cover production:
 both jobs share `/opt/cardhub/backups/backup.log`, and the checker matches
 `project=<name>` as a whole token (`cardhub-prod` does not match
-`cardhub-prod-old`). It exits 0 only when that project's latest line is `ok`
-and `ts` is within the max age. Use 26 hours so a missed night fails the next
-morning patrol, while a backup from 02:20 still passes a same-day check.
+`cardhub-prod-old`). Only a line that starts with `BACKUP_RESULT=` counts.
+It exits 0 only when that project's latest line is `ok`, `ts` is within the
+max age, and `ts` is not more than five minutes in the future. Use 26 hours
+so a missed night fails the next morning patrol, while a backup from 02:20
+still passes a same-day check.
 
 ```bash
 ssh deploy@<host> /opt/cardhub/production/deploy/check-backup-log.sh /opt/cardhub/backups/backup.log cardhub-staging 26
@@ -442,7 +444,8 @@ ssh deploy@<host> /opt/cardhub/production/deploy/check-backup-log.sh /opt/cardhu
 
 The checker exits non-zero, with a reason, when the log is missing or
 unreadable, the project has no `BACKUP_RESULT` line, `ts` cannot be parsed,
-the latest line is `fail`, or that `ok` is older than the max age.
+the latest line is `fail`, that `ok` is older than the max age, or `ts` is
+more than five minutes in the future.
 
 The backup script can ping `BACKUP_PING_URL` on success and `<url>/fail` on
 failure if that variable is set. This host does not set it. Do not treat a
