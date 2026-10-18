@@ -115,7 +115,7 @@ const zhCN: Dictionary = {
   'state.error': '加载失败',
   'state.notFound': '内容不存在',
   'state.retry': '重试',
-  'state.retrying': '重试中',
+  'state.retrying': '重试中…',
   'state.crashTitle': '页面出错了',
   'state.crashBody': '请重试，或返回首页。',
   'state.crashHome': '返回首页',

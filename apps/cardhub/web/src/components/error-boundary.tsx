@@ -89,9 +89,9 @@ export const ErrorFallback = observer(function ErrorFallback({
   return (
     <div
       role="alert"
-      className="mx-auto mt-6 max-w-md rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+      className="mx-auto mt-6 max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
     >
-      <p className="font-semibold">{tt('state.crashTitle')}</p>
+      <p className="font-medium">{tt('state.crashTitle')}</p>
       <p className="mt-1">{tt('state.crashBody')}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <RetryButton

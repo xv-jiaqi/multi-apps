@@ -30,6 +30,22 @@ describe('ErrorBoundary fallback', () => {
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('页面出错了');
     expect(alert).toHaveTextContent('请重试，或返回首页。');
+    expect(alert).toHaveClass(
+      'mx-auto',
+      'mt-6',
+      'max-w-md',
+      'rounded-lg',
+      'border-red-200',
+      'bg-red-50',
+      'p-6',
+      'text-sm',
+      'text-red-700',
+    );
+    expect(alert.className).not.toMatch(/rounded-2xl/);
+    const title = screen.getByText('页面出错了');
+    expect(title).toHaveClass('font-medium');
+    expect(title.className).not.toMatch(/font-semibold/);
+    expect(screen.getByText('请重试，或返回首页。')).toHaveClass('mt-1');
     expect(alert).not.toHaveTextContent('Something went wrong');
     expect(alert).not.toHaveTextContent('boundary-secret');
     const retry = screen.getByRole('button', { name: '重试' });
@@ -44,6 +60,7 @@ describe('ErrorBoundary fallback', () => {
     expect(retry.className).not.toMatch(/ring-offset/);
     expect(home).toHaveClass('min-h-6', 'focus-visible:ring-2', 'focus-visible:ring-brand-500');
     expect(home.className).not.toMatch(/ring-offset/);
+    expect(retry.parentElement).toHaveClass('mt-4', 'flex', 'flex-wrap', 'items-center', 'gap-3');
     expect(consoleError).toHaveBeenCalled();
 
     fail = false;
