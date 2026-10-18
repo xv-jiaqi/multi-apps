@@ -144,23 +144,36 @@ beforeEach(() => {
 });
 
 describe('CommentSection (unauthenticated)', () => {
-  it('renders three skeleton rows and aria-busy while comments load', () => {
+  it('renders three skeleton rows and aria-busy while comments load', async () => {
     queryState.isLoading = true;
     queryState.data = undefined;
     const { container } = renderShell();
 
     const section = container.querySelector('[aria-busy="true"]');
     expect(section).not.toBeNull();
-    const rows = screen.getAllByRole('listitem');
+    const list = section?.querySelector('ul');
+    expect(list).toHaveAttribute('aria-hidden', 'true');
+    const rows = list ? Array.from(list.querySelectorAll(':scope > li')) : [];
     expect(rows).toHaveLength(3);
     for (const row of rows) {
-      expect(row.querySelector('.animate-pulse.rounded-full')).toBeTruthy();
-      expect(row.querySelectorAll('.animate-pulse.bg-neutral-200')).toHaveLength(3);
+      expect(row.querySelector('.rounded-full')).toBeNull();
       expect(row).not.toHaveClass('border-dashed');
+      const bars = row.querySelectorAll('.animate-pulse.rounded.bg-neutral-200');
+      expect(bars).toHaveLength(2);
+      expect(bars[0]).toHaveClass('h-3', 'w-24');
+      expect(bars[1]).toHaveClass('h-4', 'w-full');
     }
-    expect(section?.querySelector('ul')).not.toHaveClass('border-dashed');
     expect(screen.queryByText('还没有评论，来抢沙发吧')).not.toBeInTheDocument();
-    expect(screen.queryByText('加载中…')).not.toBeInTheDocument();
+    const loading = screen.getByText('加载中');
+    expect(loading).toHaveClass('sr-only');
+    expect(list?.contains(loading)).toBe(false);
+
+    act(() => {
+      rootStore.locale.setLocale('en-US');
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Loading')).toHaveClass('sr-only');
+    });
   });
 
   it('renders the sign-in prompt and no form', () => {
