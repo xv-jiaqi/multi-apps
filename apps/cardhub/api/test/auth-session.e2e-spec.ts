@@ -114,7 +114,7 @@ describe('auth session revocation', () => {
     const current = await usersMe(app, nextToken);
     expect(old.status).toBe(401);
     expect(old.body.error.data.code).toBe('UNAUTHORIZED');
-    expect(old.body.error.data).not.toHaveProperty('appCode');
+    expect(old.body.error.data.appCode).toBe(APP_ERROR_CODES.UNAUTHORIZED);
     expect(other.status).toBe(401);
     expect(current.status).toBe(200);
     expect(resultData(current.body)).toEqual(expect.objectContaining({ id: registered.id }));
@@ -184,7 +184,7 @@ describe('auth session revocation', () => {
       'username',
     ]);
     expect(inputOnly.status).toBe(401);
-    expect(inputOnly.body.error.data).not.toHaveProperty('appCode');
+    expect(inputOnly.body.error.data.appCode).toBe(APP_ERROR_CODES.UNAUTHORIZED);
 
     const oversizeToken = await request(app.getHttpServer())
       .get('/trpc/auth.me')
@@ -192,6 +192,40 @@ describe('auth session revocation', () => {
       .set('Authorization', `Bearer ${registered.token}`);
     expect(oversizeToken.status).toBe(400);
     expect(oversizeToken.body.error.data).not.toHaveProperty('appCode');
+  });
+
+  it('does not attach UNAUTHORIZED appCode to a failed login', async () => {
+    const identity = nextIdentity('badlogin');
+    await register(app, identity);
+
+    const response = await request(app.getHttpServer())
+      .post('/trpc/auth.login')
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', identity.ip)
+      .send({ identifier: identity.username, password: 'not-the-password' });
+
+    expect(response.status).toBe(401);
+    expect(response.body.error.data.code).toBe('UNAUTHORIZED');
+    expect(response.body.error.message).toBe('用户名或密码错误');
+    expect(response.body.error.data.appCode).not.toBe(APP_ERROR_CODES.UNAUTHORIZED);
+    expect(response.body.error.data).not.toHaveProperty('appCode');
+  });
+
+  it('keeps a wrong current password at 401 with appCode WRONG_PASSWORD', async () => {
+    const identity = nextIdentity('wrongpw');
+    const registered = await register(app, identity);
+
+    const wrong = await request(app.getHttpServer())
+      .post('/trpc/auth.changePassword')
+      .set('Content-Type', 'application/json')
+      .set('Authorization', `Bearer ${registered.token}`)
+      .set('X-Forwarded-For', identity.ip)
+      .send({ currentPassword: 'not-the-password', newPassword: NEXT_PASSWORD });
+
+    expect(wrong.status).toBe(401);
+    expect(wrong.body.error.data.code).toBe('UNAUTHORIZED');
+    expect(wrong.body.error.data.appCode).toBe(APP_ERROR_CODES.WRONG_PASSWORD);
+    expect(wrong.body.error.message).toBe('当前密码不正确');
   });
 
   it('returns WRONG_PASSWORD and SAME_PASSWORD on error.data.appCode', async () => {
