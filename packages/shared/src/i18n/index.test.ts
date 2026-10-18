@@ -20,6 +20,14 @@ describe('app error copy', () => {
     expect(appErrorMessage('zh-CN', 'NOT_A_REAL_CODE')).toBe('出了点问题，请稍后再试');
     expect(appErrorMessage('zh-CN', undefined)).toBe('出了点问题，请稍后再试');
     expect(appErrorMessage('zh-CN', 'VALIDATION')).not.toContain('VALIDATION');
+    expect(appErrorMessage('en-US', 'INTERNAL_SERVER_ERROR')).toBe(
+      'Something went wrong. Please try again.',
+    );
+    expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).toBe(
+      'Something went wrong. Please try again.',
+    );
+    expect(appErrorMessage('en-US', undefined)).toBe('Something went wrong. Please try again.');
+    expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).not.toContain('出了点问题');
   });
 });
 

@@ -3,6 +3,7 @@ import {
   ADMIN_ATTRIBUTE_MAX_KEYS,
   ADMIN_ATTRIBUTE_VALUE_MAX,
   LISTING_IMAGE_URL_MAX,
+  appErrorMessage,
   slugSchema,
   t,
   type Locale,
@@ -109,6 +110,9 @@ export function isSeriesHasCards(error: unknown): AdminCatalogDetails | null {
 
 export function adminErrorText(locale: Locale, code: string | undefined, message: string): string {
   if (code && ERROR_KEYS[code]) return t(locale, ERROR_KEYS[code]);
+  if (message.trim() === t('zh-CN', 'error.internal')) {
+    return appErrorMessage(locale, 'INTERNAL_SERVER_ERROR');
+  }
   return t(locale, 'admin.error.unknown', { message });
 }
 
@@ -281,6 +285,9 @@ export function readValidationFeedback(
   }
 
   const raw = failure.message.trim();
+  if (raw === t('zh-CN', 'error.internal')) {
+    return { fields: {}, message: appErrorMessage(locale, failure.appCode) };
+  }
   if (raw && raw !== failure.trpcCode) {
     return { fields: {}, message: t(locale, 'admin.error.unknown', { message: raw }) };
   }

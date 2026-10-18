@@ -108,6 +108,20 @@ describe('mapped API error copy', () => {
     expect(screen.queryByText('CONFLICT')).not.toBeInTheDocument();
   });
 
+  it('login in English does not show the Chinese production sentence for an unmapped code', () => {
+    rootStore.locale.setLocale('en-US');
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+    show('出了点问题，请稍后再试', 'NOT_A_REAL_CODE', 'INTERNAL_SERVER_ERROR');
+    expect(screen.getByText('Something went wrong. Please try again.')).toBeInTheDocument();
+    expect(screen.queryByText('出了点问题，请稍后再试')).not.toBeInTheDocument();
+    expect(screen.queryByText('NOT_A_REAL_CODE')).not.toBeInTheDocument();
+    expect(screen.queryByText('INTERNAL_SERVER_ERROR')).not.toBeInTheDocument();
+  });
+
   it('login shows the sign-in sentence instead of the server text or code', () => {
     render(
       <MemoryRouter>

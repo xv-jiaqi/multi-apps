@@ -12,7 +12,7 @@ import {
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { Pin } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { replyBodySchema, t } from '@repo/shared';
+import { appErrorMessage, replyBodySchema, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { MarkdownView } from '../components/markdown-view';
@@ -185,7 +185,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       ]);
     },
     onError(err) {
-      setReplyError(err.message);
+      setReplyError(appErrorMessage(locale.locale, err.data?.appCode));
     },
   });
 
@@ -456,7 +456,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             ]}
           />
           <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
-            {isNotFound ? tt('state.notFound') : (topicQuery.error?.message ?? tt('state.error'))}
+            {isNotFound
+              ? tt('state.notFound')
+              : appErrorMessage(locale.locale, topicQuery.error?.data?.appCode)}
           </p>
         </div>
       </PageShell>

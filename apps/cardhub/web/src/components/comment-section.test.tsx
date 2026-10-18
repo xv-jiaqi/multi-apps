@@ -612,4 +612,33 @@ describe('CommentSection (authenticated)', () => {
       expect(alert).not.toHaveTextContent(code);
     },
   );
+
+  it('shows English copy when the server message is the Chinese production sentence', async () => {
+    rootStore.locale.setLocale('en-US');
+    const user = userEvent.setup();
+    const serverText = '出了点问题，请稍后再试';
+    mutateMock.mockImplementationOnce(
+      (
+        _input: unknown,
+        callbacks: {
+          onError: (error: { message: string; data?: { code?: string; appCode?: string } }) => void;
+        },
+      ) => {
+        callbacks.onError({
+          message: serverText,
+          data: { code: 'INTERNAL_SERVER_ERROR', appCode: 'NOT_A_REAL_CODE' },
+        });
+      },
+    );
+    renderShell();
+
+    await user.type(screen.getByLabelText(/撰写评论|Write a comment/), 'wow');
+    await user.click(screen.getByRole('button', { name: /发布评论|Post comment/ }));
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Something went wrong. Please try again.');
+    expect(alert).not.toHaveTextContent(serverText);
+    expect(alert).not.toHaveTextContent('NOT_A_REAL_CODE');
+    expect(alert).not.toHaveTextContent('INTERNAL_SERVER_ERROR');
+  });
 });
