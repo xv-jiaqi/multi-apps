@@ -28,6 +28,96 @@ if ! [[ "${health_timeout_seconds}" =~ ^[0-9]+$ ]]; then
   exit 64
 fi
 
+# Lookup helpers are top-level so a test can source this file and call
+# read_previous_image. main uses the same functions. Nothing here returns
+# success before the image switch.
+
+compose() {
+  : "${env_name:?}" "${active_image_tag:?}" "${project:?}" "${env_file:?}" "${compose_file:?}"
+  ENV_NAME="${env_name}" IMAGE_TAG="${active_image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" "$@"
+}
+
+count_lines() {
+  printf '%s\n' "$1" | awk 'NF { n++ } END { print n + 0 }'
+}
+
+# Empty only when this service has no container. "No such object" from
+# inspect is that case. Any other inspect or list failure exits 1 before
+# rollback is armed.
+read_previous_image() {
+  local svc="$1"
+  local ids id image err rc listed named name_line name_id name_project
+  if ! ids="$(compose ps -aq "${svc}")"; then
+    echo "Refusing deploy: could not list ${svc} containers. The running API was not replaced." >&2
+    exit 1
+  fi
+  ids="$(printf '%s\n' "${ids}" | awk 'NF' | sort -u)"
+  if [ -z "${ids}" ]; then
+    # Same labels compose itself uses. A hit means compose missed a
+    # container that still belongs to this project.
+    if ! listed="$(docker ps -a \
+      --filter "label=com.docker.compose.project=${project}" \
+      --filter "label=com.docker.compose.service=${svc}" \
+      --format '{{.ID}}')"; then
+      echo "Refusing deploy: docker ps failed while checking for a ${svc} container. The running API was not replaced." >&2
+      exit 1
+    fi
+    listed="$(printf '%s\n' "${listed}" | awk 'NF')"
+    if [ -n "${listed}" ]; then
+      echo "Refusing deploy: compose listed no ${svc} container, but docker ps still shows one. The running API was not replaced." >&2
+      exit 1
+    fi
+    # A leftover can keep the compose container name after its labels are
+    # gone. The label query above does not see it. A different compose
+    # project label means the name belongs to someone else.
+    if ! named="$(docker ps -a \
+      --filter "name=^${project}-${svc}-[0-9]+$" \
+      --format '{{.ID}}{{"\t"}}{{.Label "com.docker.compose.project"}}')"; then
+      echo "Refusing deploy: docker ps failed while checking for a named ${svc} container. The running API was not replaced." >&2
+      exit 1
+    fi
+    if [ -n "${named}" ]; then
+      while IFS= read -r name_line; do
+        [ -n "${name_line}" ] || continue
+        if [[ "${name_line}" == *$'\t'* ]]; then
+          name_id="${name_line%%$'\t'*}"
+          name_project="${name_line#*$'\t'}"
+        else
+          name_id="${name_line}"
+          name_project=""
+        fi
+        if [ -n "${name_project}" ] && [ "${name_project}" != "${project}" ]; then
+          continue
+        fi
+        echo "Refusing deploy: leftover container ${name_id} occupies ${project}-${svc} without another project's compose label. The running API was not replaced." >&2
+        exit 1
+      done <<< "${named}"
+    fi
+    printf '%s' ""
+    return 0
+  fi
+  if [ "$(count_lines "${ids}")" -ne 1 ]; then
+    echo "Refusing deploy: ${svc} has $(count_lines "${ids}") containers; cannot choose a rollback image. The running API was not replaced." >&2
+    exit 1
+  fi
+  id="$(printf '%s\n' "${ids}" | head -n 1)"
+  err="$(mktemp)"
+  rc=0
+  image="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>"${err}")" || rc=$?
+  if [ "${rc}" -ne 0 ]; then
+    if grep -Eq 'No such (object|container)' "${err}"; then
+      rm -f "${err}"
+      printf '%s' ""
+      return 0
+    fi
+    echo "Refusing deploy: docker inspect of the previous ${svc} container exited ${rc}. The running API was not replaced." >&2
+    rm -f "${err}"
+    exit 1
+  fi
+  rm -f "${err}"
+  printf '%s' "${image}"
+}
+
 main() {
   local environment image_tag expected_sha env_name project base_dir
   environment="$1"
@@ -99,10 +189,6 @@ main() {
   }
   trap cleanup EXIT
 
-  compose() {
-    ENV_NAME="${env_name}" IMAGE_TAG="${active_image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" "$@"
-  }
-
   # Last assignment wins. The value is not printed.
   read_env_file_var() {
     local file="$1"
@@ -153,63 +239,8 @@ main() {
     '
   }
 
-  # Empty only when this service has no container. "No such object" from
-  # inspect is that case. Any other inspect or list failure exits 1 before
-  # rollback is armed.
-  read_previous_image() {
-    local svc="$1"
-    local ids id image err rc listed
-    if ! ids="$(compose ps -aq "${svc}")"; then
-      echo "Refusing deploy: could not list ${svc} containers. The running API was not replaced." >&2
-      exit 1
-    fi
-    ids="$(printf '%s\n' "${ids}" | awk 'NF' | sort -u)"
-    if [ -z "${ids}" ]; then
-      # A name match is not enough: another compose project can reuse
-      # cardhub-staging-api-1. Only this project's service counts.
-      if ! listed="$(docker ps -a \
-        --filter "label=com.docker.compose.project=${project}" \
-        --filter "label=com.docker.compose.service=${svc}" \
-        --format '{{.ID}}')"; then
-        echo "Refusing deploy: docker ps failed while checking for a ${svc} container. The running API was not replaced." >&2
-        exit 1
-      fi
-      listed="$(printf '%s\n' "${listed}" | awk 'NF')"
-      if [ -n "${listed}" ]; then
-        echo "Refusing deploy: compose listed no ${svc} container, but docker ps still shows one. The running API was not replaced." >&2
-        exit 1
-      fi
-      printf '%s' ""
-      return 0
-    fi
-    if [ "$(count_lines "${ids}")" -ne 1 ]; then
-      echo "Refusing deploy: ${svc} has $(count_lines "${ids}") containers; cannot choose a rollback image. The running API was not replaced." >&2
-      exit 1
-    fi
-    id="$(printf '%s\n' "${ids}" | head -n 1)"
-    err="$(mktemp)"
-    rc=0
-    image="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>"${err}")" || rc=$?
-    if [ "${rc}" -ne 0 ]; then
-      if grep -Eq 'No such (object|container)' "${err}"; then
-        rm -f "${err}"
-        printf '%s' ""
-        return 0
-      fi
-      echo "Refusing deploy: docker inspect of the previous ${svc} container exited ${rc}. The running API was not replaced." >&2
-      rm -f "${err}"
-      exit 1
-    fi
-    rm -f "${err}"
-    printf '%s' "${image}"
-  }
-
   service_ids() {
     compose ps -aq "$1" | awk 'NF' | sort -u
-  }
-
-  count_lines() {
-    printf '%s\n' "$1" | awk 'NF { n++ } END { print n + 0 }'
   }
 
   # One rollout at a time on the shared 4G+2G host. Prod and staging must not
@@ -237,13 +268,6 @@ main() {
 
   previous_api_image="$(read_previous_image api)"
   previous_web_image="$(read_previous_image web)"
-  # Stub-docker tests set this to print the lookup and stop before rollback
-  # is armed. Production leaves it unset.
-  if [ "${CARDHUB_STOP_AFTER_PREVIOUS_IMAGE:-}" = 1 ]; then
-    printf 'previous_api_image=%s\n' "${previous_api_image}"
-    printf 'previous_web_image=%s\n' "${previous_web_image}"
-    exit 0
-  fi
   previous_tag=""
   previous_api_tag=""
   previous_web_tag=""

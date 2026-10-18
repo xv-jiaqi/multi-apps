@@ -46,6 +46,8 @@ assert_no_secret() {
 
 run_case() {
   local password="$1"
+  local ps_mode="${2:-one}"
+  local dump_mode="${3:-ok}"
   local work docker_log script_log script_rc upload_flag
   work="$(mktemp -d)"
   docker_log="${work}/docker.log"
@@ -81,8 +83,23 @@ if [ "${cmd}" = "compose" ]; then
   done
   case "${sub}" in
     ps)
-      echo pgcontainer
-      exit 0
+      case "${BACKUP_STUB_PS:-one}" in
+        zero)
+          exit 0
+          ;;
+        two)
+          printf 'pg-a\npg-b\n'
+          exit 0
+          ;;
+        one)
+          echo pgcontainer
+          exit 0
+          ;;
+        *)
+          echo "stub docker: unknown ps mode ${BACKUP_STUB_PS}" >&2
+          exit 99
+          ;;
+      esac
       ;;
     exec|run)
       # Inside the postgres container the socket is trust. Password ignored.
@@ -123,9 +140,24 @@ fi
 if [ "${cmd}" = "run" ]; then
   joined="$*"
   if printf '%s\n' "${joined}" | grep -q 'pg_dump'; then
+    if ! printf '%s\n' "${joined}" | grep -F -q -- "--network ${PROJECT:?}_default"; then
+      echo "stub docker: pg_dump must use --network ${PROJECT}_default" >&2
+      exit 99
+    fi
     if printf '%s\n' "${joined}" | grep -q -- '-h postgres'; then
       if [ "${PGPASSWORD:-}" != "${BACKUP_STUB_PASSWORD:?}" ]; then
         echo 'pg_dump: error: connection to server at "postgres" (172.18.0.5), port 5432 failed: FATAL: password authentication failed for user "cardhub_backup"' >&2
+        exit 1
+      fi
+      if [ "${BACKUP_STUB_DUMP:-ok}" = "partial-fail" ]; then
+        payload="$(dump_sql)"
+        printf '%s' "${payload}"
+        bytes="$(printf '%s' "${payload}" | wc -c | awk '{ print $1 }')"
+        if [ "${bytes}" -le 1024 ]; then
+          echo "stub docker: partial dump must exceed 1KB, wrote ${bytes}" >&2
+          exit 99
+        fi
+        echo "pg_dump: write error after partial dump" >&2
         exit 1
       fi
       dump_sql
@@ -177,6 +209,8 @@ EOF
     BACKUP_STUB_LOG="${docker_log}" \
     BACKUP_STUB_PASSWORD="${right_password}" \
     BACKUP_STUB_UPLOAD="${upload_flag}" \
+    BACKUP_STUB_PS="${ps_mode}" \
+    BACKUP_STUB_DUMP="${dump_mode}" \
     bash "${backup_script}" > "${script_log}" 2>&1 || script_rc=$?
 
   CASE_RC="${script_rc}"
@@ -185,7 +219,7 @@ EOF
   CASE_UPLOAD="${upload_flag}"
   CASE_BACKUP_DIR="${work}/backups"
   CASE_DUMPED=0
-  echo "CASE password=$( [ "${password}" = "${right_password}" ] && echo right || echo wrong ) rc=${script_rc}"
+  echo "CASE password=$( [ "${password}" = "${right_password}" ] && echo right || echo wrong ) ps=${ps_mode} dump=${dump_mode} rc=${script_rc}"
 }
 
 run_case "${wrong_password}"
@@ -194,6 +228,7 @@ assert "wrong password does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 |
 assert "wrong password writes no backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 1 || echo 0)"
 assert "wrong password is an auth failure" "$(grep -q 'password authentication failed' "${CASE_LOG}" && echo 0 || echo 1)"
 assert "wrong password uses the compose host" "$(grep -q -- '-h postgres' "${CASE_DOCKER}" && echo 0 || echo 1)"
+assert "wrong password uses project network" "$(grep -F -q -- '--network cardhub-prod_default' "${CASE_DOCKER}" && echo 0 || echo 1)"
 assert_no_secret "wrong password output" "${CASE_LOG}"
 assert_no_secret "wrong password docker argv" "${CASE_DOCKER}"
 
@@ -201,8 +236,37 @@ run_case "${right_password}"
 assert "right password script succeeds" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 assert "right password uploads" "$([ -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
 assert "right password keeps a backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 0 || echo 1)"
+assert "right password uses project network" "$(grep -F -q -- '--network cardhub-prod_default' "${CASE_DOCKER}" && echo 0 || echo 1)"
 assert_no_secret "right password output" "${CASE_LOG}"
 assert_no_secret "right password docker argv" "${CASE_DOCKER}"
+
+run_case "${right_password}" zero
+assert "zero postgres exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
+assert "zero postgres is refused" "$(grep -F -q 'expected exactly one postgres container, found 0' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "zero postgres does not dump" "$(grep -F -q 'pg_dump' "${CASE_DOCKER}" && echo 1 || echo 0)"
+assert "zero postgres does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
+assert "zero postgres writes no backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 1 || echo 0)"
+assert "zero postgres leaves no file" "$(find "${CASE_BACKUP_DIR}" -type f -print | grep -q . && echo 1 || echo 0)"
+
+run_case "${right_password}" two
+assert "two postgres exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
+assert "two postgres is refused" "$(grep -F -q 'expected exactly one postgres container, found 2' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "two postgres does not dump" "$(grep -F -q 'pg_dump' "${CASE_DOCKER}" && echo 1 || echo 0)"
+assert "two postgres does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
+assert "two postgres writes no backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 1 || echo 0)"
+assert "two postgres leaves no file" "$(find "${CASE_BACKUP_DIR}" -type f -print | grep -q . && echo 1 || echo 0)"
+
+# More than 1KB then exit 1. The size check would pass this payload, so a
+# green run means pg_dump's own status failed the script. `|| true` after
+# pg_dump lets the script finish and upload.
+run_case "${right_password}" one partial-fail
+assert "partial dump exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
+assert "partial dump failed in pg_dump" "$(grep -F -q 'pg_dump: write error after partial dump' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "partial dump is not a size rejection" "$(grep -F -q 'unexpectedly small' "${CASE_LOG}" && echo 1 || echo 0)"
+assert "partial dump ran pg_dump" "$(grep -F -q 'pg_dump' "${CASE_DOCKER}" && echo 0 || echo 1)"
+assert "partial dump does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
+assert "partial dump writes no backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 1 || echo 0)"
+assert "partial dump leaves no file" "$(find "${CASE_BACKUP_DIR}" -type f -print | grep -q . && echo 1 || echo 0)"
 
 if [ "${failed}" -ne 0 ]; then
   echo "backup password tests failed" >&2

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Stub-docker coverage for read_previous_image in remote-deploy.sh.
-# container exists, container truly absent (inspect: No such object),
-# and inspect error. The compose-ps fallback must use project/service
-# labels, so a same-named container from another project is ignored.
+# The test sources the deploy script and calls the function. A same-named
+# container from another project is ignored. A named container with no
+# compose project label is refused. The production script must not contain
+# a CARDHUB_STOP_AFTER_* hook that can exit 0 before the image switch.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -31,10 +32,12 @@ assert() {
 
 run_case() {
   local mode="$1"
+  local driver="${2:-function}"
   local work docker_log script_log script_rc
   work="$(mktemp -d)"
   docker_log="${work}/docker.log"
   script_log="${work}/script.log"
+  : > "${docker_log}"
   mkdir -p "${work}/bin" "${work}/root/staging/deploy"
 
   cat > "${work}/bin/docker" << 'EOF'
@@ -76,7 +79,7 @@ if [ "${cmd}" = "compose" ]; then
         web) echo oldweb ;;
       esac
       ;;
-    other-project|labeled-leftover)
+    other-project|labeled-leftover|unlabeled-leftover)
       ;;
     *)
       echo "stub docker: unknown mode ${mode}" >&2
@@ -90,6 +93,7 @@ if [ "${cmd}" = "ps" ]; then
   project_value=""
   service_value=""
   name_filter=""
+  ps_format=""
   prev=""
   for arg in "$@"; do
     case "${prev}" in
@@ -106,6 +110,9 @@ if [ "${cmd}" = "ps" ]; then
             ;;
         esac
         ;;
+      --format)
+        ps_format="${arg}"
+        ;;
     esac
     case "${arg}" in
       --filter=label=com.docker.compose.project=*)
@@ -121,15 +128,25 @@ if [ "${cmd}" = "ps" ]; then
     prev="${arg}"
   done
 
+  emit_named() {
+    local id="$1"
+    local project_label="$2"
+    if printf '%s' "${ps_format}" | grep -q 'com.docker.compose.project'; then
+      printf '%s\t%s\n' "${id}" "${project_label}"
+    else
+      printf '%s\n' "${id}"
+    fi
+  }
+
   case "${mode}" in
     other-project)
       if [ "${project_value}" = "cardhub-staging" ] && [ -n "${service_value}" ]; then
         exit 0
       fi
       if [ "${service_value}" = "web" ] || printf '%s' "${name_filter}" | grep -q 'web'; then
-        echo otherweb
+        emit_named otherweb other-project
       else
-        echo otherapi
+        emit_named otherapi other-project
       fi
       exit 0
       ;;
@@ -138,6 +155,20 @@ if [ "${cmd}" = "ps" ]; then
         echo leftoverweb
       else
         echo leftoverapi
+      fi
+      exit 0
+      ;;
+    unlabeled-leftover)
+      if [ "${project_value}" = "cardhub-staging" ] && [ -n "${service_value}" ]; then
+        exit 0
+      fi
+      if [ -z "${name_filter}" ]; then
+        exit 0
+      fi
+      if printf '%s' "${name_filter}" | grep -q 'web'; then
+        emit_named leftoverweb ""
+      else
+        emit_named leftoverapi ""
       fi
       exit 0
       ;;
@@ -205,27 +236,66 @@ API_DOMAIN=api-staging.example.test
 EOF
   cp "${root}/deploy/docker-compose.yml" "${work}/root/staging/deploy/docker-compose.yml"
 
+  export PATH="${work}/bin:${PATH}"
+  export PREV_STUB_LOG="${docker_log}"
+  export PREV_STUB_MODE="${mode}"
+  export PREV_STUB_TAG="${tag}"
+
   script_rc=0
-  env \
-    PATH="${work}/bin:${PATH}" \
-    CARDHUB_ROOT="${work}/root" \
-    CARDHUB_STOP_AFTER_PREVIOUS_IMAGE=1 \
-    PREV_STUB_LOG="${docker_log}" \
-    PREV_STUB_MODE="${mode}" \
-    PREV_STUB_TAG="${tag}" \
-    bash "${deploy_script}" staging "${tag}" "${sha}" > "${script_log}" 2>&1 || script_rc=$?
+  if [ "${driver}" = "function" ]; then
+    # The subshell must not sit in an || list: bash turns set -e off for
+    # that whole list, and read_previous_image's exit 1 would be ignored.
+    set +e
+    (
+      set -euo pipefail
+      # shellcheck disable=SC1090
+      source "${deploy_script}"
+      # Used by the sourced compose and read_previous_image functions.
+      export env_name="staging"
+      export project="cardhub-staging"
+      export active_image_tag="${tag}"
+      export env_file="${work}/root/staging/staging.env"
+      export compose_file="${work}/root/staging/deploy/docker-compose.yml"
+      previous_api_image="$(read_previous_image api)"
+      previous_web_image="$(read_previous_image web)"
+      printf 'previous_api_image=%s\n' "${previous_api_image}"
+      printf 'previous_web_image=%s\n' "${previous_web_image}"
+    ) > "${script_log}" 2>&1
+    script_rc=$?
+    set -e
+  elif [ "${driver}" = "hook" ]; then
+    env \
+      PATH="${work}/bin:${PATH}" \
+      CARDHUB_ROOT="${work}/root" \
+      CARDHUB_STOP_AFTER_PREVIOUS_IMAGE=1 \
+      PREV_STUB_LOG="${docker_log}" \
+      PREV_STUB_MODE="${mode}" \
+      PREV_STUB_TAG="${tag}" \
+      bash "${deploy_script}" staging "${tag}" "${sha}" > "${script_log}" 2>&1 || script_rc=$?
+  else
+    echo "unknown driver ${driver}" >&2
+    exit 99
+  fi
 
   CASE_RC="${script_rc}"
   CASE_LOG="${script_log}"
   CASE_DOCKER="${docker_log}"
   CASE_DUMPED=0
-  echo "CASE mode=${mode} rc=${script_rc}"
+  echo "CASE mode=${mode} driver=${driver} rc=${script_rc}"
 }
 
+if grep -n 'CARDHUB_STOP_AFTER_' "${deploy_script}"; then
+  echo "FAIL remote-deploy.sh contains a CARDHUB_STOP_AFTER_ hook" >&2
+  failed=1
+else
+  echo "OK no CARDHUB_STOP_AFTER_ hook"
+fi
+
 run_case exists
-assert "exists script stops after lookup" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
+assert "exists lookup succeeds" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 assert "exists api image" "$(grep -qx "previous_api_image=ghcr.io/xv-jiaqi/cardhub-api:${tag}" "${CASE_LOG}" && echo 0 || echo 1)"
 assert "exists web image" "$(grep -qx "previous_web_image=ghcr.io/xv-jiaqi/cardhub-web:${tag}" "${CASE_LOG}" && echo 0 || echo 1)"
+assert "exists does not pull an image" "$(grep -E -q '^pull ' "${CASE_DOCKER}" && echo 1 || echo 0)"
 
 run_case missing-object
 assert "absent container script succeeds" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
@@ -245,10 +315,24 @@ assert "other project web image is empty" "$(grep -qx 'previous_web_image=' "${C
 assert "other project is not treated as a leftover" "$(grep -q 'docker ps still shows one' "${CASE_LOG}" && echo 1 || echo 0)"
 assert "fallback filters by project label" "$(grep -q 'label=com.docker.compose.project=cardhub-staging' "${CASE_DOCKER}" && echo 0 || echo 1)"
 assert "fallback filters by service label" "$(grep -q 'label=com.docker.compose.service=api' "${CASE_DOCKER}" && grep -q 'label=com.docker.compose.service=web' "${CASE_DOCKER}" && echo 0 || echo 1)"
+assert "fallback also filters by container name" "$(grep -F -q 'name=^cardhub-staging-api-[0-9]+$' "${CASE_DOCKER}" && grep -F -q 'name=^cardhub-staging-web-[0-9]+$' "${CASE_DOCKER}" && echo 0 || echo 1)"
+assert "name lookup reads the compose project label" "$(grep -F -q '.Label "com.docker.compose.project"' "${CASE_DOCKER}" && echo 0 || echo 1)"
 
 run_case labeled-leftover
 assert "labeled leftover exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
 assert "labeled leftover is refused" "$(grep -q 'compose listed no api container, but docker ps still shows one' "${CASE_LOG}" && echo 0 || echo 1)"
+
+run_case unlabeled-leftover
+assert "unlabeled leftover exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
+assert "unlabeled leftover is refused" "$(grep -F -q 'without another project'"'"'s compose label' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "unlabeled leftover checked the container name" "$(grep -F -q 'name=^cardhub-staging-api-[0-9]+$' "${CASE_DOCKER}" && echo 0 || echo 1)"
+assert "unlabeled leftover does not record images" "$(grep -q 'previous_api_image=' "${CASE_LOG}" && echo 1 || echo 0)"
+
+# Setting the old hook variable must not make a real deploy exit 0.
+run_case exists hook
+assert "stop hook is not a successful deploy" "$([ "${CASE_RC}" -eq 0 ] && echo 1 || echo 0)"
+assert "stop hook still reaches image pull" "$(grep -F -q 'Failed to pull' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "stop hook does not publish images and exit" "$(grep -qx "previous_api_image=ghcr.io/xv-jiaqi/cardhub-api:${tag}" "${CASE_LOG}" && echo 1 || echo 0)"
 
 if [ "${failed}" -ne 0 ]; then
   echo "previous image lookup tests failed" >&2

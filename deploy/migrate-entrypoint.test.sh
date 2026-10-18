@@ -129,8 +129,14 @@ fi
 assert_no_secret "success output" "${CASE_COMBINED}"
 
 run_entry query-error
-assert "query error exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "query error exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
+assert "query error names current_user" "$(grep -F -q -x 'Refusing to migrate: could not read current_user and rolsuper' "${CASE_STDERR}" && echo 0 || echo 1)"
+# Deleting the exit 1 after the role-query failure falls through to the shape
+# check. That path still exits 1 and still skips prisma, so the assertions
+# above would stay green. This one goes red.
+assert "query error stops before the shape check" "$(grep -F -q 'unexpected shape' "${CASE_STDERR}" && echo 1 || echo 0)"
 assert "query error does not migrate" "$(grep -qx 'npx' "${CASE_TRACE}" && echo 1 || echo 0)"
+assert "query error does not run migrate deploy" "$(grep -F -q 'Running prisma migrate deploy' "${CASE_STDOUT}" && echo 1 || echo 0)"
 assert_no_secret "query error output" "${CASE_COMBINED}"
 
 run_entry dirty-stdout

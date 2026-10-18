@@ -167,17 +167,19 @@ if [ -z "${dump_db}" ]; then
   echo "POSTGRES_DB is missing from ${ENV_FILE}" >&2
   exit 1
 fi
-postgres_id="$(
+postgres_ids="$(
   docker compose -p "${PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps -q postgres \
-    | awk 'NF' | head -n 1
+    | awk 'NF'
 )" || {
   echo "Could not list the postgres container; refusing to dump" >&2
   exit 1
 }
-if [ -z "${postgres_id}" ]; then
-  echo "Postgres is not running; refusing to dump without a password check" >&2
+postgres_count="$(printf '%s\n' "${postgres_ids}" | awk 'NF { n++ } END { print n + 0 }')"
+if [ "${postgres_count}" -ne 1 ]; then
+  echo "Refusing to dump: expected exactly one postgres container, found ${postgres_count}" >&2
   exit 1
 fi
+postgres_id="${postgres_ids}"
 postgres_image="$(docker inspect -f '{{.Config.Image}}' "${postgres_id}")" || {
   echo "Could not read the postgres image; refusing to dump" >&2
   exit 1
