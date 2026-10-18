@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@repo/ui-web';
-import { commentInput, seriesCommentInput, t } from '@repo/shared';
+import { APP_ERROR_CODES, commentInput, seriesCommentInput, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
@@ -79,7 +79,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   const handleCreateError = (err: { message: string; data?: { code?: string } | null }) => {
     const code = err.data?.code;
-    setError(code === 'TOO_MANY_REQUESTS' ? tt('card.detail.commentRateLimited') : err.message);
+    setError(
+      code === APP_ERROR_CODES.TOO_MANY_REQUESTS
+        ? tt('card.detail.commentRateLimited')
+        : err.message,
+    );
   };
 
   const createForCard = trpc.comments.create.useMutation({

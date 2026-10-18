@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { APP_ERROR_CODES } from '@repo/shared';
 import { createApp } from '../bootstrap/create-app';
 import { productionRateLimitConfigs } from '../bootstrap/rate-limiters';
 import { HealthService } from '../modules/health/health.service';
@@ -95,7 +96,8 @@ describe('rate limit proxy IP handling', () => {
               message: 'Too many requests',
               code: -32029,
               data: {
-                code: 'TOO_MANY_REQUESTS',
+                code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+                appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
                 httpStatus: 429,
                 path: 'auth.login',
               },
@@ -126,7 +128,8 @@ describe('rate limit proxy IP handling', () => {
                 message: 'Too many requests',
                 code: -32029,
                 data: {
-                  code: 'TOO_MANY_REQUESTS',
+                  code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+                  appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
                   httpStatus: 429,
                   path: 'auth.login',
                 },
@@ -137,7 +140,8 @@ describe('rate limit proxy IP handling', () => {
                 message: 'Too many requests',
                 code: -32029,
                 data: {
-                  code: 'TOO_MANY_REQUESTS',
+                  code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+                  appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
                   httpStatus: 429,
                   path: 'auth.register',
                 },
@@ -191,7 +195,8 @@ describe('rate limit proxy IP handling', () => {
               message: 'Too many requests',
               code: -32029,
               data: {
-                code: 'TOO_MANY_REQUESTS',
+                code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+                appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
                 httpStatus: 429,
                 path: 'comments.create',
               },
@@ -218,7 +223,8 @@ describe('rate limit proxy IP handling', () => {
         .set('X-Forwarded-For', '203.0.113.21')
         .expect(429)
         .expect((res) => {
-          expect(res.body.error.data.code).toBe('TOO_MANY_REQUESTS');
+          expect(res.body.error.data.code).toBe(APP_ERROR_CODES.TOO_MANY_REQUESTS);
+          expect(res.body.error.data.appCode).toBe(APP_ERROR_CODES.TOO_MANY_REQUESTS);
           expect(res.body.error.data.path).toBe('comments.createForSeries');
         });
     } finally {

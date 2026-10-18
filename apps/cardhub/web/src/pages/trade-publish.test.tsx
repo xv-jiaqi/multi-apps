@@ -1,3 +1,4 @@
+import { APP_ERROR_CODES } from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -142,7 +143,7 @@ describe('TradePublishPage', () => {
     act(() => {
       publishHarness.onError?.({
         message: 'Too many requests',
-        data: { code: 'TOO_MANY_REQUESTS' },
+        data: { code: APP_ERROR_CODES.TOO_MANY_REQUESTS },
       });
     });
 

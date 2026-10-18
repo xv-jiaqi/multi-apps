@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import { AppModule } from '../app.module';
 import { SentryExceptionFilter } from '../common/sentry-exception.filter';
 import { AuthService } from '../modules/auth/auth.service';
+import { PrismaService } from '../modules/prisma/prisma.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
 import { configureApp } from './configure-app';
@@ -67,6 +68,7 @@ export async function createApp(options: CreateAppOptions = {}) {
   const config = app.get(ConfigService);
   const trpcService = app.get(TrpcService);
   const authService = app.get(AuthService);
+  const prisma = app.get(PrismaService);
 
   const corsOrigin = config
     .get<string>(
@@ -117,7 +119,7 @@ export async function createApp(options: CreateAppOptions = {}) {
     '/trpc',
     trpcExpress.createExpressMiddleware({
       router: trpcService.appRouter,
-      createContext: makeCreateContext(authService),
+      createContext: makeCreateContext(authService, prisma),
       onError: ({ error, path, type }) => {
         if (error.code === 'INTERNAL_SERVER_ERROR' && process.env.SENTRY_DSN) {
           Sentry.captureException(error.cause ?? error, {

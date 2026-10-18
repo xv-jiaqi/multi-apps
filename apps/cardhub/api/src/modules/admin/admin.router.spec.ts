@@ -45,7 +45,7 @@ function makeRouter() {
     $transaction: transaction,
   } as unknown as PrismaService;
 
-  const router = new AdminRouter(new TrpcBase(prisma), prisma);
+  const router = new AdminRouter(new TrpcBase(), prisma);
   const built = router.build();
 
   function caller(user: TrpcContext['user']) {
@@ -77,12 +77,12 @@ function makeRouter() {
 }
 
 function adminUser() {
-  return { sub: 'u-admin', username: 'admin' };
+  return { sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 };
 }
 
 function makeHttpApp(prisma: PrismaService) {
   const app = express();
-  const t = new TrpcBase(prisma);
+  const t = new TrpcBase();
   const appRouter = t.router({ admin: new AdminRouter(t, prisma).build() });
 
   app.use(jsonBodyParser());
@@ -174,11 +174,13 @@ describe('AdminRouter auth', () => {
     ['catalog.import', (admin: AdminCaller) => admin.catalog.import({ dryRun: false, data: [] })],
   ] as const)('rejects non-admin callers for %s with FORBIDDEN', async (_name, invoke) => {
     const router = makeRouter();
-    router.userFindUnique.mockResolvedValueOnce({ id: 'u1', role: 'user' });
 
-    await expect(invoke(router.caller({ sub: 'u1', username: 'alice' }))).rejects.toMatchObject({
+    await expect(
+      invoke(router.caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 })),
+    ).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });
+    expect(router.userFindUnique).not.toHaveBeenCalled();
     expectNoWrites(router);
   });
 

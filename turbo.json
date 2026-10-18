@@ -26,7 +26,16 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "env": [
+        "DATABASE_URL",
+        "JWT_SECRET",
+        "JWT_EXPIRES_IN",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "REDIS_PASSWORD",
+        "CORS_ORIGIN"
+      ]
     },
     "clean": {
       "cache": false
@@ -36,7 +45,8 @@
       "outputs": ["prisma/generated/**", "node_modules/.prisma/**"]
     },
     "db:migrate": {
-      "cache": false
+      "cache": false,
+      "env": ["DATABASE_URL"]
     },
     "db:studio": {
       "cache": false,

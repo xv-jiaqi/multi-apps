@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import { reportCreateInput, reportListInput, reportResolveInput } from '@repo/shared';
+import {
+  APP_ERROR_CODES,
+  reportCreateInput,
+  reportListInput,
+  reportResolveInput,
+} from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -101,6 +106,7 @@ export class ReportsRouter {
           throw new TRPCError({
             code: 'TOO_MANY_REQUESTS',
             message: '今日举报次数已达上限，请明天再试',
+            cause: { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
           });
         }
         await assertReportTargetExists(prisma, input.targetType, input.targetId);

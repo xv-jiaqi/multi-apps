@@ -1,3 +1,4 @@
+import { APP_ERROR_CODES } from '@repo/shared';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -554,7 +555,7 @@ describe('CommentSection (authenticated)', () => {
       ) => {
         callbacks.onError({
           message: 'Too many requests',
-          data: { code: 'TOO_MANY_REQUESTS' },
+          data: { code: APP_ERROR_CODES.TOO_MANY_REQUESTS },
         });
       },
     );

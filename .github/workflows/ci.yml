@@ -78,11 +78,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: pnpm --filter must fail when the package or script is missing
+        run: bash scripts/pnpm-filter-fail-closed.test.sh
+
       - name: Generate Prisma client
-        run: pnpm --filter @cardhub/api db:generate
+        run: pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:generate
 
       - name: Apply Prisma migrations to the test database
-        run: pnpm --filter @cardhub/api prisma migrate deploy
+        run: pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:migrate:deploy
 
       - name: Lint
         run: pnpm lint
@@ -94,7 +97,7 @@ jobs:
         run: pnpm build
 
       - name: Install Playwright Chromium
-        run: pnpm --filter @cardhub/web exec playwright install --with-deps chromium
+        run: pnpm --filter @cardhub/web --fail-if-no-match exec playwright install --with-deps chromium
 
       - name: Test
         run: pnpm test

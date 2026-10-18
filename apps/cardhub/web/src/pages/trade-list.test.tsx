@@ -1,3 +1,4 @@
+import { APP_ERROR_CODES } from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -529,7 +530,7 @@ describe('TradeListPage price filters', () => {
     const retry = listHarness.options.at(-1)?.retry;
     expect(retry).toEqual(expect.any(Function));
     expect(retry?.(0, { data: { code: 'BAD_REQUEST' } })).toBe(false);
-    expect(retry?.(0, { data: { code: 'TOO_MANY_REQUESTS' } })).toBe(true);
+    expect(retry?.(0, { data: { code: APP_ERROR_CODES.TOO_MANY_REQUESTS } })).toBe(true);
     expect(retry?.(0, { data: { code: 'INTERNAL_SERVER_ERROR' } })).toBe(true);
     expect(retry?.(1, { data: { code: 'INTERNAL_SERVER_ERROR' } })).toBe(false);
     expect(retry?.(0, {})).toBe(true);
@@ -555,7 +556,7 @@ describe('TradeListPage price filters', () => {
   });
 
   it.each([
-    ['TOO_MANY_REQUESTS', 'rate limited QA-INJECTED'],
+    [APP_ERROR_CODES.TOO_MANY_REQUESTS, 'rate limited QA-INJECTED'],
     ['INTERNAL_SERVER_ERROR', 'Internal server error QA-INJECTED'],
   ])('keeps the retry box for %s', async (code, message) => {
     const user = userEvent.setup();

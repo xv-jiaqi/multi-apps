@@ -19,7 +19,7 @@ jobs:
         with: { node-version: '22', cache: 'pnpm' }
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @cardhub/miniapp miniapp:${{ github.event.inputs.target }}
+      - run: pnpm --filter @cardhub/miniapp --fail-if-no-match exec pnpm run miniapp:${{ github.event.inputs.target }}
 
       - uses: actions/upload-artifact@v4
         with:

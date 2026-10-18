@@ -149,7 +149,7 @@ Taro 4.2 硬编码了 `react/cjs/react-jsx-runtime.production.min.js`，React 19
 
 ### 6.8 JWT context 是工厂函数
 
-tRPC 的 `createContext` 由 [apps/cardhub/api/src/trpc/context.ts](../../apps/cardhub/api/src/trpc/context.ts) 的 `makeCreateContext(authService)` 在 main.ts 启动时构造。新增需要 ctx 的依赖时，从 Nest 容器拿出来传给 factory，**不要**在 router 里直接 import 单例。
+tRPC 的 `createContext` 由 [apps/cardhub/api/src/trpc/context.ts](../../apps/cardhub/api/src/trpc/context.ts) 的 `makeCreateContext(authService, prisma)` 在启动时构造。验签后按主键查一次用户（`tokenVersion`、`role`）。新增需要 ctx 的依赖时，从 Nest 容器拿出来传给 factory，**不要**在 router 里直接 import 单例。
 
 ### 6.9 后台启动 vite 用 subshell
 

@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "identifier": "com.cardhub.app",
   "build": {
-    "beforeDevCommand": "pnpm --filter @cardhub/web dev",
-    "beforeBuildCommand": "pnpm --filter @cardhub/web build",
+    "beforeDevCommand": "pnpm --filter @cardhub/web --fail-if-no-match exec pnpm run dev",
+    "beforeBuildCommand": "pnpm --filter @cardhub/web --fail-if-no-match exec pnpm run build",
     "devUrl": "http://localhost:5173",
     "frontendDist": "../../web/dist"
   },

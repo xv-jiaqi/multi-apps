@@ -30,8 +30,8 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @cardhub/web build
-      - run: pnpm --filter @cardhub/native build
+      - run: pnpm --filter @cardhub/web --fail-if-no-match exec pnpm run build
+      - run: pnpm --filter @cardhub/native --fail-if-no-match exec pnpm run build
 
       - uses: actions/upload-artifact@v4
         with:

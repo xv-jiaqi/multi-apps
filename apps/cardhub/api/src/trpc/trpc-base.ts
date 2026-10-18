@@ -1,8 +1,12 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { initTRPC, TRPCError } from '@trpc/server';
-import { ADMIN_CATALOG_ERROR_CODES, type AdminCatalogErrorCode } from '@repo/shared';
+import {
+  ADMIN_CATALOG_ERROR_CODES,
+  isAppErrorCode,
+  t,
+  type AdminCatalogErrorCode,
+} from '@repo/shared';
 import type { TrpcContext } from './context';
-import { PrismaService } from '../modules/prisma/prisma.service';
 
 const ADMIN_CATALOG_ERROR_CODE_SET = new Set<string>(ADMIN_CATALOG_ERROR_CODES);
 const IMPORT_ROW_STATUS_SET = new Set(['created', 'updated', 'unchanged', 'error']);
@@ -94,6 +98,37 @@ function sanitizeRows(value: unknown): SanitizedImportRow[] | undefined {
   return rows;
 }
 
+const INTERNAL_MESSAGE_PATTERN =
+  /prisma|invocation|is not valid JSON|Unexpected token|node_modules|syntaxerror|\n\s+at\s+/i;
+
+function hasInternalCause(cause: unknown, depth: number): boolean {
+  if (depth > 5 || typeof cause !== 'object' || cause === null) return false;
+  if (cause instanceof Error) {
+    if (
+      cause.name.startsWith('Prisma') ||
+      cause.name === 'SyntaxError' ||
+      cause.name === 'URIError'
+    ) {
+      return true;
+    }
+  }
+  if ('cause' in cause) return hasInternalCause(cause.cause, depth + 1);
+  return false;
+}
+
+function publicErrorMessage(message: string, cause: unknown): string {
+  if (process.env.NODE_ENV !== 'production') return message;
+  if (hasInternalCause(cause, 0) || INTERNAL_MESSAGE_PATTERN.test(message)) {
+    return t('zh-CN', 'error.internal');
+  }
+  return message;
+}
+
+function readAppCode(cause: unknown): string | undefined {
+  if (typeof cause !== 'object' || cause === null || !('appCode' in cause)) return undefined;
+  return isAppErrorCode(cause.appCode) ? cause.appCode : undefined;
+}
+
 function sanitizeAdminCatalogError(cause: unknown): AdminCatalogErrorDetails | undefined {
   if (!isPlainObject(cause)) return undefined;
 
@@ -113,23 +148,30 @@ function sanitizeAdminCatalogError(cause: unknown): AdminCatalogErrorDetails | u
   return Object.keys(details).length > 0 ? details : undefined;
 }
 
-const t = initTRPC.context<TrpcContext>().create({
+const trpc = initTRPC.context<TrpcContext>().create({
   errorFormatter({ shape, error }) {
     const adminCatalogError = sanitizeAdminCatalogError(error.cause);
+    const appCode = readAppCode(error.cause);
+    const data = {
+      ...shape.data,
+      ...(adminCatalogError ? { adminCatalogError } : {}),
+      ...(appCode ? { appCode } : {}),
+    };
+    if (process.env.NODE_ENV === 'production') {
+      delete data.stack;
+    }
     return {
       ...shape,
-      data: {
-        ...shape.data,
-        ...(adminCatalogError ? { adminCatalogError } : {}),
-      },
+      message: publicErrorMessage(shape.message, error.cause),
+      data,
     };
   },
 });
 
-type TrpcRouterBuilder = typeof t.router;
-type TrpcMergeRouters = typeof t.mergeRouters;
-type TrpcMiddleware = typeof t.middleware;
-type TrpcProcedure = typeof t.procedure;
+type TrpcRouterBuilder = typeof trpc.router;
+type TrpcMergeRouters = typeof trpc.mergeRouters;
+type TrpcMiddleware = typeof trpc.middleware;
+type TrpcProcedure = typeof trpc.procedure;
 
 /**
  * TrpcBase wraps a shared tRPC builder instance so that feature modules can
@@ -137,34 +179,31 @@ type TrpcProcedure = typeof t.procedure;
  */
 @Injectable()
 export class TrpcBase {
-  constructor(@Optional() private readonly prisma?: PrismaService) {}
+  readonly router: TrpcRouterBuilder = trpc.router;
+  readonly mergeRouters: TrpcMergeRouters = trpc.mergeRouters;
+  readonly middleware: TrpcMiddleware = trpc.middleware;
+  readonly procedure: TrpcProcedure = trpc.procedure;
 
-  readonly router: TrpcRouterBuilder = t.router;
-  readonly mergeRouters: TrpcMergeRouters = t.mergeRouters;
-  readonly middleware: TrpcMiddleware = t.middleware;
-  readonly procedure: TrpcProcedure = t.procedure;
-
-  readonly authedProcedure: TrpcProcedure = t.procedure.use(({ ctx, next }) => {
+  readonly authedProcedure: TrpcProcedure = trpc.procedure.use(({ ctx, next }) => {
     if (!ctx.user) {
       throw new TRPCError({ code: 'UNAUTHORIZED' });
     }
     return next({ ctx: { ...ctx, user: ctx.user } });
   }) as unknown as TrpcProcedure;
 
-  readonly adminProcedure: TrpcProcedure = t.procedure.use(async ({ ctx, next }) => {
+  readonly adminProcedure: TrpcProcedure = trpc.procedure.use(({ ctx, next }) => {
     if (!ctx.user) {
       throw new TRPCError({ code: 'UNAUTHORIZED' });
     }
-    if (!this.prisma) {
-      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Prisma 未初始化' });
-    }
-    const requester = await this.prisma.user.findUnique({
-      where: { id: ctx.user.sub },
-      select: { id: true, role: true },
-    });
-    if (requester?.role !== 'admin') {
+    if (ctx.user.role !== 'admin') {
       throw new TRPCError({ code: 'FORBIDDEN', message: '仅管理员可管理内容' });
     }
-    return next({ ctx: { ...ctx, user: ctx.user, adminUser: requester } });
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+        adminUser: { id: ctx.user.sub, role: ctx.user.role },
+      },
+    });
   }) as unknown as TrpcProcedure;
 }

@@ -64,7 +64,12 @@ describe('UsersRouter.me', () => {
     replyCount.mockResolvedValueOnce(7);
     commentCount.mockResolvedValueOnce(11);
 
-    const result = await caller({ sub: 'u1', username: 'alice' }).me();
+    const result = await caller({
+      sub: 'u1',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).me();
 
     expect(result.listingCount).toBe(2);
     expect(result.listingTotalCount).toBe(5);
@@ -89,7 +94,12 @@ describe('UsersRouter.myTopics', () => {
       },
     ]);
 
-    const result = await caller({ sub: 'u1', username: 'alice' }).myTopics({ limit: 10 });
+    const result = await caller({
+      sub: 'u1',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).myTopics({ limit: 10 });
 
     expect(result).toEqual({
       items: [
@@ -125,7 +135,12 @@ describe('UsersRouter.myComments', () => {
       },
     ]);
 
-    const result = await caller({ sub: 'u1', username: 'alice' }).myComments({ limit: 10 });
+    const result = await caller({
+      sub: 'u1',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).myComments({ limit: 10 });
 
     expect(result.items[0]).toEqual({
       id: 'c1',
@@ -159,7 +174,12 @@ describe('UsersRouter.myComments', () => {
       },
     ]);
 
-    const result = await caller({ sub: 'u1', username: 'alice' }).myComments({ limit: 10 });
+    const result = await caller({
+      sub: 'u1',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+    }).myComments({ limit: 10 });
 
     expect(result.items[0]).toEqual({
       id: 'c-series',

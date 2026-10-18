@@ -45,6 +45,13 @@ export const loginInput = z.object({
   password: passwordSchema,
 });
 
+export const changePasswordInput = z.object({
+  currentPassword: passwordSchema,
+  newPassword: passwordSchema,
+});
+
+export type ChangePasswordInput = z.infer<typeof changePasswordInput>;
+
 export type RegisterInput = z.infer<typeof registerInput>;
 export type LoginInput = z.infer<typeof loginInput>;
 
