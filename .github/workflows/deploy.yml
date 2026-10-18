@@ -70,6 +70,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          # Full history so resolve-deploy-inputs.sh can compare HEAD:deploy
+          # with origin/main:deploy. A shallow checkout has no tree to compare
+          # and the script refuses.
           fetch-depth: 0
 
       - name: Validate deploy inputs
@@ -183,6 +186,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          # Same full history as the edge job: this job also refuses when
+          # HEAD:deploy is not origin/main:deploy.
           fetch-depth: 0
 
       - name: Check infra ref and image tag

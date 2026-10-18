@@ -178,6 +178,15 @@ commit. It does not check out the image tag. Rolling an older image back
 cannot replace the shared Caddyfile or the rolling deploy script with the
 copies stored in that older commit.
 
+Both the edge job and the deploy job run `deploy/resolve-deploy-inputs.sh`
+after that checkout. The script fetches `origin/main` and exits 1 unless
+`git rev-parse HEAD:deploy` equals `git rev-parse origin/main:deploy`. An
+image SHA that is merely an ancestor of main is not enough. GitHub re-runs an
+old run on its original commit for 30 days, and a run queued on an older
+commit can start after main has already published a newer `deploy/` tree.
+Either case would otherwise sync old compose files, `remote-deploy.sh`, and
+the shared edge, then reload Caddy.
+
 ### Zero-downtime rollout
 
 `remote-deploy.sh` pulls the new API and web images, starts Postgres and Redis
@@ -212,8 +221,10 @@ existing rollback then runs `docker compose up -d` with the previous
 immutable `sha-` tag. A replica that is already on that tag is left in place,
 and a mismatched extra replica is removed. If the failure happens after the
 cutover (the public health check or `CATALOG_SEED_CMD`), rollback recreates
-API and web on the previous tag. `previous-images.env` is still written
-before the switch and still records the tags that were running.
+API and web on the previous tag. `previous-images.env` is written only after
+that switch succeeds, and it records the tags that were running before the
+switch. A rollback does not rewrite the file, so the real previous image
+stays protected for the next cleanup.
 
 ### Schema compatibility
 
@@ -271,8 +282,10 @@ GitHub runners. GitHub's Actions cache has a 10GB repository limit; because the
 scopes are per image, older cache entries are evicted by GitHub's LRU policy when
 the repo exceeds that limit.
 
-Before switching images, `remote-deploy.sh` records the environment's previous
-API and web `sha-` tags in `/opt/cardhub/<environment>/.deploy-state/`.
+After a switch succeeds, `remote-deploy.sh` records the API and web `sha-`
+tags that were running before that switch in
+`/opt/cardhub/<environment>/.deploy-state/`. A rollback leaves the file
+unchanged.
 After a successful deploy, `image-cleanup.sh` removes only stale
 `ghcr.io/xv-jiaqi/cardhub-api:sha-*` and
 `ghcr.io/xv-jiaqi/cardhub-web:sha-*` images. Cleanup keeps, independently for

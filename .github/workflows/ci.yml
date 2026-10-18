@@ -92,6 +92,18 @@ jobs:
       - name: Test
         run: pnpm test
 
+  deploy-scripts:
+    name: Deploy script tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Edge plan, deploy tree guard, rollback previous image
+        run: |
+          bash deploy/plan-edge-apply.test.sh
+          bash deploy/deploy-tree-guard.test.sh
+          bash deploy/rollback-preserves-previous-image.test.sh
+
   audit:
     name: pnpm audit (high+)
     runs-on: ubuntu-latest

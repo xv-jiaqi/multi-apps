@@ -6,6 +6,11 @@
 # script must not check that commit out: doing so shipped pre-#103 edge
 # config and the old remote-deploy.sh when production was rolled back to an
 # older image.
+#
+# The workflow ref itself can still be stale. GitHub re-runs an old run on
+# its original commit for 30 days, and a queued run keeps the commit it was
+# created with. Both jobs call this script, and both refuse unless the
+# checkout's deploy/ tree is the same object as origin/main:deploy.
 set -euo pipefail
 
 mode="resolve"
@@ -92,6 +97,22 @@ fi
 git fetch --no-tags origin main:refs/remotes/origin/main
 if ! git merge-base --is-ancestor "${expected_sha}" origin/main; then
   echo "Refusing to deploy ${expected_sha}: SHA is not reachable from origin/main" >&2
+  exit 1
+fi
+
+# An ancestor check on the image SHA still returns success when this checkout's
+# deploy/ tree is older than origin/main. Compare the whole tree (compose,
+# remote-deploy.sh, edge, everything), not only deploy/edge.
+if ! head_deploy="$(git rev-parse --verify --quiet HEAD:deploy)" || [ -z "${head_deploy}" ]; then
+  echo "Refusing to sync deploy/: HEAD has no deploy tree. The checkout must contain deploy/ and be deep enough to resolve it (fetch-depth: 0)." >&2
+  exit 1
+fi
+if ! main_deploy="$(git rev-parse --verify --quiet origin/main:deploy)" || [ -z "${main_deploy}" ]; then
+  echo "Refusing to sync deploy/: origin/main has no deploy tree. Fetch origin/main with enough history (fetch-depth: 0)." >&2
+  exit 1
+fi
+if [ "${head_deploy}" != "${main_deploy}" ]; then
+  echo "Refusing to sync deploy/: HEAD:deploy ${head_deploy} != origin/main:deploy ${main_deploy}. A re-run of an old commit or a queued run would overwrite compose, remote-deploy.sh, and the shared edge with this older tree." >&2
   exit 1
 fi
 
