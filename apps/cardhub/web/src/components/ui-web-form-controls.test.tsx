@@ -300,7 +300,11 @@ describe('ui-web Combobox', () => {
       if (originalHtml) {
         Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalHtml);
       } else {
-        delete HTMLElement.prototype.scrollIntoView;
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+          configurable: true,
+          writable: true,
+          value: originalElement,
+        });
       }
     }
   });
