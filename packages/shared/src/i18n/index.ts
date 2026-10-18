@@ -1069,6 +1069,10 @@ function pluralMessage(locale: Locale, key: string, count: number): string | und
   return dictionary[`${key}_${category}`] ?? dictionary[`${key}_other`];
 }
 
+/**
+ * Interpolates `{name}` from `vars`. Plural keys are chosen only when `count` is a number.
+ * A formatted string such as `"1,234"` stays on the base key.
+ */
 export function t(locale: Locale, key: string, vars?: Record<string, string | number>): string {
   const count = vars?.count;
   const plural = typeof count === 'number' ? pluralMessage(locale, key, count) : undefined;
