@@ -5,8 +5,9 @@ import { Button } from '@repo/ui-web';
 import { commentInput, seriesCommentInput, t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
+import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { ReportButton } from './report-button';
-import { RetryButton, queryFallback, useFocusOnRecovery } from './retry-button';
+import { queryFallback, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
 
@@ -263,21 +264,16 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       </p>
 
       {commentsView === 'error' ? (
-        <div
-          role="alert"
-          className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
-        >
-          {tt('state.error')}
-          <RetryButton
-            retrying={list.isFetching}
-            label={tt('state.retry')}
-            retryingLabel={tt('state.retrying')}
-            onRetry={() => {
-              void list.refetch();
-            }}
-            className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          />
-        </div>
+        <ErrorBox
+          title={tt('card.detail.commentsLoadFailed')}
+          retryLabel={tt('state.retry')}
+          retryingLabel={tt('state.retrying')}
+          retrying={list.isFetching}
+          retry={() => {
+            void list.refetch();
+          }}
+          retryClassName={dataErrorRetryClassName}
+        />
       ) : commentsLoading ? (
         <CommentListSkeleton label={tt('a11y.loading')} />
       ) : !list.data || list.data.length === 0 ? (
