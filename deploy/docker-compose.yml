@@ -2,6 +2,12 @@ services:
   api:
     image: ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}
     restart: unless-stopped
+    # tini forwards SIGTERM. Node is not PID 1, so the default terminate
+    # action runs. A longer grace is the ceiling for in-flight work once
+    # shutdown hooks exist; today the process exits as soon as the signal
+    # arrives.
+    init: true
+    stop_grace_period: 30s
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 4000
@@ -39,6 +45,7 @@ services:
   web:
     image: ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}
     restart: unless-stopped
+    stop_grace_period: 30s
     environment:
       TRPC_URL: ${TRPC_URL}
       SENTRY_DSN: ${WEB_SENTRY_DSN:-}
