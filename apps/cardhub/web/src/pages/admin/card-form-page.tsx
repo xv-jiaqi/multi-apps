@@ -15,6 +15,12 @@ import { queryFallback, useFocusOnRecovery } from '../../components/retry-button
 import { AttributesEditor } from '../../components/admin/attributes-editor';
 import { ImageUrlField, imageUrlError } from '../../components/admin/image-url-field';
 import {
+  attributeSnapshots,
+  sameAttributeRows,
+  useUnsavedChanges,
+  type AttributeSnapshot,
+} from '../../components/admin/use-unsaved-changes';
+import {
   applyValidationFeedback,
   attributesToRows,
   isAccessRevoked,
@@ -55,6 +61,16 @@ const CardForm = observer(function CardForm({ mode }: { mode: 'create' | 'edit' 
   );
 });
 
+interface CardBaseline {
+  seriesSlug: string;
+  slug: string;
+  name: string;
+  rarity: Rarity;
+  description: string;
+  imageUrl: string;
+  attributes: AttributeSnapshot[];
+}
+
 const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' | 'edit' }) {
   const params = useParams();
   const routeSlug = params.slug ?? '';
@@ -83,6 +99,19 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(mode === 'create');
+  const [baseline, setBaseline] = useState<CardBaseline | null>(
+    mode === 'create'
+      ? {
+          seriesSlug: routeSlug,
+          slug: '',
+          name: '',
+          rarity: 'common',
+          description: '',
+          imageUrl: '',
+          attributes: [],
+        }
+      : null,
+  );
   const titleRef = useRef<HTMLHeadingElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -99,15 +128,37 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
 
   useEffect(() => {
     if (mode !== 'edit' || !card || hydrated) return;
-    setSeriesSlug(card.seriesSlug);
-    setSlugValue(card.slug);
-    setName(card.name);
-    setRarity(card.rarity);
-    setDescription(card.description ?? '');
-    setImageUrl(card.imageUrl ?? '');
-    setRows(attributesToRows(card.attributes ?? {}));
+    const nextRows = attributesToRows(card.attributes ?? {});
+    const next = {
+      seriesSlug: card.seriesSlug,
+      slug: card.slug,
+      name: card.name,
+      rarity: card.rarity,
+      description: card.description ?? '',
+      imageUrl: card.imageUrl ?? '',
+      attributes: attributeSnapshots(nextRows),
+    };
+    setSeriesSlug(next.seriesSlug);
+    setSlugValue(next.slug);
+    setName(next.name);
+    setRarity(next.rarity);
+    setDescription(next.description);
+    setImageUrl(next.imageUrl);
+    setRows(nextRows);
+    setBaseline(next);
     setHydrated(true);
   }, [card, hydrated, mode]);
+
+  const dirty =
+    baseline !== null &&
+    (seriesSlug !== baseline.seriesSlug ||
+      slugValue !== baseline.slug ||
+      name !== baseline.name ||
+      rarity !== baseline.rarity ||
+      description !== baseline.description ||
+      imageUrl !== baseline.imageUrl ||
+      !sameAttributeRows(attributeSnapshots(rows), baseline.attributes));
+  const unsaved = useUnsavedChanges(dirty);
 
   const pageTitle = mode === 'create' ? tt('admin.cards.new') : tt('admin.cards.edit');
   const seriesForCrumb =
@@ -185,6 +236,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         void utils.series.bySlug.invalidate({ slug: previousSeriesSlug });
       }
       void utils.admin.cards.get.invalidate({ slug: input.slug });
+      unsaved.allowLeave();
       navigate(`/admin/catalog/series/${seriesSlug}`, {
         state: {
           notice:
@@ -240,6 +292,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
 
   return (
     <>
+      {unsaved.dialog}
       <Breadcrumbs
         items={[
           { label: tt('breadcrumb.home'), to: '/' },

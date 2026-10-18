@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router';
+import { createBrowserRouter, RouterProvider } from 'react-router';
 import * as Sentry from '@sentry/react';
-import { App } from './app';
+import { appRoutes } from './app';
 import { ErrorBoundary } from './components/error-boundary';
 import { TrpcProvider } from './lib/trpc';
 import './styles/globals.css';
@@ -50,6 +50,8 @@ if (import.meta.env.DEV) {
   );
 }
 
+const router = createBrowserRouter(appRoutes);
+
 createRoot(container).render(
   <StrictMode>
     <ErrorBoundary
@@ -62,9 +64,7 @@ createRoot(container).render(
       }}
     >
       <TrpcProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </TrpcProvider>
     </ErrorBoundary>
   </StrictMode>,
