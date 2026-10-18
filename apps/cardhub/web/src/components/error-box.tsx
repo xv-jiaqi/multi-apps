@@ -1,5 +1,12 @@
 import { RetryButton } from './retry-button';
 
+const tradeListRetryClassName =
+  'mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+
+/** Trade-list button classes plus min-h-6. Passed by the block-level error call sites. */
+export const dataErrorRetryClassName =
+  'mt-3 min-h-6 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+
 export function ErrorBox({
   title,
   retryLabel,
@@ -7,6 +14,7 @@ export function ErrorBox({
   retrying,
   retry,
   headingAs = 'p',
+  retryClassName = tradeListRetryClassName,
 }: {
   title: string;
   retryLabel: string;
@@ -14,6 +22,7 @@ export function ErrorBox({
   retrying: boolean;
   retry: () => void;
   headingAs?: 'p' | 'h1';
+  retryClassName?: string;
 }) {
   const Heading = headingAs;
   return (
@@ -27,7 +36,7 @@ export function ErrorBox({
         label={retryLabel}
         retryingLabel={retryingLabel}
         onRetry={retry}
-        className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className={retryClassName}
       />
     </div>
   );

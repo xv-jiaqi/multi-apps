@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
@@ -12,6 +13,8 @@ import { CommentSection } from '../components/comment-section';
 import { ListingsForCard } from '../components/listings-for-card';
 import { Artwork } from '../components/artwork';
 import { CardDetailSkeleton } from '../components/card-detail-skeleton';
+import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
+import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
 function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
@@ -26,8 +29,11 @@ export const CardDetailPage = observer(function CardDetailPage() {
   const { locale } = useStores();
   const tt = (key: string) => t(locale.locale, key);
   const query = trpc.cards.bySlug.useQuery({ slug: cardSlug }, { enabled: !!cardSlug });
+  const view = queryFallback(query);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useFocusOnRecovery(view, headingRef);
 
-  if (query.isLoading) {
+  if (view === 'loading') {
     return (
       <>
         <PageMeta title={tt('state.loading')} />
@@ -36,8 +42,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
     );
   }
 
-  if (query.isError || !query.data) {
-    const isNotFound = query.error?.data?.code === 'NOT_FOUND';
+  if (view === 'error' && query.error?.data?.code === 'NOT_FOUND') {
     return (
       <PageShell>
         <PageMeta title={cardSlug} />
@@ -50,8 +55,36 @@ export const CardDetailPage = observer(function CardDetailPage() {
             ]}
           />
           <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
-            {isNotFound ? tt('state.notFound') : (query.error?.message ?? tt('state.error'))}
+            {tt('state.notFound')}
           </p>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (view === 'error' || !query.data) {
+    return (
+      <PageShell>
+        <PageMeta title={tt('card.detail.loadFailed')} />
+        <div className="space-y-4">
+          <Breadcrumbs
+            items={[
+              { label: tt('breadcrumb.home'), to: '/' },
+              { label: tt('breadcrumb.cards'), to: '/series' },
+              { label: cardSlug },
+            ]}
+          />
+          <ErrorBox
+            headingAs="h1"
+            title={tt('card.detail.loadFailed')}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+            retrying={query.isFetching}
+            retry={() => {
+              void query.refetch();
+            }}
+            retryClassName={dataErrorRetryClassName}
+          />
         </div>
       </PageShell>
     );
@@ -88,7 +121,13 @@ export const CardDetailPage = observer(function CardDetailPage() {
           <div className="space-y-6">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight">{card.name}</h1>
+                <h1
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className="text-3xl font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                >
+                  {card.name}
+                </h1>
                 <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
               </div>
               <p className="text-neutral-600">{card.description}</p>

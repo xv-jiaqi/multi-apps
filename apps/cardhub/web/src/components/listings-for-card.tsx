@@ -1,9 +1,12 @@
+import { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useLocation } from 'react-router';
 import { t, type ListingKind } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
+import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { ReportButton } from './report-button';
+import { queryFallback, useFocusOnRecovery } from './retry-button';
 
 interface ListingsForCardProps {
   cardSlug: string;
@@ -40,16 +43,54 @@ export const ListingsForCard = observer(function ListingsForCard({
   const location = useLocation();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const query = trpc.listings.byCard.useQuery({ cardSlug, limit: 5 });
+  const view = queryFallback(query);
+  const listRef = useRef<HTMLElement | null>(null);
+  useFocusOnRecovery(view, listRef);
   const items = query.data ?? [];
 
   return (
     <div className="space-y-3">
-      {items.length === 0 ? (
-        <p className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-3 text-center text-sm text-neutral-500">
+      {view === 'loading' ? (
+        <div className="space-y-2">
+          <p className="sr-only">{tt('a11y.loading')}</p>
+          <div
+            aria-hidden
+            className="h-14 animate-pulse rounded-lg border border-neutral-200 bg-white motion-reduce:animate-none"
+          />
+          <div
+            aria-hidden
+            className="h-14 animate-pulse rounded-lg border border-neutral-200 bg-white motion-reduce:animate-none"
+          />
+        </div>
+      ) : view === 'error' ? (
+        <ErrorBox
+          title={tt('trade.detail.byCardLoadFailed')}
+          retryLabel={tt('state.retry')}
+          retryingLabel={tt('state.retrying')}
+          retrying={query.isFetching}
+          retry={() => {
+            void query.refetch();
+          }}
+          retryClassName={dataErrorRetryClassName}
+        />
+      ) : items.length === 0 ? (
+        <p
+          ref={(node) => {
+            listRef.current = node;
+          }}
+          tabIndex={-1}
+          className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-3 text-center text-sm text-neutral-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           {tt('trade.detail.byCardEmpty')}
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul
+          ref={(node) => {
+            listRef.current = node;
+          }}
+          tabIndex={-1}
+          className="space-y-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           {items.map((listing) => {
             const priceLabel = formatPrice(
               listing.price,
