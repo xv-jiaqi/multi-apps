@@ -15,26 +15,6 @@ function hasControlCharacter(path: string): boolean {
   return false;
 }
 
-/**
- * Decode percent-encoding before the path check. A value such as "/%09/…"
- * has no raw control character until it is decoded, and "%2509" needs a
- * second pass. A malformed sequence fails closed.
- */
-function decodeRedirectTarget(value: string): string | null {
-  let current = value;
-  for (let i = 0; i < 5; i += 1) {
-    let decoded: string;
-    try {
-      decoded = decodeURIComponent(current);
-    } catch {
-      return null;
-    }
-    if (decoded === current) return decoded;
-    current = decoded;
-  }
-  return null;
-}
-
 /** Same-site path: exactly one leading slash, no backslash, no ASCII controls. */
 function isSameSiteRelativePath(path: string): boolean {
   return (
@@ -45,10 +25,25 @@ function isSameSiteRelativePath(path: string): boolean {
   );
 }
 
+/**
+ * Check every decoded layer, then return the original string. Only a decode
+ * failure on the raw input falls back. A later layer that cannot be decoded
+ * (for example "100%" after "100%25") keeps the original value.
+ */
 function acceptPath(path: string, fallback: string): string {
-  const decoded = decodeRedirectTarget(path);
-  if (decoded === null || !isSameSiteRelativePath(decoded)) return fallback;
-  return decoded;
+  let current = path;
+  for (let i = 0; i < 5; i += 1) {
+    if (!isSameSiteRelativePath(current)) return fallback;
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(current);
+    } catch {
+      return i === 0 ? fallback : path;
+    }
+    if (decoded === current) return path;
+    current = decoded;
+  }
+  return fallback;
 }
 
 export function resolvePostAuthRedirect(state: RedirectState, fallback = '/'): string {

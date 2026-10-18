@@ -83,7 +83,19 @@ describe('resolvePostAuthRedirect', () => {
     expect(resolvePostAuthRedirect('/\\evil.com')).toBe('/');
     expect(resolvePostAuthRedirect('https://evil.com')).toBe('/');
     expect(resolvePostAuthRedirect('/%2509/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%2F/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%252F/evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/%5Cevil.com')).toBe('/');
     expect(resolvePostAuthRedirect('/%E0%A4%A')).toBe('/');
     expect(resolvePostAuthRedirect('/cards/1?x=1#y')).toBe('/cards/1?x=1#y');
+  });
+
+  it('returns encoded query values unchanged when every decoded layer is same-site', () => {
+    expect(resolvePostAuthRedirect('/trade?card=a%26b&kind=sell')).toBe(
+      '/trade?card=a%26b&kind=sell',
+    );
+    expect(resolvePostAuthRedirect('/trade?card=foo%23bar')).toBe('/trade?card=foo%23bar');
+    expect(resolvePostAuthRedirect('/trade?card=100%25')).toBe('/trade?card=100%25');
+    expect(resolvePostAuthRedirect('/trade?card=a%2Bb')).toBe('/trade?card=a%2Bb');
   });
 });
