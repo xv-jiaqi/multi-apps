@@ -112,6 +112,20 @@ cd /opt/cardhub/edge/deploy/edge
 docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d caddy
 ```
 
+Compose bind-mounts this directory at `/etc/caddy`. A push to `main` syncs
+those files and reloads Caddy only when the running container already sees
+them. It does not recreate the container. The container still running from
+the old single-file `Caddyfile` mount cannot see a replaced file; the deploy
+stops there, before the app rollout, and leaves that container running.
+Switch it once, when a few seconds of downtime for every domain is acceptable:
+
+Actions → Cardhub Deploy → Run workflow → environment `staging`, image tag
+`sha-<full git sha>` (staging also accepts `main`), `recreate_edge` checked.
+
+Until that run finishes, do not restart the current Caddy container. A
+restart would read the stale `Caddyfile` inode and the proxy would not come
+back.
+
 For GitHub Actions deploys, configure environment-scoped secrets:
 
 - `DEPLOY_HOST`

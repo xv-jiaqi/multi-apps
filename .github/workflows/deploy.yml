@@ -15,6 +15,11 @@ on:
         description: Image tag to deploy. Production requires sha-<full-git-sha>; staging also accepts main.
         required: true
         default: main
+      recreate_edge:
+        description: Recreate the shared edge Caddy container so it picks up the directory mount. Briefly interrupts every domain. Leave this off unless you mean to do that switch.
+        required: false
+        type: boolean
+        default: false
   workflow_run:
     workflows: ['CI']
     branches: [main]
@@ -164,6 +169,11 @@ jobs:
 
       - name: Sync edge files
         shell: bash
+        env:
+          # workflow_run has no inputs. Only an explicit manual true may recreate.
+          RECREATE_EDGE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.recreate_edge == 'true' }}
+          DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
+          DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}
         run: |
           set -euo pipefail
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
@@ -179,10 +189,17 @@ jobs:
           after="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
             "cd ${edge_dir_q} 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 || true")"
 
-          if [ -n "${before}" ] && [ "${before}" != "${after}" ]; then
-            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-              'caddy_id="$(docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env -f /opt/cardhub/edge/deploy/edge/docker-compose.yml ps -q caddy 2>/dev/null || true)"; if [ -n "$caddy_id" ]; then docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env -f /opt/cardhub/edge/deploy/edge/docker-compose.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile; fi'
+          flags=""
+          if [ "${RECREATE_EDGE}" = "true" ]; then
+            flags="${flags} --recreate"
           fi
+          if [ -n "${before}" ] && [ "${before}" != "${after}" ]; then
+            flags="${flags} --changed"
+          fi
+          env_q="$(printf '%q' "${DEPLOY_ENVIRONMENT}")"
+          tag_q="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
+            "EDGE_ENVIRONMENT=${env_q} EDGE_IMAGE_TAG=${tag_q} bash ${edge_dir_q}/apply-edge-config.sh${flags}"
 
       - name: Deploy on VPS
         shell: bash
