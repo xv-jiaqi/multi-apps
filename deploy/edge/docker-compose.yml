@@ -15,8 +15,11 @@ services:
       STAGING_WEB_DOMAIN: ${STAGING_WEB_DOMAIN}
       STAGING_API_DOMAIN: ${STAGING_API_DOMAIN}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./optional:/etc/caddy/optional:ro
+      # Mount the directory. A single-file bind of Caddyfile keeps the inode
+      # from container create, so tar (unlink + create) leaves Caddy reading
+      # the old file while optional/ — a directory mount — already shows the
+      # new one.
+      - ./:/etc/caddy:ro
       - caddy_data:/data
       - caddy_config:/config
     networks:
