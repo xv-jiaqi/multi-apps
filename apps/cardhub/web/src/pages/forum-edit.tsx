@@ -191,7 +191,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
           <CardHeader>
             <CardTitle className="text-2xl">{tt('forum.edit.title')}</CardTitle>
             <p className="text-sm text-neutral-600" aria-live="off">
-              {formatRemaining(Math.max(0, remainingMs), tt)}
+              {expired ? tt('forum.edit.expired') : formatRemaining(remainingMs, tt)}
             </p>
           </CardHeader>
           <CardContent className="space-y-4">

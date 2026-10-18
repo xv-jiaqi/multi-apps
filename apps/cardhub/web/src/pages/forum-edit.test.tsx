@@ -149,13 +149,17 @@ describe('ForumEditPage', () => {
       fireEvent.change(screen.getByLabelText('正文'), { target: { value: 'Changed body' } });
       expect(screen.getByRole('button', { name: '保存修改' })).toBeEnabled();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(document.querySelector('p[aria-live="off"]')).toHaveTextContent('还可编辑不到 1 分钟');
 
       await act(async () => {
         vi.advanceTimersByTime(45_000);
       });
 
+      const subtitle = document.querySelector('p[aria-live="off"]');
       expect(screen.getByRole('button', { name: '保存修改' })).toBeDisabled();
       expect(screen.getByRole('alert')).toHaveTextContent('已超过 5 分钟编辑时限');
+      expect(subtitle).toHaveTextContent('已超过 5 分钟编辑时限');
+      expect(subtitle).not.toHaveTextContent('还可编辑不到 1 分钟');
     } finally {
       vi.useRealTimers();
     }

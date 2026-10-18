@@ -20,6 +20,36 @@ describe('resolvePostAuthRedirect', () => {
     ).toBe('/reports?status=PENDING#latest');
   });
 
+  it('rejects newlines, carriage returns, and nulls in a string target', () => {
+    expect(resolvePostAuthRedirect(`/${'\n'}/evil.example`)).toBe('/');
+    expect(resolvePostAuthRedirect(`/${'\r'}/evil.example`)).toBe('/');
+    expect(resolvePostAuthRedirect(`/${'\0'}/evil.example`)).toBe('/');
+  });
+
+  it('rejects a control character in pathname, search, or hash', () => {
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: `/${'\n'}/evil.example`, search: '', hash: '' },
+      }),
+    ).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '/cards', search: `?${'\r'}q=1`, hash: '' },
+      }),
+    ).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '/cards', search: '', hash: `#${'\0'}c1` },
+      }),
+    ).toBe('/');
+  });
+
+  it('keeps a same-site card path with unicode, search, and hash', () => {
+    expect(resolvePostAuthRedirect('/cards/极光骑士?tab=comments#c1')).toBe(
+      '/cards/极光骑士?tab=comments#c1',
+    );
+  });
+
   it('rejects protocol-relative paths and URLs with a scheme', () => {
     expect(resolvePostAuthRedirect({ from: '//evil.example/phish' })).toBe('/');
     expect(resolvePostAuthRedirect({ from: 'https://evil.example/phish' })).toBe('/');

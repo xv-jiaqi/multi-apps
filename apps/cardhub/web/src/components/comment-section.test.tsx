@@ -161,7 +161,11 @@ describe('CommentSection (unauthenticated)', () => {
       const bars = row.querySelectorAll('.animate-pulse.rounded.bg-neutral-200');
       expect(bars).toHaveLength(2);
       expect(bars[0]).toHaveClass('h-3', 'w-24');
+      expect(bars[0]).not.toHaveClass('h-6');
+      expect(bars[0]?.parentElement).toHaveClass('flex', 'h-6', 'items-center');
       expect(bars[1]).toHaveClass('h-4', 'w-full');
+      expect(bars[1]).not.toHaveClass('h-5');
+      expect(bars[1]?.parentElement).toHaveClass('mt-2', 'flex', 'h-5', 'items-center');
     }
     expect(screen.queryByText('还没有评论，来抢沙发吧')).not.toBeInTheDocument();
     const loading = screen.getByText('加载中');
