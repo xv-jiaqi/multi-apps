@@ -18,7 +18,7 @@ function formatDateTime(value: string, locale: string) {
   return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-/** Three rows in the same shape as a comment: avatar circle and two text bars. */
+/** Three rows in the same shape as a comment: author line, then one body line. */
 function CommentListSkeleton() {
   return (
     <ul className="space-y-3">
@@ -27,12 +27,11 @@ function CommentListSkeleton() {
           key={index}
           className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
         >
-          <div className="flex items-center gap-3">
-            <div className="size-8 shrink-0 animate-pulse rounded-full bg-neutral-200" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-4 w-1/3 animate-pulse rounded bg-neutral-200" />
-              <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-200" />
-            </div>
+          <div className="flex h-6 items-center">
+            <div className="h-3 w-24 animate-pulse rounded bg-neutral-200" />
+          </div>
+          <div className="mt-2 flex h-5 items-center">
+            <div className="h-4 w-full animate-pulse rounded bg-neutral-200" />
           </div>
         </li>
       ))}

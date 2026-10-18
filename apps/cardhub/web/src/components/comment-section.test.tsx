@@ -154,8 +154,15 @@ describe('CommentSection (unauthenticated)', () => {
     const rows = screen.getAllByRole('listitem');
     expect(rows).toHaveLength(3);
     for (const row of rows) {
-      expect(row.querySelector('.animate-pulse.rounded-full')).toBeTruthy();
-      expect(row.querySelectorAll('.animate-pulse.bg-neutral-200')).toHaveLength(3);
+      const author = row.querySelector('.h-3.w-24');
+      const body = row.querySelector('.h-4.w-full');
+      expect(author).toHaveClass('h-3', 'w-24', 'animate-pulse');
+      expect(author).not.toHaveClass('h-6');
+      expect(author?.parentElement).toHaveClass('flex', 'h-6', 'items-center');
+      expect(body).toHaveClass('h-4', 'w-full', 'animate-pulse');
+      expect(body).not.toHaveClass('h-5');
+      expect(body?.parentElement).toHaveClass('mt-2', 'flex', 'h-5', 'items-center');
+      expect(row.querySelector('.rounded-full')).toBeNull();
       expect(row).not.toHaveClass('border-dashed');
     }
     expect(section?.querySelector('ul')).not.toHaveClass('border-dashed');
