@@ -38,24 +38,24 @@
     "swr": "^2.4.1"
   },
   "devDependencies": {
-    "@axe-core/react": "^4.11.3",
+    "@axe-core/react": "^4.14.0",
     "@repo/config-ts": "workspace:*",
-    "@tailwindcss/vite": "^4.2.3",
+    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^6.1.2",
     "@vitest/browser-playwright": "4.1.5",
     "@vitest/coverage-v8": "^4.1.5",
     "jsdom": "^29.1.1",
     "playwright": "^1.64.1",
-    "rollup-plugin-visualizer": "^7.0.1",
-    "tailwindcss": "^4.2.3",
+    "rollup-plugin-visualizer": "^7.1.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.0.9",
+    "vite": "^8.3.4",
     "vitest": "^4.1.5"
   }
 }
