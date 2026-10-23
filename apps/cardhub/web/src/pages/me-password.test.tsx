@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -27,17 +28,33 @@ const { clearActiveQueryClient, mutatePassword } = vi.hoisted(() => ({
   mutatePassword: vi.fn(),
 }));
 
+let passwordPending = false;
+const passwordPendingListeners = new Set<() => void>();
+
+function setPasswordPending(pending: boolean) {
+  passwordPending = pending;
+  for (const listener of passwordPendingListeners) listener();
+}
+
 vi.mock('../lib/trpc', () => ({
   clearActiveQueryClient: () => clearActiveQueryClient(),
   trpc: {
     auth: {
       changePassword: {
         useMutation: (options: typeof passwordHandlers) => {
+          const [, setVersion] = useState(0);
+          useEffect(() => {
+            const listener = () => setVersion((version) => version + 1);
+            passwordPendingListeners.add(listener);
+            return () => {
+              passwordPendingListeners.delete(listener);
+            };
+          }, []);
           passwordHandlers.onSuccess = options.onSuccess;
           passwordHandlers.onError = options.onError;
           return {
             mutate: mutatePassword,
-            isPending: false,
+            isPending: passwordPending,
           };
         },
       },
@@ -110,6 +127,7 @@ beforeEach(() => {
   signOutHandlers.onError = undefined;
   clearActiveQueryClient.mockReset();
   mutatePassword.mockReset();
+  passwordPending = false;
 });
 
 describe('ChangePasswordPage', () => {
@@ -217,6 +235,57 @@ describe('ChangePasswordPage', () => {
       "Couldn't change your password. Try again.",
     );
     expect(screen.queryByText('出了点问题，请稍后再试')).not.toBeInTheDocument();
+  });
+
+  it('focuses the submit button after rate-limit and network errors once it is enabled', async () => {
+    const user = userEvent.setup();
+    renderPassword();
+    await user.type(screen.getByLabelText('当前密码'), 'old-password');
+    await user.type(screen.getByLabelText('新密码'), 'new-password');
+    await user.type(screen.getByLabelText('确认新密码'), 'new-password');
+    await user.click(screen.getByRole('button', { name: '修改密码' }));
+
+    act(() => {
+      setPasswordPending(true);
+    });
+    const busySubmit = screen.getByRole('button', { name: '正在修改…' });
+    expect(busySubmit).toBeDisabled();
+    screen.getByLabelText('当前密码').focus();
+    expect(document.activeElement).toBe(screen.getByLabelText('当前密码'));
+
+    act(() => {
+      passwordHandlers.onError?.({
+        message: 'Too many requests',
+        data: { code: 'TOO_MANY_REQUESTS', appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+      });
+    });
+    expect(busySubmit).toBeDisabled();
+    expect(document.activeElement).not.toBe(busySubmit);
+
+    act(() => {
+      setPasswordPending(false);
+    });
+    const afterRateLimit = screen.getByRole('button', { name: '修改密码' });
+    expect(afterRateLimit).toBeEnabled();
+    expect(document.activeElement).toBe(afterRateLimit);
+    expect(screen.getByRole('alert')).toHaveTextContent('尝试次数过多，请稍后再试');
+
+    act(() => {
+      setPasswordPending(true);
+    });
+    screen.getByLabelText('当前密码').focus();
+    act(() => {
+      passwordHandlers.onError?.({ message: 'Failed to fetch' });
+    });
+    expect(screen.getByRole('button', { name: '正在修改…' })).toBeDisabled();
+    expect(document.activeElement).not.toBe(screen.getByRole('button', { name: '正在修改…' }));
+    act(() => {
+      setPasswordPending(false);
+    });
+    const afterNetwork = screen.getByRole('button', { name: '修改密码' });
+    expect(afterNetwork).toBeEnabled();
+    expect(document.activeElement).toBe(afterNetwork);
+    expect(screen.getByRole('alert')).toHaveTextContent('修改失败，请重试');
   });
 
   it('stores the new token and returns to account security', async () => {

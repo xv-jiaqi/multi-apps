@@ -102,6 +102,7 @@ export const ChangePasswordPage = observer(function ChangePasswordPage() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<string | null>(null);
+  const [focusSubmit, setFocusSubmit] = useState(false);
   const submitRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -153,13 +154,21 @@ export const ChangePasswordPage = observer(function ChangePasswordPage() {
       }
       if (appCode === APP_ERROR_CODES.TOO_MANY_REQUESTS || code === 'TOO_MANY_REQUESTS') {
         setFormError(tt('me.password.errors.rateLimited'));
-        submitRef.current?.focus();
+        setFocusSubmit(true);
         return;
       }
       setFormError(tt('me.password.errors.failed'));
-      submitRef.current?.focus();
+      setFocusSubmit(true);
     },
   });
+
+  const busy = mutation.isPending;
+
+  useEffect(() => {
+    if (!focusSubmit || busy) return;
+    submitRef.current?.focus();
+    setFocusSubmit(false);
+  }, [focusSubmit, busy]);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -196,8 +205,6 @@ export const ChangePasswordPage = observer(function ChangePasswordPage() {
   };
 
   if (!session.isAuthenticated || !session.user) return null;
-
-  const busy = mutation.isPending;
 
   return (
     <PageShell>
