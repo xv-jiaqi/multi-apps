@@ -33,7 +33,7 @@ jobs:
       - run: pnpm --filter @cardhub/web --fail-if-no-match exec pnpm run build
       - run: pnpm --filter @cardhub/native --fail-if-no-match exec pnpm run build
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cardhub-desktop-${{ matrix.os }}
           path: apps/cardhub/native/src-tauri/target/release/bundle/**
