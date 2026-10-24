@@ -2,7 +2,7 @@ import { APP_ERROR_CODES } from '@repo/shared';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
 
 const utilsInvalidate = vi.fn();
@@ -42,6 +42,7 @@ const deleteMutationState: { isPending: boolean; variables: { id: string } | und
 
 vi.mock('../lib/trpc', () => {
   return {
+    clearActiveQueryClient: vi.fn(),
     trpc: {
       comments: {
         listForCard: {
@@ -110,6 +111,15 @@ vi.mock('../lib/trpc', () => {
 });
 
 import { CommentSection } from './comment-section';
+
+function LocationProbe() {
+  const location = useLocation();
+  return (
+    <p data-testid="where">
+      {location.pathname}|{JSON.stringify(location.state)}
+    </p>
+  );
+}
 
 function renderShell() {
   return render(
@@ -570,6 +580,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: /发布评论/ }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('评论太频繁，请稍后再试');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Too many requests');
     expect(screen.getByLabelText(/撰写评论/)).toHaveValue('wow');
   });
 
@@ -580,13 +591,6 @@ describe('CommentSection (authenticated)', () => {
       appCode: 'INTERNAL_SERVER_ERROR',
       code: 'INTERNAL_SERVER_ERROR',
       shown: '出了点问题，请稍后再试',
-    },
-    {
-      name: 'expired session',
-      message: '凭据无效或已过期',
-      appCode: 'UNAUTHORIZED',
-      code: 'UNAUTHORIZED',
-      shown: '登录已失效，请重新登录',
     },
     {
       name: 'zod validation',
@@ -653,5 +657,63 @@ describe('CommentSection (authenticated)', () => {
     expect(alert).not.toHaveTextContent(serverText);
     expect(alert).not.toHaveTextContent('NOT_A_REAL_CODE');
     expect(alert).not.toHaveTextContent('INTERNAL_SERVER_ERROR');
+  });
+
+  it('clears the session and returns to login when posting a comment is rejected', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('jwt.token', { id: 'u1', username: 'alice' });
+    mutateMock.mockImplementationOnce(
+      (
+        _input: unknown,
+        callbacks: {
+          onError: (error: { message: string; data?: { code?: string; appCode?: string } }) => void;
+        },
+      ) => {
+        callbacks.onError({
+          message: 'UNAUTHORIZED',
+          data: { code: 'UNAUTHORIZED', appCode: APP_ERROR_CODES.UNAUTHORIZED },
+        });
+      },
+    );
+    render(
+      <MemoryRouter initialEntries={['/cards/aurora-knight']}>
+        <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText(/撰写评论/), 'still here');
+    await user.click(screen.getByRole('button', { name: /发布评论/ }));
+
+    expect(rootStore.session.token).toBeNull();
+    expect(screen.getByTestId('where')).toHaveTextContent(
+      '/login|{"from":"/cards/aurora-knight","notice":"sessionExpired"}',
+    );
+    expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows localized copy for any other comment error and hides the raw payload', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('jwt.token', { id: 'u1', username: 'alice' });
+    mutateMock.mockImplementationOnce(
+      (
+        _input: unknown,
+        callbacks: { onError: (error: { message: string; data?: { code?: string } }) => void },
+      ) => {
+        callbacks.onError({
+          message: 'UNAUTHORIZED',
+          data: { code: 'UNAUTHORIZED' },
+        });
+      },
+    );
+    renderShell();
+
+    await user.type(screen.getByLabelText(/撰写评论/), 'wow');
+    await user.click(screen.getByRole('button', { name: /发布评论/ }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('出了点问题，请稍后再试');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('UNAUTHORIZED');
+    expect(rootStore.session.token).toBe('jwt.token');
   });
 });

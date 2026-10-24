@@ -2,8 +2,9 @@ import { observer } from 'mobx-react-lite';
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Button } from '@repo/ui-web';
-import { appErrorMessage, reportCreateInput, t, type ReportTargetType } from '@repo/shared';
+import { reportCreateInput, t, type ReportTargetType } from '@repo/shared';
 import { useStores } from '../stores/root-store';
+import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
 
 interface ReportButtonProps {
@@ -23,6 +24,7 @@ export const ReportButton = observer(function ReportButton({
 }: ReportButtonProps) {
   const { locale, session } = useStores();
   const location = useLocation();
+  const presentError = useAppMutationError();
   const tt = (key: string) => t(locale.locale, key);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
@@ -36,7 +38,8 @@ export const ReportButton = observer(function ReportButton({
       setReason('');
     },
     onError(err) {
-      setError(appErrorMessage(locale.locale, err.data?.appCode));
+      const message = presentError(err);
+      if (message) setError(message);
     },
   });
 

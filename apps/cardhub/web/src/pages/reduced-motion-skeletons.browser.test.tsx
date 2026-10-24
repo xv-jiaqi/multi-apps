@@ -27,6 +27,7 @@ const loadingQuery = {
 };
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       listings: { list: { invalidate: vi.fn() } },

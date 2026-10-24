@@ -2,7 +2,7 @@ import { APP_ERROR_CODES } from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
 import { TradePublishPage } from './trade-publish';
 
@@ -31,6 +31,7 @@ const publishHarness = vi.hoisted(() => ({
 }));
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       listings: {
@@ -151,6 +152,39 @@ describe('TradePublishPage', () => {
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('发布太频繁，请稍后再试');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Too many requests');
+  });
+
+  it('clears the session and returns to login when publishing is rejected', () => {
+    function Where() {
+      const location = useLocation();
+      return (
+        <p data-testid="where">
+          {location.pathname}|{JSON.stringify(location.state)}
+        </p>
+      );
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/trade/new']}>
+        <TradePublishPage />
+        <Where />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      publishHarness.onError?.({
+        message: 'UNAUTHORIZED',
+        data: { code: 'UNAUTHORIZED', appCode: APP_ERROR_CODES.UNAUTHORIZED },
+      });
+    });
+
+    expect(rootStore.session.token).toBeNull();
+    expect(screen.getByTestId('where')).toHaveTextContent(
+      '/login|{"from":"/trade/new","notice":"sessionExpired"}',
+    );
+    expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows the mapped validation copy instead of the raw server text', async () => {

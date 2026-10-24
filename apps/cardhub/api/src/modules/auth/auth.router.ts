@@ -9,6 +9,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 import { hashPassword, verifyPassword } from './password-hash';
 
+function sessionRejected(): TRPCError {
+  return new TRPCError({
+    code: 'UNAUTHORIZED',
+    message: '凭据无效或已过期',
+    cause: { appCode: APP_ERROR_CODES.UNAUTHORIZED },
+  });
+}
+
 @Injectable()
 export class AuthRouter {
   private readonly logger = new Logger(AuthRouter.name);
@@ -113,14 +121,12 @@ export class AuthRouter {
       changePassword: t.authedProcedure
         .input(changePasswordInput)
         .mutation(async ({ ctx, input }) => {
-          if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          if (!ctx.user) throw sessionRejected();
           const user = await prisma.user.findUnique({
             where: { id: ctx.user.sub },
             select: { id: true, username: true, password: true },
           });
-          if (!user) {
-            throw new TRPCError({ code: 'UNAUTHORIZED', message: '凭据无效或已过期' });
-          }
+          if (!user) throw sessionRejected();
 
           const matches = await verifyPassword(input.currentPassword, user.password);
           if (!matches.ok) {
@@ -156,7 +162,7 @@ export class AuthRouter {
         }),
 
       signOutAll: t.authedProcedure.mutation(async ({ ctx }) => {
-        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (!ctx.user) throw sessionRejected();
         await prisma.user.update({
           where: { id: ctx.user.sub },
           data: { tokenVersion: { increment: 1 } },
@@ -167,14 +173,12 @@ export class AuthRouter {
       me: t.authedProcedure
         .input(z.object({ token: z.string().max(4096) }).optional())
         .query(async ({ ctx }) => {
-          if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          if (!ctx.user) throw sessionRejected();
           const user = await prisma.user.findUnique({
             where: { id: ctx.user.sub },
             select: { id: true, email: true, username: true, role: true },
           });
-          if (!user) {
-            throw new TRPCError({ code: 'UNAUTHORIZED', message: '凭据无效或已过期' });
-          }
+          if (!user) throw sessionRejected();
           return user;
         }),
     });

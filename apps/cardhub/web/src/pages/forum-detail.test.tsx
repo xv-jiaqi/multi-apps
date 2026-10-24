@@ -171,7 +171,10 @@ vi.mock('../lib/trpc', () => ({
             onError,
           }: {
             onSuccess?: (reply: ReplyFixture) => void | Promise<void>;
-            onError?: (error: { message: string }) => void;
+            onError?: (error: {
+              message?: string;
+              data?: { code?: string; appCode?: string };
+            }) => void;
           }) => ({
             mutate: (input: unknown) => createReplyMutate(input, { onSuccess, onError }),
             isPending: false,
@@ -506,6 +509,30 @@ describe('ForumDetailPage replies pagination', () => {
 
     expect(await screen.findByText('forum notice: topicDeleted')).toBeInTheDocument();
     expect(topicsListInvalidate).toHaveBeenCalled();
+  });
+
+  it('shows not-found copy without retry wording when a reply hits a deleted topic', async () => {
+    rootStore.locale.setLocale('zh-CN');
+    rootStore.session.signIn('jwt.token', { id: 'user-current', username: 'alice' });
+    createReplyMutate.mockImplementation((_input, handlers) => {
+      handlers.onError?.({
+        message: '话题不存在',
+        data: { code: 'NOT_FOUND' },
+      });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText('撰写回帖'), 'reply to a deleted topic');
+    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+
+    const notice = await screen.findByText('内容不存在或已被删除');
+    expect(notice).not.toHaveTextContent('重试');
+    expect(notice).not.toHaveTextContent('再试');
+    expect(notice.textContent ?? '').not.toMatch(/retry|try again/i);
+    expect(screen.queryByText('话题不存在')).not.toBeInTheDocument();
+    expect(screen.queryByText('操作没有完成，请稍后再试')).not.toBeInTheDocument();
+    expect(rootStore.session.token).toBe('jwt.token');
   });
 
   it('invalidates both topic detail and replies list after posting a reply', async () => {

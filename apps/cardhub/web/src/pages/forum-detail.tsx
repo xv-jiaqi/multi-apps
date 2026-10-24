@@ -19,6 +19,7 @@ import { MarkdownView } from '../components/markdown-view';
 import { ReportButton } from '../components/report-button';
 import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
+import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
 
 interface TopicReply {
@@ -52,6 +53,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const { locale, session } = useStores();
   const navigate = useNavigate();
   const location = useLocation();
+  const presentError = useAppMutationError();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
   const topicQuery = trpc.forum.topics.bySlug.useQuery({ slug }, { enabled: !!slug });
@@ -185,7 +187,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       ]);
     },
     onError(err) {
-      setReplyError(appErrorMessage(locale.locale, err.data?.appCode));
+      const message = presentError(err);
+      if (message) setReplyError(message);
     },
   });
 

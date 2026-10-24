@@ -140,7 +140,16 @@ function LoginProbe() {
 }
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
+    auth: {
+      signOutAll: {
+        useMutation: () => ({
+          mutate: vi.fn(),
+          isPending: false,
+        }),
+      },
+    },
     search: {
       global: {
         useQuery: () => ({
@@ -458,5 +467,30 @@ describe('MePage', () => {
     await user.click(screen.getByRole('link', { name: '我的评论4' }));
 
     await waitFor(() => expect(screen.getByRole('heading', { name: '我的评论 4' })).toHaveFocus());
+  });
+
+  it('adds account security as the fourth anchor without a count', () => {
+    renderMe();
+
+    const link = screen.getByRole('link', { name: '账号安全' });
+    expect(link).toHaveAttribute('href', '#me-security');
+    expect(link.textContent).toBe('账号安全');
+    expect(screen.getByRole('heading', { name: '账号安全' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '修改密码' })).toHaveAttribute('href', '/me/password');
+    expect(screen.getByRole('button', { name: '退出所有设备' })).toBeInTheDocument();
+  });
+
+  it('focuses the password success notice from the change-password redirect', async () => {
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/me', state: { notice: 'passwordChanged' } }]}>
+        <Routes>
+          <Route path="/me" element={<MePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const notice = await screen.findByRole('status');
+    expect(notice).toHaveTextContent('密码已修改，其他设备已退出登录。');
+    await waitFor(() => expect(notice).toHaveFocus());
   });
 });
