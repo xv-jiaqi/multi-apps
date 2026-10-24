@@ -1,7 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { t, type Locale, type ReportResolveAction, type ReportStatus } from '@repo/shared';
+import {
+  appErrorMessage,
+  t,
+  type Locale,
+  type ReportResolveAction,
+  type ReportStatus,
+} from '@repo/shared';
 import { Button } from '@repo/ui-web';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -169,7 +175,9 @@ export const ReportsListPage = observer(function ReportsListPage() {
             ) : query.isError ? (
               <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
                 <p className="font-medium">{tt('state.error')}</p>
-                <p className="mt-1 break-all text-xs opacity-80">{query.error.message}</p>
+                <p className="mt-1 break-all text-xs opacity-80">
+                  {appErrorMessage(locale.locale, query.error.data?.appCode)}
+                </p>
                 <button
                   type="button"
                   onClick={() => query.refetch()}

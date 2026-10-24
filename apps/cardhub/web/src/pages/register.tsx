@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { observer } from 'mobx-react-lite';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { registerInput, t } from '@repo/shared';
+import { APP_ERROR_CODES, appErrorMessage, registerInput, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -29,7 +29,11 @@ export const RegisterPage = observer(function RegisterPage() {
       navigate(redirectTo, { replace: true });
     },
     onError(err) {
-      setError(err.message);
+      if (err.data?.appCode === APP_ERROR_CODES.CONFLICT) {
+        setError(tt('auth.register.conflict'));
+        return;
+      }
+      setError(appErrorMessage(locale.locale, err.data?.appCode));
     },
   });
 

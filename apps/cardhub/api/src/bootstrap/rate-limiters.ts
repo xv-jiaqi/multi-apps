@@ -51,7 +51,7 @@ function trpcTooManyRequestsError(path: string | undefined) {
       message: 'Too many requests',
       code: -32029,
       data: {
-        code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+        code: 'TOO_MANY_REQUESTS',
         appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
         httpStatus: 429,
         ...(path ? { path } : {}),

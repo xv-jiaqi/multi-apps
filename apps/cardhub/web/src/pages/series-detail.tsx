@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { t } from '@repo/shared';
+import { appErrorMessage, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -142,7 +142,9 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
             ]}
           />
           <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
-            {isNotFound ? tt('state.notFound') : (query.error?.message ?? tt('state.error'))}
+            {isNotFound
+              ? tt('state.notFound')
+              : appErrorMessage(locale.locale, query.error?.data?.appCode)}
           </p>
         </div>
       </PageShell>

@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router';
-import { t } from '@repo/shared';
+import { appErrorMessage, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -37,7 +37,9 @@ export const SeriesListPage = observer(function SeriesListPage() {
         ) : query.isError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
             <p className="font-medium">{tt('state.error')}</p>
-            <p className="mt-1 break-all text-xs opacity-80">{query.error.message}</p>
+            <p className="mt-1 break-all text-xs opacity-80">
+              {appErrorMessage(locale.locale, query.error.data?.appCode)}
+            </p>
             <button
               type="button"
               onClick={() => query.refetch()}

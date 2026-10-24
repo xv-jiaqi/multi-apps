@@ -23,6 +23,7 @@ import {
   LISTING_LANGUAGE_VALUES,
   TRADE_CURRENCY_VALUES,
   APP_ERROR_CODES,
+  appErrorMessage,
   listingPublishInput,
   t,
   type ListingCondition,
@@ -140,9 +141,9 @@ export const TradePublishPage = observer(function TradePublishPage() {
     },
     onError(err) {
       setFormError(
-        err.data?.code === APP_ERROR_CODES.TOO_MANY_REQUESTS
+        err.data?.appCode === APP_ERROR_CODES.TOO_MANY_REQUESTS
           ? tt('trade.publish.rateLimited')
-          : err.message,
+          : appErrorMessage(locale.locale, err.data?.appCode),
       );
     },
   });

@@ -114,7 +114,7 @@ describe('auth session revocation', () => {
     const current = await usersMe(app, nextToken);
     expect(old.status).toBe(401);
     expect(old.body.error.data.code).toBe('UNAUTHORIZED');
-    expect(old.body.error.data).not.toHaveProperty('appCode');
+    expect(old.body.error.data.appCode).toBe(APP_ERROR_CODES.UNAUTHORIZED);
     expect(other.status).toBe(401);
     expect(current.status).toBe(200);
     expect(resultData(current.body)).toEqual(expect.objectContaining({ id: registered.id }));
@@ -184,14 +184,14 @@ describe('auth session revocation', () => {
       'username',
     ]);
     expect(inputOnly.status).toBe(401);
-    expect(inputOnly.body.error.data).not.toHaveProperty('appCode');
+    expect(inputOnly.body.error.data.appCode).toBe(APP_ERROR_CODES.UNAUTHORIZED);
 
     const oversizeToken = await request(app.getHttpServer())
       .get('/trpc/auth.me')
       .query({ input: JSON.stringify({ token: 't'.repeat(4097) }) })
       .set('Authorization', `Bearer ${registered.token}`);
     expect(oversizeToken.status).toBe(400);
-    expect(oversizeToken.body.error.data).not.toHaveProperty('appCode');
+    expect(oversizeToken.body.error.data.appCode).toBe(APP_ERROR_CODES.VALIDATION);
   });
 
   it('returns WRONG_PASSWORD and SAME_PASSWORD on error.data.appCode', async () => {
@@ -221,7 +221,7 @@ describe('auth session revocation', () => {
     expect(same.body.error.message).toBe('新密码不能和当前密码相同');
   });
 
-  it('omits appCode when the error has no mapped business code', async () => {
+  it('returns NOT_FOUND with appCode when a card is missing', async () => {
     const response = await request(app.getHttpServer())
       .get('/trpc/cards.bySlug')
       .query({ input: JSON.stringify({ slug: 'missing-session-card' }) });
@@ -229,8 +229,7 @@ describe('auth session revocation', () => {
     expect(response.status).toBe(404);
     expect(response.body.error.data.code).toBe('NOT_FOUND');
     expect(response.body.error.message).toBe('卡牌不存在');
-    expect(response.body.error.data).not.toHaveProperty('appCode');
-    expect(JSON.stringify(response.body)).not.toContain('"appCode"');
+    expect(response.body.error.data.appCode).toBe(APP_ERROR_CODES.NOT_FOUND);
   });
 
   it('rejects an oversize password with 400 and no password or parser text', async () => {
@@ -247,7 +246,7 @@ describe('auth session revocation', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error.data.code).toBe('BAD_REQUEST');
-    expect(response.body.error.data).not.toHaveProperty('appCode');
+    expect(response.body.error.data.appCode).toBe(APP_ERROR_CODES.VALIDATION);
     const serialized = JSON.stringify(response.body);
     expect(serialized).not.toContain(oversize);
     expect(serialized).not.toContain('is not valid JSON');
@@ -436,7 +435,7 @@ describe('production error messages', () => {
       expect(serialized).not.toContain('\n');
       expect(serialized).not.toContain('at ');
       expect(response.body.error.data).not.toHaveProperty('stack');
-      expect(response.body.error.data).not.toHaveProperty('appCode');
+      expect(response.body.error.data.appCode).toBe(APP_ERROR_CODES.INTERNAL_SERVER_ERROR);
       expect(leakedText).not.toBe(serialized);
     } finally {
       findUnique.mockRestore();
