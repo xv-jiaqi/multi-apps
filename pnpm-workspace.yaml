@@ -19,7 +19,13 @@ overrides:
   browserslist: '^4.28.7'
   deepmerge-ts: '^8.0.0'
   ip-address: '^10.3.1'
-  multer: '^2.3.0'
+  # GHSA-27r3-jxmh-p828: express 5.2.1 depends on body-parser ^2.2.1, which
+  # resolved to 2.2.2. Only the 2.x line is replaced, so express 4's
+  # body-parser 1.20.4 stays on 1.x.
+  'body-parser@>=2.0.0 <2.4.0': '^2.4.0'
+  # GHSA-q7qp-rjg7-q26m: @nestjs/platform-express depends on multer 2.1.1.
+  # The previous override ^2.3.0 still resolved to 2.4.0, inside >=2.0.0 <2.5.0.
+  multer: '^2.5.0'
   proxy-addr: '^2.0.8'
 
 # All ignored advisories live in transitive deps of @cardhub/miniapp's
