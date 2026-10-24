@@ -83,6 +83,24 @@ describe('catalog import', () => {
     expect(calls).toHaveLength(0);
   });
 
+  it('shows mapped Chinese copy when the import procedure returns a zod error', async () => {
+    const user = userEvent.setup();
+    const raw = '[{"code":"invalid_type","message":"Required"}] VALIDATION';
+    importImpl.current = async () => {
+      throw { message: raw, data: { code: 'BAD_REQUEST', appCode: 'VALIDATION' } };
+    };
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: '预览' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('填写的内容不符合要求，请修改后再试');
+    expect(alert).not.toHaveTextContent('invalid_type');
+    expect(alert).not.toHaveTextContent('Required');
+    expect(alert).not.toHaveTextContent('VALIDATION');
+  });
+
   it('maps statuses to chips, blocks import while errors remain, and invalidates a stale preview', async () => {
     const user = userEvent.setup();
     const rows = [

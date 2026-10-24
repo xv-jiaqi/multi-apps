@@ -117,9 +117,16 @@ function hasInternalCause(cause: unknown, depth: number): boolean {
   return false;
 }
 
-function publicErrorMessage(message: string, cause: unknown): string {
+function publicErrorMessage(
+  message: string,
+  code: string,
+  httpStatus: number | undefined,
+  cause: unknown,
+): string {
   if (process.env.NODE_ENV !== 'production') return message;
-  if (hasInternalCause(cause, 0) || INTERNAL_MESSAGE_PATTERN.test(message)) {
+  const serverFailure =
+    code === 'INTERNAL_SERVER_ERROR' || (typeof httpStatus === 'number' && httpStatus >= 500);
+  if (serverFailure || hasInternalCause(cause, 0) || INTERNAL_MESSAGE_PATTERN.test(message)) {
     return t('zh-CN', 'error.internal');
   }
   return message;
@@ -128,6 +135,20 @@ function publicErrorMessage(message: string, cause: unknown): string {
 function readAppCode(cause: unknown): string | undefined {
   if (typeof cause !== 'object' || cause === null || !('appCode' in cause)) return undefined;
   return isAppErrorCode(cause.appCode) ? cause.appCode : undefined;
+}
+
+function isZodCause(cause: unknown): boolean {
+  if (typeof cause !== 'object' || cause === null) return false;
+  const named = cause as { name?: unknown; issues?: unknown };
+  return named.name === 'ZodError' || Array.isArray(named.issues);
+}
+
+function resolvedAppCode(error: { code: string; cause?: unknown }): string {
+  const fromCause = readAppCode(error.cause);
+  if (fromCause) return fromCause;
+  if (isZodCause(error.cause)) return APP_ERROR_CODES.VALIDATION;
+  if (isAppErrorCode(error.code)) return error.code;
+  return APP_ERROR_CODES.UNKNOWN;
 }
 
 function sanitizeAdminCatalogError(cause: unknown): AdminCatalogErrorDetails | undefined {
@@ -160,18 +181,18 @@ function sessionRejected(): TRPCError {
 const trpc = initTRPC.context<TrpcContext>().create({
   errorFormatter({ shape, error }) {
     const adminCatalogError = sanitizeAdminCatalogError(error.cause);
-    const appCode = readAppCode(error.cause);
+    const appCode = resolvedAppCode(error);
     const data = {
       ...shape.data,
       ...(adminCatalogError ? { adminCatalogError } : {}),
-      ...(appCode ? { appCode } : {}),
+      appCode,
     };
     if (process.env.NODE_ENV === 'production') {
       delete data.stack;
     }
     return {
       ...shape,
-      message: publicErrorMessage(shape.message, error.cause),
+      message: publicErrorMessage(shape.message, error.code, shape.data.httpStatus, error.cause),
       data,
     };
   },

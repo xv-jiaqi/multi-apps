@@ -81,14 +81,22 @@ export class AuthRouter {
           },
         });
         if (!user) {
-          throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: '用户名或密码错误',
+            cause: { appCode: APP_ERROR_CODES.INVALID_CREDENTIALS },
+          });
         }
 
         const check = await verifyPassword(input.password, user.password, {
           upgrade: prehashWrite,
         });
         if (!check.ok) {
-          throw new TRPCError({ code: 'UNAUTHORIZED', message: '用户名或密码错误' });
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: '用户名或密码错误',
+            cause: { appCode: APP_ERROR_CODES.INVALID_CREDENTIALS },
+          });
         }
         if (check.upgradedHash) {
           try {

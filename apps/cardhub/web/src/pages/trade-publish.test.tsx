@@ -147,10 +147,7 @@ describe('TradePublishPage', () => {
     act(() => {
       publishHarness.onError?.({
         message: 'Too many requests',
-        data: {
-          code: 'TOO_MANY_REQUESTS',
-          appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
-        },
+        data: { code: 'TOO_MANY_REQUESTS', appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
       });
     });
 
@@ -188,6 +185,27 @@ describe('TradePublishPage', () => {
     );
     expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows the mapped validation copy instead of the raw server text', async () => {
+    render(
+      <MemoryRouter initialEntries={['/trade/new']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      publishHarness.onError?.({
+        message: 'Must be a kebab-case slug',
+        data: { code: 'BAD_REQUEST', appCode: 'VALIDATION' },
+      });
+    });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('填写的内容不符合要求，请修改后再试');
+    expect(alert).not.toHaveTextContent('kebab-case');
+    expect(alert).not.toHaveTextContent('VALIDATION');
+    expect(alert).not.toHaveTextContent('BAD_REQUEST');
   });
 
   it('falls back to a text link when a preview image fails to load', async () => {

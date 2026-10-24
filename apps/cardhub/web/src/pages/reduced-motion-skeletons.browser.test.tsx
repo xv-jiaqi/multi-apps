@@ -87,8 +87,9 @@ beforeEach(async () => {
   await commands.emulateReducedMotion('reduce');
 });
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  await commands.emulateReducedMotion('no-preference');
 });
 
 describe('skeleton motion under prefers-reduced-motion', () => {

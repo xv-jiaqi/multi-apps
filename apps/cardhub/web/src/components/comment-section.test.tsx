@@ -584,6 +584,81 @@ describe('CommentSection (authenticated)', () => {
     expect(screen.getByLabelText(/撰写评论/)).toHaveValue('wow');
   });
 
+  it.each([
+    {
+      name: 'server 500',
+      message: 'RAW_SERVER_Prisma_boom INTERNAL_SERVER_ERROR',
+      appCode: 'INTERNAL_SERVER_ERROR',
+      code: 'INTERNAL_SERVER_ERROR',
+      shown: '出了点问题，请稍后再试',
+    },
+    {
+      name: 'zod validation',
+      message: '评论不能为空',
+      appCode: 'VALIDATION',
+      code: 'BAD_REQUEST',
+      shown: '填写的内容不符合要求，请修改后再试',
+    },
+  ])(
+    'shows Chinese copy for a comment $name and hides the raw payload',
+    async ({ message, appCode, code, shown }) => {
+      const user = userEvent.setup();
+      mutateMock.mockImplementationOnce(
+        (
+          _input: unknown,
+          callbacks: {
+            onError: (error: {
+              message: string;
+              data?: { code?: string; appCode?: string };
+            }) => void;
+          },
+        ) => {
+          callbacks.onError({ message, data: { code, appCode } });
+        },
+      );
+      renderShell();
+
+      await user.type(screen.getByLabelText(/撰写评论/), 'wow');
+      await user.click(screen.getByRole('button', { name: /发布评论/ }));
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent(shown);
+      expect(alert).not.toHaveTextContent('账号或密码不正确');
+      expect(alert).not.toHaveTextContent(message);
+      expect(alert).not.toHaveTextContent(appCode);
+      expect(alert).not.toHaveTextContent(code);
+    },
+  );
+
+  it('shows English copy when the server message is the Chinese production sentence', async () => {
+    rootStore.locale.setLocale('en-US');
+    const user = userEvent.setup();
+    const serverText = '出了点问题，请稍后再试';
+    mutateMock.mockImplementationOnce(
+      (
+        _input: unknown,
+        callbacks: {
+          onError: (error: { message: string; data?: { code?: string; appCode?: string } }) => void;
+        },
+      ) => {
+        callbacks.onError({
+          message: serverText,
+          data: { code: 'INTERNAL_SERVER_ERROR', appCode: 'NOT_A_REAL_CODE' },
+        });
+      },
+    );
+    renderShell();
+
+    await user.type(screen.getByLabelText(/撰写评论|Write a comment/), 'wow');
+    await user.click(screen.getByRole('button', { name: /发布评论|Post comment/ }));
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Something went wrong. Please try again.');
+    expect(alert).not.toHaveTextContent(serverText);
+    expect(alert).not.toHaveTextContent('NOT_A_REAL_CODE');
+    expect(alert).not.toHaveTextContent('INTERNAL_SERVER_ERROR');
+  });
+
   it('clears the session and returns to login when posting a comment is rejected', async () => {
     const user = userEvent.setup();
     rootStore.session.signIn('jwt.token', { id: 'u1', username: 'alice' });
@@ -637,7 +712,7 @@ describe('CommentSection (authenticated)', () => {
     await user.type(screen.getByLabelText(/撰写评论/), 'wow');
     await user.click(screen.getByRole('button', { name: /发布评论/ }));
 
-    expect(screen.getByRole('alert')).toHaveTextContent('操作没有完成，请稍后再试');
+    expect(screen.getByRole('alert')).toHaveTextContent('出了点问题，请稍后再试');
     expect(screen.getByRole('alert')).not.toHaveTextContent('UNAUTHORIZED');
     expect(rootStore.session.token).toBe('jwt.token');
   });

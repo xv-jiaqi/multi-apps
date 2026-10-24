@@ -4,35 +4,6 @@ export const SUPPORTED_LOCALES = ['zh-CN', 'en-US'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = 'zh-CN';
 
-/**
- * Business error codes shared by the API and web (CH-211, CH-212, CH-209).
- * Add new codes here. Do not copy these strings into api or web.
- */
-export const APP_ERROR_CODES = {
-  UNAUTHORIZED: 'UNAUTHORIZED',
-  WRONG_PASSWORD: 'WRONG_PASSWORD',
-  SAME_PASSWORD: 'SAME_PASSWORD',
-  TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
-} satisfies {
-  readonly UNAUTHORIZED: 'UNAUTHORIZED';
-  readonly WRONG_PASSWORD: 'WRONG_PASSWORD';
-  readonly SAME_PASSWORD: 'SAME_PASSWORD';
-  readonly TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS';
-};
-
-export type AppErrorCode = (typeof APP_ERROR_CODES)[keyof typeof APP_ERROR_CODES];
-
-const APP_ERROR_CODE_VALUES: readonly AppErrorCode[] = [
-  APP_ERROR_CODES.UNAUTHORIZED,
-  APP_ERROR_CODES.WRONG_PASSWORD,
-  APP_ERROR_CODES.SAME_PASSWORD,
-  APP_ERROR_CODES.TOO_MANY_REQUESTS,
-];
-
-export function isAppErrorCode(value: unknown): value is AppErrorCode {
-  return typeof value === 'string' && APP_ERROR_CODE_VALUES.some((code) => code === value);
-}
-
 export const ADMIN_CATALOG_ERROR_CODES = [
   'REQUIRED',
   'TOO_LONG',
@@ -47,3 +18,39 @@ export const ADMIN_CATALOG_ERROR_CODES = [
 ] as const;
 
 export type AdminCatalogErrorCode = (typeof ADMIN_CATALOG_ERROR_CODES)[number];
+
+/** Stable codes on `error.data.appCode`. One object, shared by the API and the web. */
+export const APP_ERROR_CODES = {
+  PARSE_ERROR: 'PARSE_ERROR',
+  BAD_REQUEST: 'BAD_REQUEST',
+  VALIDATION: 'VALIDATION',
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+  NOT_IMPLEMENTED: 'NOT_IMPLEMENTED',
+  BAD_GATEWAY: 'BAD_GATEWAY',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+  GATEWAY_TIMEOUT: 'GATEWAY_TIMEOUT',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  METHOD_NOT_SUPPORTED: 'METHOD_NOT_SUPPORTED',
+  TIMEOUT: 'TIMEOUT',
+  CONFLICT: 'CONFLICT',
+  PRECONDITION_FAILED: 'PRECONDITION_FAILED',
+  PAYLOAD_TOO_LARGE: 'PAYLOAD_TOO_LARGE',
+  UNSUPPORTED_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
+  UNPROCESSABLE_CONTENT: 'UNPROCESSABLE_CONTENT',
+  TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+  CLIENT_CLOSED_REQUEST: 'CLIENT_CLOSED_REQUEST',
+  WRONG_PASSWORD: 'WRONG_PASSWORD',
+  SAME_PASSWORD: 'SAME_PASSWORD',
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type AppErrorCode = (typeof APP_ERROR_CODES)[keyof typeof APP_ERROR_CODES];
+
+const APP_ERROR_CODE_VALUES: ReadonlySet<string> = new Set(Object.values(APP_ERROR_CODES));
+
+export function isAppErrorCode(value: unknown): value is AppErrorCode {
+  return typeof value === 'string' && APP_ERROR_CODE_VALUES.has(value);
+}

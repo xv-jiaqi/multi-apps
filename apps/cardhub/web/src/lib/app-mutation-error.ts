@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { t } from '@repo/shared';
+import { appErrorMessage, t } from '@repo/shared';
 import { clearActiveQueryClient } from './trpc';
 import { isSessionInvalidError } from './session-expiry';
 import { rootStore } from '../stores/root-store';
@@ -32,7 +32,7 @@ export function useAppMutationError() {
       if (appCode && copy?.[appCode]) return copy[appCode];
       const terminalKey = terminalCopyKey(appCode) ?? terminalCopyKey(readMutationCode(error));
       if (terminalKey) return t(locale, terminalKey);
-      return t(locale, 'error.actionFailed');
+      return appErrorMessage(locale, appCode);
     },
     [locale, location.hash, location.pathname, location.search, navigate],
   );

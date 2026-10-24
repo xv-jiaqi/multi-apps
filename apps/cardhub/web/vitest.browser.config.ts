@@ -92,6 +92,7 @@ export default defineConfig({
       '@testing-library/user-event',
       '@sentry/react',
       '@repo/shared',
+      'axe-core',
       '@repo/stores',
       'mobx',
       'mobx-react-lite',

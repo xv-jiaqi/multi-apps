@@ -180,14 +180,14 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
                 <td className="px-3 py-2">
                   <span
                     className={cn(
-                      'block w-16 animate-pulse rounded-sm bg-neutral-200',
+                      'block w-16 animate-pulse motion-reduce:animate-none rounded-sm bg-neutral-200',
                       ART_ASPECT.series,
                     )}
                   />
                 </td>
                 {Array.from({ length: 5 }, (_, cell) => (
                   <td key={cell} className="px-3 py-2">
-                    <span className="block h-4 animate-pulse rounded bg-neutral-200" />
+                    <span className="block h-4 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
                   </td>
                 ))}
               </tr>
