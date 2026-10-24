@@ -30,7 +30,7 @@ export const SeriesListPage = observer(function SeriesListPage() {
             {Array.from({ length: 6 }).map((_, idx) => (
               <li
                 key={idx}
-                className="h-56 animate-pulse rounded-2xl border border-white/60 bg-white/50"
+                className="h-56 animate-pulse motion-reduce:animate-none rounded-2xl border border-white/60 bg-white/50"
               />
             ))}
           </ul>

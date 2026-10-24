@@ -250,7 +250,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
         )
       ) : mode === 'edit' && editView === 'loading' ? (
         <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
-          <div className="h-4 w-40 animate-pulse rounded bg-neutral-200" />
+          <div className="h-4 w-40 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
         </div>
       ) : mode === 'edit' && !existing ? (
         <AdminEmpty>{tt('state.notFound')}</AdminEmpty>

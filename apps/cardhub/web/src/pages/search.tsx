@@ -77,7 +77,7 @@ function Field({
 
 function SearchSkeleton() {
   return (
-    <ul className={`${RESULT_LIST_CLASS} animate-pulse`}>
+    <ul className={`${RESULT_LIST_CLASS} animate-pulse motion-reduce:animate-none`}>
       {Array.from({ length: 3 }, (_, index) => (
         <li key={index} className="flex items-center gap-4 p-4">
           <span className="aspect-[63/88] w-10 shrink-0 rounded-sm bg-neutral-200" />

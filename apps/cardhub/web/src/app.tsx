@@ -76,7 +76,7 @@ function RouteFallback() {
       aria-live="polite"
       className="mx-auto flex min-h-[40vh] max-w-2xl items-center justify-center text-sm text-neutral-500"
     >
-      <span className="inline-block h-4 w-4 animate-pulse rounded-full bg-neutral-400" />
+      <span className="inline-block h-4 w-4 animate-pulse motion-reduce:animate-none rounded-full bg-neutral-400" />
     </div>
   );
 }

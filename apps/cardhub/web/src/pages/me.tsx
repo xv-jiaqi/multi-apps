@@ -102,7 +102,7 @@ function SectionSkeleton({ withThumb }: { withThumb?: boolean }) {
       {Array.from({ length: 3 }).map((_, index) => (
         <li
           key={index}
-          className={`grid animate-pulse gap-3 py-3 first:pt-0 last:pb-0 ${
+          className={`grid animate-pulse motion-reduce:animate-none gap-3 py-3 first:pt-0 last:pb-0 ${
             withThumb ? 'grid-cols-[auto_minmax(0,1fr)]' : ''
           }`}
         >
@@ -354,7 +354,7 @@ export const MePage = observer(function MePage() {
           <Card className="border-white/60 bg-white/70 backdrop-blur">
             <CardContent className="space-y-4 pt-6">
               {me.isLoading ? (
-                <div className="animate-pulse space-y-4">
+                <div className="animate-pulse motion-reduce:animate-none space-y-4">
                   <div className="space-y-2">
                     <div className="h-8 w-40 rounded bg-neutral-200" />
                     <div className="h-4 w-64 max-w-full rounded bg-neutral-200" />
