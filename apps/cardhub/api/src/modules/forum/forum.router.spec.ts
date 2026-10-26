@@ -40,6 +40,8 @@ function makeRouter() {
       delete: replyDelete,
     },
     user: { findUnique: userFindUnique },
+    auditLog: { create: jest.fn() },
+    $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
   const router = new ForumRouter(new TrpcBase(), prisma);
@@ -281,6 +283,7 @@ describe('ForumRouter.topics.delete', () => {
     topicFindUnique.mockResolvedValueOnce({
       id: 't-spam',
       userId: 'u-alice',
+      title: 'spam',
       createdAt: new Date(),
     });
     userFindUnique.mockResolvedValueOnce({ role: 'admin' });

@@ -1,6 +1,6 @@
 import axe from 'axe-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -224,6 +224,7 @@ beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
   window.matchMedia = vi.fn().mockReturnValue({ matches: true });
+  window.sessionStorage.removeItem('cardhub:legacyPasswordLater');
   rootStore.session.signOut();
   rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
 
@@ -506,6 +507,45 @@ describe('MePage', () => {
     expect(screen.getByRole('heading', { name: '账号安全' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '修改密码' })).toHaveAttribute('href', '/me/password');
     expect(screen.getByRole('button', { name: '退出所有设备' })).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: /旧版安全规则/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the legacy password hint on account security and hides the banner after Later', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('token', {
+      id: 'u1',
+      username: 'alice',
+      role: 'user',
+      passwordChangeRecommended: true,
+    });
+    renderMe();
+
+    const banner = screen.getByRole('status');
+    expect(banner).toHaveTextContent(
+      '你的密码是在旧版安全规则下设置的，建议修改一次密码，让账号得到完整保护。',
+    );
+    expect(banner).toHaveClass('border-amber-300', 'bg-amber-50', 'text-amber-900');
+    expect(banner).not.toHaveAttribute('role', 'alert');
+    expect(screen.getByRole('link', { name: '去修改密码' })).toHaveAttribute(
+      'href',
+      '/me/password',
+    );
+
+    const security = document.getElementById('me-security');
+    if (!security) throw new Error('missing #me-security');
+    expect(
+      within(security).getByText('建议修改密码：你的密码是在旧版安全规则下设置的。'),
+    ).toHaveClass('text-amber-900');
+    expect(within(security).queryByRole('button', { name: '稍后' })).not.toBeInTheDocument();
+    expect(within(security).getByRole('link', { name: '修改密码' })).toHaveClass('bg-brand-600');
+
+    await user.click(screen.getByRole('button', { name: '稍后' }));
+    expect(screen.queryByText(/旧版安全规则下设置的，建议修改一次密码/)).not.toBeInTheDocument();
+    expect(window.sessionStorage.getItem('cardhub:legacyPasswordLater')).toBe('1');
+    expect(document.getElementById('main')).toHaveFocus();
+    expect(
+      within(security).getByText('建议修改密码：你的密码是在旧版安全规则下设置的。'),
+    ).toBeInTheDocument();
   });
 
   it('focuses the password success notice from the change-password redirect', async () => {

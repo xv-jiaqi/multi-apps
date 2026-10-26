@@ -214,13 +214,18 @@ describe('CatalogSeriesPage delete', () => {
     expect(dialog).toHaveTextContent('37 条评论');
     expect(dialog).not.toHaveTextContent('SERIES_HAS_CARDS');
     const confirm = screen.getByRole('button', { name: '永久删除' });
+    const phrase = screen.getByRole('textbox', { name: /forge-of-titans/ });
+    const reason = screen.getByRole('textbox', { name: '删除原因（选填，只有管理员能看到）' });
     expect(confirm).toBeDisabled();
-    expect(screen.getByRole('textbox')).toHaveFocus();
+    expect(phrase).toHaveFocus();
+    expect(reason.compareDocumentPosition(phrase) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
 
-    await user.type(screen.getByRole('textbox'), ' Forge-of-titans ');
+    await user.type(phrase, ' Forge-of-titans ');
     expect(confirm).toBeDisabled();
-    await user.clear(screen.getByRole('textbox'));
-    await user.type(screen.getByRole('textbox'), ' forge-of-titans ');
+    await user.clear(phrase);
+    await user.type(phrase, ' forge-of-titans ');
     expect(confirm).toBeEnabled();
     await user.click(confirm);
 
@@ -290,10 +295,14 @@ describe('CatalogSeriesPage delete', () => {
     };
     renderPage();
     await user.click(screen.getByRole('button', { name: '删除「泰坦熔炉」' }));
-    await user.type(screen.getByRole('textbox'), 'forge-of-titans');
+    const reason = screen.getByRole('textbox', { name: '删除原因（选填，只有管理员能看到）' });
+    await user.type(reason, '  duplicate slug  ');
+    await user.type(screen.getByRole('textbox', { name: /forge-of-titans/ }), 'forge-of-titans');
     await user.click(screen.getByRole('button', { name: '永久删除' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('这个 slug 已被占用');
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(reason).toHaveValue('  duplicate slug  ');
+    expect(screen.getByRole('button', { name: '永久删除' })).toHaveFocus();
     expect(screen.queryByText('SLUG_TAKEN')).not.toBeInTheDocument();
   });
 });

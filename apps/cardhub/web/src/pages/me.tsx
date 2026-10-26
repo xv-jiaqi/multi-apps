@@ -811,9 +811,25 @@ export const MePage = observer(function MePage() {
                 <h3 className="text-sm font-semibold text-neutral-900">
                   {tt('me.security.password')}
                 </h3>
-                <p className="text-sm text-neutral-600">{tt('me.security.passwordHint')}</p>
+                <p
+                  className={
+                    session.user?.passwordChangeRecommended
+                      ? 'text-sm text-amber-900'
+                      : 'text-sm text-neutral-600'
+                  }
+                >
+                  {tt(
+                    session.user?.passwordChangeRecommended
+                      ? 'auth.legacyPassword.meHint'
+                      : 'me.security.passwordHint',
+                  )}
+                </p>
               </div>
-              <Button variant="outline" asChild className="w-full shrink-0 sm:w-auto">
+              <Button
+                variant={session.user?.passwordChangeRecommended ? 'default' : 'outline'}
+                asChild
+                className="w-full shrink-0 sm:w-auto"
+              >
                 <Link to="/me/password">{tt('me.security.changePassword')}</Link>
               </Button>
             </li>

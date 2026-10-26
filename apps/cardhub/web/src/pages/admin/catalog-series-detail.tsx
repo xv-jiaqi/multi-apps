@@ -106,11 +106,11 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
   const seriesName = series?.title ?? slug;
   const title = tt('admin.cards.caption', { series: seriesName });
 
-  const confirmDelete = async (card: PublicCard) => {
+  const confirmDelete = async (card: PublicCard, reason?: string) => {
     setRowError(null);
     setPendingSlug(card.slug);
     try {
-      await remove.mutateAsync({ slug: card.slug });
+      await remove.mutateAsync(reason ? { slug: card.slug, reason } : { slug: card.slug });
       setHidden((current) => new Set(current).add(card.slug));
       setConfirmingSlug(null);
       setNotice(tt('admin.cards.deleted', { name: card.name }));
@@ -322,7 +322,8 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                           }
                           cancelLabel={tt('admin.cancel')}
                           disabled={pendingSlug === card.slug}
-                          onConfirm={() => void confirmDelete(card)}
+                          askReason
+                          onConfirm={(reason) => void confirmDelete(card, reason)}
                           onCancel={() => {
                             focusDeleteSlug.current = card.slug;
                             setConfirmingSlug(null);

@@ -20,6 +20,7 @@ function makeRouter() {
   const commentFindUnique = jest.fn();
   const commentDelete = jest.fn();
   const userFindUnique = jest.fn();
+  const auditCreate = jest.fn();
   const prisma = {
     card: { findUnique: cardFindUnique },
     series: { findUnique: seriesFindUnique },
@@ -30,6 +31,8 @@ function makeRouter() {
       delete: commentDelete,
     },
     user: { findUnique: userFindUnique },
+    auditLog: { create: auditCreate },
+    $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
   const router = new CommentsRouter(new TrpcBase(), prisma);
@@ -52,6 +55,7 @@ function makeRouter() {
     commentFindUnique,
     commentDelete,
     userFindUnique,
+    auditCreate,
   };
 }
 
@@ -261,7 +265,11 @@ describe('CommentsRouter.delete', () => {
 
   it('allows an admin to delete another user comment', async () => {
     const { caller, commentFindUnique, commentDelete, userFindUnique } = makeRouter();
-    commentFindUnique.mockResolvedValueOnce({ id: 'cm-1', userId: 'u-alice' });
+    commentFindUnique.mockResolvedValueOnce({
+      id: 'cm-1',
+      userId: 'u-alice',
+      content: 'hi',
+    });
     userFindUnique.mockResolvedValueOnce({ role: 'admin' });
     commentDelete.mockResolvedValueOnce({ id: 'cm-1' });
 

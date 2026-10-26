@@ -1,6 +1,8 @@
-import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { cn } from '@repo/ui-web';
+import { DeleteReasonField } from '../delete-reason-field';
 import { RetryButton } from '../retry-button';
+import { useStores } from '../../stores/root-store';
 import { focusRing } from './catalog-utils';
 
 export const actionClass = `inline-flex min-h-6 items-center rounded px-1 ${focusRing}`;
@@ -113,6 +115,7 @@ export function AdminConfirmRow({
   confirmLabel,
   cancelLabel,
   disabled,
+  askReason = false,
   onConfirm,
   onCancel,
 }: {
@@ -121,15 +124,23 @@ export function AdminConfirmRow({
   confirmLabel: string;
   cancelLabel: string;
   disabled: boolean;
-  onConfirm: () => void;
+  askReason?: boolean;
+  onConfirm: (reason?: string) => void;
   onCancel: () => void;
 }) {
+  const { locale } = useStores();
   const promptId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
     cancelRef.current?.focus();
   }, []);
+
+  const confirm = () => {
+    const trimmed = reason.trim();
+    onConfirm(askReason && trimmed ? trimmed : undefined);
+  };
 
   return (
     <tr>
@@ -143,29 +154,43 @@ export function AdminConfirmRow({
               onCancel();
             }
           }}
-          className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs"
+          className={
+            askReason
+              ? 'flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+              : 'flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+          }
         >
-          <span id={promptId} className="mr-auto text-red-700">
+          <span id={promptId} className={askReason ? 'text-red-700' : 'mr-auto text-red-700'}>
             {label}
           </span>
-          <button
-            type="button"
-            aria-describedby={promptId}
-            disabled={disabled}
-            onClick={onConfirm}
-            className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
-          >
-            {confirmLabel}
-          </button>
-          <button
-            ref={cancelRef}
-            type="button"
-            disabled={disabled}
-            onClick={onCancel}
-            className={`inline-flex min-h-6 items-center rounded px-1 text-neutral-600 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
-          >
-            {cancelLabel}
-          </button>
+          {askReason ? (
+            <DeleteReasonField
+              locale={locale.locale}
+              value={reason}
+              readOnly={disabled}
+              onChange={setReason}
+            />
+          ) : null}
+          <div className={askReason ? 'flex justify-end gap-3' : 'contents'}>
+            <button
+              type="button"
+              aria-describedby={promptId}
+              disabled={disabled}
+              onClick={confirm}
+              className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
+            >
+              {confirmLabel}
+            </button>
+            <button
+              ref={cancelRef}
+              type="button"
+              disabled={disabled}
+              onClick={onCancel}
+              className={`inline-flex min-h-6 items-center rounded px-1 text-neutral-600 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
+            >
+              {cancelLabel}
+            </button>
+          </div>
         </div>
       </td>
     </tr>

@@ -20,7 +20,12 @@ const browserSessionDriver: SessionStorageDriver | null =
             if (!raw) return null;
             const parsed = JSON.parse(raw) as {
               token: string;
-              user: { id: string; username: string; role?: string };
+              user: {
+                id: string;
+                username: string;
+                role?: string;
+                passwordChangeRecommended?: boolean;
+              };
             };
             if (!parsed?.token || !parsed?.user) return null;
             return { token: parsed.token, user: parsed.user };

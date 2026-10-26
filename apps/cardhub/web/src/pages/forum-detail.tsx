@@ -13,6 +13,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { Pin } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { appErrorMessage, replyBodySchema, t } from '@repo/shared';
+import { DeleteReasonField } from '../components/delete-reason-field';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { MarkdownView } from '../components/markdown-view';
@@ -203,7 +204,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         navigate('/forum', { replace: true, state: { notice: 'topicDeleted' } });
         return;
       }
-      setConfirmingDelete(null);
+      const topic = topicQuery.data;
+      const keepReason =
+        session.isAdmin && topic !== undefined && session.user?.id !== topic.author.id;
       setDeleteError({
         kind: 'topic',
         message:
@@ -211,6 +214,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             ? tt('forum.detail.deleteTopicForbidden')
             : tt('forum.detail.deleteFailed'),
       });
+      if (keepReason) return;
+      setConfirmingDelete(null);
       focusDeleteButton({ kind: 'topic' });
     },
   });
@@ -250,7 +255,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         setDeleteError(null);
         return;
       }
-      setConfirmingDelete(null);
+      const reply = visibleReplies.find((item) => item.id === variables.id);
+      const keepReason =
+        session.isAdmin && reply !== undefined && session.user?.id !== reply.author.id;
       setDeleteError({
         kind: 'reply',
         id: variables.id,
@@ -259,6 +266,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             ? tt('forum.detail.deleteReplyForbidden')
             : tt('forum.detail.deleteFailed'),
       });
+      if (keepReason) return;
+      setConfirmingDelete(null);
       focusDeleteButton({ kind: 'reply', id: variables.id });
     },
   });
@@ -648,8 +657,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 }
                 cancelLabel={tt('forum.detail.deleteCancel')}
                 disabled={deletingTopic}
+                showReason={session.isAdmin && session.user?.id !== topic.author.id}
                 cancelRef={cancelDeleteButtonRef}
-                onConfirm={() => deleteTopic.mutate({ id: topic.id })}
+                onConfirm={(reason) =>
+                  deleteTopic.mutate(reason ? { id: topic.id, reason } : { id: topic.id })
+                }
                 onCancel={() => {
                   setConfirmingDelete(null);
                   focusDeleteButton({ kind: 'topic' });
@@ -764,8 +776,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                         }
                         cancelLabel={tt('forum.detail.deleteCancel')}
                         disabled={deletingThisReply}
+                        showReason={session.isAdmin && session.user?.id !== reply.author.id}
                         cancelRef={cancelDeleteButtonRef}
-                        onConfirm={() => deleteReply.mutate({ id: reply.id })}
+                        onConfirm={(reason) =>
+                          deleteReply.mutate(reason ? { id: reply.id, reason } : { id: reply.id })
+                        }
                         onCancel={() => {
                           setConfirmingDelete(null);
                           focusDeleteButton({ kind: 'reply', id: reply.id });
@@ -894,6 +909,7 @@ function DeleteConfirmGroup({
   dangerLabel,
   cancelLabel,
   disabled,
+  showReason = false,
   cancelRef,
   onConfirm,
   onCancel,
@@ -902,11 +918,14 @@ function DeleteConfirmGroup({
   dangerLabel: string;
   cancelLabel: string;
   disabled: boolean;
+  showReason?: boolean;
   cancelRef: RefObject<HTMLButtonElement | null>;
-  onConfirm: () => void;
+  onConfirm: (reason?: string) => void;
   onCancel: () => void;
 }) {
+  const { locale } = useStores();
   const promptId = useId();
+  const [reason, setReason] = useState('');
   return (
     <div
       role="group"
@@ -919,29 +938,46 @@ function DeleteConfirmGroup({
           }
         }
       }}
-      className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs"
+      className={
+        showReason
+          ? 'mt-2 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+          : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+      }
     >
-      <span id={promptId} className="mr-auto text-red-700">
+      <span id={promptId} className={showReason ? 'text-red-700' : 'mr-auto text-red-700'}>
         {label}
       </span>
-      <button
-        type="button"
-        aria-describedby={promptId}
-        disabled={disabled}
-        onClick={onConfirm}
-        className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
-      >
-        {dangerLabel}
-      </button>
-      <button
-        ref={cancelRef}
-        type="button"
-        disabled={disabled}
-        onClick={onCancel}
-        className="inline-flex min-h-6 items-center rounded px-1 text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {cancelLabel}
-      </button>
+      {showReason ? (
+        <DeleteReasonField
+          locale={locale.locale}
+          value={reason}
+          readOnly={disabled}
+          onChange={setReason}
+        />
+      ) : null}
+      <div className={showReason ? 'flex justify-end gap-3' : 'contents'}>
+        <button
+          type="button"
+          aria-describedby={promptId}
+          disabled={disabled}
+          onClick={() => {
+            const trimmed = reason.trim();
+            onConfirm(showReason && trimmed ? trimmed : undefined);
+          }}
+          className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+        >
+          {dangerLabel}
+        </button>
+        <button
+          ref={cancelRef}
+          type="button"
+          disabled={disabled}
+          onClick={onCancel}
+          className="inline-flex min-h-6 items-center rounded px-1 text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {cancelLabel}
+        </button>
+      </div>
     </div>
   );
 }

@@ -99,11 +99,13 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
     void utils.series.list.invalidate();
   };
 
-  const confirmInline = async (series: AdminSeriesItem) => {
+  const confirmInline = async (series: AdminSeriesItem, reason?: string) => {
     setRowError(null);
     setPendingSlug(series.slug);
     try {
-      await remove.mutateAsync({ slug: series.slug, force: false });
+      await remove.mutateAsync(
+        reason ? { slug: series.slug, force: false, reason } : { slug: series.slug, force: false },
+      );
       hideSeries(series.slug);
       setConfirmingSlug(null);
       setNotice(tt('admin.series.deleted', { title: series.title }));
@@ -300,7 +302,8 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
                       }
                       cancelLabel={tt('admin.cancel')}
                       disabled={pendingSlug === series.slug}
-                      onConfirm={() => void confirmInline(series)}
+                      askReason
+                      onConfirm={(reason) => void confirmInline(series, reason)}
                       onCancel={() => {
                         focusDeleteSlug.current = series.slug;
                         setConfirmingSlug(null);
@@ -338,9 +341,11 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
           focusNoticeOnClose.current = false;
           statusRef.current?.focus();
         }}
-        onConfirm={async () => {
+        onConfirm={async (reason) => {
           if (!force) return;
-          const result = await remove.mutateAsync({ slug: force.slug, force: true });
+          const result = await remove.mutateAsync(
+            reason ? { slug: force.slug, force: true, reason } : { slug: force.slug, force: true },
+          );
           hideSeries(force.slug);
           const cards = result.cardCount ?? force.cardCount;
           focusNoticeOnClose.current = true;

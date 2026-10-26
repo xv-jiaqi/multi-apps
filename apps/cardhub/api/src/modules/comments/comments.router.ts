@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { commentInput, seriesCommentInput, slugSchema } from '@repo/shared';
+import { commentInput, optionalDeleteReason, seriesCommentInput, slugSchema } from '@repo/shared';
+import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -134,23 +135,25 @@ export class CommentsRouter {
         }),
 
       delete: t.authedProcedure
-        .input(z.object({ id: z.string().uuid() }))
+        .input(z.object({ id: z.string().uuid(), reason: optionalDeleteReason }))
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) {
             throw new TRPCError({ code: 'UNAUTHORIZED' });
           }
+          const actor = ctx.user;
 
           const comment = await prisma.comment.findUnique({
             where: { id: input.id },
-            select: { id: true, userId: true },
+            select: { id: true, userId: true, content: true },
           });
           if (!comment) {
             throw new TRPCError({ code: 'NOT_FOUND', message: '评论不存在' });
           }
 
-          if (comment.userId !== ctx.user.sub) {
+          const isSelf = comment.userId === actor.sub;
+          if (!isSelf) {
             const requester = await prisma.user.findUnique({
-              where: { id: ctx.user.sub },
+              where: { id: actor.sub },
               select: { role: true },
             });
             if (requester?.role !== 'admin') {
@@ -158,7 +161,22 @@ export class CommentsRouter {
             }
           }
 
-          await prisma.comment.delete({ where: { id: input.id } });
+          if (isSelf) {
+            await prisma.comment.delete({ where: { id: input.id } });
+          } else {
+            await prisma.$transaction(async (tx) => {
+              await tx.comment.delete({ where: { id: input.id } });
+              await writeContentDelete(tx, {
+                actorId: actor.sub,
+                actorUsername: actor.username,
+                targetType: 'COMMENT',
+                targetId: comment.id,
+                targetLabel: comment.content,
+                targetUserId: comment.userId,
+                reason: normalizeDeleteReason(input.reason),
+              });
+            });
+          }
           return { ok: true };
         }),
     });

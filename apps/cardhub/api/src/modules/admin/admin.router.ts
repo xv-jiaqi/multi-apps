@@ -15,6 +15,7 @@ import {
   t as translate,
 } from '@repo/shared';
 import { z } from 'zod';
+import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -605,7 +606,9 @@ export class AdminRouter {
             throw error;
           }
         }),
-        delete: t.adminProcedure.input(adminSeriesDeleteInput).mutation(async ({ input }) => {
+        delete: t.adminProcedure.input(adminSeriesDeleteInput).mutation(async ({ ctx, input }) => {
+          if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          const actor = ctx.user;
           const series = await prisma.series.findUnique({
             where: { slug: input.slug },
             include: seriesAdminInclude,
@@ -622,7 +625,18 @@ export class AdminRouter {
             });
           }
 
-          await prisma.series.delete({ where: { slug: input.slug } });
+          await prisma.$transaction(async (tx) => {
+            await tx.series.delete({ where: { slug: input.slug } });
+            await writeContentDelete(tx, {
+              actorId: actor.sub,
+              actorUsername: actor.username,
+              targetType: 'SERIES',
+              targetId: series.id,
+              targetLabel: series.title ?? '',
+              targetUserId: null,
+              reason: normalizeDeleteReason(input.reason),
+            });
+          });
           return { ok: true, slug: input.slug, cardCount, commentCount };
         }),
       }),
@@ -714,13 +728,26 @@ export class AdminRouter {
             throw error;
           }
         }),
-        delete: t.adminProcedure.input(adminCardDeleteInput).mutation(async ({ input }) => {
+        delete: t.adminProcedure.input(adminCardDeleteInput).mutation(async ({ ctx, input }) => {
+          if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          const actor = ctx.user;
           const card = await prisma.card.findUnique({
             where: { slug: input.slug },
             include: { _count: { select: { comments: true } } },
           });
           if (!card) throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
-          await prisma.card.delete({ where: { slug: input.slug } });
+          await prisma.$transaction(async (tx) => {
+            await tx.card.delete({ where: { slug: input.slug } });
+            await writeContentDelete(tx, {
+              actorId: actor.sub,
+              actorUsername: actor.username,
+              targetType: 'CARD',
+              targetId: card.id,
+              targetLabel: card.name ?? '',
+              targetUserId: null,
+              reason: normalizeDeleteReason(input.reason),
+            });
+          });
           return { ok: true, slug: input.slug, commentCount: card._count.comments };
         }),
       }),

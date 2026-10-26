@@ -330,14 +330,25 @@ export const adminCardUpsertInput = z.object({
 });
 export type AdminCardUpsertInput = z.infer<typeof adminCardUpsertInput>;
 
+/** Optional admin delete reason. Trimmed, then 0–500 characters. */
+export const DELETE_REASON_MAX = 500;
+
+export const optionalDeleteReason = z
+  .string()
+  .trim()
+  .max(DELETE_REASON_MAX, { message: 'reason must be at most 500 characters' })
+  .optional();
+
 export const adminSeriesDeleteInput = z.object({
   slug: slugSchema,
   force: z.boolean().default(false),
+  reason: optionalDeleteReason,
 });
 export type AdminSeriesDeleteInput = z.infer<typeof adminSeriesDeleteInput>;
 
 export const adminCardDeleteInput = z.object({
   slug: slugSchema,
+  reason: optionalDeleteReason,
 });
 export type AdminCardDeleteInput = z.infer<typeof adminCardDeleteInput>;
 
