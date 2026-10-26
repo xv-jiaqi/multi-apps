@@ -352,7 +352,6 @@ export const MePage = observer(function MePage() {
 
         <section
           id="me-overview"
-          role="region"
           aria-labelledby="me-overview-title"
           aria-busy={me.isLoading || undefined}
         >

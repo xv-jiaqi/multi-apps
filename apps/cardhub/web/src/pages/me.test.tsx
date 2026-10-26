@@ -333,9 +333,10 @@ describe('MePage', () => {
     renderMe();
 
     const section = document.getElementById('me-overview');
-    expect(section).toHaveAttribute('role', 'region');
+    expect(section).not.toHaveAttribute('role');
     expect(section).toHaveAttribute('aria-labelledby', 'me-overview-title');
     expect(section).not.toHaveAttribute('aria-label');
+    expect(screen.getByRole('region', { name: '加载中' })).toBe(section);
     const title = document.getElementById('me-overview-title');
     expect(title).toHaveTextContent('加载中');
     expect(title).toHaveClass('sr-only');
