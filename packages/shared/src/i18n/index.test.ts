@@ -23,10 +23,14 @@ describe('app error copy', () => {
     expect(appErrorMessage('en-US', 'INTERNAL_SERVER_ERROR')).toBe(
       'Something went wrong. Try again later.',
     );
-    expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).toBe(
-      'Something went wrong. Please try again.',
+    expect(appErrorMessage('en-US', 'UNKNOWN')).toBe('Something went wrong. Try again later.');
+    expect(appErrorMessage('zh-CN', 'UNKNOWN')).toBe(
+      appErrorMessage('zh-CN', 'INTERNAL_SERVER_ERROR'),
     );
-    expect(appErrorMessage('en-US', undefined)).toBe('Something went wrong. Please try again.');
+    expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).toBe(
+      'Something went wrong. Try again later.',
+    );
+    expect(appErrorMessage('en-US', undefined)).toBe('Something went wrong. Try again later.');
     expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).not.toContain('出了点问题');
   });
 });

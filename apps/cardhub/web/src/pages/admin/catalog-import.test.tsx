@@ -79,7 +79,29 @@ describe('catalog import', () => {
     await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
     await user.paste('[\n  {\n    "slug":\n  }\n]');
     await user.click(screen.getByRole('button', { name: '预览' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('第 4 行');
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('第 4 行附近的 JSON 格式有误');
+    expect(alert).not.toHaveTextContent('Expected');
+    expect(alert).not.toHaveTextContent('Unexpected');
+    expect(alert).not.toHaveTextContent('position');
+    expect(alert).not.toHaveTextContent('SyntaxError');
+    expect(alert).not.toHaveTextContent('is not valid JSON');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('shows the English parse sentence and never the parser text', async () => {
+    rootStore.locale.setLocale('en-US');
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON' }));
+    await user.paste('[\n  {\n    "slug":\n  }\n]');
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('The JSON near line 4 is not valid.');
+    expect(alert).not.toHaveTextContent('Expected');
+    expect(alert).not.toHaveTextContent('Unexpected');
+    expect(alert).not.toHaveTextContent('position');
+    expect(alert).not.toHaveTextContent('SyntaxError');
     expect(calls).toHaveLength(0);
   });
 

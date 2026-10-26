@@ -1,3 +1,4 @@
+import axe from 'axe-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -323,6 +324,32 @@ describe('MePage', () => {
     expect(screen.getByRole('heading', { name: '@alice' })).toBeInTheDocument();
     expect(screen.getAllByText('交易意向')[0]?.nextElementSibling).toHaveTextContent('3');
     expect(screen.getByRole('link', { name: '我的意向3' })).toBeInTheDocument();
+  });
+
+  it('names the loading overview without a prohibited aria-label', async () => {
+    meState.isLoading = true;
+    meState.isSuccess = false;
+
+    renderMe();
+
+    const section = document.getElementById('me-overview');
+    expect(section).toHaveAttribute('role', 'region');
+    expect(section).toHaveAttribute('aria-labelledby', 'me-overview-title');
+    expect(section).not.toHaveAttribute('aria-label');
+    const title = document.getElementById('me-overview-title');
+    expect(title).toHaveTextContent('加载中');
+    expect(title).toHaveClass('sr-only');
+    expect(section?.querySelector('[aria-label]')).toBeNull();
+
+    const results = await axe.run(section ?? document.body, {
+      runOnly: { type: 'rule', values: ['aria-prohibited-attr'] },
+    });
+    expect(results.violations).toEqual([]);
+
+    act(() => {
+      rootStore.locale.setLocale('en-US');
+    });
+    expect(document.getElementById('me-overview-title')).toHaveTextContent('Loading');
   });
 
   it('renders independent loading, empty, and error states by section', () => {

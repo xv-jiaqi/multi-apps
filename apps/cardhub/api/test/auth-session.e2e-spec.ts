@@ -319,7 +319,7 @@ describe('auth session revocation', () => {
       .send('{"currentPassword":"TRUNC_MARKER_password"');
     expect(badJson.status).toBe(400);
     expect(badJson.body.error.data.code).toBe('BAD_REQUEST');
-    expect(badJson.body.error.data).not.toHaveProperty('appCode');
+    expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
     const serialized = JSON.stringify(badJson.body);
     expect(serialized).not.toContain('TRUNC_MARKER_password');
     expect(serialized).not.toContain('is not valid JSON');
@@ -435,7 +435,7 @@ describe('production error messages', () => {
       expect(serialized).not.toContain('SyntaxError');
       expect(serialized).not.toContain('Prisma');
       expect(response.body.error.data).not.toHaveProperty('stack');
-      expect(response.body.error.data).not.toHaveProperty('appCode');
+      expect(response.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
     } finally {
       process.env.NODE_ENV = previousNodeEnv;
     }

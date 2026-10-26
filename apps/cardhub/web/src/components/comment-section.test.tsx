@@ -653,7 +653,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: /发布评论|Post comment/ }));
 
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent('Something went wrong. Please try again.');
+    expect(alert).toHaveTextContent('Something went wrong. Try again later.');
     expect(alert).not.toHaveTextContent(serverText);
     expect(alert).not.toHaveTextContent('NOT_A_REAL_CODE');
     expect(alert).not.toHaveTextContent('INTERNAL_SERVER_ERROR');

@@ -119,7 +119,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       data = JSON.parse(text);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message), message }));
+      setParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message) }));
       return;
     }
     const previewInput = { data, dryRun: true as const };
