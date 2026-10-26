@@ -32,8 +32,10 @@ type SeriesTimeRow = {
  * Selecting those columns makes `findUnique` throw, and `Date#toISOString()`
  * throws `Invalid time value`. Read the parts as text, then emit the same
  * string `Date#toISOString()` would: years outside 0000–9999 use a sign and
- * six digits (`+010000-...`). Non-finite values (`infinity`) are not instants,
- * so the field stays `string` and the request fails instead of returning null.
+ * six digits (`+010000-...`). Postgres has no year 0, so 1 BC extracts as -1;
+ * ECMAScript uses astronomical years, where that instant is 0000. Non-finite
+ * values (`infinity`) are not instants, so the field stays `string` and the
+ * request fails instead of returning null.
  */
 function unrepresentableSeriesTime(): TRPCError {
   return new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '系列时间无法表示' });
@@ -50,6 +52,11 @@ function asYear(value: unknown): number | null {
   return null;
 }
 
+/** `EXTRACT(YEAR)` of 1 BC is -1. Astronomical year 0 is that same instant. */
+function astronomicalYear(postgresYear: number): number {
+  return postgresYear < 0 ? postgresYear + 1 : postgresYear;
+}
+
 function ecmaIsoTimestamp(year: number, monthDayTime: string): string {
   const absolute = Math.abs(year);
   const expanded = year < 0 || year > 9999;
@@ -64,7 +71,7 @@ function ecmaIsoTimestamp(year: number, monthDayTime: string): string {
 function seriesTimestamp(nonFinite: unknown, year: unknown, rest: string | null): string {
   const finiteYear = asYear(year);
   if (asBool(nonFinite) || finiteYear === null || !rest) throw unrepresentableSeriesTime();
-  return ecmaIsoTimestamp(finiteYear, rest);
+  return ecmaIsoTimestamp(astronomicalYear(finiteYear), rest);
 }
 
 async function readSeriesTimes(

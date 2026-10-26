@@ -56,14 +56,26 @@ describe('series.bySlug extreme timestamps', () => {
     expect(serialized).not.toContain('prisma.series.findUnique');
   });
 
-  it('returns a round-trippable ISO string for a BCE timestamp', async () => {
+  it('returns astronomical year 0000 for 1 BC', async () => {
     await setCreatedAt('0001-01-01 BC');
+    const response = await getSeries();
+    const createdAt = response.body.result.data.createdAt as string;
+
+    expect(response.status).toBe(200);
+    expect(createdAt).toBe('0000-01-01T00:00:00.000Z');
+    expect(new Date(createdAt).toISOString()).toBe(createdAt);
+    expect(new Date(createdAt).getUTCFullYear()).toBe(0);
+  });
+
+  it('returns astronomical year -000001 for 2 BC', async () => {
+    await setCreatedAt('0002-01-01 BC');
     const response = await getSeries();
     const createdAt = response.body.result.data.createdAt as string;
 
     expect(response.status).toBe(200);
     expect(createdAt).toBe('-000001-01-01T00:00:00.000Z');
     expect(new Date(createdAt).toISOString()).toBe(createdAt);
+    expect(new Date(createdAt).getUTCFullYear()).toBe(-1);
   });
 
   it('rejects infinity without widening createdAt to null or leaking the decoder', async () => {
