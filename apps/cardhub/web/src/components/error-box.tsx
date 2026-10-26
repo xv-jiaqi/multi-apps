@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import { RetryButton } from './retry-button';
 
 const tradeListRetryClassName =
@@ -15,6 +16,7 @@ export function ErrorBox({
   retry,
   headingAs = 'p',
   retryClassName = tradeListRetryClassName,
+  retryRef,
 }: {
   title: string;
   retryLabel: string;
@@ -23,6 +25,7 @@ export function ErrorBox({
   retry: () => void;
   headingAs?: 'p' | 'h1';
   retryClassName?: string;
+  retryRef?: Ref<HTMLButtonElement>;
 }) {
   const Heading = headingAs;
   return (
@@ -32,6 +35,7 @@ export function ErrorBox({
     >
       <Heading className="font-medium">{title}</Heading>
       <RetryButton
+        ref={retryRef}
         retrying={retrying}
         label={retryLabel}
         retryingLabel={retryingLabel}

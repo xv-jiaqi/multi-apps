@@ -1,8 +1,8 @@
-import { useRef, type Ref } from 'react';
+import { useLayoutEffect, useRef, type Ref } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { appErrorMessage, t } from '@repo/shared';
+import { isAppErrorCode, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -70,6 +70,17 @@ function SeriesHero({ series, alt, cardCountLabel, headingRef }: SeriesHeroProps
   );
 }
 
+type SeriesQueryError = { data?: { code?: string; appCode?: string } | null } | null;
+
+/** Red-box copy is fixed. Known codes share one sentence; unknown codes use UNKNOWN. */
+function seriesFailureKey(error: SeriesQueryError): string {
+  const appCode = error?.data?.appCode;
+  const code = error?.data?.code;
+  if (appCode === 'UNKNOWN' || code === 'UNKNOWN') return 'error.app.UNKNOWN';
+  if (isAppErrorCode(appCode) || isAppErrorCode(code)) return 'error.app.INTERNAL_SERVER_ERROR';
+  return 'error.app.UNKNOWN';
+}
+
 type SeriesCardArtProps = {
   card: { slug: string; name: string; imageUrl: string | null };
 };
@@ -119,8 +130,19 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
   const query = trpc.series.bySlug.useQuery({ slug: seriesSlug }, { enabled: !!seriesSlug });
   const view = queryFallback(query);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const retryRef = useRef<HTMLButtonElement>(null);
+  const failureKey = useRef('error.app.UNKNOWN');
+  const retryWasBusy = useRef(false);
   useFocusOnRecovery(view, headingRef);
-  const failureText = appErrorMessage(locale.locale, query.error?.data?.appCode);
+  if (query.error) failureKey.current = seriesFailureKey(query.error);
+  const failureText = tt(failureKey.current);
+
+  useLayoutEffect(() => {
+    const busy = view === 'error' && query.isFetching;
+    const failedRetry = retryWasBusy.current && !busy && view === 'error';
+    retryWasBusy.current = busy;
+    if (failedRetry) retryRef.current?.focus({ preventScroll: true });
+  }, [view, query.isFetching]);
 
   if (view === 'loading') {
     return (
@@ -184,6 +206,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
               void query.refetch();
             }}
             retryClassName={dataErrorRetryClassName}
+            retryRef={retryRef}
           />
         </div>
       </PageShell>

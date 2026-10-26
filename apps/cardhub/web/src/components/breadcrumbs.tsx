@@ -23,7 +23,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ items }: { items: Bre
               {item.to && !isLast ? (
                 <Link
                   to={item.to}
-                  className="rounded-sm hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  className="inline-flex min-h-6 items-center rounded-sm hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                 >
                   {item.label}
                 </Link>

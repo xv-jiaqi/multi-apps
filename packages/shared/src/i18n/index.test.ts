@@ -24,9 +24,9 @@ describe('app error copy', () => {
       'Something went wrong. Try again later.',
     );
     expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).toBe(
-      'Something went wrong. Please try again.',
+      'Something went wrong. Try again later.',
     );
-    expect(appErrorMessage('en-US', undefined)).toBe('Something went wrong. Please try again.');
+    expect(appErrorMessage('en-US', undefined)).toBe('Something went wrong. Try again later.');
     expect(appErrorMessage('en-US', 'NOT_A_REAL_CODE')).not.toContain('出了点问题');
   });
 });
