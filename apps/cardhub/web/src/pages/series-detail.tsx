@@ -1,12 +1,15 @@
+import { useLayoutEffect, useRef, type Ref } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { appErrorMessage, t } from '@repo/shared';
+import { isAppErrorCode, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { RarityBadge } from '../components/rarity-badge';
 import { CommentSection } from '../components/comment-section';
+import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
+import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
@@ -25,9 +28,10 @@ type SeriesHeroProps = {
   series: { slug: string; title: string; description: string | null; coverUrl: string | null };
   alt: string;
   cardCountLabel: string;
+  headingRef: Ref<HTMLHeadingElement>;
 };
 
-function SeriesHero({ series, alt, cardCountLabel }: SeriesHeroProps) {
+function SeriesHero({ series, alt, cardCountLabel, headingRef }: SeriesHeroProps) {
   const art = useArtImage({
     src: series.coverUrl,
     alt,
@@ -50,7 +54,13 @@ function SeriesHero({ series, alt, cardCountLabel }: SeriesHeroProps) {
         aria-hidden
       />
       <div className="relative space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{series.title}</h1>
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-3xl font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-white md:text-4xl"
+        >
+          {series.title}
+        </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-white/90">
           {series.description ?? ''}
         </p>
@@ -58,6 +68,17 @@ function SeriesHero({ series, alt, cardCountLabel }: SeriesHeroProps) {
       </div>
     </header>
   );
+}
+
+type SeriesQueryError = { data?: { code?: string; appCode?: string } | null } | null;
+
+/** Red-box copy is fixed. Known codes share one sentence; unknown codes use UNKNOWN. */
+function seriesFailureKey(error: SeriesQueryError): string {
+  const appCode = error?.data?.appCode;
+  const code = error?.data?.code;
+  if (appCode === 'UNKNOWN' || code === 'UNKNOWN') return 'error.app.UNKNOWN';
+  if (isAppErrorCode(appCode) || isAppErrorCode(code)) return 'error.app.INTERNAL_SERVER_ERROR';
+  return 'error.app.UNKNOWN';
 }
 
 type SeriesCardArtProps = {
@@ -107,8 +128,23 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const query = trpc.series.bySlug.useQuery({ slug: seriesSlug }, { enabled: !!seriesSlug });
+  const view = queryFallback(query);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const retryRef = useRef<HTMLButtonElement>(null);
+  const failureKey = useRef('error.app.UNKNOWN');
+  const retryWasBusy = useRef(false);
+  useFocusOnRecovery(view, headingRef);
+  if (query.error) failureKey.current = seriesFailureKey(query.error);
+  const failureText = tt(failureKey.current);
 
-  if (query.isLoading) {
+  useLayoutEffect(() => {
+    const busy = view === 'error' && query.isFetching;
+    const failedRetry = retryWasBusy.current && !busy && view === 'error';
+    retryWasBusy.current = busy;
+    if (failedRetry) retryRef.current?.focus({ preventScroll: true });
+  }, [view, query.isFetching]);
+
+  if (view === 'loading') {
     return (
       <PageShell>
         <PageMeta title={tt('state.loading')} />
@@ -128,8 +164,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
     );
   }
 
-  if (query.isError || !query.data) {
-    const isNotFound = query.error?.data?.code === 'NOT_FOUND';
+  if (view === 'error' && query.error?.data?.code === 'NOT_FOUND') {
     return (
       <PageShell>
         <PageMeta title={seriesSlug} />
@@ -142,10 +177,37 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
             ]}
           />
           <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
-            {isNotFound
-              ? tt('state.notFound')
-              : appErrorMessage(locale.locale, query.error?.data?.appCode)}
+            {tt('state.notFound')}
           </p>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (view === 'error' || !query.data) {
+    return (
+      <PageShell>
+        <PageMeta title={failureText} />
+        <div className="space-y-4">
+          <Breadcrumbs
+            items={[
+              { label: tt('breadcrumb.home'), to: '/' },
+              { label: tt('breadcrumb.series'), to: '/series' },
+              { label: seriesSlug },
+            ]}
+          />
+          <ErrorBox
+            headingAs="h1"
+            title={failureText}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+            retrying={query.isFetching}
+            retry={() => {
+              void query.refetch();
+            }}
+            retryClassName={dataErrorRetryClassName}
+            retryRef={retryRef}
+          />
         </div>
       </PageShell>
     );
@@ -169,6 +231,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           series={series}
           alt={tt('artwork.seriesAlt', { title: series.title })}
           cardCountLabel={tt('series.cardCount', { count: series.cards.length })}
+          headingRef={headingRef}
         />
 
         <section className="space-y-4">
