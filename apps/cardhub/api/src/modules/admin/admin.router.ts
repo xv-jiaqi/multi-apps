@@ -15,8 +15,8 @@ import {
   t as translate,
 } from '@repo/shared';
 import { z } from 'zod';
-import type { TrpcBase } from '../../trpc/trpc-base';
-import type { PrismaService } from '../prisma/prisma.service';
+import { TrpcBase } from '../../trpc/trpc-base';
+import { PrismaService } from '../prisma/prisma.service';
 
 type AttributeValue = string | number | boolean;
 type Attributes = Record<string, AttributeValue>;
