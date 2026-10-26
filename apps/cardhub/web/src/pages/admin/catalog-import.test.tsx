@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
+import { CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
 import { rootStore } from '../../stores/root-store';
 import type { ImportRowResult } from '../../components/admin/catalog-utils';
 
@@ -256,11 +257,15 @@ describe('catalog import', () => {
     const user = userEvent.setup();
     renderPage();
     const textbox = screen.getByRole('textbox', { name: 'JSON 内容' });
-    const cards = Array.from({ length: 500 }, (_, index) => ({ slug: `c${index}` }));
+    const cards = Array.from({ length: CATALOG_IMPORT_MAX_ROWS }, (_, index) => ({
+      slug: `c${index}`,
+    }));
     await user.click(textbox);
     await user.paste(JSON.stringify([{ slug: 's', cards }]));
     await user.click(screen.getByRole('button', { name: '预览' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('一次最多导入 500 行，当前 501 行');
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      `一次最多导入 ${CATALOG_IMPORT_MAX_ROWS} 行，当前 ${CATALOG_IMPORT_MAX_ROWS + 1} 行`,
+    );
     expect(calls).toHaveLength(0);
 
     await user.clear(textbox);

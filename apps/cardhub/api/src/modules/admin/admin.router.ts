@@ -9,13 +9,14 @@ import {
   adminCatalogImportInput,
   adminSeriesDeleteInput,
   adminSeriesUpsertInput,
+  CATALOG_IMPORT_MAX_ROWS,
   catalogImportLimit,
   slugSchema,
   t as translate,
 } from '@repo/shared';
 import { z } from 'zod';
-import { TrpcBase } from '../../trpc/trpc-base';
-import { PrismaService } from '../prisma/prisma.service';
+import type { TrpcBase } from '../../trpc/trpc-base';
+import type { PrismaService } from '../prisma/prisma.service';
 
 type AttributeValue = string | number | boolean;
 type Attributes = Record<string, AttributeValue>;
@@ -369,7 +370,10 @@ function assertCatalogImportLimits(raw: unknown): void {
   if (violation.reason === 'tooManyRows') {
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: translate('zh-CN', 'admin.import.tooManyRows', { count: violation.count }),
+      message: translate('zh-CN', 'admin.import.tooManyRows', {
+        count: violation.count,
+        max: CATALOG_IMPORT_MAX_ROWS,
+      }),
     });
   }
   throw new TRPCError({

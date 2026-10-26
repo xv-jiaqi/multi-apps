@@ -46,12 +46,14 @@ describe('catalog import limits', () => {
   });
 
   it('shares the rejection copy in zh and en', () => {
-    expect(t('zh-CN', 'admin.import.tooManyRows', { count: 501 })).toBe(
-      '一次最多导入 500 行，当前 501 行',
-    );
+    expect(
+      t('zh-CN', 'admin.import.tooManyRows', { count: 501, max: CATALOG_IMPORT_MAX_ROWS }),
+    ).toBe(`一次最多导入 ${CATALOG_IMPORT_MAX_ROWS} 行，当前 501 行`);
     expect(t('zh-CN', 'admin.import.tooLarge')).toBe('一次最多导入 1MB');
     expect(t('zh-CN', 'error.payloadTooLarge')).toBe('内容太大，请精简后重试');
-    expect(t('en-US', 'admin.import.tooManyRows', { count: 501 })).toContain('500');
+    expect(
+      t('en-US', 'admin.import.tooManyRows', { count: 501, max: CATALOG_IMPORT_MAX_ROWS }),
+    ).toBe(`You can import at most ${CATALOG_IMPORT_MAX_ROWS} rows at a time (this file has 501)`);
     expect(t('en-US', 'admin.import.tooLarge')).toContain('1MB');
     expect(t('en-US', 'error.payloadTooLarge')).toBe(
       'This content is too large. Shorten it and try again.',
