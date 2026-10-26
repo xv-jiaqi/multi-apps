@@ -49,19 +49,30 @@ describe('series.bySlug extreme timestamps', () => {
     expect(response.status).toBe(200);
     expect(response.body.result.data.title).toBe('时间边界系列');
     expect(response.body.result.data.slug).toBe(slug);
-    expect(response.body.result.data.createdAt).toBe('10000-01-01T00:00:00.000Z');
+    const createdAt = response.body.result.data.createdAt as string;
+    expect(createdAt).toBe('+010000-01-01T00:00:00.000Z');
+    expect(new Date(createdAt).toISOString()).toBe(createdAt);
     expect(serialized).not.toContain('Invalid time value');
     expect(serialized).not.toContain('prisma.series.findUnique');
   });
 
-  it('returns the series when createdAt is infinity', async () => {
+  it('returns a round-trippable ISO string for a BCE timestamp', async () => {
+    await setCreatedAt('0001-01-01 BC');
+    const response = await getSeries();
+    const createdAt = response.body.result.data.createdAt as string;
+
+    expect(response.status).toBe(200);
+    expect(createdAt).toBe('-000001-01-01T00:00:00.000Z');
+    expect(new Date(createdAt).toISOString()).toBe(createdAt);
+  });
+
+  it('rejects infinity without widening createdAt to null or leaking the decoder', async () => {
     await setCreatedAt('infinity');
     const response = await getSeries();
     const serialized = JSON.stringify(response.body);
 
-    expect(response.status).toBe(200);
-    expect(response.body.result.data.title).toBe('时间边界系列');
-    expect(response.body.result.data.createdAt).toBeNull();
+    expect(response.status).toBe(500);
+    expect(response.body.result?.data?.createdAt).toBeUndefined();
     expect(serialized).not.toContain('value too large to decode');
     expect(serialized).not.toContain('Invalid time value');
   });
