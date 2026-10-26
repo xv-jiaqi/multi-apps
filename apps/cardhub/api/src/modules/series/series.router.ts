@@ -1,14 +1,59 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { slugSchema, paginationSchema } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
-type SeriesListRow = Prisma.SeriesGetPayload<{
-  include: { _count: { select: { cards: true } } };
-}>;
+type SeriesListRow = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  coverUrl: string | null;
+  _count: { cards: number };
+};
+
+type SeriesTimes = { createdAt: string | null; updatedAt: string | null };
+
+/**
+ * Postgres `timestamp` accepts values Prisma's Date decoder cannot represent
+ * (`infinity`, and some years such as 10000, which come back as an invalid
+ * Date). Selecting those columns makes `findUnique` throw, and `toISOString()`
+ * throws `Invalid time value`. Read them as text instead.
+ */
+async function readSeriesTimes(
+  prisma: PrismaService,
+  ids: string[],
+): Promise<Map<string, SeriesTimes>> {
+  if (ids.length === 0) return new Map();
+  const rows = await prisma.$queryRaw<
+    Array<{ id: string; createdAt: string | null; updatedAt: string | null }>
+  >`
+    SELECT
+      id,
+      CASE
+        WHEN "createdAt" = 'infinity'::timestamp OR "createdAt" = '-infinity'::timestamp THEN NULL
+        ELSE NULLIF(btrim(to_char("createdAt", 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')), '')
+      END AS "createdAt",
+      CASE
+        WHEN "updatedAt" = 'infinity'::timestamp OR "updatedAt" = '-infinity'::timestamp THEN NULL
+        ELSE NULLIF(btrim(to_char("updatedAt", 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')), '')
+      END AS "updatedAt"
+    FROM series
+    WHERE id IN (${Prisma.join(ids)})
+  `;
+  return new Map(
+    rows.map((row) => [
+      row.id,
+      {
+        createdAt: row.createdAt?.trim() ? row.createdAt : null,
+        updatedAt: row.updatedAt?.trim() ? row.updatedAt : null,
+      },
+    ]),
+  );
+}
 
 @Injectable()
 export class SeriesRouter {
@@ -29,21 +74,35 @@ export class SeriesRouter {
             orderBy: { createdAt: 'asc' },
             skip: (page - 1) * pageSize,
             take: pageSize,
-            include: { _count: { select: { cards: true } } },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              description: true,
+              coverUrl: true,
+              _count: { select: { cards: true } },
+            },
           }),
           prisma.series.count(),
         ]);
+        const times = await readSeriesTimes(
+          prisma,
+          items.map((series: SeriesListRow) => series.id),
+        );
         return {
-          items: items.map((s: SeriesListRow) => ({
-            id: s.id,
-            slug: s.slug,
-            title: s.title,
-            description: s.description,
-            coverUrl: s.coverUrl,
-            cardCount: s._count.cards,
-            createdAt: s.createdAt.toISOString(),
-            updatedAt: s.updatedAt.toISOString(),
-          })),
+          items: items.map((series: SeriesListRow) => {
+            const stamped = times.get(series.id);
+            return {
+              id: series.id,
+              slug: series.slug,
+              title: series.title,
+              description: series.description,
+              coverUrl: series.coverUrl,
+              cardCount: series._count.cards,
+              createdAt: stamped?.createdAt ?? null,
+              updatedAt: stamped?.updatedAt ?? null,
+            };
+          }),
           page,
           pageSize,
           total,
@@ -53,7 +112,12 @@ export class SeriesRouter {
       bySlug: t.procedure.input(z.object({ slug: slugSchema })).query(async ({ input }) => {
         const series = await prisma.series.findUnique({
           where: { slug: input.slug },
-          include: {
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            description: true,
+            coverUrl: true,
             cards: {
               orderBy: { createdAt: 'asc' },
               select: {
@@ -69,14 +133,15 @@ export class SeriesRouter {
         if (!series) {
           throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
         }
+        const stamped = (await readSeriesTimes(prisma, [series.id])).get(series.id);
         return {
           id: series.id,
           slug: series.slug,
           title: series.title,
           description: series.description,
           coverUrl: series.coverUrl,
-          createdAt: series.createdAt.toISOString(),
-          updatedAt: series.updatedAt.toISOString(),
+          createdAt: stamped?.createdAt ?? null,
+          updatedAt: stamped?.updatedAt ?? null,
           cards: series.cards,
         };
       }),
