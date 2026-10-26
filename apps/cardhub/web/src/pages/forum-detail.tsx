@@ -964,7 +964,7 @@ function DeleteConfirmGroup({
             const trimmed = reason.trim();
             onConfirm(showReason && trimmed ? trimmed : undefined);
           }}
-          className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+          className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
         >
           {dangerLabel}
         </button>

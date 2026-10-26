@@ -396,7 +396,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               : { id: comment.id },
                           );
                         }}
-                        className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+                        className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
                       >
                         {isDeleting
                           ? tt('card.detail.commentDeleting')
@@ -409,7 +409,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                         }}
                         disabled={isDeleting}
                         onClick={() => cancelDelete(comment.id)}
-                        className="inline-flex min-h-6 items-center rounded px-1 text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-6 items-center rounded px-1 text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {tt('card.detail.commentDeleteCancel')}
                       </button>

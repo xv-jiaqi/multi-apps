@@ -177,7 +177,7 @@ export function AdminConfirmRow({
               aria-describedby={promptId}
               disabled={disabled}
               onClick={confirm}
-              className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
+              className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
             >
               {confirmLabel}
             </button>
@@ -239,7 +239,7 @@ export function InlineConfirm({
         aria-describedby={promptId}
         disabled={disabled}
         onClick={onConfirm}
-        className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
+        className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
       >
         {confirmLabel}
       </button>
