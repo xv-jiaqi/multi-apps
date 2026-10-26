@@ -135,6 +135,7 @@ describe('json body limits', () => {
         data: {
           code: 'BAD_REQUEST',
           httpStatus: 400,
+          appCode: 'PARSE_ERROR',
           path: 'comments.create',
         },
       },

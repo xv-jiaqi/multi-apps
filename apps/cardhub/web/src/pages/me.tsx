@@ -350,27 +350,44 @@ export const MePage = observer(function MePage() {
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('me.title') }]}
         />
 
-        <section id="me-overview" aria-labelledby="me-overview-title">
+        <section
+          id="me-overview"
+          aria-labelledby="me-overview-title"
+          aria-busy={me.isLoading || undefined}
+        >
           <Card className="border-white/60 bg-white/70 backdrop-blur">
             <CardContent className="space-y-4 pt-6">
               {me.isLoading ? (
-                <div className="animate-pulse motion-reduce:animate-none space-y-4">
-                  <div className="space-y-2">
-                    <div className="h-8 w-40 rounded bg-neutral-200" />
-                    <div className="h-4 w-64 max-w-full rounded bg-neutral-200" />
+                <>
+                  <h1 id="me-overview-title" className="sr-only">
+                    {tt('a11y.loading')}
+                  </h1>
+                  <div
+                    aria-hidden="true"
+                    className="animate-pulse space-y-4 motion-reduce:animate-none"
+                  >
+                    <div className="space-y-2">
+                      <div className="h-8 w-40 rounded bg-neutral-200" />
+                      <div className="h-4 w-64 max-w-full rounded bg-neutral-200" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <div key={index} className="h-14 rounded-lg bg-neutral-200" />
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div key={index} className="h-14 rounded-lg bg-neutral-200" />
-                    ))}
-                  </div>
-                </div>
+                </>
               ) : me.isError ? (
-                <ErrorState
-                  onRetry={() => void me.refetch()}
-                  message={tt('state.error')}
-                  retryLabel={tt('state.retry')}
-                />
+                <>
+                  <h1 id="me-overview-title" className="sr-only">
+                    {tt('me.title')}
+                  </h1>
+                  <ErrorState
+                    onRetry={() => void me.refetch()}
+                    message={tt('state.error')}
+                    retryLabel={tt('state.retry')}
+                  />
+                </>
               ) : me.data ? (
                 <>
                   <div className="space-y-1">

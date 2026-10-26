@@ -1,6 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
-import { CATALOG_IMPORT_MAX_BYTES, t } from '@repo/shared';
+import { APP_ERROR_CODES, CATALOG_IMPORT_MAX_BYTES, t } from '@repo/shared';
 
 /**
  * Nest's 100kb default for every route except catalog import.
@@ -105,6 +105,7 @@ function trpcClientError(path: string | undefined, status: ParserClientStatus) {
       data: {
         code: coded.name,
         httpStatus: status,
+        ...(status === 400 ? { appCode: APP_ERROR_CODES.PARSE_ERROR } : {}),
         ...(path ? { path } : {}),
       },
     },

@@ -94,6 +94,7 @@ describe('SentryExceptionFilter', () => {
         data: {
           code: 'BAD_REQUEST',
           httpStatus: 400,
+          appCode: 'PARSE_ERROR',
           path: 'comments.create',
         },
       },
@@ -183,6 +184,7 @@ describe('SentryExceptionFilter', () => {
         data: {
           code: 'BAD_REQUEST',
           httpStatus: 400,
+          appCode: 'PARSE_ERROR',
           path: 'comments.create',
         },
       },

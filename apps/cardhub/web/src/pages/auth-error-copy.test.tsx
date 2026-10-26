@@ -117,7 +117,7 @@ describe('mapped API error copy', () => {
       </MemoryRouter>,
     );
     show('出了点问题，请稍后再试', 'NOT_A_REAL_CODE', 'INTERNAL_SERVER_ERROR');
-    expect(screen.getByText('Something went wrong. Please try again.')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong. Try again later.')).toBeInTheDocument();
     expect(screen.queryByText('出了点问题，请稍后再试')).not.toBeInTheDocument();
     expect(screen.queryByText('NOT_A_REAL_CODE')).not.toBeInTheDocument();
     expect(screen.queryByText('INTERNAL_SERVER_ERROR')).not.toBeInTheDocument();

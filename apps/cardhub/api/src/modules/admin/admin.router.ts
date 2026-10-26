@@ -9,6 +9,7 @@ import {
   adminCatalogImportInput,
   adminSeriesDeleteInput,
   adminSeriesUpsertInput,
+  CATALOG_IMPORT_MAX_ROWS,
   catalogImportLimit,
   slugSchema,
   t as translate,
@@ -369,7 +370,10 @@ function assertCatalogImportLimits(raw: unknown): void {
   if (violation.reason === 'tooManyRows') {
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: translate('zh-CN', 'admin.import.tooManyRows', { count: violation.count }),
+      message: translate('zh-CN', 'admin.import.tooManyRows', {
+        count: violation.count,
+        max: CATALOG_IMPORT_MAX_ROWS,
+      }),
     });
   }
   throw new TRPCError({

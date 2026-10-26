@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { APP_ERROR_CODES } from '@repo/shared';
 import request from 'supertest';
 import { createApp } from '../src/bootstrap/create-app';
 
@@ -9,6 +10,7 @@ const FIXED_TRPC_BODY = {
     data: {
       code: 'BAD_REQUEST',
       httpStatus: 400,
+      appCode: APP_ERROR_CODES.PARSE_ERROR,
     },
   },
 };
@@ -77,6 +79,35 @@ describe('malformed JSON through the Nest bootstrap', () => {
       expect(serialized).not.toContain('Bad Request');
     },
   );
+
+  it('returns PARSE_ERROR for bad JSON and keeps an oversize body at 413', async () => {
+    const badJson = await request(app.getHttpServer())
+      .post('/trpc/comments.create')
+      .set('Content-Type', 'application/json')
+      .send('{"content":"PARSER_LEAK_MARKER"');
+
+    expect(badJson.status).toBe(400);
+    expect(badJson.body.error.data.code).toBe('BAD_REQUEST');
+    expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
+    const badSerialized = JSON.stringify(badJson.body);
+    expect(badSerialized).not.toContain('PARSER_LEAK_MARKER');
+    expect(badSerialized).not.toContain('Unexpected token');
+    expect(badSerialized).not.toContain('is not valid JSON');
+    expect(badSerialized).not.toContain('SyntaxError');
+
+    const tooLarge = await request(app.getHttpServer())
+      .post('/trpc/comments.create')
+      .set('Content-Type', 'application/json')
+      .send(Buffer.alloc(100 * 1024 + 1, 0x78));
+
+    expect(tooLarge.status).toBe(413);
+    expect(tooLarge.body.error.data.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(tooLarge.body.error.data.httpStatus).toBe(413);
+    expect(tooLarge.body.error.data).not.toHaveProperty('appCode');
+    const largeSerialized = JSON.stringify(tooLarge.body);
+    expect(largeSerialized).not.toContain('entity.too.large');
+    expect(largeSerialized).not.toContain('request entity too large');
+  });
 
   it('returns fixed JSON for a malformed body outside /trpc', async () => {
     const response = await request(app.getHttpServer())
