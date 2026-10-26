@@ -24,6 +24,11 @@ export function isNewPasswordHash(stored: string): boolean {
   return stored.startsWith(NEW_PASSWORD_HASH_PREFIX);
 }
 
+/** Legacy bcrypt only stored the first 72 UTF-8 bytes. */
+export function legacyPasswordExceedsBcryptLimit(stored: string, password: string): boolean {
+  return !isNewPasswordHash(stored) && Buffer.byteLength(password, 'utf8') > BCRYPT_MAX_BYTES;
+}
+
 export async function hashPassword(
   password: string,
   options: { prehash?: boolean } = {},

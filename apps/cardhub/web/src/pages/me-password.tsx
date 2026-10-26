@@ -8,6 +8,7 @@ import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { trpc } from '../lib/trpc';
+import { LEGACY_PASSWORD_LATER_KEY } from '../components/legacy-password-notice';
 import { useStores } from '../stores/root-store';
 
 type FieldName = 'current' | 'next' | 'confirm';
@@ -130,7 +131,14 @@ export const ChangePasswordPage = observer(function ChangePasswordPage() {
 
   const mutation = trpc.auth.changePassword.useMutation({
     onSuccess(data) {
-      if (session.user) session.signIn(data.token, session.user);
+      if (session.user) {
+        session.signIn(data.token, { ...session.user, passwordChangeRecommended: false });
+      }
+      try {
+        window.sessionStorage.removeItem(LEGACY_PASSWORD_LATER_KEY);
+      } catch {
+        // sessionStorage may be unavailable.
+      }
       navigate('/me#me-security', { replace: true, state: { notice: 'passwordChanged' } });
     },
     onError(error) {

@@ -30,6 +30,8 @@ function makeRouter() {
     },
     card: { findUnique: cardFindUnique, findMany: cardFindMany },
     user: { findUnique: userFindUnique },
+    auditLog: { create: jest.fn() },
+    $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
   const router = new ListingsRouter(new TrpcBase(), prisma);
@@ -410,6 +412,7 @@ describe('ListingsRouter.close', () => {
       id: 'l1',
       userId: 'u-stranger',
       status: 'OPEN',
+      cardSlug: 'aurora-knight',
     });
     userFindUnique.mockResolvedValueOnce({ role: 'admin' });
     listingUpdate.mockResolvedValueOnce({ id: 'l1', status: 'CLOSED' });

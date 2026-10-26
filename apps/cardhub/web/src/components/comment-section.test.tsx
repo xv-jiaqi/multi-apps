@@ -400,6 +400,7 @@ describe('CommentSection (authenticated)', () => {
 
     await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
     expect(screen.getByText('删除这条评论？')).toBeInTheDocument();
+    expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
     await user.keyboard('{Escape}');
 
     expect(screen.queryByText('删除这条评论？')).not.toBeInTheDocument();
@@ -447,6 +448,64 @@ describe('CommentSection (authenticated)', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus(),
     );
+  });
+
+  it('asks an admin for a reason, tabs reason then delete then cancel, and keeps it on failure', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob', role: 'admin' });
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'own comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    deleteMutateMock.mockImplementation((input, callbacks) => {
+      callbacks.onError?.({ message: 'nope', data: { code: 'INTERNAL_SERVER_ERROR' } }, input);
+    });
+    renderShell();
+
+    const trigger = screen.getByRole('button', { name: '删除 @alice 的评论' });
+    await user.click(trigger);
+    const reason = screen.getByLabelText('删除原因（选填，只有管理员能看到）');
+    const remove = screen.getByRole('button', { name: '删除' });
+    const cancel = screen.getByRole('button', { name: '取消' });
+    expect(cancel).toHaveFocus();
+    expect(reason.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(remove.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(screen.getByText('0/500')).toBeInTheDocument();
+
+    reason.focus();
+    await user.tab();
+    expect(remove).toHaveFocus();
+    await user.tab();
+    expect(cancel).toHaveFocus();
+
+    await user.type(reason, '  spam  ');
+    expect(screen.getByText('8/500')).toBeInTheDocument();
+    await user.click(remove);
+    expect(deleteMutateMock).toHaveBeenCalledWith(
+      { id: 'cm-1', reason: 'spam' },
+      expect.objectContaining({ onError: expect.any(Function) }),
+    );
+    expect(reason).toHaveValue('  spam  ');
+    expect(reason).not.toBeDisabled();
+    expect(screen.getByRole('alert')).toHaveTextContent('删除失败，请重试');
+    expect(screen.getByRole('button', { name: '取消' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus(),
+    );
+
+    await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
+    expect(screen.getByLabelText('删除原因（选填，只有管理员能看到）')).toHaveValue('');
   });
 
   it('shows a visible success status and focuses it after deleting a comment', async () => {

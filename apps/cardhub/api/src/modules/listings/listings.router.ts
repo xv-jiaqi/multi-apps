@@ -3,7 +3,13 @@ import { TRPCError } from '@trpc/server';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { z } from 'zod';
-import { listingListInput, listingMineInput, listingPublishInput } from '@repo/shared';
+import {
+  listingListInput,
+  listingMineInput,
+  listingPublishInput,
+  optionalDeleteReason,
+} from '@repo/shared';
+import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -231,21 +237,23 @@ export class ListingsRouter {
       }),
 
       close: t.authedProcedure
-        .input(z.object({ id: z.string().uuid() }))
+        .input(z.object({ id: z.string().uuid(), reason: optionalDeleteReason }))
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          const actor = ctx.user;
           const existing = await prisma.listing.findUnique({
             where: { id: input.id },
-            select: { id: true, userId: true, status: true },
+            select: { id: true, userId: true, status: true, cardSlug: true },
           });
           if (!existing) {
             throw new TRPCError({ code: 'NOT_FOUND', message: '该交易意向不存在' });
           }
-          if (existing.userId !== ctx.user.sub) {
+          const isSelf = existing.userId === actor.sub;
+          if (!isSelf) {
             // Mirror forum.delete — fall through to admin role check only
             // when ownership fails so the common case stays cheap.
             const requester = await prisma.user.findUnique({
-              where: { id: ctx.user.sub },
+              where: { id: actor.sub },
               select: { role: true },
             });
             if (requester?.role !== 'admin') {
@@ -255,10 +263,28 @@ export class ListingsRouter {
           if (existing.status === 'CLOSED') {
             return { ok: true };
           }
-          await prisma.listing.update({
-            where: { id: input.id },
-            data: { status: 'CLOSED' },
-          });
+          if (isSelf) {
+            await prisma.listing.update({
+              where: { id: input.id },
+              data: { status: 'CLOSED' },
+            });
+          } else {
+            await prisma.$transaction(async (tx) => {
+              await tx.listing.update({
+                where: { id: input.id },
+                data: { status: 'CLOSED' },
+              });
+              await writeContentDelete(tx, {
+                actorId: actor.sub,
+                actorUsername: actor.username,
+                targetType: 'LISTING',
+                targetId: existing.id,
+                targetLabel: existing.cardSlug,
+                targetUserId: existing.userId,
+                reason: normalizeDeleteReason(input.reason),
+              });
+            });
+          }
           return { ok: true };
         }),
     });

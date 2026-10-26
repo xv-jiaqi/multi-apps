@@ -7,7 +7,7 @@ import { passwordPrehashWriteEnabled } from '../../config/env.validation';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
-import { hashPassword, verifyPassword } from './password-hash';
+import { hashPassword, legacyPasswordExceedsBcryptLimit, verifyPassword } from './password-hash';
 
 function sessionRejected(): TRPCError {
   return new TRPCError({
@@ -78,6 +78,7 @@ export class AuthRouter {
             password: true,
             role: true,
             tokenVersion: true,
+            passwordChangeRecommended: true,
           },
         });
         if (!user) {
@@ -98,11 +99,15 @@ export class AuthRouter {
             cause: { appCode: APP_ERROR_CODES.INVALID_CREDENTIALS },
           });
         }
-        if (check.upgradedHash) {
+        const recommendChange = legacyPasswordExceedsBcryptLimit(user.password, input.password);
+        if (check.upgradedHash || recommendChange) {
           try {
             await prisma.user.updateMany({
               where: { id: user.id, password: user.password },
-              data: { password: check.upgradedHash },
+              data: {
+                ...(check.upgradedHash ? { password: check.upgradedHash } : {}),
+                ...(recommendChange ? { passwordChangeRecommended: true } : {}),
+              },
             });
           } catch (error) {
             const reported = error instanceof Error ? error : new Error(String(error));
@@ -114,7 +119,13 @@ export class AuthRouter {
         const token = auth.sign({ sub: user.id, username: user.username, ver: user.tokenVersion });
         return {
           token,
-          user: { id: user.id, email: user.email, username: user.username, role: user.role },
+          user: {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            passwordChangeRecommended: user.passwordChangeRecommended || recommendChange,
+          },
         };
       }),
 
@@ -150,6 +161,7 @@ export class AuthRouter {
             data: {
               password: hashed,
               tokenVersion: { increment: 1 },
+              passwordChangeRecommended: false,
             },
             select: { id: true, username: true, tokenVersion: true },
           });
@@ -176,7 +188,13 @@ export class AuthRouter {
           if (!ctx.user) throw sessionRejected();
           const user = await prisma.user.findUnique({
             where: { id: ctx.user.sub },
-            select: { id: true, email: true, username: true, role: true },
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              role: true,
+              passwordChangeRecommended: true,
+            },
           });
           if (!user) throw sessionRejected();
           return user;

@@ -227,6 +227,7 @@ describe('AuthRouter.login', () => {
       email: 'alice@cardhub.test',
       username: 'alice',
       role: 'admin',
+      passwordChangeRecommended: false,
     });
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u1', username: 'alice', ver: 4 });
     expect(userMock.update).not.toHaveBeenCalled();
@@ -293,6 +294,7 @@ describe('AuthRouter.me', () => {
       email: 'admin@cardhub.test',
       username: 'admin',
       role: 'admin',
+      passwordChangeRecommended: false,
     });
 
     await expect(caller.me({ token: 'ignored.jwt.token' })).resolves.toEqual({
@@ -300,12 +302,14 @@ describe('AuthRouter.me', () => {
       email: 'admin@cardhub.test',
       username: 'admin',
       role: 'admin',
+      passwordChangeRecommended: false,
     });
     await expect(caller.me()).resolves.toEqual({
       id: 'u-admin',
       email: 'admin@cardhub.test',
       username: 'admin',
       role: 'admin',
+      passwordChangeRecommended: false,
     });
     expect(auth.verify).not.toHaveBeenCalled();
   });

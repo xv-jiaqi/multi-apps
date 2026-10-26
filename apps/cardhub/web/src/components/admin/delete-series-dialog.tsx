@@ -14,6 +14,7 @@ import {
   isConfirmPhraseValid,
 } from '@repo/ui-web';
 import { useStores } from '../../stores/root-store';
+import { DeleteReasonTextarea } from '../delete-reason-field';
 import { failureText, formatAdminCount, isAccessRevoked } from './catalog-utils';
 
 function PhraseLabel({ locale, slug }: { locale: Locale; slug: string }) {
@@ -38,7 +39,7 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
 }: {
   series: { slug: string; title: string; cardCount: number; commentCount: number } | null;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => Promise<void>;
+  onConfirm: (reason: string) => Promise<void>;
   onForbidden: () => void;
   onCloseAutoFocus?: (event: Event) => void;
 }) {
@@ -47,6 +48,7 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
   const inputRef = useRef<HTMLInputElement>(null);
   const actionRef = useRef<HTMLButtonElement>(null);
   const [phrase, setPhrase] = useState('');
+  const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const open = series !== null;
@@ -55,6 +57,7 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
   useEffect(() => {
     if (!open) {
       setPhrase('');
+      setReason('');
       setError(null);
       setBusy(false);
     }
@@ -65,7 +68,7 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
     setBusy(true);
     setError(null);
     try {
-      await onConfirm();
+      await onConfirm(reason.trim());
       onOpenChange(false);
     } catch (caught) {
       if (isAccessRevoked(caught)) {
@@ -115,6 +118,12 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="mt-4 space-y-4 text-sm text-neutral-800">
+              <DeleteReasonTextarea
+                locale={locale.locale}
+                value={reason}
+                readOnly={busy}
+                onChange={setReason}
+              />
               <ConfirmPhraseField
                 ref={inputRef}
                 id="delete-series-phrase"

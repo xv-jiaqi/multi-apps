@@ -316,6 +316,11 @@ const zhCN: Dictionary = {
   'me.security.title': '账号安全',
   'me.security.password': '密码',
   'me.security.passwordHint': '修改后，其他设备需要用新密码重新登录。',
+  'auth.legacyPassword.notice':
+    '你的密码是在旧版安全规则下设置的，建议修改一次密码，让账号得到完整保护。',
+  'auth.legacyPassword.action': '去修改密码',
+  'auth.legacyPassword.later': '稍后',
+  'auth.legacyPassword.meHint': '建议修改密码：你的密码是在旧版安全规则下设置的。',
   'me.security.changePassword': '修改密码',
   'me.security.signOutAll': '退出所有设备',
   'me.security.signOutAllHint': '所有已登录的设备都会退出，包括这台设备。',
@@ -417,6 +422,8 @@ const zhCN: Dictionary = {
   'admin.cancel': '取消',
   'admin.deleting': '正在删除…',
   'admin.deleteFailed': '删除失败，请重试',
+  'admin.deleteReason.label': '删除原因（选填，只有管理员能看到）',
+  'admin.deleteReason.count': '{n}/500',
   'admin.series.confirmDelete': '删除系列「{title}」？此操作不可撤销。',
   'admin.series.forceTitle': '删除系列「{title}」及其全部卡牌',
   'admin.series.forceTitleSeriesComments': '删除系列「{title}」及其系列评论',
@@ -916,6 +923,12 @@ const enUS: Dictionary = {
   'me.security.password': 'Password',
   'me.security.passwordHint':
     'After you change it, other devices must sign in again with the new password.',
+  'auth.legacyPassword.notice':
+    'Your password was set under older security rules. Change it once to fully protect your account.',
+  'auth.legacyPassword.action': 'Change password',
+  'auth.legacyPassword.later': 'Later',
+  'auth.legacyPassword.meHint':
+    'We recommend changing your password: it was set under older security rules.',
   'me.security.changePassword': 'Change password',
   'me.security.signOutAll': 'Sign out everywhere',
   'me.security.signOutAllHint': 'Signs out every device, including this one.',
@@ -1020,6 +1033,8 @@ const enUS: Dictionary = {
   'admin.cancel': 'Cancel',
   'admin.deleting': 'Deleting…',
   'admin.deleteFailed': "Couldn't delete. Try again.",
+  'admin.deleteReason.label': 'Reason (optional, admins only)',
+  'admin.deleteReason.count': '{n}/500',
   'admin.series.confirmDelete': "Delete series “{title}”? This can't be undone.",
   'admin.series.forceTitle': 'Delete “{title}” and all its cards',
   'admin.series.forceTitleSeriesComments': 'Delete “{title}” and its series comments',

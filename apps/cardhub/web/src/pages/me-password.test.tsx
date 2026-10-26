@@ -289,6 +289,13 @@ describe('ChangePasswordPage', () => {
   });
 
   it('stores the new token and returns to account security', async () => {
+    rootStore.session.signIn('token', {
+      id: 'u1',
+      username: 'alice',
+      role: 'user',
+      passwordChangeRecommended: true,
+    });
+    window.sessionStorage.setItem('cardhub:legacyPasswordLater', '1');
     const user = userEvent.setup();
     renderPassword();
     await user.type(screen.getByLabelText('当前密码'), 'old-password');
@@ -300,6 +307,8 @@ describe('ChangePasswordPage', () => {
       passwordHandlers.onSuccess?.({ token: 'next-token' });
     });
     expect(rootStore.session.token).toBe('next-token');
+    expect(rootStore.session.user?.passwordChangeRecommended).toBe(false);
+    expect(window.sessionStorage.getItem('cardhub:legacyPasswordLater')).toBeNull();
     expect(screen.getByTestId('probe')).toHaveTextContent(
       '/me#me-security|{"notice":"passwordChanged"}',
     );

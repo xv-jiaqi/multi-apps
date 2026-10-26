@@ -42,6 +42,7 @@ function makeRouter() {
       upsert: cardUpsert,
       delete: cardDelete,
     },
+    auditLog: { create: jest.fn().mockResolvedValue({}) },
     $transaction: transaction,
   } as unknown as PrismaService;
 

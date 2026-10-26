@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { observer } from 'mobx-react-lite';
 import { t } from '@repo/shared';
+import { LegacyPasswordNotice } from './legacy-password-notice';
 import { SiteHeader } from './site-header';
 import { useStores } from '../stores/root-store';
 
@@ -34,6 +35,7 @@ export const PageShell = observer(function PageShell({ children }: PropsWithChil
         tabIndex={-1}
         className="app-safe-x app-safe-bottom relative mx-auto w-full max-w-6xl py-10 focus:outline-none"
       >
+        <LegacyPasswordNotice />
         {children}
       </main>
     </div>

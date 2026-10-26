@@ -485,6 +485,7 @@ describe('ForumDetailPage replies pagination', () => {
     const deleteButton = screen.getByRole('button', { name: '删除 @user1 的回帖' });
     await user.click(deleteButton);
     expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
+    expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
 
     await user.keyboard('{Escape}');
     await waitFor(() => {
@@ -794,5 +795,41 @@ describe('ForumDetailPage CH-103 topic controls', () => {
 
     expect(screen.getByRole('button', { name: '置顶' })).toHaveFocus();
     expect(topicsListInvalidate).toHaveBeenCalled();
+  });
+
+  it('tabs the admin reply reason before delete and cancel, and keeps it after Esc clears it', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'admin-1', username: 'admin', role: 'admin' });
+    deleteReplyMutate.mockImplementation((input, handlers) => {
+      handlers.onError?.({ data: { code: 'INTERNAL_SERVER_ERROR' } }, input);
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    const trigger = screen.getByRole('button', { name: '删除 @user1 的回帖' });
+    await user.click(trigger);
+    const reason = screen.getByLabelText('删除原因（选填，只有管理员能看到）');
+    const remove = screen.getByRole('button', { name: '删除' });
+    const cancel = screen.getByRole('button', { name: '取消' });
+    expect(cancel).toHaveFocus();
+    reason.focus();
+    await user.tab();
+    expect(remove).toHaveFocus();
+    await user.tab();
+    expect(cancel).toHaveFocus();
+
+    await user.type(reason, ' off topic ');
+    await user.click(remove);
+    expect(deleteReplyMutate).toHaveBeenCalledWith(
+      { id: 'reply-01', reason: 'off topic' },
+      expect.objectContaining({ onError: expect.any(Function) }),
+    );
+    expect(reason).toHaveValue(' off topic ');
+    expect(screen.getByRole('alert')).toHaveTextContent('删除失败，请重试');
+
+    await user.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '删除 @user1 的回帖' })).toHaveFocus(),
+    );
+    expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
   });
 });

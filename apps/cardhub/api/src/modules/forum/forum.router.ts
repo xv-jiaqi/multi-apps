@@ -6,12 +6,14 @@ import { z } from 'zod';
 import {
   cursorPaginationInput,
   markdownToPlainText,
+  optionalDeleteReason,
   replyCreateInput,
   slugify,
   topicCreateInput,
   topicSetPinnedInput,
   topicUpdateInput,
 } from '@repo/shared';
+import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -219,27 +221,44 @@ export class ForumRouter {
       }),
 
       delete: t.authedProcedure
-        .input(z.object({ id: z.string().uuid() }))
+        .input(z.object({ id: z.string().uuid(), reason: optionalDeleteReason }))
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          const actor = ctx.user;
           const topic = await prisma.topic.findUnique({
             where: { id: input.id },
-            select: { id: true, userId: true },
+            select: { id: true, userId: true, title: true },
           });
           if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
-          if (topic.userId !== ctx.user.sub) {
+          const isSelf = topic.userId === actor.sub;
+          if (!isSelf) {
             // Only re-fetch the role when the requester is not the owner —
             // the common case (owner deletes their own topic) avoids the
             // extra round-trip.
             const requester = await prisma.user.findUnique({
-              where: { id: ctx.user.sub },
+              where: { id: actor.sub },
               select: { role: true },
             });
             if (requester?.role !== 'admin') {
               throw new TRPCError({ code: 'FORBIDDEN', message: '没有删除权限' });
             }
           }
-          await prisma.topic.delete({ where: { id: input.id } });
+          if (isSelf) {
+            await prisma.topic.delete({ where: { id: input.id } });
+          } else {
+            await prisma.$transaction(async (tx) => {
+              await tx.topic.delete({ where: { id: input.id } });
+              await writeContentDelete(tx, {
+                actorId: actor.sub,
+                actorUsername: actor.username,
+                targetType: 'TOPIC',
+                targetId: topic.id,
+                targetLabel: topic.title,
+                targetUserId: topic.userId,
+                reason: normalizeDeleteReason(input.reason),
+              });
+            });
+          }
           return { ok: true };
         }),
     });
@@ -288,24 +307,41 @@ export class ForumRouter {
       }),
 
       delete: t.authedProcedure
-        .input(z.object({ id: z.string().uuid() }))
+        .input(z.object({ id: z.string().uuid(), reason: optionalDeleteReason }))
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          const actor = ctx.user;
           const reply = await prisma.reply.findUnique({
             where: { id: input.id },
-            select: { id: true, userId: true },
+            select: { id: true, userId: true, body: true },
           });
           if (!reply) throw new TRPCError({ code: 'NOT_FOUND', message: '回帖不存在' });
-          if (reply.userId !== ctx.user.sub) {
+          const isSelf = reply.userId === actor.sub;
+          if (!isSelf) {
             const requester = await prisma.user.findUnique({
-              where: { id: ctx.user.sub },
+              where: { id: actor.sub },
               select: { role: true },
             });
             if (requester?.role !== 'admin') {
               throw new TRPCError({ code: 'FORBIDDEN', message: '没有删除权限' });
             }
           }
-          await prisma.reply.delete({ where: { id: input.id } });
+          if (isSelf) {
+            await prisma.reply.delete({ where: { id: input.id } });
+          } else {
+            await prisma.$transaction(async (tx) => {
+              await tx.reply.delete({ where: { id: input.id } });
+              await writeContentDelete(tx, {
+                actorId: actor.sub,
+                actorUsername: actor.username,
+                targetType: 'REPLY',
+                targetId: reply.id,
+                targetLabel: reply.body,
+                targetUserId: reply.userId,
+                reason: normalizeDeleteReason(input.reason),
+              });
+            });
+          }
           return { ok: true };
         }),
     });

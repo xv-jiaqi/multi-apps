@@ -45,6 +45,7 @@ export {
   isConfirmPhraseValid,
   type ConfirmPhraseFieldProps,
 } from './components/confirm-phrase-field';
+export { controlBase } from './components/form-styles';
 export { Input } from './components/input';
 export type { InputProps } from './components/input';
 export {

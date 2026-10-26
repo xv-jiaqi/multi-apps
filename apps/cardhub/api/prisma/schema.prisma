@@ -23,6 +23,10 @@ model User {
   // Bumped to revoke outstanding JWTs. Missing `ver` on a token counts as 0,
   // which matches this default, so applying the column does not log anyone out.
   tokenVersion Int   @default(0)
+  // Set at login when a legacy bcrypt hash was checked with a password longer
+  // than bcrypt's 72-byte input. Cleared after a successful password change.
+  // Old servers ignore the column.
+  passwordChangeRecommended Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -32,6 +36,8 @@ model User {
   listings        Listing[]
   reportsFiled    Report[]  @relation("ReportReporter")
   reportsResolved Report[]  @relation("ReportResolver")
+  auditLogsActed    AuditLog[] @relation("AuditActor")
+  auditLogsTargeted AuditLog[] @relation("AuditTargetUser")
 
   @@map("users")
 }
@@ -227,4 +233,26 @@ model Report {
   @@index([status, createdAt])
   @@index([resolvedById])
   @@map("reports")
+}
+
+// Append-only moderation record. Old servers ignore the table.
+model AuditLog {
+  id            String   @id @default(uuid())
+  actorId       String?
+  actorUsername String
+  action        String
+  targetType    String
+  targetId      String
+  targetLabel   String
+  targetUserId  String?
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  actor      User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  targetUser User? @relation("AuditTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
 }

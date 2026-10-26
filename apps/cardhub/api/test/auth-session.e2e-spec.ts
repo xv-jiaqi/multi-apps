@@ -175,11 +175,13 @@ describe('auth session revocation', () => {
         email: identity.email,
         username: identity.username,
         role: 'user',
+        passwordChangeRecommended: false,
       }),
     );
     expect(Object.keys(resultData(withInput.body)).sort()).toEqual([
       'email',
       'id',
+      'passwordChangeRecommended',
       'role',
       'username',
     ]);

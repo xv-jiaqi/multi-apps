@@ -717,6 +717,7 @@ export const TradeListPage = observer(function TradeListPage() {
                             {canClose ? (
                               <ListingCloseControl
                                 listingId={listing.id}
+                                showReason={session.isAdmin && !isMine}
                                 confirming={confirmingId === listing.id}
                                 onConfirmingChange={(open) =>
                                   setConfirmingId((current) =>

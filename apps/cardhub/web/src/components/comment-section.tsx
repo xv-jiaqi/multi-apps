@@ -7,6 +7,7 @@ import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
+import { DeleteReasonField } from './delete-reason-field';
 import { ReportButton } from './report-button';
 import { queryFallback, useFocusOnRecovery } from './retry-button';
 
@@ -63,6 +64,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const [content, setContent] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
   const [deleteError, setDeleteError] = useState<{ id: string; message: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const statusRef = useRef<HTMLParagraphElement | null>(null);
@@ -106,6 +108,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   function markDeleted() {
     setConfirmingId(null);
+    setDeleteReason('');
     setDeleteError(null);
     setStatusMessage(tt('card.detail.commentDeleted'));
     if (commentTarget.kind === 'card') {
@@ -126,7 +129,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         return;
       }
 
-      setConfirmingId(null);
+      const target = list.data?.find((item) => item.id === variables.id);
+      const keepReason =
+        session.isAdmin && target !== undefined && session.user?.id !== target.user.id;
       setDeleteError({
         id: variables.id,
         message:
@@ -134,6 +139,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             ? tt('card.detail.commentDeleteForbidden')
             : tt('card.detail.commentDeleteFailed'),
       });
+      if (keepReason) return;
+      setConfirmingId(null);
+      setDeleteReason('');
       restoreDeleteFocus(variables.id);
     },
   });
@@ -179,6 +187,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   const cancelDelete = (commentId: string) => {
     setConfirmingId(null);
+    setDeleteReason('');
     restoreDeleteFocus(commentId);
   };
 
@@ -301,6 +310,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         >
           {list.data.map((comment) => {
             const canDelete = session.user?.id === comment.user.id || session.isAdmin;
+            const showDeleteReason = session.isAdmin && session.user?.id !== comment.user.id;
             const isConfirming = confirmingId === comment.id;
             const isDeleting =
               deleteComment.isPending && deleteComment.variables?.id === comment.id;
@@ -338,6 +348,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           onClick={() => {
                             setDeleteError(null);
                             setStatusMessage('');
+                            setDeleteReason('');
                             setConfirmingId(comment.id);
                           }}
                           className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
@@ -355,33 +366,54 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                   <div
                     role="group"
                     aria-label={tt('card.detail.confirmDeleteComment')}
-                    className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs"
+                    className={
+                      showDeleteReason
+                        ? 'mt-2 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+                        : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+                    }
                     onKeyDown={(event) => onConfirmKeyDown(event, comment.id)}
                   >
-                    <span className="mr-auto text-red-700">
+                    <span className={showDeleteReason ? 'text-red-700' : 'mr-auto text-red-700'}>
                       {tt('card.detail.confirmDeleteComment')}
                     </span>
-                    <button
-                      type="button"
-                      disabled={isDeleting}
-                      onClick={() => deleteComment.mutate({ id: comment.id })}
-                      className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-                    >
-                      {isDeleting
-                        ? tt('card.detail.commentDeleting')
-                        : tt('card.detail.commentDelete')}
-                    </button>
-                    <button
-                      type="button"
-                      ref={(node) => {
-                        cancelButtonRefs.current[comment.id] = node;
-                      }}
-                      disabled={isDeleting}
-                      onClick={() => cancelDelete(comment.id)}
-                      className="inline-flex min-h-6 items-center rounded px-1 text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {tt('card.detail.commentDeleteCancel')}
-                    </button>
+                    {showDeleteReason ? (
+                      <DeleteReasonField
+                        locale={locale.locale}
+                        value={deleteReason}
+                        readOnly={isDeleting}
+                        onChange={setDeleteReason}
+                      />
+                    ) : null}
+                    <div className={showDeleteReason ? 'flex justify-end gap-3' : 'contents'}>
+                      <button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={() => {
+                          const reason = deleteReason.trim();
+                          deleteComment.mutate(
+                            showDeleteReason && reason
+                              ? { id: comment.id, reason }
+                              : { id: comment.id },
+                          );
+                        }}
+                        className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+                      >
+                        {isDeleting
+                          ? tt('card.detail.commentDeleting')
+                          : tt('card.detail.commentDelete')}
+                      </button>
+                      <button
+                        type="button"
+                        ref={(node) => {
+                          cancelButtonRefs.current[comment.id] = node;
+                        }}
+                        disabled={isDeleting}
+                        onClick={() => cancelDelete(comment.id)}
+                        className="inline-flex min-h-6 items-center rounded px-1 text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {tt('card.detail.commentDeleteCancel')}
+                      </button>
+                    </div>
                   </div>
                 ) : null}
                 {deleteError?.id === comment.id ? (
