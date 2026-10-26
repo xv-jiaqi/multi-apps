@@ -14,7 +14,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ items }: { items: Bre
   const ariaLabel = t(locale.locale, 'breadcrumb.aria');
 
   return (
-    <nav aria-label={ariaLabel} className="text-sm text-neutral-500">
+    <nav aria-label={ariaLabel} className="text-sm text-neutral-600">
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;
