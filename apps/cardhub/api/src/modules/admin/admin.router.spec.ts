@@ -673,7 +673,7 @@ describe('AdminRouter.catalog.import limits', () => {
       }),
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
-      message: `一次最多导入 500 行，当前 ${CATALOG_IMPORT_MAX_ROWS + 1} 行`,
+      message: `一次最多导入 ${CATALOG_IMPORT_MAX_ROWS} 行，当前 ${CATALOG_IMPORT_MAX_ROWS + 1} 行`,
     });
 
     expect(seriesFindMany).not.toHaveBeenCalled();

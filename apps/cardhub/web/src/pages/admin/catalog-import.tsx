@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
-import { appErrorMessage, catalogImportLimit, t } from '@repo/shared';
+import { CATALOG_IMPORT_MAX_ROWS, appErrorMessage, catalogImportLimit, t } from '@repo/shared';
 import { Button, SegmentedControl } from '@repo/ui-web';
 import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
@@ -119,7 +119,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       data = JSON.parse(text);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message), message }));
+      setParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message) }));
       return;
     }
     const previewInput = { data, dryRun: true as const };
@@ -127,7 +127,10 @@ const CatalogImportBody = observer(function CatalogImportBody() {
     if (previewLimit) {
       setParseError(
         previewLimit.reason === 'tooManyRows'
-          ? tt('admin.import.tooManyRows', { count: previewLimit.count })
+          ? tt('admin.import.tooManyRows', {
+              count: previewLimit.count,
+              max: CATALOG_IMPORT_MAX_ROWS,
+            })
           : tt('admin.import.tooLarge'),
       );
       return;
@@ -161,7 +164,10 @@ const CatalogImportBody = observer(function CatalogImportBody() {
     if (executeLimit) {
       setActionError(
         executeLimit.reason === 'tooManyRows'
-          ? tt('admin.import.tooManyRows', { count: executeLimit.count })
+          ? tt('admin.import.tooManyRows', {
+              count: executeLimit.count,
+              max: CATALOG_IMPORT_MAX_ROWS,
+            })
           : tt('admin.import.tooLarge'),
       );
       setActionRows(null);
