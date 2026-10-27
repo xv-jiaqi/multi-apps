@@ -52,9 +52,6 @@ interface ThreadOverlay {
 const replyActionClassName =
   'inline-flex min-h-6 items-center rounded px-1 text-xs font-medium text-brand-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
-const inlineReplyRetryClassName =
-  'inline-flex min-h-6 items-center rounded px-1 text-xs font-medium text-red-700 underline hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
-
 const MENTION = /^@([A-Za-z0-9_-]+) /;
 
 function emptyOverlay(): ThreadOverlay {
@@ -986,11 +983,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                   >
                     <span>{tt('comment.reply.loadFailed')}</span>
                     <RetryButton
+                      variant="inline"
                       retrying={loadingParentId === comment.id}
                       label={tt('state.retry')}
                       retryingLabel={tt('state.retrying')}
                       onRetry={() => void loadMore(comment.id)}
-                      className={inlineReplyRetryClassName}
                     />
                   </div>
                 ) : remaining > 0 && cursor ? (
