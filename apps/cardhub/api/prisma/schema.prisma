@@ -99,8 +99,10 @@ model Comment {
   card   Card?   @relation(fields: [cardId], references: [id], onDelete: Cascade)
   series Series? @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   // Null means a top-level comment. Replies point at that top-level row.
-  // Expand-only: old servers ignore the column. Roll back the app first, then
-  // drop comments_parentId_fkey, comments_parentId_idx, and parentId.
+  // Expand-only: old servers ignore the column. Roll the app back first, then
+  // drop comments_parentId_createdAt_id_idx, comments_parentId_fkey,
+  // comments_parentId_idx, and parentId. Until the column is dropped, an old
+  // list does not filter parentId, so replies show up as extra top-level rows.
   parentId String?
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
@@ -108,6 +110,7 @@ model Comment {
   @@index([cardId])
   @@index([seriesId])
   @@index([parentId])
+  @@index([parentId, createdAt, id])
   @@map("comments")
 }
 

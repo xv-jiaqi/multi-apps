@@ -1,3 +1,4 @@
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { APP_ERROR_CODES } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { CommentsRouter } from './comments.router';
@@ -22,6 +23,7 @@ function makeRouter() {
   const commentDelete = jest.fn();
   const userFindUnique = jest.fn();
   const auditCreate = jest.fn();
+  const queryRaw = jest.fn().mockResolvedValue([]);
   const prisma = {
     card: { findUnique: cardFindUnique },
     series: { findUnique: seriesFindUnique },
@@ -34,6 +36,7 @@ function makeRouter() {
     },
     user: { findUnique: userFindUnique },
     auditLog: { create: auditCreate },
+    $queryRaw: queryRaw,
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
@@ -59,6 +62,7 @@ function makeRouter() {
     commentDelete,
     userFindUnique,
     auditCreate,
+    queryRaw,
   };
 }
 
@@ -378,58 +382,60 @@ const alice = {
 const parentId = '11111111-1111-4111-8111-111111111111';
 
 describe('CommentsRouter replies', () => {
-  it('returns the oldest three replies, the live count, and a cursor', async () => {
-    const { caller, cardFindUnique, commentFindMany, commentGroupBy } = makeRouter();
+  it('returns the oldest three replies from the preview query, the live count, and a cursor', async () => {
+    const { caller, cardFindUnique, commentFindMany, commentGroupBy, queryRaw } = makeRouter();
     cardFindUnique.mockResolvedValueOnce({ id: 'card-1' });
-    commentFindMany
-      .mockResolvedValueOnce([
-        {
-          id: 'cm-1',
-          content: 'top',
-          createdAt: new Date('2026-05-03T00:00:00Z'),
-          user: { id: 'u1', username: 'alice' },
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 'r1',
-          parentId: 'cm-1',
-          content: 'first',
-          createdAt: new Date('2026-05-03T01:00:00Z'),
-          user: { id: 'u2', username: 'bob' },
-        },
-        {
-          id: 'r2',
-          parentId: 'cm-1',
-          content: 'second',
-          createdAt: new Date('2026-05-03T02:00:00Z'),
-          user: { id: 'u3', username: 'cara' },
-        },
-        {
-          id: 'r3',
-          parentId: 'cm-1',
-          content: 'third',
-          createdAt: new Date('2026-05-03T03:00:00Z'),
-          user: { id: 'u2', username: 'bob' },
-        },
-        {
-          id: 'r4',
-          parentId: 'cm-1',
-          content: 'fourth',
-          createdAt: new Date('2026-05-03T04:00:00Z'),
-          user: { id: 'u3', username: 'cara' },
-        },
-      ]);
-    commentGroupBy.mockResolvedValueOnce([{ parentId: 'cm-1', _count: { _all: 4 } }]);
+    commentFindMany.mockResolvedValueOnce([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        content: 'top',
+        createdAt: new Date('2026-05-03T00:00:00Z'),
+        user: { id: 'u1', username: 'alice' },
+      },
+    ]);
+    queryRaw.mockResolvedValueOnce([
+      {
+        id: '22222222-2222-4222-8222-222222222222',
+        parentId: '11111111-1111-4111-8111-111111111111',
+        content: 'first',
+        createdAt: new Date('2026-05-03T01:00:00Z'),
+        userId: '33333333-3333-4333-8333-333333333333',
+        username: 'bob',
+      },
+      {
+        id: '44444444-4444-4444-8444-444444444444',
+        parentId: '11111111-1111-4111-8111-111111111111',
+        content: 'second',
+        createdAt: new Date('2026-05-03T02:00:00Z'),
+        userId: '55555555-5555-4555-8555-555555555555',
+        username: 'cara',
+      },
+      {
+        id: '66666666-6666-4666-8666-666666666666',
+        parentId: '11111111-1111-4111-8111-111111111111',
+        content: 'third',
+        createdAt: new Date('2026-05-03T03:00:00Z'),
+        userId: '33333333-3333-4333-8333-333333333333',
+        username: 'bob',
+      },
+    ]);
+    commentGroupBy.mockResolvedValueOnce([
+      { parentId: '11111111-1111-4111-8111-111111111111', _count: { _all: 5 } },
+    ]);
 
     const result = await caller(null).listForCard({ cardSlug: 'aurora-knight' });
-    expect(result[0]?.replyCount).toBe(4);
-    expect(result[0]?.replies.map((reply) => reply.id)).toEqual(['r1', 'r2', 'r3']);
-    expect(result[0]?.repliesNextCursor).toBe('r3');
-    expect(commentFindMany.mock.calls[1]?.[0]?.orderBy).toEqual([
-      { createdAt: 'asc' },
-      { id: 'asc' },
+    expect(result[0]?.replyCount).toBe(5);
+    expect(result[0]?.replies.map((reply) => reply.id)).toEqual([
+      '22222222-2222-4222-8222-222222222222',
+      '44444444-4444-4444-8444-444444444444',
+      '66666666-6666-4666-8666-666666666666',
     ]);
+    expect(result[0]?.repliesNextCursor).toBe('66666666-6666-4666-8666-666666666666');
+    expect(commentFindMany).toHaveBeenCalledTimes(1);
+    const sql = queryRaw.mock.calls[0]?.[0];
+    const text = Array.isArray(sql?.strings) ? sql.strings.join(' ') : String(sql);
+    expect(text).toContain('LIMIT');
+    expect(text).toContain('LATERAL');
   });
 
   it('pages replies after the cursor and hides a reply parent', async () => {
@@ -437,6 +443,7 @@ describe('CommentsRouter replies', () => {
     const cursor = '33333333-3333-4333-8333-333333333333';
     const nextId = '44444444-4444-4444-8444-444444444444';
     commentFindUnique.mockResolvedValueOnce({ parentId: null });
+    commentFindUnique.mockResolvedValueOnce({ parentId });
     commentFindMany.mockResolvedValueOnce([
       {
         id: nextId,
@@ -478,6 +485,16 @@ describe('CommentsRouter replies', () => {
       items: [],
       nextCursor: null,
     });
+
+    commentFindUnique.mockResolvedValueOnce({ parentId: null });
+    commentFindUnique.mockResolvedValueOnce({ parentId: '77777777-7777-4777-8777-777777777777' });
+    await expect(
+      caller(null).listReplies({
+        parentId,
+        cursor: '88888888-8888-4888-8888-888888888888',
+      }),
+    ).resolves.toEqual({ items: [], nextCursor: null });
+    expect(commentFindMany).toHaveBeenCalledTimes(1);
   });
 
   it('stores a card reply and rejects a blank mention or a parent that is not top-level here', async () => {
@@ -508,6 +525,26 @@ describe('CommentsRouter replies', () => {
       cardId: 'card-1',
       userId: 'u-alice',
       parentId,
+    });
+
+    commentFindUnique.mockResolvedValueOnce({
+      id: parentId,
+      parentId: null,
+      cardId: 'card-1',
+      seriesId: null,
+    });
+    commentCreate.mockRejectedValueOnce(
+      new PrismaClientKnownRequestError('fk', {
+        code: 'P2003',
+        clientVersion: 'test',
+        meta: { constraint: 'comments_parentId_fkey', field_name: 'parentId' },
+      }),
+    );
+    await expect(
+      caller(alice).create({ cardSlug: 'aurora-knight', content: 'too late', parentId }),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      cause: { appCode: APP_ERROR_CODES.COMMENT_PARENT_GONE },
     });
 
     commentFindUnique.mockResolvedValueOnce({
@@ -557,7 +594,7 @@ describe('CommentsRouter replies', () => {
       code: 'NOT_FOUND',
       cause: { appCode: APP_ERROR_CODES.COMMENT_PARENT_GONE },
     });
-    expect(commentCreate).toHaveBeenCalledTimes(1);
+    expect(commentCreate).toHaveBeenCalledTimes(2);
   });
 
   it('stores a series reply on that series top-level comment', async () => {

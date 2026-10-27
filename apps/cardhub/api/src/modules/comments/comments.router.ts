@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import {
@@ -14,6 +15,7 @@ import {
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { loadReplyPreviews, type ReplyPreview } from './reply-preview';
 
 type CommentWithUser = Prisma.CommentGetPayload<{
   include: { user: { select: { id: true; username: true } } };
@@ -44,6 +46,11 @@ function blankReply(): TRPCError {
   });
 }
 
+function isMissingParentFk(error: unknown): boolean {
+  if (!(error instanceof PrismaClientKnownRequestError) || error.code !== 'P2003') return false;
+  return JSON.stringify(error.meta ?? {}).includes('parentId');
+}
+
 @Injectable()
 export class CommentsRouter {
   constructor(
@@ -72,41 +79,44 @@ export class CommentsRouter {
           where: { parentId: { in: ids } },
           _count: { _all: true },
         }),
-        prisma.comment.findMany({
-          where: { parentId: { in: ids } },
-          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-          include: { user: userSelect },
-        }),
+        loadReplyPreviews(prisma, ids),
       ]);
       const countByParent = new Map(
         counts.map((row) => [row.parentId, row._count._all] as const),
       );
-      const grouped = new Map<string, CommentWithUser[]>();
+      const grouped = new Map<string, ReplyPreview[]>();
       for (const reply of replyRows) {
-        if (!reply.parentId) continue;
         const bucket = grouped.get(reply.parentId) ?? [];
         bucket.push(reply);
         grouped.set(reply.parentId, bucket);
       }
       return comments.map((comment) => {
-        const shown = (grouped.get(comment.id) ?? []).slice(0, 3);
+        const shown = grouped.get(comment.id) ?? [];
         const replyCount = countByParent.get(comment.id) ?? 0;
         return {
           ...mapComment(comment),
           replyCount,
-          replies: shown.map(mapComment),
+          replies: shown.map((reply) => ({
+            id: reply.id,
+            content: reply.content,
+            createdAt: reply.createdAt.toISOString(),
+            user: { id: reply.userId, username: reply.username },
+          })),
           repliesNextCursor: replyCount > shown.length ? (shown.at(-1)?.id ?? null) : null,
         };
       });
     }
 
     async function assertReplyContent(parentId: string, content: string) {
+      const trimmed = content.trim();
+      if (!trimmed.startsWith('@')) return;
       const authors = await prisma.comment.findMany({
         where: { parentId },
+        distinct: ['userId'],
         select: { user: { select: { username: true } } },
       });
-      const names = [...new Set(authors.map((row) => row.user.username))];
-      if (isBlankReplyContent(content, names)) throw blankReply();
+      const names = authors.map((row) => row.user.username);
+      if (isBlankReplyContent(trimmed, names)) throw blankReply();
     }
 
     async function requireTopLevel(
@@ -166,6 +176,15 @@ export class CommentsRouter {
           select: { parentId: true },
         });
         if (!parent || parent.parentId !== null) return { items: [], nextCursor: null };
+        if (input.cursor) {
+          const cursorRow = await prisma.comment.findUnique({
+            where: { id: input.cursor },
+            select: { parentId: true },
+          });
+          if (!cursorRow || cursorRow.parentId !== input.parentId) {
+            return { items: [], nextCursor: null };
+          }
+        }
         const limit = input.limit;
         const rows = await prisma.comment.findMany({
           where: { parentId: input.parentId },
@@ -198,17 +217,21 @@ export class CommentsRouter {
           await assertReplyContent(input.parentId, input.content);
         }
 
-        const created = await prisma.comment.create({
-          data: {
-            content: input.content,
-            cardId: card.id,
-            userId: ctx.user.sub,
-            ...(input.parentId ? { parentId: input.parentId } : {}),
-          },
-          include: { user: { select: { id: true, username: true } } },
-        });
-
-        return mapComment(created);
+        try {
+          const created = await prisma.comment.create({
+            data: {
+              content: input.content,
+              cardId: card.id,
+              userId: ctx.user.sub,
+              ...(input.parentId ? { parentId: input.parentId } : {}),
+            },
+            include: { user: { select: { id: true, username: true } } },
+          });
+          return mapComment(created);
+        } catch (error) {
+          if (isMissingParentFk(error)) throw parentGone();
+          throw error;
+        }
       }),
 
       createForSeries: t.activeUserProcedure
@@ -229,17 +252,21 @@ export class CommentsRouter {
             await assertReplyContent(input.parentId, input.content);
           }
 
-          const created = await prisma.comment.create({
-            data: {
-              content: input.content,
-              seriesId: series.id,
-              userId: ctx.user.sub,
-              ...(input.parentId ? { parentId: input.parentId } : {}),
-            },
-            include: { user: { select: { id: true, username: true } } },
-          });
-
-          return mapComment(created);
+          try {
+            const created = await prisma.comment.create({
+              data: {
+                content: input.content,
+                seriesId: series.id,
+                userId: ctx.user.sub,
+                ...(input.parentId ? { parentId: input.parentId } : {}),
+              },
+              include: { user: { select: { id: true, username: true } } },
+            });
+            return mapComment(created);
+          } catch (error) {
+            if (isMissingParentFk(error)) throw parentGone();
+            throw error;
+          }
         }),
 
       delete: t.authedProcedure

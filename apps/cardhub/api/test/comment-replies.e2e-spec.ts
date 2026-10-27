@@ -274,6 +274,35 @@ describe('comment replies', () => {
     expectParentGone(wrongSeries);
   });
 
+  it('returns only the three oldest replies while replyCount includes all five', async () => {
+    const top = await createComment(
+      'comments.create',
+      { cardSlug, content: 'five replies' },
+      aliceToken,
+      '203.0.113.140',
+    );
+    const ids: string[] = [];
+    for (let index = 0; index < 5; index += 1) {
+      ids.push(
+        await createComment(
+          'comments.create',
+          { cardSlug, content: `reply ${index}`, parentId: top },
+          index % 2 === 0 ? bobToken : aliceToken,
+          `203.0.113.${141 + index}`,
+        ),
+      );
+    }
+
+    const listed = await get('comments.listForCard', { cardSlug, limit: 100 });
+    expect(listed.status).toBe(200);
+    const row = asRows(listed.body.result?.data).find((item) => item.id === top);
+    const replies = asRows(row?.replies);
+    expect(replies.map((reply) => reply.id)).toEqual(ids.slice(0, 3));
+    expect(row?.replyCount).toBe(5);
+    expect(row?.repliesNextCursor).toBe(ids[2]);
+    expect(await prisma.comment.count({ where: { parentId: top } })).toBe(5);
+  });
+
   it('writes one audit row when an admin deletes a thread and drops the replies', async () => {
     const top = await createComment(
       'comments.create',
