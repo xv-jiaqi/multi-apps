@@ -1,0 +1,22 @@
+[
+  {
+    "label": "collapsed-zh-1440",
+    "violations": []
+  },
+  {
+    "label": "prefill-zh-1440",
+    "violations": []
+  },
+  {
+    "label": "load-failed-zh-1440",
+    "violations": []
+  },
+  {
+    "label": "delete-confirm-zh-1440",
+    "violations": []
+  },
+  {
+    "label": "admin-reason-zh-1440",
+    "violations": []
+  }
+]
