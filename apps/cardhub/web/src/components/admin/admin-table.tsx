@@ -11,13 +11,15 @@ export function AdminTable({
   caption,
   busy,
   children,
+  className,
 }: {
   caption: string;
   busy?: boolean;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+    <div className={cn('overflow-x-auto rounded-xl border border-neutral-200 bg-white', className)}>
       <table aria-busy={busy || undefined} className="w-full min-w-160 text-sm">
         <caption className="sr-only">{caption}</caption>
         {children}
@@ -37,14 +39,20 @@ export function AdminTableHead({ children }: { children: ReactNode }) {
 export function AdminTh({
   children,
   align = 'left',
+  className,
 }: {
   children: ReactNode;
   align?: 'left' | 'right';
+  className?: string;
 }) {
   return (
     <th
       scope="col"
-      className={cn('whitespace-nowrap px-3 py-2', align === 'right' && 'text-right')}
+      className={cn(
+        'whitespace-nowrap px-3 py-2',
+        align === 'right' && 'text-right',
+        className,
+      )}
     >
       {children}
     </th>

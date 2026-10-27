@@ -23,6 +23,10 @@ import { useStores } from '../../stores/root-store';
 
 const PAGE_SIZE = 20;
 
+/** 375 only. `sm:` puts the desktop table back to the v4 layout. */
+const stickyUsernameClassName =
+  'sticky left-0 z-10 max-w-32 border-r border-neutral-200 sm:static sm:max-w-none sm:border-r-0';
+
 type UserStatus = 'all' | 'active' | 'banned';
 type DialogMode = 'ban' | 'unban';
 
@@ -371,9 +375,15 @@ const UsersBody = observer(function UsersBody() {
               {tt('admin.users.total', { count: total })}
             </p>
           )}
-          <AdminTable caption={tt('admin.users.caption')} busy={query.isLoading}>
+          <AdminTable
+            caption={tt('admin.users.caption')}
+            busy={query.isLoading}
+            className="scroll-pl-32 sm:scroll-pl-0"
+          >
             <AdminTableHead>
-              <AdminTh>{tt('admin.users.colUser')}</AdminTh>
+              <AdminTh className={`${stickyUsernameClassName} bg-neutral-50`}>
+                {tt('admin.users.colUser')}
+              </AdminTh>
               <AdminTh>{tt('admin.users.colEmail')}</AdminTh>
               <AdminTh>{tt('admin.users.colStatus')}</AdminTh>
               <AdminTh>{tt('admin.users.colJoined')}</AdminTh>
@@ -385,7 +395,14 @@ const UsersBody = observer(function UsersBody() {
                 ? Array.from({ length: 5 }, (_, index) => (
                     <tr key={index}>
                       {Array.from({ length: 6 }, (_, cell) => (
-                        <td key={cell} className="px-3 py-2">
+                        <td
+                          key={cell}
+                          className={
+                            cell === 0
+                              ? `${stickyUsernameClassName} bg-white px-3 py-2`
+                              : 'px-3 py-2'
+                          }
+                        >
                           <span className="block h-4 animate-pulse rounded bg-neutral-200 motion-reduce:animate-none" />
                         </td>
                       ))}
@@ -433,10 +450,10 @@ const UsersBody = observer(function UsersBody() {
                         if (node) rowRefs.current.set(user.id, node);
                         else rowRefs.current.delete(user.id);
                       }}
-                      className="px-3 py-2 text-left font-medium text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className={`${stickyUsernameClassName} bg-white px-3 py-2 text-left font-medium text-neutral-900 wrap-anywhere focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500`}
                     >
-                      <span className="inline-flex flex-wrap items-center gap-2">
-                        @{user.username}
+                      <span className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="min-w-0 wrap-anywhere">@{user.username}</span>
                         {user.role === 'admin' ? (
                           <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
                             {tt('me.roleAdmin')}
