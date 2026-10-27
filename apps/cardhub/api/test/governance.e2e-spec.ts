@@ -276,6 +276,38 @@ describe('user governance', () => {
     }
   });
 
+  it('returns CANNOT_BAN_ADMIN when an admin bans another admin', async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      const response = await post(
+        'admin.users.ban',
+        { userId: otherAdminId, reason: '不应该成功' },
+        adminToken,
+        '203.0.113.89',
+      );
+      expect(response.status).toBe(403);
+      expect(response.body.error.data.code).toBe('FORBIDDEN');
+      expect(response.body.error.data.appCode).toBe(APP_ERROR_CODES.CANNOT_BAN_ADMIN);
+      expect(response.body.error.data.stack).toBeUndefined();
+      expectNoLeak(response.body);
+      expect(
+        await prisma.user.findUnique({
+          where: { id: otherAdminId },
+          select: { bannedAt: true },
+        }),
+      ).toEqual({ bannedAt: null });
+      expect(
+        await prisma.auditLog.count({
+          where: { action: 'USER_BAN', targetId: otherAdminId },
+        }),
+      ).toBe(0);
+    } finally {
+      if (previous === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previous;
+    }
+  });
+
   it('refuses to ban yourself or another admin', async () => {
     const previous = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';

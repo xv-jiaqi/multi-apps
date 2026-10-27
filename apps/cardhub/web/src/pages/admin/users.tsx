@@ -107,7 +107,6 @@ const UsersBody = observer(function UsersBody() {
   const qParam = searchParams.get('q') ?? '';
   const status = parseStatus(searchParams.get('status'));
   const [draft, setDraft] = useState(qParam);
-  const [debounced, setDebounced] = useState(qParam.trim());
   const [dialog, setDialog] = useState<{ mode: DialogMode; user: AdminUserRow } | null>(null);
   const [dialogAlert, setDialogAlert] = useState<string | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -115,28 +114,35 @@ const UsersBody = observer(function UsersBody() {
   const pageErrorRef = useRef<HTMLParagraphElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
   const rowRefs = useRef(new Map<string, HTMLTableCellElement>());
+  const actionRefs = useRef(new Map<string, HTMLButtonElement>());
+  const restoreActionUserId = useRef<string | null>(null);
   const focusNoticeOnClose = useRef(false);
+  const paramsRef = useRef(searchParams);
+  paramsRef.current = searchParams;
   const utils = trpc.useUtils();
 
   useEffect(() => {
     setDraft(qParam);
   }, [qParam]);
 
+  // Search text is debounced into `q` only. Status stays on the URL until
+  // setStatus or clearFilters changes it. A render effect that cloned
+  // searchParams raced with clearFilters: debounced `q` updated first, and
+  // the effect published the previous `status=banned` back over the cleared URL.
   useEffect(() => {
-    const handle = window.setTimeout(() => setDebounced(draft.trim()), 250);
+    const handle = window.setTimeout(() => {
+      const trimmed = draft.trim();
+      const next = new URLSearchParams(paramsRef.current);
+      const current = (next.get('q') ?? '').trim();
+      if (trimmed === current) return;
+      if (trimmed) next.set('q', trimmed);
+      else next.delete('q');
+      setSearchParams(next, { replace: true });
+      setNotice(null);
+      setPageError(null);
+    }, 250);
     return () => window.clearTimeout(handle);
-  }, [draft]);
-
-  useEffect(() => {
-    const current = qParam.trim();
-    if (debounced === current) return;
-    const next = new URLSearchParams(searchParams);
-    if (debounced) next.set('q', debounced);
-    else next.delete('q');
-    setSearchParams(next, { replace: true });
-    setNotice(null);
-    setPageError(null);
-  }, [debounced, qParam, searchParams, setNotice, setSearchParams]);
+  }, [draft, setNotice, setPageError, setSearchParams]);
 
   const listInput = useMemo(
     () => ({
@@ -166,6 +172,18 @@ const UsersBody = observer(function UsersBody() {
     if (pageError) pageErrorRef.current?.focus();
   }, [pageError]);
 
+  useEffect(() => {
+    if (dialog !== null || focusNoticeOnClose.current) return;
+    const userId = restoreActionUserId.current;
+    if (!userId) return;
+    // After close, the row may have rendered a new button. Read the map
+    // after commit instead of focusing the node that opened the dialog.
+    const frame = window.requestAnimationFrame(() => {
+      actionRefs.current.get(userId)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [dialog]);
+
   const setStatus = (next: UserStatus) => {
     const params = new URLSearchParams(searchParams);
     if (next === 'all') params.delete('status');
@@ -177,7 +195,6 @@ const UsersBody = observer(function UsersBody() {
 
   const clearFilters = () => {
     setDraft('');
-    setDebounced('');
     setSearchParams(new URLSearchParams(), { replace: true });
     setNotice(null);
     setPageError(null);
@@ -201,6 +218,7 @@ const UsersBody = observer(function UsersBody() {
     replaceRow(next);
     setDialogAlert(null);
     setPageError(null);
+    restoreActionUserId.current = null;
     focusNoticeOnClose.current = true;
     setNotice(message);
     setDialog(null);
@@ -241,6 +259,7 @@ const UsersBody = observer(function UsersBody() {
         return;
       }
       if (appCode === APP_ERROR_CODES.NOT_FOUND || readTrpcCode(error) === 'NOT_FOUND') {
+        restoreActionUserId.current = null;
         setDialog(null);
         setPageError(tt('admin.users.gone'));
         void query.refetch();
@@ -458,6 +477,10 @@ const UsersBody = observer(function UsersBody() {
                         {showModeration ? (
                           <button
                             type="button"
+                            ref={(node) => {
+                              if (node) actionRefs.current.set(user.id, node);
+                              else actionRefs.current.delete(user.id);
+                            }}
                             className={
                               banned
                                 ? `${actionClass} text-xs font-medium text-brand-600 hover:underline`
@@ -470,6 +493,7 @@ const UsersBody = observer(function UsersBody() {
                               },
                             )}
                             onClick={() => {
+                              restoreActionUserId.current = user.id;
                               setDialogAlert(null);
                               setDialog({ mode: banned ? 'unban' : 'ban', user });
                             }}
@@ -535,10 +559,21 @@ const UsersBody = observer(function UsersBody() {
         }}
         onConfirm={(reason) => void submit(reason)}
         onCloseAutoFocus={(event) => {
-          if (!focusNoticeOnClose.current) return;
+          // Radix would focus the element that opened the dialog. That node
+          // can already be gone: the row re-renders during close, and a
+          // successful ban replaces 封禁 with 解封. Look the button up by
+          // userId after the next frame. Success still moves focus to the notice.
           event.preventDefault();
-          focusNoticeOnClose.current = false;
-          window.requestAnimationFrame(() => statusRef.current?.focus());
+          const userId = restoreActionUserId.current;
+          if (focusNoticeOnClose.current) {
+            focusNoticeOnClose.current = false;
+            window.requestAnimationFrame(() => statusRef.current?.focus());
+            return;
+          }
+          window.requestAnimationFrame(() => {
+            if (!userId) return;
+            actionRefs.current.get(userId)?.focus();
+          });
         }}
       />
     </div>

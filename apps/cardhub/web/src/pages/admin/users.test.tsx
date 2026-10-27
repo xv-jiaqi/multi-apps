@@ -183,6 +183,28 @@ describe('AdminUsersPage list', () => {
     expect(screen.getByTestId('loc').textContent).toBe('');
   });
 
+  it('clears status from the control and the URL together', async () => {
+    const user = userEvent.setup();
+    setRows([]);
+    renderPage('/admin/users?q=ada&status=banned');
+    expect(screen.getByRole('radio', { name: '已封禁' })).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: '清除筛选' }));
+
+    expect(screen.getByRole('radio', { name: '全部' })).toBeChecked();
+    expect(screen.getByRole('searchbox', { name: '按用户名或邮箱搜索' })).toHaveValue('');
+    const search = screen.getByTestId('loc').textContent ?? '';
+    expect(search).not.toContain('status=');
+    expect(search).not.toContain('q=');
+    expect(usersMock.inputs.at(-1)).toEqual({ limit: 20 });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    });
+    expect(screen.getByRole('radio', { name: '全部' })).toBeChecked();
+    expect(screen.getByTestId('loc').textContent ?? '').not.toContain('status=');
+  });
+
   it('shows a retry box without the server message', () => {
     usersMock.isError = true;
     usersMock.error = { message: 'PrismaClientKnownRequestError LEAK' };
@@ -240,6 +262,47 @@ describe('AdminUsersPage list', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('加载失败');
     expect(screen.getByRole('button', { name: '重试' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '加载更多' })).not.toBeInTheDocument();
+  });
+});
+
+describe('AdminUsersPage dialog focus return', () => {
+  it.each([
+    ['mouse', 'cancel'],
+    ['mouse', 'escape'],
+    ['keyboard', 'cancel'],
+    ['keyboard', 'escape'],
+  ] as const)('returns focus to the row button after %s open and %s close', async (openWith, closeWith) => {
+    const user = userEvent.setup();
+    setRows([
+      userRow(),
+      userRow({
+        id: 'banned-1',
+        username: 'cara',
+        email: 'cara@cardhub.test',
+        bannedAt: '2026-04-01T08:30:00.000Z',
+        bannedBy: { username: 'mod' },
+      }),
+    ]);
+    renderPage();
+    const trigger = screen.getByRole('button', { name: '封禁 @alice' });
+
+    if (openWith === 'mouse') {
+      await user.click(trigger);
+    } else {
+      trigger.focus();
+      await user.keyboard('{Enter}');
+    }
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+
+    if (closeWith === 'cancel') {
+      await user.click(screen.getByRole('button', { name: '取消' }));
+    } else {
+      await user.keyboard('{Escape}');
+    }
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '封禁 @alice' })).toHaveFocus();
+    expect(document.activeElement).not.toBe(document.body);
   });
 });
 
