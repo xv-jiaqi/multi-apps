@@ -90,10 +90,11 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 # Migrations are not part of this process. deploy/migrate-entrypoint.sh runs
 # `prisma migrate deploy` in a one-shot container, which is the only process
 # that receives MIGRATE_DATABASE_URL. An empty MIGRATE_DATABASE_URL falls
-# back to DATABASE_URL. This command replaces the shell with node so the
-# server is tini's direct child. Signal delivery still needs compose
-# `init: true`: without a JS SIGTERM listener, node ignores SIGTERM when it
-# is PID 1 and `docker stop` SIGKILLs it after the grace period.
+# back to DATABASE_URL. This command replaces the shell with node so SIGTERM
+# reaches the process. main.ts handles that signal: stop accepting
+# connections, finish in-flight requests, then exit. Compose `init: true`
+# still puts tini at PID 1 and forwards the signal; without init, node is
+# PID 1 and the same listener runs.
 COPY --chmod=555 deploy/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
 COPY --chmod=555 deploy/migrate-entrypoint.sh /usr/local/bin/migrate-entrypoint.sh
 CMD ["/usr/local/bin/api-entrypoint.sh"]

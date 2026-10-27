@@ -112,6 +112,15 @@ redirects `ROOT_WEB_REDIRECT_DOMAINS=www.card-hub.app` to
 `https://card-hub.app` with a permanent redirect; keep
 `ROOT_WEB_REDIRECT_TARGET=card-hub.app` in `/opt/cardhub/edge/edge.env`.
 
+Security headers are set on the edge, not in the web image. nginx in
+`Dockerfile.web` only sets cache headers. `card-hub.app`
+(`optional/root-web.caddy`) and `staging.card-hub.app` send
+`Strict-Transport-Security: max-age=31536000; includeSubDomains` (no
+`preload`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and
+`Content-Security-Policy: frame-ancestors 'none'`. Both API hostnames send
+that same HSTS value and `nosniff`. The handlers use `defer`, so they replace
+the same fields from upstream. `lb_try_duration` is unchanged.
+
 After changing any edge env vars manually, recreate the Caddy container so
 Compose injects the new environment; `caddy reload` does not pick up env-file
 changes:
@@ -273,21 +282,26 @@ the schema.
 
 The API entrypoint `exec`s node, so the server is not left under a shell.
 Migrations run in a separate one-shot container and are not in this process.
-That is not enough on its own: Node has no SIGTERM listener unless the app
-installs one (`enableShutdownHooks` is intentionally unchanged here), and PID
-1 ignores a signal it does not handle. `docker stop` then waits out the grace
-period and sends SIGKILL. Compose sets `init: true` on `api` so tini is PID 1
-and forwards SIGTERM to node, which is not PID 1 and therefore exits.
-`stop_grace_period` and the script's `docker stop -t` are 30 seconds. That is
-the ceiling for in-flight requests once shutdown hooks drain them. Today the
-process exits as soon as SIGTERM arrives, so the 30 seconds are not spent
-sleeping, and in-flight requests on that container are not drained. tini is
-the same uid as node and keeps the container environment, which is why
-`MIGRATE_DATABASE_URL` is not set on the `api` service.
+`main.ts` calls `enableShutdownHooks()`. On SIGTERM or SIGINT the process
+closes the HTTP listener before Prisma or Redis disconnect. Node's
+`server.close()` stops new connections, drops sockets that are already idle,
+and waits for in-flight responses. The shutdown path also sets
+`keepAliveTimeout` to 1 second so a keep-alive socket left open after the
+response cannot hold the process until the grace period ends. Compose sets
+`init: true` on `api` so tini is PID 1 and forwards SIGTERM to node. Without
+init, node is PID 1 and the same listener still runs. `stop_grace_period` and
+the script's `docker stop -t` are 30 seconds. That is the ceiling for
+in-flight requests. A request still running when the grace period ends is
+stopped with SIGKILL.
 
-Containers that were started before `init: true` still have node as PID 1.
-The first stop of those containers still ends in SIGKILL after the grace
-period. Later deploys stop a container that was created with tini.
+`rollout_service` in `remote-deploy.sh` starts the new container beside the
+old one (`docker compose up -d --no-deps --scale <service>=2 --no-recreate`),
+waits until that container is healthy and the in-container probe passes, and
+only then runs `docker stop -t 30` on the old container id. A new container
+that fails health or the probe is deleted. The old container keeps serving.
+
+tini is the same uid as node and keeps the container environment, which is why
+`MIGRATE_DATABASE_URL` is not set on the `api` service.
 
 ### Edge retries
 
