@@ -25,7 +25,7 @@ const PAGE_SIZE = 20;
 
 /** 375 only. `sm:` puts the desktop table back to the v4 layout. */
 const stickyUsernameClassName =
-  'sticky left-0 z-10 max-w-32 border-r border-neutral-200 sm:static sm:max-w-none sm:border-r-0';
+  'sticky left-0 z-10 w-32 max-w-32 border-r border-neutral-200 sm:static sm:w-auto sm:max-w-none sm:border-r-0';
 
 type UserStatus = 'all' | 'active' | 'banned';
 type DialogMode = 'ban' | 'unban';
