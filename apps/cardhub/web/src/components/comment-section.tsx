@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@repo/ui-web';
 import {
@@ -397,23 +397,23 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     statusRef.current?.focus();
   }, [statusMessage, statusVisible]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const pending = pendingFocus.current;
     if (!pending) return;
+    const node =
+      pending.type === 'title'
+        ? document.getElementById(pending.id)
+        : pending.type === 'opener'
+          ? replyButtonRefs.current[pending.id]
+          : pending.type === 'show-more'
+            ? document.getElementById(`show-more-${pending.id}`)
+            : document.getElementById(`reply-${pending.id}`);
+    // The new reply <li> is committed in this same render. If it is not in the
+    // document yet, keep the request so a later render can focus it. Clearing
+    // first dropped the focus onto the reply's delete button.
+    if (!node) return;
     pendingFocus.current = null;
-    if (pending.type === 'title') {
-      document.getElementById(pending.id)?.focus();
-      return;
-    }
-    if (pending.type === 'opener') {
-      replyButtonRefs.current[pending.id]?.focus();
-      return;
-    }
-    if (pending.type === 'show-more') {
-      document.getElementById(`show-more-${pending.id}`)?.focus();
-      return;
-    }
-    document.getElementById(`reply-${pending.id}`)?.focus();
+    node.focus();
   });
 
   useEffect(() => {
@@ -767,7 +767,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                         setDeleteReason('');
                         setConfirmingId(comment.id);
                       }}
-                      className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       {tt('card.detail.commentDelete')}
                     </button>
@@ -862,12 +862,12 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           aria-busy={replyDeleting ? true : undefined}
                           className="focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
-                          <div className="flex min-h-6 items-center justify-between gap-x-3 text-xs text-neutral-600">
-                            <span className="min-w-0 truncate font-semibold text-neutral-900">
+                          <div className="flex min-h-6 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600">
+                            <span className="font-semibold text-neutral-900 wrap-anywhere">
                               @{reply.user.username}
                             </span>
                             {!replyConfirming ? (
-                              <div className="ml-auto flex shrink-0 items-center gap-3">
+                              <div className="ml-auto flex max-w-full flex-wrap items-center gap-x-3 gap-y-1">
                                 <time dateTime={reply.createdAt} className="whitespace-nowrap">
                                   {formatDateTime(reply.createdAt, locale.locale)}
                                 </time>
@@ -889,7 +889,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                                       setDeleteReason('');
                                       setConfirmingId(reply.id);
                                     }}
-                                    className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                                    className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                                   >
                                     {tt('card.detail.commentDelete')}
                                   </button>

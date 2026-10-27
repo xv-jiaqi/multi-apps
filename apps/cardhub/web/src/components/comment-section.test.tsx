@@ -888,10 +888,21 @@ describe('CommentSection replies', () => {
     const posted = document.getElementById('reply-r-new');
     expect(posted).toHaveTextContent('looks good');
     expect(posted).toHaveFocus();
+    expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).not.toHaveFocus();
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('回复已发布');
     expect(status).toHaveClass('sr-only');
     expect(screen.getByText('2 条回复')).toBeInTheDocument();
+  });
+
+  it('sizes delete with the other actions and wraps a reply author instead of truncating it', () => {
+    rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob', role: 'admin' });
+    renderShell();
+    expect(screen.getByRole('button', { name: '删除 @bob 的评论' })).toHaveClass('text-xs');
+    const author = screen.getByText('@cara');
+    expect(author).toHaveClass('wrap-anywhere');
+    expect(author).not.toHaveClass('truncate');
+    expect(screen.getByRole('button', { name: '删除 @cara 的评论' })).toHaveClass('text-xs');
   });
 
   it('prefills a mention when replying to a reply and returns focus on Escape', async () => {
