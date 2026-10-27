@@ -27,6 +27,10 @@ model User {
   // than bcrypt's 72-byte input. Cleared after a successful password change.
   // Old servers ignore the column.
   passwordChangeRecommended Boolean @default(false)
+  // Null means the account can post. Set while an admin ban is in effect.
+  // Old servers ignore the column. Ban is a status, not a role.
+  bannedAt   DateTime?
+  bannedById String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -38,7 +42,10 @@ model User {
   reportsResolved Report[]  @relation("ReportResolver")
   auditLogsActed    AuditLog[] @relation("AuditActor")
   auditLogsTargeted AuditLog[] @relation("AuditTargetUser")
+  bannedBy   User?  @relation("UserBannedBy", fields: [bannedById], references: [id], onDelete: SetNull)
+  bannedUsers User[] @relation("UserBannedBy")
 
+  @@index([bannedAt])
   @@map("users")
 }
 

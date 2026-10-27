@@ -176,9 +176,11 @@ describe('auth session revocation', () => {
         username: identity.username,
         role: 'user',
         passwordChangeRecommended: false,
+        bannedAt: null,
       }),
     );
     expect(Object.keys(resultData(withInput.body)).sort()).toEqual([
+      'bannedAt',
       'email',
       'id',
       'passwordChangeRecommended',
@@ -356,7 +358,7 @@ describe('auth session revocation', () => {
       expect(userLookups).toHaveLength(1);
       expect(userLookups[0]?.[0]).toEqual({
         where: { id: registered.id },
-        select: { tokenVersion: true, role: true },
+        select: { tokenVersion: true, role: true, bannedAt: true },
       });
     } finally {
       findUnique.mockRestore();

@@ -100,6 +100,26 @@ describe('TradePublishPage', () => {
     rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
   });
 
+  it('replaces the form when the account is banned', () => {
+    rootStore.session.signIn('token', {
+      id: 'u1',
+      username: 'alice',
+      role: 'user',
+      bannedAt: '2026-10-27T00:00:00.000Z',
+    });
+    render(
+      <MemoryRouter initialEntries={['/trade/new']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('你的账号已被封禁，不能发布交易意向。')).not.toHaveAttribute(
+      'role',
+      'alert',
+    );
+    expect(screen.getByRole('link', { name: '返回交易板' })).toHaveAttribute('href', '/trade');
+    expect(screen.queryByRole('button', { name: '发布意向' })).not.toBeInTheDocument();
+  });
+
   it('uses a real newline in the image placeholder and field errors for an empty contact', async () => {
     const user = userEvent.setup();
     render(

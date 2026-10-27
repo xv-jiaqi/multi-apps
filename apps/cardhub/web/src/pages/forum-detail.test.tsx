@@ -832,4 +832,35 @@ describe('ForumDetailPage CH-103 topic controls', () => {
     );
     expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
   });
+
+  it('hides reply, edit, and report when the viewer is banned', () => {
+    rootStore.session.signIn('jwt.token', {
+      id: 'author-1',
+      username: 'author',
+      bannedAt: '2026-10-27T00:00:00.000Z',
+    });
+    renderPage();
+    expect(screen.getByText('你的账号已被封禁，不能回帖。')).not.toHaveAttribute('role', 'alert');
+    expect(screen.queryByRole('button', { name: '发布回帖' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /编辑/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '举报' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the reply draft when the write returns USER_BANNED', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('jwt.token', { id: 'user-current', username: 'alice' });
+    createReplyMutate.mockImplementation((_input, handlers) => {
+      handlers.onError?.({
+        message: 'Prisma LEAK',
+        data: { code: 'FORBIDDEN', appCode: 'USER_BANNED' },
+      });
+    });
+    renderPage();
+    const field = screen.getByLabelText('撰写回帖');
+    await user.type(field, 'keep the reply');
+    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('你的账号已被封禁，这次操作没有完成。');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Prisma');
+    expect(field).toHaveValue('keep the reply');
+  });
 });

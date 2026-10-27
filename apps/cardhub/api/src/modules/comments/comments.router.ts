@@ -84,7 +84,7 @@ export class CommentsRouter {
           return comments.map(mapComment);
         }),
 
-      create: t.authedProcedure.input(commentInput).mutation(async ({ ctx, input }) => {
+      create: t.activeUserProcedure.input(commentInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) {
           throw new TRPCError({ code: 'UNAUTHORIZED' });
         }
@@ -108,7 +108,7 @@ export class CommentsRouter {
         return mapComment(created);
       }),
 
-      createForSeries: t.authedProcedure
+      createForSeries: t.activeUserProcedure
         .input(seriesCommentInput)
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) {

@@ -1,12 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
 import { t, topicCreateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { TopicForm } from '../components/topic-form';
+import { BannedNotice } from '../components/banned-notice';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
@@ -70,24 +71,36 @@ export const ForumNewPage = observer(function ForumNewPage() {
             <CardTitle className="text-2xl">{tt('forum.new.title')}</CardTitle>
             <p className="text-sm text-neutral-600">{tt('forum.new.subtitle')}</p>
           </CardHeader>
-          <CardContent>
-            <TopicForm
-              titleLabel={tt('forum.new.titleLabel')}
-              titlePlaceholder={tt('forum.new.titlePlaceholder')}
-              bodyLabel={tt('forum.new.bodyLabel')}
-              bodyPlaceholder={tt('forum.new.bodyPlaceholder')}
-              markdownHint={tt('forum.new.markdownHint')}
-              showPreviewLabel={tt('forum.new.showPreview')}
-              hidePreviewLabel={tt('forum.new.hidePreview')}
-              previewEmptyLabel={tt('forum.new.previewEmpty')}
-              cancelLabel={tt('forum.new.cancel')}
-              submitLabel={tt('forum.new.publish')}
-              submittingLabel={tt('forum.new.publishing')}
-              error={error}
-              isSubmitting={create.isPending}
-              onCancel={() => navigate('/forum')}
-              onSubmit={onSubmit}
-            />
+          <CardContent className="space-y-3">
+            {session.isBanned ? (
+              <>
+                <BannedNotice>{tt('ban.cannotPost')}</BannedNotice>
+                <Link
+                  to="/forum"
+                  className="inline-flex min-h-6 items-center text-sm text-brand-600 hover:underline"
+                >
+                  {tt('ban.backToForum')}
+                </Link>
+              </>
+            ) : (
+              <TopicForm
+                titleLabel={tt('forum.new.titleLabel')}
+                titlePlaceholder={tt('forum.new.titlePlaceholder')}
+                bodyLabel={tt('forum.new.bodyLabel')}
+                bodyPlaceholder={tt('forum.new.bodyPlaceholder')}
+                markdownHint={tt('forum.new.markdownHint')}
+                showPreviewLabel={tt('forum.new.showPreview')}
+                hidePreviewLabel={tt('forum.new.hidePreview')}
+                previewEmptyLabel={tt('forum.new.previewEmpty')}
+                cancelLabel={tt('forum.new.cancel')}
+                submitLabel={tt('forum.new.publish')}
+                submittingLabel={tt('forum.new.publishing')}
+                error={error}
+                isSubmitting={create.isPending}
+                onCancel={() => navigate('/forum')}
+                onSubmit={onSubmit}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

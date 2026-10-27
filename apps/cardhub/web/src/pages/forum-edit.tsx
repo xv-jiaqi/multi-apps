@@ -2,12 +2,14 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { t, topicUpdateInput } from '@repo/shared';
+import { APP_ERROR_CODES, t, topicUpdateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { TopicForm } from '../components/topic-form';
+import { BannedNotice } from '../components/banned-notice';
 import { useStores } from '../stores/root-store';
+import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
 
 function formatRemaining(ms: number, tt: (key: string, vars?: Record<string, number>) => string) {
@@ -21,6 +23,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
   const navigate = useNavigate();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
+  const presentError = useAppMutationError();
   const topicQuery = trpc.forum.topics.bySlug.useQuery({ slug }, { enabled: !!slug });
   const utils = trpc.useUtils();
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +51,11 @@ export const ForumEditPage = observer(function ForumEditPage() {
       navigate(`/forum/${slug}`, { replace: true, state: { notice: 'topicEdited' } });
     },
     onError(err) {
+      if (err.data?.appCode === APP_ERROR_CODES.USER_BANNED) {
+        const message = presentError(err);
+        if (message) setError(message);
+        return;
+      }
       if (err.data?.code === 'FORBIDDEN') {
         setExpiredByServer(true);
         setError(null);
@@ -85,6 +93,25 @@ export const ForumEditPage = observer(function ForumEditPage() {
   }, [isOwner, isWithinWindow]);
 
   if (!session.isAuthenticated) return null;
+
+  if (session.isBanned) {
+    return (
+      <PageShell>
+        <PageMeta title={tt('forum.edit.title')} />
+        <div className="space-y-4">
+          <Breadcrumbs
+            items={[
+              { label: tt('breadcrumb.home'), to: '/' },
+              { label: tt('forum.list.title'), to: '/forum' },
+              { label: slug, to: `/forum/${slug}` },
+              { label: tt('forum.detail.edit') },
+            ]}
+          />
+          <BannedNotice>{tt('ban.cannotEdit')}</BannedNotice>
+        </div>
+      </PageShell>
+    );
+  }
 
   if (topicQuery.isLoading) {
     return (

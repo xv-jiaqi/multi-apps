@@ -16,6 +16,7 @@ import {
 } from '@repo/shared';
 import { z } from 'zod';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
+import { buildAdminAuditRouter, buildAdminUsersRouter } from './governance.router';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -765,6 +766,8 @@ export class AdminRouter {
             return input.dryRun ? previewImport(input.data) : applyImport(input.data);
           }),
       }),
+      users: buildAdminUsersRouter(t, prisma),
+      audit: buildAdminAuditRouter(t, prisma),
     });
   }
 }

@@ -1,6 +1,9 @@
 import type { Prisma } from '@prisma/client';
 
 export const CONTENT_DELETE_ACTION = 'CONTENT_DELETE';
+export const USER_BAN_ACTION = 'USER_BAN';
+export const USER_UNBAN_ACTION = 'USER_UNBAN';
+export const REPORT_RESOLVE_ACTION = 'REPORT_RESOLVE';
 const TARGET_LABEL_MAX = 80;
 
 export type ContentDeleteTargetType = 'TOPIC' | 'REPLY' | 'COMMENT' | 'LISTING' | 'CARD' | 'SERIES';
@@ -36,6 +39,31 @@ export async function writeContentDelete(
       actorUsername: entry.actorUsername,
       action: CONTENT_DELETE_ACTION,
       targetType: entry.targetType,
+      targetId: entry.targetId,
+      targetLabel: contentSnapshot(entry.targetLabel),
+      targetUserId: entry.targetUserId,
+      reason: entry.reason,
+    },
+  });
+}
+
+export async function writeReportResolve(
+  tx: Prisma.TransactionClient,
+  entry: {
+    actorId: string;
+    actorUsername: string;
+    targetId: string;
+    targetLabel: string;
+    targetUserId: string | null;
+    reason: string | null;
+  },
+): Promise<void> {
+  await tx.auditLog.create({
+    data: {
+      actorId: entry.actorId,
+      actorUsername: entry.actorUsername,
+      action: REPORT_RESOLVE_ACTION,
+      targetType: 'REPORT',
       targetId: entry.targetId,
       targetLabel: contentSnapshot(entry.targetLabel),
       targetUserId: entry.targetUserId,

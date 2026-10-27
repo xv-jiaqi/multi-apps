@@ -203,6 +203,17 @@ describe('ForumEditPage', () => {
     expect(screen.getByRole('link', { name: '返回话题' })).toBeInTheDocument();
   });
 
+  it('shows the ban notice instead of the editor', () => {
+    rootStore.session.signIn('jwt.token', {
+      id: 'author-1',
+      username: 'author',
+      bannedAt: '2026-10-27T00:00:00.000Z',
+    });
+    renderPage();
+    expect(screen.getByText('你的账号已被封禁，不能编辑话题。')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '保存修改' })).not.toBeInTheDocument();
+  });
+
   it('redirects anonymous users to login with from state', async () => {
     rootStore.session.signOut();
 

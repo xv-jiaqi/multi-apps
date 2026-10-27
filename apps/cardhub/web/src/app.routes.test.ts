@@ -8,6 +8,7 @@ describe('app routes', () => {
     expect(path('/')).toBe('/');
     expect(path('/forum/new')).toBe('/forum/new');
     expect(path('/forum/some-topic')).toBe('/forum/:slug');
+    expect(path('/admin/users')).toBe('/admin/users');
     expect(path('/admin/catalog/series/new')).toBe('/admin/catalog/series/new');
     expect(path('/admin/catalog/series/celestial-dawn/edit')).toBe(
       '/admin/catalog/series/:slug/edit',

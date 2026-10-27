@@ -41,6 +41,7 @@ function makeRouter() {
     reply: { findUnique: replyFindUnique, findMany: replyFindMany, delete: replyDelete },
     comment: { findUnique: commentFindUnique, findMany: commentFindMany, delete: commentDelete },
     card: { findMany: cardFindMany },
+    auditLog: { create: jest.fn().mockResolvedValue({ id: 'audit-1' }) },
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
@@ -224,6 +225,7 @@ describe('ReportsRouter.resolve', () => {
       targetId: 'target-1',
     });
     reportUpdate.mockResolvedValueOnce({});
+    commentFindUnique.mockResolvedValueOnce(null);
 
     await expect(
       caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
@@ -231,7 +233,7 @@ describe('ReportsRouter.resolve', () => {
         action: 'MARK_RESOLVED',
       }),
     ).resolves.toEqual({ ok: true });
-    expect(commentFindUnique).not.toHaveBeenCalled();
+    expect(commentFindUnique).toHaveBeenCalled();
     expect(reportUpdate).toHaveBeenCalledWith({
       where: { id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5' },
       data: expect.objectContaining({

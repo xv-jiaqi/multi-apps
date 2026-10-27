@@ -77,6 +77,12 @@ describe('other count copy', () => {
     expect(t('en-US', 'search.cardsHeading', { count: 2 })).toBe('Cards (2)');
     expect(t('en-US', 'search.seriesHeading', { count: 1 })).toBe('Series (1)');
 
+    expect(t('en-US', 'admin.users.total', { count: 1 })).toBe('1 user');
+    expect(t('en-US', 'admin.users.total', { count: 0 })).toBe('0 users');
+    expect(t('en-US', 'admin.users.total', { count: 2 })).toBe('2 users');
+    expect(t('zh-CN', 'admin.users.total', { count: 1 })).toBe('共 1 位用户');
+    expect(t('zh-CN', 'admin.users.total', { count: 2 })).toBe('共 2 位用户');
+
     expect(t('en-US', 'admin.count.cards', { count: 1 })).toBe('1 card');
     expect(t('en-US', 'admin.count.comments', { count: 0 })).toBe('0 comments');
     expect(t('en-US', 'admin.count.seriesComments', { count: 2 })).toBe('2 series comments');

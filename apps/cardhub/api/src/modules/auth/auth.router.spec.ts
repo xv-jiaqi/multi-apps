@@ -228,6 +228,7 @@ describe('AuthRouter.login', () => {
       username: 'alice',
       role: 'admin',
       passwordChangeRecommended: false,
+      bannedAt: null,
     });
     expect(auth.sign).toHaveBeenCalledWith({ sub: 'u1', username: 'alice', ver: 4 });
     expect(userMock.update).not.toHaveBeenCalled();
@@ -303,6 +304,7 @@ describe('AuthRouter.me', () => {
       username: 'admin',
       role: 'admin',
       passwordChangeRecommended: false,
+      bannedAt: null,
     });
     await expect(caller.me()).resolves.toEqual({
       id: 'u-admin',
@@ -310,6 +312,7 @@ describe('AuthRouter.me', () => {
       username: 'admin',
       role: 'admin',
       passwordChangeRecommended: false,
+      bannedAt: null,
     });
     expect(auth.verify).not.toHaveBeenCalled();
   });
