@@ -51,6 +51,9 @@ const CatalogSeriesPage = lazy(() =>
 const AdminUsersPage = lazy(() =>
   import('./pages/admin/users').then((m) => ({ default: m.AdminUsersPage })),
 );
+const AdminAuditPage = lazy(() =>
+  import('./pages/admin/audit').then((m) => ({ default: m.AdminAuditPage })),
+);
 const CatalogSeriesDetailPage = lazy(() =>
   import('./pages/admin/catalog-series-detail').then((m) => ({
     default: m.CatalogSeriesDetailPage,
@@ -141,6 +144,7 @@ export const appRoutes: RouteObject[] = [
       { path: '/reports', element: lazyPage(<ReportsListPage />) },
       { path: '/admin/catalog', element: lazyPage(<CatalogSeriesPage />) },
       { path: '/admin/users', element: lazyPage(<AdminUsersPage />) },
+      { path: '/admin/audit', element: lazyPage(<AdminAuditPage />) },
       { path: '/admin/catalog/import', element: lazyPage(<CatalogImportPage />) },
       { path: '/admin/catalog/series/new', element: lazyPage(<NewSeriesPage />) },
       { path: '/admin/catalog/series/:slug/edit', element: lazyPage(<EditSeriesPage />) },

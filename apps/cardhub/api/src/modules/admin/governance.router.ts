@@ -268,6 +268,7 @@ export function buildAdminAuditRouter(t: TrpcBase, prisma: PrismaService) {
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
           take: limit + 1,
           ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
+          include: { targetUser: { select: { username: true } } },
         }),
         prisma.auditLog.count({ where }),
       ]);
@@ -284,6 +285,7 @@ export function buildAdminAuditRouter(t: TrpcBase, prisma: PrismaService) {
           targetId: row.targetId,
           targetLabel: row.targetLabel,
           targetUserId: row.targetUserId,
+          targetUsername: row.targetUser?.username ?? null,
           reason: row.reason,
         })),
         total,

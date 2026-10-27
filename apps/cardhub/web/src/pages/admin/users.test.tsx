@@ -120,7 +120,7 @@ describe('AdminUsersPage list', () => {
     });
   });
 
-  it('pluralizes the total and renders both status chips without a history button', () => {
+  it('pluralizes the total, renders both status chips, and links each row to its audit history', () => {
     setRows([
       userRow(),
       userRow({
@@ -147,8 +147,15 @@ describe('AdminUsersPage list', () => {
     expect(screen.getByRole('button', { name: '封禁 @alice' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '解封 @cara' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '封禁 @admin' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /记录/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /操作记录/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '查看 @alice 的操作记录' })).toHaveAttribute(
+      'href',
+      '/admin/audit?user=alice',
+    );
+    expect(screen.getByRole('link', { name: '查看 @admin 的操作记录' })).toHaveAttribute(
+      'href',
+      '/admin/audit?user=admin',
+    );
+    expect(screen.getByRole('link', { name: '查看 @cara 的操作记录' })).toBeInTheDocument();
     expect(screen.getAllByTitle('话题 1 · 回帖 2 · 评论 3 · 交易意向 4')[0]).toHaveTextContent(
       '10',
     );

@@ -69,7 +69,7 @@
 | CH-206 | 卡牌详情页改版（大图、长描述）                  | P2     | M    | CH-105、CH-107        | 待领取                                                |
 | CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 待领取                                                |
 | CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105                | 待领取                                                |
-| CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 🟡 #144（PR2 审计页）                                 |
+| CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 进行中（cursor/ch209-governance-2）                   |
 | CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | 待领取                                                |
 | CH-211 | API 错误信息国际化                              | P2     | M    | —                     | 待领取                                                |
 | CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102                | 待领取                                                |
@@ -484,8 +484,8 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - `TrpcBase.activeUserProcedure` 读上下文里的 `TrpcUser.bannedAt`（必填 `Date | null`）。非空则拒绝，错误码 `USER_BANNED`。已改用它的写接口：`comments.create`、`comments.createForSeries`、`forum.topics.create`、`forum.topics.update`、`forum.replies.create`、`listings.publish`、`reports.create`。删除自己的内容、关闭自己的意向、改密码、退出所有设备不拦。
   - API：`admin.users.list`、`admin.users.ban`、`admin.users.unban`、`admin.audit.list`。`auth.login` / `auth.me` 多返回 `bannedAt`，不返回封禁原因。
   - Web：`/admin/users`（搜索、状态筛选、封禁 / 解封）。Header「管理」菜单有「用户管理」。被封账号重新登录后可以浏览，写入口换成说明，Header 有封禁横幅。
-- **PR2（未做）**
-  - Web：`/admin/audit` 操作审计页，Header「管理」菜单增加「操作审计」，用户表每行链到该用户的记录。接口沿用 PR1 的 `admin.audit.list`，不要改封禁模型，也不要新增角色。
+- **PR2（`cursor/ch209-governance-2`）**
+  - Web：`/admin/audit` 操作审计页，Header「管理」菜单增加「操作审计」，用户表每行「记录」链到 `/admin/audit?user={username}`。列表多返回 `targetUsername`（对象用户还在时），给内容行显示作者；不改封禁模型，也不新增角色。
 - **依赖**：CH-001、CH-107。
 
 #### CH-210 Redis 缓存 + 限流 Redis 存储
