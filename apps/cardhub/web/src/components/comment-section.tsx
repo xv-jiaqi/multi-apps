@@ -6,6 +6,7 @@ import { APP_ERROR_CODES, commentInput, seriesCommentInput, t } from '@repo/shar
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
+import { BannedNotice } from './banned-notice';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { DeleteReasonField } from './delete-reason-field';
 import { ReportButton } from './report-button';
@@ -205,7 +206,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   return (
     <div className="space-y-4" aria-busy={commentsLoading ? true : undefined}>
-      {session.isAuthenticated ? (
+      {session.isAuthenticated && session.isBanned ? (
+        <BannedNotice>{tt('ban.cannotComment')}</BannedNotice>
+      ) : session.isAuthenticated ? (
         <form
           onSubmit={onSubmit}
           className="space-y-2 rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur"

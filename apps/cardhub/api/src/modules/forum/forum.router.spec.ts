@@ -201,6 +201,7 @@ describe('ForumRouter.topics.update', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).topics.update({
       id: '11111111-1111-4111-a111-111111111111',
       title: 'edited title',
@@ -225,7 +226,13 @@ describe('ForumRouter.topics.update', () => {
     });
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).topics.update({
+      caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).topics.update({
         id: '11111111-1111-4111-a111-111111111111',
         title: 'still the same',
         body: 'edited later',
@@ -253,6 +260,7 @@ describe('ForumRouter.topics.setPinned', () => {
       username: 'admin',
       role: 'admin',
       tokenVersion: 0,
+      bannedAt: null,
     }).topics.setPinned({
       id: '44444444-4444-4444-a444-444444444444',
       pinned: true,
@@ -268,7 +276,13 @@ describe('ForumRouter.topics.setPinned', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'user' });
 
     await expect(
-      caller({ sub: 'u-bob', username: 'bob', role: 'user', tokenVersion: 0 }).topics.setPinned({
+      caller({
+        sub: 'u-bob',
+        username: 'bob',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).topics.setPinned({
         id: '55555555-5555-4555-a555-555555555555',
         pinned: true,
       }),
@@ -294,6 +308,7 @@ describe('ForumRouter.topics.delete', () => {
       username: 'admin',
       role: 'admin',
       tokenVersion: 0,
+      bannedAt: null,
     }).topics.delete({
       id: '22222222-2222-4222-a222-222222222222',
     });
@@ -311,7 +326,13 @@ describe('ForumRouter.topics.delete', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'user' });
 
     await expect(
-      caller({ sub: 'u-bob', username: 'bob', role: 'user', tokenVersion: 0 }).topics.delete({
+      caller({
+        sub: 'u-bob',
+        username: 'bob',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).topics.delete({
         id: '33333333-3333-4333-a333-333333333333',
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });

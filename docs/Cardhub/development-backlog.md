@@ -69,7 +69,7 @@
 | CH-206 | 卡牌详情页改版（大图、长描述）                  | P2     | M    | CH-105、CH-107        | 待领取                                                |
 | CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 待领取                                                |
 | CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105                | 待领取                                                |
-| CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 待领取                                                |
+| CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 🟡 #144（PR2 审计页）                                 |
 | CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | 待领取                                                |
 | CH-211 | API 错误信息国际化                              | P2     | M    | —                     | 待领取                                                |
 | CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102                | 待领取                                                |
@@ -475,11 +475,17 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-209 用户治理：封禁、用户管理、操作审计
 
-- **改动范围**
-  - 角色新增 `banned`。在 `TrpcBase` 增加 `activeUserProcedure`：查库确认未被封禁，所有写接口（评论、话题、回帖、意向、举报、收藏）改用它。token 仍有效也会被拦截。
-  - Prisma：`ModerationLog { id, actorId, action, targetType, targetId, note?, createdAt }`。写入时机：处理举报、admin 删除话题 / 回帖 / 评论、admin 关闭意向、封禁 / 解封、角色变更。
-  - API：`admin.users.list({ q, cursor })`、`admin.users.setRole({ userId, role })`（不能修改自己的角色）、`admin.moderationLog.list`。
-  - Web：`/admin/users`、`/admin/logs`，纳入 CH-107 的“管理”入口。被封禁用户在发布时看到明确提示。
+封禁是账号状态，不是角色。`User.role` 仍然只有 `user` | `admin`。不要新增 `banned` 角色，不要调用 `admin.users.setRole`，也不要建 `ModerationLog` 或 `/admin/logs`。
+
+- **PR1（#144，已实现）**
+  - Prisma：`User.bannedAt DateTime?`、`User.bannedById String?`（封禁人删除时置空）。`bannedAt` 为空表示可以写。审计用已有的 `AuditLog`，不是单独的审核表。封禁、解封、管理员删除内容、处理举报都和业务写在同一个事务里。`action` 为 `USER_BAN`、`USER_UNBAN`、`CONTENT_DELETE`、`REPORT_RESOLVE`。
+  - 封禁用条件更新：只有 `bannedAt` 为空才写入 `bannedAt`、`bannedById`，并把 `tokenVersion` 加 1，旧 token 立即失效。两个管理员同时封同一个人只成功一次，只产生一条 `USER_BAN`。已经封禁则返回 `ALREADY_BANNED`。不能封自己（`CANNOT_BAN_SELF`），不能封管理员（`CANNOT_BAN_ADMIN`）。
+  - 解封同样是条件更新：只有 `bannedAt` 非空才把它和 `bannedById` 清掉。不加 `tokenVersion`。未封禁则返回 `NOT_BANNED`。
+  - `TrpcBase.activeUserProcedure` 读上下文里的 `TrpcUser.bannedAt`（必填 `Date | null`）。非空则拒绝，错误码 `USER_BANNED`。已改用它的写接口：`comments.create`、`comments.createForSeries`、`forum.topics.create`、`forum.topics.update`、`forum.replies.create`、`listings.publish`、`reports.create`。删除自己的内容、关闭自己的意向、改密码、退出所有设备不拦。
+  - API：`admin.users.list`、`admin.users.ban`、`admin.users.unban`、`admin.audit.list`。`auth.login` / `auth.me` 多返回 `bannedAt`，不返回封禁原因。
+  - Web：`/admin/users`（搜索、状态筛选、封禁 / 解封）。Header「管理」菜单有「用户管理」。被封账号重新登录后可以浏览，写入口换成说明，Header 有封禁横幅。
+- **PR2（未做）**
+  - Web：`/admin/audit` 操作审计页，Header「管理」菜单增加「操作审计」，用户表每行链到该用户的记录。接口沿用 PR1 的 `admin.audit.list`，不要改封禁模型，也不要新增角色。
 - **依赖**：CH-001、CH-107。
 
 #### CH-210 Redis 缓存 + 限流 Redis 存储

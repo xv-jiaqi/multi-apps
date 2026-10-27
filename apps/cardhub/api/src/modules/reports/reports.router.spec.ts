@@ -41,6 +41,7 @@ function makeRouter() {
     reply: { findUnique: replyFindUnique, findMany: replyFindMany, delete: replyDelete },
     comment: { findUnique: commentFindUnique, findMany: commentFindMany, delete: commentDelete },
     card: { findMany: cardFindMany },
+    auditLog: { create: jest.fn().mockResolvedValue({ id: 'audit-1' }) },
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
@@ -97,7 +98,13 @@ describe('ReportsRouter.create', () => {
     reportCount.mockResolvedValueOnce(10);
 
     await expect(
-      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).create({
+      caller({
+        sub: 'u1',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).create({
         targetType: 'COMMENT',
         targetId: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         reason: 'still spam',
@@ -123,6 +130,7 @@ describe('ReportsRouter.create', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).create({
       targetType: 'LISTING',
       targetId: 'f3a78b1c-8d4e-4f1a-9b2c-7c8d4e1f5a3b',
@@ -144,7 +152,13 @@ describe('ReportsRouter.create', () => {
     commentFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).create({
+      caller({
+        sub: 'u1',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).create({
         targetType: 'COMMENT',
         targetId: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         reason: 'already gone',
@@ -160,7 +174,13 @@ describe('ReportsRouter.resolve', () => {
     userFindUnique.mockResolvedValueOnce({ id: 'u1', role: 'user' });
 
     await expect(
-      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).resolve({
+      caller({
+        sub: 'u1',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
       }),
@@ -180,7 +200,13 @@ describe('ReportsRouter.resolve', () => {
     reportUpdate.mockResolvedValueOnce({});
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
+      caller({
+        sub: 'u-admin',
+        username: 'admin',
+        role: 'admin',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
         resolution: ' handled ',
@@ -204,7 +230,13 @@ describe('ReportsRouter.resolve', () => {
     reportFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
+      caller({
+        sub: 'u-admin',
+        username: 'admin',
+        role: 'admin',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
       }),
@@ -224,14 +256,21 @@ describe('ReportsRouter.resolve', () => {
       targetId: 'target-1',
     });
     reportUpdate.mockResolvedValueOnce({});
+    commentFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
+      caller({
+        sub: 'u-admin',
+        username: 'admin',
+        role: 'admin',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'MARK_RESOLVED',
       }),
     ).resolves.toEqual({ ok: true });
-    expect(commentFindUnique).not.toHaveBeenCalled();
+    expect(commentFindUnique).toHaveBeenCalled();
     expect(reportUpdate).toHaveBeenCalledWith({
       where: { id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5' },
       data: expect.objectContaining({
@@ -245,7 +284,13 @@ describe('ReportsRouter.resolve', () => {
     const { caller, userFindUnique, reportFindUnique } = makeRouter();
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
+      caller({
+        sub: 'u-admin',
+        username: 'admin',
+        role: 'admin',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).resolve({
         id: 'not-a-uuid',
         action: 'MARK_RESOLVED',
       }),
@@ -282,7 +327,13 @@ describe('ReportsRouter.resolve', () => {
 
       await expect(
         router
-          .caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 })
+          .caller({
+            sub: 'u-admin',
+            username: 'admin',
+            role: 'admin',
+            tokenVersion: 0,
+            bannedAt: null,
+          })
           .resolve({
             id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
             action: 'REMOVE_TARGET',
@@ -315,7 +366,13 @@ describe('ReportsRouter.resolve', () => {
     commentFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
+      caller({
+        sub: 'u-admin',
+        username: 'admin',
+        role: 'admin',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'REMOVE_TARGET',
       }),
@@ -335,7 +392,13 @@ describe('ReportsRouter.resolve', () => {
     });
 
     await expect(
-      caller({ sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 }).resolve({
+      caller({
+        sub: 'u-admin',
+        username: 'admin',
+        role: 'admin',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).resolve({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
         action: 'REMOVE_TARGET',
       }),
@@ -351,7 +414,9 @@ describe('ReportsRouter.list', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'user' });
 
     await expect(
-      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).list({ limit: 20 }),
+      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0, bannedAt: null }).list({
+        limit: 20,
+      }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
@@ -383,6 +448,7 @@ describe('ReportsRouter.list', () => {
       username: 'admin',
       role: 'admin',
       tokenVersion: 0,
+      bannedAt: null,
     }).list({ limit: 20 });
     expect(result.items).toHaveLength(1);
     expect(result.items[0]).toMatchObject({
@@ -428,6 +494,7 @@ describe('ReportsRouter.list', () => {
       username: 'admin',
       role: 'admin',
       tokenVersion: 0,
+      bannedAt: null,
     }).list({ limit: 20 });
 
     expect(cardFindMany).toHaveBeenCalledWith({
@@ -471,6 +538,7 @@ describe('ReportsRouter.list', () => {
       username: 'admin',
       role: 'admin',
       tokenVersion: 0,
+      bannedAt: null,
     }).list({ limit: 20 });
 
     expect(result.items[0]).toMatchObject({

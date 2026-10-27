@@ -151,6 +151,49 @@ function resolvedAppCode(error: { code: string; cause?: unknown }): string {
   return APP_ERROR_CODES.UNKNOWN;
 }
 
+function sanitizeCount(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
+/** Public user row returned with ALREADY_BANNED / NOT_BANNED so the table can update in place. */
+function sanitizeGovernanceSubject(value: unknown): Record<string, unknown> | undefined {
+  if (!isPlainObject(value)) return undefined;
+  if (typeof value.id !== 'string' || typeof value.username !== 'string') return undefined;
+  if (typeof value.email !== 'string' || typeof value.role !== 'string') return undefined;
+  if (typeof value.createdAt !== 'string') return undefined;
+  if (value.bannedAt !== null && typeof value.bannedAt !== 'string') return undefined;
+  let bannedBy: { username: string } | null = null;
+  if (value.bannedBy !== null) {
+    if (!isPlainObject(value.bannedBy) || typeof value.bannedBy.username !== 'string') {
+      return undefined;
+    }
+    bannedBy = { username: value.bannedBy.username };
+  }
+  if (!isPlainObject(value.counts)) return undefined;
+  const topics = sanitizeCount(value.counts.topics);
+  const replies = sanitizeCount(value.counts.replies);
+  const comments = sanitizeCount(value.counts.comments);
+  const listings = sanitizeCount(value.counts.listings);
+  if (
+    topics === undefined ||
+    replies === undefined ||
+    comments === undefined ||
+    listings === undefined
+  ) {
+    return undefined;
+  }
+  return {
+    id: value.id,
+    username: value.username,
+    email: value.email,
+    role: value.role,
+    createdAt: value.createdAt,
+    bannedAt: value.bannedAt,
+    bannedBy,
+    counts: { topics, replies, comments, listings },
+  };
+}
+
 function sanitizeAdminCatalogError(cause: unknown): AdminCatalogErrorDetails | undefined {
   if (!isPlainObject(cause)) return undefined;
 
@@ -181,10 +224,14 @@ function sessionRejected(): TRPCError {
 const trpc = initTRPC.context<TrpcContext>().create({
   errorFormatter({ shape, error }) {
     const adminCatalogError = sanitizeAdminCatalogError(error.cause);
+    const subject = isPlainObject(error.cause)
+      ? sanitizeGovernanceSubject(error.cause.subject)
+      : undefined;
     const appCode = resolvedAppCode(error);
     const data = {
       ...shape.data,
       ...(adminCatalogError ? { adminCatalogError } : {}),
+      ...(subject ? { subject } : {}),
       appCode,
     };
     if (process.env.NODE_ENV === 'production') {
@@ -226,7 +273,11 @@ export class TrpcBase {
       throw sessionRejected();
     }
     if (ctx.user.role !== 'admin') {
-      throw new TRPCError({ code: 'FORBIDDEN', message: '仅管理员可管理内容' });
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: '仅管理员可管理内容',
+        cause: { appCode: APP_ERROR_CODES.FORBIDDEN },
+      });
     }
     return next({
       ctx: {
@@ -235,5 +286,20 @@ export class TrpcBase {
         adminUser: { id: ctx.user.sub, role: ctx.user.role },
       },
     });
+  }) as unknown as TrpcProcedure;
+
+  /** Signed-in user who is not banned. Reads bannedAt from the context user row. */
+  readonly activeUserProcedure: TrpcProcedure = trpc.procedure.use(({ ctx, next }) => {
+    if (!ctx.user) {
+      throw sessionRejected();
+    }
+    if (ctx.user.bannedAt) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: '账号已被封禁',
+        cause: { appCode: APP_ERROR_CODES.USER_BANNED },
+      });
+    }
+    return next({ ctx: { ...ctx, user: ctx.user } });
   }) as unknown as TrpcProcedure;
 }

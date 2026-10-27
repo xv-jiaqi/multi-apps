@@ -158,7 +158,7 @@ export class ForumRouter {
           };
         }),
 
-      create: t.authedProcedure.input(topicCreateInput).mutation(async ({ ctx, input }) => {
+      create: t.activeUserProcedure.input(topicCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const created = await createTopicWithUniqueSlug(prisma, {
           title: input.title,
@@ -168,7 +168,7 @@ export class ForumRouter {
         return mapTopicSummary({ ...created, _count: { replies: 0 } });
       }),
 
-      update: t.authedProcedure.input(topicUpdateInput).mutation(async ({ ctx, input }) => {
+      update: t.activeUserProcedure.input(topicUpdateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const existing = await prisma.topic.findUnique({
           where: { id: input.id },
@@ -287,7 +287,7 @@ export class ForumRouter {
           };
         }),
 
-      create: t.authedProcedure.input(replyCreateInput).mutation(async ({ ctx, input }) => {
+      create: t.activeUserProcedure.input(replyCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const topic = await prisma.topic.findUnique({
           where: { id: input.topicId },

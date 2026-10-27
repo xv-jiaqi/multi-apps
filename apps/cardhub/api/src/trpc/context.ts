@@ -7,6 +7,8 @@ export interface TrpcUser {
   username: string;
   role: string;
   tokenVersion: number;
+  /** Loaded with the session row. Null means the account can write. */
+  bannedAt: Date | null;
 }
 
 export interface TrpcContext {
@@ -38,7 +40,7 @@ export function makeCreateContext(auth: AuthService, prisma: PrismaService) {
           const tokenVer = typeof payload.ver === 'number' ? payload.ver : 0;
           const row = await prisma.user.findUnique({
             where: { id: payload.sub },
-            select: { tokenVersion: true, role: true },
+            select: { tokenVersion: true, role: true, bannedAt: true },
           });
           if (row && row.tokenVersion === tokenVer) {
             return {
@@ -49,6 +51,7 @@ export function makeCreateContext(auth: AuthService, prisma: PrismaService) {
                 username: payload.username,
                 role: row.role,
                 tokenVersion: row.tokenVersion,
+                bannedAt: row.bannedAt,
               },
             };
           }

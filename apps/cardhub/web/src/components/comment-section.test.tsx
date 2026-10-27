@@ -775,4 +775,37 @@ describe('CommentSection (authenticated)', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('UNAUTHORIZED');
     expect(rootStore.session.token).toBe('jwt.token');
   });
+
+  it('replaces the composer with a notice when the account is banned', () => {
+    rootStore.session.signIn('jwt.token', {
+      id: 'u1',
+      username: 'alice',
+      bannedAt: '2026-10-27T00:00:00.000Z',
+    });
+    renderShell();
+    const notice = screen.getByText('你的账号已被封禁，不能发表评论。');
+    expect(notice).not.toHaveAttribute('role', 'alert');
+    expect(screen.queryByRole('button', { name: '发布评论' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '举报' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the draft and shows the ban sentence when a write returns USER_BANNED', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('jwt.token', { id: 'u1', username: 'alice' });
+    mutateMock.mockImplementationOnce((_input, callbacks) => {
+      callbacks.onError({
+        message: 'PrismaClientKnownRequestError LEAK',
+        data: { code: 'FORBIDDEN', appCode: APP_ERROR_CODES.USER_BANNED },
+      });
+    });
+    renderShell();
+    const field = screen.getByLabelText(/撰写评论/);
+    await user.type(field, 'keep this');
+    await user.click(screen.getByRole('button', { name: /发布评论/ }));
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('你的账号已被封禁，这次操作没有完成。');
+    expect(alert).not.toHaveTextContent('LEAK');
+    expect(alert).not.toHaveTextContent('Prisma');
+    expect(field).toHaveValue('keep this');
+  });
 });

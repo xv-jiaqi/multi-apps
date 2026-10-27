@@ -25,6 +25,7 @@ const browserSessionDriver: SessionStorageDriver | null =
                 username: string;
                 role?: string;
                 passwordChangeRecommended?: boolean;
+                bannedAt?: string | null;
               };
             };
             if (!parsed?.token || !parsed?.user) return null;

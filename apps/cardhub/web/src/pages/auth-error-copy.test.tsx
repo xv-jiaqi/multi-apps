@@ -1,8 +1,10 @@
+import { APP_ERROR_CODES } from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
+import { bindSessionRefresh } from '../lib/session-refresh';
 import { LoginPage } from './login';
 import { RegisterPage } from './register';
 import { ForumNewPage } from './forum-new';
@@ -163,5 +165,55 @@ describe('mapped API error copy', () => {
     expect(screen.getByText('填写的内容不符合要求，请修改后再试')).toBeInTheDocument();
     expect(screen.queryByText('请简要说明原因，至少 4 个字符')).not.toBeInTheDocument();
     expect(screen.queryByText('VALIDATION')).not.toBeInTheDocument();
+  });
+
+  it('hides the report button and replaces the topic form when the account is banned', () => {
+    rootStore.session.signIn('token', {
+      id: 'u1',
+      username: 'qa_user',
+      role: 'user',
+      bannedAt: '2026-10-27T00:00:00.000Z',
+    });
+    const { unmount } = render(
+      <MemoryRouter>
+        <ForumNewPage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('heading', { name: '你的账号已被封禁' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '你的账号已被封禁' })).not.toHaveAttribute(
+      'role',
+      'alert',
+    );
+    expect(screen.getByText('你的账号已被封禁，不能发布话题。')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '返回论坛' })).toHaveAttribute('href', '/forum');
+    expect(screen.queryByRole('button', { name: '发布话题' })).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <ReportButton targetType="COMMENT" targetId="00000000-0000-4000-8000-000000000001" />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('button', { name: '举报' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '举报' })).not.toBeInTheDocument();
+  });
+
+  it('shows the ban sentence for USER_BANNED and keeps the topic draft', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('token', { id: 'u1', username: 'qa_user', role: 'user' });
+    render(
+      <MemoryRouter>
+        <ForumNewPage />
+      </MemoryRouter>,
+    );
+    const refresh = vi.fn();
+    bindSessionRefresh(refresh);
+    await user.type(screen.getByLabelText('标题'), 'still here');
+    show('账号已被封禁 Prisma LEAK', APP_ERROR_CODES.USER_BANNED, 'FORBIDDEN');
+    expect(refresh).toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('你的账号已被封禁，这次操作没有完成。');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Prisma');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('FORBIDDEN');
+    expect(screen.getByLabelText('标题')).toHaveValue('still here');
   });
 });

@@ -9,6 +9,7 @@ import {
 } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { writeReportResolve } from '../audit/content-delete';
 
 type ReportWithReporter = Prisma.ReportGetPayload<{
   include: {
@@ -80,6 +81,45 @@ function assertAdmin(requester: AdminRequester, message: string) {
   }
 }
 
+async function removeReportedTarget(
+  tx: Prisma.TransactionClient,
+  targetType: 'LISTING' | 'TOPIC' | 'REPLY' | 'COMMENT',
+  targetId: string,
+): Promise<void> {
+  switch (targetType) {
+    case 'LISTING':
+      await tx.listing.update({ where: { id: targetId }, data: { status: 'CLOSED' } });
+      return;
+    case 'TOPIC':
+      await tx.topic.delete({ where: { id: targetId } });
+      return;
+    case 'REPLY':
+      await tx.reply.delete({ where: { id: targetId } });
+      return;
+    case 'COMMENT':
+      await tx.comment.delete({ where: { id: targetId } });
+      return;
+  }
+}
+
+async function reportedAuthor(
+  tx: Prisma.TransactionClient,
+  targetType: 'LISTING' | 'TOPIC' | 'REPLY' | 'COMMENT',
+  targetId: string,
+): Promise<{ found: boolean; userId: string | null }> {
+  const select = { userId: true } as const;
+  const row =
+    targetType === 'LISTING'
+      ? await tx.listing.findUnique({ where: { id: targetId }, select })
+      : targetType === 'TOPIC'
+        ? await tx.topic.findUnique({ where: { id: targetId }, select })
+        : targetType === 'REPLY'
+          ? await tx.reply.findUnique({ where: { id: targetId }, select })
+          : await tx.comment.findUnique({ where: { id: targetId }, select });
+  if (!row) return { found: false, userId: null };
+  return { found: true, userId: row.userId };
+}
+
 @Injectable()
 export class ReportsRouter {
   constructor(
@@ -92,7 +132,7 @@ export class ReportsRouter {
     const prisma = this.prisma;
 
     return t.router({
-      create: t.authedProcedure.input(reportCreateInput).mutation(async ({ ctx, input }) => {
+      create: t.activeUserProcedure.input(reportCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         // Per-user per-day quota is enforced at the procedure level so
         // express-rate-limit doesn't have to sniff the bearer token; 10
@@ -284,6 +324,7 @@ export class ReportsRouter {
         assertAdmin(requester, '仅管理员可处理举报');
 
         const resolution = input.resolution?.trim() || null;
+        const actor = ctx.user;
 
         await prisma.$transaction(async (tx) => {
           const report = await tx.report.findUnique({
@@ -303,6 +344,8 @@ export class ReportsRouter {
             return;
           }
 
+          const author = await reportedAuthor(tx, report.targetType, report.targetId);
+
           if (input.action === 'MARK_RESOLVED') {
             await tx.report.update({
               where: { id: input.id },
@@ -313,71 +356,33 @@ export class ReportsRouter {
                 resolution,
               },
             });
-            return;
+          } else {
+            if (!author.found) {
+              throw new TRPCError({ code: 'NOT_FOUND', message: '举报目标不存在或已被删除' });
+            }
+            await removeReportedTarget(tx, report.targetType, report.targetId);
+            await tx.report.updateMany({
+              where: {
+                targetType: report.targetType,
+                targetId: report.targetId,
+                status: 'PENDING',
+              },
+              data: {
+                status: 'RESOLVED',
+                resolvedAt: new Date(),
+                resolvedById: requester!.id,
+                resolution,
+              },
+            });
           }
 
-          switch (report.targetType) {
-            case 'LISTING': {
-              const listing = await tx.listing.findUnique({
-                where: { id: report.targetId },
-                select: { id: true },
-              });
-              if (!listing) {
-                throw new TRPCError({ code: 'NOT_FOUND', message: '举报目标不存在或已被删除' });
-              }
-              await tx.listing.update({
-                where: { id: report.targetId },
-                data: { status: 'CLOSED' },
-              });
-              break;
-            }
-            case 'TOPIC': {
-              const topic = await tx.topic.findUnique({
-                where: { id: report.targetId },
-                select: { id: true },
-              });
-              if (!topic) {
-                throw new TRPCError({ code: 'NOT_FOUND', message: '举报目标不存在或已被删除' });
-              }
-              await tx.topic.delete({ where: { id: report.targetId } });
-              break;
-            }
-            case 'REPLY': {
-              const reply = await tx.reply.findUnique({
-                where: { id: report.targetId },
-                select: { id: true },
-              });
-              if (!reply) {
-                throw new TRPCError({ code: 'NOT_FOUND', message: '举报目标不存在或已被删除' });
-              }
-              await tx.reply.delete({ where: { id: report.targetId } });
-              break;
-            }
-            case 'COMMENT': {
-              const comment = await tx.comment.findUnique({
-                where: { id: report.targetId },
-                select: { id: true },
-              });
-              if (!comment) {
-                throw new TRPCError({ code: 'NOT_FOUND', message: '举报目标不存在或已被删除' });
-              }
-              await tx.comment.delete({ where: { id: report.targetId } });
-              break;
-            }
-          }
-
-          await tx.report.updateMany({
-            where: {
-              targetType: report.targetType,
-              targetId: report.targetId,
-              status: 'PENDING',
-            },
-            data: {
-              status: 'RESOLVED',
-              resolvedAt: new Date(),
-              resolvedById: requester!.id,
-              resolution,
-            },
+          await writeReportResolve(tx, {
+            actorId: actor.sub,
+            actorUsername: actor.username,
+            targetId: report.id,
+            targetLabel: report.targetType,
+            targetUserId: author.userId,
+            reason: resolution,
           });
         });
 

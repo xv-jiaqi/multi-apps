@@ -6,7 +6,7 @@ import { SiteHeader } from './site-header';
 import { useStores } from '../stores/root-store';
 
 export const PageShell = observer(function PageShell({ children }: PropsWithChildren) {
-  const { locale } = useStores();
+  const { locale, session } = useStores();
   const tt = (key: string) => t(locale.locale, key);
 
   return (
@@ -35,6 +35,17 @@ export const PageShell = observer(function PageShell({ children }: PropsWithChil
         tabIndex={-1}
         className="app-safe-x app-safe-bottom relative mx-auto w-full max-w-6xl py-10 focus:outline-none"
       >
+        {session.isBanned ? (
+          <section
+            aria-labelledby="ban-banner-title"
+            className="mb-6 rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-3 text-sm text-neutral-800"
+          >
+            <h2 id="ban-banner-title" className="font-semibold text-neutral-900">
+              {tt('ban.banner.title')}
+            </h2>
+            <p className="mt-1">{tt('ban.banner.body')}</p>
+          </section>
+        ) : null}
         <LegacyPasswordNotice />
         {children}
       </main>

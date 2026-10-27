@@ -79,6 +79,7 @@ export class AuthRouter {
             role: true,
             tokenVersion: true,
             passwordChangeRecommended: true,
+            bannedAt: true,
           },
         });
         if (!user) {
@@ -125,6 +126,7 @@ export class AuthRouter {
             username: user.username,
             role: user.role,
             passwordChangeRecommended: user.passwordChangeRecommended || recommendChange,
+            bannedAt: user.bannedAt ? user.bannedAt.toISOString() : null,
           },
         };
       }),
@@ -194,10 +196,18 @@ export class AuthRouter {
               username: true,
               role: true,
               passwordChangeRecommended: true,
+              bannedAt: true,
             },
           });
           if (!user) throw sessionRejected();
-          return user;
+          return {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            passwordChangeRecommended: user.passwordChangeRecommended,
+            bannedAt: user.bannedAt ? user.bannedAt.toISOString() : null,
+          };
         }),
     });
   }

@@ -200,7 +200,7 @@ export class ListingsRouter {
         };
       }),
 
-      publish: t.authedProcedure.input(listingPublishInput).mutation(async ({ ctx, input }) => {
+      publish: t.activeUserProcedure.input(listingPublishInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         // Sanity check the cardSlug exists at publish time so users do
         // not post listings for typos. We do not lock the relation

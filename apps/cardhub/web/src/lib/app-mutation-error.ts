@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { appErrorMessage, t } from '@repo/shared';
+import { APP_ERROR_CODES, appErrorMessage, t } from '@repo/shared';
 import { clearActiveQueryClient } from './trpc';
 import { isSessionInvalidError } from './session-expiry';
+import { refreshSignedInSession } from './session-refresh';
 import { rootStore } from '../stores/root-store';
 
 export type MutationErrorCopy = Partial<Record<string, string>>;
@@ -29,6 +30,10 @@ export function useAppMutationError() {
         return null;
       }
       const appCode = readMutationAppCode(error);
+      if (appCode === APP_ERROR_CODES.USER_BANNED) {
+        refreshSignedInSession();
+        return t(locale, 'ban.actionBlocked');
+      }
       if (appCode && copy?.[appCode]) return copy[appCode];
       const terminalKey = terminalCopyKey(appCode) ?? terminalCopyKey(readMutationCode(error));
       if (terminalKey) return t(locale, terminalKey);

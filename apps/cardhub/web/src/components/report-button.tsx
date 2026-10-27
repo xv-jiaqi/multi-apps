@@ -43,6 +43,8 @@ export const ReportButton = observer(function ReportButton({
     },
   });
 
+  if (session.isBanned) return null;
+
   if (!session.isAuthenticated) {
     return (
       <Link

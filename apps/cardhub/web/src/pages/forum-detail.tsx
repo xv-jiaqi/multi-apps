@@ -21,6 +21,7 @@ import { ReportButton } from '../components/report-button';
 import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
+import { BannedNotice } from '../components/banned-notice';
 import { trpc } from '../lib/trpc';
 
 interface TopicReply {
@@ -422,7 +423,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   useEffect(() => {
     const topic = topicQuery.data;
-    if (!topic || session.user?.id !== topic.author.id) {
+    if (!topic || session.user?.id !== topic.author.id || session.isBanned) {
       setShowEditAction(false);
       return;
     }
@@ -440,7 +441,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const delay = Math.max(0, editableUntilMs - (Date.now() + serverOffsetMs));
     const timeout = window.setTimeout(update, delay);
     return () => window.clearTimeout(timeout);
-  }, [session.user?.id, topicQuery.data]);
+  }, [session.isBanned, session.user?.id, topicQuery.data]);
 
   if (topicQuery.isLoading) {
     return (
@@ -853,7 +854,9 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             )
           ) : null}
 
-          {session.isAuthenticated ? (
+          {session.isAuthenticated && session.isBanned ? (
+            <BannedNotice>{tt('ban.cannotReply')}</BannedNotice>
+          ) : session.isAuthenticated ? (
             <form
               onSubmit={onSubmitReply}
               className="space-y-2 rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur"
@@ -874,7 +877,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
               />
               {replyError ? (
-                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                <p
+                  role="alert"
+                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                >
                   {replyError}
                 </p>
               ) : null}

@@ -5,6 +5,8 @@ export interface SessionUser {
   username: string;
   role?: string;
   passwordChangeRecommended?: boolean;
+  /** ISO timestamp while the account is banned. Absent or null means not banned. */
+  bannedAt?: string | null;
 }
 
 /**
@@ -40,6 +42,10 @@ export class SessionStore {
 
   get isAdmin(): boolean {
     return this.user?.role === 'admin';
+  }
+
+  get isBanned(): boolean {
+    return typeof this.user?.bannedAt === 'string' && this.user.bannedAt.length > 0;
   }
 
   signIn(token: string, user: SessionUser): void {

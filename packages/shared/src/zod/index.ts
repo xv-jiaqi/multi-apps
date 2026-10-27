@@ -357,3 +357,39 @@ export const adminCatalogImportInput = z.object({
   dryRun: z.boolean().default(true),
 });
 export type AdminCatalogImportInput = z.infer<typeof adminCatalogImportInput>;
+
+export const ADMIN_USER_STATUS_VALUES = ['active', 'banned'] as const;
+export type AdminUserStatus = (typeof ADMIN_USER_STATUS_VALUES)[number];
+
+/** Ban and unban reasons are required after trim, and at most 500 characters. */
+export const BAN_REASON_MAX = 500;
+
+export const adminUsersListInput = z.object({
+  q: z.string().trim().max(EMAIL_MAX).optional(),
+  status: z.enum(ADMIN_USER_STATUS_VALUES).optional(),
+  cursor: cursorSchema.optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+export type AdminUsersListInput = z.infer<typeof adminUsersListInput>;
+
+export const adminUserBanInput = z.object({
+  userId: z.string().uuid(),
+  reason: z.string().trim().min(1).max(BAN_REASON_MAX),
+});
+export type AdminUserBanInput = z.infer<typeof adminUserBanInput>;
+
+export const AUDIT_ACTION_VALUES = [
+  'USER_BAN',
+  'USER_UNBAN',
+  'CONTENT_DELETE',
+  'REPORT_RESOLVE',
+] as const;
+export type AuditAction = (typeof AUDIT_ACTION_VALUES)[number];
+
+export const adminAuditListInput = z.object({
+  action: z.enum(AUDIT_ACTION_VALUES).optional(),
+  user: z.string().trim().min(1).max(24).optional(),
+  cursor: cursorSchema.optional(),
+  limit: z.number().int().min(1).max(50).default(50),
+});
+export type AdminAuditListInput = z.infer<typeof adminAuditListInput>;
