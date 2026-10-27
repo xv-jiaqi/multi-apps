@@ -174,9 +174,10 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const draftsRef = useRef<Record<string, string>>({});
   const openParentRef = useRef<string | null>(null);
-  const pendingFocus = useRef<
-    { type: 'reply' | 'opener' | 'show-more' | 'title'; id: string } | null
-  >(null);
+  const pendingFocus = useRef<{ type: 'opener' | 'show-more' | 'title'; id: string } | null>(
+    null,
+  );
+  const [replyFocusId, setReplyFocusId] = useState<string | null>(null);
   const threadsRef = useRef(threads);
   threadsRef.current = threads;
   const canReply = session.isAuthenticated && !session.isBanned;
@@ -246,7 +247,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       };
     });
     showStatus(tt('comment.reply.posted'), false);
-    pendingFocus.current = { type: 'reply', id: created.id };
+    setReplyFocusId(created.id);
   }
 
   function handleReplyError(err: unknown) {
@@ -397,6 +398,19 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     statusRef.current?.focus();
   }, [statusMessage, statusVisible]);
 
+  const renderedReplyIds = ((list.data ?? []) as ThreadComment[])
+    .flatMap((comment) => visibleReplies(comment, threads[comment.id] ?? emptyOverlay()))
+    .map((reply) => reply.id)
+    .join('\n');
+
+  useLayoutEffect(() => {
+    if (!replyFocusId || !renderedReplyIds.split('\n').includes(replyFocusId)) return;
+    const node = document.getElementById(`reply-${replyFocusId}`);
+    if (!node) return;
+    node.focus();
+    setReplyFocusId(null);
+  }, [replyFocusId, renderedReplyIds]);
+
   useLayoutEffect(() => {
     const pending = pendingFocus.current;
     if (!pending) return;
@@ -405,12 +419,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         ? document.getElementById(pending.id)
         : pending.type === 'opener'
           ? replyButtonRefs.current[pending.id]
-          : pending.type === 'show-more'
-            ? document.getElementById(`show-more-${pending.id}`)
-            : document.getElementById(`reply-${pending.id}`);
-    // The new reply <li> is committed in this same render. If it is not in the
-    // document yet, keep the request so a later render can focus it. Clearing
-    // first dropped the focus onto the reply's delete button.
+          : document.getElementById(`show-more-${pending.id}`);
     if (!node) return;
     pendingFocus.current = null;
     node.focus();
@@ -565,7 +574,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       });
       showStatus(tt('comment.reply.loaded', { count: fresh.length }), false);
       if (page.nextCursor) pendingFocus.current = { type: 'show-more', id: parentId };
-      else if (fresh[0]) pendingFocus.current = { type: 'reply', id: fresh[0].id };
+      else if (fresh[0]) setReplyFocusId(fresh[0].id);
     } catch {
       setFailedParentId(parentId);
     } finally {

@@ -895,6 +895,29 @@ describe('CommentSection replies', () => {
     expect(screen.getByText('2 条回复')).toBeInTheDocument();
   });
 
+  it('focuses the new reply li after it mounts, not its delete button', async () => {
+    const user = userEvent.setup();
+    mutateMock.mockImplementation((input, callbacks) => {
+      callbacks.onSuccess(
+        {
+          id: 'mounted',
+          content: input.content,
+          createdAt: '2026-05-01T02:00:00.000Z',
+          user: { id: 'u1', username: 'alice' },
+        },
+        input,
+      );
+    });
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    await user.type(screen.getByRole('textbox', { name: '回复 @bob' }), 'mounted focus');
+    await user.click(screen.getByRole('button', { name: '回复' }));
+    const posted = document.getElementById('reply-mounted');
+    expect(posted?.tagName).toBe('LI');
+    expect(document.activeElement).toBe(posted);
+    expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).not.toHaveFocus();
+  });
+
   it('sizes delete with the other actions and wraps a reply author instead of truncating it', () => {
     rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob', role: 'admin' });
     renderShell();
