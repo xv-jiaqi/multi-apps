@@ -297,7 +297,7 @@ const AuditBody = observer(function AuditBody() {
                           {row.reason}
                         </span>
                       ) : (
-                        <span className="text-neutral-500">{tt('admin.audit.noReason')}</span>
+                        <span className="text-neutral-600">{tt('admin.audit.noReason')}</span>
                       )}
                     </td>
                   </tr>

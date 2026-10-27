@@ -106,7 +106,7 @@ describe('AdminAuditPage', () => {
     expect(within(table).getByText('解封')).toBeInTheDocument();
     expect(within(table).getByText('删除内容')).toBeInTheDocument();
     expect(within(table).getByText('处理举报')).toBeInTheDocument();
-    expect(within(table).getByText('未填写')).toHaveClass('text-neutral-500');
+    expect(within(table).getByText('未填写')).toHaveClass('text-neutral-600');
 
     const reply = within(table).getByText(/回帖 · /);
     expect(reply).toHaveClass('wrap-anywhere');
