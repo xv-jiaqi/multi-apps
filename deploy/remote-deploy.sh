@@ -14,8 +14,8 @@ fi
 
 # CARDHUB_ROOT is /opt/cardhub in production. Tests point it at a temp tree.
 cardhub_root="${CARDHUB_ROOT:-/opt/cardhub}"
-# Seconds docker stop waits for the old container. Containers started with
-# init: true exit on SIGTERM immediately; this is the ceiling, not a sleep.
+# Seconds `docker stop -t` waits after SIGTERM while in-flight requests finish.
+# Compose stop_grace_period is the same 30s ceiling.
 stop_grace_seconds="${CARDHUB_STOP_GRACE_SECONDS:-30}"
 health_timeout_seconds="${CARDHUB_HEALTH_TIMEOUT_SECONDS:-180}"
 

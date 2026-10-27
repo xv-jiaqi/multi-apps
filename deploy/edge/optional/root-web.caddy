@@ -1,4 +1,5 @@
 {$ROOT_WEB_DOMAINS:http://root-web-disabled.invalid} {
+	import cardhub_web_headers
 	import cardhub_upstream {$ENV_NAME}-web:8080
 }
 
