@@ -1,25 +1,7 @@
 import { Logger } from '@nestjs/common';
-import type { Server } from 'node:http';
+import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 
-/**
- * Nest's shutdown sequence calls `onModuleDestroy` (Prisma `$disconnect`,
- * Redis `quit`) before it closes the HTTP server. An in-flight request would
- * lose those clients and fail. On SIGTERM/SIGINT we close the listening
- * socket first and make those hooks wait until in-flight responses finish.
- *
- * `app.close()` in tests does not raise a signal, so the hooks disconnect
- * immediately when no drain is in progress.
- *
- * The listener removes itself. After the hooks finish, Nest re-sends the
- * same signal so the default action can exit the process. A listener that
- * stayed registered would swallow that signal.
- */
-
-const SHUTDOWN_KEEP_ALIVE_TIMEOUT_MS = 1_000;
-
-type Releasable = {
-  onModuleDestroy?: (() => Promise<void> | void) | undefined;
-};
+const DEFAULT_SHUTDOWN_TIMEOUT_MS = 25_000;
 
 const drains = new WeakMap<Server, Promise<void>>();
 
@@ -29,57 +11,86 @@ export function beginHttpDrain(server: Server): Promise<void> {
     return existing;
   }
 
-  // `server.close()` stops new connections and drops sockets that are
-  // already idle. A socket that is still serving a response is kept, then
-  // becomes a keep-alive socket when the response ends. Shorten that idle
-  // timeout so it cannot hold the process open for the container grace period.
-  // `headersTimeout` must stay strictly greater than `keepAliveTimeout`.
-  server.keepAliveTimeout = SHUTDOWN_KEEP_ALIVE_TIMEOUT_MS;
-  if (server.headersTimeout <= server.keepAliveTimeout) {
-    server.headersTimeout = server.keepAliveTimeout + 1_000;
-  }
-
-  const drain = new Promise<void>((resolve) => {
-    server.close(() => {
-      resolve();
+  // Node >=22 closes connections that are already idle and waits for active
+  // responses. installHttpDrain also closes connections as they become idle.
+  const drain = new Promise<void>((resolve, reject) => {
+    server.close((error?: NodeJS.ErrnoException) => {
+      if (error && error.code !== 'ERR_SERVER_NOT_RUNNING') {
+        reject(error);
+      } else {
+        resolve();
+      }
     });
   });
   drains.set(server, drain);
   return drain;
 }
 
-function waitForHttpDrain(server: Server): Promise<void> {
-  return drains.get(server) ?? Promise.resolve();
-}
-
-function releaseAfterDrain(server: Server, target: Releasable): void {
-  if (typeof target.onModuleDestroy !== 'function') {
-    return;
-  }
-  const release = target.onModuleDestroy.bind(target);
-  target.onModuleDestroy = async () => {
-    await waitForHttpDrain(server);
-    await release();
-  };
-}
-
+/**
+ * Own the signal lifecycle instead of enabling Nest's signal handlers, which
+ * re-send the signal after closing. Drain HTTP before app.close() runs any
+ * resource hooks (including Prisma/Redis), then exit explicitly.
+ */
 export function installHttpDrain(
-  app: { getHttpServer(): Server },
-  resources: readonly Releasable[],
+  app: { getHttpServer(): Server; close(): Promise<void> },
+  timeoutMs = Number(process.env.SHUTDOWN_TIMEOUT_MS ?? DEFAULT_SHUTDOWN_TIMEOUT_MS),
 ): void {
-  const server = app.getHttpServer();
-  for (const resource of resources) {
-    releaseAfterDrain(server, resource);
+  // Node timers overflow above this limit and would fire almost immediately.
+  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) {
+    throw new Error('SHUTDOWN_TIMEOUT_MS must be an integer between 1 and 2147483647');
   }
 
+  const server = app.getHttpServer();
   const logger = new Logger('Shutdown');
-  const onSignal = (signal: NodeJS.Signals) => {
-    process.removeListener('SIGTERM', onSignal);
-    process.removeListener('SIGINT', onSignal);
-    logger.log(`${signal}: closing the listener and draining in-flight HTTP requests`);
-    beginHttpDrain(server);
+  let shuttingDown = false;
+
+  // Observe requests before the application handler can finish them. Node 22's
+  // close() reaps currently idle sockets; a response active at that point may
+  // later leave a keep-alive socket behind. Reap it on finish, without changing
+  // keepAliveTimeout or interrupting another active response on that socket.
+  server.prependListener('request', (_request: IncomingMessage, response: ServerResponse) => {
+    response.once('finish', () => {
+      if (shuttingDown) {
+        server.closeIdleConnections();
+      }
+    });
+  });
+
+  const forceExit = (message: string) => {
+    logger.error(message);
+    server.closeAllConnections();
+    process.exit(1);
   };
 
-  process.prependListener('SIGTERM', onSignal);
-  process.prependListener('SIGINT', onSignal);
+  const onSignal = (signal: NodeJS.Signals) => {
+    // Keep both listeners installed until exit so repeated/mixed signals cannot
+    // trigger the default action or start another app.close().
+    if (shuttingDown) {
+      return;
+    }
+    shuttingDown = true;
+    logger.log(`${signal}: 开始 drain; closing the listener and draining in-flight HTTP requests`);
+
+    // This is a deadline for the entire shutdown, including resource hooks.
+    // Keep it referenced so hung hooks cannot exit successfully on their own.
+    const deadline = setTimeout(() => {
+      forceExit(`shutdown timed out after ${timeoutMs}ms; forcing remaining connections closed`);
+    }, timeoutMs);
+
+    void (async () => {
+      try {
+        await beginHttpDrain(server);
+        logger.log(`${signal}: drain complete`);
+        await app.close();
+        clearTimeout(deadline);
+        process.exit(0);
+      } catch (error) {
+        clearTimeout(deadline);
+        forceExit(`shutdown failed: ${error instanceof Error ? error.stack : String(error)}`);
+      }
+    })();
+  };
+
+  process.on('SIGTERM', onSignal);
+  process.on('SIGINT', onSignal);
 }
