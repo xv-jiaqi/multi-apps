@@ -64,14 +64,30 @@ export const commentContentSchema = z
 export const commentInput = z.object({
   cardSlug: slugSchema,
   content: commentContentSchema,
+  parentId: z.string().uuid().optional(),
 });
 export type CommentInput = z.infer<typeof commentInput>;
 
 export const seriesCommentInput = z.object({
   seriesSlug: slugSchema,
   content: commentContentSchema,
+  parentId: z.string().uuid().optional(),
 });
 export type SeriesCommentInput = z.infer<typeof seriesCommentInput>;
+
+export const commentRepliesListInput = z.object({
+  parentId: z.string().uuid(),
+  cursor: z.string().uuid().optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+export type CommentRepliesListInput = z.infer<typeof commentRepliesListInput>;
+
+/** Blank after trim, or only the prefilled `@username`, is not a reply. */
+export function isBlankReplyContent(content: string, prefillUsernames: readonly string[]): boolean {
+  const trimmed = content.trim();
+  if (!trimmed) return true;
+  return prefillUsernames.some((name) => trimmed === `@${name}`);
+}
 
 // Forum (M6) — Markdown body capped at 10k chars to keep XSS surface
 // (rehype-sanitize) and Postgres TOAST fast paths predictable.

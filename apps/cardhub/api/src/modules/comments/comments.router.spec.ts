@@ -15,7 +15,8 @@ import type { TrpcContext } from '../../trpc/context';
 function makeRouter() {
   const cardFindUnique = jest.fn();
   const seriesFindUnique = jest.fn();
-  const commentFindMany = jest.fn();
+  const commentFindMany = jest.fn().mockResolvedValue([]);
+  const commentGroupBy = jest.fn().mockResolvedValue([]);
   const commentCreate = jest.fn();
   const commentFindUnique = jest.fn();
   const commentDelete = jest.fn();
@@ -26,6 +27,7 @@ function makeRouter() {
     series: { findUnique: seriesFindUnique },
     comment: {
       findMany: commentFindMany,
+      groupBy: commentGroupBy,
       create: commentCreate,
       findUnique: commentFindUnique,
       delete: commentDelete,
@@ -79,9 +81,16 @@ describe('CommentsRouter.listForCard', () => {
         content: 'hi',
         createdAt: '2026-05-01T00:00:00.000Z',
         user: { id: 'u1', username: 'alice' },
+        replyCount: 0,
+        replies: [],
+        repliesNextCursor: null,
       },
     ]);
-    expect(commentFindMany.mock.calls[0]?.[0]?.orderBy).toEqual({ createdAt: 'desc' });
+    expect(commentFindMany.mock.calls[0]?.[0]?.orderBy).toEqual([
+      { createdAt: 'desc' },
+      { id: 'desc' },
+    ]);
+    expect(commentFindMany.mock.calls[0]?.[0]?.where).toEqual({ cardId: 'card-1', parentId: null });
   });
 
   it('returns NOT_FOUND when the card slug is unknown', async () => {

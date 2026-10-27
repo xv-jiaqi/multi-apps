@@ -98,9 +98,15 @@ model Comment {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   card   Card?   @relation(fields: [cardId], references: [id], onDelete: Cascade)
   series Series? @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  // Null means a top-level comment. Replies point at that top-level row.
+  // Old servers ignore the column. Deleting the parent cascades the replies.
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
 
   @@index([cardId])
   @@index([seriesId])
+  @@index([parentId])
   @@map("comments")
 }
 
