@@ -587,23 +587,23 @@ function backup(db: Db, fromVersion: number): void {
 
 ## 7. 审计动作
 
-| `action`                       | 何时记录                                                      | `detail`                                       |
-| ------------------------------ | ------------------------------------------------------------- | ---------------------------------------------- |
-| `token.created`                | 新建桥接 token（含首次启动自动创建的默认 token）              | `{ tokenId, name, scopes }`                    |
-| `token.scopes_changed`         | 修改 token 的 scope                                           | `{ tokenId, from, to }`                        |
-| `token.revoked`                | 吊销 token                                                    | `{ tokenId }`                                  |
-| `approval.decided`             | 人或桥接方做出审批决定                                        | `{ approvalId, decision, kind, title }`        |
-| `approval.expired`             | 审批超时或停机时被系统结束                                    | `{ approvalId }`                               |
-| `bridge.diff_read`             | 桥接 token 读取 diff（`GET /tasks/:id/diff`）                 | `{ scope, format, bytes, truncated }`          |
-| `task.deleted`                 | 删除任务                                                      | `{ shortId, title }`                           |
-| `git.push` / `git.fetch`       | Hub 自己对 `internal` 的推送、拉取（网页 Agent）              | `{ remote, branch, ok, error? }`               |
-| `git.apply`                    | 应用到本地分支 / 合并                                         | `{ branch, commit?, merged }`                  |
-| `repo.origin_push_disabled`    | 注册仓库时禁用 `origin` 的推送地址                            | `{ repoId }`                                   |
-| `security.push_blocked`        | pre-push 钩子或 PushService 拦截了一次推送                    | `{ remote, url, reason }`（URL 去掉 userinfo） |
-| `security.remote_ref_changed`  | 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4） | `{ refs }`                                     |
-| `security.read_only_violation` | 只读任务的工作区在本轮有改动                                  | `{ turnIndex, filesChanged }`                  |
-| `config.changed`               | 设置页保存配置                                                | `{ keys }`（只记改了哪些顶层键，不记值）       |
-| `diagnostics.exported`         | 导出诊断包                                                    | `{ file }`                                     |
+| `action`                       | 何时记录                                                                                                                                                                   | `detail`                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `token.created`                | 新建桥接 token（含首次启动自动创建的默认 token）                                                                                                                           | `{ tokenId, name, scopes }`                    |
+| `token.scopes_changed`         | 修改 token 的 scope                                                                                                                                                        | `{ tokenId, from, to }`                        |
+| `token.revoked`                | 吊销 token                                                                                                                                                                 | `{ tokenId }`                                  |
+| `approval.decided`             | 人或桥接方做出审批决定                                                                                                                                                     | `{ approvalId, decision, kind, title }`        |
+| `approval.expired`             | 审批超时或停机时被系统结束                                                                                                                                                 | `{ approvalId }`                               |
+| `bridge.diff_read`             | 桥接 token 读取 diff（`GET /tasks/:id/diff`）                                                                                                                              | `{ scope, format, bytes, truncated }`          |
+| `task.deleted`                 | 删除任务                                                                                                                                                                   | `{ shortId, title }`                           |
+| `git.push` / `git.fetch`       | Hub 自己对 `internal` 的推送（每次都记）、拉取（只在镜像 ref 变了、或一段连续失败的第一次时记，[web-agent.md](web-agent.md) §2.3）                                         | `{ remote, branch, ok, error? }`               |
+| `git.apply`                    | 应用到本地分支 / 合并                                                                                                                                                      | `{ branch, commit?, merged }`                  |
+| `repo.origin_push_disabled`    | 注册仓库时禁用 `origin` 的推送地址                                                                                                                                         | `{ repoId }`                                   |
+| `security.push_blocked`        | `PushService` 的推送目标检查不通过，或 Hub 的 `pre-push` 钩子拦截了 Hub 自己的推送（Agent 子进程被拦截的推送记在 `guard/blocked.ndjson`，[security.md](security.md) §3.3） | `{ remote, url, reason }`（URL 去掉 userinfo） |
+| `security.remote_ref_changed`  | 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4）                                                                                                              | `{ refs }`                                     |
+| `security.read_only_violation` | 只读任务的工作区在本轮有改动                                                                                                                                               | `{ turnIndex, filesChanged }`                  |
+| `config.changed`               | 设置页保存配置                                                                                                                                                             | `{ keys }`（只记改了哪些顶层键，不记值）       |
+| `diagnostics.exported`         | 导出诊断包                                                                                                                                                                 | `{ file }`                                     |
 
 ## 8. 备份与重置
 

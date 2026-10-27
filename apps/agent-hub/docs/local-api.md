@@ -1310,7 +1310,7 @@ Idempotency-Key: conv_7f3a:msg_12
 
 - 一个轮都没结束且不是 `live` → `404 DIFF_NOT_AVAILABLE`。
 - 存库的补丁超过 5 MB 时只有统计（`patch: null`、`truncated: true`）；现场快照的补丁同样按 5 MB 处理。
-- 网页 Agent 任务的 `live` 是立即拉取一次远端任务分支（[web-agent.md](web-agent.md) §4）。
+- 网页 Agent 任务的 `live` 由 `TaskRunner.liveDiff(id, { fetch: true })` 执行：先拉取一次远端任务分支，失败时记 `warn` 日志、用最近一次成功拉取的结果（[web-agent.md](web-agent.md) §4.1、§4.2）。
 - 桥接方：脱敏、512 KB 截断、审计（§3.4）。
 
 ### 5.8 审批
@@ -1331,9 +1331,9 @@ Idempotency-Key: conv_7f3a:msg_12
 
 ### 5.9 应用改动与网页任务（管理）
 
-**`POST /tasks/:id/apply`**，`{ merge?: boolean }`：任务不在终态 → `409 TASK_BUSY`；`in_place` → `409 APPLY_NOT_SUPPORTED`；其余按 [architecture.md](architecture.md) §7.4 与 [web-agent.md](web-agent.md) §4 执行。返回 `ApplyResponse`：`commit` 是本次新建的提交（没有未提交改动时为 `null`），`merged` 表示本次产生了合并提交。可能的错误：`GIT_IDENTITY_MISSING`、`NOTHING_TO_APPLY`、`WORKSPACE_DIRTY`、`MERGE_CONFLICT`；其他 git 失败 → `INTERNAL`（stderr 末尾 2 KB 脱敏后进日志）。写审计 `git.apply`。
+**`POST /tasks/:id/apply`**，`{ merge?: boolean }`：任务不在终态 → `409 TASK_BUSY`；`in_place` → `409 APPLY_NOT_SUPPORTED`；其余按 [architecture.md](architecture.md) §7.4 执行；`remote_branch` 按 [web-agent.md](web-agent.md) §4.3（不联网，把本地 `agent-hub/<shortId>` 快进到最近一次拉取的结果，`commit` 恒为 `null`）。返回 `ApplyResponse`：`commit` 是本次新建的提交（没有未提交改动时为 `null`），`merged` 表示本次产生了合并提交。可能的错误：`GIT_IDENTITY_MISSING`、`NOTHING_TO_APPLY`、`WORKSPACE_DIRTY`、`MERGE_CONFLICT`；其他 git 失败 → `INTERNAL`（stderr 末尾 2 KB 脱敏后进日志）。写审计 `git.apply`。
 
-**`POST /tasks/:id/remote/done`**：网页 Agent 任务的“完成本轮”。不是网页任务，或任务不在 `running` → `409 ILLEGAL_TRANSITION`。立即拉取一次远端任务分支，然后以 `end_turn` 结束本轮（[web-agent.md](web-agent.md) §3）。返回任务当前状态。
+**`POST /tasks/:id/remote/done`**：网页 Agent 任务的“完成本轮”。由 `TaskService.completeRemoteTurn(id)` 执行：不是网页任务、任务不在 `running`、或没有活动的网页会话 → `409 ILLEGAL_TRANSITION`。会话最后拉取一次远端任务分支、发出本轮总结，然后以 `end_turn` 结束本轮（[web-agent.md](web-agent.md) §3.3）；重复请求等同一个结果。返回此刻的 `TaskDto`（轮后 diff 可能还在计算，最终状态经 WebSocket 推送）。
 
 **`POST /tasks/:id/remote/link`**，`{ url }`：记录 AoneD 会话链接（`remoteUrl`），只接受 `http` / `https`。不是网页任务 → `409 ILLEGAL_TRANSITION`。任何状态都可以改。
 
