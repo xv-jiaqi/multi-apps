@@ -303,6 +303,70 @@ describe('comment replies', () => {
     expect(audits[0]).toMatchObject({ targetId: top, reason: 'thread spam' });
   });
 
+  function expectNoLeak(body: unknown) {
+    const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain('LEAK_MARKER');
+    expect(serialized).not.toContain('Prisma');
+    expect(serialized).not.toContain('prisma.');
+    expect(serialized).not.toContain('node_modules');
+    expect(serialized).not.toMatch(/at Object\./);
+  }
+
+  it('rejects an oversize body with 413 and a too-long reply with 400 without leaking internals', async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      const badJson = await request(app.getHttpServer())
+        .post('/trpc/comments.create')
+        .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${aliceToken}`)
+        .set('X-Forwarded-For', '203.0.113.130')
+        .send('{"content":"LEAK_MARKER"');
+      expect(badJson.status).toBe(400);
+      expect(badJson.body.error.data.code).toBe('BAD_REQUEST');
+      expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
+      expect(badJson.body.error.data.stack).toBeUndefined();
+      expectNoLeak(badJson.body);
+
+      const tooLarge = await request(app.getHttpServer())
+        .post('/trpc/comments.create')
+        .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${aliceToken}`)
+        .set('X-Forwarded-For', '203.0.113.131')
+        .send(Buffer.alloc(100 * 1024 + 1, 0x78));
+      expect(tooLarge.status).toBe(413);
+      expect(tooLarge.body.error.data.code).toBe('PAYLOAD_TOO_LARGE');
+      expect(tooLarge.body.error.data.httpStatus).toBe(413);
+      expect(tooLarge.body.error.data.stack).toBeUndefined();
+      expectNoLeak(tooLarge.body);
+
+      const top = await createComment(
+        'comments.create',
+        { cardSlug, content: 'length parent' },
+        aliceToken,
+        '203.0.113.132',
+      );
+      const tooLong = await post(
+        'comments.create',
+        { cardSlug, content: `${'字'.repeat(501)}`, parentId: top },
+        bobToken,
+        '203.0.113.133',
+      );
+      expect(tooLong.status).toBe(400);
+      expect(tooLong.body.error.data.code).toBe('BAD_REQUEST');
+      expect(tooLong.body.error.data.appCode).toBe(APP_ERROR_CODES.VALIDATION);
+      expect(tooLong.body.error.data.stack).toBeUndefined();
+      expect(tooLong.body.error.message).not.toContain('字'.repeat(40));
+      expectNoLeak(tooLong.body);
+      expect(
+        await prisma.comment.count({ where: { parentId: top } }),
+      ).toBe(0);
+    } finally {
+      if (previous === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previous;
+    }
+  });
+
   it('shares the comment create limiter with replies', async () => {
     const top = await createComment(
       'comments.create',

@@ -99,7 +99,8 @@ model Comment {
   card   Card?   @relation(fields: [cardId], references: [id], onDelete: Cascade)
   series Series? @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   // Null means a top-level comment. Replies point at that top-level row.
-  // Old servers ignore the column. Deleting the parent cascades the replies.
+  // Expand-only: old servers ignore the column. Roll back the app first, then
+  // drop comments_parentId_fkey, comments_parentId_idx, and parentId.
   parentId String?
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")

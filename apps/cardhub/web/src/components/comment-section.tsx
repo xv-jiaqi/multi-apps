@@ -729,36 +729,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                   >
                     @{comment.user.username}
                   </span>
-                  {!isConfirming ? (
-                    <div className="ml-auto flex shrink-0 items-center gap-3">
-                      <time dateTime={comment.createdAt} className="whitespace-nowrap">
-                        {formatDateTime(comment.createdAt, locale.locale)}
-                      </time>
-                      {session.user?.id !== comment.user.id ? (
-                        <ReportButton targetType="COMMENT" targetId={comment.id} />
-                      ) : null}
-                      {canDelete ? (
-                        <button
-                          type="button"
-                          ref={(node) => {
-                            deleteButtonRefs.current[comment.id] = node;
-                          }}
-                          aria-label={tt('card.detail.commentDeleteAria', {
-                            user: comment.user.username,
-                          })}
-                          onClick={() => {
-                            setDeleteError(null);
-                            setStatusMessage('');
-                            setDeleteReason('');
-                            setConfirmingId(comment.id);
-                          }}
-                          className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                        >
-                          {tt('card.detail.commentDelete')}
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
+                  <time dateTime={comment.createdAt} className="ml-auto whitespace-nowrap">
+                    {formatDateTime(comment.createdAt, locale.locale)}
+                  </time>
                 </div>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
                   {comment.content}
@@ -777,6 +750,29 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                       className={replyActionClassName}
                     >
                       {tt('comment.reply')}
+                    </button>
+                  ) : null}
+                  {!isConfirming && session.user?.id !== comment.user.id ? (
+                    <ReportButton targetType="COMMENT" targetId={comment.id} />
+                  ) : null}
+                  {!isConfirming && canDelete ? (
+                    <button
+                      type="button"
+                      ref={(node) => {
+                        deleteButtonRefs.current[comment.id] = node;
+                      }}
+                      aria-label={tt('card.detail.commentDeleteAria', {
+                        user: comment.user.username,
+                      })}
+                      onClick={() => {
+                        setDeleteError(null);
+                        setStatusMessage('');
+                        setDeleteReason('');
+                        setConfirmingId(comment.id);
+                      }}
+                      className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      {tt('card.detail.commentDelete')}
                     </button>
                   ) : null}
                   {replyCount > 0 ? (

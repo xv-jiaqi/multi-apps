@@ -20,6 +20,14 @@ const queryState: {
         content: string;
         createdAt: string;
         user: { id: string; username: string };
+        replyCount?: number;
+        repliesNextCursor?: string | null;
+        replies?: Array<{
+          id: string;
+          content: string;
+          createdAt: string;
+          user: { id: string; username: string };
+        }>;
       }>
     | undefined;
   isLoading: boolean;
@@ -892,7 +900,7 @@ describe('CommentSection replies', () => {
     await user.click(screen.getByRole('button', { name: '回复 @cara' }));
     const field = screen.getByRole('textbox', { name: '回复 @cara' });
     expect(field).toHaveValue('@cara ');
-    expect(field.selectionStart).toBe('@cara '.length);
+    expect((field as HTMLTextAreaElement).selectionStart).toBe('@cara '.length);
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('textbox', { name: '回复 @cara' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '回复 @cara' })).toHaveFocus();
@@ -936,7 +944,7 @@ describe('CommentSection replies', () => {
         replyCount: 4,
         repliesNextCursor: '33333333-3333-4333-8333-333333333333',
         replies: [
-          thread.replies[0],
+          thread.replies[0]!,
           {
             id: '44444444-4444-4444-8444-444444444444',
             content: 'second',
@@ -978,6 +986,67 @@ describe('CommentSection replies', () => {
     expect(screen.getByText('fourth')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /展开其余/ })).not.toBeInTheDocument();
     expect(document.getElementById('reply-r4')).toHaveFocus();
+  });
+
+  it('hides reply when signed out and does not render an empty reply list', () => {
+    rootStore.session.signOut();
+    queryState.data = [
+      {
+        ...thread,
+        replyCount: 0,
+        replies: [],
+      },
+    ];
+    renderShell();
+    expect(screen.queryByRole('button', { name: /回复 @/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: '对 @bob 的回复' })).not.toBeInTheDocument();
+    expect(screen.queryByText('暂无回复')).not.toBeInTheDocument();
+    expect(screen.queryByText(/条回复/)).not.toBeInTheDocument();
+  });
+
+  it('submits a series reply with Ctrl+Enter and keeps the composer busy until it settles', async () => {
+    const user = userEvent.setup();
+    mutateMock.mockImplementation(() => undefined);
+    renderSeriesShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    const field = screen.getByRole('textbox', { name: '回复 @bob' });
+    await user.type(field, 'series note');
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    expect(mutateMock.mock.calls[0]?.[0]).toEqual({
+      seriesSlug: 'sky-dawn',
+      content: 'series note',
+      parentId: thread.id,
+    });
+    expect(screen.getByRole('button', { name: '发送中…' })).toBeDisabled();
+    expect(field).toHaveAttribute('readonly');
+    expect(field.closest('form')).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('removes a reply and focuses the visible deleted status', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'u3', username: 'cara' });
+    const user = userEvent.setup();
+    deleteMutateMock.mockImplementation((_input, callbacks) => {
+      callbacks.onSuccess();
+    });
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '删除 @cara 的评论' }));
+    expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '删除' }));
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('回复已删除');
+    expect(status).toHaveClass('bg-emerald-50');
+    expect(status).toHaveFocus();
+    expect(screen.queryByText('older reply')).not.toBeInTheDocument();
+    expect(screen.queryByText(/条回复/)).not.toBeInTheDocument();
+  });
+
+  it('asks an admin for a reason before deleting someone else’s reply', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'admin', username: 'admin', role: 'admin' });
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '删除 @cara 的评论' }));
+    expect(screen.getByLabelText('删除原因（选填，只有管理员能看到）')).toBeInTheDocument();
+    expect(screen.getByText('删除这条回复？')).toBeInTheDocument();
   });
 
   it('confirms deleting a top-level comment together with its replies', async () => {
