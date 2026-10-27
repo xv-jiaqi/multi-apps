@@ -169,7 +169,7 @@ export interface DiffStats {
 ```
 
 - `TaskStatus`、`TurnStatus` 的含义与迁移规则见 [architecture.md](architecture.md) §3。
-- `ApprovalDecision` 只有四个值。会改写 Agent 持久配置的选项（Codex 的 execpolicy / 网络策略 amendment，ACP 的 `reject_always`）**不提供**，Hub 也不做自动批准。
+- `ApprovalDecision` 只有四个值。会改写 Agent 持久配置的选项（Codex 的 execpolicy / 网络策略 amendment，ACP 的 `allow_always` / `reject_always`）**不提供**，Hub 也不做自动批准（唯一的例外是只读 ACP 任务里代为拒绝“退出计划模式”，[adapter-acp.md](adapter-acp.md) §7.3）。
 - `DecidedBy`：`ui` = Hub 界面，`bridge` = 桥接 token，`system` = 超时、撤回、停机、重启时由 Hub 结束。
 
 ## 3. 统一事件
@@ -298,19 +298,20 @@ export interface HubEventEnvelope {
 
 `notice.code` 是字符串，下表是全部取值；新增时先补这张表。界面按 `level` 着色，按 `code` 决定是否折叠同类提示。
 
-| `code`                   | `level`   | 产出方     | 何时                                                                                 |
-| ------------------------ | --------- | ---------- | ------------------------------------------------------------------------------------ |
-| `TURN_LIMIT`             | `warning` | 核心       | 轮以 `max_tokens` / `max_turn_requests` / `refusal` 结束（§6.1 规则 4）。            |
-| `READ_ONLY_VIOLATION`    | `error`   | 核心       | 只读任务的工作区在本轮有改动（[architecture.md](architecture.md) §7.3）。            |
-| `REMOTE_REF_CHANGED`     | `error`   | 核心       | 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4）。                      |
-| `AGENT_RETRYING`         | `warning` | Codex      | `error` 通知且 `willRetry: true`（[adapter-codex.md](adapter-codex.md) §5.3）。      |
-| `MODEL_REROUTED`         | `warning` | Codex      | `model/rerouted`。                                                                   |
-| `CONTEXT_COMPACTED`      | `info`    | Codex      | `contextCompaction` item 结束。                                                      |
-| `USER_INPUT_UNSUPPORTED` | `warning` | Codex      | `item/tool/requestUserInput`：Hub 回空答案。                                         |
-| `ELICITATION_DECLINED`   | `warning` | Codex      | `mcpServer/elicitation/request`：Hub 回拒绝。                                        |
-| `AGENT_WARNING`          | `warning` | Codex、ACP | Agent 自己发的警告（Codex `warning` 通知等）。                                       |
-| `MODE_RESTORED`          | `warning` | ACP        | Agent 切到被禁止的会话模式，Hub 已切回（D37，[adapter-acp.md](adapter-acp.md) §5）。 |
-| `WEB_FETCH_FAILED`       | `warning` | 网页       | 轮询拉取远端任务分支失败（[web-agent.md](web-agent.md) §3）。                        |
+| `code`                   | `level`             | 产出方     | 何时                                                                                                      |
+| ------------------------ | ------------------- | ---------- | --------------------------------------------------------------------------------------------------------- |
+| `TURN_LIMIT`             | `warning`           | 核心       | 轮以 `max_tokens` / `max_turn_requests` / `refusal` 结束（§6.1 规则 4）。                                 |
+| `READ_ONLY_VIOLATION`    | `error`             | 核心       | 只读任务的工作区在本轮有改动（[architecture.md](architecture.md) §7.3）。                                 |
+| `REMOTE_REF_CHANGED`     | `error`             | 核心       | 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4）。                                           |
+| `AGENT_RETRYING`         | `warning`           | Codex      | `error` 通知且 `willRetry: true`（[adapter-codex.md](adapter-codex.md) §5.3）。                           |
+| `MODEL_REROUTED`         | `warning`           | Codex      | `model/rerouted`。                                                                                        |
+| `CONTEXT_COMPACTED`      | `info`              | Codex、ACP | Codex `contextCompaction` item 结束；ACP `compaction_update` 完成。                                       |
+| `USER_INPUT_UNSUPPORTED` | `warning`           | Codex      | `item/tool/requestUserInput`：Hub 回空答案。                                                              |
+| `ELICITATION_DECLINED`   | `warning`           | Codex      | `mcpServer/elicitation/request`：Hub 回拒绝。                                                             |
+| `AGENT_WARNING`          | `warning` / `error` | Codex、ACP | Agent 自己发的警告（Codex `warning` 通知；ACP `warning` / `error` 级的 `notice`，`info` 级不带 `code`）。 |
+| `MODE_RESTORED`          | `warning`           | ACP        | Agent 切到不允许的会话模式，Hub 已切回（D37，[adapter-acp.md](adapter-acp.md) §5）。                      |
+| `PLAN_EXIT_DECLINED`     | `info`              | ACP        | 只读任务里 Agent 请求退出计划模式，Hub 代为拒绝、本轮结束（[adapter-acp.md](adapter-acp.md) §7.3）。      |
+| `WEB_FETCH_FAILED`       | `warning`           | 网页       | 轮询拉取远端任务分支失败（[web-agent.md](web-agent.md) §3）。                                             |
 
 ## 4. 错误码
 
@@ -404,27 +405,27 @@ export interface ApiErrorBody {
 
 `AgentErrorCode` 出现在 `turn.completed` 事件、`TurnDto.error`、`TaskDto.lastError` 里，说明“这一轮为什么没有正常结束”；`ApiErrorCode` 只出现在 HTTP / WS 的错误响应里（[local-api.md](local-api.md) §7）。两套码不混用。
 
-| `AgentErrorCode`          | 何时                                                                                      | 产出方                       | `retryable`  | 轮 / 任务状态                                   |
-| ------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------- | ------------ | ----------------------------------------------- |
-| `AGENT_BINARY_NOT_FOUND`  | 命令在登录 PATH 里找不到，或绝对路径不可执行。                                            | 适配器                       | `false`      | `failed`                                        |
-| `AGENT_SPAWN_FAILED`      | `spawn` 失败（权限、cwd 不存在等）。                                                      | `ProcessSupervisor`          | `false`      | `failed`                                        |
-| `AGENT_HANDSHAKE_TIMEOUT` | `initialize` 30 秒没有响应。                                                              | 适配器                       | `true`       | `failed`                                        |
-| `AGENT_PROTOCOL_ERROR`    | 非握手请求超时（60 秒）、返回 JSON-RPC 错误、响应结构不对、连接在请求途中关闭但进程还在。 | 适配器                       | `true`       | `failed`                                        |
-| `AGENT_PROCESS_EXITED`    | 会话期间 Agent 进程退出。                                                                 | 适配器                       | `true`       | `interrupted`（`startSession` 阶段为 `failed`） |
-| `AGENT_AUTH_REQUIRED`     | 未登录或登录过期。                                                                        | 适配器                       | `false`      | `failed`                                        |
-| `AGENT_RATE_LIMITED`      | 用量、频率或预算超限。                                                                    | 适配器                       | `true`       | `failed`                                        |
-| `AGENT_CONTEXT_EXCEEDED`  | 上下文窗口用尽。                                                                          | 适配器                       | `false`      | `failed`                                        |
-| `AGENT_UPSTREAM_ERROR`    | 其他上游（模型服务）错误。                                                                | 适配器                       | 按适配器分册 | `failed`                                        |
-| `AGENT_SANDBOX_ERROR`     | Agent 的沙箱报错。                                                                        | 适配器                       | `false`      | `failed`                                        |
-| `AGENT_DISABLED`          | 任务排队期间 Agent 配置被禁用或删除（[architecture.md](architecture.md) §4）。            | `TaskRunner`                 | `false`      | `failed`                                        |
-| `MODEL_NOT_SUPPORTED`     | Agent 拒绝了指定的模型或推理档位。                                                        | 适配器                       | `false`      | `failed`                                        |
-| `SESSION_NOT_RESUMABLE`   | 需要恢复原生会话，但 Agent 不支持或恢复失败。                                             | 适配器                       | `false`      | `failed`                                        |
-| `WORKSPACE_SETUP_FAILED`  | worktree 创建、`worktreeSetup`、仓库没有提交、网页任务分支准备失败。                      | `TaskRunner`                 | `false`      | `failed`                                        |
-| `GIT_ERROR`               | 轮前 / 轮后快照或 diff 计算失败。                                                         | `TaskRunner`                 | `true`       | `failed`                                        |
-| `GIT_PUSH_BLOCKED`        | 网页任务分支推送被守卫拦截（[security.md](security.md) §3）。                             | `PushService`                | `false`      | `failed`                                        |
-| `WEB_TURN_TIMEOUT`        | 网页任务一轮超过 `maxTurnMinutes`。                                                       | 网页适配器                   | `true`       | `failed`                                        |
-| `HUB_SHUTDOWN`            | 侧车停机时轮还没结束。                                                                    | 核心 / 适配器（§6.1 规则 5） | `true`       | `interrupted`                                   |
-| `INTERNAL`                | 未预料的异常（程序错误）；`message` 固定为“Agent Hub 内部错误，详见日志”，堆栈只进日志。  | `TaskRunner`                 | `false`      | `failed`                                        |
+| `AgentErrorCode`          | 何时                                                                                      | 产出方                       | `retryable`                                   | 轮 / 任务状态                                   |
+| ------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------- | ----------------------------------------------- |
+| `AGENT_BINARY_NOT_FOUND`  | 命令在登录 PATH 里找不到，或绝对路径不可执行。                                            | 适配器                       | `false`                                       | `failed`                                        |
+| `AGENT_SPAWN_FAILED`      | `spawn` 失败（权限、cwd 不存在等）。                                                      | `ProcessSupervisor`          | `false`                                       | `failed`                                        |
+| `AGENT_HANDSHAKE_TIMEOUT` | `initialize` 30 秒没有响应。                                                              | 适配器                       | `true`                                        | `failed`                                        |
+| `AGENT_PROTOCOL_ERROR`    | 非握手请求超时（60 秒）、返回 JSON-RPC 错误、响应结构不对、连接在请求途中关闭但进程还在。 | 适配器                       | 超时、连接中断 `true`；Agent 返回错误 `false` | `failed`                                        |
+| `AGENT_PROCESS_EXITED`    | 会话期间 Agent 进程退出。                                                                 | 适配器                       | `true`                                        | `interrupted`（`startSession` 阶段为 `failed`） |
+| `AGENT_AUTH_REQUIRED`     | 未登录或登录过期。                                                                        | 适配器                       | `false`                                       | `failed`                                        |
+| `AGENT_RATE_LIMITED`      | 用量、频率或预算超限。                                                                    | 适配器                       | `true`                                        | `failed`                                        |
+| `AGENT_CONTEXT_EXCEEDED`  | 上下文窗口用尽。                                                                          | 适配器                       | `false`                                       | `failed`                                        |
+| `AGENT_UPSTREAM_ERROR`    | 其他上游（模型服务）错误。                                                                | 适配器                       | 按适配器分册                                  | `failed`                                        |
+| `AGENT_SANDBOX_ERROR`     | Agent 的沙箱报错。                                                                        | 适配器                       | `false`                                       | `failed`                                        |
+| `AGENT_DISABLED`          | 任务排队期间 Agent 配置被禁用或删除（[architecture.md](architecture.md) §4）。            | `TaskRunner`                 | `false`                                       | `failed`                                        |
+| `MODEL_NOT_SUPPORTED`     | Agent 拒绝了指定的模型或推理档位。                                                        | 适配器                       | `false`                                       | `failed`                                        |
+| `SESSION_NOT_RESUMABLE`   | 需要恢复原生会话，但 Agent 不支持或恢复失败。                                             | 适配器                       | `false`                                       | `failed`                                        |
+| `WORKSPACE_SETUP_FAILED`  | worktree 创建、`worktreeSetup`、仓库没有提交、网页任务分支准备失败。                      | `TaskRunner`                 | `false`                                       | `failed`                                        |
+| `GIT_ERROR`               | 轮前 / 轮后快照或 diff 计算失败。                                                         | `TaskRunner`                 | `true`                                        | `failed`                                        |
+| `GIT_PUSH_BLOCKED`        | 网页任务分支推送被守卫拦截（[security.md](security.md) §3）。                             | `PushService`                | `false`                                       | `failed`                                        |
+| `WEB_TURN_TIMEOUT`        | 网页任务一轮超过 `maxTurnMinutes`。                                                       | 网页适配器                   | `true`                                        | `failed`                                        |
+| `HUB_SHUTDOWN`            | 侧车停机时轮还没结束。                                                                    | 核心 / 适配器（§6.1 规则 5） | `true`                                        | `interrupted`                                   |
+| `INTERNAL`                | 未预料的异常（程序错误）；`message` 固定为“Agent Hub 内部错误，详见日志”，堆栈只进日志。  | `TaskRunner`                 | `false`                                       | `failed`                                        |
 
 `message` 是给人看的中文，带上 Agent 名和可操作的建议（例如“Codex 未登录或登录已过期：请在 ChatGPT 应用或终端里执行 codex login 后重试”）；不含凭据、不含提示词全文。`detail` 放协议原始错误（核心落库前脱敏）。
 
@@ -461,18 +462,18 @@ export interface ApiErrorBody {
 
 ### 5.2 决定怎么回复给 Agent
 
-| Hub 决定            | Codex 命令执行 / 文件修改（`decision`）                    | Codex `item/permissions/requestApproval`              | ACP `session/request_permission`（`outcome`）              |
-| ------------------- | ---------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
-| `allow_once`        | `accept`                                                   | 授予所请求的权限，`scope: "turn"`                     | `selected`，选 `kind: allow_once` 的选项                   |
-| `allow_for_session` | `acceptForSession`                                         | 授予所请求的权限，`scope: "session"`                  | `selected`，选 `kind: allow_always` 的选项                 |
-| `reject`            | `decline`                                                  | `{ permissions: {}, scope: "turn" }`                  | `selected`，选 `kind: reject_once` 的选项                  |
-| `cancel_turn`       | `cancel`                                                   | `{ permissions: {}, scope: "turn" }`                  | `cancelled`（随后核心取消本轮，适配器发 `session/cancel`） |
-| 撤回（`withdrawn`） | Agent 已发 `serverRequest/resolved`：不回复；否则 `cancel` | 同左：不回复，或 `{ permissions: {}, scope: "turn" }` | `cancelled`（进程已退出则不回复）                          |
+| Hub 决定            | Codex 命令执行 / 文件修改（`decision`）                    | Codex `item/permissions/requestApproval`              | ACP `session/request_permission`（`outcome`）                    |
+| ------------------- | ---------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------- |
+| `allow_once`        | `accept`                                                   | 授予所请求的权限，`scope: "turn"`                     | `selected`，选 `kind: allow_once` 的选项                         |
+| `allow_for_session` | `acceptForSession`                                         | 授予所请求的权限，`scope: "session"`                  | 不提供（D59）                                                    |
+| `reject`            | `decline`                                                  | `{ permissions: {}, scope: "turn" }`                  | `selected`，选 `kind: reject_once` 的选项                        |
+| `cancel_turn`       | `cancel`                                                   | `{ permissions: {}, scope: "turn" }`                  | `cancelled`（随后核心取消本轮，适配器发 `session/cancel`）       |
+| 撤回（`withdrawn`） | Agent 已发 `serverRequest/resolved`：不回复；否则 `cancel` | 同左：不回复，或 `{ permissions: {}, scope: "turn" }` | Agent 发过 `$/cancel_request`：回错误 `-32800`；否则 `cancelled` |
 
 **可选决定（`options`）**：
 
 - Codex：三类请求都给全部四个决定。
-- ACP：按请求里的选项生成：有 `allow_once` 选项 → `allow_once`；有 `allow_always` → `allow_for_session`；有 `reject_once` → `reject`；`cancel_turn` 总是有。`reject_always` 永远不用。没有 `reject_once` 时只能用“取消本轮”来拒绝。
+- ACP：按请求里的选项生成（`permissionDecisions()`）：有 `allow_once` 选项 → `allow_once`；有 `reject_once` → `reject`；`cancel_turn` 总是有。`allow_always` / `reject_always` 永远不用，所以 ACP 没有 `allow_for_session`（D59：Claude Code 的 `allow_always` 会把规则写进项目设置，“退出计划模式”的 `allow_always` 选项会切到跳过审批的模式）。没有 `reject_once` 时只能用“取消本轮”来拒绝。
 - 网页 Agent 没有审批。
 
 ### 5.3 审批类型与标题
@@ -674,6 +675,10 @@ export interface AdapterDeps {
   /** Agent 子进程的环境变量（GitGuard 构造，含推送守卫与 envPassthrough，security.md §3.2）。 */
   agentEnv(): Record<string, string>;
   now(): Date;
+  /** 侧车版本（server/package.json 的 version），握手时作为 clientInfo.version。 */
+  hubVersion: string;
+  /** ACP 探测进程的 cwd：<AGENT_HUB_HOME>/probe，侧车启动时创建的空目录（adapter-acp.md §4.2）。 */
+  probeCwd: string;
 }
 
 export interface SpawnSpec {
@@ -1475,7 +1480,7 @@ export type AgentHealth =
 
 ## 10. 新增一个 Agent
 
-1. **说 ACP 的 Agent**（大多数情况）：在设置页或 `config.json` 加一项 `kind: "acp"`、`profile: "generic"`，填命令和参数即可。有协议怪癖时在 `server/src/adapters/acp/profiles/` 加一个 profile（[adapter-acp.md](adapter-acp.md) §3），并把它加进 `acpAgentSchema.profile` 的枚举；**不要**为单个 Agent 复制一份 `AcpAdapter`。
+1. **说 ACP 的 Agent**（大多数情况）：在设置页或 `config.json` 加一项 `kind: "acp"`、`profile: "generic"`，填命令和参数即可。有协议怪癖时在 `server/src/adapters/acp/profiles.ts` 的 `ACP_PROFILES` 里加一个 profile（[adapter-acp.md](adapter-acp.md) §3），并把它加进 `acpAgentSchema.profile` 的枚举（漏加编译不过）；**不要**为单个 Agent 复制一份 `AcpAdapter`。
 2. **全新协议**：在 `ADAPTER_KINDS`、`agentConfigSchema` 里加一个 `kind`；实现 `AgentAdapter`；在 `AdapterRegistry` 的实例化分支里注册；写一个假 Agent 覆盖 [testing.md](testing.md) §4 错误路径矩阵里的适配器行；新增 `docs/adapter-<name>.md`，结构参照 Codex 那篇（握手、会话、轮、事件映射、审批映射、取消、恢复、兼容表）。
 3. **网页 Agent 的自动化**：实现 [web-agent.md](web-agent.md) §7 的驱动接口，不新增适配器类型。
 4. 任何一种都要在 [decisions-and-risks.md](decisions-and-risks.md) 追加决策，说明为什么接入、默认启用与否、并发上限。
