@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { t } from '@repo/shared';
 import {
   AlertDialog,
@@ -41,7 +41,21 @@ export function BanUserDialog({
   const labelId = useId();
   const hintId = useId();
   const errorId = useId();
-  const ban = mode === 'ban';
+  // Parent clears mode and username as soon as close starts. Keep the last
+  // open pair until this dialog's content actually unmounts, so the exit
+  // animation does not flash the red ban button.
+  const retainedRef = useRef<{ mode: 'ban' | 'unban'; username: string } | null>(null);
+  const openRef = useRef(open);
+  openRef.current = open;
+  if (open) retainedRef.current = { mode, username };
+  const clearRetention = useCallback(() => {
+    // Strict Mode remounts the content while it is still open. Only drop the
+    // last target after a real close has unmounted it.
+    if (openRef.current) return;
+    retainedRef.current = null;
+  }, []);
+  const shown = retainedRef.current ?? { mode, username };
+  const ban = shown.mode === 'ban';
 
   useEffect(() => {
     if (open) return;
@@ -82,9 +96,10 @@ export function BanUserDialog({
         }}
         onCloseAutoFocus={onCloseAutoFocus}
       >
+        <ForgetDialogTargetOnUnmount forget={clearRetention} />
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {tt(ban ? 'admin.ban.title' : 'admin.unban.title', { user: username })}
+            {tt(ban ? 'admin.ban.title' : 'admin.unban.title', { user: shown.username })}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {tt(ban ? 'admin.ban.body' : 'admin.unban.body')}
@@ -150,4 +165,11 @@ export function BanUserDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
+}
+
+function ForgetDialogTargetOnUnmount({ forget }: { forget: () => void }) {
+  useEffect(() => {
+    return () => forget();
+  }, [forget]);
+  return null;
 }
