@@ -7,6 +7,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../../stores/root-store';
 import { resetUsersMock, usersMock } from './users-trpc-mock';
 import type { AdminUserRow } from './users';
+import { AdminTable } from '../../components/admin/admin-table';
 
 vi.mock('../../lib/trpc', async () => {
   const mod = await import('./users-trpc-mock');
@@ -340,5 +341,63 @@ describe('AdminUsersPage ban flow', () => {
     const notice = screen.getByText('已封禁 @alice，对方的所有设备已退出登录。');
     expect(notice).toHaveFocus();
     expect(screen.getByText('共 2 位用户')).toBeInTheDocument();
+  });
+});
+
+describe('username column sticky contract', () => {
+  it('sticks only the username column and pads the scroller', () => {
+    usersMock.isLoading = true;
+    renderPage();
+    const table = screen.getByRole('table', { name: '用户列表' });
+    expect(table.parentElement).toHaveClass('overflow-x-auto', 'scroll-pl-32', 'sm:scroll-pl-0');
+    expect(screen.getByRole('columnheader', { name: '用户名' })).toHaveClass(
+      'sticky',
+      'left-0',
+      'z-10',
+      'w-32',
+      'max-w-32',
+      'border-r',
+      'border-neutral-200',
+      'bg-neutral-50',
+      'sm:static',
+      'sm:max-w-none',
+      'sm:border-r-0',
+    );
+    expect(screen.getByRole('columnheader', { name: '邮箱' })).not.toHaveClass('sticky');
+    const skeletonCells = within(table).getAllByRole('row')[1]?.querySelectorAll('td');
+    expect(skeletonCells?.[0]).toHaveClass('sticky', 'bg-white');
+    expect(skeletonCells?.[1]).not.toHaveClass('sticky');
+  });
+
+  it('wraps a long username instead of truncating it', () => {
+    const longName = 'u'.repeat(40);
+    setRows([userRow({ id: 'admin-row', username: longName, role: 'admin' }), userRow()]);
+    renderPage();
+    const author = screen.getByText(`@${longName}`);
+    expect(author).toHaveClass('wrap-anywhere', 'min-w-0');
+    expect(author).not.toHaveClass('truncate');
+    const row = screen.getByRole('rowheader', { name: new RegExp(longName) });
+    expect(row).toHaveClass('sticky', 'bg-white', 'wrap-anywhere', 'focus-visible:ring-inset');
+  });
+
+  it('does not stick the clear-filter row', () => {
+    setRows([]);
+    renderPage('/admin/users?q=missing');
+    expect(screen.getByRole('cell')).not.toHaveClass('sticky');
+  });
+
+  it('leaves tables without the username class unpadded', () => {
+    render(
+      <AdminTable caption="审计">
+        <tbody>
+          <tr>
+            <td>时间</td>
+          </tr>
+        </tbody>
+      </AdminTable>,
+    );
+    expect(screen.getByRole('table', { name: '审计' }).parentElement).not.toHaveClass(
+      'scroll-pl-32',
+    );
   });
 });
