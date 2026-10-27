@@ -623,9 +623,9 @@ sequenceDiagram
 触发：`--lifeline stdin` 下 stdin 读到 EOF；SIGTERM；SIGINT。只执行一次（重复信号忽略）。
 
 1. 停止接受新的 HTTP 请求和 WS 连接（已有的 `wait` 立即返回 `reached: false`）；调度器停止派发。
-2. 对每个 `running` 的任务调 `cancelTurn()`；`preparing` 的任务触发中止。
+2. `ApprovalService.expireAll()`：未决审批按兜底决定回复 Agent、记为 `expired`（[adapter-interface.md](adapter-interface.md) §5.1）；然后对每个 `running` 的任务调 `cancelTurn()`，`preparing` 的任务触发中止。
 3. 最多等 **5 秒**；然后对所有会话 `dispose('shutdown')`、所有适配器 `shutdown()`（结束全部 Agent 进程组）。
-4. 仍未结束的任务与轮记为 `interrupted`（`lastError.code = HUB_SHUTDOWN`）；刷出所有增量缓冲。
+4. 停机期间结束的轮，除了正常完成（`end_turn`）的，一律记为 `interrupted`（`lastError.code = HUB_SHUTDOWN`，[adapter-interface.md](adapter-interface.md) §6.1 规则 4）；刷出所有增量缓冲。
 5. 关闭数据库，删除 `server.lock`，`exit 0`。
 
 Rust 壳在关闭 stdin 后等 10 秒（D7），侧车的 5 秒加上适配器结束进程组的时间要在这之内。
