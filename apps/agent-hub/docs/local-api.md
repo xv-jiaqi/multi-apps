@@ -1302,11 +1302,11 @@ Idempotency-Key: conv_7f3a:msg_12
 `?scope=task|turn&turn=<index>&format=json|patch&live=true|false`
 
 | 参数     | 含义                                                                                                                                                                                                                              |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `scope`  | `task`（默认）= 从任务基线到该轮结束；`turn` = 只看该轮。                                                                                                                                                                         |
 | `turn`   | 轮的 `index`；省略 = 已有快照的最近一轮。指定的轮不存在 → `404 TURN_NOT_FOUND`；存在但还没有快照（未结束）→ `404 DIFF_NOT_AVAILABLE`。                                                                                            |
 | `live`   | 只在任务 `running` 时有效：现场拍快照（[architecture.md](architecture.md) §7.2），`turnIndex` 为当前轮，追加一条 `diff.updated`（`scope: "live"`）。任务不在 `running` 时忽略此参数。同一任务同一时刻只拍一次，并发请求共享结果。 |
-| `format` | `json`（默认）→ `DiffDto`；`patch` → `Content-Type: text/x-diff; charset=utf-8`，响应体是补丁文本（没有改动时为空），响应头 `X-Agent-Hub-Truncated: true                                                                          | false`。 |
+| `format` | `json`（默认）→ `DiffDto`；`patch` → `Content-Type: text/x-diff; charset=utf-8`，响应体是补丁文本（没有改动时为空），响应头 `X-Agent-Hub-Truncated` 为 `true` 或 `false`。                                                        |
 
 - 一个轮都没结束且不是 `live` → `404 DIFF_NOT_AVAILABLE`。
 - 存库的补丁超过 5 MB 时只有统计（`patch: null`、`truncated: true`）；现场快照的补丁同样按 5 MB 处理。
