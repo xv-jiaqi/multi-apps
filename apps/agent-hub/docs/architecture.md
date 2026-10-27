@@ -90,6 +90,7 @@ flowchart TB
 | `Recovery`          | `core/recovery.ts`                     | 启动时清理残留进程、把中断的任务和审批落地（§10.3）。                                                                                        | —                                  |
 | `Retention`         | `core/retention.ts`                    | 启动后 1 分钟执行一次、之后每 6 小时执行一次保留策略（[data-model.md](data-model.md) §6）。                                                  | —                                  |
 | `WorktreeService`   | `workspace/worktree.service.ts`        | 解析基线、创建 / 移除 worktree、执行 `worktreeSetup`。                                                                                       | —                                  |
+| `createGit`         | `workspace/git.ts`                     | 侧车执行 git 的唯一入口：固定环境、超时、输出上限（§7.2）。                                                                                  | 不加推送守卫变量。                 |
 | `SnapshotService`   | `workspace/snapshot.ts`                | 树快照、diff 补丁与统计（§7.2）。                                                                                                            | 不改用户的暂存区和工作区。         |
 | `ApplyService`      | `workspace/apply.service.ts`           | “应用到本地分支”（§7.4）。                                                                                                                   | **不推送。**                       |
 | `RepoInspector`     | `workspace/repo-inspector.ts`          | 仓库体检：是否 git 仓库、远端列表、`origin` 推送是否已禁用、`internal` 推送主机、工作区是否干净。                                            | —                                  |
@@ -141,7 +142,7 @@ stateDiagram-v2
 - 每次迁移在**同一个事务**里写 `tasks.status` 并追加一条 `task.status` 事件。
 - 终态 = `completed` / `failed` / `cancelled` / `interrupted`。
 - 归档是 `archivedAt` 字段，不是状态；只有终态任务能归档；归档后不能追问，先取消归档。
-- 删除只对已归档任务开放，只能由 Hub UI 发起；删除任务时同时删除其 worktree（若还在）和分支 `agent-hub/<shortId>`（只删本地分支）。
+- 删除只对已归档任务开放，只能由 Hub UI 发起；删除任务时同时删除其 worktree（若还在）、分支 `agent-hub/<shortId>`（只删本地分支）和 `refs/agent-hub/base/<shortId>`；网页任务另删镜像 ref `refs/agent-hub/remote/<shortId>`（[web-agent.md](web-agent.md) §4.4）。
 - 同一任务同一时刻最多一个未结束的轮。非终态时追问返回 `TASK_BUSY`。
 
 ### 3.2 轮
@@ -192,22 +193,22 @@ stateDiagram-v2
 ## 5. 一轮的执行流程（`TaskRunner`）
 
 1. 迁移 `queued → preparing`。
-2. **准备工作区**（只在第 1 轮；worktree 已被保留策略清理的任务不能追问，见 [local-api.md](local-api.md) §5.4）：
+2. **准备工作区**（`tasks.base_tree` 为 `NULL` 时执行：第 1 轮，或上次准备失败后的追问；worktree 已被保留策略清理的任务不能追问，见 [local-api.md](local-api.md) §5.4）：
    - `in_place`：工作目录 = 仓库路径；`baseCommit` = 当前 `HEAD`（仓库没有任何提交时失败，`WORKSPACE_SETUP_FAILED`）。
-   - `worktree`：见 §7.1，完成后执行 `worktreeSetup`。
-   - `remote_branch`：见 [web-agent.md](web-agent.md) §3。
+   - `worktree`：见 §7.1，完成后执行 `worktreeSetup`。worktree 目录已存在、且检出的是 `agent-hub/<shortId>`（上次 `worktreeSetup` 失败留下的）时直接复用，只重跑 `worktreeSetup`。
+   - `remote_branch`：见 [web-agent.md](web-agent.md) §3.1。
    - 记 `baseTree` = 当时的树快照（§7.2），并 `git update-ref refs/agent-hub/base/<shortId> <baseTree>`。
 3. **会话**：活动会话表里没有时调 `adapter.startSession(...)`（追问时带 `resumeNativeSessionId`）；拿到的 `nativeSessionId` 写回任务。
-4. **轮前快照** `beforeTree`。
+4. **轮前快照** `beforeTree`；本地 Agent（`codex` / `acp`）任务同时记下 `refs/remotes/*` 的快照（[security.md](security.md) §3.4）。
 5. 轮 → `running`，任务 `preparing → running`，追加 `turn.started` 事件。
 6. `await session.prompt({ turnId, text, model, reasoningEffort })`。期间适配器不断 `emit` 事件、`requestApproval` 审批。
 7. `prompt()` 返回 `TurnResult` 后：
    1. `EventStore.flush(taskId)`，确保本轮的增量都已落库；
    2. 轮后快照 `afterTree`，算本轮 diff（`beforeTree → afterTree`）与任务 diff（`baseTree → afterTree`），写入轮记录，追加 `diff.updated`；
-   3. 只读任务且 `beforeTree ≠ afterTree`：追加 `notice`（`error` 级，“只读任务的工作区在本轮有改动”），任务打上 `readOnlyViolation`（§7.3）；
+   3. 只读任务且 `beforeTree ≠ afterTree`：追加 `notice`（`error` 级，“只读任务的工作区在本轮有改动”），任务打上 `readOnlyViolation`（§7.3）；本地 Agent 任务另做远端跟踪分支审计、读取 `pre-push` 拦截记录（[security.md](security.md) §3.4）；
    4. 写轮的结束状态、`finalMessage`、用量，追加 `turn.completed`；
    5. 按 §3.2 迁移任务状态。
-8. 会话留在活动会话表里，启动闲置计时器（ACP 默认 10 分钟、Codex 30 分钟，到点 `dispose('idle')`，Codex 的 `dispose` 只是 `thread/unsubscribe`）。
+8. 会话留在活动会话表里，启动闲置计时器（ACP 默认 10 分钟、Codex 30 分钟，到点 `dispose('idle')`，Codex 的 `dispose` 只是 `thread/unsubscribe`；网页 Agent 没有子进程，不启动）。
 9. 通知调度器有槽位空出。
 
 第 2、3 步出错：本轮 → `failed`，任务 `preparing → failed`，`lastError` 写错误码。第 6 步里适配器的业务错误不会抛异常，而是体现在 `TurnResult.error`（[adapter-interface.md](adapter-interface.md) §6.1）；Agent 进程中途退出时 `TurnResult.stopReason` 为 `error`、错误码 `AGENT_PROCESS_EXITED`，任务记为 `interrupted` 而不是 `failed`。
@@ -249,30 +250,174 @@ git -C "$repo" worktree add -b "agent-hub/$shortId" "$AGENT_HUB_HOME/worktrees/$
 
 ### 7.2 树快照与 diff
 
-快照不碰真实暂存区和工作区：复制一份真实索引，在副本上 `git add -A` 再 `write-tree`。
+侧车里所有 git 调用都经 `createGit()`：固定加 `GIT_TERMINAL_PROMPT=0` 与 `LC_ALL=C`，剔除会把 `git -C` 带到别的仓库的环境变量，超时结束 git 的整个进程组（含 ssh 子进程）。`main.ts` 创建一个实例 `createGit(process.env)`（Rust 壳已把登录 shell 的 PATH 放进侧车环境），以 provider token `GIT` 注入 `SnapshotService`、`WorktreeService`、`ApplyService`、`RepoInspector`、`GitGuard`、`PushService`。
 
 ```ts
-// server/src/workspace/snapshot.ts（核心逻辑；git() 是 workspace/git.ts 里的执行函数）
-export async function snapshotTree(cwd: string): Promise<string> {
+// server/src/workspace/git.ts
+import { spawn } from 'node:child_process';
+
+/** 侧车自己执行 git 时叠加的环境（不含 Agent 子进程的推送守卫，architecture.md §7.2）。 */
+export const GIT_FIXED_ENV: Readonly<Record<string, string>> = {
+  GIT_TERMINAL_PROMPT: '0',
+  /** 要匹配 git 的英文报错（例如 couldn't find remote ref）；不影响提交信息等内容的编码。 */
+  LC_ALL: 'C',
+};
+
+/** 侧车环境里若带着这些变量，`git -C` 会被带到别的仓库。 */
+const LOCATING_VARS = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_OBJECT_DIRECTORY',
+  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+  'GIT_COMMON_DIR',
+  'GIT_NAMESPACE',
+  'GIT_CEILING_DIRECTORIES',
+];
+
+export interface GitOptions {
+  /** 叠加在基础环境之上，优先级最高。 */
+  env?: Record<string, string>;
+  /** 默认 30 秒；push / fetch 传 60_000。到时对 git 的进程组发 SIGKILL。 */
+  timeoutMs?: number;
+  /** stdout 上限，默认 64 MB；超过时结束进程并抛 kind 为 too_large 的 GitError。 */
+  maxStdoutBytes?: number;
+}
+
+export interface GitResult {
+  code: number;
+  stdout: string;
+  stderr: string;
+}
+
+export class GitError extends Error {
+  constructor(
+    readonly args: readonly string[],
+    readonly kind: 'exit' | 'timeout' | 'too_large' | 'spawn',
+    readonly result: GitResult | null,
+  ) {
+    const stderr = (result?.stderr ?? '').trim().split('\n').slice(-3).join(' / ');
+    super(
+      kind === 'exit'
+        ? `git ${args[0]} 失败（退出码 ${result?.code}）：${stderr}`
+        : kind === 'timeout'
+          ? `git ${args[0]} 超时`
+          : kind === 'too_large'
+            ? `git ${args[0]} 输出过大`
+            : `无法执行 git：${stderr}`,
+    );
+  }
+}
+
+export interface Git {
+  /** 退出码非 0 时抛 GitError（kind: 'exit'）。返回 stdout 原文。 */
+  run(cwd: string, args: string[], options?: GitOptions): Promise<string>;
+  /** 退出码非 0 也返回；超时、输出过大、启动失败仍抛。 */
+  exec(cwd: string, args: string[], options?: GitOptions): Promise<GitResult>;
+}
+
+export function createGit(baseEnv: NodeJS.ProcessEnv): Git {
+  const env: Record<string, string> = {};
+  for (const [k, v] of Object.entries(baseEnv)) {
+    if (v !== undefined && !LOCATING_VARS.includes(k)) env[k] = v;
+  }
+
+  const exec = (cwd: string, args: string[], options: GitOptions = {}): Promise<GitResult> =>
+    new Promise((resolve, reject) => {
+      const child = spawn('git', ['-C', cwd, ...args], {
+        env: { ...env, ...GIT_FIXED_ENV, ...options.env },
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: true,
+      });
+      const out: Buffer[] = [];
+      const err: Buffer[] = [];
+      let outBytes = 0;
+      let failure: 'timeout' | 'too_large' | null = null;
+      const kill = (why: 'timeout' | 'too_large') => {
+        failure ??= why;
+        try {
+          process.kill(-child.pid!, 'SIGKILL');
+        } catch {
+          child.kill('SIGKILL');
+        }
+      };
+      const timer = setTimeout(() => kill('timeout'), options.timeoutMs ?? 30_000);
+      const limit = options.maxStdoutBytes ?? 64 * 1024 * 1024;
+      child.stdout.on('data', (b: Buffer) => {
+        outBytes += b.length;
+        if (outBytes > limit) kill('too_large');
+        else out.push(b);
+      });
+      child.stderr.on('data', (b: Buffer) => err.push(b));
+      child.on('error', (e) => {
+        clearTimeout(timer);
+        reject(new GitError(args, 'spawn', { code: -1, stdout: '', stderr: e.message }));
+      });
+      child.on('close', (code) => {
+        clearTimeout(timer);
+        const result = {
+          code: code ?? -1,
+          stdout: Buffer.concat(out).toString('utf8'),
+          stderr: Buffer.concat(err).toString('utf8'),
+        };
+        if (failure) reject(new GitError(args, failure, result));
+        else resolve(result);
+      });
+    });
+
+  return {
+    exec,
+    async run(cwd, args, options) {
+      const r = await exec(cwd, args, options);
+      if (r.code !== 0) throw new GitError(args, 'exit', r);
+      return r.stdout;
+    },
+  };
+}
+```
+
+快照不碰真实暂存区和工作区：复制一份真实索引，在副本上 `git add -A` 再 `write-tree`。网页任务的快照只读镜像 ref，不联网（[web-agent.md](web-agent.md) §4.1）。
+
+```ts
+// server/src/workspace/snapshot.ts
+import { copyFile, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { remoteMirrorRef } from '../adapters/web/types';
+import type { Git } from './git';
+
+/** in_place / worktree：工作目录当前内容（含未跟踪、不含被忽略的文件）的树。不碰真实的索引和工作区。 */
+export async function snapshotTree(git: Git, cwd: string): Promise<string> {
   const realIndex = (
-    await git(cwd, ['rev-parse', '--path-format=absolute', '--git-path', 'index'])
+    await git.run(cwd, ['rev-parse', '--path-format=absolute', '--git-path', 'index'])
   ).trim();
   const dir = await mkdtemp(join(tmpdir(), 'agent-hub-idx-'));
   const env = { GIT_INDEX_FILE: join(dir, 'index'), GIT_OPTIONAL_LOCKS: '0' };
   try {
     try {
       await copyFile(realIndex, env.GIT_INDEX_FILE); // 复用 stat 缓存，大仓库也快
-      await git(cwd, ['add', '-A'], { env });
+      await git.run(cwd, ['add', '-A'], { env, timeoutMs: 120_000 });
     } catch {
-      // 索引不存在或复制时正被别的 git 进程改写：退回到从 HEAD 重建
+      // 索引不存在，或复制时正被别的 git 进程改写：从 HEAD 重建
       await rm(env.GIT_INDEX_FILE, { force: true });
-      await git(cwd, ['read-tree', 'HEAD'], { env });
-      await git(cwd, ['add', '-A'], { env });
+      await git.run(cwd, ['read-tree', 'HEAD'], { env });
+      await git.run(cwd, ['add', '-A'], { env, timeoutMs: 120_000 });
     }
-    return (await git(cwd, ['write-tree'], { env })).trim();
+    return (await git.run(cwd, ['write-tree'], { env })).trim();
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+}
+
+/** remote_branch：镜像 ref 指向的提交的树。不联网，拉取由调用方决定（web-agent.md §4.1）。 */
+export async function snapshotRemoteBranch(
+  git: Git,
+  repoPath: string,
+  shortId: string,
+): Promise<string> {
+  return (
+    await git.run(repoPath, ['rev-parse', '--verify', `${remoteMirrorRef(shortId)}^{tree}`])
+  ).trim();
 }
 ```
 
@@ -286,11 +431,11 @@ git diff-tree -r -M --name-status -z "$from" "$to"                # A / M / D / 
 
 - 每轮结束存两份补丁与统计：**本轮**（`beforeTree → afterTree`）和**整个任务**（`baseTree → afterTree`）。API 默认返回整个任务的 diff。
 - 单份补丁超过 **5 MB** 时不存补丁文本，只存统计，`patchTruncated = true`。
-- 运行中的“刷新 diff”：现场拍一次快照，算 `baseTree → 现在` 和 `beforeTree → 现在`，追加一条 `diff.updated`（`scope: "live"`，只带统计），补丁随响应返回，不写入轮记录。
+- 运行中的“刷新 diff”是 `TaskRunner.liveDiff(taskId, { fetch })`：现场拍一次快照，算 `baseTree → 现在` 和 `beforeTree → 现在`，追加一条 `diff.updated`（`scope: "live"`，只带统计），补丁随结果返回，不写入轮记录；同一任务同一时刻只算一次，并发调用共享结果。调用方：`GET /tasks/:id/diff?live=true`（`fetch: true`，只对网页任务有意义）和网页任务的 `remote.updated`（`fetch: false`，[web-agent.md](web-agent.md) §4.2）。
 - `.gitignore` 忽略的文件不进快照，所以不会出现在 diff 里；未被忽略的新文件会。
 - `write-tree` 产生的树对象不被任何分支引用，`git gc` 会在两周后回收。`baseTree` 要在整个任务期间可用，所以用 `refs/agent-hub/base/<shortId>` 指向它（已实测：指向树对象的 ref 能阻止回收，`git log --all`、`git fsck` 不受影响）；删除任务时删掉这个 ref。轮前 / 轮后快照只在本轮内使用，补丁已存库，不需要保护。
-- 网页 Agent（`remote_branch`）没有本地工作目录，快照 = 远端任务分支最新提交的树：`git fetch internal agent-hub/<shortId>` 后 `git rev-parse FETCH_HEAD^{tree}`（[web-agent.md](web-agent.md) §4）。`SnapshotService.snapshot(task)` 按工作区类型分派。
-- Hub 自己执行 git 时用侧车的环境（登录 shell 的 PATH），外加 `GIT_TERMINAL_PROMPT=0`，**不**加 Agent 子进程的推送守卫变量（Hub 需要正常的本地 git）。
+- 网页 Agent（`remote_branch`）没有本地工作目录，快照 = 镜像 ref `refs/agent-hub/remote/<shortId>` 指向的提交的树（`snapshotRemoteBranch`），**不联网**；镜像 ref 什么时候拉取见 [web-agent.md](web-agent.md) §4.1。`SnapshotService.snapshot(task)` 按工作区类型分派。
+- 侧车执行 git 一律用 `createGit` 的环境，**不**加 Agent 子进程的推送守卫变量（Hub 需要正常的本地 git）。
 
 ### 7.3 只读任务的越界检测
 
@@ -306,7 +451,7 @@ Codex 只读任务有沙箱，正常不会触发；这主要是给没有沙箱�
 | 工作区          | “应用”做什么                                                                                                                                                                                                                                                   |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worktree`      | ① worktree 还在且有未提交改动时：检查 `user.name` / `user.email`（缺了返回 `GIT_IDENTITY_MISSING`），`git add -A`，`git commit --no-verify -m "<任务标题>" -m "Agent Hub 任务 <shortId>（<Agent 名>）"`。② 分支相对基线没有任何提交时返回 `NOTHING_TO_APPLY`。 |
-| `remote_branch` | 拉取 `internal/agent-hub/<shortId>`，确认本地分支是它的祖先后快进本地分支（否则 `MERGE_CONFLICT`），见 [web-agent.md](web-agent.md) §4。                                                                                                                       |
+| `remote_branch` | 把本地 `agent-hub/<shortId>` 快进到镜像 ref（不联网：应用的就是 diff 里看到的提交）；不能快进时 `MERGE_CONFLICT`，任务分支正被检出时 `WORKSPACE_DIRTY`，见 [web-agent.md](web-agent.md) §4.3。                                                                 |
 | `in_place`      | 不提供（改动本来就在原目录里），返回 `APPLY_NOT_SUPPORTED`。                                                                                                                                                                                                   |
 
 请求里 `merge: true` 时再做一步合并：
