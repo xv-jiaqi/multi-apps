@@ -53,6 +53,7 @@ function makeRouter() {
     cardFindUnique,
     seriesFindUnique,
     commentFindMany,
+    commentGroupBy,
     commentCreate,
     commentFindUnique,
     commentDelete,
@@ -123,11 +124,14 @@ describe('CommentsRouter.listForSeries', () => {
         content: 'great set',
         createdAt: '2026-05-02T00:00:00.000Z',
         user: { id: 'u1', username: 'alice' },
+        replyCount: 0,
+        replies: [],
+        repliesNextCursor: null,
       },
     ]);
-    expect(commentFindMany).toHaveBeenCalledWith({
-      where: { seriesId: 'series-1' },
-      orderBy: { createdAt: 'desc' },
+    expect(commentFindMany.mock.calls[0]?.[0]).toEqual({
+      where: { seriesId: 'series-1', parentId: null },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 50,
       include: { user: { select: { id: true, username: true } } },
     });
@@ -360,5 +364,230 @@ describe('CommentsRouter.delete', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
 
     expect(commentDelete).not.toHaveBeenCalled();
+  });
+});
+
+const alice = {
+  sub: 'u-alice',
+  username: 'alice',
+  role: 'user' as const,
+  tokenVersion: 0,
+  bannedAt: null,
+};
+
+const parentId = '11111111-1111-4111-8111-111111111111';
+
+describe('CommentsRouter replies', () => {
+  it('returns the oldest three replies, the live count, and a cursor', async () => {
+    const { caller, cardFindUnique, commentFindMany, commentGroupBy } = makeRouter();
+    cardFindUnique.mockResolvedValueOnce({ id: 'card-1' });
+    commentFindMany
+      .mockResolvedValueOnce([
+        {
+          id: 'cm-1',
+          content: 'top',
+          createdAt: new Date('2026-05-03T00:00:00Z'),
+          user: { id: 'u1', username: 'alice' },
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'r1',
+          parentId: 'cm-1',
+          content: 'first',
+          createdAt: new Date('2026-05-03T01:00:00Z'),
+          user: { id: 'u2', username: 'bob' },
+        },
+        {
+          id: 'r2',
+          parentId: 'cm-1',
+          content: 'second',
+          createdAt: new Date('2026-05-03T02:00:00Z'),
+          user: { id: 'u3', username: 'cara' },
+        },
+        {
+          id: 'r3',
+          parentId: 'cm-1',
+          content: 'third',
+          createdAt: new Date('2026-05-03T03:00:00Z'),
+          user: { id: 'u2', username: 'bob' },
+        },
+        {
+          id: 'r4',
+          parentId: 'cm-1',
+          content: 'fourth',
+          createdAt: new Date('2026-05-03T04:00:00Z'),
+          user: { id: 'u3', username: 'cara' },
+        },
+      ]);
+    commentGroupBy.mockResolvedValueOnce([{ parentId: 'cm-1', _count: { _all: 4 } }]);
+
+    const result = await caller(null).listForCard({ cardSlug: 'aurora-knight' });
+    expect(result[0]?.replyCount).toBe(4);
+    expect(result[0]?.replies.map((reply) => reply.id)).toEqual(['r1', 'r2', 'r3']);
+    expect(result[0]?.repliesNextCursor).toBe('r3');
+    expect(commentFindMany.mock.calls[1]?.[0]?.orderBy).toEqual([
+      { createdAt: 'asc' },
+      { id: 'asc' },
+    ]);
+  });
+
+  it('pages replies after the cursor and hides a reply parent', async () => {
+    const { caller, commentFindUnique, commentFindMany } = makeRouter();
+    const cursor = '33333333-3333-4333-8333-333333333333';
+    const nextId = '44444444-4444-4444-8444-444444444444';
+    commentFindUnique.mockResolvedValueOnce({ parentId: null });
+    commentFindMany.mockResolvedValueOnce([
+      {
+        id: nextId,
+        content: 'fourth',
+        createdAt: new Date('2026-05-03T04:00:00Z'),
+        user: { id: 'u3', username: 'cara' },
+      },
+      {
+        id: '55555555-5555-4555-8555-555555555555',
+        content: 'fifth',
+        createdAt: new Date('2026-05-03T05:00:00Z'),
+        user: { id: 'u2', username: 'bob' },
+      },
+    ]);
+
+    const page = await caller(null).listReplies({ parentId, cursor, limit: 1 });
+    expect(page).toEqual({
+      items: [
+        {
+          id: nextId,
+          content: 'fourth',
+          createdAt: '2026-05-03T04:00:00.000Z',
+          user: { id: 'u3', username: 'cara' },
+        },
+      ],
+      nextCursor: nextId,
+    });
+    expect(commentFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { parentId },
+        cursor: { id: cursor },
+        skip: 1,
+        take: 2,
+      }),
+    );
+
+    commentFindUnique.mockResolvedValueOnce({ parentId: 'cm-1' });
+    await expect(caller(null).listReplies({ parentId })).resolves.toEqual({
+      items: [],
+      nextCursor: null,
+    });
+  });
+
+  it('stores a card reply and rejects a blank mention or a parent that is not top-level here', async () => {
+    const { caller, cardFindUnique, commentFindUnique, commentFindMany, commentCreate } =
+      makeRouter();
+    cardFindUnique.mockResolvedValue({ id: 'card-1' });
+    commentFindUnique.mockResolvedValueOnce({
+      id: parentId,
+      parentId: null,
+      cardId: 'card-1',
+      seriesId: null,
+    });
+    commentFindMany.mockResolvedValueOnce([]);
+    commentCreate.mockResolvedValueOnce({
+      id: 'r-new',
+      content: '@bob looks good',
+      createdAt: new Date('2026-05-03T06:00:00Z'),
+      user: { id: 'u-alice', username: 'alice' },
+    });
+
+    await caller(alice).create({
+      cardSlug: 'aurora-knight',
+      content: '@bob looks good',
+      parentId,
+    });
+    expect(commentCreate.mock.calls[0]?.[0]?.data).toEqual({
+      content: '@bob looks good',
+      cardId: 'card-1',
+      userId: 'u-alice',
+      parentId,
+    });
+
+    commentFindUnique.mockResolvedValueOnce({
+      id: parentId,
+      parentId: null,
+      cardId: 'card-1',
+      seriesId: null,
+    });
+    commentFindMany.mockResolvedValueOnce([{ user: { username: 'bob' } }]);
+    await expect(
+      caller(alice).create({ cardSlug: 'aurora-knight', content: '  @bob  ', parentId }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.VALIDATION },
+    });
+
+    commentFindUnique.mockResolvedValueOnce({
+      id: parentId,
+      parentId: 'cm-top',
+      cardId: 'card-1',
+      seriesId: null,
+    });
+    await expect(
+      caller(alice).create({ cardSlug: 'aurora-knight', content: 'hi', parentId }),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      cause: { appCode: APP_ERROR_CODES.COMMENT_PARENT_GONE },
+    });
+
+    commentFindUnique.mockResolvedValueOnce(null);
+    await expect(
+      caller(alice).create({ cardSlug: 'aurora-knight', content: 'hi', parentId }),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      cause: { appCode: APP_ERROR_CODES.COMMENT_PARENT_GONE },
+    });
+
+    commentFindUnique.mockResolvedValueOnce({
+      id: parentId,
+      parentId: null,
+      cardId: 'other-card',
+      seriesId: null,
+    });
+    await expect(
+      caller(alice).create({ cardSlug: 'aurora-knight', content: 'hi', parentId }),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      cause: { appCode: APP_ERROR_CODES.COMMENT_PARENT_GONE },
+    });
+    expect(commentCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('stores a series reply on that series top-level comment', async () => {
+    const { caller, seriesFindUnique, commentFindUnique, commentFindMany, commentCreate } =
+      makeRouter();
+    seriesFindUnique.mockResolvedValueOnce({ id: 'series-1' });
+    commentFindUnique.mockResolvedValueOnce({
+      id: parentId,
+      parentId: null,
+      cardId: null,
+      seriesId: 'series-1',
+    });
+    commentFindMany.mockResolvedValueOnce([]);
+    commentCreate.mockResolvedValueOnce({
+      id: 'r-series',
+      content: 'nice set',
+      createdAt: new Date('2026-05-03T07:00:00Z'),
+      user: { id: 'u-alice', username: 'alice' },
+    });
+
+    await caller(alice).createForSeries({
+      seriesSlug: 'sky-dawn',
+      content: 'nice set',
+      parentId,
+    });
+    expect(commentCreate.mock.calls[0]?.[0]?.data).toEqual({
+      content: 'nice set',
+      seriesId: 'series-1',
+      userId: 'u-alice',
+      parentId,
+    });
   });
 });
