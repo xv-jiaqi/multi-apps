@@ -1066,12 +1066,12 @@ export class JsonRpcConnection {
 
 ### 7.2 两个协议的差异
 
-| 方面           | Codex app-server                                     | ACP                                                                               |
-| -------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `jsonrpc` 字段 | 不带（`includeJsonrpcField: false`），对端回复也不带 | 带 `"2.0"`（`includeJsonrpcField: true`）                                         |
-| 进程           | 每个 Codex 配置一个，多个会话共享                    | 每个任务一个                                                                      |
-| 对端请求       | 审批、用户输入、MCP elicitation 等                   | `session/request_permission`（`fs/*`、`terminal/*` 不会来，D36；来了回 `-32601`） |
-| stdin 关闭后   | 立即退出（实测 12 ms）                               | 不保证退出（Qoder 实测约 1.2 秒；按不退出处理）                                   |
+| 方面           | Codex app-server                                     | ACP                                                                                       |
+| -------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `jsonrpc` 字段 | 不带（`includeJsonrpcField: false`），对端回复也不带 | 带 `"2.0"`（`includeJsonrpcField: true`）                                                 |
+| 进程           | 每个 Codex 配置一个，多个会话共享                    | 每个任务一个                                                                              |
+| 对端请求       | 审批、用户输入、MCP elicitation 等                   | `session/request_permission`（`fs/*`、`terminal/*` 不会来，D36；来了回 `-32601`）         |
+| stdin 关闭后   | 立即退出（实测 12 ms）                               | 不保证退出（三个 Agent 实测都在 1.4 秒内退出，但需求方反馈过 Qoder 不退出；按不保证处理） |
 
 ### 7.3 已实测的场景
 

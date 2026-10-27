@@ -16,6 +16,7 @@ AgentHub/
 ├── logs/server-YYYY-MM-DD.log      # 侧车日志，JSON 行（architecture.md §11）
 ├── transcripts/<taskId>.ndjson     # 原始协议帧，脱敏；只在 diagnostics.recordTranscripts 打开时写（D14）
 ├── worktrees/<repoId>/<shortId>/   # 可写任务的 git worktree
+├── probe/                          # ACP 探测进程的 cwd，空目录；Agent 在里面留的文件 Hub 不读不清（adapter-acp.md §4.2）
 └── guard/                          # GitGuard 生成，每次启动重写（security.md §3）
     ├── hooks/                      # 注入给 Agent 子进程的 core.hooksPath
     ├── askpass                     # 永远失败的 GIT_ASKPASS / SSH_ASKPASS 脚本
@@ -39,6 +40,7 @@ export interface HubPaths {
   logs: string;
   transcripts: string;
   worktrees: string;
+  probe: string;
   guard: string;
   hooks: string;
   askpass: string;
@@ -60,6 +62,7 @@ export function resolvePaths(env: NodeJS.ProcessEnv = process.env): HubPaths {
     logs: join(home, 'logs'),
     transcripts: join(home, 'transcripts'),
     worktrees: join(home, 'worktrees'),
+    probe: join(home, 'probe'),
     guard,
     hooks: join(guard, 'hooks'),
     askpass: join(guard, 'askpass'),
@@ -69,7 +72,7 @@ export function resolvePaths(env: NodeJS.ProcessEnv = process.env): HubPaths {
 }
 ```
 
-`main.ts` 调一次 `resolvePaths()`，把结果交给 Nest 的依赖注入（provider token `HUB_PATHS`）；测试里把 `AGENT_HUB_HOME` 指向 `mkdtemp` 出来的临时目录。
+`main.ts` 调一次 `resolvePaths()`，把结果交给 Nest 的依赖注入（provider token `HUB_PATHS`）；`AdapterDeps.probeCwd` 取 `paths.probe`（[adapter-interface.md](adapter-interface.md) §6）。测试里把 `AGENT_HUB_HOME` 指向 `mkdtemp` 出来的临时目录。
 
 ## 2. 存储约定
 

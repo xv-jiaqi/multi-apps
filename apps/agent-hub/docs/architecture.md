@@ -172,7 +172,7 @@ stateDiagram-v2
 ### 3.4 追问与恢复
 
 - 追问只在终态、未归档时可用：新建一轮 `pending`，任务 → `queued`，可以带新的 `model` / `reasoningEffort`。
-- `TaskRunner` 拿到槽位后：活动会话表里有该任务的会话就直接用；没有（进程已闲置结束、侧车重启过、Agent 崩溃过）就调 `adapter.startSession({ resumeNativeSessionId })` 恢复：Codex `thread/resume`；ACP 依次尝试 `session/resume`、`session/load`；都不支持时本轮失败，错误码 `SESSION_NOT_RESUMABLE`。
+- `TaskRunner` 拿到槽位后：活动会话表里有该任务的会话就直接用；没有（进程已闲置结束、侧车重启过、Agent 崩溃过）就调 `adapter.startSession({ resumeNativeSessionId })` 恢复：Codex `thread/resume`；ACP 按新进程声明的能力选 `session/resume` 或 `session/load`，失败时不改试另一种（D35）；不支持或恢复失败时本轮失败，错误码 `SESSION_NOT_RESUMABLE`。
 - 没有单独的“恢复”按钮：`interrupted` 的任务在界面上把追问输入框预填为“上次执行被中断，请从中断处继续。”。
 
 ## 4. 调度与并发
@@ -592,13 +592,13 @@ sequenceDiagram
 
 ### 10.1 命令行与环境变量
 
-| 参数 / 变量            | 含义                                                                              |
-| ---------------------- | --------------------------------------------------------------------------------- |
-| `--lifeline stdin`     | stdin 读到 EOF 时优雅停机（Tauri 拉起时传，D7）。                                 |
-| `AGENT_HUB_HOME`       | 数据目录，默认 `~/Library/Application Support/AgentHub`。                         |
-| `AGENT_HUB_LOGIN_PATH` | 登录 shell 的 PATH（Tauri 传入）；解析 Agent 命令用。没有时侧车自己问登录 shell。 |
-| `AGENT_HUB_PORT`       | 覆盖 `server.port`（测试用）。                                                    |
-| `AGENT_HUB_DEV=1`      | 开发模式：stderr 打印带 UI token 的开发链接；CORS 额外放行 Vite 开发服务器。      |
+| 参数 / 变量            | 含义                                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--lifeline stdin`     | stdin 读到 EOF 时优雅停机（Tauri 拉起时传，D7）。                                                                   |
+| `AGENT_HUB_HOME`       | 数据目录，默认 `~/Library/Application Support/AgentHub`。                                                           |
+| `AGENT_HUB_LOGIN_PATH` | 登录 shell 的 PATH（Tauri 传入）；解析 Agent 命令用。没有时侧车自己问登录 shell。                                   |
+| `AGENT_HUB_PORT`       | 覆盖 `server.port`（测试用）。                                                                                      |
+| `AGENT_HUB_DEV=1`      | 开发模式：stderr 打印带 UI token 的开发链接（CORS 不受影响，开发来源始终放行，[local-api.md](local-api.md) §2.1）。 |
 
 ### 10.2 启动顺序
 
@@ -607,7 +607,7 @@ sequenceDiagram
 | 步骤 | 内容                                                                                                                                                                 | 失败码                                          |
 | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | 1    | 检查 `process.versions.node` ≥ 22.13。                                                                                                                               | `NODE_TOO_OLD`                                  |
-| 2    | 创建 `AGENT_HUB_HOME` 及子目录（权限 `0700`）。                                                                                                                      | `HOME_NOT_WRITABLE`                             |
+| 2    | 创建 `AGENT_HUB_HOME` 及子目录 `logs/`、`transcripts/`、`worktrees/`、`guard/`、`probe/`（权限 `0700`，[data-model.md](data-model.md) §1）。                         | `HOME_NOT_WRITABLE`                             |
 | 3    | 读 `server.lock`：记录的 pid 还活着、且 `GET http://127.0.0.1:<port>/api/v1/health` 在 1 秒内返回 `app: "agent-hub"` 时失败；否则覆盖写入 `{pid, port, startedAt}`。 | `ALREADY_RUNNING`                               |
 | 4    | 读取并校验 `config.json`（不存在则写默认值）。错误信息带前 5 条 zod issue 的路径。                                                                                   | `CONFIG_INVALID`                                |
 | 5    | 打开 `hub.db`，执行迁移（[data-model.md](data-model.md) §5）。                                                                                                       | `DB_OPEN_FAILED` / `DB_MIGRATION_FAILED`        |

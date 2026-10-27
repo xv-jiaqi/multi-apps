@@ -34,17 +34,17 @@
 
 ### 2.1 Hub 发出
 
-| 方法                 | 类型 | 何时                                  | 超时  | 参数要点                                                                                                                                                   |
-| -------------------- | ---- | ------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `initialize`         | 请求 | 进程启动后第一条                      | 30 秒 | `clientInfo: { name: "agent_hub", title: "Agent Hub", version: <侧车版本> }`（D43），`capabilities: { experimentalApi: false, requestAttestation: false }` |
-| `initialized`        | 通知 | `initialize` 成功后立即               | —     | 无参数                                                                                                                                                     |
-| `account/read`       | 请求 | 探测时、每次 `startSession` 前（D32） | 60 秒 | `{ refreshToken: false }`                                                                                                                                  |
-| `model/list`         | 请求 | 探测时                                | 60 秒 | `{ includeHidden: false, cursor }`，按 `nextCursor` 翻页，最多 10 页                                                                                       |
-| `thread/start`       | 请求 | 新任务的第一个会话                    | 60 秒 | §4.1                                                                                                                                                       |
-| `thread/resume`      | 请求 | 恢复会话                              | 60 秒 | §4.1                                                                                                                                                       |
-| `turn/start`         | 请求 | 每轮                                  | 60 秒 | §5.1                                                                                                                                                       |
-| `turn/interrupt`     | 请求 | 取消本轮、鉴权失败时                  | 60 秒 | `{ threadId, turnId }`；不等响应（§7.1）                                                                                                                   |
-| `thread/unsubscribe` | 请求 | 会话释放（闲置、取消、停机、删除）    | 5 秒  | `{ threadId }`；失败只记日志                                                                                                                               |
+| 方法                 | 类型 | 何时                                  | 超时  | 参数要点                                                                                                                                                        |
+| -------------------- | ---- | ------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initialize`         | 请求 | 进程启动后第一条                      | 30 秒 | `clientInfo: { name: "agent_hub", title: "Agent Hub", version: deps.hubVersion }`（D43），`capabilities: { experimentalApi: false, requestAttestation: false }` |
+| `initialized`        | 通知 | `initialize` 成功后立即               | —     | 无参数                                                                                                                                                          |
+| `account/read`       | 请求 | 探测时、每次 `startSession` 前（D32） | 60 秒 | `{ refreshToken: false }`                                                                                                                                       |
+| `model/list`         | 请求 | 探测时                                | 60 秒 | `{ includeHidden: false, cursor }`，按 `nextCursor` 翻页，最多 10 页                                                                                            |
+| `thread/start`       | 请求 | 新任务的第一个会话                    | 60 秒 | §4.1                                                                                                                                                            |
+| `thread/resume`      | 请求 | 恢复会话                              | 60 秒 | §4.1                                                                                                                                                            |
+| `turn/start`         | 请求 | 每轮                                  | 60 秒 | §5.1                                                                                                                                                            |
+| `turn/interrupt`     | 请求 | 取消本轮、鉴权失败时                  | 60 秒 | `{ threadId, turnId }`；不等响应（§7.1）                                                                                                                        |
+| `thread/unsubscribe` | 请求 | 会话释放（闲置、取消、停机、删除）    | 5 秒  | `{ threadId }`；失败只记日志                                                                                                                                    |
 
 ### 2.2 Hub 处理的通知
 
