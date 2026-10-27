@@ -73,7 +73,7 @@ JQ-Boss 在自己的开发 Mac 上同时使用多个 AI 编程 Agent：ChatGPT �
 | Electron                              | 重：自带 Chromium + Node，安装包上百 MB             | 可以                                                                                                         | Node                                         | 否：owner 明确排除         |
 | 纯本地 Web（浏览器访问）              | 轻                                                  | **不行**：第三方页面一般禁止 iframe 嵌入，iframe 里的第三方 Cookie 也会被拦                                  | Node                                         | 只作开发期调试方式         |
 | 纯 Tauri（业务逻辑全写在 Rust 里）    | 最轻                                                | 可以                                                                                                         | Rust                                         | 否：owner 不熟 Rust；CI 测不到 |
-| **Tauri v2 壳 + Node 侧车（选用）**   | 壳几 MB，用系统 WKWebView；Node 用本机已装的 22.13+ | **可以**：Tauri 多 WebView（`Window::add_child`）在同一窗口放一个原生子 WebView 加载本地郎页面，Cookie 隔离 | Node 侧车（TS），Rust 只有一个约 460 行的文件 | **选用**                   |
+| **Tauri v2 壳 + Node 侧车（选用）**   | 壳几 MB，用系统 WKWebView；Node 用本机已装的 22.13+ | **可以**：Tauri 多 WebView（`Window::add_child`）在同一窗口放一个原生子 WebView 加载本地郎页面，Cookie 隔离 | Node 侧车（TS），Rust 只有一个约 480 行的文件 | **选用**                   |
 
 ### 4.2 理由
 
