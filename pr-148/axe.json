@@ -1,0 +1,174 @@
+[
+  {
+    "label": "users-375-zh",
+    "url": "http://localhost:5173/admin/users",
+    "timestamp": "2026-10-27T13:24:42.248Z",
+    "testEngine": {
+      "name": "axe-core",
+      "version": "4.11.4"
+    },
+    "testRunner": {
+      "name": "axe"
+    },
+    "testEnvironment": {
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+      "windowWidth": 375,
+      "windowHeight": 900,
+      "orientationAngle": 0,
+      "orientationType": "landscape-primary"
+    },
+    "violations": [],
+    "passes": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 53
+      },
+      {
+        "id": "aria-conditional-attr",
+        "nodes": 53
+      },
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 53
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 53
+      },
+      {
+        "id": "aria-valid-attr",
+        "nodes": 53
+      },
+      {
+        "id": "button-name",
+        "nodes": 13
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 78
+      },
+      {
+        "id": "empty-table-header",
+        "nodes": 26
+      },
+      {
+        "id": "link-name",
+        "nodes": 20
+      },
+      {
+        "id": "nested-interactive",
+        "nodes": 13
+      },
+      {
+        "id": "scope-attr-valid",
+        "nodes": 26
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": 1
+      },
+      {
+        "id": "tabindex",
+        "nodes": 20
+      },
+      {
+        "id": "table-duplicate-name",
+        "nodes": 1
+      },
+      {
+        "id": "td-headers-attr",
+        "nodes": 1
+      },
+      {
+        "id": "th-has-data-cells",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "label": "users-375-en",
+    "url": "http://localhost:5173/admin/users",
+    "timestamp": "2026-10-27T13:25:11.469Z",
+    "testEngine": {
+      "name": "axe-core",
+      "version": "4.11.4"
+    },
+    "testRunner": {
+      "name": "axe"
+    },
+    "testEnvironment": {
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+      "windowWidth": 375,
+      "windowHeight": 900,
+      "orientationAngle": 0,
+      "orientationType": "landscape-primary"
+    },
+    "violations": [],
+    "passes": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 53
+      },
+      {
+        "id": "aria-conditional-attr",
+        "nodes": 53
+      },
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 53
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 53
+      },
+      {
+        "id": "aria-valid-attr",
+        "nodes": 53
+      },
+      {
+        "id": "button-name",
+        "nodes": 13
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 84
+      },
+      {
+        "id": "empty-table-header",
+        "nodes": 26
+      },
+      {
+        "id": "link-name",
+        "nodes": 20
+      },
+      {
+        "id": "nested-interactive",
+        "nodes": 13
+      },
+      {
+        "id": "scope-attr-valid",
+        "nodes": 26
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": 1
+      },
+      {
+        "id": "tabindex",
+        "nodes": 20
+      },
+      {
+        "id": "table-duplicate-name",
+        "nodes": 1
+      },
+      {
+        "id": "td-headers-attr",
+        "nodes": 1
+      },
+      {
+        "id": "th-has-data-cells",
+        "nodes": 1
+      }
+    ]
+  }
+]
