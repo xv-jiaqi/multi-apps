@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { APP_ERROR_CODES, t } from '@repo/shared';
 import { Button, Input, SegmentedControl } from '@repo/ui-web';
 import { Breadcrumbs } from '../../components/breadcrumbs';
@@ -477,6 +477,13 @@ const UsersBody = observer(function UsersBody() {
                             {tt(banned ? 'admin.users.unban' : 'admin.users.ban')}
                           </button>
                         ) : null}
+                        <Link
+                          to={`/admin/audit?user=${encodeURIComponent(user.username)}`}
+                          className={`${actionClass} text-xs text-neutral-600 hover:underline`}
+                          aria-label={tt('admin.users.historyAria', { user: user.username })}
+                        >
+                          {tt('admin.users.history')}
+                        </Link>
                       </div>
                     </td>
                   </tr>

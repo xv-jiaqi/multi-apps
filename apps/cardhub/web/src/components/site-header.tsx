@@ -88,6 +88,11 @@ function AdminNav({ tt, onAdminRoute }: { tt: (key: string) => string; onAdminRo
               {tt('nav.reports')}
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/admin/audit" className={adminLinkClass}>
+              {tt('nav.audit')}
+            </NavLink>
+          </li>
         </ul>
       ) : null}
     </div>
@@ -280,6 +285,9 @@ export const SiteHeader = observer(function SiteHeader() {
                 </NavLink>
                 <NavLink to="/reports" className={mobileAdminNavItemClass} onClick={closeMenu}>
                   {tt('nav.reports')}
+                </NavLink>
+                <NavLink to="/admin/audit" className={mobileAdminNavItemClass} onClick={closeMenu}>
+                  {tt('nav.audit')}
                 </NavLink>
               </>
             ) : null}

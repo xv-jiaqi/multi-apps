@@ -502,10 +502,15 @@ describe('user governance', () => {
 
     const audit = await get('admin.audit.list', { user: userUsername, limit: 50 }, adminToken);
     expect(audit.status).toBe(200);
-    const actions = (resultData(audit.body).items as Array<{ action: string }>).map(
-      (item) => item.action,
-    );
+    const auditItems = resultData(audit.body).items as Array<{
+      action: string;
+      targetUsername: string | null;
+    }>;
+    const actions = auditItems.map((item) => item.action);
     expect(actions).toEqual(expect.arrayContaining(['USER_BAN', 'USER_UNBAN', 'REPORT_RESOLVE']));
+    expect(auditItems.find((item) => item.action === 'USER_BAN')?.targetUsername).toBe(
+      userUsername,
+    );
   });
 
   it('writes one audit row when two admins ban the same user together', async () => {

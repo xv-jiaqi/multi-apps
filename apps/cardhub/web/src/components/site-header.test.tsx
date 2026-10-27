@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -45,9 +45,14 @@ describe('SiteHeader admin navigation', () => {
       'href',
       '/admin/catalog',
     );
-    expect(screen.getByRole('link', { name: '用户管理' })).toHaveAttribute('href', '/admin/users');
-    expect(screen.queryByRole('link', { name: '操作审计' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '举报队列' })).toHaveAttribute('href', '/reports');
+    const menu = document.getElementById('admin-nav');
+    expect(menu).not.toBeNull();
+    expect(
+      within(menu as HTMLElement)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['内容管理', '用户管理', '举报队列', '操作审计']);
+    expect(screen.getByRole('link', { name: '操作审计' })).toHaveAttribute('href', '/admin/audit');
 
     await user.keyboard('{Escape}');
     expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -91,7 +96,9 @@ describe('SiteHeader admin navigation', () => {
     const users = screen.getByRole('link', { name: '用户管理' });
     expect(users).toHaveAttribute('href', '/admin/users');
     expect(users).toHaveClass('pl-6');
-    expect(screen.queryByRole('link', { name: '操作审计' })).not.toBeInTheDocument();
+    const audit = screen.getByRole('link', { name: '操作审计' });
+    expect(audit).toHaveAttribute('href', '/admin/audit');
+    expect(audit).toHaveClass('pl-6');
   });
 
   it('hides the admin entry from non-admins', () => {
