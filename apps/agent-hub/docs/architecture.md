@@ -157,7 +157,7 @@ stateDiagram-v2
 
 - 创建任务时同时创建第 1 轮（`pending`）；每次追问新建一轮，`index` 递增。任务处于 `queued` 时恰好有一个 `pending` 的轮。
 - 轮的结束原因 `stopReason` 归一为 `end_turn | max_tokens | max_turn_requests | refusal | cancelled | error`（映射见各适配器分册）。`end_turn` → 轮 `completed`；`max_tokens` / `max_turn_requests` / `refusal` → 轮 `completed` 并追加一条 `notice`（`warning`）；`cancelled` → `cancelled`；`error` → `failed`。
-- 每轮结束时记录最后一条完整的 Agent 消息为 `finalMessage`（任务上也冗余一份，供列表和本地郎直接取）。
+- 每轮结束时把最后一条完整的 Agent 消息记为该轮的 `finalMessage`；`GET /tasks/:id/result` 取最近一轮的值。
 
 ### 3.3 取消
 
@@ -192,11 +192,11 @@ stateDiagram-v2
 ## 5. 一轮的执行流程（`TaskRunner`）
 
 1. 迁移 `queued → preparing`。
-2. **准备工作区**（只在第 1 轮，或 worktree 已被清理时）：
+2. **准备工作区**（只在第 1 轮；worktree 已被保留策略清理的任务不能追问，见 [local-api.md](local-api.md) §5.4）：
    - `in_place`：工作目录 = 仓库路径；`baseCommit` = 当前 `HEAD`（仓库没有任何提交时失败，`WORKSPACE_SETUP_FAILED`）。
    - `worktree`：见 §7.1，完成后执行 `worktreeSetup`。
    - `remote_branch`：见 [web-agent.md](web-agent.md) §3。
-   - 记 `baseTree` = 当时的树快照（§7.2）。
+   - 记 `baseTree` = 当时的树快照（§7.2），并 `git update-ref refs/agent-hub/base/<shortId> <baseTree>`。
 3. **会话**：活动会话表里没有时调 `adapter.startSession(...)`（追问时带 `resumeNativeSessionId`）；拿到的 `nativeSessionId` 写回任务。
 4. **轮前快照** `beforeTree`。
 5. 轮 → `running`，任务 `preparing → running`，追加 `turn.started` 事件。
@@ -288,6 +288,8 @@ git diff-tree -r -M --name-status -z "$from" "$to"                # A / M / D / 
 - 单份补丁超过 **5 MB** 时不存补丁文本，只存统计，`patchTruncated = true`。
 - 运行中的“刷新 diff”：现场拍一次快照，算 `baseTree → 现在` 和 `beforeTree → 现在`，追加一条 `diff.updated`（`scope: "live"`，只带统计），补丁随响应返回，不写入轮记录。
 - `.gitignore` 忽略的文件不进快照，所以不会出现在 diff 里；未被忽略的新文件会。
+- `write-tree` 产生的树对象不被任何分支引用，`git gc` 会在两周后回收。`baseTree` 要在整个任务期间可用，所以用 `refs/agent-hub/base/<shortId>` 指向它（已实测：指向树对象的 ref 能阻止回收，`git log --all`、`git fsck` 不受影响）；删除任务时删掉这个 ref。轮前 / 轮后快照只在本轮内使用，补丁已存库，不需要保护。
+- 网页 Agent（`remote_branch`）没有本地工作目录，快照 = 远端任务分支最新提交的树：`git fetch internal agent-hub/<shortId>` 后 `git rev-parse FETCH_HEAD^{tree}`（[web-agent.md](web-agent.md) §4）。`SnapshotService.snapshot(task)` 按工作区类型分派。
 - Hub 自己执行 git 时用侧车的环境（登录 shell 的 PATH），外加 `GIT_TERMINAL_PROMPT=0`，**不**加 Agent 子进程的推送守卫变量（Hub 需要正常的本地 git）。
 
 ### 7.3 只读任务的越界检测
@@ -303,7 +305,7 @@ Codex 只读任务有沙箱，正常不会触发；这主要是给没有沙箱�
 
 | 工作区          | “应用”做什么                                                                                                                                                                                                                                   |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `worktree`      | ① worktree 里有未提交改动时：检查 `user.name` / `user.email`（缺了返回 `GIT_IDENTITY_MISSING`），`git add -A`，`git commit --no-verify -m "<任务标题>" -m "Agent Hub 任务 <shortId>（<Agent 名>）"`。② 分支相对基线没有任何提交时返回 `NOTHING_TO_APPLY`。 |
+| `worktree`      | ① worktree 还在且有未提交改动时：检查 `user.name` / `user.email`（缺了返回 `GIT_IDENTITY_MISSING`），`git add -A`，`git commit --no-verify -m "<任务标题>" -m "Agent Hub 任务 <shortId>（<Agent 名>）"`。② 分支相对基线没有任何提交时返回 `NOTHING_TO_APPLY`。 |
 | `remote_branch` | 拉取 `internal/agent-hub/<shortId>`，确认本地分支是它的祖先后快进本地分支（否则 `MERGE_CONFLICT`），见 [web-agent.md](web-agent.md) §4。                                                                                                       |
 | `in_place`      | 不提供（改动本来就在原目录里），返回 `APPLY_NOT_SUPPORTED`。                                                                                                                                                                                  |
 
