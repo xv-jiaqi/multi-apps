@@ -2,7 +2,7 @@
   {
     "label": "collapsed-zh-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:02:57.911Z",
+    "timestamp": "2026-10-27T14:00:51.785Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -410,29 +410,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
           }
         ]
       },
@@ -1150,6 +1127,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -1352,7 +1333,7 @@
   {
     "label": "prefill-zh-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:02:59.021Z",
+    "timestamp": "2026-10-27T14:00:52.388Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -1790,35 +1771,6 @@
               "span[aria-live=\"off\"]"
             ],
             "html": "<span class=\"text-xs text-neutral-500\" aria-live=\"off\">6 / 500</span>"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
-          },
-          {
-            "target": [
-              "#reply-content-11111111-1111-4111-8111-111111111111"
-            ],
-            "html": "<textarea id=\"reply-content-11111111-1111-4111-8111-111111111111\" rows=\"3\" maxlength=\"500\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring"
           }
         ]
       },
@@ -2610,6 +2562,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -2812,7 +2768,7 @@
   {
     "label": "load-failed-zh-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:14.160Z",
+    "timestamp": "2026-10-27T14:00:55.691Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -3244,29 +3200,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
           }
         ]
       },
@@ -3991,6 +3924,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -4191,7 +4128,7 @@
   {
     "label": "delete-confirm-zh-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:16.452Z",
+    "timestamp": "2026-10-27T14:00:57.737Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -4241,9 +4178,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -4255,7 +4192,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -4326,9 +4263,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -4340,7 +4277,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -4416,9 +4353,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -4430,7 +4367,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -4536,9 +4473,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -4550,7 +4487,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -4596,9 +4533,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -4610,7 +4547,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -4623,29 +4560,6 @@
               "button[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
           }
         ]
       },
@@ -4678,9 +4592,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -4927,7 +4841,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           }
         ]
       },
@@ -4993,9 +4907,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -5117,7 +5031,7 @@
             "target": [
               ".min-w-0"
             ],
-            "html": "<span title=\"@fanmvqp46dk\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqp46dk</span>",
+            "html": "<span title=\"@fanmvqr6sku\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqr6sku</span>",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -5136,9 +5050,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">",
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -5296,6 +5210,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -5498,7 +5416,7 @@
   {
     "label": "admin-reason-zh-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:19.317Z",
+    "timestamp": "2026-10-27T14:00:59.786Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -5580,7 +5498,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -5701,7 +5619,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -5827,7 +5745,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -5983,7 +5901,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -6079,7 +5997,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -6110,35 +6028,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.mt-2[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
-          },
-          {
-            "target": [
-              "#_r_c_"
-            ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
           }
         ]
       },
@@ -6290,7 +6179,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -6338,7 +6227,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -6395,7 +6284,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -6439,7 +6328,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -6474,7 +6363,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -6979,6 +6868,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -7179,7 +7072,7 @@
   {
     "label": "collapsed-zh-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:29.158Z",
+    "timestamp": "2026-10-27T14:01:01.758Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -7587,29 +7480,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
           }
         ]
       },
@@ -8329,6 +8199,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -8529,7 +8403,7 @@
   {
     "label": "prefill-zh-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:30.086Z",
+    "timestamp": "2026-10-27T14:01:02.342Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -8967,35 +8841,6 @@
               "span[aria-live=\"off\"]"
             ],
             "html": "<span class=\"text-xs text-neutral-500\" aria-live=\"off\">6 / 500</span>"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
-          },
-          {
-            "target": [
-              "#reply-content-11111111-1111-4111-8111-111111111111"
-            ],
-            "html": "<textarea id=\"reply-content-11111111-1111-4111-8111-111111111111\" rows=\"3\" maxlength=\"500\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring"
           }
         ]
       },
@@ -9789,6 +9634,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -9989,7 +9838,7 @@
   {
     "label": "load-failed-zh-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:45.434Z",
+    "timestamp": "2026-10-27T14:01:05.607Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -10421,29 +10270,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
           }
         ]
       },
@@ -11168,6 +10994,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -11368,7 +11198,7 @@
   {
     "label": "delete-confirm-zh-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:47.729Z",
+    "timestamp": "2026-10-27T14:01:07.629Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -11418,9 +11248,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -11432,7 +11262,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -11503,9 +11333,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -11517,7 +11347,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -11593,9 +11423,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -11607,7 +11437,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -11713,9 +11543,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -11727,7 +11557,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -11773,9 +11603,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -11787,7 +11617,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -11800,29 +11630,6 @@
               "button[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
           }
         ]
       },
@@ -11855,9 +11662,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -12104,7 +11911,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"对 @fanmvqp46dk 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"对 @fanmvqr6sku 的回复\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           }
         ]
       },
@@ -12170,9 +11977,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -12294,7 +12101,7 @@
             "target": [
               ".min-w-0"
             ],
-            "html": "<span title=\"@fanmvqp46dk\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqp46dk</span>",
+            "html": "<span title=\"@fanmvqr6sku\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqr6sku</span>",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -12313,9 +12120,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"回复 @fanmvqp46dk\"]"
+              "button[aria-label=\"回复 @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqp46dk\" class=\"inline-flex min-h-6 ...\">",
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"回复 @fanmvqr6sku\" class=\"inline-flex min-h-6 ...\">",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -12473,6 +12280,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -12675,7 +12486,7 @@
   {
     "label": "admin-reason-zh-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:03:50.269Z",
+    "timestamp": "2026-10-27T14:01:09.642Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -12757,7 +12568,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -12878,7 +12689,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -13004,7 +12815,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -13160,7 +12971,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -13256,7 +13067,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -13287,35 +13098,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.mt-2[aria-label=\"回复 @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"回复 @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"说说你对这张卡的看法…\" rows=\"3\" maxlength=\"500\" aria-label=\"撰写评论\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none f"
-          },
-          {
-            "target": [
-              "#_r_c_"
-            ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
           }
         ]
       },
@@ -13467,7 +13249,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -13515,7 +13297,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -13572,7 +13354,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -13616,7 +13398,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -13651,7 +13433,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -14156,6 +13938,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -14356,7 +14142,7 @@
   {
     "label": "collapsed-en-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:00.133Z",
+    "timestamp": "2026-10-27T14:01:11.631Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -14396,7 +14182,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -14475,7 +14261,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -14559,7 +14345,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -14667,7 +14453,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -14727,7 +14513,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -14764,29 +14550,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
           }
         ]
       },
@@ -14896,7 +14659,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -14920,7 +14683,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -14965,7 +14728,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -15003,7 +14766,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -15032,7 +14795,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -15504,6 +15267,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -15706,7 +15473,7 @@
   {
     "label": "prefill-en-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:01.155Z",
+    "timestamp": "2026-10-27T14:01:12.200Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -15746,7 +15513,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -15831,7 +15598,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -15921,7 +15688,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16035,7 +15802,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16101,7 +15868,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16144,35 +15911,6 @@
               "span[aria-live=\"off\"]"
             ],
             "html": "<span class=\"text-xs text-neutral-500\" aria-live=\"off\">6 / 500</span>"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
-          },
-          {
-            "target": [
-              "#reply-content-11111111-1111-4111-8111-111111111111"
-            ],
-            "html": "<textarea id=\"reply-content-11111111-1111-4111-8111-111111111111\" rows=\"3\" maxlength=\"500\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring"
           }
         ]
       },
@@ -16294,7 +16032,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16330,7 +16068,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16381,7 +16119,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16425,7 +16163,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16460,7 +16198,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -16964,6 +16702,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -17166,7 +16908,7 @@
   {
     "label": "load-failed-en-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:16.594Z",
+    "timestamp": "2026-10-27T14:01:15.489Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -17206,7 +16948,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -17291,7 +17033,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -17381,7 +17123,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -17501,7 +17243,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -17561,7 +17303,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -17598,29 +17340,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
           }
         ]
       },
@@ -17730,7 +17449,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -17766,7 +17485,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -17811,7 +17530,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -17849,7 +17568,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -17878,7 +17597,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -18345,6 +18064,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -18545,7 +18268,7 @@
   {
     "label": "delete-confirm-en-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:18.380Z",
+    "timestamp": "2026-10-27T14:01:17.496Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -18585,7 +18308,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -18595,9 +18318,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -18609,7 +18332,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -18670,7 +18393,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -18680,9 +18403,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -18694,7 +18417,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -18760,7 +18483,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -18770,9 +18493,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -18784,7 +18507,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -18880,7 +18603,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -18890,9 +18613,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -18904,7 +18627,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -18940,7 +18663,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -18950,9 +18673,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -18964,7 +18687,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -18977,29 +18700,6 @@
               "button[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
           }
         ]
       },
@@ -19032,9 +18732,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -19097,7 +18797,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -19139,7 +18839,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -19184,7 +18884,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -19222,7 +18922,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -19251,7 +18951,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -19281,7 +18981,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           }
         ]
       },
@@ -19347,9 +19047,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -19471,7 +19171,7 @@
             "target": [
               ".min-w-0"
             ],
-            "html": "<span title=\"@fanmvqp46dk\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqp46dk</span>",
+            "html": "<span title=\"@fanmvqr6sku\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqr6sku</span>",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -19490,9 +19190,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">",
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -19650,6 +19350,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -19852,7 +19556,7 @@
   {
     "label": "admin-reason-en-1440",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:20.799Z",
+    "timestamp": "2026-10-27T14:01:19.553Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -19892,7 +19596,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -19934,7 +19638,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -20013,7 +19717,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -20055,7 +19759,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -20139,7 +19843,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -20181,7 +19885,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -20295,7 +19999,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -20337,7 +20041,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -20391,7 +20095,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -20433,7 +20137,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -20464,35 +20168,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.mt-2[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
-          },
-          {
-            "target": [
-              "#_r_c_"
-            ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
           }
         ]
       },
@@ -20626,7 +20301,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -20644,7 +20319,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -20686,13 +20361,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -20743,13 +20418,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -20787,13 +20462,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -20822,13 +20497,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -21333,6 +21008,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -21533,7 +21212,7 @@
   {
     "label": "collapsed-en-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:30.724Z",
+    "timestamp": "2026-10-27T14:01:21.567Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -21573,7 +21252,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -21652,7 +21331,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -21736,7 +21415,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -21844,7 +21523,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -21904,7 +21583,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -21941,29 +21620,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
           }
         ]
       },
@@ -22073,7 +21729,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -22097,7 +21753,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -22142,7 +21798,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -22180,7 +21836,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -22209,7 +21865,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -22683,6 +22339,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -22883,7 +22543,7 @@
   {
     "label": "prefill-en-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:31.677Z",
+    "timestamp": "2026-10-27T14:01:22.150Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -22923,7 +22583,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23008,7 +22668,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23098,7 +22758,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23212,7 +22872,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23278,7 +22938,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23321,35 +22981,6 @@
               "span[aria-live=\"off\"]"
             ],
             "html": "<span class=\"text-xs text-neutral-500\" aria-live=\"off\">6 / 500</span>"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
-          },
-          {
-            "target": [
-              "#reply-content-11111111-1111-4111-8111-111111111111"
-            ],
-            "html": "<textarea id=\"reply-content-11111111-1111-4111-8111-111111111111\" rows=\"3\" maxlength=\"500\" class=\"w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring"
           }
         ]
       },
@@ -23471,7 +23102,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23507,7 +23138,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23558,7 +23189,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23602,7 +23233,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -23637,7 +23268,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -24143,6 +23774,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -24343,7 +23978,7 @@
   {
     "label": "load-failed-en-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:45.841Z",
+    "timestamp": "2026-10-27T14:01:25.452Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -24383,7 +24018,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -24468,7 +24103,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -24558,7 +24193,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -24678,7 +24313,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -24738,7 +24373,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -24775,29 +24410,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.rounded[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
           }
         ]
       },
@@ -24907,7 +24519,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -24943,7 +24555,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -24988,7 +24600,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -25026,7 +24638,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -25055,7 +24667,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -25522,6 +25134,10 @@
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
       },
       {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
+      },
+      {
         "id": "blink",
         "description": "Ensure <blink> elements are not used"
       },
@@ -25722,7 +25338,7 @@
   {
     "label": "delete-confirm-en-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:48.024Z",
+    "timestamp": "2026-10-27T14:01:27.468Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -25762,7 +25378,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -25772,9 +25388,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -25786,7 +25402,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -25847,7 +25463,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -25857,9 +25473,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -25871,7 +25487,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -25937,7 +25553,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -25947,9 +25563,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -25961,7 +25577,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -26057,7 +25673,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -26067,9 +25683,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -26081,7 +25697,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -26117,7 +25733,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -26127,9 +25743,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -26141,7 +25757,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           },
           {
             "target": [
@@ -26154,29 +25770,6 @@
               "button[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
           }
         ]
       },
@@ -26209,9 +25802,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -26274,7 +25867,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -26316,7 +25909,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -26361,7 +25954,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -26399,7 +25992,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -26428,7 +26021,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           }
         ]
       },
@@ -26458,7 +26051,7 @@
             "target": [
               ".mt-3"
             ],
-            "html": "<ul aria-label=\"Replies to @fanmvqp46dk\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
+            "html": "<ul aria-label=\"Replies to @fanmvqr6sku\" class=\"mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4\">"
           }
         ]
       },
@@ -26524,9 +26117,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">"
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">"
           },
           {
             "target": [
@@ -26648,7 +26241,7 @@
             "target": [
               ".min-w-0"
             ],
-            "html": "<span title=\"@fanmvqp46dk\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqp46dk</span>",
+            "html": "<span title=\"@fanmvqr6sku\" class=\"min-w-0 truncate font-semibold text-neutral-900\">@fanmvqr6sku</span>",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -26667,9 +26260,9 @@
           },
           {
             "target": [
-              "button[aria-label=\"Reply to @fanmvqp46dk\"]"
+              "button[aria-label=\"Reply to @fanmvqr6sku\"]"
             ],
-            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqp46d...\" class=\"inline-flex min-h-6 ...\">",
+            "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-999999...\" aria-label=\"Reply to @fanmvqr6sk...\" class=\"inline-flex min-h-6 ...\">",
             "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
           },
           {
@@ -26827,6 +26420,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
@@ -27029,7 +26626,7 @@
   {
     "label": "admin-reason-en-375",
     "url": "http://localhost:5173/cards/reply-card-mvqmdf7g3",
-    "timestamp": "2026-10-27T13:04:50.284Z",
+    "timestamp": "2026-10-27T14:01:29.526Z",
     "testEngine": {
       "name": "axe-core",
       "version": "4.11.4"
@@ -27069,7 +26666,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -27111,7 +26708,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -27190,7 +26787,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -27232,7 +26829,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -27316,7 +26913,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -27358,7 +26955,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -27472,7 +27069,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -27514,7 +27111,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -27568,7 +27165,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -27610,7 +27207,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -27641,35 +27238,6 @@
               "#reply-44444444-4444-4444-8444-444444444444 > .text-brand-700.mt-2[aria-label=\"Reply to @cara\"]"
             ],
             "html": "<button type=\"button\" aria-expanded=\"false\" aria-controls=\"reply-content-111111...\" aria-label=\"Reply to @cara\" class=\"inline-flex min-h-6 ...\">"
-          }
-        ]
-      },
-      {
-        "id": "avoid-inline-spacing",
-        "impact": null,
-        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets",
-        "help": "Inline text spacing must be adjustable with custom stylesheets",
-        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/avoid-inline-spacing?application=axeAPI",
-        "tags": [
-          "cat.structure",
-          "wcag21aa",
-          "wcag1412",
-          "EN-301-549",
-          "EN-9.1.4.12",
-          "ACT"
-        ],
-        "nodes": [
-          {
-            "target": [
-              "#comment-content"
-            ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
-          },
-          {
-            "target": [
-              "#_r_c_"
-            ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
           }
         ]
       },
@@ -27803,7 +27371,7 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
@@ -27821,7 +27389,7 @@
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -27863,13 +27431,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           },
           {
             "target": [
@@ -27920,13 +27488,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -27964,13 +27532,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -27999,13 +27567,13 @@
             "target": [
               "#comment-content"
             ],
-            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\" style=\"\">"
+            "html": "<textarea id=\"comment-content\" placeholder=\"Share your thoughts ...\" rows=\"3\" maxlength=\"500\" aria-label=\"Write a comment\" class=\"w-full resize-y roun...\">"
           },
           {
             "target": [
               "#_r_c_"
             ],
-            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\" style=\"\">"
+            "html": "<input class=\"flex w-full items-ce...\" id=\"_r_c_\" maxlength=\"500\" aria-describedby=\"_r_c_-count\" value=\"\">"
           }
         ]
       },
@@ -28508,6 +28076,10 @@
       {
         "id": "autocomplete-valid",
         "description": "Ensure the autocomplete attribute is correct and suitable for the form field"
+      },
+      {
+        "id": "avoid-inline-spacing",
+        "description": "Ensure that text spacing set through style attributes can be adjusted with custom stylesheets"
       },
       {
         "id": "blink",
