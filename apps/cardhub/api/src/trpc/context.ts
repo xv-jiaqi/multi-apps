@@ -7,8 +7,8 @@ export interface TrpcUser {
   username: string;
   role: string;
   tokenVersion: number;
-  /** Loaded with tokenVersion and role. Absent only in tests that predate the column. */
-  bannedAt?: Date | null;
+  /** Loaded with the session row. Null means the account can write. */
+  bannedAt: Date | null;
 }
 
 export interface TrpcContext {

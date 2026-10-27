@@ -63,6 +63,7 @@ const signedInUser = {
   username: 'alice',
   role: 'user',
   tokenVersion: 0,
+  bannedAt: null,
 };
 
 describe('AuthRouter.register', () => {
@@ -275,6 +276,7 @@ describe('AuthRouter.me', () => {
     username: 'admin',
     role: 'admin',
     tokenVersion: 0,
+    bannedAt: null,
   };
 
   it('rejects anonymous callers before reading the optional input', async () => {

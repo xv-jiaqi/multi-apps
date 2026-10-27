@@ -119,7 +119,13 @@ describe('ListingsRouter.publish', () => {
     cardFindUnique.mockResolvedValueOnce(null);
 
     await expect(
-      caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
+      caller({
+        sub: 'u1',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).publish({
         cardSlug: 'no-such-card',
         kind: 'SELL',
         price: 100,
@@ -167,6 +173,7 @@ describe('ListingsRouter.publish', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).publish({
       cardSlug: 'aurora-knight',
       kind: 'SELL',
@@ -209,7 +216,13 @@ describe('ListingsRouter.publish', () => {
     const tooLongUrl = `${prefix}${'a'.repeat(2049 - prefix.length)}`;
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
+      caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         currency: 'CNY',
@@ -219,7 +232,13 @@ describe('ListingsRouter.publish', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
+      caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         currency: 'CNY',
@@ -229,7 +248,13 @@ describe('ListingsRouter.publish', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
+      caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         price: '0'.repeat(65),
@@ -250,7 +275,13 @@ describe('ListingsRouter.publish', () => {
       code: 'BAD_REQUEST',
     });
     await expect(
-      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).mine({
+      caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).mine({
         pageCursor: 'x'.repeat(37),
       }),
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
@@ -262,7 +293,13 @@ describe('ListingsRouter.publish', () => {
     const { caller, cardFindUnique, listingCreate } = makeRouter();
 
     await expect(
-      caller({ sub: 'u-alice', username: 'alice', role: 'user', tokenVersion: 0 }).publish({
+      caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).publish({
         cardSlug: 'aurora-knight',
         kind: 'SELL',
         currency: 'CNY',
@@ -378,7 +415,13 @@ describe('ListingsRouter.close', () => {
     userFindUnique.mockResolvedValueOnce({ role: 'user' });
 
     await expect(
-      caller({ sub: 'u-other', username: 'other', role: 'user', tokenVersion: 0 }).close({
+      caller({
+        sub: 'u-other',
+        username: 'other',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).close({
         id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
@@ -398,6 +441,7 @@ describe('ListingsRouter.close', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).close({
       id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
     });
@@ -422,6 +466,7 @@ describe('ListingsRouter.close', () => {
       username: 'admin',
       role: 'admin',
       tokenVersion: 0,
+      bannedAt: null,
     }).close({
       id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
     });
@@ -442,6 +487,7 @@ describe('ListingsRouter.close', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).close({
       id: '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5',
     });

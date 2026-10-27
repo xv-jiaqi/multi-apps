@@ -17,8 +17,8 @@ model User {
   password  String
   // role: "user" | "admin". Admins can delete any topic / reply / listing /
   // comment and view the moderation report queue. Stored as a free-form
-  // string instead of an enum so future roles ("mod", "banned") don't need a
-  // schema migration just to be added.
+  // string instead of an enum so a future role ("mod") doesn't need a
+  // schema migration just to be added. Ban is `bannedAt`, not a role.
   role      String   @default("user")
   // Bumped to revoke outstanding JWTs. Missing `ver` on a token counts as 0,
   // which matches this default, so applying the column does not log anyone out.

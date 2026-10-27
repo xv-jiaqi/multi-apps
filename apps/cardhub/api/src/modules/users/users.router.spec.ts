@@ -69,6 +69,7 @@ describe('UsersRouter.me', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).me();
 
     expect(result.listingCount).toBe(2);
@@ -99,6 +100,7 @@ describe('UsersRouter.myTopics', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).myTopics({ limit: 10 });
 
     expect(result).toEqual({
@@ -140,6 +142,7 @@ describe('UsersRouter.myComments', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).myComments({ limit: 10 });
 
     expect(result.items[0]).toEqual({
@@ -179,6 +182,7 @@ describe('UsersRouter.myComments', () => {
       username: 'alice',
       role: 'user',
       tokenVersion: 0,
+      bannedAt: null,
     }).myComments({ limit: 10 });
 
     expect(result.items[0]).toEqual({

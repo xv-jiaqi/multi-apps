@@ -130,15 +130,37 @@ export function buildAdminUsersRouter(t: TrpcBase, prisma: PrismaService) {
             toUserRow(target),
           );
         }
-        const updated = await tx.user.update({
-          where: { id: target.id },
+        const bannedAt = new Date();
+        const marked = await tx.user.updateMany({
+          where: { id: target.id, bannedAt: null },
           data: {
-            bannedAt: new Date(),
+            bannedAt,
             bannedById: actor.sub,
             tokenVersion: { increment: 1 },
           },
+        });
+        if (marked.count === 0) {
+          const current = await tx.user.findUnique({
+            where: { id: target.id },
+            include: userRowInclude,
+          });
+          if (!current) {
+            throw governanceError('NOT_FOUND', APP_ERROR_CODES.NOT_FOUND, '用户不存在');
+          }
+          throw governanceError(
+            'CONFLICT',
+            APP_ERROR_CODES.ALREADY_BANNED,
+            '该用户已被封禁',
+            toUserRow(current),
+          );
+        }
+        const updated = await tx.user.findUnique({
+          where: { id: target.id },
           include: userRowInclude,
         });
+        if (!updated) {
+          throw governanceError('NOT_FOUND', APP_ERROR_CODES.NOT_FOUND, '用户不存在');
+        }
         await tx.auditLog.create({
           data: {
             actorId: actor.sub,
@@ -179,11 +201,32 @@ export function buildAdminUsersRouter(t: TrpcBase, prisma: PrismaService) {
             toUserRow(target),
           );
         }
-        const updated = await tx.user.update({
-          where: { id: target.id },
+        const marked = await tx.user.updateMany({
+          where: { id: target.id, bannedAt: { not: null } },
           data: { bannedAt: null, bannedById: null },
+        });
+        if (marked.count === 0) {
+          const current = await tx.user.findUnique({
+            where: { id: target.id },
+            include: userRowInclude,
+          });
+          if (!current) {
+            throw governanceError('NOT_FOUND', APP_ERROR_CODES.NOT_FOUND, '用户不存在');
+          }
+          throw governanceError(
+            'CONFLICT',
+            APP_ERROR_CODES.NOT_BANNED,
+            '该用户未被封禁',
+            toUserRow(current),
+          );
+        }
+        const updated = await tx.user.findUnique({
+          where: { id: target.id },
           include: userRowInclude,
         });
+        if (!updated) {
+          throw governanceError('NOT_FOUND', APP_ERROR_CODES.NOT_FOUND, '用户不存在');
+        }
         await tx.auditLog.create({
           data: {
             actorId: actor.sub,

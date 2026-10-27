@@ -507,4 +507,40 @@ describe('user governance', () => {
     );
     expect(actions).toEqual(expect.arrayContaining(['USER_BAN', 'USER_UNBAN', 'REPORT_RESOLVE']));
   });
+
+  it('writes one audit row when two admins ban the same user together', async () => {
+    const fresh = nextIdentity('govrace');
+    const created = await register(fresh);
+    const other = await prisma.user.findUniqueOrThrow({
+      where: { id: otherAdminId },
+      select: { username: true },
+    });
+    const secondAdmin = await login(other.username, '203.0.113.88');
+    const [first, second] = await Promise.all([
+      post('admin.users.ban', { userId: created.id, reason: '并发甲' }, adminToken, '203.0.113.89'),
+      post(
+        'admin.users.ban',
+        { userId: created.id, reason: '并发乙' },
+        secondAdmin.token,
+        '203.0.113.90',
+      ),
+    ]);
+    const responses = [first, second];
+    expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
+    const conflict = responses.find((response) => response.status === 409);
+    expect(conflict?.body.error.data.appCode).toBe(APP_ERROR_CODES.ALREADY_BANNED);
+    const winner = responses.find((response) => response.status === 200);
+    expect(resultData(winner?.body ?? {}).bannedAt).toEqual(expect.any(String));
+
+    const logs = await prisma.auditLog.findMany({
+      where: { action: 'USER_BAN', targetId: created.id },
+    });
+    expect(logs).toHaveLength(1);
+    const row = await prisma.user.findUniqueOrThrow({
+      where: { id: created.id },
+      select: { tokenVersion: true, bannedAt: true },
+    });
+    expect(row.bannedAt).not.toBeNull();
+    expect(row.tokenVersion).toBe(1);
+  });
 });

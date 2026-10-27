@@ -78,7 +78,7 @@ function makeRouter() {
 }
 
 function adminUser() {
-  return { sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0 };
+  return { sub: 'u-admin', username: 'admin', role: 'admin', tokenVersion: 0, bannedAt: null };
 }
 
 function makeHttpApp(prisma: PrismaService) {
@@ -177,7 +177,15 @@ describe('AdminRouter auth', () => {
     const router = makeRouter();
 
     await expect(
-      invoke(router.caller({ sub: 'u1', username: 'alice', role: 'user', tokenVersion: 0 })),
+      invoke(
+        router.caller({
+          sub: 'u1',
+          username: 'alice',
+          role: 'user',
+          tokenVersion: 0,
+          bannedAt: null,
+        }),
+      ),
     ).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });
