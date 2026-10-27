@@ -282,17 +282,23 @@ the schema.
 
 The API entrypoint `exec`s node, so the server is not left under a shell.
 Migrations run in a separate one-shot container and are not in this process.
-`main.ts` calls `enableShutdownHooks()`. On SIGTERM or SIGINT the process
-closes the HTTP listener before Prisma or Redis disconnect. Node's
-`server.close()` stops new connections, drops sockets that are already idle,
-and waits for in-flight responses. The shutdown path also sets
-`keepAliveTimeout` to 1 second so a keep-alive socket left open after the
-response cannot hold the process until the grace period ends. Compose sets
+`main.ts` installs its own SIGTERM/SIGINT handlers instead of Nest's
+`enableShutdownHooks()`, which would re-send the signal and exit with 143.
+The first signal logs `开始 drain` and closes the HTTP listener before Prisma
+or Redis disconnect; repeated signals are ignored. Node >=22's
+`server.close()` stops new connections, closes already idle keep-alive sockets,
+and waits for in-flight responses. A response `finish` listener closes connections
+that become idle during drain, without changing `keepAliveTimeout` or adding delays.
+After logging `drain complete`, `app.close()` runs Nest's resource shutdown
+hooks and the process exits with code 0. `SHUTDOWN_TIMEOUT_MS` bounds the
+entire sequence, including resource cleanup (default 25000 milliseconds;
+must be a positive integer no greater than 2147483647). On timeout or error,
+the process logs an error, force-closes remaining HTTP connections, and exits
+with code 1. Keep this deadline below the container's grace period. Compose sets
 `init: true` on `api` so tini is PID 1 and forwards SIGTERM to node. Without
 init, node is PID 1 and the same listener still runs. `stop_grace_period` and
-the script's `docker stop -t` are 30 seconds. That is the ceiling for
-in-flight requests. A request still running when the grace period ends is
-stopped with SIGKILL.
+the script's `docker stop -t` are 30 seconds. This leaves 5 seconds beyond the
+default application deadline before the container would send SIGKILL.
 
 `rollout_service` in `remote-deploy.sh` starts the new container beside the
 old one (`docker compose up -d --no-deps --scale <service>=2 --no-recreate`),
