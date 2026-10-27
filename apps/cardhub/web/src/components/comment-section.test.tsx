@@ -921,11 +921,14 @@ describe('CommentSection replies', () => {
   it('sizes delete with the other actions and wraps a reply author instead of truncating it', () => {
     rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob', role: 'admin' });
     renderShell();
-    expect(screen.getByRole('button', { name: '删除 @bob 的评论' })).toHaveClass('text-xs');
+    expect(screen.getByRole('button', { name: '删除 @bob 的评论' })).toHaveClass('text-xs', 'text-red-700');
     const author = screen.getByText('@cara');
     expect(author).toHaveClass('wrap-anywhere');
     expect(author).not.toHaveClass('truncate');
-    expect(screen.getByRole('button', { name: '删除 @cara 的评论' })).toHaveClass('text-xs');
+    expect(screen.getByRole('button', { name: '删除 @cara 的评论' })).toHaveClass('text-xs', 'text-red-700');
+    expect(screen.getAllByText('0 / 500')[0]).toHaveClass('text-neutral-600');
+    expect(screen.getAllByRole('button', { name: '举报' })[0]).toHaveClass('text-neutral-600');
+    expect(screen.getByText('top comment').previousElementSibling).toHaveClass('text-neutral-600');
   });
 
   it('prefills a mention when replying to a reply and returns focus on Escape', async () => {

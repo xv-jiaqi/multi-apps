@@ -626,7 +626,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             </p>
           ) : null}
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-neutral-500">{content.length} / 500</span>
+            <span className="text-xs text-neutral-600">{content.length} / 500</span>
             <Button type="submit" disabled={isCreating || !content.trim()}>
               {isCreating ? tt('card.detail.commentSubmitting') : tt('card.detail.commentSubmit')}
             </Button>
@@ -728,7 +728,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 aria-busy={isDeleting ? true : undefined}
                 className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
               >
-                <div className="flex min-h-6 items-center justify-between gap-x-3 text-xs text-neutral-500">
+                <div className="flex min-h-6 items-center justify-between gap-x-3 text-xs text-neutral-600">
                   <span
                     title={`@${comment.user.username}`}
                     className="min-w-0 truncate font-semibold text-neutral-900"
@@ -776,7 +776,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                         setDeleteReason('');
                         setConfirmingId(comment.id);
                       }}
-                      className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       {tt('card.detail.commentDelete')}
                     </button>
@@ -898,7 +898,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                                       setDeleteReason('');
                                       setConfirmingId(reply.id);
                                     }}
-                                    className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                                    className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                                   >
                                     {tt('card.detail.commentDelete')}
                                   </button>
@@ -1056,7 +1056,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                       </p>
                     ) : null}
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-neutral-500" aria-live="off">
+                      <span className="text-xs text-neutral-600" aria-live="off">
                         {replyDraft.length} / 500
                       </span>
                       <div className="flex gap-3">
