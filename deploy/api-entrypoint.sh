@@ -6,8 +6,9 @@
 # receives MIGRATE_DATABASE_URL. This process keeps DATABASE_URL, the
 # runtime credential.
 #
-# `exec` replaces the shell so node is tini's child. Compose `init: true`
-# makes tini PID 1 and forwards SIGTERM. Unsetting MIGRATE_DATABASE_URL here
+# `exec` replaces the shell so node receives SIGTERM. Compose `init: true`
+# makes tini PID 1 and forwards the signal; without init, node is PID 1.
+# main.ts listens for SIGTERM either way. Unsetting MIGRATE_DATABASE_URL here
 # would not be enough: tini is the same uid and keeps the container
 # environment in /proc/1/environ. The variable must not be injected at all.
 
