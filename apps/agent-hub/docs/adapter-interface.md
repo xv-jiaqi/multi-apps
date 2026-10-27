@@ -283,7 +283,7 @@ export interface HubEventEnvelope {
 ### 3.1 约定
 
 1. **谁产出**：`AgentEvent` 只由适配器经 `sink.emit()` 产出；`CoreEvent` 只由核心写入。`sink.emit` 的参数类型就是 `AgentEvent`，适配器写不出核心事件。
-2. **`itemId`**：同一任务内唯一（跨轮也不重复）。Codex 用协议的 item id；ACP 的规则见 [adapter-acp.md](adapter-acp.md) §6；网页 Agent 没有 item。
+2. **`itemId`**：同一任务内唯一（跨轮也不重复）。Codex 用协议的 item id；ACP 的规则见 [adapter-acp.md](adapter-acp.md) §6；网页 Agent 每轮固定两个：`t<轮序号>-handoff`（提示词工具项）与 `t<轮序号>-summary`（本轮总结，[web-agent.md](web-agent.md) §3.2、§3.3）。
 3. **顺序**：同一 `itemId` 的事件必须是 `*.started`（只有工具有）→ 若干 `*.delta` → `*.completed`。`message.completed` / `reasoning.completed` 的 `text` 是**完整文本**，以它为准（增量只用于实时显示）。
 4. **补齐**：`prompt()` resolve 之前，适配器必须给本轮每个出现过的 item 发出 `*.completed`。协议没有显式“结束”时（ACP 的消息块）由适配器用累计的文本补发；轮结束时还没结束的工具补发 `tool.completed`（`status: 'failed'`）。
 5. **`tool.output.delta`**：stdout 与 stderr 不分开；`truncated` 只由核心设置（单个工具 1 MB 上限，[architecture.md](architecture.md) §6），适配器不设。
@@ -311,7 +311,8 @@ export interface HubEventEnvelope {
 | `AGENT_WARNING`          | `warning` / `error` | Codex、ACP | Agent 自己发的警告（Codex `warning` 通知；ACP `warning` / `error` 级的 `notice`，`info` 级不带 `code`）。 |
 | `MODE_RESTORED`          | `warning`           | ACP        | Agent 切到不允许的会话模式，Hub 已切回（D37，[adapter-acp.md](adapter-acp.md) §5）。                      |
 | `PLAN_EXIT_DECLINED`     | `info`              | ACP        | 只读任务里 Agent 请求退出计划模式，Hub 代为拒绝、本轮结束（[adapter-acp.md](adapter-acp.md) §7.3）。      |
-| `WEB_FETCH_FAILED`       | `warning`           | 网页       | 轮询拉取远端任务分支失败（[web-agent.md](web-agent.md) §3）。                                             |
+| `WEB_FETCH_FAILED`       | `warning`           | 网页       | 轮询拉取远端任务分支失败；一段连续失败只发一次（[web-agent.md](web-agent.md) §3.2）。                     |
+| `WEB_BRANCH_REWRITTEN`   | `warning`           | 网页       | 远端任务分支被强推改写；每轮只发一次（[web-agent.md](web-agent.md) §3.2）。                               |
 
 ## 4. 错误码
 
@@ -421,7 +422,7 @@ export interface ApiErrorBody {
 | `MODEL_NOT_SUPPORTED`     | Agent 拒绝了指定的模型或推理档位。                                                        | 适配器                       | `false`                                       | `failed`                                        |
 | `SESSION_NOT_RESUMABLE`   | 需要恢复原生会话，但 Agent 不支持或恢复失败。                                             | 适配器                       | `false`                                       | `failed`                                        |
 | `WORKSPACE_SETUP_FAILED`  | worktree 创建、`worktreeSetup`、仓库没有提交、网页任务分支准备失败。                      | `TaskRunner`                 | `false`                                       | `failed`                                        |
-| `GIT_ERROR`               | 轮前 / 轮后快照或 diff 计算失败。                                                         | `TaskRunner`                 | `true`                                        | `failed`                                        |
+| `GIT_ERROR`               | 轮前 / 轮后快照或 diff 计算失败；网页任务本轮开始时拉取远端任务分支失败。                 | `TaskRunner`、网页适配器     | `true`                                        | `failed`                                        |
 | `GIT_PUSH_BLOCKED`        | 网页任务分支推送被守卫拦截（[security.md](security.md) §3）。                             | `PushService`                | `false`                                       | `failed`                                        |
 | `WEB_TURN_TIMEOUT`        | 网页任务一轮超过 `maxTurnMinutes`。                                                       | 网页适配器                   | `true`                                        | `failed`                                        |
 | `HUB_SHUTDOWN`            | 侧车停机时轮还没结束。                                                                    | 核心 / 适配器（§6.1 规则 5） | `true`                                        | `interrupted`                                   |
@@ -778,7 +779,7 @@ export interface ProcessSupervisor {
 | `session.dispose('config_changed')`  | `AdapterRegistry` | 该 Agent 配置变更或被禁用时，对空闲会话。                                                 |
 | `session.dispose('deleted')`         | `TaskService`     | 删除任务时（会话还在表里）。                                                              |
 | `session.dispose('shutdown')`        | 停机流程          | [architecture.md](architecture.md) §10.3 第 3 步。                                        |
-| `WebSession.completeTurn()`          | `TaskService`     | `POST /tasks/:id/remote/done`。                                                           |
+| `WebSession.completeTurn()`          | `TaskService`     | `POST /tasks/:id/remote/done`（[web-agent.md](web-agent.md) §3.3）。                      |
 | `adapter.shutdown()`                 | `AdapterRegistry` | 停机第 3 步；替换或禁用该 Agent 时（活动会话已全部结束后）。                              |
 
 ### 6.3 核心一侧的 sink
@@ -786,6 +787,7 @@ export interface ProcessSupervisor {
 `TaskRunner` 为每个会话创建一个 sink，绑定 `taskId`：
 
 - `emit(event)`：事件归到该任务**当前的轮**（`preparing` 阶段建会话时也是这一轮）。当前轮不在 `pending` / `running`（轮已结束后迟到的通知）→ 丢弃并记 `debug`。其余交给 `EventStore.append`（[architecture.md](architecture.md) §6）。
+- `emit` 收到 `remote.updated`：落库后再调 `void taskRunner.liveDiff(taskId, { fetch: false })`，让 Diff 页签自动更新（[web-agent.md](web-agent.md) §4.2）。
 - `requestApproval(input, signal)` → `ApprovalService.request(taskId, currentTurnId, input, signal)`（§5.1）。
 - `raw(direction, frame)`：`diagnostics.recordTranscripts` 打开时，脱敏后追加一行 `{"ts","dir","frame"}` 到 `transcripts/<taskId>.ndjson`；关闭时直接返回。Codex 共享进程的帧按 `threadId` 分到各任务，不属于任何任务的帧（握手、`model/list`）只进 `debug` 日志。
 
@@ -1469,7 +1471,7 @@ export type AgentHealth =
 
 | 方法 / 行为                  | 规则                                                                                                                                                                                                                                                                                         |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 实例化                       | 对 `config.agents` 里 `enabled` 的每一项按 `kind` 创建：`codex` → `CodexAdapter`，`acp` → `AcpAdapter`（带 `profiles[config.profile]`），`web` → `WebManualAdapter`。禁用的不创建。                                                                                                          |
+| 实例化                       | 对 `config.agents` 里 `enabled` 的每一项按 `kind` 创建：`codex` → `CodexAdapter`，`acp` → `AcpAdapter`（带 `profiles[config.profile]`），`web` → `WebManualAdapter`（第三个参数是 `PushService`，[web-agent.md](web-agent.md) §2.5）。禁用的不创建。                                         |
 | `get(agentId)`               | 返回适配器；不存在、禁用或正在替换 → `null`（`TaskRunner` 据此报 `AGENT_DISABLED`）。                                                                                                                                                                                                        |
 | `state(agentId)`             | `{ health, capabilities }`，组装 `AgentDto` 用（[local-api.md](local-api.md) §4.3）。禁用 → `{ status: 'disabled' }` 与 `null`；已启用但还没探测完 → `{ status: 'checking' }` 与 `adapter.capabilities()`。                                                                                  |
 | 探测时机                     | 侧车启动第 11 步对全部启用的 Agent 并行 `probe()`；`refresh(agentId)`（`POST /agents/:id/refresh`）；配置变更后对新建的适配器。**不做定时轮询。**                                                                                                                                            |
