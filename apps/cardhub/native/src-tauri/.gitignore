@@ -1,3 +1,0 @@
-target/
-gen/
-# Auto-generated schemas land in gen/; commit only the hand-written capabilities.

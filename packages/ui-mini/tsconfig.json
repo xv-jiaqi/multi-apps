@@ -1,8 +1,0 @@
-{
-  "extends": "@repo/config-ts/taro.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "noEmit": true
-  },
-  "include": ["src/**/*"]
-}
