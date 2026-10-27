@@ -4,15 +4,15 @@
 
 ## 1. 进程模型
 
-| 进程                             | 由谁启动                                | 生命周期                                                                 | 崩溃影响与处理                                                                                         |
-| -------------------------------- | --------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Tauri 主进程（Rust）             | 用户打开应用                            | 直到应用退出；关窗口只是隐藏（D11）                                      | 侧车的 stdin 随之关闭，侧车自行优雅停机（D7）；下次启动走恢复流程（§10.3）。                           |
-| Hub UI 子 WebView（label `hub`） | Tauri 主进程                            | 与主窗口相同                                                             | 重新加载页面即可，状态全在侧车。                                                                       |
-| Bot 子 WebView（label `bot`）    | Hub UI 调 `bot_open`                    | 与主窗口相同；可单独刷新、重建                                           | 只影响左栏显示，不影响任务。                                                                           |
-| Node 侧车 `@agent-hub/server`    | Hub UI 调 `sidecar_start`（开发期可手动） | 应用退出时优雅停机                                                       | Hub UI 按退避策略重启（[desktop-shell.md](desktop-shell.md) §5.5）；运行中的任务标为 `interrupted`。   |
-| `codex app-server`               | CodexAdapter                            | 每个 Codex 配置**共享一个**常驻进程，每个任务一个 thread（D30）          | 该配置下运行中的任务标为 `interrupted`；下次使用时重启进程，追问时 `thread/resume`。                   |
-| ACP Agent（如 `qodercli --acp`） | AcpAdapter                              | **每个任务一个**进程（独立进程组）；任务结束后闲置 10 分钟结束（D35）    | 只影响该任务，标为 `interrupted`；追问时按能力 `session/resume` 或 `session/load`。                    |
-| 本地郎                           | 桥接方自己                              | 与 Hub 无关                                                              | 断线后用 `afterSeq` 续读事件，不丢事件（[local-api.md](local-api.md) §6）。                            |
+| 进程                             | 由谁启动                                  | 生命周期                                                              | 崩溃影响与处理                                                                                       |
+| -------------------------------- | ----------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Tauri 主进程（Rust）             | 用户打开应用                              | 直到应用退出；关窗口只是隐藏（D11）                                   | 侧车的 stdin 随之关闭，侧车自行优雅停机（D7）；下次启动走恢复流程（§10.3）。                         |
+| Hub UI 子 WebView（label `hub`） | Tauri 主进程                              | 与主窗口相同                                                          | 重新加载页面即可，状态全在侧车。                                                                     |
+| Bot 子 WebView（label `bot`）    | Hub UI 调 `bot_open`                      | 与主窗口相同；可单独刷新、重建                                        | 只影响左栏显示，不影响任务。                                                                         |
+| Node 侧车 `@agent-hub/server`    | Hub UI 调 `sidecar_start`（开发期可手动） | 应用退出时优雅停机                                                    | Hub UI 按退避策略重启（[desktop-shell.md](desktop-shell.md) §5.5）；运行中的任务标为 `interrupted`。 |
+| `codex app-server`               | CodexAdapter                              | 每个 Codex 配置**共享一个**常驻进程，每个任务一个 thread（D30）       | 该配置下运行中的任务标为 `interrupted`；下次使用时重启进程，追问时 `thread/resume`。                 |
+| ACP Agent（如 `qodercli --acp`） | AcpAdapter                                | **每个任务一个**进程（独立进程组）；任务结束后闲置 10 分钟结束（D35） | 只影响该任务，标为 `interrupted`；追问时按能力 `session/resume` 或 `session/load`。                  |
+| 本地郎                           | 桥接方自己                                | 与 Hub 无关                                                           | 断线后用 `afterSeq` 续读事件，不丢事件（[local-api.md](local-api.md) §6）。                          |
 
 网页 Agent（AoneD）在用户自己的浏览器里运行，Hub 只和内网 git 打交道（[web-agent.md](web-agent.md)），没有额外进程。
 
@@ -76,29 +76,29 @@ flowchart TB
   Config --> Registry
 ```
 
-| 模块                | 文件                                    | 职责                                                                                                                                         | 不做什么                                       |
-| ------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `ConfigService`     | `config/config.service.ts`              | 读取并用 zod 校验 `config.json`（schema 见 §8）；原子写入；变更后通知订阅者（适配器注册表、调度器）。                                        | 不存任何 token。                               |
-| `AuthService`       | `auth/*`                                | UI token（内存）与桥接 token（库里存哈希）校验；scope 检查；Host / Origin 白名单；CORS；WS 首条消息鉴权（[local-api.md](local-api.md) §2）。 | —                                              |
-| REST / `WsGateway`  | `api/*`                                 | 用 contract 里的 zod schema 校验输入；调用核心服务；统一错误格式；幂等键。                                                                   | 不含业务逻辑。                                 |
-| `TaskService`       | `core/task.service.ts`                  | 创建、追问、取消、归档、删除；**唯一**修改任务状态的地方（经 `StateMachine`）。                                                              | 不解析任何 Agent 协议。                        |
-| `Scheduler`         | `core/scheduler.ts`                     | 按并发上限和工作区互斥规则挑选排队任务，交给 `TaskRunner`（§4）。                                                                            | 不轮询。                                       |
-| `TaskRunner`        | `core/task-runner.ts`                   | 一轮的完整流程：准备工作区 → 建立或恢复原生会话 → 轮前快照 → 发提示词 → 轮后快照与 diff → 落状态（§5）；持有内存中的活动会话表。            | —                                              |
-| `ApprovalService`   | `core/approval.service.ts`              | 审批落库、广播、等待决定、超时、撤回；把结果交还给适配器（[adapter-interface.md](adapter-interface.md) §5）。                                | 不自动批准。                                   |
-| `EventStore`        | `core/event-store.ts`                   | 增量合并、分配 `seq`、落库、广播（§6）。                                                                                                     | —                                              |
-| `EventBus`          | `core/event-bus.ts`                     | 进程内发布订阅（RxJS `Subject`）：事件流、任务变化、审批变化；`wait` 长轮询基于它。                                                          | —                                              |
-| `Recovery`          | `core/recovery.ts`                      | 启动时清理残留进程、把中断的任务和审批落地（§10.3）。                                                                                        | —                                              |
-| `Retention`         | `core/retention.ts`                     | 启动后 1 分钟执行一次、之后每 6 小时执行一次保留策略（[data-model.md](data-model.md) §6）。                                                  | —                                              |
-| `WorktreeService`   | `workspace/worktree.service.ts`         | 解析基线、创建 / 移除 worktree、执行 `worktreeSetup`。                                                                                       | —                                              |
-| `SnapshotService`   | `workspace/snapshot.ts`                 | 树快照、diff 补丁与统计（§7.2）。                                                                                                            | 不改用户的暂存区和工作区。                     |
-| `ApplyService`      | `workspace/apply.service.ts`            | “应用到本地分支”（§7.4）。                                                                                                                   | **不推送。**                                   |
-| `RepoInspector`     | `workspace/repo-inspector.ts`           | 仓库体检：是否 git 仓库、远端列表、`origin` 推送是否已禁用、`internal` 推送主机、工作区是否干净。                                            | —                                              |
-| `GitGuard`          | `workspace/git-guard.ts`                | 生成 Agent 子进程的环境变量；维护 hooks 目录和 askpass 脚本；推送前的主机检查；轮后远端跟踪分支审计（[security.md](security.md) §3）。      | —                                              |
-| `PushService`       | `workspace/push.service.ts`             | 网页 Agent 任务分支的推送与拉取，只允许 `agent-hub/*` → `internal`。                                                                         | 不推送其他分支、不强推。                       |
-| `AdapterRegistry`   | `adapters/registry.ts`                  | 按配置实例化适配器；健康检查与能力缓存；配置变更时重建空闲的适配器。                                                                         | —                                              |
-| `ProcessSupervisor` | `adapters/process/supervisor.ts`        | 用登录 shell 的 PATH 定位可执行文件；以独立进程组启动；pid 落库；结束进程组（[adapter-interface.md](adapter-interface.md) §8）。             | —                                              |
-| `JsonRpcConnection` | `adapters/jsonrpc/connection.ts`        | 换行分隔 JSON 的读写、请求表与超时、对端发来的请求、非 JSON 行容错；Codex 与 ACP 共用（[adapter-interface.md](adapter-interface.md) §7）。   | —                                              |
-| `Db`                | `db/sqlite.ts`、`db/repositories/*.ts`  | `node:sqlite` 的薄封装与按表划分的读写函数（[data-model.md](data-model.md) §3–§4）。                                                         | 不暴露 `DatabaseSync` 给业务代码。             |
+| 模块                | 文件                                   | 职责                                                                                                                                         | 不做什么                           |
+| ------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `ConfigService`     | `config/config.service.ts`             | 读取并用 zod 校验 `config.json`（schema 见 §8）；原子写入；变更后通知订阅者（适配器注册表、调度器）。                                        | 不存任何 token。                   |
+| `AuthService`       | `auth/*`                               | UI token（内存）与桥接 token（库里存哈希）校验；scope 检查；Host / Origin 白名单；CORS；WS 首条消息鉴权（[local-api.md](local-api.md) §2）。 | —                                  |
+| REST / `WsGateway`  | `api/*`                                | 用 contract 里的 zod schema 校验输入；调用核心服务；统一错误格式；幂等键。                                                                   | 不含业务逻辑。                     |
+| `TaskService`       | `core/task.service.ts`                 | 创建、追问、取消、归档、删除；**唯一**修改任务状态的地方（经 `StateMachine`）。                                                              | 不解析任何 Agent 协议。            |
+| `Scheduler`         | `core/scheduler.ts`                    | 按并发上限和工作区互斥规则挑选排队任务，交给 `TaskRunner`（§4）。                                                                            | 不轮询。                           |
+| `TaskRunner`        | `core/task-runner.ts`                  | 一轮的完整流程：准备工作区 → 建立或恢复原生会话 → 轮前快照 → 发提示词 → 轮后快照与 diff → 落状态（§5）；持有内存中的活动会话表。             | —                                  |
+| `ApprovalService`   | `core/approval.service.ts`             | 审批落库、广播、等待决定、超时、撤回；把结果交还给适配器（[adapter-interface.md](adapter-interface.md) §5）。                                | 不自动批准。                       |
+| `EventStore`        | `core/event-store.ts`                  | 增量合并、分配 `seq`、落库、广播（§6）。                                                                                                     | —                                  |
+| `EventBus`          | `core/event-bus.ts`                    | 进程内发布订阅（RxJS `Subject`）：事件流、任务变化、审批变化；`wait` 长轮询基于它。                                                          | —                                  |
+| `Recovery`          | `core/recovery.ts`                     | 启动时清理残留进程、把中断的任务和审批落地（§10.3）。                                                                                        | —                                  |
+| `Retention`         | `core/retention.ts`                    | 启动后 1 分钟执行一次、之后每 6 小时执行一次保留策略（[data-model.md](data-model.md) §6）。                                                  | —                                  |
+| `WorktreeService`   | `workspace/worktree.service.ts`        | 解析基线、创建 / 移除 worktree、执行 `worktreeSetup`。                                                                                       | —                                  |
+| `SnapshotService`   | `workspace/snapshot.ts`                | 树快照、diff 补丁与统计（§7.2）。                                                                                                            | 不改用户的暂存区和工作区。         |
+| `ApplyService`      | `workspace/apply.service.ts`           | “应用到本地分支”（§7.4）。                                                                                                                   | **不推送。**                       |
+| `RepoInspector`     | `workspace/repo-inspector.ts`          | 仓库体检：是否 git 仓库、远端列表、`origin` 推送是否已禁用、`internal` 推送主机、工作区是否干净。                                            | —                                  |
+| `GitGuard`          | `workspace/git-guard.ts`               | 生成 Agent 子进程的环境变量；维护 hooks 目录和 askpass 脚本；推送前的主机检查；轮后远端跟踪分支审计（[security.md](security.md) §3）。       | —                                  |
+| `PushService`       | `workspace/push.service.ts`            | 网页 Agent 任务分支的推送与拉取，只允许 `agent-hub/*` → `internal`。                                                                         | 不推送其他分支、不强推。           |
+| `AdapterRegistry`   | `adapters/registry.ts`                 | 按配置实例化适配器；健康检查与能力缓存；配置变更时重建空闲的适配器。                                                                         | —                                  |
+| `ProcessSupervisor` | `adapters/process/supervisor.ts`       | 用登录 shell 的 PATH 定位可执行文件；以独立进程组启动；pid 落库；结束进程组（[adapter-interface.md](adapter-interface.md) §8）。             | —                                  |
+| `JsonRpcConnection` | `adapters/jsonrpc/connection.ts`       | 换行分隔 JSON 的读写、请求表与超时、对端发来的请求、非 JSON 行容错；Codex 与 ACP 共用（[adapter-interface.md](adapter-interface.md) §7）。   | —                                  |
+| `Db`                | `db/sqlite.ts`、`db/repositories/*.ts` | `node:sqlite` 的薄封装与按表划分的读写函数（[data-model.md](data-model.md) §3–§4）。                                                         | 不暴露 `DatabaseSync` 给业务代码。 |
 
 依赖方向只能从上往下：接口层 → 核心 → 工作区 / 适配器 / 存储。**适配器不访问数据库**，只通过 `AgentEventSink` 把事件和审批交给核心（[adapter-interface.md](adapter-interface.md) §5）。Nest 只用来组织依赖注入和 HTTP 路由；核心类都是普通 TS 类，单测时直接 `new`。
 
@@ -125,15 +125,15 @@ stateDiagram-v2
   interrupted --> queued: 追问
 ```
 
-| 状态          | 含义                                                                                     | 允许的操作                         |
-| ------------- | ---------------------------------------------------------------------------------------- | ---------------------------------- |
-| `queued`      | 有一个待执行的轮，在等并发槽位。                                                         | 取消                               |
-| `preparing`   | 正在建工作区、跑 `worktreeSetup`、启动或恢复 Agent 会话。                                | 取消                               |
-| `running`     | 本轮进行中。是否在等审批看 `pendingApprovals`（计数字段），**不是**单独的状态。          | 停止本轮、审批、刷新 diff          |
-| `completed`   | 最近一轮正常结束。                                                                       | 追问、归档、应用到本地分支         |
-| `failed`      | 最近一轮或准备阶段出错，`lastError` 有错误码。                                           | 追问（重试）、归档、应用           |
-| `cancelled`   | 最近一轮被取消。                                                                         | 追问、归档、应用                   |
-| `interrupted` | Agent 进程或侧车意外退出。                                                               | 追问（自动恢复原生会话）、归档     |
+| 状态          | 含义                                                                            | 允许的操作                     |
+| ------------- | ------------------------------------------------------------------------------- | ------------------------------ |
+| `queued`      | 有一个待执行的轮，在等并发槽位。                                                | 取消                           |
+| `preparing`   | 正在建工作区、跑 `worktreeSetup`、启动或恢复 Agent 会话。                       | 取消                           |
+| `running`     | 本轮进行中。是否在等审批看 `pendingApprovals`（计数字段），**不是**单独的状态。 | 停止本轮、审批、刷新 diff      |
+| `completed`   | 最近一轮正常结束。                                                              | 追问、归档、应用到本地分支     |
+| `failed`      | 最近一轮或准备阶段出错，`lastError` 有错误码。                                  | 追问（重试）、归档、应用       |
+| `cancelled`   | 最近一轮被取消。                                                                | 追问、归档、应用               |
+| `interrupted` | Agent 进程或侧车意外退出。                                                      | 追问（自动恢复原生会话）、归档 |
 
 规则：
 
@@ -146,14 +146,14 @@ stateDiagram-v2
 
 ### 3.2 轮
 
-| 轮状态        | 含义                                         |
-| ------------- | -------------------------------------------- |
-| `pending`     | 已创建，等任务拿到槽位（任务为 `queued`）。  |
-| `running`     | 已发出提示词。                               |
-| `completed`   | Agent 正常结束本轮。                         |
-| `failed`      | 出错。                                       |
-| `cancelled`   | 被取消。                                     |
-| `interrupted` | Agent 进程退出或侧车停机。                   |
+| 轮状态        | 含义                                        |
+| ------------- | ------------------------------------------- |
+| `pending`     | 已创建，等任务拿到槽位（任务为 `queued`）。 |
+| `running`     | 已发出提示词。                              |
+| `completed`   | Agent 正常结束本轮。                        |
+| `failed`      | 出错。                                      |
+| `cancelled`   | 被取消。                                    |
+| `interrupted` | Agent 进程退出或侧车停机。                  |
 
 - 创建任务时同时创建第 1 轮（`pending`）；每次追问新建一轮，`index` 递增。任务处于 `queued` 时恰好有一个 `pending` 的轮。
 - 轮的结束原因 `stopReason` 归一为 `end_turn | max_tokens | max_turn_requests | refusal | cancelled | error`（映射见各适配器分册）。`end_turn` → 轮 `completed`；`max_tokens` / `max_turn_requests` / `refusal` → 轮 `completed` 并追加一条 `notice`（`warning`）；`cancelled` → `cancelled`；`error` → `failed`。
@@ -161,13 +161,13 @@ stateDiagram-v2
 
 ### 3.3 取消
 
-| 场景             | 实现                                                                                                                                                                                                                  |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `queued`         | 轮 → `cancelled`，任务 → `cancelled`。                                                                                                                                                                                |
-| `preparing`      | 触发该轮的 `AbortController`：正在跑的 `worktreeSetup` 进程组被结束、正在启动的 Agent 会话被 `dispose`；轮和任务 → `cancelled`。已创建的 worktree 保留。                                                              |
-| `running`        | 调 `session.cancelTurn()`（Codex `turn/interrupt`、ACP `session/cancel`、网页任务直接结束本轮）。适配器负责把未决审批按协议回复“取消”。等 `prompt()` 返回，最多 **10 秒**。                                         |
-| 10 秒还没结束    | 强制：`session.dispose('cancelled')`（ACP 结束进程组；Codex 不能杀共享进程，只 `thread/unsubscribe` 并丢弃该会话），本轮记 `cancelled`。                                                                             |
-| 请求里 `force`   | 跳过 10 秒等待，直接强制。                                                                                                                                                                                            |
+| 场景           | 实现                                                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `queued`       | 轮 → `cancelled`，任务 → `cancelled`。                                                                                                                                      |
+| `preparing`    | 触发该轮的 `AbortController`：正在跑的 `worktreeSetup` 进程组被结束、正在启动的 Agent 会话被 `dispose`；轮和任务 → `cancelled`。已创建的 worktree 保留。                    |
+| `running`      | 调 `session.cancelTurn()`（Codex `turn/interrupt`、ACP `session/cancel`、网页任务直接结束本轮）。适配器负责把未决审批按协议回复“取消”。等 `prompt()` 返回，最多 **10 秒**。 |
+| 10 秒还没结束  | 强制：`session.dispose('cancelled')`（ACP 结束进程组；Codex 不能杀共享进程，只 `thread/unsubscribe` 并丢弃该会话），本轮记 `cancelled`。                                    |
+| 请求里 `force` | 跳过 10 秒等待，直接强制。                                                                                                                                                  |
 
 ### 3.4 追问与恢复
 
@@ -177,11 +177,11 @@ stateDiagram-v2
 
 ## 4. 调度与并发
 
-| 限制                 | 默认值                                                     | 配置项                                   |
-| -------------------- | ---------------------------------------------------------- | ---------------------------------------- |
-| 全局同时运行的任务数 | 3                                                          | `scheduler.maxConcurrentTasks`           |
-| 每个 Agent 配置      | `codex` 2，其余 1（D41）                                   | `agents[].maxConcurrentTasks`            |
-| 排队上限             | 50                                                         | `scheduler.maxQueuedTasks`，超出返回 `QUEUE_FULL` |
+| 限制                 | 默认值                   | 配置项                                            |
+| -------------------- | ------------------------ | ------------------------------------------------- |
+| 全局同时运行的任务数 | 3                        | `scheduler.maxConcurrentTasks`                    |
+| 每个 Agent 配置      | `codex` 2，其余 1（D41） | `agents[].maxConcurrentTasks`                     |
+| 排队上限             | 50                       | `scheduler.maxQueuedTasks`，超出返回 `QUEUE_FULL` |
 
 - `preparing` 和 `running` 占槽位；等待审批的任务照样占（Agent 进程还在）。
 - **同目录写互斥**：`in_place` 可写任务独占该仓库目录，期间同一仓库的其他 `in_place` 任务（只读也算）不能开始；`worktree` 和 `remote_branch` 任务不受影响。
@@ -229,11 +229,11 @@ stateDiagram-v2
 
 ### 7.1 工作区模式
 
-| 任务类型          | 默认工作区      | 说明                                                                                                                                                   |
-| ----------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 本地 Agent · 只读 | `in_place`      | 直接在仓库目录里运行；轮前后快照比对（§7.3）。                                                                                                         |
+| 任务类型          | 默认工作区      | 说明                                                                                                                                                |
+| ----------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 本地 Agent · 只读 | `in_place`      | 直接在仓库目录里运行；轮前后快照比对（§7.3）。                                                                                                      |
 | 本地 Agent · 可写 | `worktree`      | 路径 `<AGENT_HUB_HOME>/worktrees/<repoId>/<shortId>`，分支 `agent-hub/<shortId>`。Hub UI 可以显式选 `in_place`（二次确认）；**桥接方不能**（D45）。 |
-| 网页 Agent        | `remote_branch` | 任务分支推到 `internal`，见 [web-agent.md](web-agent.md)。                                                                                             |
+| 网页 Agent        | `remote_branch` | 任务分支推到 `internal`，见 [web-agent.md](web-agent.md)。                                                                                          |
 
 创建 worktree：
 
@@ -303,11 +303,11 @@ Codex 只读任务有沙箱，正常不会触发；这主要是给没有沙箱�
 
 ### 7.4 应用到本地分支
 
-| 工作区          | “应用”做什么                                                                                                                                                                                                                                   |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 工作区          | “应用”做什么                                                                                                                                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worktree`      | ① worktree 还在且有未提交改动时：检查 `user.name` / `user.email`（缺了返回 `GIT_IDENTITY_MISSING`），`git add -A`，`git commit --no-verify -m "<任务标题>" -m "Agent Hub 任务 <shortId>（<Agent 名>）"`。② 分支相对基线没有任何提交时返回 `NOTHING_TO_APPLY`。 |
-| `remote_branch` | 拉取 `internal/agent-hub/<shortId>`，确认本地分支是它的祖先后快进本地分支（否则 `MERGE_CONFLICT`），见 [web-agent.md](web-agent.md) §4。                                                                                                       |
-| `in_place`      | 不提供（改动本来就在原目录里），返回 `APPLY_NOT_SUPPORTED`。                                                                                                                                                                                  |
+| `remote_branch` | 拉取 `internal/agent-hub/<shortId>`，确认本地分支是它的祖先后快进本地分支（否则 `MERGE_CONFLICT`），见 [web-agent.md](web-agent.md) §4。                                                                                                                       |
+| `in_place`      | 不提供（改动本来就在原目录里），返回 `APPLY_NOT_SUPPORTED`。                                                                                                                                                                                                   |
 
 请求里 `merge: true` 时再做一步合并：
 
@@ -327,7 +327,9 @@ worktree 的清理：任务归档满 `retention.archivedWorktreeDays` 天后 `gi
 // contract/src/config.ts
 import { z } from 'zod';
 
-const idSchema = z.string().regex(/^[a-z][a-z0-9-]{1,31}$/, '只能用小写字母、数字和连字符，2–32 位');
+const idSchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]{1,31}$/, '只能用小写字母、数字和连字符，2–32 位');
 const originSchema = z.string().regex(/^https?:\/\/[^/\s]+$/, '形如 https://chat.example');
 const envNameSchema = z.string().regex(/^[A-Z_][A-Z0-9_]*$/);
 
@@ -398,7 +400,14 @@ export const repoConfigSchema = z.object({
 
 export const DEFAULT_AGENTS = [
   { id: 'codex', kind: 'codex', displayName: 'Codex', maxConcurrentTasks: 2 },
-  { id: 'qoder', kind: 'acp', profile: 'qoder', displayName: 'Qoder', command: 'qodercli', args: ['--acp'] },
+  {
+    id: 'qoder',
+    kind: 'acp',
+    profile: 'qoder',
+    displayName: 'Qoder',
+    command: 'qodercli',
+    args: ['--acp'],
+  },
   {
     id: 'claude-code',
     kind: 'acp',
@@ -472,9 +481,11 @@ export const hubConfigSchema = z
   .superRefine((cfg, ctx) => {
     const dup = (ids: string[]) => ids.find((id, i) => ids.indexOf(id) !== i);
     const agentDup = dup(cfg.agents.map((a) => a.id));
-    if (agentDup) ctx.addIssue({ code: 'custom', path: ['agents'], message: `Agent id 重复：${agentDup}` });
+    if (agentDup)
+      ctx.addIssue({ code: 'custom', path: ['agents'], message: `Agent id 重复：${agentDup}` });
     const repoDup = dup(cfg.repos.map((r) => r.id));
-    if (repoDup) ctx.addIssue({ code: 'custom', path: ['repos'], message: `仓库 id 重复：${repoDup}` });
+    if (repoDup)
+      ctx.addIssue({ code: 'custom', path: ['repos'], message: `仓库 id 重复：${repoDup}` });
     if (cfg.defaultRepoId && !cfg.repos.some((r) => r.id === cfg.defaultRepoId)) {
       ctx.addIssue({ code: 'custom', path: ['defaultRepoId'], message: '默认仓库不存在' });
     }
@@ -581,31 +592,31 @@ sequenceDiagram
 
 ### 10.1 命令行与环境变量
 
-| 参数 / 变量              | 含义                                                                          |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| `--lifeline stdin`       | stdin 读到 EOF 时优雅停机（Tauri 拉起时传，D7）。                             |
-| `AGENT_HUB_HOME`         | 数据目录，默认 `~/Library/Application Support/AgentHub`。                     |
-| `AGENT_HUB_LOGIN_PATH`   | 登录 shell 的 PATH（Tauri 传入）；解析 Agent 命令用。没有时侧车自己问登录 shell。 |
-| `AGENT_HUB_PORT`         | 覆盖 `server.port`（测试用）。                                                |
-| `AGENT_HUB_DEV=1`        | 开发模式：stderr 打印带 UI token 的开发链接；CORS 额外放行 Vite 开发服务器。  |
+| 参数 / 变量            | 含义                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| `--lifeline stdin`     | stdin 读到 EOF 时优雅停机（Tauri 拉起时传，D7）。                                 |
+| `AGENT_HUB_HOME`       | 数据目录，默认 `~/Library/Application Support/AgentHub`。                         |
+| `AGENT_HUB_LOGIN_PATH` | 登录 shell 的 PATH（Tauri 传入）；解析 Agent 命令用。没有时侧车自己问登录 shell。 |
+| `AGENT_HUB_PORT`       | 覆盖 `server.port`（测试用）。                                                    |
+| `AGENT_HUB_DEV=1`      | 开发模式：stderr 打印带 UI token 的开发链接；CORS 额外放行 Vite 开发服务器。      |
 
 ### 10.2 启动顺序
 
 任一步失败：stdout 打印一行 `{"event":"fatal","code":"…","message":"…"}`（`message` 是中文，给人看），`exit 1`。
 
-| 步骤 | 内容                                                                                                                                                                      | 失败码                |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| 1    | 检查 `process.versions.node` ≥ 22.13。                                                                                                                                    | `NODE_TOO_OLD`        |
-| 2    | 创建 `AGENT_HUB_HOME` 及子目录（权限 `0700`）。                                                                                                                           | `HOME_NOT_WRITABLE`   |
-| 3    | 读 `server.lock`：记录的 pid 还活着、且 `GET http://127.0.0.1:<port>/api/v1/health` 在 1 秒内返回 `app: "agent-hub"` 时失败；否则覆盖写入 `{pid, port, startedAt}`。       | `ALREADY_RUNNING`     |
-| 4    | 读取并校验 `config.json`（不存在则写默认值）。错误信息带前 5 条 zod issue 的路径。                                                                                         | `CONFIG_INVALID`      |
-| 5    | 打开 `hub.db`，执行迁移（[data-model.md](data-model.md) §5）。                                                                                                             | `DB_OPEN_FAILED` / `DB_MIGRATION_FAILED` |
-| 6    | 恢复流程（§9.3）。                                                                                                                                                        | `STARTUP_FAILED`      |
-| 7    | `GitGuard.ensure()`：写 hooks 目录、askpass 脚本、空的 `gh` 配置目录（[security.md](security.md) §3）。                                                                    | `STARTUP_FAILED`      |
-| 8    | 没有任何未吊销的默认桥接 token 时新建一个，明文写 `bridge-token`（`0600`，D44）。                                                                                          | `STARTUP_FAILED`      |
-| 9    | 生成 UI token；创建 Nest 应用；**只在 `127.0.0.1:<port>` 上监听**；挂上 WebSocket。                                                                                        | `PORT_IN_USE`（`EADDRINUSE`）/ `STARTUP_FAILED` |
-| 10   | stdout 打印 `{"event":"ready","port":47821,"uiToken":"…","version":"0.1.0","pid":12345}`。开发模式再往 stderr 打印 `Hub UI: http://localhost:5174/#uiToken=…`。         | —                     |
-| 11   | 启动调度器；异步做各 Agent 的健康检查（界面先显示“检测中”）；安排保留策略任务。                                                                                           | —                     |
+| 步骤 | 内容                                                                                                                                                                 | 失败码                                          |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 1    | 检查 `process.versions.node` ≥ 22.13。                                                                                                                               | `NODE_TOO_OLD`                                  |
+| 2    | 创建 `AGENT_HUB_HOME` 及子目录（权限 `0700`）。                                                                                                                      | `HOME_NOT_WRITABLE`                             |
+| 3    | 读 `server.lock`：记录的 pid 还活着、且 `GET http://127.0.0.1:<port>/api/v1/health` 在 1 秒内返回 `app: "agent-hub"` 时失败；否则覆盖写入 `{pid, port, startedAt}`。 | `ALREADY_RUNNING`                               |
+| 4    | 读取并校验 `config.json`（不存在则写默认值）。错误信息带前 5 条 zod issue 的路径。                                                                                   | `CONFIG_INVALID`                                |
+| 5    | 打开 `hub.db`，执行迁移（[data-model.md](data-model.md) §5）。                                                                                                       | `DB_OPEN_FAILED` / `DB_MIGRATION_FAILED`        |
+| 6    | 恢复流程（§9.3）。                                                                                                                                                   | `STARTUP_FAILED`                                |
+| 7    | `GitGuard.ensure()`：写 hooks 目录、askpass 脚本、空的 `gh` 配置目录（[security.md](security.md) §3）。                                                              | `STARTUP_FAILED`                                |
+| 8    | `AuthService.ensureDefaultToken()`：按 [local-api.md](local-api.md) §2.2 的四条规则新建或轮换默认桥接 token，明文写 `bridge-token`（`0600`，D44）。                  | `STARTUP_FAILED`                                |
+| 9    | 生成 UI token；创建 Nest 应用；**只在 `127.0.0.1:<port>` 上监听**；挂上 WebSocket。                                                                                  | `PORT_IN_USE`（`EADDRINUSE`）/ `STARTUP_FAILED` |
+| 10   | stdout 打印 `{"event":"ready","port":47821,"uiToken":"…","version":"0.1.0","pid":12345}`。开发模式再往 stderr 打印 `Hub UI: http://localhost:5174/#uiToken=…`。      | —                                               |
+| 11   | 启动调度器；异步做各 Agent 的健康检查（界面先显示“检测中”）；安排保留策略任务。                                                                                      | —                                               |
 
 ### 10.3 停机
 

@@ -73,28 +73,28 @@ export function resolvePaths(env: NodeJS.ProcessEnv = process.env): HubPaths {
 
 ## 2. 存储约定
 
-| 项目       | 约定                                                                                                                                                     |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 主键       | `crypto.randomUUID()`；任务另有 8 位十六进制的 `short_id`（UUID 去掉连字符的前 8 位，`UNIQUE` 冲突就重新生成，D19）。审计表用自增整数。                  |
-| 时间       | `TEXT`，`new Date().toISOString()`（UTC，毫秒，带 `Z`），同一格式下字符串顺序就是时间顺序，可以直接比较和排序。                                          |
-| 布尔       | `INTEGER` 0 / 1，带 `CHECK`。                                                                                                                            |
-| JSON       | `TEXT`，带 `CHECK (json_valid(...))`；写入用 `JSON.stringify`，读出用 `JSON.parse`，读出时**不再**用 zod 校验（写入方都是侧车自己）。                    |
-| 空值       | 列值 `NULL` ↔ DTO 字段 `null`。DTO 里不出现 `undefined`。                                                                                                |
-| 枚举       | 只有三个状态列（`tasks.status`、`turns.status`、`approvals.status`）带 `CHECK`；其余枚举（类型、原因、决定）由 TS 类型约束，加取值时不需要重建表。       |
-| 表模式     | 全部 `STRICT`：类型不符直接报错，不做隐式转换。`events` 与 `idempotency_keys` 另加 `WITHOUT ROWID`（主键就是聚簇键）。                                   |
-| 外键       | `PRAGMA foreign_keys = ON`；删除任务时级联删除它的轮、事件、审批、幂等键。审计和子进程表不挂外键（删任务后审计要留着）。                                 |
-| 连接       | 整个侧车**一个**连接（`Db` 单例）。`node:sqlite` 是同步 API，Node 单线程，所以同一时刻只有一条语句在执行；事务回调必须是同步函数（`Db.tx` 会检查）。     |
+| 项目   | 约定                                                                                                                                                 |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 主键   | `crypto.randomUUID()`；任务另有 8 位十六进制的 `short_id`（UUID 去掉连字符的前 8 位，`UNIQUE` 冲突就重新生成，D19）。审计表用自增整数。              |
+| 时间   | `TEXT`，`new Date().toISOString()`（UTC，毫秒，带 `Z`），同一格式下字符串顺序就是时间顺序，可以直接比较和排序。                                      |
+| 布尔   | `INTEGER` 0 / 1，带 `CHECK`。                                                                                                                        |
+| JSON   | `TEXT`，带 `CHECK (json_valid(...))`；写入用 `JSON.stringify`，读出用 `JSON.parse`，读出时**不再**用 zod 校验（写入方都是侧车自己）。                |
+| 空值   | 列值 `NULL` ↔ DTO 字段 `null`。DTO 里不出现 `undefined`。                                                                                            |
+| 枚举   | 只有三个状态列（`tasks.status`、`turns.status`、`approvals.status`）带 `CHECK`；其余枚举（类型、原因、决定）由 TS 类型约束，加取值时不需要重建表。   |
+| 表模式 | 全部 `STRICT`：类型不符直接报错，不做隐式转换。`events` 与 `idempotency_keys` 另加 `WITHOUT ROWID`（主键就是聚簇键）。                               |
+| 外键   | `PRAGMA foreign_keys = ON`；删除任务时级联删除它的轮、事件、审批、幂等键。审计和子进程表不挂外键（删任务后审计要留着）。                             |
+| 连接   | 整个侧车**一个**连接（`Db` 单例）。`node:sqlite` 是同步 API，Node 单线程，所以同一时刻只有一条语句在执行；事务回调必须是同步函数（`Db.tx` 会检查）。 |
 
 `node:sqlite` 参数绑定的实测行为（22.13 与 22.23 相同），写仓储代码时必须遵守：
 
-| 情况                                         | 结果                                                         |
-| -------------------------------------------- | ------------------------------------------------------------ |
-| SQL 用 `:name`，参数对象用不带冒号的键 `name` | 正常。全项目统一这种写法，不用 `?` 位置参数。                |
-| 参数对象里**多**一个 SQL 没用到的键          | 抛错 `Unknown named parameter 'x'`。                          |
-| 参数对象里**少**一个 SQL 用到的键            | **不报错，静默绑定为 `NULL`**。所以参数对象必须逐键写全。     |
-| 值是 `true` / `false` / `undefined`          | 抛错 `Provided value cannot be bound to SQLite parameter`。   |
-| `get()` 没有匹配的行                         | 返回 `undefined`。                                           |
-| 返回的行对象                                 | 原型为 `null` 的普通对象；整数列是 `number`。                |
+| 情况                                          | 结果                                                        |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| SQL 用 `:name`，参数对象用不带冒号的键 `name` | 正常。全项目统一这种写法，不用 `?` 位置参数。               |
+| 参数对象里**多**一个 SQL 没用到的键           | 抛错 `Unknown named parameter 'x'`。                        |
+| 参数对象里**少**一个 SQL 用到的键             | **不报错，静默绑定为 `NULL`**。所以参数对象必须逐键写全。   |
+| 值是 `true` / `false` / `undefined`           | 抛错 `Provided value cannot be bound to SQLite parameter`。 |
+| `get()` 没有匹配的行                          | 返回 `undefined`。                                          |
+| 返回的行对象                                  | 原型为 `null` 的普通对象；整数列是 `number`。               |
 
 ## 3. 表结构
 
@@ -264,44 +264,44 @@ CREATE TABLE processes (
 
 **`tasks`**
 
-| 列                    | 含义                                                                                                                                                      |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `adapter_kind`        | `codex` / `acp` / `web`。冗余存一份：配置里删掉某个 Agent 后，历史任务仍知道它是哪类。                                                                    |
-| `repo_path`           | 创建时仓库路径（`~` 已展开）的快照；仓库后来从配置里删掉也能显示。                                                                                        |
-| `source`              | `ui` / `bridge`。                                                                                                                                         |
-| `source_token_id`     | 桥接方创建时是它的 token id；用于“只能管理自己创建的任务”（[local-api.md](local-api.md) §2.3）。                                                          |
-| `external_ref`        | 桥接方自带的关联标识（例如对话 id），最长 200 字符，原样返回，可按它筛选。                                                                                |
-| `mode`                | `read_only` / `write`。                                                                                                                                   |
-| `workspace_kind`      | `in_place` / `worktree` / `remote_branch`。                                                                                                               |
-| `workspace_path`      | Agent 的工作目录。`in_place` = 仓库路径；`worktree` 在第一轮准备完成后写入；`remote_branch` 为 `NULL`。                                                   |
-| `branch`              | `agent-hub/<shortId>`；`in_place` 为 `NULL`。                                                                                                             |
-| `base_ref`            | 用户或桥接方指定的基线原文（例如 `main`）；`NULL` = 当前 `HEAD`。                                                                                         |
-| `base_commit`         | 解析后的基线提交。                                                                                                                                        |
+| 列                    | 含义                                                                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `adapter_kind`        | `codex` / `acp` / `web`。冗余存一份：配置里删掉某个 Agent 后，历史任务仍知道它是哪类。                                                                       |
+| `repo_path`           | 创建时仓库路径（`~` 已展开）的快照；仓库后来从配置里删掉也能显示。                                                                                           |
+| `source`              | `ui` / `bridge`。                                                                                                                                            |
+| `source_token_id`     | 桥接方创建时是它的 token id；用于“只能管理自己创建的任务”（[local-api.md](local-api.md) §2.3）。                                                             |
+| `external_ref`        | 桥接方自带的关联标识（例如对话 id），最长 200 字符，原样返回，可按它筛选。                                                                                   |
+| `mode`                | `read_only` / `write`。                                                                                                                                      |
+| `workspace_kind`      | `in_place` / `worktree` / `remote_branch`。                                                                                                                  |
+| `workspace_path`      | Agent 的工作目录。`in_place` = 仓库路径；`worktree` 在第一轮准备完成后写入；`remote_branch` 为 `NULL`。                                                      |
+| `branch`              | `agent-hub/<shortId>`；`in_place` 为 `NULL`。                                                                                                                |
+| `base_ref`            | 用户或桥接方指定的基线原文（例如 `main`）；`NULL` = 当前 `HEAD`。                                                                                            |
+| `base_commit`         | 解析后的基线提交。                                                                                                                                           |
 | `base_tree`           | 第一轮开始前的树快照（[architecture.md](architecture.md) §7.2），整个任务 diff 的起点。同时写 `refs/agent-hub/base/<shortId>` 指向它，防止被 `git gc` 回收。 |
-| `model`               | 最近一轮使用的模型；`NULL` = Agent 默认。`reasoning_effort` 同理。                                                                                        |
-| `native_session_id`   | Codex 的 thread id 或 ACP 的 session id；追问恢复用。                                                                                                     |
-| `remote_url`          | 网页 Agent 的会话链接（人在 Hub 里粘贴，[web-agent.md](web-agent.md) §5）。                                                                               |
-| `pending_approvals`   | 当前 `pending` 的审批数；与审批的插入、结束在同一事务里增减。                                                                                             |
-| `turn_count`          | 已创建的轮数（含 `pending`）。                                                                                                                            |
-| `last_event_seq`      | 已分配的最大事件序号（§4.3）。                                                                                                                            |
-| `last_error`          | 最近一次失败的 `AgentError` JSON；任务回到 `queued` 时清空。                                                                                              |
-| `started_at`          | 第一次进入 `preparing` 的时间。                                                                                                                           |
-| `ended_at`            | 最近一次进入终态的时间；保留策略以它为准。                                                                                                                |
-| `worktree_removed_at` | worktree 被保留策略移除的时间；之后追问返回 `WORKSPACE_REMOVED`（[local-api.md](local-api.md) §5.4），应用改动只看分支上已有的提交。                      |
+| `model`               | 最近一轮使用的模型；`NULL` = Agent 默认。`reasoning_effort` 同理。                                                                                           |
+| `native_session_id`   | Codex 的 thread id 或 ACP 的 session id；追问恢复用。                                                                                                        |
+| `remote_url`          | 网页 Agent 的会话链接（人在 Hub 里粘贴，[web-agent.md](web-agent.md) §5）。                                                                                  |
+| `pending_approvals`   | 当前 `pending` 的审批数；与审批的插入、结束在同一事务里增减。                                                                                                |
+| `turn_count`          | 已创建的轮数（含 `pending`）。                                                                                                                               |
+| `last_event_seq`      | 已分配的最大事件序号（§4.3）。                                                                                                                               |
+| `last_error`          | 最近一次失败的 `AgentError` JSON；任务回到 `queued` 时清空。                                                                                                 |
+| `started_at`          | 第一次进入 `preparing` 的时间。                                                                                                                              |
+| `ended_at`            | 最近一次进入终态的时间；保留策略以它为准。                                                                                                                   |
+| `worktree_removed_at` | worktree 被保留策略移除的时间；之后追问返回 `WORKSPACE_REMOVED`（[local-api.md](local-api.md) §5.4），应用改动只看分支上已有的提交。                         |
 
 **`turns`**
 
-| 列                            | 含义                                                                                                                  |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `idx`                         | 从 1 开始，DTO 字段名 `index`。                                                                                       |
-| `model` / `reasoning_effort`  | 本轮请求时指定的值；`NULL` = 沿用任务当时的设置。                                                                     |
-| `stop_reason`                 | `end_turn` / `max_tokens` / `max_turn_requests` / `refusal` / `cancelled` / `error`（[architecture.md](architecture.md) §3.2）。 |
-| `native_turn_id`              | Codex 的 turn id；ACP 没有（`NULL`）。                                                                                |
-| `before_tree` / `after_tree`  | 轮前、轮后树快照。                                                                                                    |
-| `turn_patch` / `task_patch`   | 本轮补丁（`before → after`）与截至本轮的任务补丁（`base → after`）；超过 5 MB 时为 `NULL` 且 `patch_truncated = 1`。 |
-| `turn_stats` / `task_stats`   | `DiffStats` JSON，即使补丁被截断也有。                                                                                |
-| `usage`                       | `UsageInfo` JSON，取本轮最后一次 `usage.updated`。                                                                    |
-| `final_message`               | 本轮最后一条完整的 Agent 消息（`message.completed`）。                                                                |
+| 列                           | 含义                                                                                                                             |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `idx`                        | 从 1 开始，DTO 字段名 `index`。                                                                                                  |
+| `model` / `reasoning_effort` | 本轮实际使用的值（创建或追问时解析后写入，[local-api.md](local-api.md) §5.2、§5.4）；`NULL` = Agent 自己的默认值。               |
+| `stop_reason`                | `end_turn` / `max_tokens` / `max_turn_requests` / `refusal` / `cancelled` / `error`（[architecture.md](architecture.md) §3.2）。 |
+| `native_turn_id`             | Codex 的 turn id；ACP 没有（`NULL`）。                                                                                           |
+| `before_tree` / `after_tree` | 轮前、轮后树快照。                                                                                                               |
+| `turn_patch` / `task_patch`  | 本轮补丁（`before → after`）与截至本轮的任务补丁（`base → after`）；超过 5 MB 时为 `NULL` 且 `patch_truncated = 1`。             |
+| `turn_stats` / `task_stats`  | `DiffStats` JSON，即使补丁被截断也有。                                                                                           |
+| `usage`                      | `UsageInfo` JSON，取本轮最后一次 `usage.updated`。                                                                               |
+| `final_message`              | 本轮最后一条完整的 Agent 消息（`message.completed`）。                                                                           |
 
 **`events`**：`type` 是事件的 `type` 字段（如 `message.delta`、`task.status`），`is_delta` 对三种增量事件为 1，`payload` 是事件对象本身（含 `type`），`turn_id` 是事件所属的轮（任务级事件为 `NULL`）。
 
@@ -394,7 +394,8 @@ export class Db {
 export const toBool = (v: number): boolean => v === 1;
 export const fromBool = (v: boolean): number => (v ? 1 : 0);
 export const toJson = (v: unknown): string | null => (v == null ? null : JSON.stringify(v));
-export const fromJson = <T>(v: string | null): T | null => (v == null ? null : (JSON.parse(v) as T));
+export const fromJson = <T>(v: string | null): T | null =>
+  v == null ? null : (JSON.parse(v) as T);
 ```
 
 - `Db` 由 `DbModule` 以单例 provider 提供：`useFactory: (paths) => { const db = new Db(paths.db); migrate(db); return db; }`；侧车停机最后一步 `db.close()`。
@@ -408,16 +409,16 @@ export const fromJson = <T>(v: string | null): T | null => (v == null ? null : (
 
 `server/src/db/repositories/` 下每张表一个文件，只导出普通函数，第一个参数是 `Db`。**只有这些文件里出现 SQL**。
 
-| 文件                | 函数（签名省略 `db: Db` 参数）                                                                                                                                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tasks.repo.ts`     | `insertTask(row: NewTask)`、`getTask(idOrShortId): TaskDto \| undefined`、`listTasks(filter: TaskFilter): { items: TaskDto[]; nextCursor: string \| null }`、`updateTask(id, patch: TaskPatch)`、`nextEventSeq(id): number`、`listTasksByStatus(statuses): TaskDto[]`、`deleteTask(id)`、`getBaseTree(id): string \| null` |
-| `turns.repo.ts`     | `insertTurn(row: NewTurn)`、`getTurn(id)`、`listTurns(taskId): TurnDto[]`、`getTurnByIndex(taskId, index)`、`getLatestTurn(taskId)`、`updateTurn(id, patch: TurnPatch)`、`getTurnPatch(turnId, scope: 'turn' \| 'task'): { patch: string \| null; truncated: boolean }`、`getTurnTrees(turnId): { beforeTree; afterTree }` |
-| `events.repo.ts`    | `insertEvent(env: HubEventEnvelope)`、`listEvents(taskId, afterSeq, limit): HubEventEnvelope[]`、`hasEventsAfter(taskId, seq): boolean`                                                                                 |
-| `approvals.repo.ts` | `insertApproval(row: NewApproval)`、`getApproval(id): ApprovalDto \| undefined`、`listApprovals(filter): ApprovalDto[]`、`resolveApproval(id, patch): boolean`（只改 `pending` 的行，返回是否改到）、`listPendingApprovals(): ApprovalDto[]` |
-| `tokens.repo.ts`    | `insertToken(row)`、`findActiveTokenByHash(hash)`、`listTokens(): ApiTokenDto[]`、`getToken(id)`、`updateTokenScopes(id, scopes)`、`revokeToken(id)`、`touchToken(id, now)`、`hasActiveDefaultToken(): boolean`               |
-| `idempotency.repo.ts` | `findIdempotencyKey(tokenId, key)`、`insertIdempotencyKey(row)`、`deleteIdempotencyKeysBefore(cutoff)`                                                                                                                |
-| `audit.repo.ts`     | `appendAudit(entry: { actor; action; taskId?; detail? })`、`listAudit(filter: { before?: number; limit: number; action?: string }): AuditDto[]`、`deleteAuditBefore(cutoff)`                                             |
-| `processes.repo.ts` | `insertProcess(row)`、`deleteProcess(pid)`、`listProcesses()`                                                                                                                                                          |
+| 文件                  | 函数（签名省略 `db: Db` 参数）                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tasks.repo.ts`       | `insertTask(row: NewTask)`、`getTask(idOrShortId): TaskDto \| undefined`、`listTasks(filter: TaskFilter): { items: TaskDto[]; nextCursor: string \| null }`、`updateTask(id, patch: TaskPatch)`、`nextEventSeq(id): number`、`listTasksByStatus(statuses): TaskDto[]`、`deleteTask(id)`、`getBaseTree(id): string \| null`                                                                                                      |
+| `turns.repo.ts`       | `insertTurn(row: NewTurn)`、`getTurn(id)`、`listTurns(taskId): TurnDto[]`、`getTurnByIndex(taskId, index)`、`getLatestTurn(taskId)`、`updateTurn(id, patch: TurnPatch)`、`getTurnPatch(turnId, scope: 'turn' \| 'task'): { patch: string \| null; truncated: boolean }`、`getTurnTrees(turnId): { beforeTree; afterTree }`                                                                                                      |
+| `events.repo.ts`      | `insertEvent(env: HubEventEnvelope)`、`listEvents(taskId, afterSeq, limit): HubEventEnvelope[]`、`hasEventsAfter(taskId, seq): boolean`                                                                                                                                                                                                                                                                                         |
+| `approvals.repo.ts`   | `insertApproval(row: NewApproval)`、`getApproval(id): ApprovalDto \| undefined`、`listApprovals(filter): ApprovalDto[]`、`resolveApproval(id, patch): boolean`（只改 `pending` 的行，返回是否改到）、`listPendingApprovals(): ApprovalDto[]`                                                                                                                                                                                    |
+| `tokens.repo.ts`      | `insertToken(row)`、`findActiveTokenByHash(hash): { id; scopes } \| undefined`、`listTokens(): ApiTokenDto[]`、`getToken(id)`、`updateTokenScopes(id, scopes)`、`revokeToken(id, now)`、`touchToken(id, now)`、`getActiveDefaultToken(): { id; hash; scopes } \| undefined`、`hasAnyDefaultToken(): boolean`（含已吊销的）、`transferTokenOwnership(fromId, toId)`（改 `tasks.source_token_id` 与 `idempotency_keys.token_id`） |
+| `idempotency.repo.ts` | `findIdempotencyKey(tokenId, key)`、`insertIdempotencyKey(row)`、`deleteIdempotencyKeysBefore(cutoff)`                                                                                                                                                                                                                                                                                                                          |
+| `audit.repo.ts`       | `appendAudit(entry: { actor; action; taskId?; detail? })`、`listAudit(filter: { before?: number; limit: number; action?: string }): AuditDto[]`、`deleteAuditBefore(cutoff)`                                                                                                                                                                                                                                                    |
+| `processes.repo.ts`   | `insertProcess(row)`、`deleteProcess(pid)`、`listProcesses()`                                                                                                                                                                                                                                                                                                                                                                   |
 
 `NewTask`、`TaskPatch` 等输入类型写在各自的 repo 文件里；返回值直接是 contract 里的 DTO（[local-api.md](local-api.md) §4），**没有**中间的“实体类型”。
 
@@ -568,38 +569,38 @@ function backup(db: Db, fromVersion: number): void {
 
 `Retention` 在侧车启动 1 分钟后执行一次，之后每 6 小时一次；每步独立 `try/catch`，失败只记日志。天数来自 `config.json` 的 `retention`（D17）。`cutoff(n)` = 当前时间减 n 天的 ISO 字符串。
 
-| 顺序 | 数据                  | 规则                                                                                                                                                                         |
-| ---- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | 增量事件              | `DELETE FROM events WHERE is_delta = 1 AND task_id IN (SELECT id FROM tasks WHERE status IN ('completed','failed','cancelled','interrupted') AND ended_at < :cutoff)`，`cutoff(deltaEventDays)`。 |
-| 2    | 幂等键                | `deleteIdempotencyKeysBefore(当前时间 − 24 小时)`。                                                                                                                          |
-| 3    | 审计                  | `deleteAuditBefore(cutoff(auditDays))`。                                                                                                                                     |
-| 4    | 归档任务的 worktree   | 选出 `workspace_kind = 'worktree' AND archived_at < cutoff(archivedWorktreeDays) AND worktree_removed_at IS NULL` 的任务，逐个 `git -C <repo> worktree remove --force <path>`（目录已不存在时 `git worktree prune`），写 `worktree_removed_at`。分支保留。 |
-| 5    | transcript            | `transcripts/` 下修改时间早于 `cutoff(transcriptDays)` 的文件删除。                                                                                                          |
-| 6    | 日志                  | `logs/` 下文件名日期早于 `cutoff(logDays)` 的 `server-*.log` 删除。                                                                                                          |
-| 7    | 收尾                  | `PRAGMA optimize`；日志记一条 `{scope:"retention", deletedEvents, removedWorktrees, …}`。                                                                                    |
+| 顺序 | 数据                | 规则                                                                                                                                                                                                                                                       |
+| ---- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | 增量事件            | `DELETE FROM events WHERE is_delta = 1 AND task_id IN (SELECT id FROM tasks WHERE status IN ('completed','failed','cancelled','interrupted') AND ended_at < :cutoff)`，`cutoff(deltaEventDays)`。                                                          |
+| 2    | 幂等键              | `deleteIdempotencyKeysBefore(当前时间 − 24 小时)`。                                                                                                                                                                                                        |
+| 3    | 审计                | `deleteAuditBefore(cutoff(auditDays))`。                                                                                                                                                                                                                   |
+| 4    | 归档任务的 worktree | 选出 `workspace_kind = 'worktree' AND archived_at < cutoff(archivedWorktreeDays) AND worktree_removed_at IS NULL` 的任务，逐个 `git -C <repo> worktree remove --force <path>`（目录已不存在时 `git worktree prune`），写 `worktree_removed_at`。分支保留。 |
+| 5    | transcript          | `transcripts/` 下修改时间早于 `cutoff(transcriptDays)` 的文件删除。                                                                                                                                                                                        |
+| 6    | 日志                | `logs/` 下文件名日期早于 `cutoff(logDays)` 的 `server-*.log` 删除。                                                                                                                                                                                        |
+| 7    | 收尾                | `PRAGMA optimize`；日志记一条 `{scope:"retention", deletedEvents, removedWorktrees, …}`。                                                                                                                                                                  |
 
 - 删除的页由 SQLite 复用，不做 `VACUUM`（文件不会变小，但不会继续增长）。
 - 任务、轮、diff 补丁、非增量事件、审批一直保留，直到用户在界面上删除任务（[architecture.md](architecture.md) §3.1）。删除任务在一个事务里删 `tasks` 行（级联删其余），之后再删 worktree、本地分支 `agent-hub/<shortId>`、`refs/agent-hub/base/<shortId>` 和 transcript 文件，并写审计 `task.deleted`。
 
 ## 7. 审计动作
 
-| `action`                     | 何时记录                                                                                     | `detail`                                      |
-| ---------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `token.created`              | 新建桥接 token（含首次启动自动创建的默认 token）                                             | `{ tokenId, name, scopes }`                   |
-| `token.scopes_changed`       | 修改 token 的 scope                                                                          | `{ tokenId, from, to }`                       |
-| `token.revoked`              | 吊销 token                                                                                   | `{ tokenId }`                                 |
-| `approval.decided`           | 人或桥接方做出审批决定                                                                       | `{ approvalId, decision, kind, title }`       |
-| `approval.expired`           | 审批超时或停机时被系统结束                                                                   | `{ approvalId }`                              |
-| `bridge.diff_read`           | 桥接 token 读取 diff（`GET /tasks/:id/diff`）                                                | `{ scope, format, bytes, truncated }`         |
-| `task.deleted`               | 删除任务                                                                                     | `{ shortId, title }`                          |
-| `git.push` / `git.fetch`     | Hub 自己对 `internal` 的推送、拉取（网页 Agent）                                             | `{ remote, branch, ok, error? }`              |
-| `git.apply`                  | 应用到本地分支 / 合并                                                                        | `{ branch, commit?, merged }`                 |
-| `repo.origin_push_disabled`  | 注册仓库时禁用 `origin` 的推送地址                                                           | `{ repoId }`                                  |
-| `security.push_blocked`      | pre-push 钩子或 PushService 拦截了一次推送                                                   | `{ remote, url, reason }`（URL 去掉 userinfo） |
-| `security.remote_ref_changed`| 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4）                                | `{ refs }`                                    |
-| `security.read_only_violation` | 只读任务的工作区在本轮有改动                                                               | `{ turnIndex, filesChanged }`                 |
-| `config.changed`             | 设置页保存配置                                                                               | `{ keys }`（只记改了哪些顶层键，不记值）      |
-| `diagnostics.exported`       | 导出诊断包                                                                                   | `{ file }`                                    |
+| `action`                       | 何时记录                                                      | `detail`                                       |
+| ------------------------------ | ------------------------------------------------------------- | ---------------------------------------------- |
+| `token.created`                | 新建桥接 token（含首次启动自动创建的默认 token）              | `{ tokenId, name, scopes }`                    |
+| `token.scopes_changed`         | 修改 token 的 scope                                           | `{ tokenId, from, to }`                        |
+| `token.revoked`                | 吊销 token                                                    | `{ tokenId }`                                  |
+| `approval.decided`             | 人或桥接方做出审批决定                                        | `{ approvalId, decision, kind, title }`        |
+| `approval.expired`             | 审批超时或停机时被系统结束                                    | `{ approvalId }`                               |
+| `bridge.diff_read`             | 桥接 token 读取 diff（`GET /tasks/:id/diff`）                 | `{ scope, format, bytes, truncated }`          |
+| `task.deleted`                 | 删除任务                                                      | `{ shortId, title }`                           |
+| `git.push` / `git.fetch`       | Hub 自己对 `internal` 的推送、拉取（网页 Agent）              | `{ remote, branch, ok, error? }`               |
+| `git.apply`                    | 应用到本地分支 / 合并                                         | `{ branch, commit?, merged }`                  |
+| `repo.origin_push_disabled`    | 注册仓库时禁用 `origin` 的推送地址                            | `{ repoId }`                                   |
+| `security.push_blocked`        | pre-push 钩子或 PushService 拦截了一次推送                    | `{ remote, url, reason }`（URL 去掉 userinfo） |
+| `security.remote_ref_changed`  | 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4） | `{ refs }`                                     |
+| `security.read_only_violation` | 只读任务的工作区在本轮有改动                                  | `{ turnIndex, filesChanged }`                  |
+| `config.changed`               | 设置页保存配置                                                | `{ keys }`（只记改了哪些顶层键，不记值）       |
+| `diagnostics.exported`         | 导出诊断包                                                    | `{ file }`                                     |
 
 ## 8. 备份与重置
 
