@@ -1457,16 +1457,16 @@ export async function replayThenFollow(
 ### 6.4 心跳、背压与关闭
 
 - 服务端每 **20 秒**发一次 WebSocket ping 帧，**60 秒**内没收到 pong 就 `terminate()`。
-- 每次发送前检查 `ws.bufferedAmount`，超过 **8 MB** → 以 `4008` 关闭（消费太慢）；客户端应带 `afterSeq` 重连。
+- 每次发送前检查 `ws.bufferedAmount`，超过 **8 MB** → 以 `4008` 关闭（消费太慢）；客户端应带 `afterSeq` 按 1、2、5、10 秒重连，之后保持 10 秒，不立即重连。
 - 侧车停机时所有连接以 `1001` 关闭。
 
-| 关闭码 | 常量                           | 含义                                          | 客户端应当             |
-| ------ | ------------------------------ | --------------------------------------------- | ---------------------- |
-| `1001` | `WS_CLOSE_CODES.SHUTDOWN`      | 侧车停机                                      | 稍后重连               |
-| `4400` | `WS_CLOSE_CODES.BAD_MESSAGE`   | 消息格式错误                                  | 修正代码，不要重连     |
-| `4401` | `WS_CLOSE_CODES.UNAUTHORIZED`  | 未鉴权、token 无效或已吊销、5 秒内没有 `auth` | 重新取 token 后再连    |
-| `4403` | `WS_CLOSE_CODES.FORBIDDEN`     | 没有 `tasks:read`                             | 不要重连               |
-| `4008` | `WS_CLOSE_CODES.SLOW_CONSUMER` | 待发送数据超过 8 MB                           | 带 `afterSeq` 立即重连 |
+| 关闭码 | 常量                           | 含义                                          | 客户端应当                         |
+| ------ | ------------------------------ | --------------------------------------------- | ---------------------------------- |
+| `1001` | `WS_CLOSE_CODES.SHUTDOWN`      | 侧车停机                                      | 稍后重连                           |
+| `4400` | `WS_CLOSE_CODES.BAD_MESSAGE`   | 消息格式错误                                  | 修正代码，不要重连                 |
+| `4401` | `WS_CLOSE_CODES.UNAUTHORIZED`  | 未鉴权、token 无效或已吊销、5 秒内没有 `auth` | 重新取 token 后再连                |
+| `4403` | `WS_CLOSE_CODES.FORBIDDEN`     | 没有 `tasks:read`                             | 不要重连                           |
+| `4008` | `WS_CLOSE_CODES.SLOW_CONSUMER` | 待发送数据超过 8 MB                           | 带 `afterSeq` 退避重连，上限 10 秒 |
 
 ## 7. 错误码
 

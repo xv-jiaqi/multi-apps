@@ -6,7 +6,7 @@
 
 ## 1. 布局
 
-单窗口三栏。顶栏 44 px、Bot 工具条 32 px、收起后的左栏竖条 40 px、中栏 360 px、右栏最小 380 px。Bot 面板三档 **360 / 440 / 560**，默认 440、展开。窗口放不下当前档时逐档调窄，`localStorage` 里的偏好不变。
+单窗口三栏。顶栏 44 px、Bot 工具条 32 px、收起后的左栏竖条 40 px、中栏 360 px、右栏最小 380 px。Bot 面板三档 **360 / 440 / 560**，默认 440、展开。窗口放不下当前档时逐档调窄，`localStorage` 里的偏好不变。窗口最小 1100×680（desktop-shell.md §2），不做窄屏或单栏布局。
 
 路由用 `createHashRouter`（D22）：
 
@@ -242,7 +242,7 @@ declare const client: {
 
 `configure(null)` 用于侧车断开。`request` 把非 2xx 的契约错误转成 `ApiError`。
 
-WebSocket（`api/socket.ts`）首条消息 `auth`，`ready` 后重发全部订阅。状态 `idle | connecting | open | reconnecting | stopped`。`getStatus` / `subscribeStatus` 供 `useSyncExternalStore`。重连间隔 1、2、5、10 秒，之后保持 10 秒。`4008` 立即重连。`4400`、`4403`、`4401` 停止；侧车给出新 token 后由 `connect()` 重新开始。
+WebSocket（`api/socket.ts`）首条消息 `auth`，`ready` 后重发全部订阅。状态 `idle | connecting | open | reconnecting | stopped`。`getStatus` / `subscribeStatus` 供 `useSyncExternalStore`。重连间隔 1、2、5、10 秒，之后保持 10 秒。`4008` 也走这组间隔，不立即重连。`4400`、`4403`、`4401` 停止；侧车给出新 token 后由 `connect()` 重新开始。
 
 ```ts
 type TasksHandlers = {
