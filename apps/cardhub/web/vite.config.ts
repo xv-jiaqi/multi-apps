@@ -61,6 +61,14 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}', 'test/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['src/**/*.browser.test.tsx'],
+    // This package's tests run beside the API jest suite and agent-hub vitest.
+    // Leaving maxWorkers at the CPU count let those runners oversubscribe a
+    // 4-core CI machine. Two workers overlap files without taking every core.
+    maxWorkers: 2,
+    // Vitest's default 300ms marks ordinary tests once the runner is busy.
+    // 1s is still 5x under the 5000ms timeout, so a slow test is printed
+    // while it is still passing.
+    slowTestThreshold: 1_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html', 'lcov'],

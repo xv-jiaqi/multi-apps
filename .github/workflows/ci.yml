@@ -100,7 +100,15 @@ jobs:
         run: pnpm --filter @cardhub/web --fail-if-no-match exec playwright install --with-deps chromium
 
       - name: Test
-        run: pnpm test
+        # ubuntu-latest has 4 vCPUs. turbo's default runs every ready test
+        # task together, and each vitest/jest then forks about one worker per
+        # core. On fa6ecc2 (run 40676902358) @cardhub/web vitest, @cardhub/api
+        # jest, and @agent-hub/web vitest overlapped; forum-detail.test.tsx
+        # took 5192ms and crossed the 5000ms timeout. Two turbo tasks at a
+        # time, with each runner capped at 2 workers below, stays near the
+        # core count. Isolated, the web jsdom suite was 27.7s with the default
+        # worker count and 35.9s with --maxWorkers=2.
+        run: pnpm exec turbo run test --concurrency=2
 
   deploy-scripts:
     name: Deploy script tests

@@ -109,6 +109,9 @@ export default defineConfig({
   },
   test: {
     include: ['src/**/*.browser.test.tsx'],
+    // Same reporting line as the jsdom suite. Browser mode keeps its own
+    // worker count; only the slow-test threshold is shared.
+    slowTestThreshold: 1_000,
     browser: {
       enabled: true,
       headless: true,
