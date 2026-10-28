@@ -256,7 +256,13 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
 
         <Card className="border-white/60 bg-white/70 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-base">{tt('series.detail.commentsTitle')}</CardTitle>
+            <CardTitle
+              id="comment-section-title"
+              tabIndex={-1}
+              className="text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              {tt('series.detail.commentsTitle')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <CommentSection target={{ kind: 'series', slug: series.slug }} />

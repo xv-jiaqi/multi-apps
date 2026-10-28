@@ -68,6 +68,16 @@ export function useFocusOnPersistentError(
   }, [restore, targetRef]);
 }
 
+const retryButtonVariantClassName = {
+  /** Callers pass the surrounding button chrome through `className`. */
+  default: '',
+  /** G-3 inline control inside a field-level red bar. */
+  inline:
+    'inline-flex min-h-6 items-center rounded px-1 text-xs font-medium text-red-700 underline hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+} as const;
+
+export type RetryButtonVariant = keyof typeof retryButtonVariantClassName;
+
 export const RetryButton = forwardRef<
   HTMLButtonElement,
   {
@@ -76,8 +86,12 @@ export const RetryButton = forwardRef<
     retryingLabel: string;
     onRetry: () => void;
     className?: string;
+    variant?: RetryButtonVariant;
   }
->(function RetryButton({ retrying, label, retryingLabel, onRetry, className }, ref) {
+>(function RetryButton(
+  { retrying, label, retryingLabel, onRetry, className, variant = 'default' },
+  ref,
+) {
   return (
     <button
       ref={ref}
@@ -88,7 +102,11 @@ export const RetryButton = forwardRef<
         if (retrying) return;
         onRetry();
       }}
-      className={cn(className, retrying && 'cursor-not-allowed opacity-50')}
+      className={cn(
+        retryButtonVariantClassName[variant],
+        className,
+        retrying && 'cursor-not-allowed opacity-50',
+      )}
     >
       {retrying ? retryingLabel : label}
     </button>

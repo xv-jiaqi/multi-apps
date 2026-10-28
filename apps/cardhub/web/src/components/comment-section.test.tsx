@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
 
 const utilsInvalidate = vi.fn();
+const listRepliesFetch = vi.fn();
 const mutateMock = vi.fn();
 const deleteMutateMock = vi.fn();
 const refetchMock = vi.fn();
@@ -19,6 +20,14 @@ const queryState: {
         content: string;
         createdAt: string;
         user: { id: string; username: string };
+        replyCount?: number;
+        repliesNextCursor?: string | null;
+        replies?: Array<{
+          id: string;
+          content: string;
+          createdAt: string;
+          user: { id: string; username: string };
+        }>;
       }>
     | undefined;
   isLoading: boolean;
@@ -104,6 +113,7 @@ vi.mock('../lib/trpc', () => {
         comments: {
           listForCard: { invalidate: utilsInvalidate },
           listForSeries: { invalidate: utilsInvalidate },
+          listReplies: { fetch: listRepliesFetch },
         },
       }),
     },
@@ -139,6 +149,7 @@ function renderSeriesShell() {
 
 beforeEach(() => {
   utilsInvalidate.mockClear();
+  listRepliesFetch.mockReset();
   mutateMock.mockClear();
   deleteMutateMock.mockClear();
   refetchMock.mockClear();
@@ -807,5 +818,279 @@ describe('CommentSection (authenticated)', () => {
     expect(alert).not.toHaveTextContent('LEAK');
     expect(alert).not.toHaveTextContent('Prisma');
     expect(field).toHaveValue('keep this');
+  });
+});
+
+describe('CommentSection replies', () => {
+  const thread = {
+    id: '11111111-1111-4111-8111-111111111111',
+    content: 'top comment',
+    createdAt: '2026-05-01T00:00:00.000Z',
+    user: { id: 'u2', username: 'bob' },
+    replyCount: 1,
+    repliesNextCursor: null,
+    replies: [
+      {
+        id: '22222222-2222-4222-8222-222222222222',
+        content: 'older reply',
+        createdAt: '2026-05-01T01:00:00.000Z',
+        user: { id: 'u3', username: 'cara' },
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    rootStore.session.signIn('jwt.token', { id: 'u1', username: 'alice' });
+    queryState.data = [thread];
+  });
+
+  it('keeps the reply button enabled and rejects an empty reply without a request', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    const field = screen.getByRole('textbox', { name: '回复 @bob' });
+    expect(field).toHaveFocus();
+    const submit = screen.getByRole('button', { name: '回复' });
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+    expect(mutateMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('写点内容再回复');
+    expect(field).toHaveFocus();
+
+    await user.type(field, '@cara');
+    await user.click(submit);
+    expect(mutateMock).not.toHaveBeenCalled();
+  });
+
+  it('appends a successful reply without reloading the list', async () => {
+    const user = userEvent.setup();
+    mutateMock.mockImplementation((input, callbacks) => {
+      callbacks.onSuccess(
+        {
+          id: 'r-new',
+          content: input.content,
+          createdAt: '2026-05-01T02:00:00.000Z',
+          user: { id: 'u1', username: 'alice' },
+        },
+        input,
+      );
+    });
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    await user.type(screen.getByRole('textbox', { name: '回复 @bob' }), 'looks good');
+    await user.click(screen.getByRole('button', { name: '回复' }));
+    expect(mutateMock.mock.calls[0]?.[0]).toEqual({
+      cardSlug: 'aurora-knight',
+      content: 'looks good',
+      parentId: '11111111-1111-4111-8111-111111111111',
+    });
+    expect(utilsInvalidate).not.toHaveBeenCalled();
+    const posted = document.getElementById('reply-r-new');
+    expect(posted).toHaveTextContent('looks good');
+    expect(posted).toHaveFocus();
+    expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).not.toHaveFocus();
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('回复已发布');
+    expect(status).toHaveClass('sr-only');
+    expect(screen.getByText('2 条回复')).toBeInTheDocument();
+  });
+
+  it('focuses the new reply li after it mounts, not its delete button', async () => {
+    const user = userEvent.setup();
+    mutateMock.mockImplementation((input, callbacks) => {
+      callbacks.onSuccess(
+        {
+          id: 'mounted',
+          content: input.content,
+          createdAt: '2026-05-01T02:00:00.000Z',
+          user: { id: 'u1', username: 'alice' },
+        },
+        input,
+      );
+    });
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    await user.type(screen.getByRole('textbox', { name: '回复 @bob' }), 'mounted focus');
+    await user.click(screen.getByRole('button', { name: '回复' }));
+    const posted = document.getElementById('reply-mounted');
+    expect(posted?.tagName).toBe('LI');
+    expect(document.activeElement).toBe(posted);
+    expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).not.toHaveFocus();
+  });
+
+  it('sizes delete with the other actions and wraps a reply author instead of truncating it', () => {
+    rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob', role: 'admin' });
+    renderShell();
+    expect(screen.getByRole('button', { name: '删除 @bob 的评论' })).toHaveClass('text-xs', 'text-red-700');
+    const author = screen.getByText('@cara');
+    expect(author).toHaveClass('wrap-anywhere');
+    expect(author).not.toHaveClass('truncate');
+    expect(screen.getByRole('button', { name: '删除 @cara 的评论' })).toHaveClass('text-xs', 'text-red-700');
+    expect(screen.getAllByText('0 / 500')[0]).toHaveClass('text-neutral-600');
+    expect(screen.getAllByRole('button', { name: '举报' })[0]).toHaveClass('text-neutral-600');
+    expect(screen.getByText('top comment').previousElementSibling).toHaveClass('text-neutral-600');
+  });
+
+  it('prefills a mention when replying to a reply and returns focus on Escape', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @cara' }));
+    const field = screen.getByRole('textbox', { name: '回复 @cara' });
+    expect(field).toHaveValue('@cara ');
+    expect((field as HTMLTextAreaElement).selectionStart).toBe('@cara '.length);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('textbox', { name: '回复 @cara' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '回复 @cara' })).toHaveFocus();
+  });
+
+  it('shows parentGone without retry, refreshes, and focuses the section title', async () => {
+    const user = userEvent.setup();
+    mutateMock.mockImplementation((input, callbacks) => {
+      callbacks.onError(
+        {
+          message: '这条评论已被删除，无法回复',
+          data: { code: 'NOT_FOUND', appCode: APP_ERROR_CODES.COMMENT_PARENT_GONE },
+        },
+        input,
+      );
+    });
+    render(
+      <MemoryRouter>
+        <h3 id="comment-section-title" tabIndex={-1}>
+          评论区
+        </h3>
+        <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    await user.type(screen.getByRole('textbox', { name: '回复 @bob' }), 'still here');
+    await user.click(screen.getByRole('button', { name: '回复' }));
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('这条评论已被删除，无法回复');
+    expect(alert).not.toHaveTextContent('重试');
+    expect(screen.queryByRole('textbox', { name: '回复 @bob' })).not.toBeInTheDocument();
+    expect(utilsInvalidate).toHaveBeenCalled();
+    expect(document.getElementById('comment-section-title')).toHaveFocus();
+  });
+
+  it('loads the rest of the replies and reports a failure in place', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        ...thread,
+        replyCount: 4,
+        repliesNextCursor: '33333333-3333-4333-8333-333333333333',
+        replies: [
+          thread.replies[0]!,
+          {
+            id: '44444444-4444-4444-8444-444444444444',
+            content: 'second',
+            createdAt: '2026-05-01T01:10:00.000Z',
+            user: { id: 'u2', username: 'bob' },
+          },
+          {
+            id: '33333333-3333-4333-8333-333333333333',
+            content: 'third',
+            createdAt: '2026-05-01T01:20:00.000Z',
+            user: { id: 'u3', username: 'cara' },
+          },
+        ],
+      },
+    ];
+    listRepliesFetch.mockRejectedValueOnce(new Error('nope'));
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '展开其余 1 条回复' }));
+    expect(listRepliesFetch).toHaveBeenCalledWith({
+      parentId: '11111111-1111-4111-8111-111111111111',
+      cursor: '33333333-3333-4333-8333-333333333333',
+      limit: 20,
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('回复加载失败');
+    expect(screen.getByText('older reply')).toBeInTheDocument();
+
+    listRepliesFetch.mockResolvedValueOnce({
+      items: [
+        {
+          id: 'r4',
+          content: 'fourth',
+          createdAt: '2026-05-01T01:30:00.000Z',
+          user: { id: 'u1', username: 'alice' },
+        },
+      ],
+      nextCursor: null,
+    });
+    await user.click(screen.getByRole('button', { name: '重试' }));
+    expect(screen.getByText('fourth')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /展开其余/ })).not.toBeInTheDocument();
+    expect(document.getElementById('reply-r4')).toHaveFocus();
+  });
+
+  it('hides reply when signed out and does not render an empty reply list', () => {
+    rootStore.session.signOut();
+    queryState.data = [
+      {
+        ...thread,
+        replyCount: 0,
+        replies: [],
+      },
+    ];
+    renderShell();
+    expect(screen.queryByRole('button', { name: /回复 @/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: '对 @bob 的回复' })).not.toBeInTheDocument();
+    expect(screen.queryByText('暂无回复')).not.toBeInTheDocument();
+    expect(screen.queryByText(/条回复/)).not.toBeInTheDocument();
+  });
+
+  it('submits a series reply with Ctrl+Enter and keeps the composer busy until it settles', async () => {
+    const user = userEvent.setup();
+    mutateMock.mockImplementation(() => undefined);
+    renderSeriesShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    const field = screen.getByRole('textbox', { name: '回复 @bob' });
+    await user.type(field, 'series note');
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    expect(mutateMock.mock.calls[0]?.[0]).toEqual({
+      seriesSlug: 'sky-dawn',
+      content: 'series note',
+      parentId: thread.id,
+    });
+    expect(screen.getByRole('button', { name: '发送中…' })).toBeDisabled();
+    expect(field).toHaveAttribute('readonly');
+    expect(field.closest('form')).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('removes a reply and focuses the visible deleted status', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'u3', username: 'cara' });
+    const user = userEvent.setup();
+    deleteMutateMock.mockImplementation((_input, callbacks) => {
+      callbacks.onSuccess();
+    });
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '删除 @cara 的评论' }));
+    expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '删除' }));
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('回复已删除');
+    expect(status).toHaveClass('bg-emerald-50');
+    expect(status).toHaveFocus();
+    expect(screen.queryByText('older reply')).not.toBeInTheDocument();
+    expect(screen.queryByText(/条回复/)).not.toBeInTheDocument();
+  });
+
+  it('asks an admin for a reason before deleting someone else’s reply', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'admin', username: 'admin', role: 'admin' });
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '删除 @cara 的评论' }));
+    expect(screen.getByLabelText('删除原因（选填，只有管理员能看到）')).toBeInTheDocument();
+    expect(screen.getByText('删除这条回复？')).toBeInTheDocument();
+  });
+
+  it('confirms deleting a top-level comment together with its replies', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob' });
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '删除 @bob 的评论' }));
+    expect(screen.getByText('删除这条评论？它的 1 条回复也会一起删除。')).toBeInTheDocument();
   });
 });

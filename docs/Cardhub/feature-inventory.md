@@ -80,7 +80,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 | 举报评论                     | ✅   | 评论旁     | `reports.create`                                      | 自己的评论不显示举报按钮                                                                                      |
 | 系列页评论                   | ✅   | 系列详情页 | `comments.listForSeries` / `comments.createForSeries` | Web / Tauri 复用卡牌评论区交互；小程序同步留到 CH-301                                                         |
 | 评论加载失败可重试           | ✅   | 卡牌和系列 | `comments.listForCard` / `comments.listForSeries`     | 评论加载失败可以重试；重试时保留错误框，按钮显示「重试中」且焦点留在按钮上。点击「重试中」不会穿透            |
-| 评论回复                     | ❌   | —          | —                                                     | 历史架构文档设计了 `parent_comment_id`（CH-204）                                                              |
+| 评论回复                     | ✅   | 卡牌详情、系列详情 | `comments.listForCard` / `listForSeries` / `listReplies` / `create` / `createForSeries` | 单层。顶层最新 50 条；每条最多 3 条回复、`replyCount`（硬删后只数现存行）和 `repliesNextCursor`。回复最旧在前，每页 20。小程序只显示顶层 |
 
 ### 3.5 论坛
 

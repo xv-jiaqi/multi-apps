@@ -125,7 +125,7 @@ function measure(listLabel: string) {
   const header = cardEl?.firstElementChild;
   const name = header?.querySelector('span');
   const time = header?.querySelector('time');
-  const report = header?.querySelector('a');
+  const report = cardEl?.querySelector('a');
   const rect = (node: Element | null | undefined) => {
     if (!node) return null;
     const box = node.getBoundingClientRect();

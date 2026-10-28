@@ -19,15 +19,12 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createApp } from './bootstrap/create-app';
 import { installHttpDrain } from './bootstrap/graceful-shutdown';
-import { PrismaService } from './modules/prisma/prisma.service';
-import { RedisService } from './modules/redis/redis.service';
 
 async function bootstrap(): Promise<void> {
   const app = await createApp();
-  // onModuleDestroy disconnects Prisma and Redis before Nest closes the
-  // socket. Drain first so an in-flight request still has those clients.
-  app.enableShutdownHooks();
-  installHttpDrain(app, [app.get(PrismaService), app.get(RedisService)]);
+  // Own SIGTERM/SIGINT handling: drain first, then app.close() runs Nest's
+  // resource hooks. enableShutdownHooks() would re-send the signal on exit.
+  installHttpDrain(app);
   const logger = new Logger('Bootstrap');
 
   const config = app.get(ConfigService);
