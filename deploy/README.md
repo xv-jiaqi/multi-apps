@@ -276,7 +276,12 @@ rename, retype, or drop columns, tables, or constraints that the running
 version uses. Ship that kind of change in a later release, after no running
 code depends on the old shape. Prisma does not roll a migration back
 automatically; a failed deploy that rolls the containers back does not undo
-the schema.
+the schema. Do not delete or edit a migration directory after it has landed
+on `main`. Roll a schema change back with a new forward migration in its own
+pull request, and only after every release that still depends on the old
+shape has stopped. Authoring steps and examples are in
+[docs/Cardhub/development-backlog.md](../docs/Cardhub/development-backlog.md)
+§1.3.
 
 ### Stopping the old API container
 

@@ -17,7 +17,7 @@
 ## 1. 通用完成标准（每个任务都适用）
 
 - [ ] `pnpm typecheck && pnpm lint && pnpm test && pnpm build` 全部通过。
-- [ ] **Schema 变更**：用 `pnpm --filter @cardhub/api exec prisma migrate dev --name <snake_case>` 生成迁移并提交。生产启动时自动执行 `prisma migrate deploy`，回滚镜像不会撤销迁移，所以**只做向前兼容的增量变更**：新列可空或带默认值；删列 / 改名分两次发布。
+- [ ] **Schema 变更**：Prisma 迁移只增不删，按 §1.3 做。用 `pnpm --filter @cardhub/api exec prisma migrate dev --name <snake_case>` 生成迁移并提交。
 - [ ] **共享包**：改了 `packages/*` 要 build 对应包；改了任何 router 的输入输出要 `pnpm --filter @repo/trpc-contract build`，否则客户端拿到旧类型。
 - [ ] **输入校验**：新的输入 schema 放 `packages/shared/src/zod/index.ts`，前后端共用；前端提交前 `safeParse`。
 - [ ] **权限**：需要登录用 `t.authedProcedure`；“本人或管理员”沿用现有写法（先比对所有者，不是本人时再查库确认 `role === 'admin'`）；管理员接口每次请求都重新查库确认角色，不信任 token 里的信息。
@@ -40,6 +40,19 @@
 - `apps/cardhub/api/prisma/schema.prisma` 和迁移目录：合并前 rebase 到最新 `main`；解决 schema 冲突后运行 `prisma migrate dev --create-only --name check`，确认没有生成多余的 diff 再删掉这个临时迁移。
 - `packages/shared/src/i18n/index.ts`：按模块分组插入新 key。
 - `rate-limiters.ts`、`trpc.service.ts`、`trpc.module.ts`、`apps/cardhub/web/src/app.tsx`、`site-header.tsx`：只追加自己的条目，不要顺手重排。
+
+### 1.3 Prisma 迁移只增不删
+
+生产在新 API 容器起来之前就执行 `prisma migrate deploy`，上一版进程在这段重叠时间里仍读写同一库。镜像回滚只换容器，不会撤销已经落库的迁移。部署侧说明见 [deploy/README.md](../../deploy/README.md#schema-compatibility)。因此 Cardhub 的 Prisma 迁移只增不删。
+
+- 已经合入 `main` 的迁移目录和 `migration.sql` 不得删除或修改。还没有出现在 `main` 上的本地临时迁移可以删，包括 §1.2 里 `prisma migrate dev --create-only --name check` 生成的那份。
+- 修改 schema 走扩展-收缩。先加可空列，或加旧版本不读的新表；新列要可空，或者带上旧版本插入时能直接用的默认值。然后双写或回填（旧数据本来就可以为空时，不做回填）。再把读取切到新结构。最后才收缩：删列、改列名、收紧约束。收缩必须单独开 PR，并且要等仍依赖旧结构的版本已经全部下线。滚动发布还没结束时，旧版本仍在服务，这一版里不能收缩。
+- 不要在同一个迁移里删列或改列名。一次迁移只做旧版本还能照常读写的变更。
+- 回滚靠新的前向迁移，不靠删除迁移文件，也不靠改写已经合入的 `migration.sql`。`prisma migrate deploy` 不会自动倒放。
+
+正例：[20261027143000_add_comment_parent_id](../../apps/cardhub/api/prisma/migrations/20261027143000_add_comment_parent_id/migration.sql) 只给 `comments` 加可空列 `parentId`、索引和外键。旧版本不读这列，已有行不用回填也能打开。
+
+反例：在同一个迁移里执行 `RENAME COLUMN`，或者为了撤回某次变更而删掉已经合入 `main` 的迁移目录。改列名会让仍在跑的旧容器读写失败；删掉迁移文件也不会从已经执行过这次迁移的数据库里撤掉它。
 
 ## 2. 任务总览
 
@@ -428,7 +441,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - API：评论列表返回顶层评论，每条附最多 3 条回复和 `replyCount`；新增 `comments.listReplies({ parentId, cursor })`；创建评论接受可选 `parentId`，必须属于同一张卡牌（或同一个系列，若 CH-101 已完成）且是顶层评论。
   - Web：评论下“回复”按钮、内联输入框、缩进显示，“展开更多回复”。
 - **依赖**：CH-002（删除顶层评论会级联删除回复，需要界面提示）。
-- **回滚**：迁移只加可空列 `parentId`、索引和外键（`ON DELETE CASCADE`），以及 `(parentId, createdAt, id)` 复合索引。旧服务不读这列。先把应用退回上一版，再按顺序丢掉 `comments_parentId_createdAt_id_idx`、`comments_parentId_fkey`、`comments_parentId_idx` 和 `parentId`。新版本还在跑时不要删列。退回旧版但列还在时，旧列表不过滤 `parentId`，回复会当成顶层评论出现（条数会变多）。可以接受，回滚时要知道。
+- **回滚**：迁移只加可空列 `parentId`、索引和外键（`ON DELETE CASCADE`），以及 `(parentId, createdAt, id)` 复合索引。旧服务不读这列。先把应用退回上一版。丢掉 `comments_parentId_createdAt_id_idx`、`comments_parentId_fkey`、`comments_parentId_idx` 和 `parentId` 必须通过新的前向迁移来做，见 §1.3；不要改已经合入的迁移文件。新版本还在跑时不要删列。退回旧版但列还在时，旧列表不过滤 `parentId`，回复会当成顶层评论出现（条数会变多）。可以接受，回滚时要知道。
 
 #### CH-205 首页改版
 
