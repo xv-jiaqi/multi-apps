@@ -3,6 +3,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useId,
   useMemo,
   useRef,
@@ -276,24 +277,28 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   // Reply rows are memoized. These wrappers stay stable so typing a reply
   // does not re-render every row (and re-parse its Markdown) on each key.
+  // The latest closures are stored after commit, not during render, so a
+  // discarded concurrent render cannot publish its handlers.
   const replyActionsRef = useRef({
     askDelete(_replyId: string) {},
     confirmDelete(_replyId: string, _reason?: string) {},
     cancelDelete(_replyId: string) {},
   });
-  replyActionsRef.current = {
-    askDelete(replyId) {
-      clearDeleteState();
-      setConfirmingDelete({ kind: 'reply', id: replyId });
-    },
-    confirmDelete(replyId, reason) {
-      deleteReply.mutate(reason ? { id: replyId, reason } : { id: replyId });
-    },
-    cancelDelete(replyId) {
-      setConfirmingDelete(null);
-      focusDeleteButton({ kind: 'reply', id: replyId });
-    },
-  };
+  useLayoutEffect(() => {
+    replyActionsRef.current = {
+      askDelete(replyId) {
+        clearDeleteState();
+        setConfirmingDelete({ kind: 'reply', id: replyId });
+      },
+      confirmDelete(replyId, reason) {
+        deleteReply.mutate(reason ? { id: replyId, reason } : { id: replyId });
+      },
+      cancelDelete(replyId) {
+        setConfirmingDelete(null);
+        focusDeleteButton({ kind: 'reply', id: replyId });
+      },
+    };
+  });
   const askDeleteReply = useCallback((replyId: string) => {
     replyActionsRef.current.askDelete(replyId);
   }, []);
