@@ -1,0 +1,58 @@
+head 16c62ef40772ada2d1dbf5b460c9340ae915d9a0
+headCommittedAt 2026-10-28T08:44:08+00:00
+runOnly wcag2a,wcag2aa,wcag21a,wcag21aa,wcag22aa
+smoke startedAt 2026-10-28T08:46:35.150Z
+mode file /tmp/hub-mode=empty
+--- empty-zh-1100 viewport 1100x680 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1100,"innerHeight":680,"scrollWidth":1100,"clientWidth":1100,"gridTemplateColumns":"360px 360px 380px","bot":{"x":0,"y":44,"width":360,"height":636,"right":360,"bottom":680},"list":{"x":360,"y":44,"width":360,"height":636,"right":720,"bottom":680},"detail":{"x":720,"y":44,"width":380,"height":636,"right":1100,"bottom":680},"header":{"x":0,"y":0,"width":1100,"height":44,"right":1100,"bottom":44}}
+consoleErrors []
+PASS empty-zh-1100
+axe empty-zh-1100 violations=0 at 2026-10-28T08:46:36.343Z
+--- empty-zh-1440 viewport 1440x900 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1440,"innerHeight":900,"scrollWidth":1440,"clientWidth":1440,"gridTemplateColumns":"440px 360px 640px","bot":{"x":0,"y":44,"width":440,"height":856,"right":440,"bottom":900},"list":{"x":440,"y":44,"width":360,"height":856,"right":800,"bottom":900},"detail":{"x":800,"y":44,"width":640,"height":856,"right":1440,"bottom":900},"header":{"x":0,"y":0,"width":1440,"height":44,"right":1440,"bottom":44}}
+consoleErrors []
+PASS empty-zh-1440
+axe empty-zh-1440 violations=0 at 2026-10-28T08:46:37.602Z
+mode file /tmp/hub-mode=loading
+--- loading-zh-1100 viewport 1100x680 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1100,"innerHeight":680,"scrollWidth":1100,"clientWidth":1100,"gridTemplateColumns":"360px 360px 380px","bot":{"x":0,"y":44,"width":360,"height":636,"right":360,"bottom":680},"list":{"x":360,"y":44,"width":360,"height":636,"right":720,"bottom":680},"detail":{"x":720,"y":44,"width":380,"height":636,"right":1100,"bottom":680},"header":{"x":0,"y":0,"width":1100,"height":44,"right":1100,"bottom":44}}
+consoleErrors []
+PASS loading-zh-1100
+axe loading-zh-1100 violations=0 at 2026-10-28T08:46:39.793Z
+--- loading-zh-1440 viewport 1440x900 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1440,"innerHeight":900,"scrollWidth":1440,"clientWidth":1440,"gridTemplateColumns":"440px 360px 640px","bot":{"x":0,"y":44,"width":440,"height":856,"right":440,"bottom":900},"list":{"x":440,"y":44,"width":360,"height":856,"right":800,"bottom":900},"detail":{"x":800,"y":44,"width":640,"height":856,"right":1440,"bottom":900},"header":{"x":0,"y":0,"width":1440,"height":44,"right":1440,"bottom":44}}
+consoleErrors []
+PASS loading-zh-1440
+axe loading-zh-1440 violations=0 at 2026-10-28T08:46:40.597Z
+mode file /tmp/hub-mode=error
+--- error-zh-1100 viewport 1100x680 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1100,"innerHeight":680,"scrollWidth":1100,"clientWidth":1100,"gridTemplateColumns":"360px 360px 380px","bot":{"x":0,"y":44,"width":360,"height":636,"right":360,"bottom":680},"list":{"x":360,"y":44,"width":360,"height":636,"right":720,"bottom":680},"detail":{"x":720,"y":44,"width":380,"height":636,"right":1100,"bottom":680},"header":{"x":0,"y":0,"width":1100,"height":44,"right":1100,"bottom":44}}
+consoleErrors ["Failed to load resource: the server responded with a status of 500 (Internal Server Error)","Failed to load resource: the server responded with a status of 500 (Internal Server Error)"]
+PASS error-zh-1100
+axe error-zh-1100 violations=0 at 2026-10-28T08:46:41.410Z
+--- error-zh-1440 viewport 1440x900 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1440,"innerHeight":900,"scrollWidth":1440,"clientWidth":1440,"gridTemplateColumns":"440px 360px 640px","bot":{"x":0,"y":44,"width":440,"height":856,"right":440,"bottom":900},"list":{"x":440,"y":44,"width":360,"height":856,"right":800,"bottom":900},"detail":{"x":800,"y":44,"width":640,"height":856,"right":1440,"bottom":900},"header":{"x":0,"y":0,"width":1440,"height":44,"right":1440,"bottom":44}}
+consoleErrors ["Failed to load resource: the server responded with a status of 500 (Internal Server Error)","Failed to load resource: the server responded with a status of 500 (Internal Server Error)"]
+PASS error-zh-1440
+axe error-zh-1440 violations=0 at 2026-10-28T08:46:42.543Z
+mode file /tmp/hub-mode=success
+--- success-zh-1100 viewport 1100x680 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1100,"innerHeight":680,"scrollWidth":1100,"clientWidth":1100,"gridTemplateColumns":"360px 360px 380px","bot":{"x":0,"y":44,"width":360,"height":636,"right":360,"bottom":680},"list":{"x":360,"y":44,"width":360,"height":636,"right":720,"bottom":680},"detail":{"x":720,"y":44,"width":380,"height":636,"right":1100,"bottom":680},"header":{"x":0,"y":0,"width":1100,"height":44,"right":1100,"bottom":44}}
+consoleErrors []
+PASS success-zh-1100
+axe success-zh-1100 violations=0 at 2026-10-28T08:46:43.358Z
+--- success-zh-1440 viewport 1440x900 ---
+GET http://localhost:5174/#uiToken=ahu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> 200
+geometry {"innerWidth":1440,"innerHeight":900,"scrollWidth":1440,"clientWidth":1440,"gridTemplateColumns":"440px 360px 640px","bot":{"x":0,"y":44,"width":440,"height":856,"right":440,"bottom":900},"list":{"x":440,"y":44,"width":360,"height":856,"right":800,"bottom":900},"detail":{"x":800,"y":44,"width":640,"height":856,"right":1440,"bottom":900},"header":{"x":0,"y":0,"width":1440,"height":44,"right":1440,"bottom":44}}
+consoleErrors []
+PASS success-zh-1440
+axe success-zh-1440 violations=0 at 2026-10-28T08:46:44.349Z
+smoke finishedAt 2026-10-28T08:46:44.488Z
+failures 0

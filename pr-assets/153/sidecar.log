@@ -1,0 +1,153 @@
+fake sidecar on 47821
+2026-10-28T08:46:22.261Z GET /api/v1/health mode=success -> 200
+2026-10-28T08:46:28.944Z GET /api/v1/health mode=success -> 200
+2026-10-28T08:46:35.736Z UPGRADE /api/v1/ws
+2026-10-28T08:46:35.764Z OPTIONS /api/v1/agents mode=empty -> 204
+2026-10-28T08:46:35.769Z OPTIONS /api/v1/approvals?status=pending mode=empty -> 204
+2026-10-28T08:46:35.769Z GET /api/v1/agents mode=empty -> 200
+2026-10-28T08:46:35.771Z GET /api/v1/approvals?status=pending mode=empty -> 200
+2026-10-28T08:46:35.772Z OPTIONS /api/v1/settings mode=empty -> 204
+2026-10-28T08:46:35.774Z GET /api/v1/settings mode=empty -> 200
+2026-10-28T08:46:35.775Z GET /api/v1/approvals?status=pending mode=empty -> 200
+2026-10-28T08:46:35.776Z OPTIONS /api/v1/settings mode=empty -> 204
+2026-10-28T08:46:35.778Z GET /api/v1/agents mode=empty -> 200
+2026-10-28T08:46:35.779Z GET /api/v1/settings mode=empty -> 200
+2026-10-28T08:46:35.820Z WS auth
+2026-10-28T08:46:35.828Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=empty -> 204
+2026-10-28T08:46:35.829Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=empty -> 204
+2026-10-28T08:46:35.832Z WS subscribe
+2026-10-28T08:46:35.833Z GET /api/v1/tasks?archived=false&limit=50 mode=empty -> 200
+2026-10-28T08:46:35.833Z GET /api/v1/tasks?archived=false&limit=50 mode=empty -> 200
+2026-10-28T08:46:35.858Z GET /api/v1/approvals?status=pending mode=empty -> 200
+2026-10-28T08:46:35.858Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=empty -> 204
+2026-10-28T08:46:35.859Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=empty -> 200
+2026-10-28T08:46:36.912Z UPGRADE /api/v1/ws
+2026-10-28T08:46:36.939Z OPTIONS /api/v1/agents mode=empty -> 204
+2026-10-28T08:46:36.940Z OPTIONS /api/v1/approvals?status=pending mode=empty -> 204
+2026-10-28T08:46:36.940Z OPTIONS /api/v1/settings mode=empty -> 204
+2026-10-28T08:46:36.940Z GET /api/v1/agents mode=empty -> 200
+2026-10-28T08:46:36.942Z GET /api/v1/approvals?status=pending mode=empty -> 200
+2026-10-28T08:46:36.943Z GET /api/v1/settings mode=empty -> 200
+2026-10-28T08:46:36.947Z GET /api/v1/agents mode=empty -> 200
+2026-10-28T08:46:36.948Z GET /api/v1/approvals?status=pending mode=empty -> 200
+2026-10-28T08:46:36.948Z GET /api/v1/settings mode=empty -> 200
+2026-10-28T08:46:36.981Z WS auth
+2026-10-28T08:46:36.991Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=empty -> 204
+2026-10-28T08:46:36.992Z GET /api/v1/tasks?archived=false&limit=50 mode=empty -> 200
+2026-10-28T08:46:36.993Z GET /api/v1/tasks?archived=false&limit=50 mode=empty -> 200
+2026-10-28T08:46:36.996Z WS subscribe
+2026-10-28T08:46:37.026Z GET /api/v1/approvals?status=pending mode=empty -> 200
+2026-10-28T08:46:37.026Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=empty -> 204
+2026-10-28T08:46:37.026Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=empty -> 200
+2026-10-28T08:46:38.200Z UPGRADE /api/v1/ws
+2026-10-28T08:46:38.228Z OPTIONS /api/v1/agents mode=loading -> 204
+2026-10-28T08:46:38.230Z GET /api/v1/agents mode=loading -> 200
+2026-10-28T08:46:38.233Z OPTIONS /api/v1/approvals?status=pending mode=loading -> 204
+2026-10-28T08:46:38.234Z OPTIONS /api/v1/settings mode=loading -> 204
+2026-10-28T08:46:38.238Z GET /api/v1/approvals?status=pending mode=loading -> 200
+2026-10-28T08:46:38.239Z GET /api/v1/settings mode=loading -> 200
+2026-10-28T08:46:38.241Z GET /api/v1/approvals?status=pending mode=loading -> 200
+2026-10-28T08:46:38.249Z GET /api/v1/agents mode=loading -> 200
+2026-10-28T08:46:38.249Z GET /api/v1/settings mode=loading -> 200
+2026-10-28T08:46:38.272Z WS auth
+2026-10-28T08:46:38.280Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=loading -> 204
+2026-10-28T08:46:38.281Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=loading -> 204
+2026-10-28T08:46:38.285Z WS subscribe
+2026-10-28T08:46:38.317Z GET /api/v1/approvals?status=pending mode=loading -> 200
+2026-10-28T08:46:38.319Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=loading -> 204
+2026-10-28T08:46:40.169Z UPGRADE /api/v1/ws
+2026-10-28T08:46:40.194Z OPTIONS /api/v1/agents mode=loading -> 204
+2026-10-28T08:46:40.194Z OPTIONS /api/v1/approvals?status=pending mode=loading -> 204
+2026-10-28T08:46:40.195Z GET /api/v1/agents mode=loading -> 200
+2026-10-28T08:46:40.195Z OPTIONS /api/v1/settings mode=loading -> 204
+2026-10-28T08:46:40.195Z GET /api/v1/approvals?status=pending mode=loading -> 200
+2026-10-28T08:46:40.196Z GET /api/v1/settings mode=loading -> 200
+2026-10-28T08:46:40.199Z GET /api/v1/agents mode=loading -> 200
+2026-10-28T08:46:40.200Z GET /api/v1/approvals?status=pending mode=loading -> 200
+2026-10-28T08:46:40.200Z GET /api/v1/settings mode=loading -> 200
+2026-10-28T08:46:40.223Z WS auth
+2026-10-28T08:46:40.228Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=loading -> 204
+2026-10-28T08:46:40.229Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=loading -> 204
+2026-10-28T08:46:40.230Z WS subscribe
+2026-10-28T08:46:40.247Z GET /api/v1/approvals?status=pending mode=loading -> 200
+2026-10-28T08:46:40.248Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=loading -> 204
+2026-10-28T08:46:40.991Z UPGRADE /api/v1/ws
+2026-10-28T08:46:41.017Z OPTIONS /api/v1/agents mode=error -> 204
+2026-10-28T08:46:41.018Z OPTIONS /api/v1/approvals?status=pending mode=error -> 204
+2026-10-28T08:46:41.019Z GET /api/v1/agents mode=error -> 200
+2026-10-28T08:46:41.019Z OPTIONS /api/v1/settings mode=error -> 204
+2026-10-28T08:46:41.019Z GET /api/v1/approvals?status=pending mode=error -> 200
+2026-10-28T08:46:41.020Z GET /api/v1/settings mode=error -> 200
+2026-10-28T08:46:41.023Z GET /api/v1/agents mode=error -> 200
+2026-10-28T08:46:41.023Z GET /api/v1/approvals?status=pending mode=error -> 200
+2026-10-28T08:46:41.024Z GET /api/v1/settings mode=error -> 200
+2026-10-28T08:46:41.037Z WS auth
+2026-10-28T08:46:41.052Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=error -> 204
+2026-10-28T08:46:41.053Z GET /api/v1/tasks?archived=false&limit=50 mode=error -> 500
+2026-10-28T08:46:41.053Z GET /api/v1/tasks?archived=false&limit=50 mode=error -> 500
+2026-10-28T08:46:41.055Z WS subscribe
+2026-10-28T08:46:41.070Z GET /api/v1/approvals?status=pending mode=error -> 200
+2026-10-28T08:46:41.070Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=error -> 204
+2026-10-28T08:46:41.071Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=error -> 500
+2026-10-28T08:46:41.795Z UPGRADE /api/v1/ws
+2026-10-28T08:46:41.821Z OPTIONS /api/v1/agents mode=error -> 204
+2026-10-28T08:46:41.822Z GET /api/v1/agents mode=error -> 200
+2026-10-28T08:46:41.822Z OPTIONS /api/v1/approvals?status=pending mode=error -> 204
+2026-10-28T08:46:41.822Z OPTIONS /api/v1/settings mode=error -> 204
+2026-10-28T08:46:41.823Z GET /api/v1/approvals?status=pending mode=error -> 200
+2026-10-28T08:46:41.823Z GET /api/v1/settings mode=error -> 200
+2026-10-28T08:46:41.826Z GET /api/v1/agents mode=error -> 200
+2026-10-28T08:46:41.826Z GET /api/v1/approvals?status=pending mode=error -> 200
+2026-10-28T08:46:41.827Z GET /api/v1/settings mode=error -> 200
+2026-10-28T08:46:41.840Z WS auth
+2026-10-28T08:46:41.857Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=error -> 204
+2026-10-28T08:46:41.857Z GET /api/v1/tasks?archived=false&limit=50 mode=error -> 500
+2026-10-28T08:46:41.858Z GET /api/v1/tasks?archived=false&limit=50 mode=error -> 500
+2026-10-28T08:46:41.859Z WS subscribe
+2026-10-28T08:46:41.876Z GET /api/v1/approvals?status=pending mode=error -> 200
+2026-10-28T08:46:41.877Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=error -> 204
+2026-10-28T08:46:41.877Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=error -> 500
+2026-10-28T08:46:42.934Z UPGRADE /api/v1/ws
+2026-10-28T08:46:42.961Z OPTIONS /api/v1/agents mode=success -> 204
+2026-10-28T08:46:42.962Z OPTIONS /api/v1/approvals?status=pending mode=success -> 204
+2026-10-28T08:46:42.962Z GET /api/v1/agents mode=success -> 200
+2026-10-28T08:46:42.963Z OPTIONS /api/v1/settings mode=success -> 204
+2026-10-28T08:46:42.964Z GET /api/v1/approvals?status=pending mode=success -> 200
+2026-10-28T08:46:42.965Z GET /api/v1/settings mode=success -> 200
+2026-10-28T08:46:42.966Z GET /api/v1/agents mode=success -> 200
+2026-10-28T08:46:42.967Z GET /api/v1/approvals?status=pending mode=success -> 200
+2026-10-28T08:46:42.967Z GET /api/v1/settings mode=success -> 200
+2026-10-28T08:46:42.992Z WS auth
+2026-10-28T08:46:42.998Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=success -> 204
+2026-10-28T08:46:42.998Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:42.999Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:43.000Z WS subscribe
+2026-10-28T08:46:43.017Z GET /api/v1/approvals?status=pending mode=success -> 200
+2026-10-28T08:46:43.017Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=success -> 204
+2026-10-28T08:46:43.018Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=success -> 200
+2026-10-28T08:46:43.029Z WS subscribe
+2026-10-28T08:46:43.763Z UPGRADE /api/v1/ws
+2026-10-28T08:46:43.791Z OPTIONS /api/v1/agents mode=success -> 204
+2026-10-28T08:46:43.792Z OPTIONS /api/v1/approvals?status=pending mode=success -> 204
+2026-10-28T08:46:43.792Z GET /api/v1/agents mode=success -> 200
+2026-10-28T08:46:43.793Z GET /api/v1/approvals?status=pending mode=success -> 200
+2026-10-28T08:46:43.793Z OPTIONS /api/v1/settings mode=success -> 204
+2026-10-28T08:46:43.794Z GET /api/v1/settings mode=success -> 200
+2026-10-28T08:46:43.797Z GET /api/v1/agents mode=success -> 200
+2026-10-28T08:46:43.797Z GET /api/v1/approvals?status=pending mode=success -> 200
+2026-10-28T08:46:43.797Z GET /api/v1/settings mode=success -> 200
+2026-10-28T08:46:43.822Z WS auth
+2026-10-28T08:46:43.828Z OPTIONS /api/v1/tasks?archived=false&limit=50 mode=success -> 204
+2026-10-28T08:46:43.828Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:43.829Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:43.830Z WS subscribe
+2026-10-28T08:46:43.846Z GET /api/v1/approvals?status=pending mode=success -> 200
+2026-10-28T08:46:43.846Z OPTIONS /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=success -> 204
+2026-10-28T08:46:43.847Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=success -> 200
+2026-10-28T08:46:43.857Z WS subscribe
+2026-10-28T08:46:38.281Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:38.292Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:38.320Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=success -> 200
+2026-10-28T08:46:40.229Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:40.240Z GET /api/v1/tasks?archived=false&limit=50 mode=success -> 200
+2026-10-28T08:46:40.249Z GET /api/v1/tasks?archived=false&status=queued%2Cpreparing%2Crunning&limit=50 mode=success -> 200
