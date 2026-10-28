@@ -1705,11 +1705,10 @@ export function useBotSlot(ref: RefObject<HTMLElement | null>): void {
 `web/src/main.tsx` 与根组件按这个顺序接上桌面逻辑（页面细节见 [hub-ui.md](hub-ui.md) §3–§5）：
 
 1. `takeDevToken(window.location, window.history, window.sessionStorage)`：必须在创建 hash 路由之前（链接里的 `#uiToken=…` 会被当成路由）。
-2. `void sidecar.start()`，然后渲染根组件。
-3. 根组件挂载时 `installAppMenu(actions)`（不等侧车就绪，⌘Q 在侧车失败时也要能用）。`actions` 通过 ref 指向当前的路由与界面状态。
-4. `useSidecarState()` 为 `ready` 时：用 `info` 配置 API 客户端与 WebSocket（`uiToken` 变了就重新配置）；拉 `GET /api/v1/settings`，调 `botPanel.configure(settings.bot)`；之后每次保存设置成功再调一次。
-5. WebSocket 收到审批的新建 / 结束 → 重新计算待审批数 → `setTrayCount(n)`；收到任务事件 → `notificationFor(...)` 非空就 `notifyInBackground(...)`。
-6. 左栏 `BotSlot` 用 `useBotSlot(ref)`；对话框一律用 `HubDialog` / `HubAlertDialog`。
+2. `installLinkGuard(document, openExternal, …)`：页面里的 http(s) 链接交给系统浏览器（[hub-ui.md](hub-ui.md) §2.5）。
+3. 渲染前 `installConnection(...)`：侧车每次就绪时配置客户端、连 WebSocket、让全部查询失效（[hub-ui.md](hub-ui.md) §3.3）。
+4. `void sidecar.start()`，然后渲染。
+5. `AppShell` 挂载时 `installAppMenu`（只装一次，回调经 ref 取当前路由与界面状态）。主界面里的 `useDesktopSync` 负责 `botPanel.configure(settings.bot)` 和 `setTrayCount(待审批数)`。系统通知由 `AttentionWatcher` 发出（[hub-ui.md](hub-ui.md) §4.3）。左栏 `BotSlot` 仍用 `useBotSlot`；确认框和“应用到本地分支”用 `HubDialog` / `HubAlertDialog`。
 
 ## 7. R4 的退路：不内嵌本地郎
 
@@ -1737,11 +1736,11 @@ export function useBotSlot(ref: RefObject<HTMLElement | null>): void {
 }
 ```
 
-| 命令                                           | 做什么                                                                                                                                                                                                                                     |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm dev:agent-hub`                           | `tauri dev`：先构建 contract 与侧车，再起 Hub UI 的 Vite（5174，`strictPort`），编译并打开应用；应用拉起 `server/dist/main.js`。改了 Hub UI 热更新；改了侧车代码就重新 `pnpm --filter @agent-hub/server build`，然后在设置页点“重启服务”。 |
-| `pnpm desktop:bundle`                          | `tauri build --bundles app`，产物 `desktop/src-tauri/target/release/bundle/macos/Agent Hub.app`。它通过编译期路径找侧车（D5），源码目录移动后要重新打包。                                                                                  |
-| `pnpm --filter @agent-hub/server dev` + 浏览器 | 浏览器开发模式（§8.2）。不编译 Rust，适合只改 Hub UI 或侧车。                                                                                                                                                                              |
+| 命令                                           | 做什么                                                                                                                                                                                                                                                   |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev:agent-hub`                           | `tauri dev`：先构建 contract 与侧车，再起 Hub UI 的 Vite（5174，`strictPort`），编译并打开应用；应用拉起 `server/dist/main.js`。改了 Hub UI 热更新；改了侧车代码就重新 `pnpm --filter @agent-hub/server build`，然后在设置页“关于”分区点“重启本地服务”。 |
+| `pnpm desktop:bundle`                          | `tauri build --bundles app`，产物 `desktop/src-tauri/target/release/bundle/macos/Agent Hub.app`。它通过编译期路径找侧车（D5），源码目录移动后要重新打包。                                                                                                |
+| `pnpm --filter @agent-hub/server dev` + 浏览器 | 浏览器开发模式（§8.2）。不编译 Rust，适合只改 Hub UI 或侧车。                                                                                                                                                                                            |
 
 ### 8.2 浏览器开发模式
 
@@ -1770,11 +1769,11 @@ export function useBotSlot(ref: RefObject<HTMLElement | null>): void {
 3. **登录态**：在 Bot 页面登录，⌘Q 退出再打开，仍是登录状态；设置页“清除本地郎登录数据”后需要重新登录。
 4. **登录弹窗**：需要 SSO 弹窗的登录能完成，登录态回到 Bot 页面；Bot 页面里指向其他站点的链接在系统浏览器打开。
 5. **隔离**：在 Bot 页面的 Web 检查器里执行 `window.__TAURI_INTERNALS__.invoke('sidecar_start')`，返回 `not allowed` 错误。
-6. **遮挡**：打开“新建任务”“设置”等对话框时 Bot 面板隐藏，关闭后恢复且键盘输入回到 Hub UI；中栏、右栏的下拉框不被遮挡。
+6. **遮挡**：打开确认框和“应用到本地分支”对话框时 Bot 面板隐藏；新建任务、设置是页面，不隐藏 Bot。关闭对话框后键盘输入回到 Hub UI；中栏、右栏的下拉框不被遮挡。
 7. **快捷键与编辑**：焦点在 Bot 页面里时 ⌘1、⌘N、⌘,、⌘⇧R 都生效；两个页面里 ⌘C / ⌘V / ⌘A 正常。
 8. **关闭与重新打开**：点关闭按钮后任务继续、本地郎的 API 照常可用；点 Dock 图标、菜单栏图标、再次双击 .app 都能把窗口拉回来，且不会出现第二个进程。
 9. **退出**：有运行中的任务时 ⌘Q 弹确认，取消则什么都不发生；确认后应用退出，`ps -ax | grep -E 'agent-hub|codex|qodercli'` 没有残留。
-10. **侧车崩溃**：用活动监视器强制结束 `node … main.js`：顶栏出现“服务已断开，1 秒后重启”，随后恢复；原来运行中的任务显示“已中断”；菜单栏数字正确。
+10. **侧车崩溃**：用活动监视器强制结束 `node … main.js`：顶栏出现“本地服务已断开，1 秒后自动重启”，随后恢复；原来运行中的任务显示“已中断”；菜单栏数字正确。
 11. **壳崩溃**：强制结束 `Agent Hub` 进程：侧车随之退出，Agent 子进程不残留（下次启动时恢复流程清理）。
 12. **通知**：窗口不在前台时，有新审批、任务结束、网页任务提示词就绪都弹系统通知；窗口在前台时不弹。
 13. **退路**：打开“用系统浏览器打开本地郎”，左栏变成按钮，点击在浏览器打开；关闭后恢复内嵌。
