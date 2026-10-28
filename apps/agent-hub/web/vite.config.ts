@@ -12,5 +12,9 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./test/setup.ts'],
     include: ['test/**/*.test.{ts,tsx}'],
+    // Runs in the same CI test step as @cardhub/web. Cap workers so this
+    // suite does not fork one jsdom per core beside the web suite.
+    maxWorkers: 2,
+    slowTestThreshold: 1_000,
   },
 });
