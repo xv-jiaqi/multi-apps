@@ -504,7 +504,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
               { label: slug },
             ]}
           />
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
             {isNotFound
               ? tt('state.notFound')
               : appErrorMessage(locale.locale, topicQuery.error?.data?.appCode)}
@@ -949,7 +949,7 @@ const ForumReplyItem = memo(function ForumReplyItem({
           : 'border-white/60 bg-white/80 duration-1000'
       }`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-500">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-600">
         <span className="min-w-0 truncate font-medium text-neutral-700">
           @{reply.author.username}
         </span>

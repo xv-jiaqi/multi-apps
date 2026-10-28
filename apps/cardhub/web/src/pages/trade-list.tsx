@@ -586,7 +586,7 @@ export const TradeListPage = observer(function TradeListPage() {
         ) : listView === 'loading' ? (
           <ListingSkeleton />
         ) : items.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+          <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
             <p>{hasAnyFilter ? tt('trade.filter.empty') : tt('trade.list.empty')}</p>
             {hasAnyFilter ? (
               <Button type="button" variant="outline" className="mt-4" onClick={clearAllFilters}>

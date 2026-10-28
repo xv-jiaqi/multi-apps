@@ -142,7 +142,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
           <div
             className={
               isNotFound
-                ? 'rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500'
+                ? 'rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600'
                 : 'rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700'
             }
           >

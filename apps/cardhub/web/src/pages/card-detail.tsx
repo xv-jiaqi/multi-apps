@@ -54,7 +54,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
               { label: cardSlug },
             ]}
           />
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
             {tt('state.notFound')}
           </p>
         </div>
@@ -131,7 +131,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
               </div>
               <p className="text-neutral-600">{card.description}</p>
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-neutral-600">
                 {tt('card.detail.seriesLabel')}
                 <Link to={`/series/${card.seriesSlug}`} className="text-brand-600 hover:underline">
                   {card.seriesTitle}
