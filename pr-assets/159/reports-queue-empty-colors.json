@@ -1,0 +1,74 @@
+{
+  "colors": [
+    {
+      "tag": "zh-1440",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "rgb": "rgb(82, 82, 82)",
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+    },
+    {
+      "tag": "zh-375",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "rgb": "rgb(82, 82, 82)",
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+    },
+    {
+      "tag": "en-1440",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "rgb": "rgb(82, 82, 82)",
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+    },
+    {
+      "tag": "en-375",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "rgb": "rgb(82, 82, 82)",
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+    }
+  ],
+  "axe": [
+    {
+      "tag": "zh-1440",
+      "violations": 0,
+      "colorContrast": 0,
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      }
+    },
+    {
+      "tag": "zh-375",
+      "violations": 0,
+      "colorContrast": 0,
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      }
+    },
+    {
+      "tag": "en-1440",
+      "violations": 0,
+      "colorContrast": 0,
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      }
+    },
+    {
+      "tag": "en-375",
+      "violations": 0,
+      "colorContrast": 0,
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      }
+    }
+  ]
+}

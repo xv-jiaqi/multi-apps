@@ -105,5 +105,13 @@
     "specified": "oklch(0.439 0 0)",
     "rgb": "rgb(82, 82, 82)",
     "className": "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-600"
+  },
+  {
+    "id": 3,
+    "file": "pages/reports-list.tsx:192",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+    "note": "v2 §3.1 #3，1440/375 中英文四张截图一致"
   }
 ]
