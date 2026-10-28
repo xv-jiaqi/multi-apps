@@ -1,5 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import {
+  memo,
   useCallback,
   useEffect,
   useId,
@@ -272,6 +273,36 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       focusDeleteButton({ kind: 'reply', id: variables.id });
     },
   });
+
+  // Reply rows are memoized. These wrappers stay stable so typing a reply
+  // does not re-render every row (and re-parse its Markdown) on each key.
+  const replyActionsRef = useRef({
+    askDelete(_replyId: string) {},
+    confirmDelete(_replyId: string, _reason?: string) {},
+    cancelDelete(_replyId: string) {},
+  });
+  replyActionsRef.current = {
+    askDelete(replyId) {
+      clearDeleteState();
+      setConfirmingDelete({ kind: 'reply', id: replyId });
+    },
+    confirmDelete(replyId, reason) {
+      deleteReply.mutate(reason ? { id: replyId, reason } : { id: replyId });
+    },
+    cancelDelete(replyId) {
+      setConfirmingDelete(null);
+      focusDeleteButton({ kind: 'reply', id: replyId });
+    },
+  };
+  const askDeleteReply = useCallback((replyId: string) => {
+    replyActionsRef.current.askDelete(replyId);
+  }, []);
+  const confirmDeleteReply = useCallback((replyId: string, reason?: string) => {
+    replyActionsRef.current.confirmDelete(replyId, reason);
+  }, []);
+  const cancelDeleteReply = useCallback((replyId: string) => {
+    replyActionsRef.current.cancelDelete(replyId);
+  }, []);
 
   useEffect(() => {
     setShowLoadedReplyPages(false);
@@ -710,93 +741,36 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 const canDelete = session.user?.id === reply.author.id || session.isAdmin;
                 const confirmingThisReply =
                   confirmingDelete?.kind === 'reply' && confirmingDelete.id === reply.id;
-                const deletingThisReply = deleteReply.isPending && confirmingThisReply;
                 return (
-                  <li
+                  <ForumReplyItem
                     key={reply.id}
-                    ref={(node) => {
-                      if (node) {
-                        replyRefs.current.set(reply.id, node);
-                      } else {
-                        replyRefs.current.delete(reply.id);
-                      }
-                    }}
-                    tabIndex={-1}
-                    aria-busy={deletingThisReply || undefined}
-                    className={`rounded-2xl border p-4 backdrop-blur transition-colors ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
-                      highlightedReplyId === reply.id
-                        ? 'border-brand-200 bg-brand-50 duration-0'
-                        : 'border-white/60 bg-white/80 duration-1000'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-500">
-                      <span className="min-w-0 truncate font-medium text-neutral-700">
-                        @{reply.author.username}
-                      </span>
-                      <div className="ml-auto flex shrink-0 items-center gap-3">
-                        <time dateTime={reply.createdAt} className="whitespace-nowrap">
-                          {new Date(reply.createdAt).toLocaleString(locale.locale)}
-                        </time>
-                        {session.user?.id !== reply.author.id ? (
-                          <ReportButton targetType="REPLY" targetId={reply.id} />
-                        ) : null}
-                        {canDelete && !confirmingThisReply ? (
-                          <button
-                            ref={(node) => {
-                              if (node) {
-                                replyDeleteButtonRefs.current.set(reply.id, node);
-                              } else {
-                                replyDeleteButtonRefs.current.delete(reply.id);
-                              }
-                            }}
-                            type="button"
-                            onClick={() => {
-                              clearDeleteState();
-                              setConfirmingDelete({ kind: 'reply', id: reply.id });
-                            }}
-                            aria-label={tt('forum.detail.deleteReplyAria', {
-                              user: reply.author.username,
-                            })}
-                            className="inline-flex min-h-6 items-center rounded px-1 text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
-                          >
-                            {tt('forum.detail.delete')}
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="mt-2 min-w-0">
-                      <MarkdownView body={reply.body} />
-                    </div>
-                    {confirmingThisReply ? (
-                      <DeleteConfirmGroup
-                        label={tt('forum.detail.confirmDeleteReply')}
-                        dangerLabel={
-                          deletingThisReply
-                            ? tt('forum.detail.deleting')
-                            : tt('forum.detail.delete')
-                        }
-                        cancelLabel={tt('forum.detail.deleteCancel')}
-                        disabled={deletingThisReply}
-                        showReason={session.isAdmin && session.user?.id !== reply.author.id}
-                        cancelRef={cancelDeleteButtonRef}
-                        onConfirm={(reason) =>
-                          deleteReply.mutate(reason ? { id: reply.id, reason } : { id: reply.id })
-                        }
-                        onCancel={() => {
-                          setConfirmingDelete(null);
-                          focusDeleteButton({ kind: 'reply', id: reply.id });
-                        }}
-                      />
-                    ) : null}
-                    {deleteError?.kind === 'reply' && deleteError.id === reply.id ? (
-                      <p
-                        role="alert"
-                        className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
-                      >
-                        {deleteError.message}
-                      </p>
-                    ) : null}
-                  </li>
+                    reply={reply}
+                    locale={locale.locale}
+                    highlighted={highlightedReplyId === reply.id}
+                    canDelete={canDelete}
+                    showReport={session.user?.id !== reply.author.id}
+                    confirming={confirmingThisReply}
+                    deleting={Boolean(deleteReply.isPending) && confirmingThisReply}
+                    showReason={session.isAdmin && session.user?.id !== reply.author.id}
+                    errorMessage={
+                      deleteError?.kind === 'reply' && deleteError.id === reply.id
+                        ? deleteError.message
+                        : null
+                    }
+                    deleteAriaLabel={tt('forum.detail.deleteReplyAria', {
+                      user: reply.author.username,
+                    })}
+                    deleteLabel={tt('forum.detail.delete')}
+                    confirmLabel={tt('forum.detail.confirmDeleteReply')}
+                    deletingLabel={tt('forum.detail.deleting')}
+                    cancelLabel={tt('forum.detail.deleteCancel')}
+                    listRef={replyRefs}
+                    deleteButtonRef={replyDeleteButtonRefs}
+                    cancelRef={cancelDeleteButtonRef}
+                    onAskDelete={askDeleteReply}
+                    onConfirmDelete={confirmDeleteReply}
+                    onCancelDelete={cancelDeleteReply}
+                  />
                 );
               })}
             </ul>
@@ -907,6 +881,121 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         </section>
       </div>
     </PageShell>
+  );
+});
+
+const ForumReplyItem = memo(function ForumReplyItem({
+  reply,
+  locale,
+  highlighted,
+  canDelete,
+  showReport,
+  confirming,
+  deleting,
+  showReason,
+  errorMessage,
+  deleteAriaLabel,
+  deleteLabel,
+  confirmLabel,
+  deletingLabel,
+  cancelLabel,
+  listRef,
+  deleteButtonRef,
+  cancelRef,
+  onAskDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: {
+  reply: TopicReply;
+  locale: string;
+  highlighted: boolean;
+  canDelete: boolean;
+  showReport: boolean;
+  confirming: boolean;
+  deleting: boolean;
+  showReason: boolean;
+  errorMessage: string | null;
+  deleteAriaLabel: string;
+  deleteLabel: string;
+  confirmLabel: string;
+  deletingLabel: string;
+  cancelLabel: string;
+  listRef: RefObject<Map<string, HTMLLIElement>>;
+  deleteButtonRef: RefObject<Map<string, HTMLButtonElement>>;
+  cancelRef: RefObject<HTMLButtonElement | null>;
+  onAskDelete: (replyId: string) => void;
+  onConfirmDelete: (replyId: string, reason?: string) => void;
+  onCancelDelete: (replyId: string) => void;
+}) {
+  return (
+    <li
+      ref={(node) => {
+        if (node) {
+          listRef.current.set(reply.id, node);
+        } else {
+          listRef.current.delete(reply.id);
+        }
+      }}
+      tabIndex={-1}
+      aria-busy={deleting || undefined}
+      className={`rounded-2xl border p-4 backdrop-blur transition-colors ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
+        highlighted
+          ? 'border-brand-200 bg-brand-50 duration-0'
+          : 'border-white/60 bg-white/80 duration-1000'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-500">
+        <span className="min-w-0 truncate font-medium text-neutral-700">
+          @{reply.author.username}
+        </span>
+        <div className="ml-auto flex shrink-0 items-center gap-3">
+          <time dateTime={reply.createdAt} className="whitespace-nowrap">
+            {new Date(reply.createdAt).toLocaleString(locale)}
+          </time>
+          {showReport ? <ReportButton targetType="REPLY" targetId={reply.id} /> : null}
+          {canDelete && !confirming ? (
+            <button
+              ref={(node) => {
+                if (node) {
+                  deleteButtonRef.current.set(reply.id, node);
+                } else {
+                  deleteButtonRef.current.delete(reply.id);
+                }
+              }}
+              type="button"
+              onClick={() => onAskDelete(reply.id)}
+              aria-label={deleteAriaLabel}
+              className="inline-flex min-h-6 items-center rounded px-1 text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
+            >
+              {deleteLabel}
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <div className="mt-2 min-w-0">
+        <MarkdownView body={reply.body} />
+      </div>
+      {confirming ? (
+        <DeleteConfirmGroup
+          label={confirmLabel}
+          dangerLabel={deleting ? deletingLabel : deleteLabel}
+          cancelLabel={cancelLabel}
+          disabled={deleting}
+          showReason={showReason}
+          cancelRef={cancelRef}
+          onConfirm={(reason) => onConfirmDelete(reply.id, reason)}
+          onCancel={() => onCancelDelete(reply.id)}
+        />
+      ) : null}
+      {errorMessage ? (
+        <p
+          role="alert"
+          className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+        >
+          {errorMessage}
+        </p>
+      ) : null}
+    </li>
   );
 });
 

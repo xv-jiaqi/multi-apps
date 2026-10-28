@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -231,6 +231,12 @@ function ForumLanding() {
   );
 }
 
+function replyRow(text: string): HTMLElement {
+  const row = screen.getByText(text).closest('li');
+  if (!row) throw new Error(`${text} is not in a reply row`);
+  return row;
+}
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/forum/test-topic']}>
@@ -332,21 +338,21 @@ beforeEach(() => {
 
 describe('ForumDetailPage replies pagination', () => {
   it('renders the first 20 replies and loads 41 replies across two clicks', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
     expect(screen.getByText('Reply 1')).toBeInTheDocument();
     expect(screen.getByText('Reply 20')).toBeInTheDocument();
     expect(screen.queryByText('Reply 21')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
 
     expect(await screen.findByText('Reply 21')).toBeInTheDocument();
     expect(screen.getByText('Reply 40')).toBeInTheDocument();
     expect(screen.queryByText('Reply 41')).not.toBeInTheDocument();
     expect(screen.getAllByText(/^Reply \d+$/)).toHaveLength(40);
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
 
     expect(await screen.findByText('Reply 41')).toBeInTheDocument();
     expect(screen.getByText('已显示全部回帖')).toBeInTheDocument();
@@ -355,10 +361,10 @@ describe('ForumDetailPage replies pagination', () => {
   });
 
   it('uses the refreshed inline cursor after deleting the previous cursor reply', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const view = renderPage();
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
     expect(await screen.findByText('Reply 30')).toBeInTheDocument();
 
     availableReplies = replies.filter((reply) => reply.id !== replies[19]!.id);
@@ -380,7 +386,7 @@ describe('ForumDetailPage replies pagination', () => {
       expect(latestInitialCursor).toBe('reply-21');
       expect(repliesReset).toHaveBeenCalled();
     });
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
     view.rerender(
       <MemoryRouter initialEntries={['/forum/test-topic']}>
         <Routes>
@@ -396,15 +402,16 @@ describe('ForumDetailPage replies pagination', () => {
 
   it('keeps loaded reply pages expanded after deleting an inline non-cursor reply', async () => {
     rootStore.session.signIn('jwt.token', { id: 'user-5', username: 'user5' });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
     expect(await screen.findByText('Reply 21')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '删除 @user5 的回帖' }));
-    expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
-    await user.click(screen.getByRole('button', { name: '删除' }));
+    const row = within(replyRow('Reply 5'));
+    await user.click(row.getByRole('button', { name: '删除 @user5 的回帖' }));
+    expect(row.getByRole('button', { name: '取消' })).toHaveFocus();
+    await user.click(row.getByRole('button', { name: '删除' }));
 
     await waitFor(() => expect(screen.queryByText('Reply 5')).not.toBeInTheDocument());
     expect(screen.getByText('Reply 21')).toBeInTheDocument();
@@ -414,14 +421,15 @@ describe('ForumDetailPage replies pagination', () => {
 
   it('removes a deleted reply from an already loaded pagination page', async () => {
     rootStore.session.signIn('jwt.token', { id: 'admin-1', username: 'admin', role: 'admin' });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
     expect(await screen.findByText('Reply 25')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '删除 @user25 的回帖' }));
-    await user.click(screen.getByRole('button', { name: '删除' }));
+    const row = within(replyRow('Reply 25'));
+    await user.click(row.getByRole('button', { name: '删除 @user25 的回帖' }));
+    await user.click(row.getByRole('button', { name: '删除' }));
 
     await waitFor(() => expect(screen.queryByText('Reply 25')).not.toBeInTheDocument());
     expect(screen.getByText('Reply 21')).toBeInTheDocument();
@@ -431,14 +439,15 @@ describe('ForumDetailPage replies pagination', () => {
 
   it('can load more replies after deleting the current reply cursor', async () => {
     rootStore.session.signIn('jwt.token', { id: 'admin-1', username: 'admin', role: 'admin' });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: '删除 @user20 的回帖' }));
-    await user.click(screen.getByRole('button', { name: '删除' }));
+    const row = within(replyRow('Reply 20'));
+    await user.click(row.getByRole('button', { name: '删除 @user20 的回帖' }));
+    await user.click(row.getByRole('button', { name: '删除' }));
 
     await waitFor(() => expect(screen.queryByText('Reply 20')).not.toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
 
     expect(await screen.findByText('Reply 21')).toBeInTheDocument();
     expect(screen.getByText('Reply 40')).toBeInTheDocument();
@@ -446,20 +455,21 @@ describe('ForumDetailPage replies pagination', () => {
 
   it('keeps refetched pages after deleting the cursor reply and posting a reply', async () => {
     rootStore.session.signIn('jwt.token', { id: 'admin-1', username: 'admin', role: 'admin' });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
     expect(await screen.findByText('Reply 40')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '删除 @user20 的回帖' }));
-    await user.click(screen.getByRole('button', { name: '删除' }));
+    const cursorRow = within(replyRow('Reply 20'));
+    await user.click(cursorRow.getByRole('button', { name: '删除 @user20 的回帖' }));
+    await user.click(cursorRow.getByRole('button', { name: '删除' }));
 
     await waitFor(() => expect(screen.queryByText('Reply 20')).not.toBeInTheDocument());
     expect(repliesQueryState.data.pageParams).toEqual(['reply-19']);
 
     await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
-    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+    await user.click(screen.getByText('发布回帖'));
 
     await waitFor(() => {
       expect(fetchNextPage).toHaveBeenCalledTimes(2);
@@ -479,29 +489,37 @@ describe('ForumDetailPage replies pagination', () => {
     deleteReplyMutate.mockImplementation((input, handlers) => {
       handlers.onError?.({ data: { code: 'FORBIDDEN' } }, input);
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    const deleteButton = screen.getByRole('button', { name: '删除 @user1 的回帖' });
+    const deleteButton = within(replyRow('Reply 1')).getByRole('button', {
+      name: '删除 @user1 的回帖',
+    });
     await user.click(deleteButton);
     expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
     expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
 
     await user.keyboard('{Escape}');
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '删除 @user1 的回帖' })).toHaveFocus();
+      expect(
+        within(replyRow('Reply 1')).getByRole('button', { name: '删除 @user1 的回帖' }),
+      ).toHaveFocus();
     });
 
-    await user.click(screen.getByRole('button', { name: '删除 @user1 的回帖' }));
+    await user.click(
+      within(replyRow('Reply 1')).getByRole('button', { name: '删除 @user1 的回帖' }),
+    );
     await user.click(screen.getByRole('button', { name: '删除' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('你没有权限删除这条回帖');
-    expect(screen.getByRole('button', { name: '删除 @user1 的回帖' })).toHaveFocus();
+    expect(
+      within(replyRow('Reply 1')).getByRole('button', { name: '删除 @user1 的回帖' }),
+    ).toHaveFocus();
   });
 
   it('navigates to the forum list with a topicDeleted notice after deleting a topic', async () => {
     rootStore.session.signIn('jwt.token', { id: 'author-1', username: 'author' });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
     await user.click(screen.getByRole('button', { name: '删除这个话题' }));
@@ -521,11 +539,11 @@ describe('ForumDetailPage replies pagination', () => {
         data: { code: 'NOT_FOUND' },
       });
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
     await user.type(screen.getByLabelText('撰写回帖'), 'reply to a deleted topic');
-    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+    await user.click(screen.getByText('发布回帖'));
 
     const notice = await screen.findByText('内容不存在或已被删除');
     expect(notice).not.toHaveTextContent('重试');
@@ -546,11 +564,11 @@ describe('ForumDetailPage replies pagination', () => {
         author: { id: 'user-current', username: 'alice' },
       }),
     );
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
     await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
-    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+    await user.click(screen.getByText('发布回帖'));
 
     await waitFor(() => {
       expect(topicInvalidate).toHaveBeenCalledWith({ slug: 'test-topic' });
@@ -574,11 +592,11 @@ describe('ForumDetailPage replies pagination', () => {
       repliesQueryState.isFetchNextPageError = true;
       return { data: repliesQueryState.data, isError: true };
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
     await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
-    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+    await user.click(screen.getByText('发布回帖'));
 
     await waitFor(() => {
       expect(fetchNextPage).toHaveBeenCalledTimes(1);
@@ -588,7 +606,7 @@ describe('ForumDetailPage replies pagination', () => {
   });
 
   it('shows loading instead of the end message while the first hidden reply page loads', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     fetchNextPage.mockImplementation(async () => {
       repliesQueryState.isLoading = true;
       repliesQueryState.isSuccess = false;
@@ -596,7 +614,7 @@ describe('ForumDetailPage replies pagination', () => {
     });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
 
     const loadingButton = await screen.findByRole('button', { name: '加载中…' });
     expect(loadingButton).toBeDisabled();
@@ -605,7 +623,7 @@ describe('ForumDetailPage replies pagination', () => {
   });
 
   it('reuses load-more loading state while retrying failed reply pagination', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     repliesQueryState.isFetchNextPageError = true;
     fetchNextPage.mockImplementation(async () => {
       repliesQueryState.isLoading = true;
@@ -633,7 +651,7 @@ describe('ForumDetailPage replies pagination', () => {
     };
     createReplyMutate.mockImplementation((_input, handlers) => handlers.onSuccess?.(newReply));
     repliesQueryState.hasNextPage = false;
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
     await user.type(screen.getByLabelText('撰写回帖'), 'new highlighted reply');
@@ -643,7 +661,7 @@ describe('ForumDetailPage replies pagination', () => {
       replies: [...topicState.data!.replies, newReply],
       replyNextCursor: null,
     };
-    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+    await user.click(screen.getByText('发布回帖'));
 
     const highlightedReply = await screen.findByText('new highlighted reply');
     await waitFor(() => {
@@ -662,7 +680,7 @@ describe('ForumDetailPage replies pagination', () => {
   });
 
   it('drops a pending reply focus when the loaded row never mounts', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const view = renderPage();
     fetchNextPage.mockImplementation(async () => ({
       data: {
@@ -671,7 +689,7 @@ describe('ForumDetailPage replies pagination', () => {
       },
     }));
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
     expect(await screen.findByText('已加载 1 条回帖')).toBeInTheDocument();
     expect(screen.queryByText('Reply 21')).not.toBeInTheDocument();
 
@@ -692,10 +710,10 @@ describe('ForumDetailPage replies pagination', () => {
   });
 
   it('moves focus to the first newly loaded reply when more pages remain', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: '加载更多回帖' }));
+    await user.click(screen.getByText('加载更多回帖'));
 
     const firstNew = await screen.findByText('Reply 21');
     const item = firstNew.closest('li');
@@ -704,7 +722,7 @@ describe('ForumDetailPage replies pagination', () => {
       expect(item).toHaveFocus();
     });
     expect(document.activeElement).not.toBe(document.body);
-    expect(screen.getByRole('button', { name: '加载更多回帖' })).toBeInTheDocument();
+    expect(screen.getByText('加载更多回帖')).toBeInTheDocument();
   });
 });
 
@@ -762,7 +780,7 @@ describe('ForumDetailPage CH-103 topic controls', () => {
       setPinnedIsPending = true;
       void handlers.onSuccess?.({ pinned: true });
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const view = renderPage();
 
     const pinButton = screen.getByRole('button', { name: '置顶' });
@@ -802,10 +820,10 @@ describe('ForumDetailPage CH-103 topic controls', () => {
     deleteReplyMutate.mockImplementation((input, handlers) => {
       handlers.onError?.({ data: { code: 'INTERNAL_SERVER_ERROR' } }, input);
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
 
-    const trigger = screen.getByRole('button', { name: '删除 @user1 的回帖' });
+    const trigger = within(replyRow('Reply 1')).getByRole('button', { name: '删除 @user1 的回帖' });
     await user.click(trigger);
     const reason = screen.getByLabelText('删除原因（选填，只有管理员能看到）');
     const remove = screen.getByRole('button', { name: '删除' });
@@ -828,7 +846,9 @@ describe('ForumDetailPage CH-103 topic controls', () => {
 
     await user.keyboard('{Escape}');
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: '删除 @user1 的回帖' })).toHaveFocus(),
+      expect(
+        within(replyRow('Reply 1')).getByRole('button', { name: '删除 @user1 的回帖' }),
+      ).toHaveFocus(),
     );
     expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
   });
@@ -847,7 +867,7 @@ describe('ForumDetailPage CH-103 topic controls', () => {
   });
 
   it('keeps the reply draft when the write returns USER_BANNED', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     rootStore.session.signIn('jwt.token', { id: 'user-current', username: 'alice' });
     createReplyMutate.mockImplementation((_input, handlers) => {
       handlers.onError?.({
@@ -858,7 +878,7 @@ describe('ForumDetailPage CH-103 topic controls', () => {
     renderPage();
     const field = screen.getByLabelText('撰写回帖');
     await user.type(field, 'keep the reply');
-    await user.click(screen.getByRole('button', { name: '发布回帖' }));
+    await user.click(screen.getByText('发布回帖'));
     expect(screen.getByRole('alert')).toHaveTextContent('你的账号已被封禁，这次操作没有完成。');
     expect(screen.getByRole('alert')).not.toHaveTextContent('Prisma');
     expect(field).toHaveValue('keep the reply');
