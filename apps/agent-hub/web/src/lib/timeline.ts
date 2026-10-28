@@ -183,10 +183,11 @@ function applyBatch(state: TaskState, envelopes: readonly HubEventEnvelope[]): T
   let items = state.snapshot.items;
   let usage = state.snapshot.usage;
   let lastSeq = state.snapshot.lastSeq;
-  const seen = state.seen;
+  let seen = state.seen;
   let changed = false;
   for (const envelope of envelopes) {
     if (seen.has(envelope.seq)) continue;
+    if (!changed) seen = new Set(state.seen);
     seen.add(envelope.seq);
     if (envelope.seq > lastSeq) lastSeq = envelope.seq;
     changed = true;

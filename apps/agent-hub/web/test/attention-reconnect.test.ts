@@ -104,4 +104,31 @@ describe('重连后的通知', () => {
       expect(FakeSocket.sockets).toHaveLength(before + 1);
     }
   });
+
+  it('任务结束后丢掉 seq，再次开始从 lastEventSeq 接着收', () => {
+    const hub = createSocket((url) => new FakeSocket(url));
+    const watcher = new AttentionWatcher({
+      subscribeTask: (taskId, handlers) => hub.subscribeTask(taskId, handlers),
+      notify: () => undefined,
+      isBackground: () => false,
+      agentDisplayName: () => 'Codex',
+    });
+    const running = task({ status: 'running', lastEventSeq: 4 });
+    hub.connect('ws://127.0.0.1:47821/api/v1/ws', 'token');
+    ready(FakeSocket.sockets[0]!);
+    watcher.onTask(running);
+    FakeSocket.sockets[0]!.onmessage?.({
+      data: JSON.stringify({
+        op: 'event',
+        id: `task:${running.id}`,
+        ...envelope(
+          { type: 'task.status', from: 'running', to: 'running' },
+          { seq: 9, ts: new Date().toISOString(), taskId: running.id },
+        ),
+      }),
+    });
+    watcher.onTask({ ...running, status: 'completed', lastEventSeq: 9 });
+    watcher.onTask({ ...running, status: 'running', lastEventSeq: 2 });
+    expect(taskAfterSeqs(FakeSocket.sockets[0]!).at(-1)).toBe(2);
+  });
 });

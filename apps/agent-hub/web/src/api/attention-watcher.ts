@@ -62,6 +62,7 @@ export class AttentionWatcher {
   }
 
   private release(taskId: string): void {
+    this.seqs.delete(taskId);
     const unsubscribe = this.subs.get(taskId);
     if (!unsubscribe) return;
     this.subs.delete(taskId);
