@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import { memo, type ComponentProps } from 'react';
 import ReactMarkdown, { type ExtraProps } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
@@ -36,7 +36,7 @@ function MarkdownTable({ node: _node, ...props }: ComponentProps<'table'> & Extr
  * Long URLs and inline code use `wrap-anywhere` (overflow-wrap: anywhere).
  * Fenced code stays on one line and scrolls inside its own `pre`.
  */
-export function MarkdownView({ body, className }: MarkdownViewProps) {
+export const MarkdownView = memo(function MarkdownView({ body, className }: MarkdownViewProps) {
   return (
     <div
       className={['min-w-0 wrap-anywhere text-neutral-800', className].filter(Boolean).join(' ')}
@@ -50,4 +50,4 @@ export function MarkdownView({ body, className }: MarkdownViewProps) {
       </ReactMarkdown>
     </div>
   );
-}
+});
