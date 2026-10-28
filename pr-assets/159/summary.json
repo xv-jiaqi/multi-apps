@@ -1,0 +1,649 @@
+{
+  "head": "02b35a0e813dabd009c12b02eac7332cc6738bb7",
+  "startedAt": "2026-10-28T12:44:54.068Z",
+  "finishedAt": "2026-10-28T12:45:54.556Z",
+  "colors": [
+    {
+      "tag": "zh-1440",
+      "item": "reports-login",
+      "color": "rgb(37, 99, 235)",
+      "contrastOnF6": 4.78,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "trade-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "series-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "series-missing",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "card-series",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "forum-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "reply-resting",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "reply-highlight",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "admin-only",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-1440",
+      "item": "report-note-readonly",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "reports-login",
+      "color": "rgb(37, 99, 235)",
+      "contrastOnF6": 4.78,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "trade-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "series-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "series-missing",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "card-series",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "forum-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "reply-resting",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "reply-highlight",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "admin-only",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "zh-375",
+      "item": "report-note-readonly",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "reports-login",
+      "color": "rgb(37, 99, 235)",
+      "contrastOnF6": 4.78,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "trade-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "series-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "series-missing",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "card-series",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "forum-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "reply-resting",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "reply-highlight",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "admin-only",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-1440",
+      "item": "report-note-readonly",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "reports-login",
+      "color": "rgb(37, 99, 235)",
+      "contrastOnF6": 4.78,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "trade-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "series-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "series-missing",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "card-series",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "forum-empty",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "reply-resting",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "reply-highlight",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "admin-only",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    },
+    {
+      "tag": "en-375",
+      "item": "report-note-readonly",
+      "color": "oklch(0.439 0 0)",
+      "contrastOnF6": null,
+      "ok": false
+    }
+  ],
+  "axe": [
+    {
+      "label": "reports-empty-zh-1440",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-zh-1440",
+      "url": "http://localhost:5173/trade",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-empty-zh-1440",
+      "url": "http://localhost:5173/series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-missing-zh-1440",
+      "url": "http://localhost:5173/series/missing-series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "card-detail-zh-1440",
+      "url": "http://localhost:5173/cards/demo-card",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-zh-1440",
+      "url": "http://localhost:5173/forum",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-zh-1440",
+      "url": "http://localhost:5173/forum/welcome",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "admin-forbidden-zh-1440",
+      "url": "http://localhost:5173/admin/catalog",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "reports-readonly-zh-1440",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "reports-empty-zh-375",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-zh-375",
+      "url": "http://localhost:5173/trade",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-empty-zh-375",
+      "url": "http://localhost:5173/series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-missing-zh-375",
+      "url": "http://localhost:5173/series/missing-series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "card-detail-zh-375",
+      "url": "http://localhost:5173/cards/demo-card",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-zh-375",
+      "url": "http://localhost:5173/forum",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-zh-375",
+      "url": "http://localhost:5173/forum/welcome",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "admin-forbidden-zh-375",
+      "url": "http://localhost:5173/admin/catalog",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "reports-readonly-zh-375",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "reports-empty-en-1440",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-en-1440",
+      "url": "http://localhost:5173/trade",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-empty-en-1440",
+      "url": "http://localhost:5173/series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-missing-en-1440",
+      "url": "http://localhost:5173/series/missing-series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "card-detail-en-1440",
+      "url": "http://localhost:5173/cards/demo-card",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-en-1440",
+      "url": "http://localhost:5173/forum",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-en-1440",
+      "url": "http://localhost:5173/forum/welcome",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "admin-forbidden-en-1440",
+      "url": "http://localhost:5173/admin/catalog",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "reports-readonly-en-1440",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "reports-empty-en-375",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-en-375",
+      "url": "http://localhost:5173/trade",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-empty-en-375",
+      "url": "http://localhost:5173/series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "series-missing-en-375",
+      "url": "http://localhost:5173/series/missing-series",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "card-detail-en-375",
+      "url": "http://localhost:5173/cards/demo-card",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-en-375",
+      "url": "http://localhost:5173/forum",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-en-375",
+      "url": "http://localhost:5173/forum/welcome",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "admin-forbidden-en-375",
+      "url": "http://localhost:5173/admin/catalog",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    },
+    {
+      "label": "reports-readonly-en-375",
+      "url": "http://localhost:5173/reports",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrast": 0,
+      "violations": []
+    }
+  ]
+}

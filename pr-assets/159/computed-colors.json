@@ -1,0 +1,109 @@
+[
+  {
+    "id": 1,
+    "file": "pages/reports-list.tsx:121",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 13,
+    "file": "components/admin/admin-gate.tsx:23",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 2,
+    "file": "pages/reports-list.tsx:131",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 14,
+    "file": "components/admin/admin-gate.tsx:37",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 3,
+    "file": "pages/reports-list.tsx:370",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+  },
+  {
+    "id": 4,
+    "file": "pages/trade-list.tsx:589",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 5,
+    "file": "pages/series-list.tsx:82",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 6,
+    "file": "pages/series-detail.tsx:179",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 7,
+    "file": "pages/card-detail.tsx:57",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 8,
+    "file": "pages/card-detail.tsx:134",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "text-sm text-neutral-600"
+  },
+  {
+    "id": 9,
+    "file": "pages/forum-list.tsx:108",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 10,
+    "file": "pages/forum-detail.tsx:507",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": 12,
+    "file": "pages/forum-edit.tsx:145",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600"
+  },
+  {
+    "id": "11-rest",
+    "file": "pages/forum-detail.tsx:952",
+    "state": "非高亮 bg-white/80",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-600"
+  },
+  {
+    "id": "11-hot",
+    "file": "pages/forum-detail.tsx:952",
+    "state": "高亮 bg-brand-50",
+    "specified": "oklch(0.439 0 0)",
+    "rgb": "rgb(82, 82, 82)",
+    "className": "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-600"
+  }
+]
