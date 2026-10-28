@@ -943,6 +943,32 @@ describe('CommentSection replies', () => {
     expect(screen.getByRole('button', { name: '回复 @cara' })).toHaveFocus();
   });
 
+  it('prefills the reply author after escaping an untouched top-level reply', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    const topLevel = screen.getByRole('textbox', { name: '回复 @bob' });
+    expect(topLevel).toHaveValue('');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('textbox', { name: '回复 @bob' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '回复 @cara' }));
+    const field = screen.getByRole('textbox', { name: '回复 @cara' });
+    expect(field).toHaveValue('@cara ');
+    expect((field as HTMLTextAreaElement).selectionStart).toBe('@cara '.length);
+  });
+
+  it('keeps a non-empty reply draft after Escape', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    await user.type(screen.getByRole('textbox', { name: '回复 @bob' }), 'still drafting');
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: '回复 @cara' }));
+    expect(screen.getByRole('textbox', { name: '回复 @cara' })).toHaveValue('still drafting');
+  });
+
   it('shows parentGone without retry, refreshes, and focuses the section title', async () => {
     const user = userEvent.setup();
     mutateMock.mockImplementation((input, callbacks) => {

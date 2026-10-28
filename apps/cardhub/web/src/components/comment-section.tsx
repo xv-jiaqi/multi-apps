@@ -81,6 +81,18 @@ function visibleReplyCount(comment: ThreadComment, overlay: ThreadOverlay) {
   return Math.max(0, base + overlay.countDelta);
 }
 
+/** Keep a draft only when the composer has text beyond whitespace. */
+function rememberReplyDraft(drafts: Record<string, string>, parentId: string, value: string) {
+  if (value.trim()) drafts[parentId] = value;
+  else delete drafts[parentId];
+}
+
+/** A blank draft falls back to `@author `; a top-level reply has no prefill. */
+function replyComposerValue(saved: string | undefined, prefill: string | null) {
+  if (saved?.trim()) return saved;
+  return prefill ? `@${prefill} ` : '';
+}
+
 function resolveCursor(
   comment: ThreadComment,
   overlay: ThreadOverlay,
@@ -256,7 +268,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         ? (err.data as { appCode?: unknown }).appCode
         : undefined;
     if (appCode === APP_ERROR_CODES.COMMENT_PARENT_GONE) {
-      if (openParentRef.current) draftsRef.current[openParentRef.current] = replyDraft;
+      if (openParentRef.current) {
+        rememberReplyDraft(draftsRef.current, openParentRef.current, replyDraft);
+      }
       openParentRef.current = null;
       setOpenParentId(null);
       setReplyError(null);
@@ -482,9 +496,10 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     labelUser: string,
     prefill: string | null,
   ) {
-    if (openParentRef.current) draftsRef.current[openParentRef.current] = replyDraft;
-    const saved = draftsRef.current[parentId];
-    const next = saved !== undefined ? saved : prefill ? `@${prefill} ` : '';
+    if (openParentRef.current) {
+      rememberReplyDraft(draftsRef.current, openParentRef.current, replyDraft);
+    }
+    const next = replyComposerValue(draftsRef.current[parentId], prefill);
     openParentRef.current = parentId;
     setOpenParentId(parentId);
     setOpenerKey(`${parentId}:${sourceId}`);
@@ -495,7 +510,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   }
 
   function closeReply(restore: boolean) {
-    if (openParentRef.current) draftsRef.current[openParentRef.current] = replyDraft;
+    if (openParentRef.current) {
+      rememberReplyDraft(draftsRef.current, openParentRef.current, replyDraft);
+    }
     const key = openerKey;
     openParentRef.current = null;
     setOpenParentId(null);
