@@ -244,7 +244,7 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 ### 6.17 部署相关的坑
 
 1. **Web 容器缺少合法的 `TRPC_URL` 会拒绝启动**：入口脚本 `apps/cardhub/web/docker-entrypoint.d/10-cardhub-runtime-config.sh` 要求完整的 http(s) 地址且以 `/trpc` 结尾，不再回退同源。`Dockerfile.web` 头部的旧注释与此不符（CH-005 清理）。
-2. **迁移只能向前兼容**：API 容器启动时执行 `prisma migrate deploy`；部署失败自动回滚只换镜像，不撤销已执行的迁移。新列要可空或有默认值，删列 / 改名分两次发布。
+2. **Prisma 迁移只增不删**：发布时 `prisma migrate deploy` 先于新容器执行，失败回滚只换镜像。已合入 `main` 的迁移文件不能删改；删列和改名不能写进同一次迁移。约定见 [development-backlog.md](development-backlog.md) §1.3。
 3. **`seed-catalog` 会覆盖同 slug 的数据**：它按 slug upsert，不要在生产重复执行；内容管理后台（CH-107）上线时要改为只插入缺失记录。
 4. **env 文件里的 `CORS_ORIGIN` 会覆盖代码默认值**：代码默认值包含 Tauri 来源，`deploy/.env.example` 的生产值只有 `https://card-hub.app`。桌面 / 移动端连生产 API 前必须补上 Tauri 来源（CH-303）。
 5. **限流按 IP 且在进程内存中计数**：`trust proxy` 只信任 1 跳（Caddy）。如果以后在 Caddy 前再加 CDN / SLB，要同步调整，否则所有用户会共享同一个 IP 的限额；多实例部署时换 Redis store（CH-210）。
