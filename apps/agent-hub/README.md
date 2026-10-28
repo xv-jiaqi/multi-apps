@@ -25,16 +25,16 @@ JQ-Boss 在自己的开发 Mac 上同时使用多个 AI 编程 Agent：ChatGPT �
 
 ### 2.1 目标
 
-| 编号 | 目标         | 说明                                                                                                                                                                    |
-| ---- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G1   | 统一派发     | 在一处给 Codex、Qoder、其他 ACP Agent、网页 Agent 下任务；可选 Agent、模型、推理档位、只读或可写、仓库与基线。                                                          |
-| G2   | 统一可见     | 任务列表显示每个任务的 Agent、模型与推理档、状态、实时输出、diff、待审批请求、历史；不管任务是在 Hub 里建的还是本地郎派的。                                             |
-| G3   | 人工审批     | Agent 发起的权限请求（执行命令、改文件等）汇总到 Hub，由人批准或拒绝；拒绝、超时、取消都有确定的结果。                                                                  |
-| G4   | 桥接 API     | 本机 HTTP + WebSocket API：本地郎可以派任务、等待结果、取 diff、追问、取消。                                                                                            |
-| G5   | 可插拔适配器 | 统一的适配器接口；Codex（app-server JSON-RPC）与通用 ACP 适配器先行，Qoder 是 ACP 的第一个配置；Claude Code、Gemini CLI 以配置接入；网页 Agent 是第三类适配器。         |
-| G6   | 单窗口工作台 | Tauri 桌面应用；主窗口左栏**内嵌本地郎的对话页面**（原生子 WebView），右边是任务列表与详情；不用切窗口。                                                                |
-| G7   | 本地与安全   | 只在本机运行；数据只存本机 SQLite；**绝不向 GitHub 推送**；凭据不外泄；默认只读沙箱；API 只监听 `127.0.0.1` 并鉴权。                                                    |
-| G8   | 可恢复       | Hub 或 Agent 进程崩溃后，任务正确落为“已中断”，残留进程被清理；追问时从各 Agent 的原生会话恢复（Codex `thread/resume`，ACP `session/resume` / `session/load`）。        |
+| 编号 | 目标         | 说明                                                                                                                                                             |
+| ---- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1   | 统一派发     | 在一处给 Codex、Qoder、其他 ACP Agent、网页 Agent 下任务；可选 Agent、模型、推理档位、只读或可写、仓库与基线。                                                   |
+| G2   | 统一可见     | 任务列表显示每个任务的 Agent、模型与推理档、状态、实时输出、diff、待审批请求、历史；不管任务是在 Hub 里建的还是本地郎派的。                                      |
+| G3   | 人工审批     | Agent 发起的权限请求（执行命令、改文件等）汇总到 Hub，由人批准或拒绝；拒绝、超时、取消都有确定的结果。                                                           |
+| G4   | 桥接 API     | 本机 HTTP + WebSocket API：本地郎可以派任务、等待结果、取 diff、追问、取消。                                                                                     |
+| G5   | 可插拔适配器 | 统一的适配器接口；Codex（app-server JSON-RPC）与通用 ACP 适配器先行，Qoder 是 ACP 的第一个配置；Claude Code、Gemini CLI 以配置接入；网页 Agent 是第三类适配器。  |
+| G6   | 单窗口工作台 | Tauri 桌面应用；主窗口左栏**内嵌本地郎的对话页面**（原生子 WebView），右边是任务列表与详情；不用切窗口。                                                         |
+| G7   | 本地与安全   | 只在本机运行；数据只存本机 SQLite；**绝不向 GitHub 推送**；凭据不外泄；默认只读沙箱；API 只监听 `127.0.0.1` 并鉴权。                                             |
+| G8   | 可恢复       | Hub 或 Agent 进程崩溃后，任务正确落为“已中断”，残留进程被清理；追问时从各 Agent 的原生会话恢复（Codex `thread/resume`，ACP `session/resume` / `session/load`）。 |
 
 ### 2.2 非目标
 
@@ -50,17 +50,17 @@ JQ-Boss 在自己的开发 Mac 上同时使用多个 AI 编程 Agent：ChatGPT �
 
 ## 3. 用户场景
 
-| 编号 | 场景                     | 过程                                                                                                                                                                                                                                  |
-| ---- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 编号 | 场景                     | 过程                                                                                                                                                                                                                                    |
+| ---- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | S1   | 本地郎派发只读任务       | JQ-Boss 在左栏对本地郎说“让 Codex 看看 X 模块为什么慢”。本地郎调 `POST /api/v1/tasks`（`agentId: "codex"`，不传 `mode` 即只读）。任务列表立刻出现一条“来自本地郎”的任务，输出实时滚动。本地郎用 `wait` 长轮询等到本轮结束，取结果回复。 |
-| S2   | 本地郎派发写任务，人审批 | 本地郎派发“用 Qoder 修复 Y 的空指针”（`mode: "write"`）。Hub 建 git worktree、启动 Qoder。Qoder 请求执行 `pnpm test`，右栏弹出审批卡片，JQ-Boss 点“允许一次”。完成后本地郎取 diff 摘要回复；JQ-Boss 在 Hub 里看完整 diff，点“应用”。   |
-| S3   | 在 Hub 里直接建任务      | 点“新建任务”，选 Agent、模型、推理档位、只读 / 可写、仓库与基线，填提示词。                                                                                                                                                           |
-| S4   | 追问                     | 对已结束的任务追加一轮（“再补一个单测”），沿用同一个原生会话；可以换模型。                                                                                                                                                            |
-| S5   | 停止                     | 任务跑偏，点“停止本轮”（协议级中断）；10 秒没停下就强制结束。本地郎也可以取消任务。                                                                                                                                                   |
-| S6   | 网页 Agent               | 派发给 AoneD：Hub 建 `agent-hub/<shortId>` 分支并推到 `internal`，显示提示词和“打开 AoneD”按钮；JQ-Boss 在浏览器里让 AoneD 在该分支上工作；Hub 自动拉取新提交并展示 diff；JQ-Boss 点“完成本轮”。                                      |
-| S7   | 回看历史                 | 按 Agent、状态、来源、仓库筛选任务；打开上周的任务，回看输出、每轮 diff 与审批记录。                                                                                                                                                  |
-| S8   | 在 ChatGPT 里接着聊      | Codex 任务以 `threadSource: "user"` 创建（D31），同一会话也出现在 ChatGPT 应用的 Codex 里。                                                                                                                                           |
-| S9   | 崩溃恢复                 | Hub 被强退。重启后，上次运行中的任务标为“已中断”，残留 Agent 进程被清理；追问时从原生会话继续。                                                                                                                                       |
+| S2   | 本地郎派发写任务，人审批 | 本地郎派发“用 Qoder 修复 Y 的空指针”（`mode: "write"`）。Hub 建 git worktree、启动 Qoder。Qoder 请求执行 `pnpm test`，右栏弹出审批卡片，JQ-Boss 点“允许一次”。完成后本地郎取 diff 摘要回复；JQ-Boss 在 Hub 里看完整 diff，点“应用”。    |
+| S3   | 在 Hub 里直接建任务      | 点“新建任务”，选 Agent、模型、推理档位、只读 / 可写、仓库与基线，填提示词。                                                                                                                                                             |
+| S4   | 追问                     | 对已结束的任务追加一轮（“再补一个单测”），沿用同一个原生会话；可以换模型。                                                                                                                                                              |
+| S5   | 停止                     | 任务跑偏，点“停止本轮”（协议级中断）；10 秒没停下就强制结束。本地郎也可以取消任务。                                                                                                                                                     |
+| S6   | 网页 Agent               | 派发给 AoneD：Hub 建 `agent-hub/<shortId>` 分支并推到 `internal`，显示提示词和“打开 AoneD”按钮；JQ-Boss 在浏览器里让 AoneD 在该分支上工作；Hub 自动拉取新提交并展示 diff；JQ-Boss 点“完成本轮”。                                        |
+| S7   | 回看历史                 | 按 Agent、状态、来源、仓库筛选任务；打开上周的任务，回看输出、每轮 diff 与审批记录。                                                                                                                                                    |
+| S8   | 在 ChatGPT 里接着聊      | Codex 任务以 `threadSource: "user"` 创建（D31），同一会话也出现在 ChatGPT 应用的 Codex 里。                                                                                                                                             |
+| S9   | 崩溃恢复                 | Hub 被强退。重启后，上次运行中的任务标为“已中断”，残留 Agent 进程被清理；追问时从原生会话继续。                                                                                                                                         |
 
 ## 4. 选型结论
 
@@ -68,12 +68,12 @@ JQ-Boss 在自己的开发 Mac 上同时使用多个 AI 编程 Agent：ChatGPT �
 
 ### 4.1 方案对比
 
-| 方案                                  | 体积 / 内存                                         | 能否把本地郎嵌进同一窗口                                                                                     | 业务逻辑放哪                                 | 结论                       |
-| ------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------- | -------------------------- |
-| Electron                              | 重：自带 Chromium + Node，安装包上百 MB             | 可以                                                                                                         | Node                                         | 否：owner 明确排除         |
-| 纯本地 Web（浏览器访问）              | 轻                                                  | **不行**：第三方页面一般禁止 iframe 嵌入，iframe 里的第三方 Cookie 也会被拦                                  | Node                                         | 只作开发期调试方式         |
-| 纯 Tauri（业务逻辑全写在 Rust 里）    | 最轻                                                | 可以                                                                                                         | Rust                                         | 否：owner 不熟 Rust；CI 测不到 |
-| **Tauri v2 壳 + Node 侧车（选用）**   | 壳几 MB，用系统 WKWebView；Node 用本机已装的 22.13+ | **可以**：Tauri 多 WebView（`Window::add_child`）在同一窗口放一个原生子 WebView 加载本地郎页面，Cookie 隔离 | Node 侧车（TS），Rust 只有一个约 480 行的文件 | **选用**                   |
+| 方案                                | 体积 / 内存                                         | 能否把本地郎嵌进同一窗口                                                                                    | 业务逻辑放哪                                  | 结论                           |
+| ----------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------ |
+| Electron                            | 重：自带 Chromium + Node，安装包上百 MB             | 可以                                                                                                        | Node                                          | 否：owner 明确排除             |
+| 纯本地 Web（浏览器访问）            | 轻                                                  | **不行**：第三方页面一般禁止 iframe 嵌入，iframe 里的第三方 Cookie 也会被拦                                 | Node                                          | 只作开发期调试方式             |
+| 纯 Tauri（业务逻辑全写在 Rust 里）  | 最轻                                                | 可以                                                                                                        | Rust                                          | 否：owner 不熟 Rust；CI 测不到 |
+| **Tauri v2 壳 + Node 侧车（选用）** | 壳几 MB，用系统 WKWebView；Node 用本机已装的 22.13+ | **可以**：Tauri 多 WebView（`Window::add_child`）在同一窗口放一个原生子 WebView 加载本地郎页面，Cookie 隔离 | Node 侧车（TS），Rust 只有一个约 480 行的文件 | **选用**                       |
 
 ### 4.2 理由
 
@@ -97,14 +97,14 @@ JQ-Boss 在自己的开发 Mac 上同时使用多个 AI 编程 Agent：ChatGPT �
 
 **偏离**（每条都有理由）：
 
-| 偏离                                                       | 理由                                                                                                       |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| 数据库用 Node 内置 `node:sqlite`，不用 Prisma / Postgres   | 单用户本机工具，不应要求 Docker；没有原生依赖（D13）。                                                     |
-| 不用 tRPC，UI 与本地郎共用 REST + WS `/api/v1`             | 本地郎需要语言无关的接口；一套契约、一套鉴权、一套测试（D23）。Cardhub“不引入 REST 业务接口”只适用于 Cardhub。 |
-| 不用 MobX                                                  | 状态几乎全来自侧车，TanStack Query 缓存就够（D21）。                                                       |
-| Tauri 打开 `unstable` Cargo 特性                           | 多 WebView（`Window::add_child`）只在该特性下可用；版本锁定（R4）。                                        |
-| 只支持 macOS 14+                                           | 运行环境唯一；Bot 独立数据存储需要 macOS 14（D1）。                                                        |
-| commitlint 新增 scope `agent-hub`                          | 现有白名单都是 Cardhub 的（D56）。                                                                         |
+| 偏离                                                     | 理由                                                                                                           |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 数据库用 Node 内置 `node:sqlite`，不用 Prisma / Postgres | 单用户本机工具，不应要求 Docker；没有原生依赖（D13）。                                                         |
+| 不用 tRPC，UI 与本地郎共用 REST + WS `/api/v1`           | 本地郎需要语言无关的接口；一套契约、一套鉴权、一套测试（D23）。Cardhub“不引入 REST 业务接口”只适用于 Cardhub。 |
+| 不用 MobX                                                | 状态几乎全来自侧车，TanStack Query 缓存就够（D21）。                                                           |
+| Tauri 打开 `unstable` Cargo 特性                         | 多 WebView（`Window::add_child`）只在该特性下可用；版本锁定（R4）。                                            |
+| 只支持 macOS 14+                                         | 运行环境唯一；Bot 独立数据存储需要 macOS 14（D1）。                                                            |
+| commitlint 新增 scope `agent-hub`                        | 现有白名单都是 Cardhub 的（D56）。                                                                             |
 
 ## 5. 总体架构
 
@@ -172,23 +172,24 @@ flowchart LR
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │ Agent Hub   ● Codex  ● Qoder  ○ AoneD      待审批 2      [＋ 新建任务]  [⚙ 设置]          │ 顶栏 44px
 ├────────────────────────────┬──────────────────────────┬─────────────────────────────────┤
-│ 本地郎    [⟳] [↗] [⇤]       │ [全部▾][Agent▾][来源▾] 🔍 │ 修复 Y 的空指针   Qoder · 可写   │ Bot 工具条 32px
+│ 本地郎  [⟳] [↗] [↔] [⇤]     │ [全部▾][Agent▾][来源▾] 🔍 │ 修复 Y 的空指针   Qoder · 可写   │ Bot 工具条 32px
 │────────────────────────────│──────────────────────────│ 模型 默认 · 推理 高 · worktree  │
 │                            │ ● 运行中 · 本地郎 · Qoder │ [停止本轮] [追问] [应用] [归档] │
 │   （Bot 子 WebView，        │   修复 Y 的空指针  待批 2 │─────────────────────────────────│
 │    原生视图覆盖这一块）     │ ✓ 已完成 · 本地郎 · Codex │ 输出 │ Diff 3 │ 审批 2 │ 详情     │
 │                            │   分析 X 模块性能         │ ▸ 计划 3/5                       │
 │                            │ ✕ 失败 · 界面 · Qoder     │ ▸ $ pnpm test   等待审批         │
-│                            │   迁移脚本                │   [允许一次][本会话允许][拒绝]   │
+│                            │   迁移脚本                │ [允许一次][拒绝][拒绝并停止本轮] │
 │                            │ …                        │ Agent：已定位到 …                │
 └────────────────────────────┴──────────────────────────┴─────────────────────────────────┘
   左栏宽 360 / 440 / 560 三档（⌘1 收起 / 展开）· 中栏 360 · 右栏自适应 · 关窗 = 隐藏到菜单栏
 ```
 
 - 顶栏、Bot 工具条、中栏、右栏都是 Hub UI（React）；左栏工具条下面那一块由 Hub UI 留出空位（`BotSlot`），Rust 创建的**原生 Bot 子 WebView** 按这块的位置和大小盖上去，登录态存在独立的数据存储里。
-- Bot 工具条：`⟳` 刷新 Bot 页面，`↗` 用系统浏览器打开，`⇤` 收起左栏。
+- Bot 工具条：`⟳` 刷新 Bot 页面，`↗` 用系统浏览器打开，`↔` 在三档宽度间切换，`⇤` 收起左栏。
+- 审批按钮是 `[允许一次][拒绝][拒绝并停止本轮]`。Codex 另有“本会话允许”（D59）。
 - 本地郎和 Hub 之间**只通过本地 API 通信**；Hub 不向 Bot 页面注入脚本，Bot 页面也没有任何 Tauri IPC 能力。
-- 原生视图会盖住 Hub UI 的弹层：有对话框、下拉框、弹出菜单打开时 Bot 视图临时隐藏（[desktop-shell.md](docs/desktop-shell.md) §5.3）。界面细节见 [docs/hub-ui.md](docs/hub-ui.md)。
+- 对话框和确认框打开时 Bot 面板临时隐藏。下拉框只放在中栏和右栏、向下展开，不隐藏 Bot（[desktop-shell.md](docs/desktop-shell.md) §5.3）。界面细节见 [docs/hub-ui.md](docs/hub-ui.md)。
 
 ## 7. 目录结构
 
@@ -197,7 +198,7 @@ apps/agent-hub/
 ├── README.md                     # 本文
 ├── docs/                         # 设计分册（§8）；没有 package.json，pnpm 不会当成包
 ├── contract/                     # @agent-hub/contract：zod schema 与类型（领域、事件、错误、配置、API DTO），CJS 输出
-│   └── src/{index,domain,events,errors,capabilities,config,api,labels}.ts
+│   └── src/{index,domain,events,errors,capabilities,config,api,dto,labels}.ts
 ├── server/                       # @agent-hub/server：Node 侧车（NestJS 11 + ws + node:sqlite）
 │   ├── src/
 │   │   ├── main.ts               # 参数、自检、ready / fatal 行、生命线、停机
@@ -212,7 +213,7 @@ apps/agent-hub/
 │   │   └── adapters/             # types、registry、jsonrpc/、process/、codex/、acp/、web/
 │   └── test/                     # fakes/（假 Codex、假 ACP、场景文件）、helpers/、*.e2e-spec.ts
 ├── web/                          # @agent-hub/web：Vite + React Hub UI（Tauri 加载；开发时也可用浏览器打开）
-│   └── src/{main.tsx,app/,api/,pages/,components/,desktop/,lib/}
+│   └── src/{main.tsx,app/,api/,lib/,components/,pages/,desktop/}
 └── desktop/                      # @agent-hub/desktop：Tauri v2 壳
     ├── package.json
     └── src-tauri/{Cargo.toml,build.rs,tauri.conf.json,capabilities/hub.json,icons/,src/{main.rs,lib.rs}}
@@ -237,26 +238,27 @@ apps/agent-hub/
 | 11   | [docs/hub-ui.md](docs/hub-ui.md)                           | Hub UI：页面、组件、数据流、交互细则                                           |
 | 12   | [docs/security.md](docs/security.md)                       | 威胁模型、推送守卫、凭据、沙箱、WebView 隔离、脱敏                             |
 | 13   | [docs/testing.md](docs/testing.md)                         | 测试分层、假 Agent、错误路径矩阵、CI、手工验收清单                             |
-| 14   | [docs/milestones.md](docs/milestones.md)                   | **一次实现的分步计划**：依赖清单、每步的文件、检查点、完成定义                 |
+| 14   | [docs/milestones.md](docs/milestones.md)                   | **一次实现的分步计划**：14 步、检查点、AH-001 的 `node:sqlite`                 |
+| 15   | [docs/remaining-work.md](docs/remaining-work.md)           | 文档收尾时还没写完的部分：目标、契约、验收、依赖顺序                           |
 
 ## 9. 术语
 
-| 术语                  | 含义                                                                                                                                       |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hub                   | 本应用，包括 Tauri 壳、Hub UI 和 Node 侧车。                                                                                               |
-| 侧车（server）        | `@agent-hub/server` 进程，承载全部业务逻辑与 API，由 Tauri 壳拉起。                                                                        |
-| 桥接方 / 本地郎       | Grok Bot「本地郎」：本机进程通过 API 派任务、取结果；它的对话页面嵌在主窗口左栏。                                                          |
-| Agent                 | 被调度的外部编程 Agent：Codex、Qoder、Claude Code、Gemini CLI、AoneD 等。                                                                  |
-| 适配器（Adapter）     | 把某类 Agent 协议翻译成 Hub 统一接口的模块。三类：`codex`、`acp`、`web`。                                                                  |
-| Agent 配置（Profile） | `config.json` 里的一项 Agent 定义（id、类型、命令、并发上限等）。同一类适配器可以有多项，例如 `qoder` 和 `claude-code` 都是 `acp`。        |
-| 任务（Task）          | 一次派发的工作单元，绑定一个 Agent 配置、一个仓库、一个工作区和一个原生会话，可以有多轮。                                                  |
-| 轮（Turn）            | 任务里的一次提示词及 Agent 随后的全部工作；对应 Codex 的 turn、ACP 的一次 `session/prompt`、网页 Agent 的一次“开始 → 完成本轮”。           |
-| 原生会话              | Agent 自己的会话：Codex 的 thread、ACP 的 session。                                                                                        |
-| 审批（Approval）      | Agent 发起、需要人决定的权限请求。                                                                                                         |
-| 工作区                | 任务运行的目录：`in_place`（原仓库目录）、`worktree`（Hub 新建的 git worktree）、`remote_branch`（网页 Agent 的内网任务分支）。            |
-| 只读 / 可写           | 任务模式 `read_only` / `write`，默认只读。                                                                                                 |
-| 树快照                | 用临时索引把工作区当前内容写成一个 git tree 对象；两个快照之间的差就是 diff（D51）。                                                       |
-| shortId               | 任务 id 的 8 位十六进制短号，用于分支名 `agent-hub/<shortId>` 与界面显示。                                                                 |
+| 术语                  | 含义                                                                                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Hub                   | 本应用，包括 Tauri 壳、Hub UI 和 Node 侧车。                                                                                        |
+| 侧车（server）        | `@agent-hub/server` 进程，承载全部业务逻辑与 API，由 Tauri 壳拉起。                                                                 |
+| 桥接方 / 本地郎       | Grok Bot「本地郎」：本机进程通过 API 派任务、取结果；它的对话页面嵌在主窗口左栏。                                                   |
+| Agent                 | 被调度的外部编程 Agent：Codex、Qoder、Claude Code、Gemini CLI、AoneD 等。                                                           |
+| 适配器（Adapter）     | 把某类 Agent 协议翻译成 Hub 统一接口的模块。三类：`codex`、`acp`、`web`。                                                           |
+| Agent 配置（Profile） | `config.json` 里的一项 Agent 定义（id、类型、命令、并发上限等）。同一类适配器可以有多项，例如 `qoder` 和 `claude-code` 都是 `acp`。 |
+| 任务（Task）          | 一次派发的工作单元，绑定一个 Agent 配置、一个仓库、一个工作区和一个原生会话，可以有多轮。                                           |
+| 轮（Turn）            | 任务里的一次提示词及 Agent 随后的全部工作；对应 Codex 的 turn、ACP 的一次 `session/prompt`、网页 Agent 的一次“开始 → 完成本轮”。    |
+| 原生会话              | Agent 自己的会话：Codex 的 thread、ACP 的 session。                                                                                 |
+| 审批（Approval）      | Agent 发起、需要人决定的权限请求。                                                                                                  |
+| 工作区                | 任务运行的目录：`in_place`（原仓库目录）、`worktree`（Hub 新建的 git worktree）、`remote_branch`（网页 Agent 的内网任务分支）。     |
+| 只读 / 可写           | 任务模式 `read_only` / `write`，默认只读。                                                                                          |
+| 树快照                | 用临时索引把工作区当前内容写成一个 git tree 对象；两个快照之间的差就是 diff（D51）。                                                |
+| shortId               | 任务 id 的 8 位十六进制短号，用于分支名 `agent-hub/<shortId>` 与界面显示。                                                          |
 
 ## 10. 给实现 Agent 的约定
 
