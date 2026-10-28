@@ -15,6 +15,8 @@ export function agentDisplayNameFromQuery(qc: QueryClient, agentId: string): str
 export class AttentionWatcher {
   private readonly subs = new Map<string, () => void>();
   private readonly tasks = new Map<string, TaskDto>();
+  /** 每个任务已经处理到的 seq。重连时 afterSeq 从这里接着收，避免把通知再放一遍。 */
+  private readonly seqs = new Map<string, number>();
 
   constructor(
     private readonly deps: {
@@ -27,6 +29,7 @@ export class AttentionWatcher {
 
   onTask(task: TaskDto): void {
     this.tasks.set(task.id, task);
+    if (!this.seqs.has(task.id)) this.seqs.set(task.id, task.lastEventSeq);
     const active = task.status === 'preparing' || task.status === 'running';
     if (!active) {
       this.release(task.id);
@@ -34,8 +37,11 @@ export class AttentionWatcher {
     }
     if (this.subs.has(task.id)) return;
     const unsubscribe = this.deps.subscribeTask(task.id, {
-      afterSeq: () => 0,
+      afterSeq: () => this.seqs.get(task.id) ?? task.lastEventSeq,
       onEvent: (envelope) => {
+        const seen = this.seqs.get(task.id) ?? task.lastEventSeq;
+        if (envelope.seq <= seen) return;
+        this.seqs.set(task.id, envelope.seq);
         const current = this.tasks.get(task.id) ?? task;
         const text = notificationFor(
           envelope,

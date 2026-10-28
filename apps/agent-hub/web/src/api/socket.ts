@@ -162,11 +162,6 @@ export function createSocket(
       setStatus('stopped');
       return;
     }
-    if (code === WS_CLOSE_CODES.SLOW_CONSUMER) {
-      setStatus('reconnecting');
-      openSocket('reconnecting');
-      return;
-    }
     const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)] ?? 10_000;
     attempt += 1;
     setStatus('reconnecting');

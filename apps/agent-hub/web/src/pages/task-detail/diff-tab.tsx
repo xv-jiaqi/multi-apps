@@ -22,8 +22,12 @@ export function DiffTab(props: { task: TaskDetailDto }): ReactElement {
   const diff = useQuery(taskDiffQuery(props.task.id, scope, scope === 'turn' ? turn : null));
   const qc = useQueryClient();
   const running = props.task.status === 'preparing' || props.task.status === 'running';
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<unknown>(null);
 
   async function refreshLive(): Promise<void> {
+    setRefreshing(true);
+    setRefreshError(null);
     try {
       const next = await api.getTaskDiff(props.task.id, {
         scope,
@@ -35,11 +39,9 @@ export function DiffTab(props: { task: TaskDetailDto }): ReactElement {
         next,
       );
     } catch (error) {
-      qc.setQueryData(
-        taskDiffQuery(props.task.id, scope, scope === 'turn' ? turn : null).queryKey,
-        undefined,
-      );
-      throw error;
+      setRefreshError(error);
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -82,13 +84,26 @@ export function DiffTab(props: { task: TaskDetailDto }): ReactElement {
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => void refreshLive().catch(() => undefined)}
+            disabled={refreshing}
+            onClick={() => void refreshLive()}
           >
-            刷新 diff
+            {refreshing ? '处理中…' : '刷新 diff'}
           </Button>
         ) : null}
       </div>
-      {diff.isError ? (
+      {refreshError ? (
+        <div role="alert" className="space-y-2">
+          <p className="select-text text-sm text-red-700">{errorMessage(refreshError)}</p>
+          <button
+            type="button"
+            className={`h-8 rounded-md border px-3 text-sm ${focusRing}`}
+            onClick={() => void refreshLive()}
+          >
+            重试
+          </button>
+        </div>
+      ) : null}
+      {refreshError ? null : diff.isError ? (
         diff.error instanceof ApiError && diff.error.code === 'DIFF_NOT_AVAILABLE' ? (
           <p className="text-sm text-neutral-700">本轮结束后才有 diff</p>
         ) : (
@@ -103,8 +118,9 @@ export function DiffTab(props: { task: TaskDetailDto }): ReactElement {
             </button>
           </div>
         )
+      ) : diff.isLoading ? (
+        <p className="text-sm text-neutral-700">正在加载 diff…</p>
       ) : null}
-      {diff.isLoading ? <p className="text-sm text-neutral-700">正在加载 diff…</p> : null}
       {diff.data?.truncated ? <p className="text-sm text-amber-800">diff 已截断</p> : null}
       {diff.data && diff.data.patch === null ? (
         <p className="text-sm text-neutral-700">

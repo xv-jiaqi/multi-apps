@@ -59,7 +59,7 @@ describe('WebSocket', () => {
     expect(FakeSocket.sockets).toHaveLength(2);
   });
 
-  it('普通断开按 1、2、5、10 秒重连，4008 立即重连，4400 和 4403 停止', () => {
+  it('普通断开和 4008 都按 1、2、5、10 秒重连，之后保持 10 秒，4400 和 4403 停止', () => {
     const hub = createSocket((url) => new FakeSocket(url));
     hub.connect('ws://127.0.0.1:47821/api/v1/ws', 'token');
     ready(FakeSocket.sockets[0]!);
@@ -79,6 +79,8 @@ describe('WebSocket', () => {
     vi.advanceTimersByTime(10_000);
     expect(FakeSocket.sockets).toHaveLength(5);
     FakeSocket.sockets[4]!.onclose?.({ code: WS_CLOSE_CODES.SLOW_CONSUMER });
+    expect(FakeSocket.sockets).toHaveLength(5);
+    vi.advanceTimersByTime(10_000);
     expect(FakeSocket.sockets).toHaveLength(6);
     FakeSocket.sockets[5]!.onclose?.({ code: WS_CLOSE_CODES.BAD_MESSAGE });
     expect(hub.getStatus()).toBe('stopped');

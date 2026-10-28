@@ -242,7 +242,7 @@ declare const client: {
 
 `configure(null)` 用于侧车断开。`request` 把非 2xx 的契约错误转成 `ApiError`。
 
-WebSocket（`api/socket.ts`）首条消息 `auth`，`ready` 后重发全部订阅。状态 `idle | connecting | open | reconnecting | stopped`。`getStatus` / `subscribeStatus` 供 `useSyncExternalStore`。重连间隔 1、2、5、10 秒，之后保持 10 秒。`4008` 立即重连。`4400`、`4403`、`4401` 停止；侧车给出新 token 后由 `connect()` 重新开始。
+WebSocket（`api/socket.ts`）首条消息 `auth`，`ready` 后重发全部订阅。状态 `idle | connecting | open | reconnecting | stopped`。`getStatus` / `subscribeStatus` 供 `useSyncExternalStore`。重连间隔 1、2、5、10 秒，之后保持 10 秒。`4008` 也走这组间隔，不立即重连。`4400`、`4403`、`4401` 停止；侧车给出新 token 后由 `connect()` 重新开始。
 
 ```ts
 type TasksHandlers = {

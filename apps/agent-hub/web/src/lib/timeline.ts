@@ -108,7 +108,7 @@ const MAX_TASKS = 5;
 
 interface TaskState {
   snapshot: TimelineSnapshot;
-  seen: ReadonlySet<number>;
+  seen: Set<number>;
   openedAt: number;
 }
 
@@ -183,13 +183,11 @@ function applyBatch(state: TaskState, envelopes: readonly HubEventEnvelope[]): T
   let items = state.snapshot.items;
   let usage = state.snapshot.usage;
   let lastSeq = state.snapshot.lastSeq;
-  let seen = state.seen;
+  const seen = state.seen;
   let changed = false;
   for (const envelope of envelopes) {
     if (seen.has(envelope.seq)) continue;
-    const nextSeen = new Set(seen);
-    nextSeen.add(envelope.seq);
-    seen = nextSeen;
+    seen.add(envelope.seq);
     if (envelope.seq > lastSeq) lastSeq = envelope.seq;
     changed = true;
     const step = applyEvent(items, usage, envelope);
