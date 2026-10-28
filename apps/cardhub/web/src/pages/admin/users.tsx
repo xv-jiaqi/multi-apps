@@ -501,7 +501,7 @@ const UsersBody = observer(function UsersBody() {
                             className={
                               banned
                                 ? `${actionClass} text-xs font-medium text-brand-600 hover:underline`
-                                : `${actionClass} text-xs text-red-600 hover:underline`
+                                : `${actionClass} text-xs text-red-700 hover:underline`
                             }
                             aria-label={tt(
                               banned ? 'admin.users.unbanAria' : 'admin.users.banAria',

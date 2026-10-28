@@ -303,7 +303,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                                   setRowError(null);
                                   setConfirmingSlug(card.slug);
                                 }}
-                                className={`${actionClass} text-xs text-red-600 hover:underline`}
+                                className={`${actionClass} text-xs text-red-700 hover:underline`}
                               >
                                 {tt('admin.action.delete')}
                               </button>

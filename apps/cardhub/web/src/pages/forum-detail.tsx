@@ -603,7 +603,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                       }}
                       disabled={deleteTopic.isPending}
                       aria-label={tt('forum.detail.deleteTopicAria')}
-                      className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                      className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
                     >
                       {tt('forum.detail.delete')}
                     </button>
@@ -757,7 +757,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                             aria-label={tt('forum.detail.deleteReplyAria', {
                               user: reply.author.username,
                             })}
-                            className="inline-flex min-h-6 items-center rounded px-1 text-red-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
+                            className="inline-flex min-h-6 items-center rounded px-1 text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
                           >
                             {tt('forum.detail.delete')}
                           </button>

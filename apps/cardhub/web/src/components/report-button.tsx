@@ -93,7 +93,7 @@ export const ReportButton = observer(function ReportButton({
       onSubmit={onSubmit}
       className="space-y-2 rounded-md border border-neutral-200 bg-white p-3 text-sm"
     >
-      <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+      <p className="text-xs font-semibold uppercase tracking-widest text-neutral-600">
         {tt('report.title')}
       </p>
       <label className="block">
@@ -119,7 +119,7 @@ export const ReportButton = observer(function ReportButton({
             setOpen(false);
             setError(null);
           }}
-          className="text-xs text-neutral-500 hover:text-neutral-900"
+          className="text-xs text-neutral-600 hover:text-neutral-900"
         >
           {tt('report.cancel')}
         </button>

@@ -443,7 +443,7 @@ function ReportListItem({
                     ref={removeButtonRef}
                     type="button"
                     variant="outline"
-                    className="h-10 w-full border-red-200 text-red-600 hover:bg-red-50 sm:w-auto"
+                    className="h-10 w-full border-red-200 text-red-700 hover:bg-red-50 sm:w-auto"
                     disabled={isBusy}
                     onClick={() => setConfirmingRemove(true)}
                   >
