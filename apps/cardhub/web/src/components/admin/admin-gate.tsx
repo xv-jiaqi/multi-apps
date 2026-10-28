@@ -20,7 +20,7 @@ export const AdminGate = observer(function AdminGate({ children }: { children: R
 
   if (!session.isAuthenticated) {
     return (
-      <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+      <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
         <Link
           to="/login"
           state={{ from: location.pathname }}
@@ -34,7 +34,7 @@ export const AdminGate = observer(function AdminGate({ children }: { children: R
 
   if (!session.isAdmin || revoked) {
     return (
-      <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+      <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
         {tt('admin.adminOnly')}
       </p>
     );

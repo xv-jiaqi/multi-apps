@@ -118,7 +118,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
         </header>
 
         {!session.isAuthenticated ? (
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
             <Link
               to="/login"
               state={{ from: '/reports' }}
@@ -128,7 +128,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
             </Link>
           </p>
         ) : !session.isAdmin ? (
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
             {tt('reports.adminOnly')}
           </p>
         ) : (
@@ -367,7 +367,7 @@ function ReportListItem({
                 readOnly={isBusy}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder={tt('reports.resolve.notePlaceholder')}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
               />
               <p className="text-xs text-neutral-500">{note.length} / 500</p>
             </div>

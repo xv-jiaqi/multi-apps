@@ -176,7 +176,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
               { label: seriesSlug },
             ]}
           />
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-500">
+          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
             {tt('state.notFound')}
           </p>
         </div>
