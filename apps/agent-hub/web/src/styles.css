@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+@import '@repo/design-tokens/tailwind.css';
+
+@source '../../../../packages/ui-web/src';
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  user-select: none;
+}
+
+.markdown :where(h1) {
+  @apply mb-2 mt-3 text-xl font-semibold text-neutral-900;
+}
+
+.markdown :where(h2) {
+  @apply mb-2 mt-3 text-lg font-semibold text-neutral-900;
+}
+
+.markdown :where(h3, h4) {
+  @apply mb-2 mt-3 text-base font-semibold text-neutral-900;
+}
+
+.markdown :where(p) {
+  @apply my-2;
+}
+
+.markdown :where(ul) {
+  @apply my-2 list-disc pl-5;
+}
+
+.markdown :where(ol) {
+  @apply my-2 list-decimal pl-5;
+}
+
+.markdown :where(blockquote) {
+  @apply my-2 border-l-2 border-neutral-300 pl-3 text-neutral-700;
+}
+
+.markdown :where(table) {
+  @apply my-2 w-full border-collapse text-left text-sm;
+}
+
+.markdown :where(th, td) {
+  @apply border border-neutral-300 px-2 py-1;
+}
+
+.markdown :where(code) {
+  @apply rounded bg-neutral-100 px-1 font-mono text-sm;
+}
+
+.markdown :where(pre) {
+  @apply my-2 overflow-auto rounded bg-neutral-100 p-2;
+}
+
+.markdown :where(pre code) {
+  @apply bg-transparent p-0;
+}
+
+.markdown :where(a) {
+  @apply text-brand-700 underline;
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@agent-hub/contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Agent Hub 契约：领域类型、事件、错误码、配置、API DTO。CommonJS 输出。",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@repo/config-ts": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}

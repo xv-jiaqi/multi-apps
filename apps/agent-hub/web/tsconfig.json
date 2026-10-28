@@ -1,0 +1,7 @@
+{
+  "extends": "@repo/config-ts/react.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node", "vitest/globals"]
+  },
+  "include": ["src/**/*", "test/**/*", "vite.config.ts"]
+}
