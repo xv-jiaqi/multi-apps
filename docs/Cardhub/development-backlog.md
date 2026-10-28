@@ -441,7 +441,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
   - API：评论列表返回顶层评论，每条附最多 3 条回复和 `replyCount`；新增 `comments.listReplies({ parentId, cursor })`；创建评论接受可选 `parentId`，必须属于同一张卡牌（或同一个系列，若 CH-101 已完成）且是顶层评论。
   - Web：评论下“回复”按钮、内联输入框、缩进显示，“展开更多回复”。
 - **依赖**：CH-002（删除顶层评论会级联删除回复，需要界面提示）。
-- **回滚**：迁移只加可空列 `parentId`、索引和外键（`ON DELETE CASCADE`），以及 `(parentId, createdAt, id)` 复合索引。旧服务不读这列。先把应用退回上一版，再按顺序丢掉 `comments_parentId_createdAt_id_idx`、`comments_parentId_fkey`、`comments_parentId_idx` 和 `parentId`。新版本还在跑时不要删列。退回旧版但列还在时，旧列表不过滤 `parentId`，回复会当成顶层评论出现（条数会变多）。可以接受，回滚时要知道。
+- **回滚**：迁移只加可空列 `parentId`、索引和外键（`ON DELETE CASCADE`），以及 `(parentId, createdAt, id)` 复合索引。旧服务不读这列。先把应用退回上一版。丢掉 `comments_parentId_createdAt_id_idx`、`comments_parentId_fkey`、`comments_parentId_idx` 和 `parentId` 必须通过新的前向迁移来做，见 §1.3；不要改已经合入的迁移文件。新版本还在跑时不要删列。退回旧版但列还在时，旧列表不过滤 `parentId`，回复会当成顶层评论出现（条数会变多）。可以接受，回滚时要知道。
 
 #### CH-205 首页改版
 
