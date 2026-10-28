@@ -969,6 +969,34 @@ describe('CommentSection replies', () => {
     expect(screen.getByRole('textbox', { name: '回复 @cara' })).toHaveValue('still drafting');
   });
 
+  it('prefills the next author after escaping a mention-only reply', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        ...thread,
+        replyCount: 2,
+        replies: [
+          ...thread.replies,
+          {
+            id: '33333333-3333-4333-8333-333333333333',
+            content: 'another reply',
+            createdAt: '2026-05-01T01:05:00.000Z',
+            user: { id: 'u4', username: 'dave' },
+          },
+        ],
+      },
+    ];
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @cara' }));
+    expect(screen.getByRole('textbox', { name: '回复 @cara' })).toHaveValue('@cara ');
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: '回复 @dave' }));
+    const field = screen.getByRole('textbox', { name: '回复 @dave' });
+    expect(field).toHaveValue('@dave ');
+    expect((field as HTMLTextAreaElement).selectionStart).toBe('@dave '.length);
+  });
+
   it('shows parentGone without retry, refreshes, and focuses the section title', async () => {
     const user = userEvent.setup();
     mutateMock.mockImplementation((input, callbacks) => {
