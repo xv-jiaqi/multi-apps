@@ -294,3 +294,4 @@ declare function prePushHookScript(blockedHosts: readonly string[], guardLog: st
 - mermaid 图全部能用 `mmdc` 渲染；文档间相对链接与 `§` 锚点都指向存在的文件和章节；表格每行列数与表头一致。
 - `rg -n 'ahu_[A-Za-z0-9_-]{43}|ahb_[A-Za-z0-9_-]{20,}' apps/agent-hub` 没有结果（文档里只能用明显的假 token），域名只用 `*.example` 或 `<内网 git 域名>`。
 - 嵌入的源码在临时目录里 `tsc --noEmit` 通过、相关测试通过，与文档逐字一致。
+- 风险和决策只链到 [decisions-and-risks.md](decisions-and-risks.md)。相对链接必须能打开目标文件；紧跟在链接后面的 `§` 必须对得上该文件的章节号。
