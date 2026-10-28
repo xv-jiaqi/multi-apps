@@ -305,4 +305,22 @@ describe('RetryButton', () => {
     expect(button).toHaveClass('cursor-not-allowed');
     expect(button).not.toHaveClass('pointer-events-none');
   });
+
+  it('renders the inline variant as a text button inside a field error', () => {
+    render(
+      <RetryButton
+        variant="inline"
+        retrying={false}
+        label="重试"
+        retryingLabel="重试中"
+        onRetry={() => undefined}
+      />,
+    );
+    expect(screen.getByRole('button', { name: '重试' })).toHaveClass(
+      'inline-flex',
+      'min-h-6',
+      'text-red-700',
+      'underline',
+    );
+  });
 });
