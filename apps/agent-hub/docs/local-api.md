@@ -33,7 +33,7 @@
 `main.ts` 里的装配顺序（Nest 用 Express 平台，`@nestjs/platform-express`）：
 
 ```ts
-z.config(z.locales.zhCN()); // zod 默认错误信息改成中文；web/src/main.tsx 也调一次
+z.config(z.locales.zhCN()); // zod 默认错误信息改成中文。Hub UI 不在本地跑 zod 校验
 const app = await NestFactory.create<NestExpressApplication>(AppModule, {
   bodyParser: false,
   logger,

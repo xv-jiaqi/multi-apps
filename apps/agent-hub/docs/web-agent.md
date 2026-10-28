@@ -1101,8 +1101,8 @@ export class WebManualAdapter implements AgentAdapter {
 | 分支与仓库 | `task.branch`；仓库地址取 `GET /repos` 里该仓库 `inspection.remotes` 中 `internalRemote` 的 `pushUrl`（已去 userinfo）。 | 总是                 |
 | 最新提交   | 当前轮最后一条 `remote.updated` 的 `headCommit`（前 8 位）与 `newCommits`；本轮还没有时显示“本轮还没有新提交”。          | 总是                 |
 | 复制提示词 | 复制当前轮 `t<轮序号>-handoff` 工具项的输出（`navigator.clipboard.writeText`），提示“已复制”。                           | 当前轮已有这个工具项 |
-| 打开 AoneD | `openUrl(config.openUrl)`（`@tauri-apps/plugin-opener`，用系统默认浏览器，那里有 SSO 登录态）。                          | `openUrl` 不为空     |
-| 打开会话   | `openUrl(task.remoteUrl)`。                                                                                              | `remoteUrl` 不为空   |
+| 打开 AoneD | `openExternal(config.openUrl)`（`web/src/desktop/external.ts`，用系统默认浏览器，那里有 SSO 登录态）。                   | `openUrl` 不为空     |
+| 打开会话   | `openExternal(task.remoteUrl)`。                                                                                         | `remoteUrl` 不为空   |
 | 会话链接   | 输入框 + 保存 → `POST /tasks/:id/remote/link`，只接受 `http` / `https`；任何状态都能改。                                 | 总是                 |
 | 停止本轮   | `POST /tasks/:id/cancel`。                                                                                               | `running`            |
 | 完成本轮   | `POST /tasks/:id/remote/done`；请求期间按钮显示“正在拉取…”并禁用。                                                       | `running`            |

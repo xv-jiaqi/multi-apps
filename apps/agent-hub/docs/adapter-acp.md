@@ -133,7 +133,7 @@ export const ACP_PROFILES: Record<AcpProfileId, AcpProfile> = {
 | `qoder`       | `qodercli --acp`   | `default`                                    | `default`      | Qoder 的五个模式 `default` / `acceptEdits` / `auto` / `dontAsk` / `yolo` 里只有 `default` 对修改和命令都询问。用户可以在 Qoder 设置里把默认模式（`defaultPermissionMode`）设成 `yolo`，所以 Hub 每个会话都显式切到 `default`。 |
 | `claude-code` | `claude-agent-acp` | `plan`（没有时 `default`）                   | `default`      | `plan` 只读规划；`default`（界面名 Manual）修改前询问；`acceptEdits`、`auto`、`bypassPermissions` 会跳过审批。                                                                                                                 |
 | `gemini`      | `gemini --acp`     | `plan`（“Read-only mode”，没有时 `default`） | `default`      | `default` 每次询问；`autoEdit`、`yolo` 跳过审批。                                                                                                                                                                              |
-| `generic`     | 用户填写           | `plan`，没有时 `default`                     | `default`      | 常见命名。两个都没有时 Hub 不管理模式，只记 `warn` 日志（新建任务对话框照 D38 显示“只读靠审批与快照比对”）。                                                                                                                   |
+| `generic`     | 用户填写           | `plan`，没有时 `default`                     | `default`      | 常见命名。两个都没有时 Hub 不管理模式，只记 `warn` 日志（新建任务页照 D38 显示“只读靠审批与快照比对”）。                                                                                                                       |
 
 新增一个 profile：在 `contract/src/config.ts` 的 `acpAgentSchema.profile` 枚举里加 id（`ACP_PROFILES` 的类型取自这个枚举，漏加编译不过），在 `ACP_PROFILES` 里加一项，在 §10 加兼容表行，在 [decisions-and-risks.md](decisions-and-risks.md) 追加决策。**不要**为单个 Agent 复制 `AcpAdapter`。
 

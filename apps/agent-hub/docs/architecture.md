@@ -245,7 +245,7 @@ git -C "$repo" worktree add -b "agent-hub/$shortId" "$AGENT_HUB_HOME/worktrees/$
 ```
 
 - worktree 放在仓库外面，不会出现在用户的 `git status` 里，也不会被 Vite / tsc 的监听扫到。
-- 原仓库有未提交改动时，新建任务对话框提示“未提交的改动不会带进 worktree”。
+- 原仓库有未提交改动时，新建任务页提示“未提交的改动不会带进 worktree”。
 - **worktree 没有 `node_modules`**：仓库配置 `worktreeSetup`（例如 `{"command": ["pnpm", "install", "--offline", "--frozen-lockfile"]}`）在 Agent 启动前执行，用 Agent 子进程同样的环境（含推送守卫），超时默认 600 秒；失败记 `WORKSPACE_SETUP_FAILED`，worktree 保留供排查，setup 输出的最后 4 KB 放进错误详情。
 
 ### 7.2 树快照与 diff

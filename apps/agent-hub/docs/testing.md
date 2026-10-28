@@ -21,7 +21,7 @@
 | git 与工作区测试 | jest + 临时仓库 + 本地裸仓库 + `git daemon`       | `server/test/git/*.e2e-spec.ts`      | worktree、diff（未跟踪、二进制、重命名、超大）、不碰用户暂存区、应用到本地分支、推送守卫各层                                    | 是               |
 | API 集成测试     | jest + supertest + `ws`                           | `server/test/api/*.e2e-spec.ts`      | 在随机端口启动完整 Nest 应用（临时 `AGENT_HUB_HOME`、临时 SQLite），验证鉴权、Host/Origin、幂等、`wait`、WS 续订与关闭码        | 是               |
 | 网页 Agent 测试  | jest + Playwright Chromium + 假 AoneD 站点        | `server/test/web/*.e2e-spec.ts`      | 驱动的提交、观察、取消、登录过期、DOM 漂移、超时；双源 git 流程                                                                 | 是               |
-| Hub UI 测试      | vitest + Testing Library（同 `apps/cardhub/web`） | `web/src/**/*.test.tsx`              | 任务列表、任务详情、diff 查看、审批卡片、新建任务对话框、`BotSlot` 位置上报（模拟 `ResizeObserver`）、tRPC 用假链接             | 是               |
+| Hub UI 测试      | vitest + Testing Library（同 `apps/cardhub/web`） | `web/src/**/*.test.tsx`              | 任务列表、任务详情、diff 查看、审批卡片、新建任务页、`BotSlot` 位置上报（模拟 `ResizeObserver`）、tRPC 用假链接                 | 是               |
 | Rust 壳单测      | `cargo test`                                      | `desktop/src-tauri/src/**`           | desktop-shell.md §9 列出的纯函数                                                                                                | 否（macOS 本机） |
 | 手工验收         | 清单                                              | §6                                   | 真实 Codex / Qoder / AoneD、桌面壳、安全清单、本地郎端到端                                                                      | 否               |
 

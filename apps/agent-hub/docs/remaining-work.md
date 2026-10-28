@@ -8,7 +8,7 @@
 | ---- | -------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | W1   | Hub UI         | 新增 `docs/hub-ui.md`；`web/src/` 里除 `desktop/` 以外的全部代码 | README 和 6 份分册已引用 `hub-ui.md` 的 §1–§5.7，文件不存在；§2 是它的完整提纲                                        |
 | W2   | 桌面壳文档修正 | 改 `docs/desktop-shell.md` 的 §6、§8.1、§10                      | Rust 与 `web/src/desktop/` 源码已定稿；只有接线说明和验收清单与 Hub UI 的最终设计不一致                               |
-| W3   | 决策与措辞同步 | 改 `decisions-and-risks.md` 等 7 个文件                          | 还有“新建任务对话框”、`openUrl(...)` 等旧说法                                                                         |
+| W3   | 决策与措辞同步 | 改 `decisions-and-risks.md` 等 7 个文件                          | 还有把新建任务说成对话框、以及旧的打开函数调用等说法                                                                  |
 | W4   | 安全分册重写   | `docs/security.md`                                               | §8 仍写着不存在的 IPC 命令 `reveal_path` / `open_external`；“脱敏”的章节号与 4 处引用对不上                           |
 | W5   | 测试分册重写   | `docs/testing.md`                                                | 仍有 Prisma、Playwright、tRPC、`cargo test`，分别与 D13、D40、D23、D54 冲突；手工清单的章节号与 7 处“§7”引用对不上    |
 | W6   | 实施计划重写   | `docs/milestones.md`                                             | 仍按 M0–M5 里程碑组织（D55 要求一次实现的步骤表）；“AoneD 驱动”“MCP 端点”两张卡与 D40、D47 冲突；链接不存在的风险文档 |
@@ -246,7 +246,7 @@ declare function withoutRepo(config: HubConfig, repoId: string): HubConfig; // �
 | D66  | 不用 toast 库：自写 `ToastStore`，右下角最多 3 条，普通 4 秒、错误 8 秒。查询错误在原位显示，变更错误默认弹提示。                                                       |
 | D67  | Hub UI 不发 `Idempotency-Key`（服务端只对桥接 token 生效，local-api.md §3.3），防重复提交靠提交期间禁用按钮。                                                           |
 
-同时修改：D21 改为“任务、审批对象（`tasks` 主题）写进 Query 缓存；任务事件流（`task` 主题）不进 Query，合并进 `TaskStreams` / `Timeline`”；D38 的“新建任务对话框”改为“新建任务页”；D54 加上 desktop-shell.md §10。其他文件：`adapter-acp.md`、`adapter-interface.md`、`architecture.md`、`milestones.md`、`testing.md` 里的“新建任务对话框”改为“新建任务页”；`web-agent.md` §5.2 表格里的 `openUrl(...)` 改为 `openExternal(...)`（`web/src/desktop/external.ts`）；`local-api.md` §1.1 的 `z.config(...)` 注释删掉“web/src/main.tsx 也调一次”（Hub UI 不在本地跑 zod 校验）。验收：`rg '新建任务对话框|openUrl\('` 在 `docs/` 下没有结果。
+同时修改：D21 改为“任务、审批对象（`tasks` 主题）写进 Query 缓存；任务事件流（`task` 主题）不进 Query，合并进 `TaskStreams` / `Timeline`”；D38 把新建任务的旧对话框说法改为“新建任务页”；D54 加上 desktop-shell.md §10。其他文件：`adapter-acp.md`、`adapter-interface.md`、`architecture.md`、`milestones.md`、`testing.md` 里同样改为“新建任务页”；`web-agent.md` §5.2 表格里的旧打开函数调用改为 `openExternal(...)`（`web/src/desktop/external.ts`）；`local-api.md` §1.1 的 `z.config(...)` 注释删掉“web/src/main.tsx 也调一次”（Hub UI 不在本地跑 zod 校验）。验收：在 `docs/` 下搜索把“新建任务”和“对话框”连写成的旧说法，以及 `openUrl` 后紧跟括号的调用，都没有结果。
 
 ## 5. W4 security.md 重写
 

@@ -1478,7 +1478,7 @@ export type AgentHealth =
 | 运行中的更新                 | 适配器调 `deps.report.health()` / `report.capabilities()`：例如会话失败于 `AGENT_AUTH_REQUIRED` → `auth_required`；Codex 进程退出 → `unavailable`，下次成功启动后回到 `ready`；ACP 会话建成后上报新的模型列表。                                                                              |
 | 配置变更 `applyConfig(next)` | 按 `id` 比较新旧配置。没变的不动。新增 → 创建并探测。删除、禁用或任何字段变了 → 先对该 Agent 的空闲会话 `dispose('config_changed')`；还有 `preparing` / `running` 的任务时标记“替换中”（调度器不给它派新任务），等这些任务全部离开这两个状态后再 `shutdown()` 旧适配器、按新配置创建并探测。 |
 | `shutdown()`                 | 停机：对全部适配器并行 `shutdown()`。                                                                                                                                                                                                                                                        |
-| 推送                         | Agent 状态变化**不经 WebSocket 推送**；Hub UI 每 10 秒刷新一次 `GET /agents`，打开新建任务对话框时立即刷新（[hub-ui.md](hub-ui.md) §4）。                                                                                                                                                    |
+| 推送                         | Agent 状态变化**不经 WebSocket 推送**；Hub UI 每 10 秒刷新一次 `GET /agents`，打开新建任务页时立即刷新（[hub-ui.md](hub-ui.md) §4）。                                                                                                                                                        |
 
 ## 10. 新增一个 Agent
 

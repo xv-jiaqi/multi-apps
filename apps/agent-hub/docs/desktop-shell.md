@@ -1629,7 +1629,7 @@ export function notificationFor(
 
 ```ts
 // web/src/desktop/external.ts
-import { openUrl, revealItemInDir } from '@tauri-apps/plugin-opener';
+import { openUrl as openInOpener, revealItemInDir } from '@tauri-apps/plugin-opener';
 import { ipc } from './ipc';
 
 /** 用系统默认浏览器打开链接；只接受 http / https（capability 的 opener 范围也只放行这两种）。 */
@@ -1639,7 +1639,7 @@ export async function openExternal(url: string): Promise<void> {
     throw new Error('只能打开 http / https 链接');
   }
   if (ipc.inTauri()) {
-    await openUrl(parsed.href);
+    await openInOpener(parsed.href);
   } else {
     window.open(parsed.href, '_blank', 'noopener,noreferrer');
   }
