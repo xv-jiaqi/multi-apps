@@ -237,6 +237,26 @@ function replyRow(text: string): HTMLElement {
   return row;
 }
 
+function repliesSection(): HTMLElement {
+  const heading = screen.getByRole('heading', { name: /^回帖（/ });
+  const section = heading.closest('section');
+  if (!section) throw new Error('回帖区块不存在');
+  return section;
+}
+
+function loadMoreButton(): HTMLElement {
+  const list = within(repliesSection()).getByRole('list');
+  const row = list.nextElementSibling;
+  if (!(row instanceof HTMLElement)) throw new Error('加载更多回帖不在列表后面的那一行');
+  return within(row).getByRole('button', { name: '加载更多回帖' });
+}
+
+function postReplyButton(): HTMLElement {
+  const form = screen.getByLabelText('撰写回帖').closest('form');
+  if (!form) throw new Error('回帖表单不存在');
+  return within(form).getByRole('button', { name: '发布回帖' });
+}
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/forum/test-topic']}>
@@ -345,14 +365,14 @@ describe('ForumDetailPage replies pagination', () => {
     expect(screen.getByText('Reply 20')).toBeInTheDocument();
     expect(screen.queryByText('Reply 21')).not.toBeInTheDocument();
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
 
     expect(await screen.findByText('Reply 21')).toBeInTheDocument();
     expect(screen.getByText('Reply 40')).toBeInTheDocument();
     expect(screen.queryByText('Reply 41')).not.toBeInTheDocument();
     expect(screen.getAllByText(/^Reply \d+$/)).toHaveLength(40);
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
 
     expect(await screen.findByText('Reply 41')).toBeInTheDocument();
     expect(screen.getByText('已显示全部回帖')).toBeInTheDocument();
@@ -364,7 +384,7 @@ describe('ForumDetailPage replies pagination', () => {
     const user = userEvent.setup({ delay: null });
     const view = renderPage();
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
     expect(await screen.findByText('Reply 30')).toBeInTheDocument();
 
     availableReplies = replies.filter((reply) => reply.id !== replies[19]!.id);
@@ -386,7 +406,7 @@ describe('ForumDetailPage replies pagination', () => {
       expect(latestInitialCursor).toBe('reply-21');
       expect(repliesReset).toHaveBeenCalled();
     });
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
     view.rerender(
       <MemoryRouter initialEntries={['/forum/test-topic']}>
         <Routes>
@@ -405,7 +425,7 @@ describe('ForumDetailPage replies pagination', () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
     expect(await screen.findByText('Reply 21')).toBeInTheDocument();
 
     const row = within(replyRow('Reply 5'));
@@ -424,7 +444,7 @@ describe('ForumDetailPage replies pagination', () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
     expect(await screen.findByText('Reply 25')).toBeInTheDocument();
 
     const row = within(replyRow('Reply 25'));
@@ -447,7 +467,7 @@ describe('ForumDetailPage replies pagination', () => {
     await user.click(row.getByRole('button', { name: '删除' }));
 
     await waitFor(() => expect(screen.queryByText('Reply 20')).not.toBeInTheDocument());
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
 
     expect(await screen.findByText('Reply 21')).toBeInTheDocument();
     expect(screen.getByText('Reply 40')).toBeInTheDocument();
@@ -458,7 +478,7 @@ describe('ForumDetailPage replies pagination', () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
     expect(await screen.findByText('Reply 40')).toBeInTheDocument();
 
     const cursorRow = within(replyRow('Reply 20'));
@@ -469,7 +489,7 @@ describe('ForumDetailPage replies pagination', () => {
     expect(repliesQueryState.data.pageParams).toEqual(['reply-19']);
 
     await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
-    await user.click(screen.getByText('发布回帖'));
+    await user.click(postReplyButton());
 
     await waitFor(() => {
       expect(fetchNextPage).toHaveBeenCalledTimes(2);
@@ -543,7 +563,7 @@ describe('ForumDetailPage replies pagination', () => {
     renderPage();
 
     await user.type(screen.getByLabelText('撰写回帖'), 'reply to a deleted topic');
-    await user.click(screen.getByText('发布回帖'));
+    await user.click(postReplyButton());
 
     const notice = await screen.findByText('内容不存在或已被删除');
     expect(notice).not.toHaveTextContent('重试');
@@ -568,7 +588,7 @@ describe('ForumDetailPage replies pagination', () => {
     renderPage();
 
     await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
-    await user.click(screen.getByText('发布回帖'));
+    await user.click(postReplyButton());
 
     await waitFor(() => {
       expect(topicInvalidate).toHaveBeenCalledWith({ slug: 'test-topic' });
@@ -596,7 +616,7 @@ describe('ForumDetailPage replies pagination', () => {
     renderPage();
 
     await user.type(screen.getByLabelText('撰写回帖'), 'new reply');
-    await user.click(screen.getByText('发布回帖'));
+    await user.click(postReplyButton());
 
     await waitFor(() => {
       expect(fetchNextPage).toHaveBeenCalledTimes(1);
@@ -614,7 +634,7 @@ describe('ForumDetailPage replies pagination', () => {
     });
     renderPage();
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
 
     const loadingButton = await screen.findByRole('button', { name: '加载中…' });
     expect(loadingButton).toBeDisabled();
@@ -661,7 +681,7 @@ describe('ForumDetailPage replies pagination', () => {
       replies: [...topicState.data!.replies, newReply],
       replyNextCursor: null,
     };
-    await user.click(screen.getByText('发布回帖'));
+    await user.click(postReplyButton());
 
     const highlightedReply = await screen.findByText('new highlighted reply');
     await waitFor(() => {
@@ -689,7 +709,7 @@ describe('ForumDetailPage replies pagination', () => {
       },
     }));
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
     expect(await screen.findByText('已加载 1 条回帖')).toBeInTheDocument();
     expect(screen.queryByText('Reply 21')).not.toBeInTheDocument();
 
@@ -713,7 +733,7 @@ describe('ForumDetailPage replies pagination', () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
 
-    await user.click(screen.getByText('加载更多回帖'));
+    await user.click(loadMoreButton());
 
     const firstNew = await screen.findByText('Reply 21');
     const item = firstNew.closest('li');
@@ -722,7 +742,7 @@ describe('ForumDetailPage replies pagination', () => {
       expect(item).toHaveFocus();
     });
     expect(document.activeElement).not.toBe(document.body);
-    expect(screen.getByText('加载更多回帖')).toBeInTheDocument();
+    expect(loadMoreButton()).toBeInTheDocument();
   });
 });
 
@@ -878,7 +898,7 @@ describe('ForumDetailPage CH-103 topic controls', () => {
     renderPage();
     const field = screen.getByLabelText('撰写回帖');
     await user.type(field, 'keep the reply');
-    await user.click(screen.getByText('发布回帖'));
+    await user.click(postReplyButton());
     expect(screen.getByRole('alert')).toHaveTextContent('你的账号已被封禁，这次操作没有完成。');
     expect(screen.getByRole('alert')).not.toHaveTextContent('Prisma');
     expect(field).toHaveValue('keep the reply');
