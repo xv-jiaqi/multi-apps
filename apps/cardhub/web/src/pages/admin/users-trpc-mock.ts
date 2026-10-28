@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { vi } from 'vitest';
 import type { AdminUserRow } from './users';
 
@@ -20,7 +21,9 @@ export const usersMock: {
   fetchNextPage: ReturnType<typeof vi.fn>;
   banPending: boolean;
   unbanPending: boolean;
-  ban: ReturnType<typeof vi.fn<(input: { userId: string; reason: string }) => Promise<AdminUserRow>>>;
+  ban: ReturnType<
+    typeof vi.fn<(input: { userId: string; reason: string }) => Promise<AdminUserRow>>
+  >;
   unban: ReturnType<
     typeof vi.fn<(input: { userId: string; reason: string }) => Promise<AdminUserRow>>
   >;
@@ -109,7 +112,12 @@ export const usersTrpcMock = {
       users: {
         list: {
           useInfiniteQuery: (input: unknown) => {
-            usersMock.inputs.push(input);
+            // Record after commit. Pushing during render lets a discarded
+            // startTransition render report q=bob while the committed URL
+            // is still the previous search.
+            useEffect(() => {
+              usersMock.inputs.push(input);
+            }, [input]);
             return queryResult();
           },
         },
