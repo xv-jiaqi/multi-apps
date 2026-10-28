@@ -1,0 +1,1627 @@
+{
+  "head": "a02cacf38ebcdfa86d5537e8dfef40d816923704",
+  "startedAt": "2026-10-28T13:32:25.589Z",
+  "finishedAt": "2026-10-28T13:33:38.720Z",
+  "rows": [
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">仅管理员可查看举报队列</p>",
+      "section": {
+        "id": 2,
+        "file": "pages/reports-list.tsx:131",
+        "item": "reports-admin-only"
+      },
+      "text": "仅管理员可查看举报队列",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">仅管理员可以管理内容</p>",
+      "section": {
+        "id": 15,
+        "file": "components/admin/admin-gate.tsx:37",
+        "item": "admin-only"
+      },
+      "text": "仅管理员可以管理内容",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">当前没有符合条件的举报记录</p>",
+      "section": {
+        "id": 3,
+        "file": "pages/reports-list.tsx:192",
+        "item": "reports-queue-empty"
+      },
+      "text": "当前没有符合条件的举报记录",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "passes",
+      "messageKey": null,
+      "target": [
+        "#resolution-report-1"
+      ],
+      "section": {
+        "id": 4,
+        "file": "pages/reports-list.tsx:370",
+        "item": "report-note-readonly"
+      },
+      "measured": false,
+      "note": "1440 下这个只读备注在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 read-only:bg-neutral-50，采样 rgb(250, 250, 250)，不是 #f6f6f6，实测比值 7.49。",
+      "text": null,
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "ratio": 7.49,
+      "contrastOnF6": 7.23
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed > p"
+      ],
+      "html": "<p>暂无交易意向</p>",
+      "section": {
+        "id": 5,
+        "file": "pages/trade-list.tsx:589",
+        "item": "trade-empty"
+      },
+      "text": "暂无交易意向",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "ratio": 7.49,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">暂无系列数据</p>",
+      "section": {
+        "id": 6,
+        "file": "pages/series-list.tsx:82",
+        "item": "series-empty"
+      },
+      "text": "暂无系列数据",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">内容不存在</p>",
+      "section": {
+        "id": 7,
+        "file": "pages/series-detail.tsx:179",
+        "item": "series-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">内容不存在</p>",
+      "section": {
+        "id": 8,
+        "file": "pages/card-detail.tsx:57",
+        "item": "card-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".space-y-3 > p:nth-child(3)"
+      ],
+      "html": "<p class=\"text-sm text-neutral-600\">所属系列：<a class=\"text-brand-600 hover:underline\" href=\"/series/demo-series\" data-discover=\"true\">演示系列</a></p>",
+      "section": {
+        "id": 9,
+        "file": "pages/card-detail.tsx:134",
+        "item": "card-series"
+      },
+      "text": "所属系列：演示系列",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">还没有话题，第一个开聊吧</p>",
+      "section": {
+        "id": 10,
+        "file": "pages/forum-list.tsx:108",
+        "item": "forum-empty"
+      },
+      "text": "还没有话题，第一个开聊吧",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">内容不存在</p>",
+      "section": {
+        "id": 11,
+        "file": "pages/forum-detail.tsx:507",
+        "item": "forum-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p>内容不存在</p>",
+      "section": {
+        "id": 13,
+        "file": "pages/forum-edit.tsx:145",
+        "item": "forum-edit-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".shrink-0 > time"
+      ],
+      "html": "<time datetime=\"2026-10-28T04:00:00.000Z\" class=\"whitespace-nowrap\">2026/10/28 04:00:00</time>",
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-resting",
+        "state": "非高亮 bg-white/80"
+      },
+      "text": "2026/10/28 04:00:00",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(254, 254, 254)",
+      "backgroundHex": "#fefefe",
+      "ratio": 7.75,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "passes",
+      "messageKey": null,
+      "target": [
+        "time[datetime=\"2026-10-28T04:05:00.000Z\"]"
+      ],
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-highlight",
+        "state": "高亮 bg-brand-50"
+      },
+      "measured": false,
+      "note": "1440 下高亮回帖的时间在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 bg-brand-50，采样 rgb(239, 246, 255)，不是 #f6f6f6，实测比值 7.18。",
+      "text": null,
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "ratio": 7.18,
+      "contrastOnF6": 7.23
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">仅管理员可查看举报队列</p>",
+      "section": {
+        "id": 2,
+        "file": "pages/reports-list.tsx:131",
+        "item": "reports-admin-only"
+      },
+      "text": "仅管理员可查看举报队列",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(245, 243, 246)",
+      "backgroundHex": "#f5f3f6",
+      "ratio": 7.08,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">仅管理员可以管理内容</p>",
+      "section": {
+        "id": 15,
+        "file": "components/admin/admin-gate.tsx:37",
+        "item": "admin-only"
+      },
+      "text": "仅管理员可以管理内容",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 250, 250)",
+      "backgroundHex": "#fdfafa",
+      "ratio": 7.53,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">当前没有符合条件的举报记录</p>",
+      "section": {
+        "id": 3,
+        "file": "pages/reports-list.tsx:192",
+        "item": "reports-queue-empty"
+      },
+      "text": "当前没有符合条件的举报记录",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(229, 240, 248)",
+      "backgroundHex": "#e5f0f8",
+      "ratio": 6.75,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "#resolution-report-1"
+      ],
+      "html": "<textarea id=\"resolution-report-1\" rows=\"2\" maxlength=\"500\" placeholder=\"例如：已核实违规\" class=\"w-full resize-y roun...\" readonly=\"\">",
+      "section": {
+        "id": 4,
+        "file": "pages/reports-list.tsx:370",
+        "item": "report-note-readonly"
+      },
+      "text": "已核实",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "ratio": 7.49,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed > p"
+      ],
+      "html": "<p>暂无交易意向</p>",
+      "section": {
+        "id": 5,
+        "file": "pages/trade-list.tsx:589",
+        "item": "trade-empty"
+      },
+      "text": "暂无交易意向",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(236, 243, 248)",
+      "backgroundHex": "#ecf3f8",
+      "ratio": 6.97,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">暂无系列数据</p>",
+      "section": {
+        "id": 6,
+        "file": "pages/series-list.tsx:82",
+        "item": "series-empty"
+      },
+      "text": "暂无系列数据",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 239, 243)",
+      "backgroundHex": "#f7eff3",
+      "ratio": 6.92,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">内容不存在</p>",
+      "section": {
+        "id": 7,
+        "file": "pages/series-detail.tsx:179",
+        "item": "series-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">内容不存在</p>",
+      "section": {
+        "id": 8,
+        "file": "pages/card-detail.tsx:57",
+        "item": "card-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".space-y-3 > p:nth-child(3)"
+      ],
+      "html": "<p class=\"text-sm text-neutral-600\">所属系列：<a class=\"text-brand-600 hover:underline\" href=\"/series/demo-series\" data-discover=\"true\">演示系列</a></p>",
+      "section": {
+        "id": 9,
+        "file": "pages/card-detail.tsx:134",
+        "item": "card-series"
+      },
+      "text": "所属系列：演示系列",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 249, 250)",
+      "backgroundHex": "#f7f9fa",
+      "ratio": 7.4,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">还没有话题，第一个开聊吧</p>",
+      "section": {
+        "id": 10,
+        "file": "pages/forum-list.tsx:108",
+        "item": "forum-empty"
+      },
+      "text": "还没有话题，第一个开聊吧",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(238, 241, 247)",
+      "backgroundHex": "#eef1f7",
+      "ratio": 6.91,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">内容不存在</p>",
+      "section": {
+        "id": 11,
+        "file": "pages/forum-detail.tsx:507",
+        "item": "forum-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p>内容不存在</p>",
+      "section": {
+        "id": 13,
+        "file": "pages/forum-edit.tsx:145",
+        "item": "forum-edit-missing"
+      },
+      "text": "内容不存在",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".shrink-0 > time"
+      ],
+      "html": "<time datetime=\"2026-10-28T04:00:00.000Z\" class=\"whitespace-nowrap\">2026/10/28 04:00:00</time>",
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-resting",
+        "state": "非高亮 bg-white/80"
+      },
+      "text": "2026/10/28 04:00:00",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(254, 250, 251)",
+      "backgroundHex": "#fefafb",
+      "ratio": 7.55,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "time[datetime=\"2026-10-28T04:05:00.000Z\"]"
+      ],
+      "html": "<time datetime=\"2026-10-28T04:05:00.000Z\" class=\"whitespace-nowrap\">2026/10/28 04:05:00</time>",
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-highlight",
+        "state": "高亮 bg-brand-50"
+      },
+      "text": "2026/10/28 04:05:00",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "backgroundHex": "#eff6ff",
+      "ratio": 7.18,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Only admins can view the reports queue</p>",
+      "section": {
+        "id": 2,
+        "file": "pages/reports-list.tsx:131",
+        "item": "reports-admin-only"
+      },
+      "text": "Only admins can view the reports queue",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Only admins can manage content</p>",
+      "section": {
+        "id": 15,
+        "file": "components/admin/admin-gate.tsx:37",
+        "item": "admin-only"
+      },
+      "text": "Only admins can manage content",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">No reports match the current filter</p>",
+      "section": {
+        "id": 3,
+        "file": "pages/reports-list.tsx:192",
+        "item": "reports-queue-empty"
+      },
+      "text": "No reports match the current filter",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "passes",
+      "messageKey": null,
+      "target": [
+        "#resolution-report-1"
+      ],
+      "section": {
+        "id": 4,
+        "file": "pages/reports-list.tsx:370",
+        "item": "report-note-readonly"
+      },
+      "measured": false,
+      "note": "1440 下这个只读备注在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 read-only:bg-neutral-50，采样 rgb(250, 250, 250)，不是 #f6f6f6，实测比值 7.49。",
+      "text": null,
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "ratio": 7.49,
+      "contrastOnF6": 7.23
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed > p"
+      ],
+      "html": "<p>No listings yet</p>",
+      "section": {
+        "id": 5,
+        "file": "pages/trade-list.tsx:589",
+        "item": "trade-empty"
+      },
+      "text": "No listings yet",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(249, 250, 250)",
+      "backgroundHex": "#f9fafa",
+      "ratio": 7.47,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">No series yet</p>",
+      "section": {
+        "id": 6,
+        "file": "pages/series-list.tsx:82",
+        "item": "series-empty"
+      },
+      "text": "No series yet",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Not found</p>",
+      "section": {
+        "id": 7,
+        "file": "pages/series-detail.tsx:179",
+        "item": "series-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Not found</p>",
+      "section": {
+        "id": 8,
+        "file": "pages/card-detail.tsx:57",
+        "item": "card-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".space-y-3 > p:nth-child(3)"
+      ],
+      "html": "<p class=\"text-sm text-neutral-600\">Series: <a class=\"text-brand-600 hover:underline\" href=\"/series/demo-series\" data-discover=\"true\">演示系列</a></p>",
+      "section": {
+        "id": 9,
+        "file": "pages/card-detail.tsx:134",
+        "item": "card-series"
+      },
+      "text": "Series: 演示系列",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">No topics yet — start the first conversation</p>",
+      "section": {
+        "id": 10,
+        "file": "pages/forum-list.tsx:108",
+        "item": "forum-empty"
+      },
+      "text": "No topics yet — start the first conversation",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "ratio": 7.62,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Not found</p>",
+      "section": {
+        "id": 11,
+        "file": "pages/forum-detail.tsx:507",
+        "item": "forum-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        "p"
+      ],
+      "html": "<p>Not found</p>",
+      "section": {
+        "id": 13,
+        "file": "pages/forum-edit.tsx:145",
+        "item": "forum-edit-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "ratio": 7.68,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".shrink-0 > time"
+      ],
+      "html": "<time datetime=\"2026-10-28T04:00:00.000Z\" class=\"whitespace-nowrap\">10/28/2026, 4:00:00 AM</time>",
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-resting",
+        "state": "非高亮 bg-white/80"
+      },
+      "text": "10/28/2026, 4:00:00 AM",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(254, 254, 254)",
+      "backgroundHex": "#fefefe",
+      "ratio": 7.75,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "passes",
+      "messageKey": null,
+      "target": [
+        "time[datetime=\"2026-10-28T04:05:00.000Z\"]"
+      ],
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-highlight",
+        "state": "高亮 bg-brand-50"
+      },
+      "measured": false,
+      "note": "1440 下高亮回帖的时间在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 bg-brand-50，采样 rgb(239, 246, 255)，不是 #f6f6f6，实测比值 7.18。",
+      "text": null,
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "ratio": 7.18,
+      "contrastOnF6": 7.23
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Only admins can view the reports queue</p>",
+      "section": {
+        "id": 2,
+        "file": "pages/reports-list.tsx:131",
+        "item": "reports-admin-only"
+      },
+      "text": "Only admins can view the reports queue",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(238, 245, 250)",
+      "backgroundHex": "#eef5fa",
+      "ratio": 7.1,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Only admins can manage content</p>",
+      "section": {
+        "id": 15,
+        "file": "components/admin/admin-gate.tsx:37",
+        "item": "admin-only"
+      },
+      "text": "Only admins can manage content",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 252, 252)",
+      "backgroundHex": "#fdfcfc",
+      "ratio": 7.63,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">No reports match the current filter</p>",
+      "section": {
+        "id": 3,
+        "file": "pages/reports-list.tsx:192",
+        "item": "reports-queue-empty"
+      },
+      "text": "No reports match the current filter",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(224, 241, 251)",
+      "backgroundHex": "#e0f1fb",
+      "ratio": 6.75,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "#resolution-report-1"
+      ],
+      "html": "<textarea id=\"resolution-report-1\" rows=\"2\" maxlength=\"500\" placeholder=\"e.g. Violation confi...\" class=\"w-full resize-y roun...\" readonly=\"\">",
+      "section": {
+        "id": 4,
+        "file": "pages/reports-list.tsx:370",
+        "item": "report-note-readonly"
+      },
+      "text": "Checked",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "ratio": 7.49,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed > p"
+      ],
+      "html": "<p>No listings yet</p>",
+      "section": {
+        "id": 5,
+        "file": "pages/trade-list.tsx:589",
+        "item": "trade-empty"
+      },
+      "text": "No listings yet",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(238, 245, 248)",
+      "backgroundHex": "#eef5f8",
+      "ratio": 7.09,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">No series yet</p>",
+      "section": {
+        "id": 6,
+        "file": "pages/series-list.tsx:82",
+        "item": "series-empty"
+      },
+      "text": "No series yet",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 239, 243)",
+      "backgroundHex": "#f7eff3",
+      "ratio": 6.92,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Not found</p>",
+      "section": {
+        "id": 7,
+        "file": "pages/series-detail.tsx:179",
+        "item": "series-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Not found</p>",
+      "section": {
+        "id": 8,
+        "file": "pages/card-detail.tsx:57",
+        "item": "card-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".space-y-3 > p:nth-child(3)"
+      ],
+      "html": "<p class=\"text-sm text-neutral-600\">Series: <a class=\"text-brand-600 hover:underline\" href=\"/series/demo-series\" data-discover=\"true\">演示系列</a></p>",
+      "section": {
+        "id": 9,
+        "file": "pages/card-detail.tsx:134",
+        "item": "card-series"
+      },
+      "text": "Series: 演示系列",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 249, 250)",
+      "backgroundHex": "#f7f9fa",
+      "ratio": 7.4,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".border-dashed"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">No topics yet — start the first conversation</p>",
+      "section": {
+        "id": 10,
+        "file": "pages/forum-list.tsx:108",
+        "item": "forum-empty"
+      },
+      "text": "No topics yet — start the first conversation",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(237, 243, 248)",
+      "backgroundHex": "#edf3f8",
+      "ratio": 6.99,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p class=\"rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600\">Not found</p>",
+      "section": {
+        "id": 11,
+        "file": "pages/forum-detail.tsx:507",
+        "item": "forum-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "p"
+      ],
+      "html": "<p>Not found</p>",
+      "section": {
+        "id": 13,
+        "file": "pages/forum-edit.tsx:145",
+        "item": "forum-edit-missing"
+      },
+      "text": "Not found",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "ratio": 7.43,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".shrink-0 > time"
+      ],
+      "html": "<time datetime=\"2026-10-28T04:00:00.000Z\" class=\"whitespace-nowrap\">10/28/2026, 4:00:00 AM</time>",
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-resting",
+        "state": "非高亮 bg-white/80"
+      },
+      "text": "10/28/2026, 4:00:00 AM",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 251, 253)",
+      "backgroundHex": "#fafbfd",
+      "ratio": 7.55,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        "time[datetime=\"2026-10-28T04:05:00.000Z\"]"
+      ],
+      "html": "<time datetime=\"2026-10-28T04:05:00.000Z\" class=\"whitespace-nowrap\">10/28/2026, 4:05:00 AM</time>",
+      "section": {
+        "id": 12,
+        "file": "pages/forum-detail.tsx:952",
+        "item": "reply-highlight",
+        "state": "高亮 bg-brand-50"
+      },
+      "text": "10/28/2026, 4:05:00 AM",
+      "specified": "oklch(0.439 0 0)",
+      "computedColor": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "backgroundHex": "#eff6ff",
+      "ratio": 7.18,
+      "contrastOnF6": 7.23,
+      "deltaFromComputed": 0,
+      "antialiased": false,
+      "reason": null
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 1,
+        "file": "pages/reports-list.tsx:121",
+        "item": "reports-login",
+        "role": "child-link"
+      },
+      "text": "登录后查看举报队列",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "ratio": 5.04,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    },
+    {
+      "tag": "zh-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 14,
+        "file": "components/admin/admin-gate.tsx:23",
+        "item": "admin-login",
+        "role": "child-link"
+      },
+      "text": "请先登录管理员账号",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "ratio": 5.08,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 1,
+        "file": "pages/reports-list.tsx:121",
+        "item": "reports-login",
+        "role": "child-link"
+      },
+      "text": "登录后查看举报队列",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(245, 242, 245)",
+      "ratio": 4.65,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    },
+    {
+      "tag": "zh-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 14,
+        "file": "components/admin/admin-gate.tsx:23",
+        "item": "admin-login",
+        "role": "child-link"
+      },
+      "text": "请先登录管理员账号",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(253, 250, 250)",
+      "ratio": 4.98,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 1,
+        "file": "pages/reports-list.tsx:121",
+        "item": "reports-login",
+        "role": "child-link"
+      },
+      "text": "Sign in to view the reports queue",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "ratio": 5.04,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    },
+    {
+      "tag": "en-1440",
+      "bucket": "incomplete",
+      "messageKey": "bgGradient",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 14,
+        "file": "components/admin/admin-gate.tsx:23",
+        "item": "admin-login",
+        "role": "child-link"
+      },
+      "text": "Sign in with an admin account",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "ratio": 5.08,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 1,
+        "file": "pages/reports-list.tsx:121",
+        "item": "reports-login",
+        "role": "child-link"
+      },
+      "text": "Sign in to view the reports queue",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(238, 244, 250)",
+      "ratio": 4.67,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    },
+    {
+      "tag": "en-375",
+      "bucket": "incomplete",
+      "messageKey": "bgOverlap",
+      "target": [
+        ".text-brand-600"
+      ],
+      "section": {
+        "id": 14,
+        "file": "components/admin/admin-gate.tsx:23",
+        "item": "admin-login",
+        "role": "child-link"
+      },
+      "text": "Sign in with an admin account",
+      "specified": "rgb(37, 99, 235)",
+      "computedColor": "rgb(37, 99, 235)",
+      "textPixel": "rgb(37, 99, 235)",
+      "backgroundPixel": "rgb(253, 252, 252)",
+      "ratio": 5.05,
+      "contrastOnF6": 4.78,
+      "note": "§3.1 的 p 没有自身文字。这是 p 里面的品牌色链接，也是这条 incomplete 记录。"
+    }
+  ]
+}

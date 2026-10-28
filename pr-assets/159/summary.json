@@ -1,649 +1,2106 @@
 {
-  "head": "02b35a0e813dabd009c12b02eac7332cc6738bb7",
-  "startedAt": "2026-10-28T12:59:20.923Z",
-  "finishedAt": "2026-10-28T13:00:16.677Z",
+  "head": "a02cacf38ebcdfa86d5537e8dfef40d816923704",
+  "startedAt": "2026-10-28T13:32:25.589Z",
+  "finishedAt": "2026-10-28T13:33:38.720Z",
+  "referenceBackground": "#f6f6f6",
+  "note": "contrastOnF6 是文字计算色对照 #f6f6f6。backgroundPixel / measuredContrast 是文字像素和它背后的实际背景像素。页面底是 from-white via-neutral-50 to-neutral-100 的渐变，再叠加模糊色块，所以不是 #f6f6f6。",
   "colors": [
     {
       "tag": "zh-1440",
       "item": "reports-login",
-      "color": "rgb(37, 99, 235)",
-      "contrastOnF6": 4.78,
-      "ok": false
+      "file": "pages/reports-list.tsx:121",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "先前 ok:false 是因为测到了子链接，不是 p。p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素，不在 color-contrast 的结果里。incomplete 里的是子链接 text-brand-600（bgGradient）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(252, 252, 252)，实测比值 5.04。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(252, 252, 252)",
+        "measuredContrast": 5.04,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgGradient"
+      }
     },
     {
       "tag": "zh-1440",
-      "item": "trade-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "admin-login",
+      "file": "components/admin/admin-gate.tsx:23",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素。incomplete 里的是子链接 text-brand-600（bgGradient）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(253, 253, 253)，实测比值 5.08。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(253, 253, 253)",
+        "measuredContrast": 5.08,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgGradient"
+      }
     },
     {
       "tag": "zh-1440",
-      "item": "series-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-1440",
-      "item": "series-missing",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-1440",
-      "item": "card-series",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-1440",
-      "item": "forum-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-1440",
-      "item": "reply-resting",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-1440",
-      "item": "reply-highlight",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "reports-admin-only",
+      "file": "pages/reports-list.tsx:131",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
     },
     {
       "tag": "zh-1440",
       "item": "admin-only",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "file": "components/admin/admin-gate.tsx:37",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
     },
     {
       "tag": "zh-1440",
-      "item": "report-note-readonly",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "reports-queue-empty",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "trade-empty",
+      "file": "pages/trade-list.tsx:589",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.49,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(250, 250, 250) 的比值是 7.49。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "series-empty",
+      "file": "pages/series-list.tsx:82",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "series-missing",
+      "file": "pages/series-detail.tsx:179",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "card-missing",
+      "file": "pages/card-detail.tsx:57",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "card-series",
+      "file": "pages/card-detail.tsx:134",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "text-sm text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "forum-empty",
+      "file": "pages/forum-list.tsx:108",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "forum-missing",
+      "file": "pages/forum-detail.tsx:507",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "forum-edit-missing",
+      "file": "pages/forum-edit.tsx:145",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "reply-resting",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(254, 254, 254)",
+      "backgroundHex": "#fefefe",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.75,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": "非高亮 bg-white/80",
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(254, 254, 254) 的比值是 7.75。"
     },
     {
       "tag": "zh-375",
       "item": "reports-login",
-      "color": "rgb(37, 99, 235)",
-      "contrastOnF6": 4.78,
-      "ok": false
+      "file": "pages/reports-list.tsx:121",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "先前 ok:false 是因为测到了子链接，不是 p。p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素，不在 color-contrast 的结果里。incomplete 里的是子链接 text-brand-600（bgOverlap）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(245, 242, 245)，实测比值 4.65。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(245, 242, 245)",
+        "measuredContrast": 4.65,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgOverlap"
+      }
     },
     {
       "tag": "zh-375",
-      "item": "trade-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "admin-login",
+      "file": "components/admin/admin-gate.tsx:23",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素。incomplete 里的是子链接 text-brand-600（bgOverlap）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(253, 250, 250)，实测比值 4.98。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(253, 250, 250)",
+        "measuredContrast": 4.98,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgOverlap"
+      }
     },
     {
       "tag": "zh-375",
-      "item": "series-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-375",
-      "item": "series-missing",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-375",
-      "item": "card-series",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-375",
-      "item": "forum-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-375",
-      "item": "reply-resting",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "zh-375",
-      "item": "reply-highlight",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "reports-admin-only",
+      "file": "pages/reports-list.tsx:131",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(245, 243, 246)",
+      "backgroundHex": "#f5f3f6",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.08,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(245, 243, 246) 的比值是 7.08。"
     },
     {
       "tag": "zh-375",
       "item": "admin-only",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "file": "components/admin/admin-gate.tsx:37",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 250, 250)",
+      "backgroundHex": "#fdfafa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.53,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 250, 250) 的比值是 7.53。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "reports-queue-empty",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(229, 240, 248)",
+      "backgroundHex": "#e5f0f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 6.75,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(229, 240, 248) 的比值是 6.75。"
     },
     {
       "tag": "zh-375",
       "item": "report-note-readonly",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "file": "pages/reports-list.tsx:370",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.49,
+      "ok": true,
+      "className": "w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(250, 250, 250) 的比值是 7.49。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "trade-empty",
+      "file": "pages/trade-list.tsx:589",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(236, 243, 248)",
+      "backgroundHex": "#ecf3f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 6.97,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(236, 243, 248) 的比值是 6.97。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "series-empty",
+      "file": "pages/series-list.tsx:82",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 239, 243)",
+      "backgroundHex": "#f7eff3",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 6.92,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(247, 239, 243) 的比值是 6.92。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "series-missing",
+      "file": "pages/series-detail.tsx:179",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "card-missing",
+      "file": "pages/card-detail.tsx:57",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "card-series",
+      "file": "pages/card-detail.tsx:134",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 249, 250)",
+      "backgroundHex": "#f7f9fa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.4,
+      "ok": true,
+      "className": "text-sm text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(247, 249, 250) 的比值是 7.4。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "forum-empty",
+      "file": "pages/forum-list.tsx:108",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(238, 241, 247)",
+      "backgroundHex": "#eef1f7",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 6.91,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(238, 241, 247) 的比值是 6.91。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "forum-missing",
+      "file": "pages/forum-detail.tsx:507",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "forum-edit-missing",
+      "file": "pages/forum-edit.tsx:145",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "reply-resting",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(254, 250, 251)",
+      "backgroundHex": "#fefafb",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.55,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": "非高亮 bg-white/80",
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(254, 250, 251) 的比值是 7.55。"
+    },
+    {
+      "tag": "zh-375",
+      "item": "reply-highlight",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "backgroundHex": "#eff6ff",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.18,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": "高亮 bg-brand-50",
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(239, 246, 255) 的比值是 7.18。"
     },
     {
       "tag": "en-1440",
       "item": "reports-login",
-      "color": "rgb(37, 99, 235)",
-      "contrastOnF6": 4.78,
-      "ok": false
+      "file": "pages/reports-list.tsx:121",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "先前 ok:false 是因为测到了子链接，不是 p。p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素，不在 color-contrast 的结果里。incomplete 里的是子链接 text-brand-600（bgGradient）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(252, 252, 252)，实测比值 5.04。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(252, 252, 252)",
+        "measuredContrast": 5.04,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgGradient"
+      }
     },
     {
       "tag": "en-1440",
-      "item": "trade-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "admin-login",
+      "file": "components/admin/admin-gate.tsx:23",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素。incomplete 里的是子链接 text-brand-600（bgGradient）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(253, 253, 253)，实测比值 5.08。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(253, 253, 253)",
+        "measuredContrast": 5.08,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgGradient"
+      }
     },
     {
       "tag": "en-1440",
-      "item": "series-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-1440",
-      "item": "series-missing",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-1440",
-      "item": "card-series",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-1440",
-      "item": "forum-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-1440",
-      "item": "reply-resting",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-1440",
-      "item": "reply-highlight",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "reports-admin-only",
+      "file": "pages/reports-list.tsx:131",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
     },
     {
       "tag": "en-1440",
       "item": "admin-only",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "file": "components/admin/admin-gate.tsx:37",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
     },
     {
       "tag": "en-1440",
-      "item": "report-note-readonly",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "reports-queue-empty",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "trade-empty",
+      "file": "pages/trade-list.tsx:589",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(249, 250, 250)",
+      "backgroundHex": "#f9fafa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.47,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(249, 250, 250) 的比值是 7.47。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "series-empty",
+      "file": "pages/series-list.tsx:82",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "series-missing",
+      "file": "pages/series-detail.tsx:179",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "card-missing",
+      "file": "pages/card-detail.tsx:57",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "card-series",
+      "file": "pages/card-detail.tsx:134",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "text-sm text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "forum-empty",
+      "file": "pages/forum-list.tsx:108",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(252, 252, 252)",
+      "backgroundHex": "#fcfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.62,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(252, 252, 252) 的比值是 7.62。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "forum-missing",
+      "file": "pages/forum-detail.tsx:507",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "forum-edit-missing",
+      "file": "pages/forum-edit.tsx:145",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 253, 253)",
+      "backgroundHex": "#fdfdfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.68,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 253, 253) 的比值是 7.68。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "reply-resting",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(254, 254, 254)",
+      "backgroundHex": "#fefefe",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.75,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": "非高亮 bg-white/80",
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(254, 254, 254) 的比值是 7.75。"
     },
     {
       "tag": "en-375",
       "item": "reports-login",
-      "color": "rgb(37, 99, 235)",
-      "contrastOnF6": 4.78,
-      "ok": false
+      "file": "pages/reports-list.tsx:121",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "先前 ok:false 是因为测到了子链接，不是 p。p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素，不在 color-contrast 的结果里。incomplete 里的是子链接 text-brand-600（bgOverlap）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(238, 244, 250)，实测比值 4.67。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(238, 244, 250)",
+        "measuredContrast": 4.67,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgOverlap"
+      }
     },
     {
       "tag": "en-375",
-      "item": "trade-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "admin-login",
+      "file": "components/admin/admin-gate.tsx:23",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": null,
+      "textPixelHex": null,
+      "backgroundPixel": null,
+      "backgroundHex": null,
+      "backgroundIsF6": null,
+      "contrastOnF6": 7.23,
+      "measuredContrast": null,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "axe": "p-not-in-incomplete",
+      "note": "p 的计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。p 没有自身文字像素。incomplete 里的是子链接 text-brand-600（bgOverlap）：计算色 rgb(37, 99, 235)，对照 #f6f6f6 为 4.78；文字像素 rgb(37, 99, 235)，实际背景 rgb(253, 252, 252)，实测比值 5.05。",
+      "visibleLink": {
+        "color": "rgb(37, 99, 235)",
+        "textPixel": "rgb(37, 99, 235)",
+        "backgroundPixel": "rgb(253, 252, 252)",
+        "measuredContrast": 5.05,
+        "contrastOnF6": 4.78,
+        "messageKey": "bgOverlap"
+      }
     },
     {
       "tag": "en-375",
-      "item": "series-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-375",
-      "item": "series-missing",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-375",
-      "item": "card-series",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-375",
-      "item": "forum-empty",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-375",
-      "item": "reply-resting",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
-    },
-    {
-      "tag": "en-375",
-      "item": "reply-highlight",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "item": "reports-admin-only",
+      "file": "pages/reports-list.tsx:131",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(238, 245, 250)",
+      "backgroundHex": "#eef5fa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.1,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(238, 245, 250) 的比值是 7.1。"
     },
     {
       "tag": "en-375",
       "item": "admin-only",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "file": "components/admin/admin-gate.tsx:37",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 252, 252)",
+      "backgroundHex": "#fdfcfc",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.63,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 252, 252) 的比值是 7.63。"
+    },
+    {
+      "tag": "en-375",
+      "item": "reports-queue-empty",
+      "file": "pages/reports-list.tsx:192",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(224, 241, 251)",
+      "backgroundHex": "#e0f1fb",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 6.75,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(224, 241, 251) 的比值是 6.75。"
     },
     {
       "tag": "en-375",
       "item": "report-note-readonly",
-      "color": "oklch(0.439 0 0)",
-      "contrastOnF6": null,
-      "ok": false
+      "file": "pages/reports-list.tsx:370",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.49,
+      "ok": true,
+      "className": "w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(250, 250, 250) 的比值是 7.49。"
+    },
+    {
+      "tag": "en-375",
+      "item": "trade-empty",
+      "file": "pages/trade-list.tsx:589",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(238, 245, 248)",
+      "backgroundHex": "#eef5f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.09,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(238, 245, 248) 的比值是 7.09。"
+    },
+    {
+      "tag": "en-375",
+      "item": "series-empty",
+      "file": "pages/series-list.tsx:82",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 239, 243)",
+      "backgroundHex": "#f7eff3",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 6.92,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(247, 239, 243) 的比值是 6.92。"
+    },
+    {
+      "tag": "en-375",
+      "item": "series-missing",
+      "file": "pages/series-detail.tsx:179",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "en-375",
+      "item": "card-missing",
+      "file": "pages/card-detail.tsx:57",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "en-375",
+      "item": "card-series",
+      "file": "pages/card-detail.tsx:134",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(247, 249, 250)",
+      "backgroundHex": "#f7f9fa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.4,
+      "ok": true,
+      "className": "text-sm text-neutral-600",
+      "messageKey": "bgGradient",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(247, 249, 250) 的比值是 7.4。"
+    },
+    {
+      "tag": "en-375",
+      "item": "forum-empty",
+      "file": "pages/forum-list.tsx:108",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(237, 243, 248)",
+      "backgroundHex": "#edf3f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 6.99,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(237, 243, 248) 的比值是 6.99。"
+    },
+    {
+      "tag": "en-375",
+      "item": "forum-missing",
+      "file": "pages/forum-detail.tsx:507",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "en-375",
+      "item": "forum-edit-missing",
+      "file": "pages/forum-edit.tsx:145",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(253, 248, 248)",
+      "backgroundHex": "#fdf8f8",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.43,
+      "ok": true,
+      "className": "",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": null,
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(253, 248, 248) 的比值是 7.43。"
+    },
+    {
+      "tag": "en-375",
+      "item": "reply-resting",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 251, 253)",
+      "backgroundHex": "#fafbfd",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.55,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": "非高亮 bg-white/80",
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(250, 251, 253) 的比值是 7.55。"
+    },
+    {
+      "tag": "en-375",
+      "item": "reply-highlight",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "backgroundHex": "#eff6ff",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.18,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "messageKey": "bgOverlap",
+      "axe": "incomplete",
+      "state": "高亮 bg-brand-50",
+      "note": "文字计算色是 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景不是 #f6f6f6，文字像素 rgb(82, 82, 82) 对背景像素 rgb(239, 246, 255) 的比值是 7.18。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "report-note-readonly",
+      "file": "pages/reports-list.tsx:370",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.49,
+      "ok": true,
+      "className": "w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300",
+      "axe": "passes",
+      "messageKey": null,
+      "note": "1440 下这个只读备注在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 read-only:bg-neutral-50，采样 rgb(250, 250, 250)，不是 #f6f6f6，实测比值 7.49。"
+    },
+    {
+      "tag": "zh-1440",
+      "item": "reply-highlight",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "backgroundHex": "#eff6ff",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.18,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "axe": "passes",
+      "messageKey": null,
+      "state": "高亮 bg-brand-50",
+      "note": "1440 下高亮回帖的时间在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 bg-brand-50，采样 rgb(239, 246, 255)，不是 #f6f6f6，实测比值 7.18。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "report-note-readonly",
+      "file": "pages/reports-list.tsx:370",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(250, 250, 250)",
+      "backgroundHex": "#fafafa",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.49,
+      "ok": true,
+      "className": "w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300",
+      "axe": "passes",
+      "messageKey": null,
+      "note": "1440 下这个只读备注在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 read-only:bg-neutral-50，采样 rgb(250, 250, 250)，不是 #f6f6f6，实测比值 7.49。"
+    },
+    {
+      "tag": "en-1440",
+      "item": "reply-highlight",
+      "file": "pages/forum-detail.tsx:952",
+      "specified": "oklch(0.439 0 0)",
+      "color": "rgb(82, 82, 82)",
+      "textPixel": "rgb(82, 82, 82)",
+      "textPixelHex": "#525252",
+      "backgroundPixel": "rgb(239, 246, 255)",
+      "backgroundHex": "#eff6ff",
+      "backgroundIsF6": false,
+      "contrastOnF6": 7.23,
+      "measuredContrast": 7.18,
+      "ok": true,
+      "className": "whitespace-nowrap",
+      "axe": "passes",
+      "messageKey": null,
+      "state": "高亮 bg-brand-50",
+      "note": "1440 下高亮回帖的时间在 color-contrast 的 passes 里，不在 incomplete。文字计算色 rgb(82, 82, 82)，对照 #f6f6f6 为 7.23。实际背景是 bg-brand-50，采样 rgb(239, 246, 255)，不是 #f6f6f6，实测比值 7.18。"
     }
   ],
   "axe": [
     {
       "label": "reports-empty-zh-1440",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:26.380Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 13,
       "violations": []
     },
     {
-      "label": "trade-empty-zh-1440",
-      "url": "http://localhost:5173/trade",
+      "label": "admin-login-zh-1440",
+      "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:32:26.944Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
       "violations": []
     },
     {
-      "label": "series-empty-zh-1440",
-      "url": "http://localhost:5173/series",
+      "label": "reports-admin-only-zh-1440",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:27.774Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "series-missing-zh-1440",
-      "url": "http://localhost:5173/series/missing-series",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "card-detail-zh-1440",
-      "url": "http://localhost:5173/cards/demo-card",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-empty-zh-1440",
-      "url": "http://localhost:5173/forum",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-reply-highlight-zh-1440",
-      "url": "http://localhost:5173/forum/welcome",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 14,
       "violations": []
     },
     {
       "label": "admin-forbidden-zh-1440",
       "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:32:28.388Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 13,
+      "violations": []
+    },
+    {
+      "label": "reports-queue-empty-zh-1440",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:29.357Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 15,
       "violations": []
     },
     {
       "label": "reports-readonly-zh-1440",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:30.574Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 22,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-zh-1440",
+      "url": "http://localhost:5173/trade",
+      "timestamp": "2026-10-28T13:32:31.932Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 23,
+      "violations": []
+    },
+    {
+      "label": "series-empty-zh-1440",
+      "url": "http://localhost:5173/series",
+      "timestamp": "2026-10-28T13:32:33.101Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 13,
+      "violations": []
+    },
+    {
+      "label": "series-missing-zh-1440",
+      "url": "http://localhost:5173/series/missing-series",
+      "timestamp": "2026-10-28T13:32:35.174Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
+      "violations": []
+    },
+    {
+      "label": "card-missing-zh-1440",
+      "url": "http://localhost:5173/cards/missing-card",
+      "timestamp": "2026-10-28T13:32:36.772Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
+      "violations": []
+    },
+    {
+      "label": "card-detail-zh-1440",
+      "url": "http://localhost:5173/cards/demo-card",
+      "timestamp": "2026-10-28T13:32:37.417Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 25,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-zh-1440",
+      "url": "http://localhost:5173/forum",
+      "timestamp": "2026-10-28T13:32:38.499Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 14,
+      "violations": []
+    },
+    {
+      "label": "forum-missing-zh-1440",
+      "url": "http://localhost:5173/forum/missing-topic",
+      "timestamp": "2026-10-28T13:32:40.579Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
+      "violations": []
+    },
+    {
+      "label": "forum-edit-missing-zh-1440",
+      "url": "http://localhost:5173/forum/missing-topic/edit",
+      "timestamp": "2026-10-28T13:32:42.491Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 14,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-resting-zh-1440",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:32:43.160Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 24,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-zh-1440",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:32:43.507Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 27,
       "violations": []
     },
     {
       "label": "reports-empty-zh-375",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:44.224Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
       "violations": []
     },
     {
-      "label": "trade-empty-zh-375",
-      "url": "http://localhost:5173/trade",
+      "label": "admin-login-zh-375",
+      "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:32:44.739Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
       "violations": []
     },
     {
-      "label": "series-empty-zh-375",
-      "url": "http://localhost:5173/series",
+      "label": "reports-admin-only-zh-375",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:45.531Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "series-missing-zh-375",
-      "url": "http://localhost:5173/series/missing-series",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "card-detail-zh-375",
-      "url": "http://localhost:5173/cards/demo-card",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-empty-zh-375",
-      "url": "http://localhost:5173/forum",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-reply-highlight-zh-375",
-      "url": "http://localhost:5173/forum/welcome",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
       "violations": []
     },
     {
       "label": "admin-forbidden-zh-375",
       "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:32:46.163Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "reports-queue-empty-zh-375",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:47.125Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 9,
       "violations": []
     },
     {
       "label": "reports-readonly-zh-375",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:32:48.362Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 18,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-zh-375",
+      "url": "http://localhost:5173/trade",
+      "timestamp": "2026-10-28T13:32:49.847Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 16,
+      "violations": []
+    },
+    {
+      "label": "series-empty-zh-375",
+      "url": "http://localhost:5173/series",
+      "timestamp": "2026-10-28T13:32:50.972Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
+      "violations": []
+    },
+    {
+      "label": "series-missing-zh-375",
+      "url": "http://localhost:5173/series/missing-series",
+      "timestamp": "2026-10-28T13:32:53.050Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "card-missing-zh-375",
+      "url": "http://localhost:5173/cards/missing-card",
+      "timestamp": "2026-10-28T13:32:54.637Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "card-detail-zh-375",
+      "url": "http://localhost:5173/cards/demo-card",
+      "timestamp": "2026-10-28T13:32:55.254Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 23,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-zh-375",
+      "url": "http://localhost:5173/forum",
+      "timestamp": "2026-10-28T13:32:56.317Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 9,
+      "violations": []
+    },
+    {
+      "label": "forum-missing-zh-375",
+      "url": "http://localhost:5173/forum/missing-topic",
+      "timestamp": "2026-10-28T13:32:58.401Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "forum-edit-missing-zh-375",
+      "url": "http://localhost:5173/forum/missing-topic/edit",
+      "timestamp": "2026-10-28T13:33:00.267Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-resting-zh-375",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:33:01.380Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 19,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-zh-375",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:33:01.650Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 23,
       "violations": []
     },
     {
       "label": "reports-empty-en-1440",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:02.576Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 13,
       "violations": []
     },
     {
-      "label": "trade-empty-en-1440",
-      "url": "http://localhost:5173/trade",
+      "label": "admin-login-en-1440",
+      "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:33:03.112Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
       "violations": []
     },
     {
-      "label": "series-empty-en-1440",
-      "url": "http://localhost:5173/series",
+      "label": "reports-admin-only-en-1440",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:03.932Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "series-missing-en-1440",
-      "url": "http://localhost:5173/series/missing-series",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "card-detail-en-1440",
-      "url": "http://localhost:5173/cards/demo-card",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-empty-en-1440",
-      "url": "http://localhost:5173/forum",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-reply-highlight-en-1440",
-      "url": "http://localhost:5173/forum/welcome",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 14,
       "violations": []
     },
     {
       "label": "admin-forbidden-en-1440",
       "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:33:04.558Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 13,
+      "violations": []
+    },
+    {
+      "label": "reports-queue-empty-en-1440",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:05.549Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 16,
       "violations": []
     },
     {
       "label": "reports-readonly-en-1440",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:06.756Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 22,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-en-1440",
+      "url": "http://localhost:5173/trade",
+      "timestamp": "2026-10-28T13:33:08.117Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 23,
+      "violations": []
+    },
+    {
+      "label": "series-empty-en-1440",
+      "url": "http://localhost:5173/series",
+      "timestamp": "2026-10-28T13:33:09.262Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 13,
+      "violations": []
+    },
+    {
+      "label": "series-missing-en-1440",
+      "url": "http://localhost:5173/series/missing-series",
+      "timestamp": "2026-10-28T13:33:11.349Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
+      "violations": []
+    },
+    {
+      "label": "card-missing-en-1440",
+      "url": "http://localhost:5173/cards/missing-card",
+      "timestamp": "2026-10-28T13:33:13.019Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
+      "violations": []
+    },
+    {
+      "label": "card-detail-en-1440",
+      "url": "http://localhost:5173/cards/demo-card",
+      "timestamp": "2026-10-28T13:33:13.687Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 27,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-en-1440",
+      "url": "http://localhost:5173/forum",
+      "timestamp": "2026-10-28T13:33:14.776Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 14,
+      "violations": []
+    },
+    {
+      "label": "forum-missing-en-1440",
+      "url": "http://localhost:5173/forum/missing-topic",
+      "timestamp": "2026-10-28T13:33:16.861Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 12,
+      "violations": []
+    },
+    {
+      "label": "forum-edit-missing-en-1440",
+      "url": "http://localhost:5173/forum/missing-topic/edit",
+      "timestamp": "2026-10-28T13:33:18.766Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 14,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-resting-en-1440",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:33:19.902Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 24,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-en-1440",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:33:20.246Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 27,
       "violations": []
     },
     {
       "label": "reports-empty-en-375",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:21.001Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
       "violations": []
     },
     {
-      "label": "trade-empty-en-375",
-      "url": "http://localhost:5173/trade",
+      "label": "admin-login-en-375",
+      "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:33:21.540Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
       "violations": []
     },
     {
-      "label": "series-empty-en-375",
-      "url": "http://localhost:5173/series",
+      "label": "reports-admin-only-en-375",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:22.339Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "series-missing-en-375",
-      "url": "http://localhost:5173/series/missing-series",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "card-detail-en-375",
-      "url": "http://localhost:5173/cards/demo-card",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-empty-en-375",
-      "url": "http://localhost:5173/forum",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
-      "violations": []
-    },
-    {
-      "label": "forum-reply-highlight-en-375",
-      "url": "http://localhost:5173/forum/welcome",
-      "testEngine": {
-        "name": "axe-core",
-        "version": "4.11.4"
-      },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
       "violations": []
     },
     {
       "label": "admin-forbidden-en-375",
       "url": "http://localhost:5173/admin/catalog",
+      "timestamp": "2026-10-28T13:33:22.996Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "reports-queue-empty-en-375",
+      "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:23.937Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 9,
       "violations": []
     },
     {
       "label": "reports-readonly-en-375",
       "url": "http://localhost:5173/reports",
+      "timestamp": "2026-10-28T13:33:25.223Z",
       "testEngine": {
         "name": "axe-core",
         "version": "4.11.4"
       },
-      "colorContrast": 0,
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 18,
+      "violations": []
+    },
+    {
+      "label": "trade-empty-en-375",
+      "url": "http://localhost:5173/trade",
+      "timestamp": "2026-10-28T13:33:26.685Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 16,
+      "violations": []
+    },
+    {
+      "label": "series-empty-en-375",
+      "url": "http://localhost:5173/series",
+      "timestamp": "2026-10-28T13:33:27.788Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
+      "violations": []
+    },
+    {
+      "label": "series-missing-en-375",
+      "url": "http://localhost:5173/series/missing-series",
+      "timestamp": "2026-10-28T13:33:29.840Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "card-missing-en-375",
+      "url": "http://localhost:5173/cards/missing-card",
+      "timestamp": "2026-10-28T13:33:31.436Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "card-detail-en-375",
+      "url": "http://localhost:5173/cards/demo-card",
+      "timestamp": "2026-10-28T13:33:32.066Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 23,
+      "violations": []
+    },
+    {
+      "label": "forum-empty-en-375",
+      "url": "http://localhost:5173/forum",
+      "timestamp": "2026-10-28T13:33:33.136Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 9,
+      "violations": []
+    },
+    {
+      "label": "forum-missing-en-375",
+      "url": "http://localhost:5173/forum/missing-topic",
+      "timestamp": "2026-10-28T13:33:35.236Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 7,
+      "violations": []
+    },
+    {
+      "label": "forum-edit-missing-en-375",
+      "url": "http://localhost:5173/forum/missing-topic/edit",
+      "timestamp": "2026-10-28T13:33:37.122Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 8,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-resting-en-375",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:33:38.240Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 19,
+      "violations": []
+    },
+    {
+      "label": "forum-reply-highlight-en-375",
+      "url": "http://localhost:5173/forum/welcome",
+      "timestamp": "2026-10-28T13:33:38.516Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "colorContrastViolations": 0,
+      "colorContrastIncomplete": 23,
       "violations": []
     }
-  ]
+  ],
+  "colorsSupplementedAt": "2026-10-28T13:35:53.137Z"
 }
