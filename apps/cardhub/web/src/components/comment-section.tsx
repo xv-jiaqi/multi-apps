@@ -81,6 +81,23 @@ function visibleReplyCount(comment: ThreadComment, overlay: ThreadOverlay) {
   return Math.max(0, base + overlay.countDelta);
 }
 
+/** A mention-only prefill counts as empty, same as a blank reply. */
+function rememberReplyDraft(
+  drafts: Record<string, string>,
+  parentId: string,
+  value: string,
+  prefillUsernames: readonly string[],
+) {
+  if (isBlankReplyContent(value, prefillUsernames)) delete drafts[parentId];
+  else drafts[parentId] = value;
+}
+
+/** A blank draft falls back to `@author `; a top-level reply has no prefill. */
+function replyComposerValue(saved: string | undefined, prefill: string | null) {
+  if (saved?.trim()) return saved;
+  return prefill ? `@${prefill} ` : '';
+}
+
 function resolveCursor(
   comment: ThreadComment,
   overlay: ThreadOverlay,
@@ -250,13 +267,28 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     setReplyFocusId(created.id);
   }
 
+  function prefillUsernames(parentId: string) {
+    const comment = ((list.data ?? []) as ThreadComment[]).find((item) => item.id === parentId);
+    if (!comment) return [];
+    return visibleReplies(comment, threadsRef.current[comment.id] ?? emptyOverlay()).map(
+      (reply) => reply.user.username,
+    );
+  }
+
   function handleReplyError(err: unknown) {
     const appCode =
       typeof err === 'object' && err !== null && 'data' in err
         ? (err.data as { appCode?: unknown }).appCode
         : undefined;
     if (appCode === APP_ERROR_CODES.COMMENT_PARENT_GONE) {
-      if (openParentRef.current) draftsRef.current[openParentRef.current] = replyDraft;
+      if (openParentRef.current) {
+        rememberReplyDraft(
+          draftsRef.current,
+          openParentRef.current,
+          replyDraft,
+          prefillUsernames(openParentRef.current),
+        );
+      }
       openParentRef.current = null;
       setOpenParentId(null);
       setReplyError(null);
@@ -482,9 +514,15 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     labelUser: string,
     prefill: string | null,
   ) {
-    if (openParentRef.current) draftsRef.current[openParentRef.current] = replyDraft;
-    const saved = draftsRef.current[parentId];
-    const next = saved !== undefined ? saved : prefill ? `@${prefill} ` : '';
+    if (openParentRef.current) {
+      rememberReplyDraft(
+        draftsRef.current,
+        openParentRef.current,
+        replyDraft,
+        prefillUsernames(openParentRef.current),
+      );
+    }
+    const next = replyComposerValue(draftsRef.current[parentId], prefill);
     openParentRef.current = parentId;
     setOpenParentId(parentId);
     setOpenerKey(`${parentId}:${sourceId}`);
@@ -495,7 +533,14 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   }
 
   function closeReply(restore: boolean) {
-    if (openParentRef.current) draftsRef.current[openParentRef.current] = replyDraft;
+    if (openParentRef.current) {
+      rememberReplyDraft(
+        draftsRef.current,
+        openParentRef.current,
+        replyDraft,
+        prefillUsernames(openParentRef.current),
+      );
+    }
     const key = openerKey;
     openParentRef.current = null;
     setOpenParentId(null);

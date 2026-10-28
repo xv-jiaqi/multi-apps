@@ -943,6 +943,60 @@ describe('CommentSection replies', () => {
     expect(screen.getByRole('button', { name: '回复 @cara' })).toHaveFocus();
   });
 
+  it('prefills the reply author after escaping an untouched top-level reply', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    const topLevel = screen.getByRole('textbox', { name: '回复 @bob' });
+    expect(topLevel).toHaveValue('');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('textbox', { name: '回复 @bob' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '回复 @cara' }));
+    const field = screen.getByRole('textbox', { name: '回复 @cara' });
+    expect(field).toHaveValue('@cara ');
+    expect((field as HTMLTextAreaElement).selectionStart).toBe('@cara '.length);
+  });
+
+  it('keeps a non-empty reply draft after Escape', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @bob' }));
+    await user.type(screen.getByRole('textbox', { name: '回复 @bob' }), 'still drafting');
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: '回复 @cara' }));
+    expect(screen.getByRole('textbox', { name: '回复 @cara' })).toHaveValue('still drafting');
+  });
+
+  it('prefills the next author after escaping a mention-only reply', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        ...thread,
+        replyCount: 2,
+        replies: [
+          ...thread.replies,
+          {
+            id: '33333333-3333-4333-8333-333333333333',
+            content: 'another reply',
+            createdAt: '2026-05-01T01:05:00.000Z',
+            user: { id: 'u4', username: 'dave' },
+          },
+        ],
+      },
+    ];
+    renderShell();
+    await user.click(screen.getByRole('button', { name: '回复 @cara' }));
+    expect(screen.getByRole('textbox', { name: '回复 @cara' })).toHaveValue('@cara ');
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: '回复 @dave' }));
+    const field = screen.getByRole('textbox', { name: '回复 @dave' });
+    expect(field).toHaveValue('@dave ');
+    expect((field as HTMLTextAreaElement).selectionStart).toBe('@dave '.length);
+  });
+
   it('shows parentGone without retry, refreshes, and focuses the section title', async () => {
     const user = userEvent.setup();
     mutateMock.mockImplementation((input, callbacks) => {
