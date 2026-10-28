@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { applyApproval, applyTask, detailKey, matchesFilter, pendingKey } from '../src/api/cache';
-import { toTaskListFilter } from '../src/lib/list-filter';
+import { toTaskListFilter, type ListFilterState } from '../src/lib/list-filter';
 import { approval, task } from './fixtures';
 
 describe('applyTask', () => {
@@ -71,11 +71,11 @@ describe('applyTask', () => {
   });
 
   it('toTaskListFilter 和 matchesFilter 用同一套规则', () => {
-    const states = [
-      { status: 'all' as const, agentId: '', source: '' as const, q: '' },
-      { status: 'active' as const, agentId: 'codex', source: 'ui' as const, q: '  修复  ' },
-      { status: 'ended' as const, agentId: '', source: '' as const, q: 'x'.repeat(120) },
-      { status: 'archived' as const, agentId: '', source: '' as const, q: '' },
+    const states: ListFilterState[] = [
+      { status: 'all', agentId: '', source: '', q: '' },
+      { status: 'active', agentId: 'codex', source: 'ui', q: '  修复  ' },
+      { status: 'ended', agentId: '', source: '', q: 'x'.repeat(120) },
+      { status: 'archived', agentId: '', source: '', q: '' },
     ];
     const samples = [
       task(),

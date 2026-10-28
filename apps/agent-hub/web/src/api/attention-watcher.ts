@@ -1,6 +1,16 @@
-import type { TaskDto } from '@agent-hub/contract';
+import type { AgentDto, ItemsResponse, TaskDto } from '@agent-hub/contract';
+import type { QueryClient } from '@tanstack/react-query';
 import { notificationFor } from '../desktop/notify-rules';
+import { agentsQuery } from './queries';
 import type { TaskHandlers } from './socket';
+
+/** 顶栏同一份 `['agents']` 查询。没有这条 Agent，或没有显示名时，退回 agentId。 */
+export function agentDisplayNameFromQuery(qc: QueryClient, agentId: string): string {
+  const data = qc.getQueryData<ItemsResponse<AgentDto>>(agentsQuery().queryKey);
+  const name = data?.items.find((agent) => agent.id === agentId)?.displayName;
+  if (!name) return agentId;
+  return name;
+}
 
 export class AttentionWatcher {
   private readonly subs = new Map<string, () => void>();
@@ -11,6 +21,7 @@ export class AttentionWatcher {
       subscribeTask: (taskId: string, handlers: TaskHandlers) => () => void;
       notify(text: { title: string; body: string }): void;
       isBackground(): boolean;
+      agentDisplayName(agentId: string): string;
     },
   ) {}
 
@@ -26,7 +37,12 @@ export class AttentionWatcher {
       afterSeq: () => 0,
       onEvent: (envelope) => {
         const current = this.tasks.get(task.id) ?? task;
-        const text = notificationFor(envelope, current, current.agentId, Date.now());
+        const text = notificationFor(
+          envelope,
+          current,
+          this.deps.agentDisplayName(current.agentId),
+          Date.now(),
+        );
         if (!text || !this.deps.isBackground()) return;
         this.deps.notify(text);
       },

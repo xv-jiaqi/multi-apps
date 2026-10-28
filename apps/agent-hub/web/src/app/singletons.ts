@@ -1,5 +1,5 @@
 import { api } from '../api/api';
-import { AttentionWatcher } from '../api/attention-watcher';
+import { AttentionWatcher, agentDisplayNameFromQuery } from '../api/attention-watcher';
 import { client } from '../api/client';
 import { socket } from '../api/socket';
 import { notifyInBackground } from '../desktop/attention';
@@ -13,6 +13,7 @@ export const watcher = new AttentionWatcher({
     void notifyInBackground(text);
   },
   isBackground: () => document.hidden || !document.hasFocus(),
+  agentDisplayName: (agentId) => agentDisplayNameFromQuery(queryClient, agentId),
 });
 
 export const connectionDeps: ConnectionDeps = {

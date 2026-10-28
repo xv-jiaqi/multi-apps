@@ -166,9 +166,7 @@ export function createApi(http: HubClient = client): HubApi {
     archiveTask: (id, signal) => json('POST', `${taskPath(id)}/archive`, taskDtoSchema, { signal }),
     unarchiveTask: (id, signal) =>
       json('POST', `${taskPath(id)}/unarchive`, taskDtoSchema, { signal }),
-    deleteTask: async (id, signal) => {
-      await http.request('DELETE', taskPath(id), { signal });
-    },
+    deleteTask: (id, signal) => json('DELETE', taskPath(id), z.undefined(), { signal }),
     applyTask: (id, body, signal) =>
       json('POST', `${taskPath(id)}/apply`, applyResponseSchema, { body, signal }),
     completeRemoteTurn: (id, signal) =>
