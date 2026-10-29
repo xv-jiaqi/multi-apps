@@ -505,3 +505,13 @@ export const adminAuditListInput = z.object({
   limit: z.number().int().min(1).max(50).default(50),
 });
 export type AdminAuditListInput = z.infer<typeof adminAuditListInput>;
+
+export {
+  METRICS_RANGE_MAX_DAYS,
+  adminMetricsInput,
+  formatUtcCalendarDate,
+  inclusiveUtcDayCount,
+  utcCalendarDate,
+  utcCalendarDateFromInstant,
+} from './metrics';
+export type { AdminMetricsInput } from './metrics';
