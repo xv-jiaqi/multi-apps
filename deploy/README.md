@@ -699,7 +699,9 @@ written to the log. The response echoes the chosen id in `X-Request-Id`.
 Sentry events for that request carry the same value as the tag `request_id`.
 Only 5xx and tRPC `INTERNAL_SERVER_ERROR` are reported. `LOG_LEVEL` selects the
 pino level (`info` when unset or invalid). `authorization`, `cookie`, and
-request bodies are not written.
+request bodies are not written. Query keys `input`, `token`, `code`,
+`access_token`, `refresh_token`, `id_token`, and `reset_token` are replaced
+with `[Redacted]` in both `url` and `query`.
 
 ```bash
 docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env logs -f api

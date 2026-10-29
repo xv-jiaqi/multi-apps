@@ -13,6 +13,17 @@ const logLevelSchema = z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace
 
 const SECRET_HEADERS = new Set(['authorization', 'cookie', 'set-cookie', 'proxy-authorization']);
 
+/** tRPC puts the procedure payload in `input`. The other names are credential query params. */
+const REDACTED_QUERY_KEYS = new Set([
+  'input',
+  'token',
+  'code',
+  'access_token',
+  'refresh_token',
+  'id_token',
+  'reset_token',
+]);
+
 const REQUEST_LOG_FIELDS: readonly string[] = [
   'id',
   'method',
@@ -31,6 +42,42 @@ function loggedRequestIdHeader(value: unknown): string {
   const candidate = Array.isArray(value) ? value[0] : value;
   const parsed = requestIdSchema.safeParse(candidate);
   return parsed.success ? parsed.data : '[Redacted]';
+}
+
+function decodeQueryKey(rawKey: string): string {
+  try {
+    return decodeURIComponent(rawKey.replace(/\+/g, ' '));
+  } catch {
+    return rawKey;
+  }
+}
+
+function redactQuery(query: unknown): unknown {
+  if (Array.isArray(query)) return query.map((item) => redactQuery(item));
+  if (!isRecord(query)) return query;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(query)) {
+    out[key] = REDACTED_QUERY_KEYS.has(key.toLowerCase()) ? '[Redacted]' : value;
+  }
+  return out;
+}
+
+function redactUrl(url: string): string {
+  const queryIndex = url.indexOf('?');
+  if (queryIndex === -1) return url;
+  const path = url.slice(0, queryIndex);
+  const redacted = url
+    .slice(queryIndex + 1)
+    .split('&')
+    .map((part) => {
+      if (part.length === 0) return part;
+      const eq = part.indexOf('=');
+      const rawKey = eq === -1 ? part : part.slice(0, eq);
+      if (!REDACTED_QUERY_KEYS.has(decodeQueryKey(rawKey).toLowerCase())) return part;
+      return `${rawKey}=${encodeURIComponent('[Redacted]')}`;
+    })
+    .join('&');
+  return `${path}?${redacted}`;
 }
 
 function redactHeaders(headers: unknown): Record<string, unknown> | undefined {
@@ -63,6 +110,8 @@ export function redactSerializedRequest(req: unknown): Record<string, unknown> {
       out[key] = req[key];
     }
   }
+  if (typeof out.url === 'string') out.url = redactUrl(out.url);
+  if ('query' in out) out.query = redactQuery(out.query);
   const headers = redactHeaders(req.headers);
   if (headers) out.headers = headers;
   return out;
@@ -167,8 +216,9 @@ export function attachRequestLogging(
   app: RequestLoggingApp,
   stream: PassThrough = appLogStream,
 ): void {
-  const pinoLogger = new PinoLogger({ pinoHttp: [createHttpLoggerOptions(), stream] });
-  const httpLogger = pinoHttp(createHttpLoggerOptions(), stream);
+  const options = createHttpLoggerOptions();
+  const pinoLogger = new PinoLogger({ pinoHttp: [options, stream] });
+  const httpLogger = pinoHttp(options, stream);
   app.use((req: Request, res: Response, next: NextFunction) => {
     httpLogger(req, res, () => {
       bindRequestScope(req, res, () => {

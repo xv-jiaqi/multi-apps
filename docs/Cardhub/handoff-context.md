@@ -261,7 +261,7 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 
 `X-Request-Id` 用 zod 校验：trim 后 1–128 字符，字符集 `[A-Za-z0-9._:-]`，首字符必须是字母或数字。空、换行、超长都会换成新的 UUID。不要把原始头写进日志。响应头 `X-Request-Id` 是最终采用的值。
 
-每条 JSON 日志都有 `requestId`。请求内是该 id，进程级日志是 `null`。Sentry 事件标签是 `request_id`。`authorization`、`cookie` 和请求体不进日志。
+每条 JSON 日志都有 `requestId`。请求内是该 id，进程级日志是 `null`。Sentry 事件标签是 `request_id`。`authorization`、`cookie` 和请求体不进日志。`url` 和 `query` 里的 `input`、`token`、`code`、`access_token`、`refresh_token`、`id_token`、`reset_token` 记为 `[Redacted]`，避免 tRPC 的 `?input=` 或以后的验证链接进日志。
 
 `LOG_LEVEL` 只接受 pino 的级别名，其它值回到 `info`。Compose 把这个变量注入 API 容器。
 

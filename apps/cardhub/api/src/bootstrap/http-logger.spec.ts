@@ -82,6 +82,12 @@ describe('http logger', () => {
     const missing = await request(app).get('/ok');
     expect(missing.headers['x-request-id']).toMatch(UUID);
 
+    const withQuery = await request(app)
+      .get('/trpc/auth.verify')
+      .query({ input: 'LEAK_QUERY_INPUT', token: 'LEAK_QUERY_TOKEN', page: '2' })
+      .set('X-Request-Id', 'query-1');
+    expect(withQuery.headers['x-request-id']).toBe('query-1');
+
     const parsed = parseLines(lines);
     expect(
       parsed.every((line) => line.requestId === null || typeof line.requestId === 'string'),
@@ -100,6 +106,9 @@ describe('http logger', () => {
     expect(serialized).not.toContain('LEAK_COOKIE_MARKER');
     expect(serialized).not.toContain('SECRET_BODY_MARKER');
     expect(serialized).not.toContain('id,other');
+    expect(serialized).not.toContain('LEAK_QUERY_INPUT');
+    expect(serialized).not.toContain('LEAK_QUERY_TOKEN');
     expect(serialized).toContain('[Redacted]');
+    expect(serialized).toContain('page');
   });
 });
