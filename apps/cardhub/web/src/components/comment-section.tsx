@@ -1,5 +1,12 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react';
 import { Link } from 'react-router';
 import { Button } from '@repo/ui-web';
 import {
@@ -50,7 +57,7 @@ interface ThreadOverlay {
 }
 
 const replyActionClassName =
-  'inline-flex min-h-6 items-center rounded px-1 text-xs font-medium text-brand-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+  'inline-flex min-h-6 scroll-mt-20 items-center rounded px-1 text-xs font-medium text-brand-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
 const MENTION = /^@([A-Za-z0-9_-]+) /;
 
@@ -104,7 +111,8 @@ function resolveCursor(
   visible: ReplyItem[],
   count: number,
 ): string | null {
-  const cursor = overlay.cursor === undefined ? (comment.repliesNextCursor ?? null) : overlay.cursor;
+  const cursor =
+    overlay.cursor === undefined ? (comment.repliesNextCursor ?? null) : overlay.cursor;
   if (count <= visible.length) return null;
   if (!cursor || overlay.removed.includes(cursor)) return visible.at(-1)?.id ?? null;
   return cursor;
@@ -191,9 +199,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const draftsRef = useRef<Record<string, string>>({});
   const openParentRef = useRef<string | null>(null);
-  const pendingFocus = useRef<{ type: 'opener' | 'show-more' | 'title'; id: string } | null>(
-    null,
-  );
+  const pendingFocus = useRef<{ type: 'opener' | 'show-more' | 'title'; id: string } | null>(null);
+  const replyRetryRef = useRef<HTMLButtonElement>(null);
+  const focusRetryParentId = useRef<string | null>(null);
   const [replyFocusId, setReplyFocusId] = useState<string | null>(null);
   const threadsRef = useRef(threads);
   threadsRef.current = threads;
@@ -347,9 +355,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     setDeleteReason('');
     setDeleteError(null);
     showStatus(
-      count > 0
-        ? tt('comment.deletedWithReplies', { count })
-        : tt('card.detail.commentDeleted'),
+      count > 0 ? tt('comment.deletedWithReplies', { count }) : tt('card.detail.commentDeleted'),
       true,
     );
     invalidateList();
@@ -404,8 +410,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       }
 
       const ownerId = ownerOf(variables.id);
-      const keepReason =
-        session.isAdmin && ownerId !== undefined && session.user?.id !== ownerId;
+      const keepReason = session.isAdmin && ownerId !== undefined && session.user?.id !== ownerId;
       setDeleteError({
         id: variables.id,
         message:
@@ -442,6 +447,15 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     node.focus();
     setReplyFocusId(null);
   }, [replyFocusId, renderedReplyIds]);
+
+  useLayoutEffect(() => {
+    const parentId = focusRetryParentId.current;
+    if (!parentId || failedParentId !== parentId || loadingParentId === parentId) return;
+    const node = replyRetryRef.current;
+    if (!node) return;
+    focusRetryParentId.current = null;
+    node.focus({ preventScroll: true });
+  }, [failedParentId, loadingParentId]);
 
   useLayoutEffect(() => {
     const pending = pendingFocus.current;
@@ -599,8 +613,10 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     const count = visibleReplyCount(comment, overlay);
     const cursor = resolveCursor(comment, overlay, visible, count);
     if (!cursor) return;
+    const active = document.activeElement;
+    const showMore = document.getElementById(`show-more-${parentId}`);
+    const restoreRetryFocus = active === showMore || active === replyRetryRef.current;
     setLoadingParentId(parentId);
-    setFailedParentId((current) => (current === parentId ? null : current));
     try {
       const page = await utils.comments.listReplies.fetch({ parentId, cursor, limit: 20 });
       const known = new Set(visible.map((reply) => reply.id));
@@ -618,10 +634,13 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         };
       });
       showStatus(tt('comment.reply.loaded', { count: fresh.length }), false);
+      focusRetryParentId.current = null;
+      setFailedParentId((current) => (current === parentId ? null : current));
       if (page.nextCursor) pendingFocus.current = { type: 'show-more', id: parentId };
       else if (fresh[0]) setReplyFocusId(fresh[0].id);
     } catch {
       setFailedParentId(parentId);
+      if (restoreRetryFocus) focusRetryParentId.current = parentId;
     } finally {
       setLoadingParentId((current) => (current === parentId ? null : current));
     }
@@ -660,7 +679,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             rows={3}
             maxLength={500}
             aria-label={tt('a11y.commentArea')}
-            className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+            className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           {error ? (
             <p
@@ -687,7 +706,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                   ? `/cards/${commentTarget.slug}`
                   : `/series/${commentTarget.slug}`,
             }}
-            className="font-medium text-brand-600 hover:underline"
+            className="rounded font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {tt('card.detail.loginToComment')}
           </Link>
@@ -700,7 +719,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         tabIndex={-1}
         className={
           statusMessage && statusVisible
-            ? 'rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+            ? 'scroll-mt-20 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
             : 'sr-only'
         }
       >
@@ -734,7 +753,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             commentsRef.current = node;
           }}
           tabIndex={-1}
-          className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="scroll-mt-20 rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('card.detail.commentEmpty')}
         </p>
@@ -900,10 +919,8 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                     className="mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4"
                   >
                     {replies.map((reply) => {
-                      const replyCanDelete =
-                        session.user?.id === reply.user.id || session.isAdmin;
-                      const replyShowReason =
-                        session.isAdmin && session.user?.id !== reply.user.id;
+                      const replyCanDelete = session.user?.id === reply.user.id || session.isAdmin;
+                      const replyShowReason = session.isAdmin && session.user?.id !== reply.user.id;
                       const replyConfirming = confirmingId === reply.id;
                       const replyDeleting =
                         deleteComment.isPending && deleteComment.variables?.id === reply.id;
@@ -914,7 +931,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           id={`reply-${reply.id}`}
                           tabIndex={-1}
                           aria-busy={replyDeleting ? true : undefined}
-                          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                          className="scroll-mt-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
                           <div className="flex min-h-6 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600">
                             <span className="font-semibold text-neutral-900 wrap-anywhere">
@@ -964,7 +981,12 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               aria-controls={inputId}
                               aria-label={tt('comment.replyAria', { user: reply.user.username })}
                               onClick={() =>
-                                openReply(comment.id, reply.id, reply.user.username, reply.user.username)
+                                openReply(
+                                  comment.id,
+                                  reply.id,
+                                  reply.user.username,
+                                  reply.user.username,
+                                )
                               }
                               className={`${replyActionClassName} mt-2`}
                             >
@@ -982,7 +1004,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               }
                               onKeyDown={(event) => onConfirmKeyDown(event, reply.id)}
                             >
-                              <span className={replyShowReason ? 'text-red-700' : 'mr-auto text-red-700'}>
+                              <span
+                                className={
+                                  replyShowReason ? 'text-red-700' : 'mr-auto text-red-700'
+                                }
+                              >
                                 {tt('comment.reply.confirmDelete')}
                               </span>
                               {replyShowReason ? (
@@ -993,7 +1019,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                                   onChange={setDeleteReason}
                                 />
                               ) : null}
-                              <div className={replyShowReason ? 'flex justify-end gap-3' : 'contents'}>
+                              <div
+                                className={replyShowReason ? 'flex justify-end gap-3' : 'contents'}
+                              >
                                 <button
                                   type="button"
                                   disabled={replyDeleting}
@@ -1037,7 +1065,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                   >
                     <span>{tt('comment.reply.loadFailed')}</span>
                     <RetryButton
+                      ref={replyRetryRef}
                       variant="inline"
+                      className="scroll-mt-20"
                       retrying={loadingParentId === comment.id}
                       label={tt('state.retry')}
                       retryingLabel={tt('state.retrying')}
@@ -1090,7 +1120,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           event.currentTarget.form?.requestSubmit();
                         }
                       }}
-                      className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                      className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                     {replyError ? (
                       <p

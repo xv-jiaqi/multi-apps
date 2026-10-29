@@ -50,7 +50,7 @@ export const ReportButton = observer(function ReportButton({
       <Link
         to="/login"
         state={{ from: `${location.pathname}${location.search}${location.hash}` }}
-        className="inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-600 hover:text-neutral-900 hover:underline"
+        className="inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-600 hover:text-neutral-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         {tt('report.button')}
       </Link>
@@ -104,7 +104,7 @@ export const ReportButton = observer(function ReportButton({
           placeholder={tt('report.reasonPlaceholder')}
           rows={3}
           maxLength={500}
-          className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+          className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
       </label>
       {error ? (
@@ -119,7 +119,7 @@ export const ReportButton = observer(function ReportButton({
             setOpen(false);
             setError(null);
           }}
-          className="text-xs text-neutral-600 hover:text-neutral-900"
+          className="inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('report.cancel')}
         </button>
