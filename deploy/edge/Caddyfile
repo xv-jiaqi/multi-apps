@@ -6,6 +6,11 @@
 # days. Rolled files are gzipped. The default logger keeps admin and
 # process lines on stderr and does not also copy access lines there.
 # Credential headers are deleted. Request bodies are not logged.
+# Query keys match apps/cardhub/api http-logger.ts REDACTED_QUERY_KEYS.
+# `input` is removed (tRPC GET payload, which can carry a token or email).
+# The other keys stay so the name is visible, with the value REDACTED.
+# The path is kept, including /trpc/auth.login,auth.login. Referer is
+# deleted so a copied query cannot put the same values back in the line.
 {
 	log default {
 		exclude http.log.access
@@ -21,9 +26,21 @@
 		format filter {
 			wrap json
 			request>headers>Authorization delete
+			request>headers>Proxy-Authorization delete
 			request>headers>Cookie delete
 			request>headers>Set-Cookie delete
+			request>headers>X-Api-Key delete
+			request>headers>Referer delete
 			resp_headers>Set-Cookie delete
+			request>uri query {
+				delete input
+				replace token REDACTED
+				replace code REDACTED
+				replace access_token REDACTED
+				replace refresh_token REDACTED
+				replace id_token REDACTED
+				replace reset_token REDACTED
+			}
 		}
 		level INFO
 	}

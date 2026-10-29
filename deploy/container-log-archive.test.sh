@@ -261,6 +261,47 @@ else
   ok "remaining archives are within the cap"
 fi
 
+# Empty root, a `..` component, and a symlink out of the log dir must not
+# delete files that live outside the two allowlisted directories.
+outside="$(mktemp -d)"
+planted="${outside}/api-aaaaaaaaaaaa-20200101T000000Z.log.gz"
+write_bytes "${planted}" 40 "20 days ago"
+container_log_cap_bytes=0
+cardhub_root=""
+prune_saved_container_logs
+if [ ! -f "${planted}" ]; then
+  bad "empty CARDHUB_ROOT deleted ${planted}"
+else
+  ok "empty CARDHUB_ROOT leaves outside files"
+fi
+
+cardhub_root="${outside}/nested/.."
+mkdir -p "${outside}/nested"
+prune_saved_container_logs
+if [ ! -f "${planted}" ]; then
+  bad "CARDHUB_ROOT with .. deleted ${planted}"
+else
+  ok ".. path leaves outside files"
+fi
+
+link_root="$(mktemp -d)"
+mkdir -p "${link_root}/logs"
+ln -s "${outside}" "${link_root}/logs/cardhub-prod"
+mkdir -p "${link_root}/logs/cardhub-staging"
+ln -s "${planted}" "${link_root}/logs/cardhub-staging/api-aaaaaaaaaaaa-20200101T000000Z.log.gz"
+cardhub_root="${link_root}"
+prune_saved_container_logs
+if [ ! -f "${planted}" ]; then
+  bad "symlink out of the log dir deleted ${planted}"
+else
+  ok "symlink out of the log dir leaves the target"
+fi
+if [ ! -L "${link_root}/logs/cardhub-prod" ]; then
+  bad "directory symlink was removed or replaced"
+else
+  ok "directory symlink was not used as a log dir"
+fi
+
 if [ "${failed}" -ne 0 ]; then
   exit 1
 fi

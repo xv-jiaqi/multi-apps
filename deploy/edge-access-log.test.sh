@@ -87,9 +87,20 @@ for line in \
   $'			roll_keep 9' \
   $'			roll_keep_for 336h' \
   $'			request>headers>Authorization delete' \
+  $'			request>headers>Proxy-Authorization delete' \
   $'			request>headers>Cookie delete' \
   $'			request>headers>Set-Cookie delete' \
+  $'			request>headers>X-Api-Key delete' \
+  $'			request>headers>Referer delete' \
   $'			resp_headers>Set-Cookie delete' \
+  $'			request>uri query {' \
+  $'				delete input' \
+  $'				replace token REDACTED' \
+  $'				replace code REDACTED' \
+  $'				replace access_token REDACTED' \
+  $'				replace refresh_token REDACTED' \
+  $'				replace id_token REDACTED' \
+  $'				replace reset_token REDACTED' \
   $'			wrap json'
 do
   if ! grep -qxF "${line}" <<< "${global}"; then
@@ -126,18 +137,20 @@ else
   ok "edge apply creates /data/logs"
 fi
 
+if [ "${CI:-}" = "true" ] && [ -z "${CADDY_BIN:-}" ]; then
+  echo "FAIL CADDY_BIN is required when CI=true; the live Caddy test must not be skipped" >&2
+  exit 1
+fi
 caddy_bin="${CADDY_BIN:-}"
 if [ -z "${caddy_bin}" ] && command -v caddy >/dev/null 2>&1; then
   caddy_bin="$(command -v caddy)"
 fi
 
 if [ -z "${caddy_bin}" ]; then
-  if [ "${CI:-}" = "true" ]; then
-    echo "FAIL caddy is required when CI=true" >&2
-    exit 1
-  fi
   echo "SKIP caddy adapt and live log; set CADDY_BIN"
 else
+  echo "Running live Caddy access-log test with CADDY_BIN=${caddy_bin}"
+  "${caddy_bin}" version
   work="$(mktemp -d)"
   (
     cd "${root}/deploy/edge"
@@ -159,9 +172,24 @@ writer = access["writer"]
 fields = access["encoder"]["fields"]
 expected = {
     "request>headers>Authorization": {"filter": "delete"},
+    "request>headers>Proxy-Authorization": {"filter": "delete"},
     "request>headers>Cookie": {"filter": "delete"},
     "request>headers>Set-Cookie": {"filter": "delete"},
+    "request>headers>X-Api-Key": {"filter": "delete"},
+    "request>headers>Referer": {"filter": "delete"},
     "resp_headers>Set-Cookie": {"filter": "delete"},
+    "request>uri": {
+        "filter": "query",
+        "actions": [
+            {"parameter": "input", "type": "delete"},
+            {"parameter": "token", "type": "replace", "value": "REDACTED"},
+            {"parameter": "code", "type": "replace", "value": "REDACTED"},
+            {"parameter": "access_token", "type": "replace", "value": "REDACTED"},
+            {"parameter": "refresh_token", "type": "replace", "value": "REDACTED"},
+            {"parameter": "id_token", "type": "replace", "value": "REDACTED"},
+            {"parameter": "reset_token", "type": "replace", "value": "REDACTED"},
+        ],
+    },
 }
 problems = []
 if writer.get("filename") != "/data/logs/access.log":
@@ -200,9 +228,7 @@ PY
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 class Handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        n = int(self.headers.get("Content-Length", "0"))
-        self.rfile.read(n)
+    def _ok(self):
         body = b"ok"
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
@@ -210,6 +236,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Set-Cookie", "session=super-secret")
         self.end_headers()
         self.wfile.write(body)
+
+    def do_GET(self):
+        self._ok()
+
+    def do_POST(self):
+        n = int(self.headers.get("Content-Length", "0"))
+        self.rfile.read(n)
+        self._ok()
 
     def log_message(self, fmt, *args):
         return
@@ -303,6 +337,14 @@ EOF
     -H 'X-Request-Id: trace-me' \
     --data 'password=hunter2-secret-body' \
     "http://127.0.0.1:${caddy_port}/trpc/auth.login,auth.login" >/dev/null
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/x?batch=1&input={\"email\":\"a@b.c\"}"
+  jwt='eyJhbGciOiJub25lIn0.payload.sig'
+  curl -g -sS -o /dev/null \
+    -H "Referer: http://127.0.0.1:${caddy_port}/trpc/auth.me?input={\"token\":\"${jwt}\"}" \
+    -H 'X-Api-Key: super-api-key-value' \
+    -H 'Proxy-Authorization: Basic c2VjcmV0' \
+    "http://127.0.0.1:${caddy_port}/trpc/auth.me?input={\"token\":\"${jwt}\"}&token=${jwt}&access_token=${jwt}"
   sleep 0.3
   if [ ! -s "${work}/access.log" ]; then
     bad "live access log was not written"
@@ -315,7 +357,7 @@ log_path, headers_path, err_path = sys.argv[1:]
 lines = [json.loads(line) for line in Path(log_path).read_text().splitlines() if line.strip()]
 blob = Path(log_path).read_text()
 err = Path(err_path).read_text()
-headers = Path(headers_path).read_text()
+response_headers = Path(headers_path).read_text()
 problems = []
 needles = [
     "super-secret-token",
@@ -324,12 +366,54 @@ needles = [
     "inbound=nope",
     "session=super-secret",
     "Bearer",
+    "a@b.c",
+    "a%40b.c",
+    "eyJhbGciOiJub25lIn0.payload.sig",
+    "eyJ",
+    "super-api-key-value",
+    "c2VjcmV0",
 ]
 for needle in needles:
     if needle in blob:
         problems.append(f"log contains {needle}")
     if needle in err:
         problems.append(f"stderr contains {needle}")
+for line in lines:
+    uri = ((line.get("request") or {}).get("uri") or "")
+    if "/trpc/" in uri:
+        print(f"PROOF uri={uri}")
+email = [line for line in lines if "/trpc/x" in json.dumps(line)]
+if not email:
+    problems.append("GET /trpc/x was not logged")
+else:
+    uri = (email[-1].get("request") or {}).get("uri") or ""
+    if not uri.startswith("/trpc/x"):
+        problems.append(f"path lost on /trpc/x: {uri}")
+    if "batch=1" not in uri:
+        problems.append(f"batch param lost: {uri}")
+    if "input" in uri:
+        problems.append(f"input query remained: {uri}")
+    else:
+        print("PROOF line=" + json.dumps(email[-1], separators=(",", ":")))
+auth = [line for line in lines if "/trpc/auth.me" in json.dumps(line)]
+if not auth:
+    problems.append("GET /trpc/auth.me was not logged")
+else:
+    raw = json.dumps(auth[-1])
+    req_headers = (auth[-1].get("request") or {}).get("headers") or {}
+    if "Referer" in req_headers or "referer" in req_headers:
+        problems.append(f"Referer kept: {req_headers}")
+    if "X-Api-Key" in req_headers or "Proxy-Authorization" in req_headers:
+        problems.append(f"credential header kept: {req_headers}")
+    uri = (auth[-1].get("request") or {}).get("uri") or ""
+    if not uri.startswith("/trpc/auth.me"):
+        problems.append(f"path lost on /trpc/auth.me: {uri}")
+    if "token=REDACTED" not in uri or "access_token=REDACTED" not in uri:
+        problems.append(f"token query was not redacted: {uri}")
+    if "input" in uri or "eyJ" in raw:
+        problems.append(f"jwt still in auth.me line: {raw}")
+    else:
+        print("PROOF line=" + json.dumps(auth[-1], separators=(",", ":")))
 hit = [line for line in lines if "/trpc/auth.login,auth.login" in json.dumps(line)]
 if not hit:
     problems.append("uri was not logged")
@@ -342,7 +426,7 @@ else:
         problems.append("request body field is present")
     if int(line.get("bytes_read") or 0) <= 0:
         problems.append(f"bytes_read {line.get('bytes_read')}")
-if "Set-Cookie:" not in headers or "session=super-secret" not in headers:
+if "Set-Cookie:" not in response_headers or "session=super-secret" not in response_headers:
     problems.append("response dropped Set-Cookie")
 if problems:
     print("FAIL live access log: " + "; ".join(problems), file=sys.stderr)

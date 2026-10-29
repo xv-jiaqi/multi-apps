@@ -59,6 +59,75 @@ archive_log_basename() {
   [[ "$1" =~ ^(api|web)-[0-9a-f]{12}(-[0-9a-f]{12})?-[0-9]{8}T[0-9]{6}Z\.log\.gz$ ]]
 }
 
+# Absolute archive directory, or nothing and status 1.
+# The only names allowed are cardhub-prod and cardhub-staging, under
+# ${cardhub_root}/logs (default root /opt/cardhub). Empty, relative, `..`,
+# and any symlink in that path are refused. Callers must not `find` a path
+# this function did not print.
+prepare_container_log_dir() {
+  local project_name="$1"
+  local root logs dir resolved
+  case "${project_name}" in
+    cardhub-prod|cardhub-staging) ;;
+    *)
+      echo "Warning: container log path refused for project ${project_name}." >&2
+      return 1
+      ;;
+  esac
+  root="${cardhub_root-}"
+  if [ -z "${root}" ] || [ "${root}" = "/" ]; then
+    echo "Warning: container log path refused; CARDHUB_ROOT is empty." >&2
+    return 1
+  fi
+  case "${root}" in
+    /*) ;;
+    *)
+      echo "Warning: container log path refused; CARDHUB_ROOT is not absolute." >&2
+      return 1
+      ;;
+  esac
+  root="${root%/}"
+  case "${root}" in
+    *..*)
+      echo "Warning: container log path refused; CARDHUB_ROOT contains .." >&2
+      return 1
+      ;;
+  esac
+  if [ ! -d "${root}" ] || [ -L "${root}" ]; then
+    echo "Warning: container log path refused; CARDHUB_ROOT is not a real directory." >&2
+    return 1
+  fi
+  resolved="$(cd "${root}" && pwd -P)" || return 1
+  if [ "${resolved}" != "${root}" ]; then
+    echo "Warning: container log path refused; ${root} is not canonical." >&2
+    return 1
+  fi
+  logs="${root}/logs"
+  if [ -L "${logs}" ]; then
+    echo "Warning: container log path refused; ${logs} is a symlink." >&2
+    return 1
+  fi
+  dir="${logs}/${project_name}"
+  if [ -L "${dir}" ]; then
+    echo "Warning: container log path refused; ${dir} is a symlink." >&2
+    return 1
+  fi
+  if [ ! -d "${dir}" ] && ! mkdir -p "${dir}"; then
+    echo "Warning: could not create ${dir}." >&2
+    return 1
+  fi
+  if [ -L "${dir}" ] || [ ! -d "${dir}" ]; then
+    echo "Warning: container log path refused; ${dir} is not a real directory." >&2
+    return 1
+  fi
+  resolved="$(cd "${dir}" && pwd -P)" || return 1
+  if [ "${resolved}" != "${dir}" ]; then
+    echo "Warning: container log path refused; ${dir} resolved to ${resolved}." >&2
+    return 1
+  fi
+  printf '%s\n' "${resolved}"
+}
+
 compose() {
   : "${env_name:?}" "${active_image_tag:?}" "${project:?}" "${env_file:?}" "${compose_file:?}"
   ENV_NAME="${env_name}" IMAGE_TAG="${active_image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" "$@"
@@ -510,9 +579,9 @@ archive_removed_container_logs() {
       echo "Warning: could not format a container log timestamp for ${svc} ${id:0:12}. Deploy continues." >&2
       exit 0
     fi
-    dir="${root}/logs/${project_name}"
-    if ! mkdir -p "${dir}"; then
-      echo "Warning: could not create ${dir}. ${svc} logs were not saved. Deploy continues." >&2
+    dir="$(prepare_container_log_dir "${project_name}")" || dir=""
+    if [ -z "${dir}" ]; then
+      echo "Warning: ${svc} logs were not saved. Deploy continues." >&2
       exit 0
     fi
     dest="${dir}/${svc}-${short}-${stamp}.log.gz"
@@ -568,35 +637,49 @@ prune_saved_container_logs() {
     if ! [[ "${cap}" =~ ^[0-9]+$ ]]; then
       cap=1073741824
     fi
-    for dir in "${root}/logs/cardhub-prod" "${root}/logs/cardhub-staging"; do
-      if ! mkdir -p "${dir}"; then
-        echo "Warning: could not create ${dir}; container log prune may be incomplete." >&2
-      fi
-    done
-
     removed=0
-    for dir in "${root}/logs/cardhub-prod" "${root}/logs/cardhub-staging"; do
-      [ -d "${dir}" ] || continue
-      while IFS= read -r f; do
+    now="$(date +%s)" || exit 0
+    cutoff=$((now - minutes * 60))
+    shopt -s nullglob
+    for project_name in cardhub-prod cardhub-staging; do
+      dir="$(prepare_container_log_dir "${project_name}")" || dir=""
+      if [ -z "${dir}" ]; then
+        continue
+      fi
+      for f in "${dir}/.api-"* "${dir}/.web-"* "${dir}/"*.log.gz.partial; do
         [ -n "${f}" ] || continue
+        [ -L "${f}" ] && continue
+        [ -f "${f}" ] || continue
+        case "${f}" in
+          "${dir}"/*) ;;
+          *) continue ;;
+        esac
         if rm -f -- "${f}"; then
           removed=$((removed + 1))
         fi
-      done < <(find "${dir}" -mindepth 1 -maxdepth 1 -type f \
-        \( -name '.api-*' -o -name '.web-*' -o -name '*.log.gz.partial' \) \
-        -print 2>/dev/null || true)
+      done
+      while IFS= read -r f; do
+        [ -n "${f}" ] || continue
+        [ -L "${f}" ] && continue
+        case "${f}" in
+          "${dir}"/*) ;;
+          *) continue ;;
+        esac
+        base="${f##*/}"
+        case "${base}" in
+          */*) continue ;;
+        esac
+        archive_log_basename "${base}" || continue
+        mtime="$(stat -c '%Y' "${f}" 2>/dev/null)" || continue
+        [[ "${mtime}" =~ ^[0-9]+$ ]] || continue
+        if [ "${mtime}" -lt "${cutoff}" ]; then
+          if rm -f -- "${f}"; then
+            removed=$((removed + 1))
+          fi
+        fi
+      done < <(find "${dir}" -maxdepth 1 -type f -name '*.log.gz')
     done
-
-    while IFS= read -r f; do
-      [ -n "${f}" ] || continue
-      base="${f##*/}"
-      archive_log_basename "${base}" || continue
-      if rm -f -- "${f}"; then
-        removed=$((removed + 1))
-      fi
-    done < <(find "${root}/logs/cardhub-prod" "${root}/logs/cardhub-staging" \
-      -mindepth 1 -maxdepth 1 -type f -name '*.log.gz' -mmin "+${minutes}" \
-      -print 2>/dev/null || true)
+    shopt -u nullglob
 
     inventory="$(mktemp)" || exit 0
     sorted="$(mktemp)" || {
@@ -604,17 +687,29 @@ prune_saved_container_logs() {
       exit 0
     }
     : >"${inventory}"
-    while IFS= read -r f; do
-      [ -n "${f}" ] || continue
-      base="${f##*/}"
-      archive_log_basename "${base}" || continue
-      [ -f "${f}" ] || continue
-      size="$(stat -c '%s' "${f}" 2>/dev/null)" || continue
-      mtime="$(stat -c '%Y' "${f}" 2>/dev/null)" || continue
-      [[ "${size}" =~ ^[0-9]+$ ]] || continue
-      printf '%s\t%s\t%s\n' "${mtime}" "${size}" "${f}" >>"${inventory}"
-    done < <(find "${root}/logs/cardhub-prod" "${root}/logs/cardhub-staging" \
-      -mindepth 1 -maxdepth 1 -type f -name '*.log.gz' -print 2>/dev/null || true)
+    for project_name in cardhub-prod cardhub-staging; do
+      dir="$(prepare_container_log_dir "${project_name}")" || dir=""
+      if [ -z "${dir}" ]; then
+        continue
+      fi
+      while IFS= read -r f; do
+        [ -n "${f}" ] || continue
+        [ -L "${f}" ] && continue
+        case "${f}" in
+          "${dir}"/*) ;;
+          *) continue ;;
+        esac
+        base="${f##*/}"
+        case "${base}" in
+          */*) continue ;;
+        esac
+        archive_log_basename "${base}" || continue
+        size="$(stat -c '%s' "${f}" 2>/dev/null)" || continue
+        mtime="$(stat -c '%Y' "${f}" 2>/dev/null)" || continue
+        [[ "${size}" =~ ^[0-9]+$ ]] || continue
+        printf '%s\t%s\t%s\n' "${mtime}" "${size}" "${f}" >>"${inventory}"
+      done < <(find "${dir}" -maxdepth 1 -type f -name '*.log.gz')
+    done
 
     if ! sort -n -k1,1 "${inventory}" >"${sorted}"; then
       rm -f "${inventory}" "${sorted}"

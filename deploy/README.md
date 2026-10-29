@@ -737,7 +737,13 @@ If `docker logs`, gzip, or the directory create fails, the script prints a
 warning and continues. That failure does not fail the deploy and does not
 roll it back.
 
-Each deploy then cleans those two directories. Incomplete `.partial` files
+Each deploy then cleans those two directories and no others. The script
+builds the path only as `${CARDHUB_ROOT}/logs/cardhub-prod` and
+`${CARDHUB_ROOT}/logs/cardhub-staging` (`CARDHUB_ROOT` defaults to
+`/opt/cardhub`). An empty root, a relative root, a `..` component, or a
+symlink in that path is skipped. Deletion uses
+`find "$dir" -maxdepth 1 -type f -name '*.log.gz'` with symlinks not
+followed. Incomplete `.partial` files
 and temp files from a crashed copy are removed. Archives older than 14 days
 are removed next. If what remains is still over 1 GiB (1073741824 bytes)
 for both projects together, the oldest archives are removed until the total
@@ -769,8 +775,15 @@ The file rolls at 50 MiB (`roll_size`), keeps 9 rolled files (`roll_keep`),
 and drops rolled files after 14 days (`roll_keep_for 336h`). Rolled files
 are gzipped (`access-<timestamp>-size.log.gz` or `...-time.log.gz`). The
 active file plus nine rolled files is at most about 500 MiB before gzip.
-The log filter deletes request `Authorization`, `Cookie`, and `Set-Cookie`,
-and response `Set-Cookie`. Caddy does not log request bodies.
+The log filter deletes request `Authorization`, `Proxy-Authorization`,
+`Cookie`, `Set-Cookie`, `X-Api-Key`, and `Referer`, and response
+`Set-Cookie`. `Referer` is removed so a copied query cannot keep a token.
+On `request>uri`, `input` is deleted and `token`, `code`, `access_token`,
+`refresh_token`, `id_token`, and `reset_token` are replaced with
+`REDACTED`. That is the query-key list in
+`apps/cardhub/api/src/bootstrap/http-logger.ts`. The path stays, so
+`/trpc/auth.login,auth.login` is still visible. Other query keys, such as
+`batch`, stay. Caddy does not log request bodies.
 
 `apply-edge-config.sh` creates `/data/logs` in the running container and
 chmods it to 755. If that fails, the apply still reloads; Caddy creates the

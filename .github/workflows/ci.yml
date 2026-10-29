@@ -212,6 +212,8 @@ jobs:
           caddy version
 
       - name: Edge plan, deploy tree guard, rollback previous image
+        env:
+          CADDY_BIN: /usr/local/bin/caddy
         run: |
           bash deploy/plan-edge-apply.test.sh
           bash deploy/deploy-tree-guard.test.sh
