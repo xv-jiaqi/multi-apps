@@ -1,3 +1,5 @@
+import './configure-zod';
+
 export * from './domain';
 export * from './events';
 export * from './errors';

@@ -1,3 +1,5 @@
+import './configure-zod';
+
 export * from './constants';
 export * from './zod';
 export * from './i18n';
