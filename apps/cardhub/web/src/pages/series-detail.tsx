@@ -6,6 +6,7 @@ import { isAppErrorCode, t, type Locale } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
+import { seriesMetaDescription } from '../lib/meta-description';
 import { RarityBadge } from '../components/rarity-badge';
 import { CommentSection } from '../components/comment-section';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
@@ -355,7 +356,15 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
 
   return (
     <PageShell>
-      <PageMeta title={series.title} />
+      <PageMeta
+        title={series.title}
+        description={seriesMetaDescription({
+          locale: locale.locale,
+          title: series.title,
+          cardCount: series.cards.length,
+          description: series.description,
+        })}
+      />
       <div className="space-y-8">
         <Breadcrumbs
           items={
