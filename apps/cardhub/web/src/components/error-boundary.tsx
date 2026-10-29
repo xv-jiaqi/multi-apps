@@ -50,6 +50,14 @@ export function clearChunkRetryPath(): void {
   }
 }
 
+/** Mounts only after a route's content commits, not while Suspense is pending. */
+export function ClearChunkRetryOnSuccess() {
+  useLayoutEffect(() => {
+    clearChunkRetryPath();
+  }, []);
+  return null;
+}
+
 interface ErrorBoundaryProps {
   children: ReactNode;
   /** Override the default fallback UI; receives the captured error. */
@@ -170,10 +178,10 @@ export const ErrorFallback = observer(function ErrorFallback({
   useLayoutEffect(() => {
     const marked = readChunkRetryPath();
     if (marked == null) return;
-    clearChunkRetryPath();
     if (marked === window.location.pathname) {
       retryRef.current?.focus({ preventScroll: true });
     }
+    clearChunkRetryPath();
   }, []);
 
   const alert = (

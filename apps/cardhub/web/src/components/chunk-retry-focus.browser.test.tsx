@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
-import { useLayoutEffect, useRef } from 'react';
+import { lazy, useLayoutEffect, useRef, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -13,10 +13,23 @@ vi.mock('../lib/trpc', () => ({
         useQuery: () => ({ data: undefined, refetch: vi.fn() }),
       },
     },
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isLoading: false,
+          isFetching: false,
+          isError: false,
+          isSuccess: false,
+          error: null,
+          refetch: vi.fn(),
+        }),
+      },
+    },
   },
 }));
 
-import { AppLayout } from '../app';
+import { AppLayout, LazyRoute } from '../app';
 import { CHUNK_RETRY_PATH_KEY, ErrorBoundary } from './error-boundary';
 
 function OutsideFocus() {
@@ -36,10 +49,22 @@ function ChunkFault(): never {
 }
 
 function Page({ fail }: { fail: boolean }) {
+  if (!fail) {
+    return (
+      <>
+        <OutsideFocus />
+        <LazyRoute name="/ok">
+          <p>正常</p>
+        </LazyRoute>
+      </>
+    );
+  }
   return (
     <>
       <OutsideFocus />
-      <ErrorBoundary>{fail ? <ChunkFault /> : <p>正常</p>}</ErrorBoundary>
+      <ErrorBoundary>
+        <ChunkFault />
+      </ErrorBoundary>
     </>
   );
 }
@@ -71,6 +96,51 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function rejectAfterTick(error: Error) {
+  return new Promise<never>((_, reject) => {
+    setTimeout(() => reject(error), 0);
+  });
+}
+
+function resolveAfterTick<T>(value: T) {
+  return new Promise<T>((resolve) => {
+    setTimeout(() => resolve(value), 0);
+  });
+}
+
+function AsyncLazy({ fail }: { fail: boolean }) {
+  const [Load] = useState(() =>
+    lazy(() =>
+      fail
+        ? rejectAfterTick(new Error('Failed to fetch dynamically imported module: /assets/card.js'))
+        : resolveAfterTick({
+            default: function Resolved() {
+              return <p>正常</p>;
+            },
+          }),
+    ),
+  );
+  return (
+    <LazyRoute name="/cards/async">
+      <Load />
+    </LazyRoute>
+  );
+}
+
+function renderAsync(fail: boolean) {
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/',
+        element: <AppLayout />,
+        children: [{ index: true, element: <AsyncLazy fail={fail} /> }],
+      },
+    ],
+    { initialEntries: ['/'] },
+  );
+  render(<RouterProvider router={router} />);
+}
+
 describe('chunk reload retry focus', () => {
   it('focuses retry when the marker matches the pathname and the page is still in error', () => {
     window.sessionStorage.setItem(CHUNK_RETRY_PATH_KEY, window.location.pathname);
@@ -85,6 +155,31 @@ describe('chunk reload retry focus', () => {
     expect(screen.getByText('正常')).toBeInTheDocument();
     expect(document.activeElement).toBe(screen.getByRole('button', { name: '外面' }));
     expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBeNull();
+  });
+
+  it('focuses retry when an async chunk reject arrives after mount', async () => {
+    window.sessionStorage.setItem(CHUNK_RETRY_PATH_KEY, window.location.pathname);
+    renderAsync(true);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBe(window.location.pathname);
+
+    const retry = await screen.findByRole('button', { name: '重试' });
+    expect(document.activeElement).toBe(retry);
+    expect(document.activeElement).not.toBe(document.body);
+    expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBeNull();
+  });
+
+  it('clears the marker after an async lazy page resolves and does not move focus', async () => {
+    window.sessionStorage.setItem(CHUNK_RETRY_PATH_KEY, window.location.pathname);
+    renderAsync(false);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBe(window.location.pathname);
+    expect(document.activeElement).toBe(document.body);
+
+    expect(await screen.findByText('正常')).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBeNull();
+    expect(document.activeElement).toBe(document.body);
+    expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument();
   });
 
   it('clears the marker and leaves focus alone when the pathname differs', () => {
