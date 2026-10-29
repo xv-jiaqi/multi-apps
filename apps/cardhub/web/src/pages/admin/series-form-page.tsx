@@ -167,14 +167,12 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
   };
 
   const focusFirst = (next: Record<string, string>) => {
-    const order = [
-      ['slug', slugRef],
-      ['title', titleRef],
-      ['description', descriptionRef],
-      ['coverUrl', coverRef],
-    ] as const;
-    const match = order.find(([key]) => next[key]);
-    match?.[1].current?.focus();
+    if (next.slug) slugRef.current?.focus();
+    else if (next.title) titleRef.current?.focus();
+    else if (next.description) descriptionRef.current?.focus();
+    else if (next.categorySlug) document.getElementById('series-category')?.focus();
+    else if (next.releaseDate) document.getElementById('series-release')?.focus();
+    else if (next.coverUrl) coverRef.current?.focus();
   };
 
   const onSubmit = async (event: FormEvent) => {
@@ -229,6 +227,8 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
         'slug',
         'title',
         'description',
+        'categorySlug',
+        'releaseDate',
         'coverUrl',
       ]);
       if (Object.keys(feedback.fields).length > 0) {
@@ -343,7 +343,13 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
                 value={categorySlug || 'none'}
                 onValueChange={(value) => setCategorySlug(value === 'none' ? '' : value)}
               >
-                <SelectTrigger id="series-category" size="sm" className="w-full">
+                <SelectTrigger
+                  id="series-category"
+                  size="sm"
+                  className="w-full"
+                  aria-invalid={errors.categorySlug ? true : undefined}
+                  aria-describedby={errors.categorySlug ? 'series-category-error' : undefined}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -355,8 +361,17 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
                   ))}
                 </SelectContent>
               </Select>
+              {errors.categorySlug ? (
+                <p id="series-category-error" className="text-xs text-red-700">
+                  {errors.categorySlug}
+                </p>
+              ) : null}
             </div>
-            <AdminField id="series-release" label={tt('admin.field.releaseDate')}>
+            <AdminField
+              id="series-release"
+              label={tt('admin.field.releaseDate')}
+              error={errors.releaseDate}
+            >
               <Input
                 id="series-release"
                 type="date"

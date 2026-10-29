@@ -1,8 +1,13 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { rootStore } from '../../stores/root-store';
+
+const subsetCreate = vi.hoisted(() => ({
+  current: async (input: unknown): Promise<unknown> => input,
+}));
 
 const seriesState = {
   items: [] as Array<Record<string, unknown>>,
@@ -53,7 +58,12 @@ vi.mock('../../lib/trpc', () => ({
             refetch: vi.fn(),
           }),
         },
-        create: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
+        create: {
+          useMutation: () => ({
+            isPending: false,
+            mutateAsync: (input: unknown) => subsetCreate.current(input),
+          }),
+        },
         update: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
         delete: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
       },
@@ -100,6 +110,7 @@ function renderPage() {
 }
 
 beforeEach(() => {
+  subsetCreate.current = async (input) => input;
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
   seriesState.items = [forge];
@@ -127,5 +138,100 @@ describe('catalog series detail title', () => {
       screen.getByRole('heading', { level: 1, name: 'forge-of-titans 的卡牌' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('{series}')).not.toBeInTheDocument();
+  });
+});
+
+describe('subset form server validation', () => {
+  it('shows a server sort order error under the sort field', async () => {
+    const user = userEvent.setup();
+    subsetCreate.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          appCode: 'VALIDATION',
+          zodError: {
+            issues: [
+              {
+                code: 'too_big',
+                path: ['sortOrder'],
+                message: '填写的内容不符合要求，请修改后再试',
+              },
+            ],
+          },
+        },
+      };
+    };
+    renderPage();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'base');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '主卡');
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+
+    const sort = screen.getByLabelText('排序');
+    expect(sort).toHaveAttribute('aria-invalid', 'true');
+    expect(document.getElementById('subset-sort-error')).toHaveTextContent('内容超出长度限制');
+    expect(screen.queryByText(/sortOrder/)).not.toBeInTheDocument();
+    expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
+  });
+
+  it('shows a server kind error on the kind control', async () => {
+    const user = userEvent.setup();
+    subsetCreate.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          appCode: 'VALIDATION',
+          zodError: {
+            issues: [{ code: 'invalid_value', path: ['kind'], message: 'invalid_value' }],
+          },
+        },
+      };
+    };
+    renderPage();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'base');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '主卡');
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+
+    expect(screen.getByRole('radio', { name: '基础' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('radio', { name: '基础' })).toHaveAttribute(
+      'aria-describedby',
+      'subset-kind-error',
+    );
+    expect(document.getElementById('subset-kind-error')).toHaveTextContent('这个选项不可用');
+    expect(screen.queryByText(/^kind:/)).not.toBeInTheDocument();
+  });
+
+  it('names the description and the 5000-character limit on the form alert', async () => {
+    const user = userEvent.setup();
+    subsetCreate.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          appCode: 'VALIDATION',
+          zodError: {
+            issues: [
+              {
+                code: 'too_big',
+                maximum: 5000,
+                path: ['description'],
+                message: 'description_too_long',
+              },
+            ],
+          },
+        },
+      };
+    };
+    renderPage();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'base');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '主卡');
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('简介最多 5000 个字符');
+    expect(screen.queryByText('内容超出长度限制')).not.toBeInTheDocument();
+    expect(screen.queryByText('description_too_long')).not.toBeInTheDocument();
+    expect(screen.queryByText(/description:/)).not.toBeInTheDocument();
+    expect(document.getElementById('subset-name-error')).not.toBeInTheDocument();
   });
 });

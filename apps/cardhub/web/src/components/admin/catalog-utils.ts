@@ -141,6 +141,12 @@ const KNOWN_FIELDS = new Set([
   'seriesSlug',
   'series',
   'attributes',
+  'cardNumber',
+  'subsetSlug',
+  'sortOrder',
+  'categorySlug',
+  'releaseDate',
+  'kind',
 ]);
 
 interface ZodIssueLike {

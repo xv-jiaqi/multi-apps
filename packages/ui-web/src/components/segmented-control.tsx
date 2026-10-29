@@ -16,6 +16,8 @@ export interface SegmentedControlProps {
   onValueChange: (value: string) => void;
   fullWidth?: boolean;
   className?: string;
+  invalid?: boolean;
+  describedBy?: string;
 }
 
 export function SegmentedControl({
@@ -27,9 +29,15 @@ export function SegmentedControl({
   onValueChange,
   fullWidth = false,
   className,
+  invalid = false,
+  describedBy,
 }: SegmentedControlProps) {
   return (
-    <fieldset className={cn(fullWidth && 'w-full', className)}>
+    <fieldset
+      className={cn(fullWidth && 'w-full', className)}
+      aria-invalid={invalid || undefined}
+      aria-describedby={describedBy}
+    >
       <legend
         className={cn(legendSrOnly ? 'sr-only' : 'mb-1 text-xs font-medium text-neutral-600')}
       >
@@ -59,6 +67,8 @@ export function SegmentedControl({
               checked={option.value === value}
               disabled={option.disabled}
               onChange={() => onValueChange(option.value)}
+              aria-invalid={invalid || undefined}
+              aria-describedby={describedBy}
               className="sr-only"
             />
             {option.label}
