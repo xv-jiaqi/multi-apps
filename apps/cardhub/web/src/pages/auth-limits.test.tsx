@@ -44,7 +44,7 @@ describe('auth length limits', () => {
     await user.type(screen.getByLabelText('用户名'), 'alice');
     await user.type(screen.getByLabelText('密码'), 'password1');
     await user.click(screen.getByRole('button', { name: '注册' }));
-    expect(screen.getByText('邮箱最长 128 个字符')).toBeInTheDocument();
+    expect(screen.getByText('邮箱最多 128 个字符')).toBeInTheDocument();
     expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe('auth length limits', () => {
     await user.type(screen.getByLabelText('邮箱或用户名'), 'a'.repeat(129));
     await user.type(screen.getByLabelText('密码'), 'password1');
     await user.click(screen.getByRole('button', { name: '登录' }));
-    expect(screen.getByText('邮箱或用户名最长 128 个字符')).toBeInTheDocument();
+    expect(screen.getByText('邮箱或用户名最多 128 个字符')).toBeInTheDocument();
     expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { rootStore } from '../../stores/root-store';
@@ -161,6 +161,28 @@ describe('series form', () => {
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'new-series' });
   });
 
+  it('shows slug_format under the field in the active language', async () => {
+    const user = userEvent.setup();
+    const zh = renderSeries('/admin/catalog/series/new');
+    const slug = screen.getByRole('textbox', { name: /slug/i });
+    await user.type(slug, 'Not A Slug');
+    await user.tab();
+    expect(screen.getByText('只能用小写字母、数字和短横线')).toBeInTheDocument();
+    expect(screen.queryByText('slug_format')).not.toBeInTheDocument();
+    expect(screen.queryByText(/kebab-case/)).not.toBeInTheDocument();
+    zh.unmount();
+
+    rootStore.locale.setLocale('en-US');
+    renderSeries('/admin/catalog/series/new');
+    const slugEn = screen.getByRole('textbox', { name: /slug/i });
+    await user.type(slugEn, 'Not A Slug');
+    await user.tab();
+    expect(
+      screen.getByText('Use lowercase letters, numbers, and hyphens only.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('slug_format')).not.toBeInTheDocument();
+  });
+
   it('rejects http image links on blur and blocks submit', async () => {
     const user = userEvent.setup();
     renderSeries('/admin/catalog/series/new');
@@ -225,6 +247,107 @@ describe('series form', () => {
     expect(await screen.findByText('请填写 https:// 开头的图片链接，或者留空')).toBeInTheDocument();
     expect(screen.queryByText('not a url')).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
+  });
+
+  it('uses title_too_long for an over-long title and too_big for the description', async () => {
+    const user = userEvent.setup();
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    fireEvent.change(screen.getByRole('textbox', { name: '标题' }), {
+      target: { value: '标'.repeat(121) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('标题最多 120 个字符')).toBeInTheDocument();
+    expect(screen.queryByText('内容超出长度限制')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('textbox', { name: '标题' }), {
+      target: { value: '新系列' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: '简介' }), {
+      target: { value: '介'.repeat(5001) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('内容超出长度限制')).toBeInTheDocument();
+    expect(screen.queryByText('标题最多 120 个字符')).not.toBeInTheDocument();
+  });
+
+  it('falls back to too_big when a server length error has no field code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          { code: 'too_big', path: ['description'], message: 'rejected by schema', maximum: 5000 },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('内容超出长度限制')).toBeInTheDocument();
+    expect(screen.queryByText('标题最多 120 个字符')).not.toBeInTheDocument();
+    expect(screen.queryByText('rejected by schema')).not.toBeInTheDocument();
+  });
+
+  it('maps a title_too_long code on a server too_big issue', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          { code: 'too_big', path: ['title'], message: 'title_too_long', maximum: 120 },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('标题最多 120 个字符')).toBeInTheDocument();
+    expect(screen.queryByText('title_too_long')).not.toBeInTheDocument();
+    expect(screen.queryByText('超出字数上限')).not.toBeInTheDocument();
+    expect(screen.queryByText('Too long')).not.toBeInTheDocument();
+  });
+
+  it('does not render a raw code when the server message has no zod error', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw { message: 'not_a_mapped_code', data: { code: 'BAD_REQUEST' } };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('出了点问题，请稍后再试');
+    expect(alert).not.toHaveTextContent('not_a_mapped_code');
+    expect(alert).not.toHaveTextContent('出错了：');
+  });
+
+  it('maps price_needs_currency instead of showing the code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw { message: 'price_needs_currency', data: { code: 'BAD_REQUEST' } };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('先选货币，再填价格区间');
+    expect(alert).not.toHaveTextContent('price_needs_currency');
   });
 
   it('shows a server message when the error has no field path', async () => {

@@ -12,7 +12,7 @@ import {
   Skeleton,
   type Rarity,
 } from '@repo/ui-mini';
-import { commentInput, t } from '@repo/shared';
+import { commentInput, fieldErrorMessage, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { gradientFor } from '../../../lib/gradients';
@@ -89,7 +89,11 @@ export default observer(function CardDetailPage() {
     setCommentError(null);
     const parsed = commentInput.safeParse({ cardSlug: slug, content: commentContent });
     if (!parsed.success) {
-      setCommentError(parsed.error.issues[0]?.message ?? tt('state.error'));
+      setCommentError(
+        parsed.error.issues[0]
+          ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+          : tt('state.error'),
+      );
       return;
     }
     if (!session.token) {

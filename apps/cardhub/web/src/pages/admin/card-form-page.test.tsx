@@ -137,6 +137,44 @@ beforeEach(() => {
   invalidateSeriesBySlug.mockClear();
 });
 
+describe('length copy', () => {
+  it('uses too_big for an over-long name, description, and card number', async () => {
+    const user = userEvent.setup();
+    renderNew();
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'aurora-knight');
+    fireEvent.change(screen.getByRole('textbox', { name: '名称' }), {
+      target: { value: '名'.repeat(121) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('内容超出长度限制')).toBeInTheDocument();
+    expect(screen.queryByText('标题最多 120 个字符')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('textbox', { name: '名称' }), {
+      target: { value: '极光骑士' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: '简介' }), {
+      target: { value: '介'.repeat(5001) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(screen.getByText('内容超出长度限制')).toBeInTheDocument();
+    expect(screen.queryByText('标题最多 120 个字符')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('textbox', { name: '简介' }), {
+      target: { value: '' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: '卡号' }), {
+      target: { value: '1'.repeat(21) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(screen.getByText('内容超出长度限制')).toBeInTheDocument();
+    expect(screen.queryByText('标题最多 120 个字符')).not.toBeInTheDocument();
+  });
+});
+
 describe('attributes editor', () => {
   it('infers text, number and boolean types from the saved card', () => {
     cardState.data = {
@@ -330,8 +368,10 @@ describe('card form server validation', () => {
     await submitNewCard(user);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'attributes.cost: Invalid input: expected number, received object',
+      'attributes.cost: 出了点问题，请稍后再试',
     );
+    expect(screen.queryByText(/Invalid input/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/expected number/)).not.toBeInTheDocument();
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
   });
 

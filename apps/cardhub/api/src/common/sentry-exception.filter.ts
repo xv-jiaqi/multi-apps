@@ -2,10 +2,11 @@ import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import { Catch, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import type { Request, Response } from 'express';
+import { t } from '@repo/shared';
 import {
   clientParserHttpBody,
-  parserClientStatus,
-  type ParserClientStatus,
+  parserClientFailure,
+  type ParserFailure,
 } from '../bootstrap/json-body';
 
 /**
@@ -44,8 +45,8 @@ function causeOf(exception: unknown): unknown {
   return exception.cause;
 }
 
-function parserStatusOf(exception: unknown): ParserClientStatus | undefined {
-  return parserClientStatus(exception) ?? parserClientStatus(causeOf(exception));
+function parserFailureOf(exception: unknown): ParserFailure | undefined {
+  return parserClientFailure(exception) ?? parserClientFailure(causeOf(exception));
 }
 
 function responseText(exception: HttpException): string {
@@ -77,14 +78,16 @@ export class SentryExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let body: unknown = { message: 'Internal server error' };
-    const parserStatus = parserStatusOf(exception);
-    const syntaxLeak = parserStatus === undefined && isJsonSyntaxLeak(exception);
-    const fixedParserStatus = parserStatus ?? (syntaxLeak ? 400 : undefined);
+    let body: unknown = { message: t('zh-CN', 'error.internal') };
+    let failure = parserFailureOf(exception);
+    if (!failure && isJsonSyntaxLeak(exception)) {
+      const leaked: ParserFailure = { status: 400, reason: 'parse' };
+      failure = leaked;
+    }
 
-    if (fixedParserStatus !== undefined) {
-      status = fixedParserStatus;
-      body = clientParserHttpBody(request, fixedParserStatus);
+    if (failure) {
+      status = failure.status;
+      body = clientParserHttpBody(request, failure);
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       body = exception.getResponse();
@@ -104,8 +107,8 @@ export class SentryExceptionFilter implements ExceptionFilter {
           method: request?.method ?? 'unknown',
         },
       });
-    } else if (fixedParserStatus !== undefined) {
-      this.logger.warn(`Rejected a client parser error with status ${fixedParserStatus}`);
+    } else if (failure) {
+      this.logger.warn(`Rejected a client parser error with status ${failure.status}`);
     } else if (!(exception instanceof HttpException) && exception instanceof Error) {
       this.logger.warn(exception.message);
     }

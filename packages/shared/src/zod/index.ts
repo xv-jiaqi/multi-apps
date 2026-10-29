@@ -7,7 +7,7 @@ export const slugSchema = z
   .string()
   .min(1)
   .max(64)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Must be a kebab-case slug');
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug_format');
 
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -23,16 +23,21 @@ export type PaginationInput = z.infer<typeof paginationSchema>;
 export const usernameSchema = z
   .string()
   .trim()
-  .min(3, '用户名至少 3 个字符')
-  .max(24, '用户名最多 24 个字符')
-  .regex(/^[A-Za-z0-9_-]+$/, '用户名只能包含字母、数字、下划线和连字符');
+  .min(3, 'username_too_short')
+  .max(24, 'username_too_long')
+  .regex(/^[A-Za-z0-9_-]+$/, 'username_format');
 
 /** Same cap as the login identifier, so a registered email can be used to sign in. */
 export const EMAIL_MAX = 128;
 
-export const emailSchema = z.string().trim().max(EMAIL_MAX).toLowerCase().email('邮箱格式不正确');
+export const emailSchema = z
+  .string()
+  .trim()
+  .max(EMAIL_MAX, 'email_too_long')
+  .toLowerCase()
+  .email('email_format');
 
-export const passwordSchema = z.string().min(8, '密码至少 8 位').max(128, '密码过长');
+export const passwordSchema = z.string().min(8, 'password_too_short').max(128, 'password_too_long');
 
 export const registerInput = z.object({
   email: emailSchema,
@@ -41,7 +46,7 @@ export const registerInput = z.object({
 });
 
 export const loginInput = z.object({
-  identifier: z.string().trim().min(3, '请输入邮箱或用户名').max(128),
+  identifier: z.string().trim().min(3, 'identifier_too_short').max(128, 'identifier_too_long'),
   password: passwordSchema,
 });
 
@@ -58,8 +63,8 @@ export type LoginInput = z.infer<typeof loginInput>;
 export const commentContentSchema = z
   .string()
   .trim()
-  .min(1, '评论不能为空')
-  .max(500, '评论最多 500 字');
+  .min(1, 'comment_required')
+  .max(500, 'comment_too_long');
 
 export const commentInput = z.object({
   cardSlug: slugSchema,
@@ -94,18 +99,18 @@ export function isBlankReplyContent(content: string, prefillUsernames: readonly 
 export const topicTitleSchema = z
   .string()
   .trim()
-  .min(1, '标题不能为空')
-  .max(120, '标题最多 120 字');
+  .min(1, 'title_required')
+  .max(120, 'title_too_long');
 export const topicBodySchema = z
   .string()
   .trim()
-  .min(1, '正文不能为空')
-  .max(10_000, '正文最多 10000 字');
+  .min(1, 'body_required')
+  .max(10_000, 'body_too_long');
 export const replyBodySchema = z
   .string()
   .trim()
-  .min(1, '回帖不能为空')
-  .max(5_000, '回帖最多 5000 字');
+  .min(1, 'reply_required')
+  .max(5_000, 'reply_too_long');
 
 export const topicCreateInput = z.object({
   title: topicTitleSchema,
@@ -194,7 +199,7 @@ export const currencyCodeSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^[A-Z]{3}$/, '货币代码必须是 3 个大写字母 (ISO 4217)');
+  .regex(/^[A-Z]{3}$/, 'currency_format');
 
 /**
  * Decimal(12, 2) prints in 13 characters (`9999999999.99`). 64 leaves room for
@@ -211,7 +216,7 @@ export const listingPriceSchema = z
     if (!Number.isFinite(asNumber) || asNumber < 0 || asNumber > 9_999_999_999.99) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '价格必须是 0 到 9,999,999,999.99 之间的数字',
+        message: 'price_range',
       });
       return z.NEVER;
     }
@@ -238,18 +243,18 @@ export const listingPublishInput = z.object({
         .string()
         .trim()
         .max(LISTING_IMAGE_URL_MAX)
-        .url('trade.publish.error.imageUrl')
+        .url('image_https')
         .refine((url) => url.toLowerCase().startsWith('https://'), {
-          message: 'trade.publish.error.imageUrl',
+          message: 'image_https',
         }),
     )
-    .max(LISTING_IMAGE_MAX_COUNT, 'trade.publish.error.tooManyImages')
+    .max(LISTING_IMAGE_MAX_COUNT, 'image_too_many')
     .default([]),
-  contact: z.string().trim().min(2, '联系方式至少 2 个字符').max(200, '联系方式最多 200 字'),
-  note: z.string().trim().max(500, '说明最多 500 字').optional(),
+  contact: z.string().trim().min(2, 'contact_too_short').max(200, 'contact_too_long'),
+  note: z.string().trim().max(500, 'note_too_long').optional(),
   condition: z.enum(LISTING_CONDITION_VALUES).optional(),
   language: z.enum(LISTING_LANGUAGE_VALUES).optional(),
-  variantNote: z.string().trim().max(40, '版本备注最多 40 字').optional(),
+  variantNote: z.string().trim().max(40, 'variant_note_too_long').optional(),
 });
 export type ListingPublishInput = z.infer<typeof listingPublishInput>;
 
@@ -273,7 +278,7 @@ export type ListingMineInput = z.infer<typeof listingMineInput>;
 export const reportCreateInput = z.object({
   targetType: z.enum(REPORT_TARGET_VALUES),
   targetId: z.string().uuid(),
-  reason: z.string().trim().min(4, '请简要说明原因，至少 4 个字符').max(500, '原因最多 500 字'),
+  reason: z.string().trim().min(4, 'reason_too_short').max(500, 'reason_too_long'),
 });
 export type ReportCreateInput = z.infer<typeof reportCreateInput>;
 
@@ -285,7 +290,7 @@ export type ReportListInput = z.infer<typeof reportListInput>;
 export const reportResolveInput = z.object({
   id: z.string().uuid(),
   action: z.enum(REPORT_RESOLVE_ACTION_VALUES),
-  resolution: z.string().trim().max(500, '处理说明最多 500 字').optional(),
+  resolution: z.string().trim().max(500, 'resolution_too_long').optional(),
 });
 export type ReportResolveInput = z.infer<typeof reportResolveInput>;
 
@@ -303,7 +308,7 @@ const adminImageUrlSchema = z
   .max(LISTING_IMAGE_URL_MAX)
   .refine(
     (value) => value === '' || value.startsWith('https://') || value.startsWith('gradient:'),
-    'Image URL must be empty, https://, or gradient:',
+    'image_url',
   )
   .optional();
 
@@ -324,7 +329,7 @@ export const adminAttributeValueSchema = z.union([
 export const adminAttributesSchema = z
   .record(z.string().max(ADMIN_ATTRIBUTE_KEY_MAX), adminAttributeValueSchema)
   .refine((value) => Object.keys(value).length <= ADMIN_ATTRIBUTE_MAX_KEYS, {
-    message: `At most ${ADMIN_ATTRIBUTE_MAX_KEYS} attributes`,
+    message: 'attributes_too_many',
   });
 
 /** Printed card number. Empty string clears it. The grid renders a leading #. */
@@ -351,7 +356,7 @@ export const releaseDateSchema = z
   .superRefine((value, ctx) => {
     const match = RELEASE_DATE_PATTERN.exec(value);
     if (!match) {
-      ctx.addIssue({ code: 'custom', message: 'Invalid date' });
+      ctx.addIssue({ code: 'custom', message: 'invalid_date' });
       return;
     }
     const year = Number(match[1]);
@@ -363,7 +368,7 @@ export const releaseDateSchema = z
       date.getUTCMonth() !== month - 1 ||
       date.getUTCDate() !== day
     ) {
-      ctx.addIssue({ code: 'custom', message: 'Invalid date' });
+      ctx.addIssue({ code: 'custom', message: 'invalid_date' });
     }
   });
 
@@ -443,7 +448,7 @@ export const DELETE_REASON_MAX = 500;
 export const optionalDeleteReason = z
   .string()
   .trim()
-  .max(DELETE_REASON_MAX, { message: 'reason must be at most 500 characters' })
+  .max(DELETE_REASON_MAX, { message: 'delete_reason_too_long' })
   .optional();
 
 export const adminSeriesDeleteInput = z.object({

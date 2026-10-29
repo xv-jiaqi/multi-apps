@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { appErrorMessage, t } from './index';
+import { slugSchema } from '../zod';
+import { appErrorMessage, fieldErrorCodes, fieldErrorMessage, t } from './index';
 
 const counts = [0, 1, 2] as const;
 
@@ -10,6 +11,61 @@ function searchSummary(locale: 'zh-CN' | 'en-US', cards: number, series: number)
     results: t(locale, 'form.resultsCount', { count: cards + series }),
   });
 }
+
+describe('field error codes', () => {
+  it('maps slug_format and hides unknown codes', () => {
+    const parsed = slugSchema.safeParse('Not A Slug');
+    expect(parsed.success).toBe(false);
+    if (parsed.success) return;
+    expect(parsed.error.issues[0]?.message).toBe('slug_format');
+    expect(fieldErrorMessage('zh-CN', 'slug_format')).toBe('只能用小写字母、数字和短横线');
+    expect(fieldErrorMessage('en-US', 'slug_format')).toBe(
+      'Use lowercase letters, numbers, and hyphens only.',
+    );
+    expect(fieldErrorMessage('zh-CN', 'not_a_mapped_code')).toBe('出了点问题，请稍后再试');
+    expect(fieldErrorMessage('en-US', 'not_a_mapped_code')).toBe(
+      'Something went wrong. Try again later.',
+    );
+    expect(fieldErrorMessage('zh-CN', 'not_a_mapped_code')).not.toContain('not_a_mapped_code');
+    expect(fieldErrorMessage('en-US', 'Must be a kebab-case slug')).toBe(
+      'Something went wrong. Try again later.',
+    );
+    expect(fieldErrorMessage('zh-CN', undefined)).toBe('出了点问题，请稍后再试');
+  });
+
+  it('gives every field code a sentence in both languages', () => {
+    const codes = fieldErrorCodes('zh-CN');
+    expect(codes).toEqual(fieldErrorCodes('en-US'));
+    expect(codes.length).toBeGreaterThan(0);
+    for (const code of codes) {
+      expect(code).toMatch(/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/);
+      const zh = fieldErrorMessage('zh-CN', code);
+      const en = fieldErrorMessage('en-US', code);
+      expect(zh.endsWith('。')).toBe(false);
+      expect(en.endsWith('.')).toBe(true);
+      expect(zh).not.toContain(code);
+      expect(en.toLowerCase()).not.toContain(code);
+      expect(zh).not.toBe('出了点问题，请稍后再试');
+      expect(zh).not.toContain('最长');
+      expect(zh).not.toContain('须为');
+      expect(zh).not.toMatch(/需以|需留空/);
+      expect(zh).not.toMatch(/\d 字$/);
+      expect(zh).not.toContain('位');
+    }
+    expect(fieldErrorMessage('en-US', 'invalid')).toBe(fieldErrorMessage('en-US', 'invalid_union'));
+    expect(fieldErrorMessage('zh-CN', 'price_needs_currency')).toBe('先选货币，再填价格区间');
+    expect(fieldErrorMessage('en-US', 'currency_format')).toBe(
+      'Use a 3-letter uppercase currency code.',
+    );
+    expect(fieldErrorMessage('zh-CN', 'identifier_too_short')).toBe('邮箱或用户名不能为空');
+    expect(fieldErrorMessage('zh-CN', 'reason_too_short')).toBe('原因至少 4 个字符');
+    expect(fieldErrorMessage('en-US', 'reason_too_short')).toBe(
+      'Use at least 4 characters for the reason.',
+    );
+    expect(t('en-US', 'error.app.TOO_MANY_REQUESTS')).toBe('Too many actions. Try again later.');
+    expect(t('zh-CN', 'error.app.TOO_MANY_REQUESTS')).toBe('操作太频繁，请稍后再试');
+  });
+});
 
 describe('app error copy', () => {
   it('maps a known code and hides unknown codes behind the generic sentence', () => {

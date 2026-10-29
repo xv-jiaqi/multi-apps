@@ -78,34 +78,71 @@ export function isAdminCatalogImportRequest(req: Request): boolean {
   return trpcPaths(req).includes(CATALOG_IMPORT_PROCEDURE);
 }
 
+export type ParserReason = 'parse' | 'request';
+
+export type ParserFailure = {
+  status: ParserClientStatus;
+  reason: ParserReason;
+};
+
+const JSON_PARSE_TYPES = new Set(['entity.parse.failed']);
+
+function errorType(error: object): string | undefined {
+  if (!('type' in error)) return undefined;
+  const type = error.type;
+  return typeof type === 'string' ? type : undefined;
+}
+
 export function parserClientStatus(error: unknown): ParserClientStatus | undefined {
   if (typeof error !== 'object' || error === null) return undefined;
-  const type = (error as { type?: unknown }).type;
-  if (typeof type !== 'string') return undefined;
+  const type = errorType(error);
+  if (type === undefined) return undefined;
   return PARSER_CLIENT_ERRORS[type];
 }
 
-function messageFor(status: ParserClientStatus, path: string | undefined): string {
-  if (status === 413) {
-    const key =
-      path === CATALOG_IMPORT_PROCEDURE ? 'admin.import.tooLarge' : 'error.payloadTooLarge';
-    return t('zh-CN', key);
+export function parserClientFailure(error: unknown): ParserFailure | undefined {
+  const status = parserClientStatus(error);
+  if (status !== undefined && typeof error === 'object' && error !== null) {
+    const type = errorType(error);
+    const reason: ParserReason =
+      status === 400 && type !== undefined && JSON_PARSE_TYPES.has(type) ? 'parse' : 'request';
+    return { status, reason };
   }
-  if (status === 415) return t('zh-CN', 'error.unsupportedMedia');
-  if (status === 403) return t('zh-CN', 'error.requestRejected');
-  return t('zh-CN', 'error.malformedRequest');
+  if (error instanceof SyntaxError || error instanceof URIError) {
+    return { status: 400, reason: 'parse' };
+  }
+  return undefined;
 }
 
-function trpcClientError(path: string | undefined, status: ParserClientStatus) {
-  const coded = TRPC_ERROR_BY_STATUS[status];
+function messageFor(failure: ParserFailure, path: string | undefined): string {
+  if (failure.status === 413) {
+    const key =
+      path === CATALOG_IMPORT_PROCEDURE ? 'admin.import.tooLarge' : 'error.app.PAYLOAD_TOO_LARGE';
+    return t('zh-CN', key);
+  }
+  if (failure.status === 415) return t('zh-CN', 'error.unsupportedMedia');
+  if (failure.status === 403) return t('zh-CN', 'error.requestRejected');
+  if (failure.reason === 'parse') return t('zh-CN', 'error.app.PARSE_ERROR');
+  return t('zh-CN', 'error.app.BAD_REQUEST');
+}
+
+function appCodeFor(failure: ParserFailure): string | undefined {
+  if (failure.status === 413) return APP_ERROR_CODES.PAYLOAD_TOO_LARGE;
+  if (failure.status !== 400) return undefined;
+  return failure.reason === 'parse' ? APP_ERROR_CODES.PARSE_ERROR : APP_ERROR_CODES.BAD_REQUEST;
+}
+
+function trpcClientError(path: string | undefined, failure: ParserFailure) {
+  const coded = TRPC_ERROR_BY_STATUS[failure.status];
+  const appCode = appCodeFor(failure);
   return {
     error: {
-      message: messageFor(status, path),
+      message: messageFor(failure, path),
       code: coded.code,
       data: {
         code: coded.name,
-        httpStatus: status,
-        ...(status === 400 ? { appCode: APP_ERROR_CODES.PARSE_ERROR } : {}),
+        httpStatus: failure.status,
+        ...(appCode ? { appCode } : {}),
         ...(path ? { path } : {}),
       },
     },
@@ -119,34 +156,24 @@ function trpcClientError(path: string | undefined, status: ParserClientStatus) {
  */
 export function clientParserHttpBody(
   req: ParserRequest | undefined,
-  status: ParserClientStatus,
+  failure: ParserFailure,
 ): unknown {
   if (!isTrpcRequest(req) || !req) {
-    return { statusCode: status, message: messageFor(status, undefined) };
+    return { statusCode: failure.status, message: messageFor(failure, undefined) };
   }
   const paths = trpcPaths(req);
   const isBatch = req.query?.batch === '1';
   return isBatch
-    ? paths.map((path) => trpcClientError(path, status))
-    : trpcClientError(paths[0], status);
+    ? paths.map((path) => trpcClientError(path, failure))
+    : trpcClientError(paths[0], failure);
 }
 
-function rejectClientParserError(req: Request, res: Response, status: ParserClientStatus): void {
-  res.status(status).type('application/json').send(clientParserHttpBody(req, status));
+function errorToForward(error: unknown): Error {
+  return error instanceof Error ? error : new Error('parser failure');
 }
 
-/**
- * Status for an error we must answer ourselves. JSON.parse failures stay
- * `SyntaxError` instances (body-parser only adds `type` onto that same
- * object). Nest's error layer then does `new BadRequestException(err.message)`,
- * which drops `type` and echoes the payload, so those errors never reach
- * `next`.
- */
-function resolveParserStatus(error: unknown): ParserClientStatus | undefined {
-  const typed = parserClientStatus(error);
-  if (typed !== undefined) return typed;
-  if (error instanceof SyntaxError || error instanceof URIError) return 400;
-  return undefined;
+function rejectClientParserError(req: Request, res: Response, failure: ParserFailure): void {
+  res.status(failure.status).type('application/json').send(clientParserHttpBody(req, failure));
 }
 
 /**
@@ -156,8 +183,9 @@ function resolveParserStatus(error: unknown): ParserClientStatus | undefined {
  *
  * Oversized bodies and parser failures are answered here, before the handler
  * and before Nest can wrap a `SyntaxError` into a `BadRequestException`.
- * Catalog import keeps the import-specific 413 message; JSON parse failures
- * use 「请求格式有误」. Unknown parser failures are still forwarded.
+ * Catalog import keeps the import-specific 413 message. Bad JSON uses
+ * PARSE_ERROR. Other client 400s use BAD_REQUEST. Unknown parser failures
+ * are still forwarded.
  *
  * Nest's built-in parser is a single global limit, so `createApp` disables
  * it (`bodyParser: false`) and mounts this instead.
@@ -168,12 +196,12 @@ export function jsonBodyParser(): RequestHandler {
     const limit = importRoute ? CATALOG_IMPORT_HTTP_BODY_LIMIT : DEFAULT_JSON_BODY_LIMIT;
     express.json({ limit })(req, res, (jsonError: unknown) => {
       if (jsonError) {
-        const status = resolveParserStatus(jsonError);
-        if (status !== undefined) {
-          rejectClientParserError(req, res, status);
+        const failure = parserClientFailure(jsonError);
+        if (failure) {
+          rejectClientParserError(req, res, failure);
           return;
         }
-        next(jsonError as Error);
+        next(errorToForward(jsonError));
         return;
       }
       express.urlencoded({ extended: true, limit })(req, res, (urlError: unknown) => {
@@ -181,12 +209,12 @@ export function jsonBodyParser(): RequestHandler {
           next();
           return;
         }
-        const status = resolveParserStatus(urlError);
-        if (status !== undefined) {
-          rejectClientParserError(req, res, status);
+        const failure = parserClientFailure(urlError);
+        if (failure) {
+          rejectClientParserError(req, res, failure);
           return;
         }
-        next(urlError as Error);
+        next(errorToForward(urlError));
       });
     });
   };

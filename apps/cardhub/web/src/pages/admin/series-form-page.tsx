@@ -157,7 +157,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
       const slugError = validateSlug(slugValue, locale.locale);
       if (slugError) next.slug = slugError;
     }
-    const titleError = validateRequiredText(title, 120, locale.locale);
+    const titleError = validateRequiredText(title, 120, locale.locale, 'title_too_long');
     if (titleError) next.title = titleError;
     const descriptionError = validateOptionalText(description, 5000, locale.locale);
     if (descriptionError) next.description = descriptionError;

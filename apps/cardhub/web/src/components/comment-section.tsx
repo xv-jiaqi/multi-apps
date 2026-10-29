@@ -12,6 +12,7 @@ import { Button } from '@repo/ui-web';
 import {
   APP_ERROR_CODES,
   commentInput,
+  fieldErrorMessage,
   isBlankReplyContent,
   seriesCommentInput,
   t,
@@ -490,7 +491,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     if (commentTarget.kind === 'card') {
       const parsed = commentInput.safeParse({ cardSlug: commentTarget.slug, content });
       if (!parsed.success) {
-        setError(parsed.error.issues[0]?.message ?? '');
+        setError(
+          parsed.error.issues[0]
+            ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+            : '',
+        );
         return;
       }
       createForCard.mutate(parsed.data);
@@ -499,7 +504,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
     const parsed = seriesCommentInput.safeParse({ seriesSlug: commentTarget.slug, content });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? '');
+      setError(
+        parsed.error.issues[0]
+          ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+          : '',
+      );
       return;
     }
     createForSeries.mutate(parsed.data);

@@ -1,6 +1,6 @@
 import type { Request, RequestHandler, Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import { APP_ERROR_CODES } from '@repo/shared';
+import { APP_ERROR_CODES, t } from '@repo/shared';
 
 type RateLimitConfig = {
   windowMs: number;
@@ -48,7 +48,7 @@ function getTrpcPaths(req: Request): Array<string | undefined> {
 function trpcTooManyRequestsError(path: string | undefined) {
   return {
     error: {
-      message: 'Too many requests',
+      message: t('zh-CN', 'error.app.TOO_MANY_REQUESTS'),
       code: -32029,
       data: {
         code: 'TOO_MANY_REQUESTS',
