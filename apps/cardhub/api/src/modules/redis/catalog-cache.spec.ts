@@ -16,13 +16,14 @@ import {
   seriesListCacheKey,
   seriesListPrefix,
 } from './catalog-cache';
-import { RedisService } from './redis.service';
+import { CACHE_PURGE_PREFIX, RedisService } from './redis.service';
 
 const payloadSchema = z.object({ name: z.string() });
 
 describe('catalog cache keys', () => {
   it('uses the v1 prefix and a 5 minute TTL', () => {
     expect(PRODUCTION_CACHE_PREFIX).toBe('cardhub:cache:v1:');
+    expect(CACHE_PURGE_PREFIX).toBe(PRODUCTION_CACHE_PREFIX);
     expect(CACHE_TTL_SECONDS).toBe(300);
     expect(cardBySlugKey('aurora-knight').includes('cards.bySlug:aurora-knight')).toBe(true);
     expect(cardBySlugKey('aurora-knight').startsWith(PRODUCTION_CACHE_PREFIX)).toBe(true);
