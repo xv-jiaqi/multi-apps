@@ -2,9 +2,10 @@ import { lazy, Suspense } from 'react';
 import { Outlet, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
 import { SessionExpiryWatcher } from './components/session-expiry-watcher';
-import { ErrorBoundary } from './components/error-boundary';
+import { ErrorBoundary, isChunkLoadError } from './components/error-boundary';
 import { CardDetailSkeleton } from './components/card-detail-skeleton';
 import { RouteErrorFallback } from './components/route-error';
+import { captureSentryException } from './lib/sentry';
 import { HomePage } from './pages/home';
 
 const SeriesListPage = lazy(() =>
@@ -91,11 +92,24 @@ function RouteFallback() {
   );
 }
 
-function LazyRoute({ children }: { children: React.ReactNode }) {
+export function LazyRoute({
+  name,
+  fallback = <RouteFallback />,
+  children,
+}: {
+  name: string;
+  fallback?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   // Per-route ErrorBoundary so a single page crash doesn't kill the shell.
   return (
-    <ErrorBoundary>
-      <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+    <ErrorBoundary
+      onError={(error) => {
+        if (!isChunkLoadError(error)) return;
+        captureSentryException(error, undefined, { route: name });
+      }}
+    >
+      <Suspense fallback={fallback}>{children}</Suspense>
     </ErrorBoundary>
   );
 }
@@ -110,8 +124,16 @@ function AppLayout() {
   );
 }
 
-function lazyPage(page: React.ReactNode): React.ReactNode {
-  return <LazyRoute>{page}</LazyRoute>;
+function lazyPage(
+  name: string,
+  page: React.ReactNode,
+  fallback?: React.ReactNode,
+): React.ReactNode {
+  return (
+    <LazyRoute name={name} fallback={fallback}>
+      {page}
+    </LazyRoute>
+  );
 }
 
 export const appRoutes: RouteObject[] = [
@@ -120,40 +142,55 @@ export const appRoutes: RouteObject[] = [
     errorElement: <RouteErrorFallback />,
     children: [
       { path: '/', element: <HomePage /> },
-      { path: '/series', element: lazyPage(<SeriesListPage />) },
-      { path: '/series/:seriesSlug', element: lazyPage(<SeriesDetailPage />) },
+      { path: '/series', element: lazyPage('/series', <SeriesListPage />) },
+      {
+        path: '/series/:seriesSlug',
+        element: lazyPage('/series/:seriesSlug', <SeriesDetailPage />),
+      },
       {
         path: '/cards/:cardSlug',
-        element: (
-          <ErrorBoundary>
-            <Suspense fallback={<CardDetailSkeleton />}>
-              <CardDetailPage />
-            </Suspense>
-          </ErrorBoundary>
-        ),
+        element: lazyPage('/cards/:cardSlug', <CardDetailPage />, <CardDetailSkeleton />),
       },
-      { path: '/search', element: lazyPage(<SearchPage />) },
-      { path: '/login', element: lazyPage(<LoginPage />) },
-      { path: '/register', element: lazyPage(<RegisterPage />) },
-      { path: '/forum', element: lazyPage(<ForumListPage />) },
-      { path: '/forum/new', element: lazyPage(<ForumNewPage />) },
-      { path: '/forum/:slug/edit', element: lazyPage(<ForumEditPage />) },
-      { path: '/forum/:slug', element: lazyPage(<ForumDetailPage />) },
-      { path: '/trade', element: lazyPage(<TradeListPage />) },
-      { path: '/trade/new', element: lazyPage(<TradePublishPage />) },
-      { path: '/reports', element: lazyPage(<ReportsListPage />) },
-      { path: '/admin/catalog', element: lazyPage(<CatalogSeriesPage />) },
-      { path: '/admin/users', element: lazyPage(<AdminUsersPage />) },
-      { path: '/admin/audit', element: lazyPage(<AdminAuditPage />) },
-      { path: '/admin/catalog/import', element: lazyPage(<CatalogImportPage />) },
-      { path: '/admin/catalog/series/new', element: lazyPage(<NewSeriesPage />) },
-      { path: '/admin/catalog/series/:slug/edit', element: lazyPage(<EditSeriesPage />) },
-      { path: '/admin/catalog/series/:slug/cards/new', element: lazyPage(<NewCardPage />) },
-      { path: '/admin/catalog/series/:slug', element: lazyPage(<CatalogSeriesDetailPage />) },
-      { path: '/admin/catalog/cards/:slug/edit', element: lazyPage(<EditCardPage />) },
-      { path: '/me/password', element: lazyPage(<ChangePasswordPage />) },
-      { path: '/me', element: lazyPage(<MePage />) },
-      { path: '*', element: lazyPage(<NotFoundPage />) },
+      { path: '/search', element: lazyPage('/search', <SearchPage />) },
+      { path: '/login', element: lazyPage('/login', <LoginPage />) },
+      { path: '/register', element: lazyPage('/register', <RegisterPage />) },
+      { path: '/forum', element: lazyPage('/forum', <ForumListPage />) },
+      { path: '/forum/new', element: lazyPage('/forum/new', <ForumNewPage />) },
+      { path: '/forum/:slug/edit', element: lazyPage('/forum/:slug/edit', <ForumEditPage />) },
+      { path: '/forum/:slug', element: lazyPage('/forum/:slug', <ForumDetailPage />) },
+      { path: '/trade', element: lazyPage('/trade', <TradeListPage />) },
+      { path: '/trade/new', element: lazyPage('/trade/new', <TradePublishPage />) },
+      { path: '/reports', element: lazyPage('/reports', <ReportsListPage />) },
+      { path: '/admin/catalog', element: lazyPage('/admin/catalog', <CatalogSeriesPage />) },
+      { path: '/admin/users', element: lazyPage('/admin/users', <AdminUsersPage />) },
+      { path: '/admin/audit', element: lazyPage('/admin/audit', <AdminAuditPage />) },
+      {
+        path: '/admin/catalog/import',
+        element: lazyPage('/admin/catalog/import', <CatalogImportPage />),
+      },
+      {
+        path: '/admin/catalog/series/new',
+        element: lazyPage('/admin/catalog/series/new', <NewSeriesPage />),
+      },
+      {
+        path: '/admin/catalog/series/:slug/edit',
+        element: lazyPage('/admin/catalog/series/:slug/edit', <EditSeriesPage />),
+      },
+      {
+        path: '/admin/catalog/series/:slug/cards/new',
+        element: lazyPage('/admin/catalog/series/:slug/cards/new', <NewCardPage />),
+      },
+      {
+        path: '/admin/catalog/series/:slug',
+        element: lazyPage('/admin/catalog/series/:slug', <CatalogSeriesDetailPage />),
+      },
+      {
+        path: '/admin/catalog/cards/:slug/edit',
+        element: lazyPage('/admin/catalog/cards/:slug/edit', <EditCardPage />),
+      },
+      { path: '/me/password', element: lazyPage('/me/password', <ChangePasswordPage />) },
+      { path: '/me', element: lazyPage('/me', <MePage />) },
+      { path: '*', element: lazyPage('*', <NotFoundPage />) },
     ],
   },
 ];
