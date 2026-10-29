@@ -185,53 +185,95 @@ describe('series and card meta descriptions', () => {
     ).toBe(EN_CARD_NO_NUMBER);
   });
 
-  it('cuts Chinese excerpts at 120 graphemes and English excerpts at 155', () => {
-    const chinese = '字'.repeat(130);
-    const zh = seriesMetaDescription({
+  it('keeps the whole meta content at the locale limit, template included', () => {
+    const zhRoom = 120 - graphemeLength(ZH_SERIES, 'zh-CN') - 1;
+    const zhExact = '字'.repeat(zhRoom);
+    const zhFit = seriesMetaDescription({
       locale: 'zh-CN',
       title: '基础系列',
       cardCount: 2,
-      description: chinese,
+      description: zhExact,
     });
-    const zhExcerpt = excerptAfter(zh, ZH_SERIES);
-    expect(zhExcerpt.endsWith('…')).toBe(true);
-    expect(graphemeLength(zhExcerpt, 'zh-CN')).toBeLessThanOrEqual(120);
-    expect(chinese.startsWith(zhExcerpt.slice(0, -1))).toBe(true);
+    expect(zhFit).toBe(`${ZH_SERIES} ${zhExact}`);
+    expect(graphemeLength(zhFit, 'zh-CN')).toBe(120);
+    expect(zhFit.endsWith('…')).toBe(false);
 
-    const englishFit = 'a'.repeat(155);
-    expect(
-      seriesMetaDescription({
-        locale: 'en-US',
-        title: 'Base Set',
-        cardCount: 2,
-        description: englishFit,
-      }),
-    ).toBe(`${EN_SERIES} ${englishFit}`);
+    const zhOver = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: '基础系列',
+      cardCount: 2,
+      description: '字'.repeat(zhRoom + 1),
+    });
+    expect(zhOver.startsWith(`${ZH_SERIES} `)).toBe(true);
+    expect(zhOver.endsWith('…')).toBe(true);
+    expect(graphemeLength(zhOver, 'zh-CN')).toBe(120);
+    expect('字'.repeat(zhRoom + 1).startsWith(zhOver.slice(ZH_SERIES.length + 1, -1))).toBe(true);
 
-    const englishOver = 'a'.repeat(156);
-    const en = seriesMetaDescription({
+    const enRoom = 155 - graphemeLength(EN_SERIES, 'en-US') - 1;
+    const enExact = 'a'.repeat(enRoom);
+    const enFit = seriesMetaDescription({
       locale: 'en-US',
       title: 'Base Set',
       cardCount: 2,
-      description: englishOver,
+      description: enExact,
     });
-    const enExcerpt = excerptAfter(en, EN_SERIES);
-    expect(enExcerpt.endsWith('…')).toBe(true);
-    expect(graphemeLength(enExcerpt, 'en-US')).toBeLessThanOrEqual(155);
-    expect(englishOver.startsWith(enExcerpt.slice(0, -1))).toBe(true);
+    expect(enFit).toBe(`${EN_SERIES} ${enExact}`);
+    expect(graphemeLength(enFit, 'en-US')).toBe(155);
+
+    const enOver = seriesMetaDescription({
+      locale: 'en-US',
+      title: 'Base Set',
+      cardCount: 2,
+      description: 'a'.repeat(enRoom + 1),
+    });
+    expect(enOver.startsWith(`${EN_SERIES} `)).toBe(true);
+    expect(enOver.endsWith('…')).toBe(true);
+    expect(graphemeLength(enOver, 'en-US')).toBe(155);
   });
 
-  it('prefers a finished sentence, otherwise a whole word, and does not end on a broken mark', () => {
-    const chinese = `第一句。${'第二句很长'.repeat(40)}`;
+  it('drops the description when the cut leaves fewer than 10 graphemes', () => {
     expect(
       seriesMetaDescription({
         locale: 'zh-CN',
         title: '基础系列',
         cardCount: 2,
-        description: chinese,
+        description: `短。${'后续文字'.repeat(40)}`,
       }),
-    ).toBe(`${ZH_SERIES} 第一句。…`);
+    ).toBe(ZH_SERIES);
 
+    const kept = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: '基础系列',
+      cardCount: 2,
+      description: `这是一个完整的第一句。${'后面还有很多'.repeat(20)}`,
+    });
+    expect(kept).toBe(`${ZH_SERIES} 这是一个完整的第一句。…`);
+    expect(graphemeLength(excerptAfter(kept, ZH_SERIES), 'zh-CN')).toBeGreaterThanOrEqual(10);
+    expect(graphemeLength(kept, 'zh-CN')).toBeLessThanOrEqual(120);
+  });
+
+  it('uses the English limit for a Chinese description when the UI is English', () => {
+    const description = '字'.repeat(200);
+    const english = seriesMetaDescription({
+      locale: 'en-US',
+      title: 'Base Set',
+      cardCount: 2,
+      description,
+    });
+    const chinese = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: '基础系列',
+      cardCount: 2,
+      description,
+    });
+    expect(graphemeLength(english, 'en-US')).toBeGreaterThan(120);
+    expect(graphemeLength(english, 'en-US')).toBeLessThanOrEqual(155);
+    expect(graphemeLength(chinese, 'zh-CN')).toBe(120);
+    expect(excerptAfter(english, EN_SERIES)).toMatch(/^字+…$/u);
+    expect(english).not.toBe(chinese);
+  });
+
+  it('prefers a finished sentence, otherwise a whole word, and does not end on a broken mark', () => {
     const words = '词语'.repeat(80);
     const wordExcerpt = excerptAfter(
       seriesMetaDescription({
@@ -244,7 +286,7 @@ describe('series and card meta descriptions', () => {
     );
     expect(wordExcerpt.endsWith('…')).toBe(true);
     expect(wordExcerpt.slice(0, -1).endsWith('词语')).toBe(true);
-    expect(graphemeLength(wordExcerpt, 'zh-CN')).toBeLessThanOrEqual(120);
+    expect(graphemeLength(`${ZH_SERIES} ${wordExcerpt}`, 'zh-CN')).toBeLessThanOrEqual(120);
 
     const english = `Short sentence. ${'Word '.repeat(80)}`;
     expect(
@@ -257,20 +299,18 @@ describe('series and card meta descriptions', () => {
     ).toBe(`${EN_SERIES} Short sentence.…`);
 
     const commas = Array.from({ length: 40 }, () => 'hello').join(', ');
-    const commaExcerpt = excerptAfter(
-      cardMetaDescription({
-        locale: 'en-US',
-        name: 'Pikachu',
-        seriesTitle: 'Base Set',
-        cardNumber: '58',
-        description: commas,
-      }),
-      EN_CARD,
-    );
+    const commaContent = cardMetaDescription({
+      locale: 'en-US',
+      name: 'Pikachu',
+      seriesTitle: 'Base Set',
+      cardNumber: '58',
+      description: commas,
+    });
+    const commaExcerpt = excerptAfter(commaContent, EN_CARD);
     expect(commaExcerpt.endsWith('…')).toBe(true);
     expect(commaExcerpt).not.toMatch(/[,，、；;:：]\s*…$/u);
     expect(commaExcerpt.slice(0, -1).endsWith('hello')).toBe(true);
-    expect(graphemeLength(commaExcerpt, 'en-US')).toBeLessThanOrEqual(155);
+    expect(graphemeLength(commaContent, 'en-US')).toBeLessThanOrEqual(155);
 
     const family = '👨‍👩‍👧‍👦';
     const emojiExcerpt = excerptAfter(
@@ -284,6 +324,6 @@ describe('series and card meta descriptions', () => {
     );
     expect(emojiExcerpt.endsWith('…')).toBe(true);
     expect(emojiExcerpt.slice(0, -1).split(family).join('')).toBe('');
-    expect(graphemeLength(emojiExcerpt, 'zh-CN')).toBeLessThanOrEqual(120);
+    expect(graphemeLength(`${ZH_SERIES} ${emojiExcerpt}`, 'zh-CN')).toBeLessThanOrEqual(120);
   });
 });

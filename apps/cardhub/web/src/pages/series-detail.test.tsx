@@ -346,13 +346,13 @@ describe('series detail meta description', () => {
   });
 
   it('puts the plain text of a Markdown description after the template', () => {
-    series.description = `# 标题\n\n**第一句**。\n\n${'后续'.repeat(80)}`;
+    series.description = `# 标题\n\n**这是一段足够长的第一句**。\n\n${'后续'.repeat(40)}`;
     showSeries();
     renderSeries();
 
     const content = document.querySelector('meta[name="description"]')?.getAttribute('content');
     expect(content).toBe(
-      '天穹黎明 系列，共 1 张卡牌。在 Cardhub 查看卡牌资料和讨论。 标题 第一句。…',
+      '天穹黎明 系列，共 1 张卡牌。在 Cardhub 查看卡牌资料和讨论。 标题 这是一段足够长的第一句。…',
     );
     expect(content).not.toContain('#');
     expect(content).not.toContain('**');
