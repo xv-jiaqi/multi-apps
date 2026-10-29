@@ -85,3 +85,31 @@ if [ -n "$GIT_SHA_VALUE" ] && [ "$GIT_SHA_VALUE" != unknown ]; then
 fi
 
 printf '\n};\n' >> "$CONFIG_FILE"
+
+# nginx add_header inside a location replaces every server-level add_header,
+# so the same snippet is included from the server and from each location.
+headers_file=${CARDHUB_SECURITY_HEADERS_FILE:-}
+if [ -z "$headers_file" ]; then
+  if [ -w /etc/nginx/conf.d ]; then
+    headers_file=/etc/nginx/conf.d/security-headers.inc
+  else
+    echo "ERROR: cannot write /etc/nginx/conf.d/security-headers.inc and CARDHUB_SECURITY_HEADERS_FILE is unset." >&2
+    exit 1
+  fi
+fi
+
+if [ -n "$headers_file" ]; then
+  api_origin=$(printf '%s' "$TRPC_URL_VALUE" | sed 's#/trpc$##')
+  connect_src="'self' ${api_origin}"
+  if [ -n "$SENTRY_DSN_VALUE" ]; then
+    sentry_origin=$(printf '%s' "$SENTRY_DSN_VALUE" | sed -E 's#^(https?)://([^@/]+@)?([^/]+).*#\1://\3#')
+    connect_src="${connect_src} ${sentry_origin}"
+  fi
+  csp="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src ${connect_src}; form-action 'self'"
+  cat > "$headers_file" <<EOF
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
+add_header Content-Security-Policy "${csp}" always;
+EOF
+fi

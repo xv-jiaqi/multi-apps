@@ -112,14 +112,20 @@ redirects `ROOT_WEB_REDIRECT_DOMAINS=www.card-hub.app` to
 `https://card-hub.app` with a permanent redirect; keep
 `ROOT_WEB_REDIRECT_TARGET=card-hub.app` in `/opt/cardhub/edge/edge.env`.
 
-Security headers are set on the edge, not in the web image. nginx in
-`Dockerfile.web` only sets cache headers. `card-hub.app`
-(`optional/root-web.caddy`) and `staging.card-hub.app` send
+The edge sends HSTS, `X-Content-Type-Options: nosniff`, and
+`X-Frame-Options: DENY`. `card-hub.app` (`optional/root-web.caddy`) and
+`staging.card-hub.app` send
 `Strict-Transport-Security: max-age=31536000; includeSubDomains` (no
-`preload`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and
-`Content-Security-Policy: frame-ancestors 'none'`. Both API hostnames send
-that same HSTS value and `nosniff`. The handlers use `defer`, so they replace
-the same fields from upstream. `lb_try_duration` is unchanged.
+`preload`). Both API hostnames send that same HSTS value and `nosniff`.
+The handlers use `defer`, so they replace the same fields from upstream.
+`?Content-Security-Policy` adds `frame-ancestors 'none'` only when the web
+container did not send CSP. A current image sends the full policy, including
+`connect-src` from `TRPC_URL` and `SENTRY_DSN`; rolling the web image back
+still leaves `frame-ancestors`. Ship the web image to staging and production
+before recreating the edge. `lb_try_duration` is unchanged.
+`deploy/web-security-headers.test.sh` checks these three web headers. CI
+installs Caddy 2.11.7, the version currently reported by `caddy:2-alpine`,
+and fails if that binary is missing.
 
 After changing any edge env vars manually, recreate the Caddy container so
 Compose injects the new environment; `caddy reload` does not pick up env-file

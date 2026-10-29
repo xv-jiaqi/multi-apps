@@ -16,15 +16,16 @@
 	}
 }
 
-# Security headers are set here, not in the web image. nginx only sets cache
-# headers. defer overwrites the same field from upstream (API helmet included).
-# HSTS has no preload. Web CSP is only frame-ancestors.
+# HSTS stays on the edge because nginx does not terminate TLS. nosniff and
+# X-Frame-Options stay here as well. The ? prefix fills Content-Security-Policy
+# only when the web container did not send one, so a rollback to an older
+# image still keeps frame-ancestors. defer runs after the upstream response.
 (cardhub_web_headers) {
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
-		Content-Security-Policy "frame-ancestors 'none'"
+		?Content-Security-Policy "frame-ancestors 'none'"
 		defer
 	}
 }
