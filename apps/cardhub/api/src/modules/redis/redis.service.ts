@@ -8,6 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import type { ZodType } from 'zod';
+import { timeCache } from '../../common/server-timing';
 import { reportCacheStatus } from './cache-header';
 
 export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
@@ -144,7 +145,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       return loader();
     }
 
-    const cached = await this.readValid(key, schema);
+    const cached = await timeCache(() => this.readValid(key, schema));
     if (cached.failed) {
       reportCacheStatus('BYPASS');
       return loader();
@@ -161,7 +162,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       reportCacheStatus('MISS');
       return fresh;
     }
-    await this.writeValue(key, parsed.data, ttlSeconds);
+    await timeCache(() => this.writeValue(key, parsed.data, ttlSeconds));
     reportCacheStatus('MISS');
     return parsed.data;
   }
@@ -169,7 +170,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async deleteKeys(keys: readonly string[]): Promise<void> {
     if (keys.length === 0) return;
     try {
-      await this.client.del(...keys);
+      await timeCache(() => this.client.del(...keys));
     } catch (error) {
       this.logger.warn(`cache delete failed: ${error instanceof Error ? error.message : ''}`);
       this.noteOutage();
@@ -177,6 +178,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async deleteByPrefix(prefix: string): Promise<void> {
+    await timeCache(() => this.deleteByPrefixUnscoped(prefix));
+  }
+
+  private async deleteByPrefixUnscoped(prefix: string): Promise<void> {
     try {
       let cursor = '0';
       do {

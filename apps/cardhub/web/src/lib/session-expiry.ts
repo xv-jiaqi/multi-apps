@@ -1,7 +1,7 @@
 import { APP_ERROR_CODES } from '@repo/shared';
 import { rootStore } from '../stores/root-store';
 
-type Listener = () => void;
+type Listener = (error?: unknown) => void;
 
 const listeners = new Set<Listener>();
 
@@ -12,8 +12,8 @@ export function subscribeSessionExpired(listener: Listener): () => void {
   };
 }
 
-export function emitSessionExpired(): void {
-  listeners.forEach((listener) => listener());
+export function emitSessionExpired(error?: unknown): void {
+  listeners.forEach((listener) => listener(error));
 }
 
 /**
@@ -30,5 +30,5 @@ export function isSessionInvalidError(error: unknown): boolean {
 export function noteTrpcFailure(error: unknown): void {
   if (!isSessionInvalidError(error)) return;
   if (!rootStore.session.token) return;
-  emitSessionExpired();
+  emitSessionExpired(error);
 }

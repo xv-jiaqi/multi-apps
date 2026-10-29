@@ -18,3 +18,12 @@ export function SectionSkeleton({ withThumb }: { withThumb?: boolean }) {
     </ul>
   );
 }
+
+export function ToggleSkeleton() {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-10 animate-pulse rounded bg-neutral-200 motion-reduce:animate-none"
+    />
+  );
+}

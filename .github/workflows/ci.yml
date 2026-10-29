@@ -66,7 +66,7 @@ jobs:
           bash deploy/catalog-cache-header-compose.test.sh
           bash deploy/ci-redis-install.test.sh
           rm -f "${tmp}"
-          bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh
+          bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh scripts/check-api-image.sh
           sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
 
       - name: Install pnpm
@@ -279,6 +279,17 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # Same major image as deploy. /health must report redis: true, and the
+      # check script stops this container to prove a dead Redis does not stall
+      # an authenticated read.
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -300,11 +311,11 @@ jobs:
           provenance: false
           tags: cardhub-api:ci
           build-args: |
-            GIT_SHA=${{ github.sha }}
+            GIT_SHA=${{ github.event.pull_request.head.sha || github.sha }}
             BUILD_TIME=${{ steps.build-time.outputs.value }}
           cache-from: type=gha,scope=api
 
-      - name: Smoke test API image
+      - name: Check API image
         run: |
           set -euo pipefail
           name=cardhub-api-smoke
@@ -312,7 +323,10 @@ jobs:
             status=$?
             if [ "$status" -ne 0 ]; then
               echo "::group::API container logs"
-              docker logs "$name" || true
+              docker logs "$name" >/tmp/api-smoke-logs.txt 2>&1 || true
+              if [ -s /tmp/api-smoke-logs.txt ]; then
+                cat /tmp/api-smoke-logs.txt
+              fi
               echo "::endgroup::"
             fi
             docker rm -f "$name" >/dev/null 2>&1 || true
@@ -320,12 +334,13 @@ jobs:
           }
           trap cleanup EXIT
 
-          # --network host lets these containers reach the job's Postgres
-          # service at 127.0.0.1:5432 and exposes :4000 to the runner.
-          # NODE_ENV=production is baked into the image, so JWT_SECRET must
-          # be at least 32 characters and not a banned placeholder.
-          # MIGRATE_DATABASE_URL is unset: migrate falls back to DATABASE_URL,
-          # and the API container must not receive the migrator URL.
+          # --network host lets these containers reach the job's Postgres and
+          # Redis services at 127.0.0.1 and exposes :4000 to the runner.
+          # On pull_request, github.sha is the merge commit, so the image and
+          # the check both use the PR head. NODE_ENV=production is baked into
+          # the image, so JWT_SECRET must be at least 32 characters and not a
+          # banned placeholder. MIGRATE_DATABASE_URL stays unset: migrate falls
+          # back to DATABASE_URL, and the API process must not receive it.
           docker run --rm --network host \
             -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
             --entrypoint /usr/local/bin/migrate-entrypoint.sh \
@@ -334,31 +349,12 @@ jobs:
           docker run -d --name "$name" --network host \
             -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
             -e JWT_SECRET='0123456789abcdef0123456789abcdef' \
+            -e REDIS_HOST=127.0.0.1 \
+            -e REDIS_PORT=6379 \
             cardhub-api:ci
 
-          deadline=$((SECONDS + 60))
-          code=""
-          while true; do
-            code="$(curl -sS -o /tmp/api-health-body -w '%{http_code}' --max-time 2 http://127.0.0.1:4000/health || true)"
-            if [ "$code" = "200" ]; then
-              echo "API /health returned 200"
-              if docker exec "$name" sh -c 'tr "\0" "\n" < /proc/1/environ' | grep -q '^MIGRATE_DATABASE_URL='; then
-                echo "API PID 1 environment contains MIGRATE_DATABASE_URL"
-                exit 1
-              fi
-              exit 0
-            fi
-            if ! docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null | grep -qx true; then
-              echo "API container exited before /health returned 200 (last HTTP status: ${code:-none})"
-              exit 1
-            fi
-            if [ "$SECONDS" -ge "$deadline" ]; then
-              echo "API /health did not return 200 within 60s (last HTTP status: ${code:-none})"
-              if [ -s /tmp/api-health-body ]; then
-                echo "Last /health body:"
-                cat /tmp/api-health-body
-              fi
-              exit 1
-            fi
-            sleep 2
-          done
+          EXPECTED_GIT_SHA='${{ github.event.pull_request.head.sha || github.sha }}' \
+            API_BASE_URL=http://127.0.0.1:4000 \
+            API_CONTAINER="$name" \
+            REDIS_CONTAINER=auto \
+            bash scripts/check-api-image.sh
