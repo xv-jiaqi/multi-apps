@@ -1,6 +1,6 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { rootStore } from '../../stores/root-store';
@@ -247,6 +247,52 @@ describe('series form', () => {
     expect(await screen.findByText('请填写 https:// 开头的图片链接，或者留空')).toBeInTheDocument();
     expect(screen.queryByText('not a url')).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
+  });
+
+  it('uses title_too_long for an over-long title and too_big for the description', async () => {
+    const user = userEvent.setup();
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    fireEvent.change(screen.getByRole('textbox', { name: '标题' }), {
+      target: { value: '标'.repeat(121) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('标题最多 120 个字符')).toBeInTheDocument();
+    expect(screen.queryByText('内容超出长度限制')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('textbox', { name: '标题' }), {
+      target: { value: '新系列' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: '简介' }), {
+      target: { value: '介'.repeat(5001) },
+    });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('内容超出长度限制')).toBeInTheDocument();
+    expect(screen.queryByText('标题最多 120 个字符')).not.toBeInTheDocument();
+  });
+
+  it('falls back to too_big when a server length error has no field code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          { code: 'too_big', path: ['description'], message: 'rejected by schema', maximum: 5000 },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('内容超出长度限制')).toBeInTheDocument();
+    expect(screen.queryByText('标题最多 120 个字符')).not.toBeInTheDocument();
+    expect(screen.queryByText('rejected by schema')).not.toBeInTheDocument();
   });
 
   it('maps a title_too_long code on a server too_big issue', async () => {

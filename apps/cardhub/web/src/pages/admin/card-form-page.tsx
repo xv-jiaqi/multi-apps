@@ -218,7 +218,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     if (descriptionError) next.description = descriptionError;
     const imageError = imageUrlError(imageUrl, locale.locale);
     if (imageError) next.imageUrl = imageError;
-    if (cardNumber.trim().length > 20) next.cardNumber = tt('error.field.title_too_long');
+    if (cardNumber.trim().length > 20) next.cardNumber = tt('error.field.too_big');
     const attributes = validateAttributeRows(rows, locale.locale);
     setErrors(next);
     setAttrErrors(attributes.ok ? {} : attributes.errors);

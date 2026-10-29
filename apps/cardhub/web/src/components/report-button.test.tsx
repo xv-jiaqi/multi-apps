@@ -107,7 +107,7 @@ describe('report form focus', () => {
     await user.type(textarea, 'abc');
     await user.click(screen.getByRole('button', { name: '提交举报' }));
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent('原因不能为空');
+    expect(alert).toHaveTextContent('原因至少 4 个字符');
     expect(textarea).toHaveAttribute('aria-describedby', alert.id);
     await waitFor(() => {
       expect(document.activeElement).toBe(textarea);

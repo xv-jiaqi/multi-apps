@@ -213,7 +213,7 @@ function localizeAdminIssue(locale: Locale, issue: ZodIssueLike, path: string[])
         max: issueMaximum(issue, ADMIN_ATTRIBUTE_VALUE_MAX),
       });
     }
-    return mappedFieldCopy(locale, message) ?? fieldErrorMessage(locale, 'title_too_long');
+    return mappedFieldCopy(locale, message) ?? fieldErrorMessage(locale, 'too_big');
   }
   if (code === 'custom' && (head === 'imageUrl' || head === 'coverUrl') && path.length === 1) {
     return t(locale, 'admin.error.imageUrl');
@@ -345,15 +345,25 @@ export function validateSlug(value: string, locale: Locale): string | null {
   return null;
 }
 
-export function validateRequiredText(value: string, max: number, locale: Locale): string | null {
+export function validateRequiredText(
+  value: string,
+  max: number,
+  locale: Locale,
+  tooLongCode?: string,
+): string | null {
   const trimmed = value.trim();
   if (!trimmed) return t(locale, 'admin.error.required');
-  if (value.length > max) return fieldErrorMessage(locale, 'title_too_long');
+  if (value.length > max) return fieldErrorMessage(locale, tooLongCode ?? 'too_big');
   return null;
 }
 
-export function validateOptionalText(value: string, max: number, locale: Locale): string | null {
-  if (value.length > max) return fieldErrorMessage(locale, 'title_too_long');
+export function validateOptionalText(
+  value: string,
+  max: number,
+  locale: Locale,
+  tooLongCode?: string,
+): string | null {
+  if (value.length > max) return fieldErrorMessage(locale, tooLongCode ?? 'too_big');
   return null;
 }
 

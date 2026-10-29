@@ -58,7 +58,10 @@ describe('field error codes', () => {
       'Use a 3-letter uppercase currency code.',
     );
     expect(fieldErrorMessage('zh-CN', 'identifier_too_short')).toBe('邮箱或用户名不能为空');
-    expect(fieldErrorMessage('zh-CN', 'reason_too_short')).toBe('原因不能为空');
+    expect(fieldErrorMessage('zh-CN', 'reason_too_short')).toBe('原因至少 4 个字符');
+    expect(fieldErrorMessage('en-US', 'reason_too_short')).toBe(
+      'Use at least 4 characters for the reason.',
+    );
     expect(t('en-US', 'error.app.TOO_MANY_REQUESTS')).toBe('Too many actions. Try again later.');
     expect(t('zh-CN', 'error.app.TOO_MANY_REQUESTS')).toBe('操作太频繁，请稍后再试');
   });
