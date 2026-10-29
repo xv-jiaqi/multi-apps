@@ -97,7 +97,7 @@
 | CH-305 | 深色模式                                        | P3     | M    | —                     | 待领取                                                |
 | CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | ✅ #178                                               |
 | CH-307 | 可观测性：结构化日志 + request id               | P3     | S    | —                     | ✅ PR #182                                            |
-| CH-308 | 产品指标统计                                    | P3     | M    | —                     | 进行中（cursor/ch-308-product-metrics-5f96）          |
+| CH-308 | 产品指标统计                                    | P3     | M    | —                     | ✅ PR #185                                            |
 | CH-309 | Web 安全响应头 + Tauri CSP                      | P3     | S    | CH-005                | 进行中（cursor/ch-309-security-headers-9131）         |
 | CH-310 | 邮箱验证与找回密码                              | P3     | M    | CH-212                | 待领取                                                |
 | CH-311 | 站内通知与 @提及                                | P3     | L    | CH-204                | 待领取                                                |
