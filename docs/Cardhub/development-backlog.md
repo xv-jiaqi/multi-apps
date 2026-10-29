@@ -95,7 +95,7 @@
 | CH-303 | Tauri 桌面发布（签名、更新、CORS）              | P3     | M    | —                     | 待领取                                                |
 | CH-304 | iOS / Android 真机构建与上架流程                | P3     | L    | CH-303                | 待领取                                                |
 | CH-305 | 深色模式                                        | P3     | M    | —                     | 待领取                                                |
-| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | 进行中（cursor/ch-306-playwright-smoke-3645）         |
+| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | ✅ #178                                               |
 | CH-307 | 可观测性：结构化日志 + request id               | P3     | S    | —                     | 待领取                                                |
 | CH-308 | 产品指标统计                                    | P3     | M    | —                     | 待领取                                                |
 | CH-309 | Web 安全响应头 + Tauri CSP                      | P3     | S    | CH-005                | 进行中（cursor/ch-309-security-headers-9131）         |
