@@ -8,8 +8,27 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import type { ZodType } from 'zod';
+import { reportCacheStatus } from './cache-header';
 
 export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
+
+/** Reconnect purge target. Matches `PRODUCTION_CACHE_PREFIX` and nothing under `cardhub:rl:`. */
+export const CACHE_PURGE_PREFIX = 'cardhub:cache:v1:';
+
+const PURGE_RETRY_BASE_MS = 200;
+const PURGE_RETRY_MAX_MS = 30_000;
+export const PURGE_RETRY_ATTEMPT_CAP = 6;
+
+/** Delay after `failureCount` failed purges. The delay stops growing at 30s. */
+export function purgeRetryDelayMs(failureCount: number): number {
+  if (!Number.isInteger(failureCount) || failureCount < 0) return PURGE_RETRY_BASE_MS;
+  const shift = Math.min(failureCount, 16);
+  return Math.min(PURGE_RETRY_BASE_MS * 2 ** shift, PURGE_RETRY_MAX_MS);
+}
+
+export function purgeRetryScheduled(failureCount: number): boolean {
+  return failureCount < PURGE_RETRY_ATTEMPT_CAP;
+}
 
 const CONNECT_WAIT_MS = 1_000;
 
@@ -59,10 +78,22 @@ function parseJson(raw: string): unknown {
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
+  private outage = 0;
+  private purged = 0;
+  private purging = false;
+  private closing = false;
+  private purgeFailures = 0;
+  private purgeGaveUp = false;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(@Inject(REDIS_CLIENT) public readonly client: Redis) {
     client.on('error', (err: Error) => this.logger.warn(`Redis error: ${err.message}`));
     client.on('connect', () => this.logger.log('Redis connected'));
+    client.on('close', () => this.noteOutage());
+    client.on('end', () => this.noteOutage());
+    client.on('ready', () => {
+      void this.purgeIfNeeded();
+    });
   }
 
   static createClient(config: ConfigService): Redis {
@@ -97,16 +128,30 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     schema: ZodType<T>,
     loader: () => Promise<T>,
   ): Promise<T> {
+    if (this.shouldBypass()) {
+      reportCacheStatus('BYPASS');
+      return loader();
+    }
+
     const cached = await this.readValid(key, schema);
-    if (cached !== undefined) return cached;
+    if (cached.failed) {
+      reportCacheStatus('BYPASS');
+      return loader();
+    }
+    if (cached.value !== undefined) {
+      reportCacheStatus('HIT');
+      return cached.value;
+    }
 
     const fresh = await loader();
     const parsed = schema.safeParse(fresh);
     if (!parsed.success) {
       this.logger.warn(`cache skipped write; payload did not match schema for ${key}`);
+      reportCacheStatus('MISS');
       return fresh;
     }
     await this.writeValue(key, parsed.data, ttlSeconds);
+    reportCacheStatus('MISS');
     return parsed.data;
   }
 
@@ -116,6 +161,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       await this.client.del(...keys);
     } catch (error) {
       this.logger.warn(`cache delete failed: ${error instanceof Error ? error.message : ''}`);
+      this.noteOutage();
     }
   }
 
@@ -126,7 +172,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         const scanned = await this.client.scan(cursor, 'MATCH', `${prefix}*`, 'COUNT', 200);
         const next = scanned[0];
         const found = scanned[1];
-        if (next === undefined || found === undefined) return;
+        if (next === undefined || found === undefined) {
+          throw new Error('redis scan reply was incomplete');
+        }
         if (found.length > 0) await this.client.del(...found);
         cursor = next;
       } while (cursor !== '0');
@@ -134,6 +182,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(
         `cache prefix delete failed: ${error instanceof Error ? error.message : ''}`,
       );
+      this.noteOutage();
     }
   }
 
@@ -154,7 +203,87 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    this.closing = true;
+    if (this.retryTimer !== undefined) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = undefined;
+    }
     this.client.disconnect();
+  }
+
+  /**
+   * A failed invalidation or a dropped connection means catalog keys may now
+   * be older than the database. The next ready connection deletes
+   * `cardhub:cache:v1:*` and leaves rate-limit keys alone. Failures stay
+   * inside this method so callers still return their normal responses.
+   */
+  private noteOutage(): void {
+    if (this.closing) return;
+    this.outage += 1;
+    if (this.purgeGaveUp) {
+      this.purgeFailures = 0;
+      this.purgeGaveUp = false;
+    }
+    void this.purgeIfNeeded();
+  }
+
+  private shouldBypass(): boolean {
+    return this.purging || this.outage !== this.purged;
+  }
+
+  private async purgeIfNeeded(): Promise<void> {
+    if (this.closing || this.purging || this.outage === this.purged) return;
+    if (this.client.status !== 'ready') return;
+    const target = this.outage;
+    this.purging = true;
+    try {
+      await this.unlinkByPrefix(CACHE_PURGE_PREFIX);
+      if (this.outage === target) {
+        this.purged = target;
+        this.purgeFailures = 0;
+        this.purgeGaveUp = false;
+      }
+    } catch (error) {
+      this.logger.warn(`cache purge failed: ${error instanceof Error ? error.message : ''}`);
+    } finally {
+      this.purging = false;
+      if (!this.closing && this.outage !== this.purged && this.client.status === 'ready') {
+        this.armPurgeRetry();
+      }
+    }
+  }
+
+  private armPurgeRetry(): void {
+    if (this.retryTimer !== undefined || this.closing) return;
+    if (!purgeRetryScheduled(this.purgeFailures)) {
+      if (!this.purgeGaveUp) {
+        this.purgeGaveUp = true;
+        this.logger.warn(`cache purge stopped after ${PURGE_RETRY_ATTEMPT_CAP} failures`);
+      }
+      return;
+    }
+    const delay = purgeRetryDelayMs(this.purgeFailures);
+    this.purgeFailures += 1;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = undefined;
+      void this.purgeIfNeeded();
+    }, delay);
+    this.retryTimer.unref();
+  }
+
+  private async unlinkByPrefix(prefix: string): Promise<void> {
+    let cursor = '0';
+    do {
+      const scanned = await this.client.scan(cursor, 'MATCH', `${prefix}*`, 'COUNT', 200);
+      const next = scanned[0];
+      const found = scanned[1];
+      if (next === undefined || found === undefined) {
+        throw new Error('redis scan reply was incomplete');
+      }
+      const keys = found.filter((key) => key.startsWith(prefix) && !key.startsWith('cardhub:rl:'));
+      if (keys.length > 0) await this.client.unlink(...keys);
+      cursor = next;
+    } while (cursor !== '0');
   }
 
   private becomeReady(timeoutMs: number): Promise<void> {
@@ -184,14 +313,17 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  private async readValid<T>(key: string, schema: ZodType<T>): Promise<T | undefined> {
+  private async readValid<T>(
+    key: string,
+    schema: ZodType<T>,
+  ): Promise<{ value?: T; failed: boolean }> {
     try {
       const raw = await this.client.get(key);
-      if (raw === null) return undefined;
+      if (raw === null) return { failed: false };
       const parsed = schema.safeParse(parseJson(raw));
-      return parsed.success ? parsed.data : undefined;
+      return parsed.success ? { value: parsed.data, failed: false } : { failed: false };
     } catch {
-      return undefined;
+      return { failed: true };
     }
   }
 

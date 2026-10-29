@@ -300,6 +300,9 @@ jobs:
         env:
           # Environment variable, not a secret. Empty when the variable is unset.
           PASSWORD_PREHASH_WRITE: ${{ vars.PASSWORD_PREHASH_WRITE }}
+          # Environment variable, not a secret. Empty and any value other than
+          # the exact string true become false before they are sent.
+          CATALOG_CACHE_HEADER: ${{ vars.CATALOG_CACHE_HEADER }}
           # Environment secret on staging and production. Empty when unset.
           # This step is the manual staging path, the manual production path,
           # and the staging auto-deploy after CI. Do not echo the value.
@@ -329,6 +332,19 @@ jobs:
           if [ -n "${prehash}" ]; then
             prehash_prefix="PASSWORD_PREHASH_WRITE=${prehash} "
           fi
+          cache_header="$(
+            # shellcheck disable=SC1091
+            source deploy/remote-deploy.sh
+            normalize_catalog_cache_header
+          )"
+          case "${cache_header}" in
+            true|false) ;;
+            *)
+              echo "CATALOG_CACHE_HEADER must normalize to true or false" >&2
+              exit 1
+              ;;
+          esac
+          cache_header_prefix="CATALOG_CACHE_HEADER=${cache_header} "
           # Unset or blank keeps the server line. normalize writes the URL to
           # stdout for this capture only. Mask that captured value before it
           # is placed on the ssh command line. GitHub Actions consumes
@@ -352,4 +368,4 @@ jobs:
             dsn_prefix="WEB_SENTRY_DSN=${dsn_quoted} "
           fi
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "${dsn_prefix}${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"
+            "${cache_header_prefix}${dsn_prefix}${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"

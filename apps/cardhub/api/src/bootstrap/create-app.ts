@@ -12,6 +12,11 @@ import { attachRequestLogging } from './http-logger';
 import { REQUEST_ID_HEADER_NAME, requestIdFrom } from './request-id';
 import { AuthService } from '../modules/auth/auth.service';
 import { PrismaService } from '../modules/prisma/prisma.service';
+import {
+  catalogCacheHeaderEnabled,
+  createCacheHeaderReporter,
+  observeCacheHeader,
+} from '../modules/redis/cache-header';
 import { RedisService } from '../modules/redis/redis.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
@@ -133,7 +138,23 @@ export async function createApp(options: CreateAppOptions = {}) {
   }
 
   app.use(jsonBodyParser());
+  const catalogCacheHeader: RequestHandler = (_req, res, next) => {
+    if (!catalogCacheHeaderEnabled()) {
+      next();
+      return;
+    }
+    observeCacheHeader(
+      createCacheHeaderReporter((status) => {
+        if (!res.headersSent) res.setHeader('X-Cache', status);
+      }),
+      () => {
+        next();
+      },
+    );
+  };
+
   app.use('/trpc', preserveExistingVaryHeader);
+  app.use('/trpc', catalogCacheHeader);
   app.use(
     '/trpc',
     trpcExpress.createExpressMiddleware({

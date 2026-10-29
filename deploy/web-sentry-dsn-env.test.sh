@@ -314,10 +314,14 @@ assert "main bad URL stops before compose" "$(
 
 new_file "${work}/root/staging/staging.env" "${base_body}" 600
 rc="$(run_main staging unset "")"
-assert "main unset does not rewrite" "$(printf '%s\n' "${base_body}" | cmp -s - "${work}/root/staging/staging.env" && echo 0 || echo 1)"
+assert "main unset does not rewrite the DSN line" "$(
+  grep -qx "WEB_SENTRY_DSN=${old_dsn}" "${work}/root/staging/staging.env" \
+    && grep -qx 'CATALOG_CACHE_HEADER=false' "${work}/root/staging/staging.env" \
+    && echo 0 || echo 1
+)"
 assert "main unset does not print the DSN" "$(no_leak "${log}" && no_leak "${err}" && echo 0 || echo 1)"
 
-prod_new="$(printf '%s\n' "ENV_NAME=prod" "WEB_SENTRY_DSN=${new_dsn}" "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_prod")"
+prod_new="$(printf '%s\n' "ENV_NAME=prod" "WEB_SENTRY_DSN=${new_dsn}" "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_prod" "CATALOG_CACHE_HEADER=false")"
 new_file "${work}/root/production/production.env" "${prod_body}" 600
 rc="$(run_main production set "${new_dsn}")"
 assert "main production writes the DSN" "$(
@@ -368,7 +372,7 @@ awk '
 ' "${workflow}" > "${extracted}"
 assert "extracted deploy step calls normalize" "$(grep -F -q 'normalize_web_sentry_dsn' "${extracted}" && echo 0 || echo 1)"
 assert "extracted deploy step masks the value" "$(grep -F -q '::add-mask::' "${extracted}" && echo 0 || echo 1)"
-assert "extracted deploy step prefixes ssh" "$(grep -F -q '${dsn_prefix}${prehash_prefix}bash' "${extracted}" && echo 0 || echo 1)"
+assert "extracted deploy step prefixes ssh" "$(grep -F -q '${cache_header_prefix}${dsn_prefix}${prehash_prefix}bash' "${extracted}" && echo 0 || echo 1)"
 
 mkdir -p "${work}/sshbin"
 cat > "${work}/sshbin/ssh" << 'EOF'

@@ -41,6 +41,11 @@ services:
       # fatal | error | warn | info | debug | trace | silent. Invalid values
       # fall back to info inside the API.
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # The API reads these from the process environment. This service has no
+      # env_file, so an env-file entry alone never reaches the container.
+      # Empty CATALOG_CACHE_HEADER keeps X-Cache off. Staging sets it to true.
+      ENV_NAME: ${ENV_NAME:-}
+      CATALOG_CACHE_HEADER: ${CATALOG_CACHE_HEADER:-}
     depends_on:
       postgres:
         condition: service_healthy
