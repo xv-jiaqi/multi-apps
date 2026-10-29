@@ -118,7 +118,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
             className="rounded-3xl border border-white/60 shadow-xl"
           />
 
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <h1
@@ -140,7 +140,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 </p>
               ) : null}
               {card.description ? (
-                <p className="wrap-anywhere text-neutral-600">{card.description}</p>
+                <p className="min-w-0 text-neutral-600 wrap-anywhere">{card.description}</p>
               ) : null}
               <p className="text-sm text-neutral-600">
                 {tt('card.detail.seriesLabel')}

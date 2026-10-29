@@ -167,9 +167,9 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
             <Link to={`/admin/catalog/series/${slug}/cards/new`}>{tt('admin.cards.new')}</Link>
           </Button>
         </div>
-        </header>
-        <SubsetSection seriesSlug={slug} onForbidden={reportForbidden} />
-        <PageMeta title={series?.title ?? tt('nav.catalog')} />
+      </header>
+      <SubsetSection seriesSlug={slug} onForbidden={reportForbidden} />
+      <PageMeta title={series?.title ?? tt('nav.catalog')} />
       <AdminStatus message={notice} statusRef={statusRef} />
       {detailView === 'error' ? (
         revoked ? null : (

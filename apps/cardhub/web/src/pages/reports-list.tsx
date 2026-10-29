@@ -334,11 +334,11 @@ function ReportListItem({
               {tt(report.status === 'PENDING' ? 'reports.filterPending' : 'reports.filterResolved')}
             </span>
           </div>
-          <p id={reasonId} className="text-sm text-neutral-900">
+          <p id={reasonId} className="min-w-0 text-sm text-neutral-900 wrap-anywhere">
             {report.reason}
           </p>
         </div>
-        <div className="flex w-full flex-wrap gap-x-2 text-xs text-neutral-500 sm:block sm:w-auto sm:text-right">
+        <div className="flex w-full min-w-0 flex-wrap gap-x-2 text-xs text-neutral-500 sm:block sm:w-auto sm:text-right">
           <p>@{report.reporter.username}</p>
           <time dateTime={report.createdAt}>{formatDateTime(report.createdAt, locale)}</time>
         </div>
@@ -553,7 +553,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
         >
           {report.target.topicTitle}
         </Link>
-        <p className="text-neutral-800">{report.target.excerpt}</p>
+        <p className="min-w-0 text-neutral-800 wrap-anywhere">{report.target.excerpt}</p>
         <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
       </div>
     );
@@ -577,7 +577,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
         ) : (
           <p className="font-medium text-neutral-800">{targetLabel}</p>
         )}
-        <p className="text-neutral-800">{report.target.excerpt}</p>
+        <p className="min-w-0 text-neutral-800 wrap-anywhere">{report.target.excerpt}</p>
         <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
       </div>
     );
