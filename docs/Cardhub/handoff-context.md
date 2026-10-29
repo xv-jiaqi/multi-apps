@@ -189,7 +189,7 @@ pnpm --filter @cardhub/api prisma migrate reset --force --skip-seed
 
 API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../../apps/cardhub/web/src/main.tsx) 都用 `if (DSN)` 守卫包住 `Sentry.init()`，**dev 留空 DSN 时不上报、不增加任何运行时开销**。当 API `SENTRY_DSN` 或 Web `WEB_SENTRY_DSN` 设置后：
 
-- API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）；environment 取 `SENTRY_ENVIRONMENT`（compose 中等于 `ENV_NAME`），release 取 `GIT_SHA`。
+- API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）；environment 取 `SENTRY_ENVIRONMENT`（compose 中等于 `ENV_NAME`），release 取 `GIT_SHA`。请求上的 id 写入 Sentry 标签 `request_id`（见 §6.18）。
 - Web：`ErrorBoundary` 的 `onError` 调 `Sentry.captureException`。
 
 真实 DSN 不要写进仓库。API 的 DSN 放在 VPS 的 `/opt/cardhub/<environment>/<environment>.env` 的 `SENTRY_DSN`；Web 的 DSN 放在同一 env 文件的 `WEB_SENTRY_DSN`。Web Docker 入口脚本会把 `WEB_SENTRY_DSN`、`SENTRY_ENVIRONMENT` 和镜像 `GIT_SHA` 写入运行时 `/config.js`，因此同一个 Web 镜像可同时用于 staging 和 production。`VITE_SENTRY_DSN` 仅保留给非容器静态构建 fallback，不用于 Docker 部署。
@@ -249,6 +249,20 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 4. **env 文件里的 `CORS_ORIGIN` 会覆盖代码默认值**：代码默认值包含 Tauri 来源，`deploy/.env.example` 的生产值只有 `https://card-hub.app`。桌面 / 移动端连生产 API 前必须补上 Tauri 来源（CH-303）。
 5. **限流按 IP 且在进程内存中计数**：`trust proxy` 只信任 1 跳（Caddy）。如果以后在 Caddy 前再加 CDN / SLB，要同步调整，否则所有用户会共享同一个 IP 的限额；多实例部署时换 Redis store（CH-210）。
 6. **本机办公网络可能拦截 `card-hub.app`**：在 owner 的办公网络下访问线上域名会返回安全策略拦截页（HTTP 403）。线上验证请在外网进行，或通过 VPS 上的 `curl --resolve` 检查。
+
+### 6.18 API 日志是 JSON，request id 有格式
+
+`apps/cardhub/api` 用 `nestjs-pino`。`createApp` 里要保留 `app.useLogger(app.get(NativeLogger))`，否则 Nest 的 `Logger` 仍是文本，请求上下文也不会挂上。
+
+`LoggerModule.forRoot` 只在 `AppModule` 注册一次，并且 `forRoutes` 留空。请求日志由 `createApp` 里的 `attachRequestLogging` 挂上，位置在 helmet 和 JSON parser 之前。Nest 的 `init()` 会把模块中间件追加到已有的 `app.use` 之后；parser 在 400/413 时直接结束响应，不调用 `next()`，晚挂的中间件看不到这次请求。再挂一份 pino-http，每个请求会打两行。`useLogger` 之后要 `flushLogs()`，否则 `bufferLogs` 会把 Nest 的日志一直留在缓冲区里。
+
+`X-Request-Id` 用 zod 校验：trim 后 1–128 字符，字符集 `[A-Za-z0-9._:-]`，首字符必须是字母或数字。空、换行、超长都会换成新的 UUID。不要把原始头写进日志。响应头 `X-Request-Id` 是最终采用的值。
+
+每条 JSON 日志都有 `requestId`。请求内是该 id，进程级日志是 `null`。Sentry 事件标签是 `request_id`。`authorization`、`cookie` 和请求体不进日志。
+
+`LOG_LEVEL` 只接受 pino 的级别名，其它值回到 `info`。Compose 把这个变量注入 API 容器。
+
+日志轮转是 `json-file` 的 `max-size=10m`、`max-file=5`。改 compose 后要重建容器，`docker inspect` 才能看到。守夜人在 staging 验收。
 
 ## 7. 路线图
 
