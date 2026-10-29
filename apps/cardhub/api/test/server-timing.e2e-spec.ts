@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createApp } from '../src/bootstrap/create-app';
+import { CatalogCache } from '../src/modules/redis/catalog-cache';
 
 const QUERY_MARKER = 'QUERY_TEXT_MARKER_z9';
 const USER_MARKER = 'user-marker-7f3a@cardhub.test';
@@ -48,6 +49,9 @@ describe('Server-Timing', () => {
     expect(duration(timing, 'db')).toBeGreaterThan(0);
     expect(response.headers['timing-allow-origin']).toBe(ALLOWED_ORIGIN);
 
+    // Another suite in this worker may have already filled series.list.
+    // Drop it so this request misses and records a database read.
+    await app.get(CatalogCache).invalidate({ kind: 'catalog' });
     const listed = await request(app.getHttpServer())
       .get('/trpc/series.list')
       .set('Origin', ALLOWED_ORIGIN);

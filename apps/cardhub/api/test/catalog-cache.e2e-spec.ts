@@ -212,7 +212,9 @@ describe('catalog cache', () => {
             username: `copen${suffix}${i}`.slice(0, 24),
             password: 'cache-password',
           });
-        expect(registered.status).toBe(200);
+        // The IP limiter falls back to a process-local counter. Different
+        // emails keep this on the IP bucket (limit 1), not an account bucket.
+        expect(registered.status).toBe(i === 0 ? 200 : 429);
       }
     } finally {
       if (previousHost === undefined) delete process.env.REDIS_HOST;

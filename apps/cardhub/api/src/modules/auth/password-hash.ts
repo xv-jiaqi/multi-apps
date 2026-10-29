@@ -8,7 +8,19 @@ import bcrypt from 'bcryptjs';
  */
 export const NEW_PASSWORD_HASH_PREFIX = 'sha256$';
 
-const BCRYPT_ROUNDS = 10;
+export const BCRYPT_ROUNDS = 10;
+
+/**
+ * Cost matches {@link BCRYPT_ROUNDS}. Login compares the attempt to this
+ * when no user row exists. The string inside the hash is not a password.
+ */
+export const DUMMY_PASSWORD_HASH = '$2b$10$wOJ6zGznW2baG0PRABk2aOR78A6IuX6i5XRnONWywjKBTJjEesYDm';
+
+/** One bcrypt compare against {@link DUMMY_PASSWORD_HASH}. The result is unused. */
+export function compareDummyPassword(password: string): Promise<boolean> {
+  return bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+}
+
 const BCRYPT_MAX_BYTES = 72;
 
 /**

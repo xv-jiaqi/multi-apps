@@ -1,14 +1,21 @@
 import { Logger } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import type { Request, RequestHandler, Response } from 'express';
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator, MemoryStore, type Store } from 'express-rate-limit';
 import { RedisStore, type RedisReply } from 'rate-limit-redis';
-import { APP_ERROR_CODES, t } from '@repo/shared';
+import { APP_ERROR_CODES, loginInput, t } from '@repo/shared';
+
+type TrpcCallRequest = {
+  path?: string;
+  originalUrl?: string;
+  url?: string;
+  query?: unknown;
+};
 
 type RateLimitConfig = {
   windowMs: number;
   limit: number;
-  skip: (req: { originalUrl?: string; url?: string }) => boolean;
+  skip: (req: TrpcCallRequest) => boolean;
 };
 
 type RateLimitOverrideConfig = Pick<RateLimitConfig, 'windowMs' | 'limit'>;
@@ -39,14 +46,121 @@ const urlDoesNotInclude =
   (req: { originalUrl?: string; url?: string }): boolean =>
     !(req.originalUrl ?? req.url ?? '').includes(needle);
 
-function getTrpcPaths(req: Request): Array<string | undefined> {
-  const pathname = (req.originalUrl ?? req.url ?? '').split('?')[0] ?? '';
-  const trpcPath = pathname.replace(/^\/trpc\/?/, '').replace(/^\/+/, '');
-  const paths = trpcPath
-    .split(',')
-    .map((path) => path.trim())
-    .filter(Boolean);
-  return paths.length > 0 ? paths : [undefined];
+/**
+ * Procedures the auth IP limiter counts. A batch with more than one of these
+ * is rejected before any procedure runs.
+ */
+const AUTH_WRITE_PROCEDURES = new Set(['auth.register', 'auth.login', 'auth.changePassword']);
+
+/**
+ * Same-tick query batch measured on the authenticated /me page:
+ * auth.me, users.me, listings.mine, users.myTopics, users.myComments,
+ * collection.progress, collection.list (7). Login, register, and
+ * changePassword are each one mutation. The miniapp client does not batch.
+ * 10 sits above that maximum. tRPC rejects a larger batch only when this
+ * is also passed to createExpressMiddleware.
+ */
+export const TRPC_MAX_BATCH_SIZE = 10;
+
+/** In-process fallback entries. A full window refuses new keys instead of evicting. */
+export const MEMORY_FALLBACK_MAX_ENTRIES = 100_000;
+
+/** Label mixed into the JWT secret before it is used as an account-key HMAC key. */
+export const AUTH_ACCOUNT_KEY_LABEL = 'rl:authAccount:v1';
+
+export type ParsedTrpcProcedures =
+  | { ok: true; procedures: string[]; batch: boolean }
+  | { ok: false };
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
+}
+
+/**
+ * `batch=1` is the only case where tRPC splits the path. The value is the
+ * first query entry, matching `URLSearchParams.get`.
+ */
+function isBatchCall(req: TrpcCallRequest): boolean {
+  const query = asRecord(req.query);
+  if (query && Object.prototype.hasOwnProperty.call(query, 'batch')) {
+    const value = query.batch;
+    const first = Array.isArray(value) ? value[0] : value;
+    return first === '1';
+  }
+  const raw = req.originalUrl ?? req.url ?? '';
+  const queryIndex = raw.indexOf('?');
+  if (queryIndex < 0) return false;
+  return new URLSearchParams(raw.slice(queryIndex + 1)).get('batch') === '1';
+}
+
+/**
+ * Procedure segment tRPC's Express adapter passes in: the last `/` piece of
+ * `req.path` (Express 5 leaves percent-encoding in place). Callers that only
+ * have a URL string use the same last piece.
+ */
+function procedureSegment(req: TrpcCallRequest): string {
+  const source =
+    typeof req.path === 'string' ? req.path : (req.originalUrl ?? req.url ?? '').split('?')[0];
+  return (source ?? '').slice((source ?? '').lastIndexOf('/') + 1);
+}
+
+/**
+ * tRPC decodes the whole procedure segment, then splits on comma only for a
+ * batch call. A bad escape is a failed parse, not a procedure name.
+ */
+export function parseTrpcProcedures(req: TrpcCallRequest): ParsedTrpcProcedures {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(procedureSegment(req));
+  } catch (error) {
+    if (error instanceof URIError) return { ok: false };
+    throw error;
+  }
+  const batch = isBatchCall(req);
+  return { ok: true, procedures: batch ? decoded.split(',') : [decoded], batch };
+}
+
+export type TrpcCallRejection = 'decode' | 'batch-size' | 'auth-writes';
+
+/** Shared by the pre-procedure 400 and the auth rate-limit skip / account key. */
+export function trpcCallRejection(req: TrpcCallRequest): TrpcCallRejection | undefined {
+  const parsed = parseTrpcProcedures(req);
+  if (!parsed.ok) return 'decode';
+  if (parsed.batch && parsed.procedures.length > TRPC_MAX_BATCH_SIZE) return 'batch-size';
+  let authWrites = 0;
+  for (const name of parsed.procedures) {
+    if (AUTH_WRITE_PROCEDURES.has(name)) authWrites += 1;
+  }
+  if (authWrites > 1) return 'auth-writes';
+  return undefined;
+}
+
+const TRPC_BAD_REQUEST = {
+  error: {
+    message: t('zh-CN', 'error.app.BAD_REQUEST'),
+    code: -32600,
+    data: {
+      code: 'BAD_REQUEST',
+      appCode: APP_ERROR_CODES.BAD_REQUEST,
+      httpStatus: 400,
+    },
+  },
+};
+
+/**
+ * Runs before rate limiters and before tRPC. A bad procedure path, a batch
+ * over {@link TRPC_MAX_BATCH_SIZE}, or more than one auth-write slot is a
+ * 400 and does not execute or count any procedure.
+ */
+export function rejectInvalidTrpcCall(): RequestHandler {
+  return (req, res, next) => {
+    if (trpcCallRejection(req) === undefined) {
+      next();
+      return;
+    }
+    res.status(400).type('application/json').send(TRPC_BAD_REQUEST);
+  };
 }
 
 function trpcTooManyRequestsError(path: string | undefined) {
@@ -65,11 +179,14 @@ function trpcTooManyRequestsError(path: string | undefined) {
 }
 
 function trpcRateLimitHandler(req: Request, res: Response): void {
-  const paths = getTrpcPaths(req);
-  const isBatch = req.query.batch === '1';
-  const payload = isBatch
-    ? paths.map((path) => trpcTooManyRequestsError(path))
-    : trpcTooManyRequestsError(paths[0]);
+  const parsed = parseTrpcProcedures(req);
+  if (!parsed.ok) {
+    res.status(429).type('application/json').send(trpcTooManyRequestsError(undefined));
+    return;
+  }
+  const payload = parsed.batch
+    ? parsed.procedures.map((path) => trpcTooManyRequestsError(path || undefined))
+    : trpcTooManyRequestsError(parsed.procedures[0] || undefined);
 
   res.status(429).type('application/json').send(payload);
 }
@@ -78,7 +195,14 @@ function trpcRateLimitHandler(req: Request, res: Response): void {
 // ThrottlerGuard do not intercept them. We layer express-rate-limit on the
 // sensitive write paths instead. Reads (queries) stay un-throttled here.
 // Counters live in Redis so API replicas share one bucket. Each limiter has
-// its own prefix. passOnStoreError lets the request through when Redis is down.
+// its own prefix. When Redis errors, a write falls back to a process-local
+// counter with the same limit instead of being allowed through.
+//
+// Login has a second bucket keyed by a hash of the normalized identifier.
+// The window matches authMutation (60s, 10). There is no lock longer than
+// that window. A successful login below the limit deletes the key. The
+// limiter runs before the procedure, so the request that crosses the limit
+// is 429 before the password is checked.
 //
 // Why per-route limiters instead of a single global one: each mutation has
 // a different abuse profile — login attempts deserve a 1-minute window
@@ -146,29 +270,194 @@ async function sendRedisCommand(
   return toRedisReply(await redis.sendCommand(args));
 }
 
-function createRedisStore(redis: RateLimitRedis, prefix: string): RedisStore {
-  const store = new RedisStore({
+let redisRateLimitErrors = 0;
+
+/** How many rate-limit Redis commands have failed in this process. */
+export function rateLimitRedisErrorCount(): number {
+  return redisRateLimitErrors;
+}
+
+function noteRedisRateLimitError(error: unknown): void {
+  redisRateLimitErrors += 1;
+  const detail = error instanceof Error ? error.message : 'unknown';
+  rateLimitLogger.warn(`redis error #${redisRateLimitErrors}: ${detail}`);
+}
+
+/**
+ * Redis first. A store error uses the in-process counter so a write is still
+ * limited. The memory counter does not survive a restart and is not shared
+ * across API replicas.
+ */
+class RedisMemoryFallbackStore implements Store {
+  readonly localKeys = false;
+  readonly prefix: string;
+
+  constructor(
+    private readonly redisStore: RedisStore,
+    private readonly memoryStore: MemoryStore,
+    prefix: string,
+  ) {
+    this.prefix = prefix;
+  }
+
+  init(options: Parameters<NonNullable<Store['init']>>[0]): void {
+    this.redisStore.init(options);
+    this.memoryStore.init(options);
+  }
+
+  async get(key: string) {
+    try {
+      return await this.redisStore.get(key);
+    } catch (error) {
+      noteRedisRateLimitError(error);
+      return this.memoryStore.get(key);
+    }
+  }
+
+  async increment(key: string) {
+    try {
+      return await this.redisStore.increment(key);
+    } catch (error) {
+      noteRedisRateLimitError(error);
+      return this.memoryStore.increment(key);
+    }
+  }
+
+  async decrement(key: string): Promise<void> {
+    try {
+      await this.redisStore.decrement(key);
+    } catch (error) {
+      noteRedisRateLimitError(error);
+      await this.memoryStore.decrement(key);
+    }
+  }
+
+  async resetKey(key: string): Promise<void> {
+    await this.memoryStore.resetKey(key);
+    try {
+      await this.redisStore.resetKey(key);
+    } catch (error) {
+      noteRedisRateLimitError(error);
+    }
+  }
+
+  shutdown(): void {
+    // RedisStore does not own the shared client and has no shutdown hook.
+    // MemoryStore's window timer is the one that would leak.
+    this.memoryStore.shutdown();
+  }
+}
+
+function createRedisStore(redis: RateLimitRedis, prefix: string): RedisMemoryFallbackStore {
+  const redisStore = new RedisStore({
     prefix,
     sendCommand: (...command: string[]) => sendRedisCommand(redis, command),
   });
   // SCRIPT LOAD starts in the constructor. A rejected promise with no handler
   // crashes Node, which would take the API down whenever Redis is down.
-  void store.incrementScriptSha.catch(() => undefined);
-  void store.getScriptSha.catch(() => undefined);
-  return store;
+  void redisStore.incrementScriptSha.catch(() => undefined);
+  void redisStore.getScriptSha.catch(() => undefined);
+  return new RedisMemoryFallbackStore(redisStore, new CappedMemoryStore(), prefix);
 }
+
+/**
+ * MemoryStore already drops untouched keys after two windows. This cap
+ * refuses a new key once the live maps are full, so a client rotating keys
+ * cannot grow the process without bound. Existing keys still increment.
+ * Evicting an old key would let that rotation skip a counter that is still
+ * inside the window.
+ */
+export class CappedMemoryStore extends MemoryStore {
+  constructor(private readonly maxEntries: number = MEMORY_FALLBACK_MAX_ENTRIES) {
+    super();
+  }
+
+  override async increment(key: string) {
+    const known = this.current.has(key) || this.previous.has(key);
+    if (!known && this.current.size + this.previous.size >= this.maxEntries) {
+      return {
+        totalHits: Number.MAX_SAFE_INTEGER,
+        resetTime: new Date(Date.now() + this.windowMs),
+      };
+    }
+    return super.increment(key);
+  }
+}
+
+/** trim + lowercase. Email and username keys share this form. */
+export function normalizeAuthAccount(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+/** Startup fails when this is empty. The raw secret is not the HMAC key. */
+export function authAccountKeySecret(): string {
+  const secret = process.env.JWT_SECRET?.trim() ?? '';
+  if (!secret) {
+    throw new Error('JWT_SECRET is required to derive auth account rate-limit keys');
+  }
+  return secret;
+}
+
+function authAccountHmacKey(): Buffer {
+  return createHmac('sha256', authAccountKeySecret()).update(AUTH_ACCOUNT_KEY_LABEL).digest();
+}
+
+/**
+ * HMAC-SHA256 of the normalized account under a key derived from JWT_SECRET.
+ * The Redis key and logs store only this digest.
+ */
+export function authAccountKey(account: string): string {
+  const normalized = normalizeAuthAccount(account);
+  return createHmac('sha256', authAccountHmacKey()).update(normalized).digest('hex');
+}
+
+/**
+ * Raw input for one procedure, matching this server's tRPC setup.
+ * `initTRPC` has no transformer, so deserialize is the identity: a non-batch
+ * body is the input, and a batch body contributes `body[index]` only.
+ * A `json` property is an ordinary field. Zod strips it; it is not an envelope.
+ */
+export function trpcProcedureInput(body: unknown, index: number, batched: boolean): unknown {
+  if (!batched) return body;
+  const record = asRecord(body);
+  if (!record || !Object.prototype.hasOwnProperty.call(record, String(index))) return undefined;
+  return record[String(index)];
+}
+
+/**
+ * Account the login mutation will actually check.
+ * Uses the same `loginInput` schema as `auth.login`. A failed parse is the
+ * same rejection tRPC returns before the handler, so there is no password
+ * check to count. A successful parse uses the trimmed identifier zod keeps,
+ * not a sibling `json` object.
+ */
+export function readAuthAccount(
+  req: TrpcCallRequest & {
+    body?: unknown;
+  },
+): string | undefined {
+  const parsed = parseTrpcProcedures(req);
+  if (!parsed.ok) return undefined;
+  const index = parsed.procedures.indexOf('auth.login');
+  if (index < 0) return undefined;
+  const login = loginInput.safeParse(trpcProcedureInput(req.body, index, parsed.batch));
+  if (!login.success) return undefined;
+  const normalized = normalizeAuthAccount(login.data.identifier);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+export const CLEAR_LOGIN_ACCOUNT_LIMIT = 'clearLoginAccountLimit';
+
+export type ClearLoginAccountLimit = (identifier: string) => Promise<void>;
 
 export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> = {
   authMutation: {
     windowMs: 60_000,
     limit: 10,
     skip: (req) => {
-      const url = req.originalUrl ?? req.url ?? '';
-      return (
-        !url.includes('auth.register') &&
-        !url.includes('auth.login') &&
-        !url.includes('auth.changePassword')
-      );
+      const parsed = parseTrpcProcedures(req);
+      if (!parsed.ok) return true;
+      return !parsed.procedures.some((name) => AUTH_WRITE_PROCEDURES.has(name));
     },
   },
   commentCreate: {
@@ -221,11 +510,54 @@ export function createRateLimiters(
           keyGenerator: ipKey,
           skip: resolved.skip,
           handler: trpcRateLimitHandler,
-          passOnStoreError: true,
+          // The fallback store swallows Redis errors. If it still throws, fail
+          // the request instead of letting the write through.
+          passOnStoreError: false,
           logger: redisStoreLogger,
           store: createRedisStore(redis, rateLimitStorePrefix(name, keyPrefix)),
         }),
       };
     },
   );
+}
+
+export type AuthAccountLimiter = {
+  middleware: RequestHandler;
+  clear: ClearLoginAccountLimit;
+};
+
+/**
+ * Same window and limit as the login IP limiter, including test overrides.
+ * The key is only the account hash, so a new client IP does not reset it.
+ */
+export function createAuthAccountLimiter(
+  redis: RateLimitRedis,
+  overrides: RateLimitOverrides = {},
+  keyPrefix: string = defaultRateLimitPrefix(),
+): AuthAccountLimiter {
+  authAccountKeySecret();
+  const config = productionRateLimitConfigs.authMutation;
+  const windowMs = overrides.authMutation?.windowMs ?? config.windowMs;
+  const limit = overrides.authMutation?.limit ?? config.limit;
+  const store = createRedisStore(redis, `${keyPrefix}authAccount:`);
+  const middleware = rateLimit({
+    windowMs,
+    limit,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    // Must not read req.ip. express-rate-limit rejects a key generator that
+    // touches the IP without ipKeyGenerator, and this bucket is not per IP.
+    keyGenerator: (req) => authAccountKey(readAuthAccount(req) ?? ''),
+    skip: (req) => readAuthAccount(req) === undefined,
+    handler: trpcRateLimitHandler,
+    passOnStoreError: false,
+    logger: redisStoreLogger,
+    store,
+  });
+  const clear: ClearLoginAccountLimit = async (identifier) => {
+    const normalized = normalizeAuthAccount(identifier);
+    if (!normalized) return;
+    await store.resetKey(authAccountKey(normalized));
+  };
+  return { middleware, clear };
 }

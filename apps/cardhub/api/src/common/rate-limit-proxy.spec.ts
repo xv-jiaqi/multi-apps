@@ -120,46 +120,32 @@ describe('rate limit proxy IP handling', () => {
     }
   });
 
-  it('returns a tRPC-shaped JSON error array for throttled batch requests', async () => {
+  it('rejects a batch of two auth writes before either one is counted', async () => {
     const app = await makeTestApp();
     try {
       await request(app.getHttpServer())
         .get('/trpc/auth.login,auth.register?batch=1')
         .set('X-Forwarded-For', '203.0.113.10')
-        .expect((res) => expect(res.status).not.toBe(429));
-      await request(app.getHttpServer())
-        .get('/trpc/auth.login,auth.register?batch=1')
-        .set('X-Forwarded-For', '203.0.113.10')
         .expect('Content-Type', /application\/json/)
-        .expect(429)
+        .expect(400)
         .expect((res) => {
-          expect(res.body).toEqual([
-            {
-              error: {
-                message: '操作太频繁，请稍后再试',
-                code: -32029,
-                data: {
-                  code: 'TOO_MANY_REQUESTS',
-                  appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
-                  httpStatus: 429,
-                  path: 'auth.login',
-                },
+          expect(res.body).toEqual({
+            error: {
+              message: '请求无效，请检查后再试',
+              code: -32600,
+              data: {
+                code: 'BAD_REQUEST',
+                appCode: APP_ERROR_CODES.BAD_REQUEST,
+                httpStatus: 400,
               },
             },
-            {
-              error: {
-                message: '操作太频繁，请稍后再试',
-                code: -32029,
-                data: {
-                  code: 'TOO_MANY_REQUESTS',
-                  appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
-                  httpStatus: 429,
-                  path: 'auth.register',
-                },
-              },
-            },
-          ]);
+          });
+          expect(JSON.stringify(res.body)).not.toContain('Batch');
         });
+      await request(app.getHttpServer())
+        .get('/trpc/auth.login')
+        .set('X-Forwarded-For', '203.0.113.10')
+        .expect((res) => expect(res.status).not.toBe(429));
     } finally {
       await app.close();
     }
