@@ -32,6 +32,16 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # Cache reads and the Redis rate-limit store fail open when this is
+      # down, but the tests that expect a 429 need a live Redis.
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
       DATABASE_URL: postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=public
