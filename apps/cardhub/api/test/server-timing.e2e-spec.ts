@@ -57,13 +57,14 @@ describe('Server-Timing', () => {
   });
 
   it('sends Timing-Allow-Origin on preflight only for an allowed origin', async () => {
+    // CI sets CORS_ORIGIN to this origin and replaces the default allowlist.
     const allowed = await request(app.getHttpServer())
       .options('/health')
-      .set('Origin', 'https://card-hub.app')
+      .set('Origin', ALLOWED_ORIGIN)
       .set('Access-Control-Request-Method', 'GET');
 
-    expect(allowed.headers['timing-allow-origin']).toBe('https://card-hub.app');
-    expect(allowed.headers['access-control-allow-origin']).toBe('https://card-hub.app');
+    expect(allowed.headers['timing-allow-origin']).toBe(ALLOWED_ORIGIN);
+    expect(allowed.headers['access-control-allow-origin']).toBe(ALLOWED_ORIGIN);
 
     const rejected = await request(app.getHttpServer())
       .options('/health')
