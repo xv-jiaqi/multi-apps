@@ -118,6 +118,111 @@ read_previous_image() {
   printf '%s' "${image}"
 }
 
+# Print true, false, or nothing. Empty means the GitHub variable is unset
+# and the env file must be left alone. Anything else is refused. The raw
+# value is never printed.
+normalize_password_prehash_write() {
+  local value
+  value="${PASSWORD_PREHASH_WRITE-}"
+  value="${value//$'\r'/}"
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  case "${value}" in
+    ""|true|false)
+      printf '%s' "${value}"
+      ;;
+    *)
+      echo "PASSWORD_PREHASH_WRITE must be the exact string true or false" >&2
+      return 64
+      ;;
+  esac
+}
+
+# Replace every PASSWORD_PREHASH_WRITE assignment, or append one. Comments
+# and other keys are copied through and are not printed. Unset, empty, and
+# whitespace leave the file untouched, including its inode.
+apply_password_prehash_write() {
+  local file="$1"
+  local value key tmp
+  key="PASSWORD_PREHASH_WRITE"
+  value="$(normalize_password_prehash_write)" || return $?
+  if [ -z "${value}" ]; then
+    return 0
+  fi
+  if [ ! -f "${file}" ]; then
+    echo "Missing env file: ${file}" >&2
+    return 1
+  fi
+
+  tmp="$(mktemp "${file}.tmp.XXXXXX")" || return 1
+  chmod 600 "${tmp}"
+  if ! awk -v key="${key}" -v value="${value}" '
+    function trim(s) {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
+      return s
+    }
+    {
+      raw = $0
+      sub(/\r$/, "", raw)
+      if (raw ~ /^[[:space:]]*#/ || raw ~ /^[[:space:]]*$/) {
+        print
+        next
+      }
+      eq = index(raw, "=")
+      if (eq == 0) {
+        print
+        next
+      }
+      name = trim(substr(raw, 1, eq - 1))
+      if (name == key) {
+        print key "=" value
+        next
+      }
+      print
+    }
+  ' "${file}" > "${tmp}"; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: could not rewrite ${key}" >&2
+    return 1
+  fi
+
+  if ! awk -v key="${key}" '
+    BEGIN { found = 0 }
+    {
+      raw = $0
+      sub(/\r$/, "", raw)
+      if (raw ~ /^[[:space:]]*#/ || raw ~ /^[[:space:]]*$/) next
+      eq = index(raw, "=")
+      if (eq == 0) next
+      name = substr(raw, 1, eq - 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
+      if (name == key) found = 1
+    }
+    END { exit found ? 0 : 1 }
+  ' "${tmp}"; then
+    printf '%s=%s\n' "${key}" "${value}" >> "${tmp}"
+  fi
+
+  if [ -s "${file}" ] && [ ! -s "${tmp}" ]; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: rewrite produced an empty file" >&2
+    return 1
+  fi
+
+  if cmp -s "${file}" "${tmp}"; then
+    rm -f "${tmp}"
+    return 0
+  fi
+
+  chmod --reference="${file}" "${tmp}" || chmod 600 "${tmp}"
+  if ! mv -f "${tmp}" "${file}"; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: could not replace it" >&2
+    return 1
+  fi
+  printf '%s\n' "${key}=${value}"
+}
+
 main() {
   local environment image_tag expected_sha env_name project base_dir
   environment="$1"
@@ -178,6 +283,12 @@ main() {
     echo "ENV_NAME in ${env_file} must be '${env_name}', got '${env_file_env_name:-<missing>}'" >&2
     exit 1
   fi
+
+  # GitHub Environment variable, forwarded by deploy.yml. Unset or blank
+  # keeps the line already on disk (staging stays true until the variable
+  # is set). true and false are written before any container is replaced.
+  # Other lines in the env file are secrets and are not printed.
+  apply_password_prehash_write "${env_file}" || exit $?
 
   cd "${app_dir}"
 
