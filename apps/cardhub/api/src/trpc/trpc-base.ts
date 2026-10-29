@@ -3,6 +3,7 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import {
   ADMIN_CATALOG_ERROR_CODES,
   APP_ERROR_CODES,
+  appErrorMessage,
   isAppErrorCode,
   t,
   type AdminCatalogErrorCode,
@@ -143,6 +144,69 @@ function isZodCause(cause: unknown): boolean {
   return named.name === 'ZodError' || Array.isArray(named.issues);
 }
 
+const ZOD_DEFAULT_MESSAGE = /^(?:Too small|Too big|Invalid(?: input)?|Expected |Unrecognized key)/;
+
+export interface PublicSchemaIssue {
+  path: Array<string | number>;
+  message: string;
+  code?: string;
+  minimum?: number;
+  maximum?: number;
+}
+
+export interface PublicZodError {
+  formErrors: string[];
+  fieldErrors: Record<string, string[]>;
+  issues: PublicSchemaIssue[];
+}
+
+function publicIssueMessage(message: string): string {
+  const trimmed = message.trim();
+  if (!trimmed || ZOD_DEFAULT_MESSAGE.test(trimmed)) {
+    return appErrorMessage('zh-CN', APP_ERROR_CODES.VALIDATION);
+  }
+  return trimmed;
+}
+
+function schemaIssues(cause: unknown): PublicSchemaIssue[] | undefined {
+  if (typeof cause !== 'object' || cause === null) return undefined;
+  const named = cause as { name?: unknown; issues?: unknown };
+  if (named.name !== 'ZodError' && named.name !== 'SchemaError') return undefined;
+  if (!Array.isArray(named.issues) || named.issues.length === 0) return undefined;
+
+  const issues: PublicSchemaIssue[] = [];
+  for (const issue of named.issues) {
+    if (!isPlainObject(issue)) continue;
+    const path = Array.isArray(issue.path)
+      ? issue.path.flatMap((part) =>
+          typeof part === 'string' || typeof part === 'number' ? [part] : [],
+        )
+      : [];
+    const message = publicIssueMessage(typeof issue.message === 'string' ? issue.message : '');
+    const next: PublicSchemaIssue = { path, message };
+    if (typeof issue.code === 'string') next.code = issue.code;
+    if (typeof issue.minimum === 'number') next.minimum = issue.minimum;
+    if (typeof issue.maximum === 'number') next.maximum = issue.maximum;
+    issues.push(next);
+  }
+  return issues.length > 0 ? issues : undefined;
+}
+
+function publicZodError(issues: PublicSchemaIssue[]): PublicZodError {
+  const formErrors: string[] = [];
+  const fieldErrors: Record<string, string[]> = {};
+  for (const issue of issues) {
+    const head = issue.path[0];
+    if (head === undefined) {
+      formErrors.push(issue.message);
+      continue;
+    }
+    const key = String(head);
+    fieldErrors[key] = [...(fieldErrors[key] ?? []), issue.message];
+  }
+  return { formErrors, fieldErrors, issues };
+}
+
 function resolvedAppCode(error: { code: string; cause?: unknown }): string {
   const fromCause = readAppCode(error.cause);
   if (fromCause) return fromCause;
@@ -228,18 +292,26 @@ const trpc = initTRPC.context<TrpcContext>().create({
       ? sanitizeGovernanceSubject(error.cause.subject)
       : undefined;
     const appCode = resolvedAppCode(error);
+    const issues = error.code === 'BAD_REQUEST' ? schemaIssues(error.cause) : undefined;
+    const validationMessage = appErrorMessage('zh-CN', APP_ERROR_CODES.VALIDATION);
     const data = {
       ...shape.data,
+      ...(issues ? { zodError: publicZodError(issues) } : {}),
       ...(adminCatalogError ? { adminCatalogError } : {}),
       ...(subject ? { subject } : {}),
       appCode,
     };
+    if (issues && typeof data.stack === 'string' && shape.message) {
+      data.stack = data.stack.split(shape.message).join(validationMessage);
+    }
     if (process.env.NODE_ENV === 'production') {
       delete data.stack;
     }
     return {
       ...shape,
-      message: publicErrorMessage(shape.message, error.code, shape.data.httpStatus, error.cause),
+      message: issues
+        ? validationMessage
+        : publicErrorMessage(shape.message, error.code, shape.data.httpStatus, error.cause),
       data,
     };
   },
