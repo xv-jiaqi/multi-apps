@@ -76,7 +76,7 @@ function SeriesHero({
         >
           {series.title}
         </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-white/90">
+        <p className="max-w-2xl min-w-0 text-sm leading-relaxed text-white/90 wrap-anywhere">
           {series.description ?? ''}
         </p>
         <p className="text-xs uppercase tracking-widest text-white/80">{cardCountLabel}</p>
