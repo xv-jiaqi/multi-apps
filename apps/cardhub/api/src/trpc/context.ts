@@ -1,5 +1,6 @@
 import type { CreateExpressContextOptions } from '@trpc/server/adapters/express';
 import { InvalidAuthTokenError, type AuthService } from '../modules/auth/auth.service';
+import { recordDailyActivity } from '../modules/metrics/daily-activity';
 import type { PrismaService } from '../modules/prisma/prisma.service';
 
 export interface TrpcUser {
@@ -43,6 +44,11 @@ export function makeCreateContext(auth: AuthService, prisma: PrismaService) {
             select: { tokenVersion: true, role: true, bannedAt: true },
           });
           if (row && row.tokenVersion === tokenVer) {
+            await recordDailyActivity(prisma, payload.sub, {
+              warn: (code) => {
+                req.log?.warn({ errCode: code }, 'daily activity write failed');
+              },
+            });
             return {
               req,
               res,

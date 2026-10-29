@@ -42,6 +42,7 @@ model User {
   reportsResolved Report[]  @relation("ReportResolver")
   auditLogsActed    AuditLog[] @relation("AuditActor")
   auditLogsTargeted AuditLog[] @relation("AuditTargetUser")
+  dailyActivities   UserDailyActivity[]
   bannedBy   User?  @relation("UserBannedBy", fields: [bannedById], references: [id], onDelete: SetNull)
   bannedUsers User[] @relation("UserBannedBy")
 
@@ -330,4 +331,20 @@ model AuditLog {
   @@index([targetUserId, createdAt])
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+// One row per user per UTC calendar day. Written from an authenticated tRPC
+// request. Stores no IP, user agent, email, or username. Old servers ignore
+// the table. Expand-only: do not drop it while this version is still running.
+model UserDailyActivity {
+  id        String   @id @default(uuid())
+  userId    String
+  day       DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, day])
+  @@index([day])
+  @@map("user_daily_activities")
 }
