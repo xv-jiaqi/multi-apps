@@ -21,6 +21,29 @@ interface ReportButtonProps {
 const triggerClassName =
   'inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-600 hover:text-neutral-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function reasonFieldCode(error: unknown): string | null {
+  if (!isRecord(error) || !isRecord(error.data) || !isRecord(error.data.zodError)) return null;
+  const zodError = error.data.zodError;
+  if (Array.isArray(zodError.issues)) {
+    for (const issue of zodError.issues) {
+      if (!isRecord(issue)) continue;
+      const path = Array.isArray(issue.path) ? issue.path : [];
+      const message = typeof issue.message === 'string' ? issue.message : '';
+      if (path[0] === 'reason' && message) return message;
+    }
+  }
+  const fieldErrors = zodError.fieldErrors;
+  if (!isRecord(fieldErrors)) return null;
+  const reason = fieldErrors.reason;
+  const messages = Array.isArray(reason) ? reason : [];
+  const first = messages.find((item) => typeof item === 'string' && item.length > 0);
+  return typeof first === 'string' ? first : null;
+}
+
 /**
  * Inline report control. The trigger stays mounted while the form is open so
  * focus can return to it. Pass children to put the form on the next row.
@@ -53,6 +76,12 @@ export const ReportButton = observer(function ReportButton({
       setError(null);
     },
     onError(err) {
+      const code = reasonFieldCode(err);
+      if (code) {
+        setError(fieldErrorMessage(locale.locale, code));
+        textareaRef.current?.focus();
+        return;
+      }
       const message = presentError(err);
       if (message) setError(message);
     },

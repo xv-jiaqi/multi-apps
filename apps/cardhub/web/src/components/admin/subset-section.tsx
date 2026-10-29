@@ -17,6 +17,7 @@ import { trpc } from '../../lib/trpc';
 import { useStores } from '../../stores/root-store';
 import { AdminField } from './admin-field';
 import {
+  applyValidationFeedback,
   failureText,
   isAccessRevoked,
   readTrpcFailure,
@@ -101,7 +102,14 @@ export const SubsetSection = observer(function SubsetSection({
         setErrors({ slug: tt('admin.error.slugTaken') });
         return;
       }
-      setFormError(failureText(locale.locale, error, 'admin.saveFailed'));
+      const feedback = applyValidationFeedback(locale.locale, error, 'admin.saveFailed', [
+        'slug',
+        'name',
+        'sortOrder',
+        'kind',
+      ]);
+      setErrors(feedback.fields);
+      setFormError(feedback.message);
     }
   };
 
@@ -211,11 +219,18 @@ export const SubsetSection = observer(function SubsetSection({
           legendSrOnly
           value={kind}
           onValueChange={(value) => setKind(value as SubsetKind)}
+          invalid={Boolean(errors.kind)}
+          describedBy={errors.kind ? 'subset-kind-error' : undefined}
           options={[
             { value: 'BASE', label: tt('admin.subset.kindBase') },
             { value: 'INSERT', label: tt('admin.subset.kindInsert') },
           ]}
         />
+        {errors.kind ? (
+          <p id="subset-kind-error" className="text-xs text-red-700">
+            {errors.kind}
+          </p>
+        ) : null}
         <AdminField id="subset-sort" label={tt('admin.field.sortOrder')} error={errors.sortOrder}>
           <Input
             type="number"
