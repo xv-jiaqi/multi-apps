@@ -30,6 +30,7 @@ export function RouteErrorFallback() {
 
   return (
     <ErrorFallback
+      withShell
       error={error}
       restoreFocus={crashRetry > 0}
       onRetry={() => {

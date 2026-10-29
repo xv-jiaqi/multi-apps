@@ -806,51 +806,58 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
                   {comment.content}
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  {canReply ? (
-                    <button
-                      type="button"
-                      ref={(node) => {
-                        replyButtonRefs.current[replyKey] = node;
-                      }}
-                      aria-expanded={composerOpen && openerKey === replyKey}
-                      aria-controls={inputId}
-                      aria-label={tt('comment.replyAria', { user: comment.user.username })}
-                      onClick={() => openReply(comment.id, comment.id, comment.user.username, null)}
-                      className={replyActionClassName}
-                    >
-                      {tt('comment.reply')}
-                    </button>
-                  ) : null}
-                  {!isConfirming && session.user?.id !== comment.user.id ? (
-                    <ReportButton targetType="COMMENT" targetId={comment.id} />
-                  ) : null}
-                  {!isConfirming && canDelete ? (
-                    <button
-                      type="button"
-                      ref={(node) => {
-                        deleteButtonRefs.current[comment.id] = node;
-                      }}
-                      aria-label={tt('card.detail.commentDeleteAria', {
-                        user: comment.user.username,
-                      })}
-                      onClick={() => {
-                        setDeleteError(null);
-                        setStatusMessage('');
-                        setDeleteReason('');
-                        setConfirmingId(comment.id);
-                      }}
-                      className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                    >
-                      {tt('card.detail.commentDelete')}
-                    </button>
-                  ) : null}
-                  {replyCount > 0 ? (
-                    <span className="text-xs text-neutral-600">
-                      {tt('comment.replyCount', { count: replyCount })}
-                    </span>
-                  ) : null}
-                </div>
+                <ReportButton targetType="COMMENT" targetId={comment.id}>
+                  {({ trigger, form }) => (
+                    <>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        {canReply ? (
+                          <button
+                            type="button"
+                            ref={(node) => {
+                              replyButtonRefs.current[replyKey] = node;
+                            }}
+                            aria-expanded={composerOpen && openerKey === replyKey}
+                            aria-controls={inputId}
+                            aria-label={tt('comment.replyAria', { user: comment.user.username })}
+                            onClick={() =>
+                              openReply(comment.id, comment.id, comment.user.username, null)
+                            }
+                            className={replyActionClassName}
+                          >
+                            {tt('comment.reply')}
+                          </button>
+                        ) : null}
+                        {!isConfirming && session.user?.id !== comment.user.id ? trigger : null}
+                        {!isConfirming && canDelete ? (
+                          <button
+                            type="button"
+                            ref={(node) => {
+                              deleteButtonRefs.current[comment.id] = node;
+                            }}
+                            aria-label={tt('card.detail.commentDeleteAria', {
+                              user: comment.user.username,
+                            })}
+                            onClick={() => {
+                              setDeleteError(null);
+                              setStatusMessage('');
+                              setDeleteReason('');
+                              setConfirmingId(comment.id);
+                            }}
+                            className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                          >
+                            {tt('card.detail.commentDelete')}
+                          </button>
+                        ) : null}
+                        {replyCount > 0 ? (
+                          <span className="text-xs text-neutral-600">
+                            {tt('comment.replyCount', { count: replyCount })}
+                          </span>
+                        ) : null}
+                      </div>
+                      {form}
+                    </>
+                  )}
+                </ReportButton>
                 {isConfirming ? (
                   <div
                     role="group"
@@ -933,41 +940,49 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           aria-busy={replyDeleting ? true : undefined}
                           className="scroll-mt-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
-                          <div className="flex min-h-6 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600">
-                            <span className="font-semibold text-neutral-900 wrap-anywhere">
-                              @{reply.user.username}
-                            </span>
-                            {!replyConfirming ? (
-                              <div className="ml-auto flex max-w-full flex-wrap items-center gap-x-3 gap-y-1">
-                                <time dateTime={reply.createdAt} className="whitespace-nowrap">
-                                  {formatDateTime(reply.createdAt, locale.locale)}
-                                </time>
-                                {session.user?.id !== reply.user.id ? (
-                                  <ReportButton targetType="COMMENT" targetId={reply.id} />
-                                ) : null}
-                                {replyCanDelete ? (
-                                  <button
-                                    type="button"
-                                    ref={(node) => {
-                                      deleteButtonRefs.current[reply.id] = node;
-                                    }}
-                                    aria-label={tt('card.detail.commentDeleteAria', {
-                                      user: reply.user.username,
-                                    })}
-                                    onClick={() => {
-                                      setDeleteError(null);
-                                      setStatusMessage('');
-                                      setDeleteReason('');
-                                      setConfirmingId(reply.id);
-                                    }}
-                                    className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                                  >
-                                    {tt('card.detail.commentDelete')}
-                                  </button>
-                                ) : null}
-                              </div>
-                            ) : null}
-                          </div>
+                          <ReportButton targetType="COMMENT" targetId={reply.id}>
+                            {({ trigger, form }) => (
+                              <>
+                                <div className="flex min-h-6 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600">
+                                  <span className="font-semibold text-neutral-900 wrap-anywhere">
+                                    @{reply.user.username}
+                                  </span>
+                                  {!replyConfirming ? (
+                                    <div className="ml-auto flex max-w-full flex-wrap items-center gap-x-3 gap-y-1">
+                                      <time
+                                        dateTime={reply.createdAt}
+                                        className="whitespace-nowrap"
+                                      >
+                                        {formatDateTime(reply.createdAt, locale.locale)}
+                                      </time>
+                                      {session.user?.id !== reply.user.id ? trigger : null}
+                                      {replyCanDelete ? (
+                                        <button
+                                          type="button"
+                                          ref={(node) => {
+                                            deleteButtonRefs.current[reply.id] = node;
+                                          }}
+                                          aria-label={tt('card.detail.commentDeleteAria', {
+                                            user: reply.user.username,
+                                          })}
+                                          onClick={() => {
+                                            setDeleteError(null);
+                                            setStatusMessage('');
+                                            setDeleteReason('');
+                                            setConfirmingId(reply.id);
+                                          }}
+                                          className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                                        >
+                                          {tt('card.detail.commentDelete')}
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+                                </div>
+                                {form}
+                              </>
+                            )}
+                          </ReportButton>
                           <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
                             <CommentText content={reply.content} />
                           </p>

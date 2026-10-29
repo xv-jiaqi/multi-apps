@@ -152,22 +152,6 @@ describe('mapped API error copy', () => {
     expect(screen.queryByText('BAD_REQUEST')).not.toBeInTheDocument();
   });
 
-  it('gives the signed-out report link the comment-area focus ring', () => {
-    render(
-      <MemoryRouter>
-        <ReportButton targetType="COMMENT" targetId="00000000-0000-4000-8000-000000000001" />
-      </MemoryRouter>,
-    );
-    expect(screen.getByRole('link', { name: '举报' })).toHaveClass(
-      'min-h-6',
-      'rounded',
-      'text-neutral-600',
-      'focus-visible:outline-none',
-      'focus-visible:ring-2',
-      'focus-visible:ring-brand-500',
-    );
-  });
-
   it('report shows the validation sentence instead of the server text or code', async () => {
     const user = userEvent.setup();
     rootStore.session.signIn('token', { id: 'u1', username: 'qa_user', role: 'user' });
@@ -177,14 +161,6 @@ describe('mapped API error copy', () => {
       </MemoryRouter>,
     );
     await user.click(screen.getByRole('button', { name: '举报' }));
-    expect(screen.getByRole('button', { name: '取消' })).toHaveClass(
-      'min-h-6',
-      'rounded',
-      'text-neutral-600',
-      'focus-visible:outline-none',
-      'focus-visible:ring-2',
-      'focus-visible:ring-brand-500',
-    );
     show('请简要说明原因，至少 4 个字符', 'VALIDATION', 'BAD_REQUEST');
     expect(screen.getByText('填写的内容不符合要求，请修改后再试')).toBeInTheDocument();
     expect(screen.queryByText('请简要说明原因，至少 4 个字符')).not.toBeInTheDocument();

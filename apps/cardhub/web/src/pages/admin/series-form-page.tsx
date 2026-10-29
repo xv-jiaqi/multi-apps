@@ -2,7 +2,16 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { t } from '@repo/shared';
-import { Button, Card, Input } from '@repo/ui-web';
+import {
+  Button,
+  Card,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui-web';
 import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
@@ -57,6 +66,8 @@ interface SeriesBaseline {
   title: string;
   description: string;
   coverUrl: string;
+  categorySlug: string;
+  releaseDate: string;
 }
 
 const emptySeriesBaseline: SeriesBaseline = {
@@ -64,6 +75,8 @@ const emptySeriesBaseline: SeriesBaseline = {
   title: '',
   description: '',
   coverUrl: '',
+  categorySlug: '',
+  releaseDate: '',
 };
 
 const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'create' | 'edit' }) {
@@ -73,6 +86,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const reportForbidden = useReportForbidden();
   const list = trpc.admin.series.list.useQuery(undefined, { enabled: mode === 'edit' });
+  const categoriesQuery = trpc.admin.categories.list.useQuery();
   const utils = trpc.useUtils();
   const create = trpc.admin.series.create.useMutation();
   const update = trpc.admin.series.update.useMutation();
@@ -83,6 +97,8 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
+  const [categorySlug, setCategorySlug] = useState('');
+  const [releaseDate, setReleaseDate] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [ready, setReady] = useState(mode === 'create');
@@ -110,11 +126,15 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
       title: existing.title,
       description: existing.description ?? '',
       coverUrl: existing.coverUrl ?? '',
+      categorySlug: existing.category?.slug ?? '',
+      releaseDate: existing.releaseDate ?? '',
     };
     setSlugValue(next.slug);
     setTitle(next.title);
     setDescription(next.description);
     setCoverUrl(next.coverUrl);
+    setCategorySlug(next.categorySlug);
+    setReleaseDate(next.releaseDate);
     setBaseline(next);
     setReady(true);
   }, [existing, mode, ready]);
@@ -124,7 +144,9 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
     (slugValue !== baseline.slug ||
       title !== baseline.title ||
       description !== baseline.description ||
-      coverUrl !== baseline.coverUrl);
+      coverUrl !== baseline.coverUrl ||
+      categorySlug !== baseline.categorySlug ||
+      releaseDate !== baseline.releaseDate);
   const unsaved = useUnsavedChanges(dirty);
 
   const pageTitle = mode === 'create' ? tt('admin.series.new') : tt('admin.series.edit');
@@ -170,6 +192,8 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
       title: title.trim(),
       description: description.trim() || undefined,
       coverUrl: coverUrl.trim() || undefined,
+      categorySlug,
+      releaseDate,
     };
     try {
       if (mode === 'create') {
@@ -309,6 +333,36 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600 sm:text-sm"
+              />
+            </AdminField>
+            <div className="space-y-1">
+              <label htmlFor="series-category" className="text-sm font-medium text-neutral-800">
+                {tt('admin.field.category')}
+              </label>
+              <Select
+                value={categorySlug || 'none'}
+                onValueChange={(value) => setCategorySlug(value === 'none' ? '' : value)}
+              >
+                <SelectTrigger id="series-category" size="sm" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{tt('admin.field.categoryNone')}</SelectItem>
+                  {(categoriesQuery.data?.items ?? []).map((category) => (
+                    <SelectItem key={category.slug} value={category.slug}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <AdminField id="series-release" label={tt('admin.field.releaseDate')}>
+              <Input
+                id="series-release"
+                type="date"
+                autoComplete="off"
+                value={releaseDate}
+                onChange={(event) => setReleaseDate(event.target.value)}
               />
             </AdminField>
             <ImageUrlField

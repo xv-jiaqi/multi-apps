@@ -67,6 +67,18 @@ vi.mock('../../lib/trpc', () => ({
           useMutation: () => ({ isPending: false, mutateAsync: async (input: unknown) => input }),
         },
       },
+      subsets: {
+        list: {
+          useQuery: () => ({
+            data: { items: [] },
+            isLoading: false,
+            isError: false,
+            isFetching: false,
+            error: null,
+            refetch: vi.fn(),
+          }),
+        },
+      },
     },
     search: {
       global: {
