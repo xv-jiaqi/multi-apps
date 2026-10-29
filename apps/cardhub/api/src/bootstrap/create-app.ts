@@ -9,6 +9,7 @@ import { AppModule } from '../app.module';
 import { SentryExceptionFilter } from '../common/sentry-exception.filter';
 import { AuthService } from '../modules/auth/auth.service';
 import { PrismaService } from '../modules/prisma/prisma.service';
+import { RedisService } from '../modules/redis/redis.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
 import { configureApp } from './configure-app';
@@ -17,6 +18,8 @@ import { createRateLimiters, type RateLimitOverrides } from './rate-limiters';
 
 export type CreateAppOptions = {
   rateLimitOverrides?: RateLimitOverrides;
+  /** Overrides the Redis key prefix. Tests pass one prefix to share a bucket. */
+  rateLimitPrefix?: string;
 };
 
 function splitVary(
@@ -69,6 +72,7 @@ export async function createApp(options: CreateAppOptions = {}) {
   const trpcService = app.get(TrpcService);
   const authService = app.get(AuthService);
   const prisma = app.get(PrismaService);
+  const redis = app.get(RedisService);
 
   const corsOrigin = config
     .get<string>(
@@ -109,7 +113,11 @@ export async function createApp(options: CreateAppOptions = {}) {
   // SENTRY_DSN is unset so local dev is unaffected.
   app.useGlobalFilters(new SentryExceptionFilter());
 
-  for (const { path, middleware } of createRateLimiters(options.rateLimitOverrides)) {
+  for (const { path, middleware } of createRateLimiters(
+    redis,
+    options.rateLimitOverrides,
+    options.rateLimitPrefix,
+  )) {
     app.use(path, middleware);
   }
 

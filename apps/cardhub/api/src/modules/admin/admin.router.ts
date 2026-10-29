@@ -26,6 +26,7 @@ import { buildAdminTaxonomyRouter } from './admin-taxonomy';
 import { buildAdminAuditRouter, buildAdminUsersRouter } from './governance.router';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { CatalogCache, DirectCatalogCache } from '../redis/catalog-cache';
 
 type AttributeValue = string | number | boolean;
 type Attributes = Record<string, AttributeValue>;
@@ -108,6 +109,16 @@ function normalizeImageUrl(value: string | undefined): string | null {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function relationSlug(value: unknown): string | undefined {
+  if (!isPlainObject(value)) return undefined;
+  return typeof value.slug === 'string' ? value.slug : undefined;
+}
+
+function cardSeriesSlugs(nextSlug: string, previousSlug: string | undefined): string[] {
+  if (previousSlug && previousSlug !== nextSlug) return [nextSlug, previousSlug];
+  return [nextSlug];
 }
 
 function isSlug(value: unknown): value is string {
@@ -406,11 +417,13 @@ export class AdminRouter {
   constructor(
     private readonly t: TrpcBase,
     private readonly prisma: PrismaService,
+    private readonly cache: CatalogCache = new DirectCatalogCache(),
   ) {}
 
   build() {
     const t = this.t;
     const prisma = this.prisma;
+    const cache = this.cache;
 
     const listSeries = t.adminProcedure.query(async () => {
       const series = await prisma.series.findMany({
@@ -604,6 +617,7 @@ export class AdminRouter {
               },
               include: seriesAdminInclude,
             });
+            await cache.invalidate({ kind: 'series', seriesSlug: series.slug });
             return formatSeries(series);
           } catch (error) {
             if (isPrismaUniqueError(error)) {
@@ -631,6 +645,7 @@ export class AdminRouter {
               },
               include: seriesAdminInclude,
             });
+            await cache.invalidate({ kind: 'series', seriesSlug: series.slug });
             return formatSeries(series);
           } catch (error) {
             if (isPlainObject(error) && error.code === 'P2025') {
@@ -670,6 +685,7 @@ export class AdminRouter {
               reason: normalizeDeleteReason(input.reason),
             });
           });
+          await cache.invalidate({ kind: 'series', seriesSlug: input.slug });
           return { ok: true, slug: input.slug, cardCount, commentCount };
         }),
       }),
@@ -711,6 +727,11 @@ export class AdminRouter {
               },
               include: cardAdminInclude,
             });
+            await cache.invalidate({
+              kind: 'card',
+              cardSlug: card.slug,
+              seriesSlugs: [input.seriesSlug],
+            });
             return formatCard(card);
           } catch (error) {
             if (isPrismaUniqueError(error)) {
@@ -736,15 +757,19 @@ export class AdminRouter {
             });
           }
           let subsetId = await subsetIdForSlug(prisma, series.id, input.subsetSlug);
-          if (subsetId === undefined) {
-            const existing = await prisma.card.findUnique({
-              where: { slug: input.slug },
-              select: { seriesId: true, subsetId: true },
-            });
-            if (existing && existing.seriesId !== series.id && existing.subsetId) {
-              subsetId = null;
-            }
+          const existing = await prisma.card.findUnique({
+            where: { slug: input.slug },
+            select: { seriesId: true, subsetId: true, series: { select: { slug: true } } },
+          });
+          if (
+            subsetId === undefined &&
+            existing &&
+            existing.seriesId !== series.id &&
+            existing.subsetId
+          ) {
+            subsetId = null;
           }
+          const previousSeriesSlug = relationSlug(existing?.series);
           const cardNumber = cardNumberForInput(input.cardNumber);
           try {
             const card = await prisma.card.update({
@@ -761,6 +786,11 @@ export class AdminRouter {
               },
               include: cardAdminInclude,
             });
+            await cache.invalidate({
+              kind: 'card',
+              cardSlug: card.slug,
+              seriesSlugs: cardSeriesSlugs(input.seriesSlug, previousSeriesSlug),
+            });
             return formatCard(card);
           } catch (error) {
             if (isPlainObject(error) && error.code === 'P2025') {
@@ -774,7 +804,10 @@ export class AdminRouter {
           const actor = ctx.user;
           const card = await prisma.card.findUnique({
             where: { slug: input.slug },
-            include: { _count: { select: { comments: true } } },
+            include: {
+              _count: { select: { comments: true } },
+              series: { select: { slug: true } },
+            },
           });
           if (!card) throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
           await prisma.$transaction(async (tx) => {
@@ -788,6 +821,12 @@ export class AdminRouter {
               targetUserId: null,
               reason: normalizeDeleteReason(input.reason),
             });
+          });
+          const deletedSeriesSlug = relationSlug(card.series);
+          await cache.invalidate({
+            kind: 'card',
+            cardSlug: input.slug,
+            seriesSlugs: deletedSeriesSlug ? [deletedSeriesSlug] : [],
           });
           return { ok: true, slug: input.slug, commentCount: card._count.comments };
         }),
@@ -803,10 +842,13 @@ export class AdminRouter {
           })
           .input(adminCatalogImportInput)
           .mutation(async ({ input }) => {
-            return input.dryRun ? previewImport(input.data) : applyImport(input.data);
+            if (input.dryRun) return previewImport(input.data);
+            const applied = await applyImport(input.data);
+            await cache.invalidate({ kind: 'catalog' });
+            return applied;
           }),
       }),
-      ...buildAdminTaxonomyRouter(t, prisma),
+      ...buildAdminTaxonomyRouter(t, prisma, cache),
       users: buildAdminUsersRouter(t, prisma),
       audit: buildAdminAuditRouter(t, prisma),
     });
