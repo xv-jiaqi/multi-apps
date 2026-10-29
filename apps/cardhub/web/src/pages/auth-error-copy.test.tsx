@@ -132,7 +132,7 @@ describe('mapped API error copy', () => {
       </MemoryRouter>,
     );
     show('用户名或密码错误', 'INVALID_CREDENTIALS', 'UNAUTHORIZED');
-    expect(screen.getByText('账号或密码不正确')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('账号或密码不正确');
     expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
     expect(screen.queryByText('用户名或密码错误')).not.toBeInTheDocument();
     expect(screen.queryByText('UNAUTHORIZED')).not.toBeInTheDocument();
