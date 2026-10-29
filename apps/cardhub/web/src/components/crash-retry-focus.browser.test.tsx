@@ -18,6 +18,23 @@ declare module 'vitest/browser' {
 import { ErrorBoundary } from './error-boundary';
 import { RouteErrorFallback } from './route-error';
 
+vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
+  trpc: {
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isLoading: false,
+          isFetching: false,
+          isError: false,
+          isSuccess: false,
+        }),
+      },
+    },
+  },
+}));
+
 function PermanentFault(): never {
   throw new Error('permanent-fault');
 }

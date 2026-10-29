@@ -109,7 +109,7 @@ export const ListingsForCard = observer(function ListingsForCard({
             return (
               <li
                 key={listing.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
               >
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="flex items-center gap-2">
@@ -137,9 +137,16 @@ export const ListingsForCard = observer(function ListingsForCard({
                     )}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {!isMine ? <ReportButton targetType="LISTING" targetId={listing.id} /> : null}
-                </div>
+                {!isMine ? (
+                  <ReportButton targetType="LISTING" targetId={listing.id}>
+                    {({ trigger, form }) => (
+                      <>
+                        <div className="flex items-center gap-2">{trigger}</div>
+                        {form}
+                      </>
+                    )}
+                  </ReportButton>
+                ) : null}
               </li>
             );
           })}

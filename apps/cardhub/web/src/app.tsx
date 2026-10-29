@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Outlet, type RouteObject } from 'react-router';
+import { Outlet, useLocation, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
 import { SessionExpiryWatcher } from './components/session-expiry-watcher';
 import { ErrorBoundary, isChunkLoadError } from './components/error-boundary';
@@ -101,9 +101,13 @@ export function LazyRoute({
   fallback?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const location = useLocation();
   // Per-route ErrorBoundary so a single page crash doesn't kill the shell.
+  // location.key remounts the boundary when navigation leaves the crashed page.
   return (
     <ErrorBoundary
+      key={location.key}
+      withShell
       onError={(error) => {
         if (!isChunkLoadError(error)) return;
         captureSentryException(error, undefined, { route: name });

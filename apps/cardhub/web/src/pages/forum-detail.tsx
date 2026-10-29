@@ -583,70 +583,81 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           aria-busy={deletingTopic || undefined}
         >
           <CardHeader className="space-y-2">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {topic.pinned ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-                    <Pin className="size-3" aria-hidden />
-                    {tt('forum.badge.pinned')}
-                  </span>
-                ) : null}
-                <CardTitle ref={titleRef} tabIndex={-1} className="min-w-0 wrap-anywhere text-2xl">
-                  {topic.title}
-                </CardTitle>
-              </div>
-              {confirmingDelete?.kind !== 'topic' ? (
-                <div className="flex items-center gap-2">
-                  {!isOwner ? <ReportButton targetType="TOPIC" targetId={topic.id} /> : null}
-                  {showEditAction ? (
-                    <Link
-                      ref={editLinkRef}
-                      to="edit"
-                      aria-label={tt('forum.detail.editAria')}
-                      onClick={clearTopicFeedback}
-                      className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                    >
-                      {tt('forum.detail.edit')}
-                    </Link>
-                  ) : null}
-                  {session.isAdmin ? (
-                    <button
-                      ref={pinButtonRef}
-                      type="button"
-                      onClick={() => {
-                        clearTopicFeedback();
-                        setPinned.mutate({ id: topic.id, pinned: !topic.pinned });
-                      }}
-                      disabled={setPinned.isPending}
-                      className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
-                    >
-                      {setPinned.isPending
-                        ? topic.pinned
-                          ? tt('forum.detail.unpinning')
-                          : tt('forum.detail.pinning')
-                        : topic.pinned
-                          ? tt('forum.detail.unpin')
-                          : tt('forum.detail.pin')}
-                    </button>
-                  ) : null}
-                  {canDeleteTopic ? (
-                    <button
-                      ref={topicDeleteButtonRef}
-                      type="button"
-                      onClick={() => {
-                        clearTopicFeedback();
-                        setConfirmingDelete({ kind: 'topic' });
-                      }}
-                      disabled={deleteTopic.isPending}
-                      aria-label={tt('forum.detail.deleteTopicAria')}
-                      className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
-                    >
-                      {tt('forum.detail.delete')}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+            <ReportButton targetType="TOPIC" targetId={topic.id}>
+              {({ trigger, form }) => (
+                <>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {topic.pinned ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                          <Pin className="size-3" aria-hidden />
+                          {tt('forum.badge.pinned')}
+                        </span>
+                      ) : null}
+                      <CardTitle
+                        ref={titleRef}
+                        tabIndex={-1}
+                        className="min-w-0 wrap-anywhere text-2xl"
+                      >
+                        {topic.title}
+                      </CardTitle>
+                    </div>
+                    {confirmingDelete?.kind !== 'topic' ? (
+                      <div className="flex items-center gap-2">
+                        {!isOwner ? trigger : null}
+                        {showEditAction ? (
+                          <Link
+                            ref={editLinkRef}
+                            to="edit"
+                            aria-label={tt('forum.detail.editAria')}
+                            onClick={clearTopicFeedback}
+                            className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                          >
+                            {tt('forum.detail.edit')}
+                          </Link>
+                        ) : null}
+                        {session.isAdmin ? (
+                          <button
+                            ref={pinButtonRef}
+                            type="button"
+                            onClick={() => {
+                              clearTopicFeedback();
+                              setPinned.mutate({ id: topic.id, pinned: !topic.pinned });
+                            }}
+                            disabled={setPinned.isPending}
+                            className="rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                          >
+                            {setPinned.isPending
+                              ? topic.pinned
+                                ? tt('forum.detail.unpinning')
+                                : tt('forum.detail.pinning')
+                              : topic.pinned
+                                ? tt('forum.detail.unpin')
+                                : tt('forum.detail.pin')}
+                          </button>
+                        ) : null}
+                        {canDeleteTopic ? (
+                          <button
+                            ref={topicDeleteButtonRef}
+                            type="button"
+                            onClick={() => {
+                              clearTopicFeedback();
+                              setConfirmingDelete({ kind: 'topic' });
+                            }}
+                            disabled={deleteTopic.isPending}
+                            aria-label={tt('forum.detail.deleteTopicAria')}
+                            className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                          >
+                            {tt('forum.detail.delete')}
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                  {form}
+                </>
+              )}
+            </ReportButton>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
               <span className="font-medium text-neutral-700">@{topic.author.username}</span>
               <time dateTime={topic.createdAt} className="whitespace-nowrap">
@@ -949,34 +960,41 @@ const ForumReplyItem = memo(function ForumReplyItem({
           : 'border-white/60 bg-white/80 duration-1000'
       }`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-600">
-        <span className="min-w-0 truncate font-medium text-neutral-700">
-          @{reply.author.username}
-        </span>
-        <div className="ml-auto flex shrink-0 items-center gap-3">
-          <time dateTime={reply.createdAt} className="whitespace-nowrap">
-            {new Date(reply.createdAt).toLocaleString(locale)}
-          </time>
-          {showReport ? <ReportButton targetType="REPLY" targetId={reply.id} /> : null}
-          {canDelete && !confirming ? (
-            <button
-              ref={(node) => {
-                if (node) {
-                  deleteButtonRef.current.set(reply.id, node);
-                } else {
-                  deleteButtonRef.current.delete(reply.id);
-                }
-              }}
-              type="button"
-              onClick={() => onAskDelete(reply.id)}
-              aria-label={deleteAriaLabel}
-              className="inline-flex min-h-6 items-center rounded px-1 text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
-            >
-              {deleteLabel}
-            </button>
-          ) : null}
-        </div>
-      </div>
+      <ReportButton targetType="REPLY" targetId={reply.id}>
+        {({ trigger, form }) => (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-neutral-600">
+              <span className="min-w-0 truncate font-medium text-neutral-700">
+                @{reply.author.username}
+              </span>
+              <div className="ml-auto flex shrink-0 items-center gap-3">
+                <time dateTime={reply.createdAt} className="whitespace-nowrap">
+                  {new Date(reply.createdAt).toLocaleString(locale)}
+                </time>
+                {showReport ? trigger : null}
+                {canDelete && !confirming ? (
+                  <button
+                    ref={(node) => {
+                      if (node) {
+                        deleteButtonRef.current.set(reply.id, node);
+                      } else {
+                        deleteButtonRef.current.delete(reply.id);
+                      }
+                    }}
+                    type="button"
+                    onClick={() => onAskDelete(reply.id)}
+                    aria-label={deleteAriaLabel}
+                    className="inline-flex min-h-6 items-center rounded px-1 text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
+                  >
+                    {deleteLabel}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            {form}
+          </>
+        )}
+      </ReportButton>
       <div className="mt-2 min-w-0">
         <MarkdownView body={reply.body} />
       </div>
