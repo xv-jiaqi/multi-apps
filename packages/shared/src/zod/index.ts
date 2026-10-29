@@ -385,6 +385,42 @@ export const seriesListInput = paginationSchema.extend({
 });
 export type SeriesListInput = z.infer<typeof seriesListInput>;
 
+/** Checklist order. `number` compares the printed card number, not the slug. */
+export const CARD_SERIES_LIST_SORT_VALUES = ['number', 'name', 'rarity', 'created'] as const;
+export type CardSeriesListSort = (typeof CARD_SERIES_LIST_SORT_VALUES)[number];
+
+export const CARD_SERIES_LIST_PAGE_SIZE_DEFAULT = 60;
+export const CARD_SERIES_LIST_PAGE_SIZE_MAX = 100;
+export const CARD_SERIES_LIST_PAGE_MAX = 10_000;
+export const CARD_SERIES_LIST_QUERY_MAX = 200;
+
+const cardsListBySeriesQuery = z
+  .string()
+  .trim()
+  .max(CARD_SERIES_LIST_QUERY_MAX)
+  .optional()
+  .transform((value) => (value === undefined || value.length === 0 ? undefined : value));
+
+/**
+ * Page and page size stay JSON numbers. Unlike `series.list`, strings are
+ * not coerced: a query-string number is an input error.
+ */
+export const cardsListBySeriesInput = z.object({
+  seriesSlug: slugSchema,
+  q: cardsListBySeriesQuery,
+  rarity: z.enum(RARITY_VALUES).optional(),
+  subsetSlug: slugSchema.optional(),
+  sort: z.enum(CARD_SERIES_LIST_SORT_VALUES).default('number'),
+  page: z.number().int().min(1).max(CARD_SERIES_LIST_PAGE_MAX).default(1),
+  pageSize: z
+    .number()
+    .int()
+    .min(1)
+    .max(CARD_SERIES_LIST_PAGE_SIZE_MAX)
+    .default(CARD_SERIES_LIST_PAGE_SIZE_DEFAULT),
+});
+export type CardsListBySeriesInput = z.infer<typeof cardsListBySeriesInput>;
+
 export const adminSeriesUpsertInput = z.object({
   slug: slugSchema,
   title: z.string().trim().min(1).max(120),

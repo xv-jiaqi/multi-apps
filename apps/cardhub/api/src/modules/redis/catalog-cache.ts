@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { ZodType } from 'zod';
+import { CARD_SERIES_LIST_PAGE_SIZE_DEFAULT } from '@repo/shared';
 import { RedisService } from './redis.service';
 
 /** Public catalog entries. Do not put per-user fields (CH-203 collection) in these keys. */
@@ -49,6 +50,51 @@ export function categoriesListKey(): string {
 
 export function cardsBySlugPrefix(): string {
   return `${cacheKeyPrefix()}cards.bySlug:`;
+}
+
+export function cardsListBySeriesPrefix(): string {
+  return `${cacheKeyPrefix()}cards.listBySeries:`;
+}
+
+/** Prefix for every cached page of one series. The slug is the first field. */
+export function cardsListBySeriesSeriesPrefix(seriesSlug: string): string {
+  return `${cardsListBySeriesPrefix()}series=${encodeURIComponent(seriesSlug)}&`;
+}
+
+/**
+ * Defaults match `cardsListBySeriesInput`. Omitted and explicit defaults share
+ * one key. Every filter is part of the key so two queries cannot collide.
+ */
+export function cardsListBySeriesCacheKey(input: {
+  seriesSlug: string;
+  q?: string;
+  rarity?: string;
+  subsetSlug?: string;
+  sort?: string;
+  page?: number;
+  pageSize?: number;
+}): string {
+  const q = input.q ?? '';
+  const rarity = input.rarity ?? '';
+  const subset = input.subsetSlug ?? '';
+  const sort = input.sort ?? 'number';
+  const page = input.page ?? 1;
+  const pageSize = input.pageSize ?? CARD_SERIES_LIST_PAGE_SIZE_DEFAULT;
+  return (
+    `${cardsListBySeriesSeriesPrefix(input.seriesSlug)}` +
+    `q=${encodeURIComponent(q)}` +
+    `&rarity=${encodeURIComponent(rarity)}` +
+    `&subset=${encodeURIComponent(subset)}` +
+    `&sort=${encodeURIComponent(sort)}` +
+    `&page=${page}` +
+    `&pageSize=${pageSize}`
+  );
+}
+
+function cardsListBySeriesDeletionPrefixes(seriesSlugs: readonly string[]): string[] {
+  const slugs = uniqueSlugs(seriesSlugs);
+  if (slugs.length === 0) return [cardsListBySeriesPrefix()];
+  return slugs.map(cardsListBySeriesSeriesPrefix);
 }
 
 export function seriesListCacheKey(
@@ -101,12 +147,21 @@ export function cacheDeletion(change: CatalogChange): CacheDeletion {
           cardBySlugKey(change.cardSlug),
           ...uniqueSlugs(change.seriesSlugs).map(seriesBySlugKey),
         ],
-        prefixes: [seriesListPrefix(), categoryBySlugPrefix()],
+        prefixes: [
+          seriesListPrefix(),
+          categoryBySlugPrefix(),
+          ...cardsListBySeriesDeletionPrefixes(change.seriesSlugs),
+        ],
       };
     case 'series':
       return {
         keys: [seriesBySlugKey(change.seriesSlug), categoriesListKey()],
-        prefixes: [seriesListPrefix(), categoryBySlugPrefix(), cardsBySlugPrefix()],
+        prefixes: [
+          seriesListPrefix(),
+          categoryBySlugPrefix(),
+          cardsBySlugPrefix(),
+          cardsListBySeriesSeriesPrefix(change.seriesSlug),
+        ],
       };
     case 'category':
       return {
@@ -116,7 +171,7 @@ export function cacheDeletion(change: CatalogChange): CacheDeletion {
     case 'subset':
       return {
         keys: [seriesBySlugKey(change.seriesSlug)],
-        prefixes: [cardsBySlugPrefix()],
+        prefixes: [cardsBySlugPrefix(), cardsListBySeriesSeriesPrefix(change.seriesSlug)],
       };
     case 'catalog':
       return { keys: [], prefixes: [cacheKeyPrefix()] };
