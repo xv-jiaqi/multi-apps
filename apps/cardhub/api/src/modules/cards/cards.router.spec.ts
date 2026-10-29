@@ -161,3 +161,119 @@ describe('CardsRouter.bySlug', () => {
     expect(result.attributes).toBeNull();
   });
 });
+
+describe('CardsRouter.listBySeries', () => {
+  function makeListRouter() {
+    const findUnique = jest.fn();
+    const prisma = { series: { findUnique } } as unknown as PrismaService;
+    const caller = new CardsRouter(new TrpcBase(), prisma).build().createCaller({
+      req: {} as never,
+      res: {} as never,
+      user: null,
+    });
+    return { caller, findUnique };
+  }
+
+  const rows = [
+    {
+      id: 'c10',
+      slug: 'n-10',
+      name: '十',
+      rarity: 'common',
+      imageUrl: null,
+      cardNumber: '10',
+      attributes: { attack: 1, lore: 'x', nested: { a: 1 } },
+      createdAt: new Date('2020-01-03T00:00:00.000Z'),
+      subset: { slug: 'base' },
+    },
+    {
+      id: 'c2',
+      slug: 'n-2',
+      name: '二',
+      rarity: 'rare',
+      imageUrl: null,
+      cardNumber: '2',
+      attributes: null,
+      createdAt: new Date('2020-01-02T00:00:00.000Z'),
+      subset: null,
+    },
+    {
+      id: 'c1',
+      slug: 'n-1',
+      name: '一',
+      rarity: 'common',
+      imageUrl: null,
+      cardNumber: '1',
+      attributes: ['nope'],
+      createdAt: new Date('2020-01-01T00:00:00.000Z'),
+      subset: { slug: 'base' },
+    },
+  ];
+
+  it('returns NOT_FOUND when the series is missing', async () => {
+    const { caller, findUnique } = makeListRouter();
+    findUnique.mockResolvedValueOnce(null);
+
+    await expect(caller.listBySeries({ seriesSlug: 'missing-series' })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: '系列不存在',
+    });
+    expect(findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an illegal page before querying', async () => {
+    const { caller, findUnique } = makeListRouter();
+
+    await expect(caller.listBySeries({ seriesSlug: 'ok-series', page: 0 })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    expect(findUnique).not.toHaveBeenCalled();
+  });
+
+  it('filters in one query, pages after numeric order, and returns labels', async () => {
+    const { caller, findUnique } = makeListRouter();
+    findUnique.mockResolvedValue({ cards: rows });
+
+    const page = await caller.listBySeries({
+      seriesSlug: 'dawn-set',
+      q: '十',
+      rarity: 'rare',
+      subsetSlug: 'base',
+      page: 1,
+      pageSize: 2,
+    });
+
+    expect(findUnique).toHaveBeenCalledTimes(1);
+    expect(findUnique.mock.calls[0]?.[0].where).toEqual({ slug: 'dawn-set' });
+    expect(findUnique.mock.calls[0]?.[0].select.cards.where).toEqual({
+      rarity: 'rare',
+      subset: { slug: 'base' },
+    });
+    expect(page.total).toBe(1);
+    expect(page.pageSize).toBe(2);
+    expect(page.sort).toBe('number');
+    expect(page.items.map((item) => item.slug)).toEqual(['n-10']);
+    expect(page.items[0]).toMatchObject({
+      cardNumber: '10',
+      attributes: { attack: 1, lore: 'x' },
+      subsetSlug: 'base',
+    });
+    expect(page.attributeLabels.attack).toEqual({ 'zh-CN': '攻击', 'en-US': 'Attack' });
+    expect(page.attributeLabels.lore).toEqual({ 'zh-CN': 'lore', 'en-US': 'lore' });
+    expect(page.attributeLabels.cost).toEqual({ 'zh-CN': '费用', 'en-US': 'Cost' });
+    expect(page.attributeLabels.health).toEqual({ 'zh-CN': '生命', 'en-US': 'Health' });
+    expect(page.attributeLabels.type).toEqual({ 'zh-CN': '类型', 'en-US': 'Type' });
+    expect(page.attributeLabels).not.toHaveProperty('nested');
+
+    const second = await caller.listBySeries({ seriesSlug: 'dawn-set', page: 2, pageSize: 2 });
+    expect(second.items.map((item) => item.slug)).toEqual(['n-10']);
+    expect(second.items[0]?.attributes).toEqual({ attack: 1, lore: 'x' });
+    expect(second.total).toBe(3);
+
+    const defaults = await caller.listBySeries({ seriesSlug: 'dawn-set' });
+    expect(defaults.page).toBe(1);
+    expect(defaults.pageSize).toBe(60);
+    expect(defaults.sort).toBe('number');
+    expect(defaults.items.map((item) => item.cardNumber)).toEqual(['1', '2', '10']);
+  });
+});

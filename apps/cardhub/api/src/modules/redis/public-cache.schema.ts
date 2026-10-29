@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CARD_SERIES_LIST_SORT_VALUES } from '@repo/shared';
 
 const categoryRefSchema = z.object({ slug: z.string(), name: z.string() }).nullable();
 
@@ -54,6 +55,31 @@ export const seriesBySlugSchema = z.object({
       subsetSlug: z.string().nullable(),
     }),
   ),
+});
+
+const attributeLabelSchema = z.object({
+  'zh-CN': z.string(),
+  'en-US': z.string(),
+});
+
+export const cardsListBySeriesSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      slug: z.string(),
+      name: z.string(),
+      rarity: z.string().nullable(),
+      imageUrl: z.string().nullable(),
+      cardNumber: z.string().nullable(),
+      subsetSlug: z.string().nullable(),
+      attributes: z.record(z.string(), attributeValueSchema).nullable(),
+    }),
+  ),
+  page: z.number(),
+  pageSize: z.number(),
+  total: z.number(),
+  sort: z.enum(CARD_SERIES_LIST_SORT_VALUES),
+  attributeLabels: z.record(z.string(), attributeLabelSchema),
 });
 
 export const cardBySlugSchema = z.object({

@@ -186,17 +186,26 @@ echo "OK sync marker absent; nothing was uploaded"
 step_keys() {
   local job="$1"
   local step="$2"
+  # The second awk used to exit at the next step. That closes the pipe while
+  # the first awk is still writing the rest of the job, so pipefail turns a
+  # passing check into SIGPIPE (exit 141). Keep reading until EOF.
   awk -v job="${job}" -v step="${step}" '
     BEGIN { header = "  " job ":" }
     $0 == header { in_job = 1; next }
     in_job && /^  [^ ]/ { exit }
     in_job { print }
   ' "${workflow}" | awk -v step="${step}" '
+    done { next }
     /^      - name: / {
-      if (capturing) exit
+      if (capturing) {
+        capturing = 0
+        done = 1
+        next
+      }
       name = substr($0, 15)
       gsub(/^"|"$/, "", name)
       if (name == step) capturing = 1
+      next
     }
     capturing { print }
   '
@@ -215,7 +224,7 @@ do
     echo "FAIL ${job}: missing step ${step}" >&2
     exit 1
   fi
-  if printf '%s\n' "${block}" | grep -Eq '^        (if:|continue-on-error:)'; then
+  if grep -Eq '^        (if:|continue-on-error:)' <<< "${block}"; then
     echo "FAIL ${job}: ${step} has if: or continue-on-error" >&2
     printf '%s\n' "${block}" >&2
     exit 1
