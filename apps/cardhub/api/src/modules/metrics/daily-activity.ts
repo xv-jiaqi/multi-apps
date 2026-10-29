@@ -16,6 +16,7 @@ export interface DailyActivityRedis {
     ttlSeconds: number,
     mode: 'NX',
   ): Promise<'OK' | null>;
+  del?(key: string): Promise<unknown>;
 }
 
 /** Seconds until the next UTC midnight. At least 1 so EX never gets 0. */
@@ -78,12 +79,20 @@ export async function recordDailyActivity(
   );
   if (claim === 'seen') return;
 
+  const dayIso = formatUtcCalendarDate(day);
   try {
     await prisma.userDailyActivity.createMany({
       data: [{ userId, day }],
       skipDuplicates: true,
     });
   } catch (error) {
+    if (claim === 'claimed') {
+      try {
+        await options?.redis?.del?.(`${DAILY_ACTIVITY_KEY_PREFIX}${userId}:${dayIso}`);
+      } catch {
+        activityLogger.warn('daily activity lock release failed');
+      }
+    }
     const code = errorCode(error);
     try {
       if (options?.warn) {
