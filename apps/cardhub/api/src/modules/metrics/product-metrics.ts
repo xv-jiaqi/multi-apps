@@ -47,8 +47,17 @@ export function ratioTo4(numerator: number, denominator: number): number | null 
   return Math.round((numerator * 10_000) / denominator) / 10_000;
 }
 
-/** Stored timestamps are UTC wall time. Read them back as a UTC calendar date. */
-const utcDay = Prisma.raw(`(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')::date`);
+/** UTC clock time stored in `timestamp without time zone`, with no function on the column. */
+function utcTimestampLiteral(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hour = String(date.getUTCHours()).padStart(2, '0');
+  const minute = String(date.getUTCMinutes()).padStart(2, '0');
+  const second = String(date.getUTCSeconds()).padStart(2, '0');
+  const ms = String(date.getUTCMilliseconds()).padStart(3, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}.${ms}`;
+}
 
 function requireCalendarDate(value: string): Date {
   const date = utcCalendarDate(value);
@@ -122,6 +131,8 @@ export async function loadProductMetrics(
   const fromIso = formatUtcCalendarDate(from);
   const toIso = formatUtcCalendarDate(to);
   const todayIso = formatUtcCalendarDate(utcCalendarDateFromInstant(new Date()));
+  const rangeStart = utcTimestampLiteral(from);
+  const rangeEnd = utcTimestampLiteral(new Date(to.getTime() + 86_400_000));
   const dayCount = inclusiveUtcDayCount(from, to);
 
   const [activeRows, monthRows, registrationRows, retentionRows, commentRows] = await Promise.all([
@@ -139,21 +150,33 @@ export async function loadProductMetrics(
       ORDER BY 1
     `,
     prisma.$queryRaw<DayRow[]>`
-      SELECT to_char(${utcDay}, 'YYYY-MM-DD') AS day,
-             COUNT(*)::int AS count
-      FROM users
-      WHERE ${utcDay} BETWEEN CAST(${fromIso} AS date) AND CAST(${toIso} AS date)
-      GROUP BY 1
-      ORDER BY 1
+      SELECT to_char(days.day_start, 'YYYY-MM-DD') AS day,
+             COUNT(users.id)::int AS count
+      FROM generate_series(
+        CAST(${rangeStart} AS timestamp),
+        CAST(${utcTimestampLiteral(to)} AS timestamp),
+        interval '1 day'
+      ) AS days(day_start)
+      LEFT JOIN users
+        ON users."createdAt" >= days.day_start
+       AND users."createdAt" < days.day_start + interval '1 day'
+      GROUP BY days.day_start
+      ORDER BY days.day_start
     `,
     prisma.$queryRaw<RetentionRow[]>`
       WITH activity_start AS (
         SELECT MIN(day) AS started_on FROM user_daily_activities
       ),
       cohort AS (
-        SELECT id, ${utcDay} AS registered_on
-        FROM users
-        WHERE ${utcDay} BETWEEN CAST(${fromIso} AS date) AND CAST(${toIso} AS date)
+        SELECT users.id, days.day_start::date AS registered_on
+        FROM generate_series(
+          CAST(${rangeStart} AS timestamp),
+          CAST(${utcTimestampLiteral(to)} AS timestamp),
+          interval '1 day'
+        ) AS days(day_start)
+        JOIN users
+          ON users."createdAt" >= days.day_start
+         AND users."createdAt" < days.day_start + interval '1 day'
       )
       SELECT
         COUNT(*) FILTER (
@@ -189,7 +212,8 @@ export async function loadProductMetrics(
     prisma.$queryRaw<CountRow[]>`
       SELECT COUNT(*)::int AS count
       FROM comments
-      WHERE ${utcDay} BETWEEN CAST(${fromIso} AS date) AND CAST(${toIso} AS date)
+      WHERE "createdAt" >= CAST(${rangeStart} AS timestamp)
+        AND "createdAt" < CAST(${rangeEnd} AS timestamp)
     `,
   ]);
 

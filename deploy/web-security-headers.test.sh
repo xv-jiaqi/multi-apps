@@ -42,7 +42,7 @@ require_site_import() {
     echo "FAIL ${name}: site block not found" >&2
     return 1
   fi
-  if ! printf '%s\n' "${body}" | grep -Eq '^[[:space:]]*import cardhub_web_headers[[:space:]]*$'; then
+  if ! grep -Eq '^[[:space:]]*import cardhub_web_headers[[:space:]]*$' <<< "${body}"; then
     echo "FAIL ${name}: site block does not import cardhub_web_headers" >&2
     return 1
   fi
@@ -55,7 +55,7 @@ block="$(site_block "${caddyfile}" '^[(]cardhub_web_headers[)]')"
 require_line() {
   local name="$1"
   local line="$2"
-  if ! printf '%s\n' "${block}" | grep -qxF "${line}"; then
+  if ! grep -qxF "${line}" <<< "${block}"; then
     echo "FAIL ${name}: missing ${line}" >&2
     failed=1
     return
@@ -79,7 +79,7 @@ if ! require_site_import "www redirect" "${root_site}" '^[{][$]ROOT_WEB_REDIRECT
   failed=1
 fi
 redirect_body="$(site_block "${root_site}" '^[{][$]ROOT_WEB_REDIRECT_DOMAINS')"
-if ! printf '%s\n' "${redirect_body}" | grep -Eq '^[[:space:]]*redir https://\{\$ROOT_WEB_REDIRECT_TARGET:card-hub\.app\}\{uri\} 308[[:space:]]*$'; then
+if ! grep -Eq '^[[:space:]]*redir https://\{\$ROOT_WEB_REDIRECT_TARGET:card-hub\.app\}\{uri\} 308[[:space:]]*$' <<< "${redirect_body}"; then
   echo "FAIL www redirect: site block does not 308 to the apex" >&2
   failed=1
 else
@@ -181,9 +181,11 @@ EOF
   trap 'kill "${caddy_pid}" >/dev/null 2>&1 || true; rm -rf "${work}"' EXIT
   ready=0
   for _ in 1 2 3 4 5 6 7 8 9 10; do
+    redirect_code=""
     if curl -sf -o /dev/null "http://127.0.0.1:${port}/" \
       && curl -sf -o /dev/null "http://127.0.0.1:${edge_port}/" \
-      && curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${redirect_port}/" | grep -qx '308'; then
+      && redirect_code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${redirect_port}/")" \
+      && grep -qx '308' <<< "${redirect_code}"; then
       ready=1
       break
     fi
@@ -202,7 +204,7 @@ EOF
     'X-Content-Type-Options: nosniff' \
     'X-Frame-Options: DENY'
   do
-    if ! printf '%s\n' "${headers}" | grep -qi "^${expected}"; then
+    if ! grep -qi "^${expected}" <<< "${headers}"; then
       echo "FAIL curl missing ${expected}" >&2
       failed=1
     else
@@ -214,8 +216,8 @@ EOF
   printf '%s\n' "${preserved}"
   csp_count="$(printf '%s\n' "${preserved}" | grep -ci '^Content-Security-Policy:' || true)"
   if [ "${csp_count}" -ne 1 ] \
-    || ! printf '%s\n' "${preserved}" | grep -qi "^Content-Security-Policy: default-src 'self'; script-src 'self'; frame-ancestors 'none'" \
-    || ! printf '%s\n' "${preserved}" | grep -qi '^Strict-Transport-Security:'; then
+    || ! grep -qi "^Content-Security-Policy: default-src 'self'; script-src 'self'; frame-ancestors 'none'" <<< "${preserved}" \
+    || ! grep -qi '^Strict-Transport-Security:' <<< "${preserved}"; then
     echo "FAIL edge overwrote or dropped the upstream CSP" >&2
     failed=1
   else
@@ -224,13 +226,13 @@ EOF
   echo "LIVE curl -sI www redirect"
   redirected="$(curl -sI "http://127.0.0.1:${redirect_port}/cards/1?q=a" | tr -d '\r')"
   printf '%s\n' "${redirected}"
-  if ! printf '%s\n' "${redirected}" | grep -qi '^HTTP/.* 308'; then
+  if ! grep -qi '^HTTP/.* 308' <<< "${redirected}"; then
     echo "FAIL www redirect status is not 308" >&2
     failed=1
   else
     echo "OK curl www redirect 308"
   fi
-  if ! printf '%s\n' "${redirected}" | grep -qi '^Location: https://card-hub.app/cards/1?q=a$'; then
+  if ! grep -qi '^Location: https://card-hub.app/cards/1?q=a$' <<< "${redirected}"; then
     echo "FAIL www redirect location" >&2
     failed=1
   else
@@ -242,7 +244,7 @@ EOF
     'X-Frame-Options: DENY' \
     "Content-Security-Policy: frame-ancestors 'none'"
   do
-    if ! printf '%s\n' "${redirected}" | grep -qi "^${expected}"; then
+    if ! grep -qi "^${expected}" <<< "${redirected}"; then
       echo "FAIL www redirect missing ${expected}" >&2
       failed=1
     else

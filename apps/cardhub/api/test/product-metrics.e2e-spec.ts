@@ -114,11 +114,11 @@ describe('admin.metrics', () => {
 
   async function clearFixtureWindow() {
     const activityFrom = day('2001-01-01');
-    const activityTo = day('2001-05-09');
+    const activityTo = day('2001-06-10');
     const createdFrom = at('2001-01-01T00:00:00.000Z');
-    const createdTo = at('2001-05-02T00:00:00.000Z');
+    const createdTo = at('2001-06-03T00:00:00.000Z');
     await prisma.comment.deleteMany({
-      where: { createdAt: { gte: createdFrom, lt: at('2001-05-02T00:00:00.000Z') } },
+      where: { createdAt: { gte: createdFrom, lt: createdTo } },
     });
     await prisma.userDailyActivity.deleteMany({
       where: { day: { gte: activityFrom, lte: activityTo } },
@@ -420,11 +420,17 @@ describe('admin.metrics', () => {
     const anonymous = await get('health.ping', undefined, undefined, '203.0.113.100');
     expect(anonymous.status).toBe(200);
 
-    const rows = await prisma.userDailyActivity.findMany({
-      where: { userId: registered.id },
-      orderBy: { day: 'asc' },
-      select: { day: true, userId: true },
-    });
+    let rows: Array<{ day: Date; userId: string }> = [];
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      rows = await prisma.userDailyActivity.findMany({
+        where: { userId: registered.id },
+        orderBy: { day: 'asc' },
+        select: { day: true, userId: true },
+      });
+      if (rows.length === 2) break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+
     const today = formatUtcCalendarDate(utcCalendarDateFromInstant(new Date()));
     expect(rows.map((row) => formatUtcCalendarDate(row.day))).toEqual(['2001-04-01', today]);
     expect(rows.every((row) => row.userId === registered.id)).toBe(true);
@@ -454,6 +460,71 @@ describe('admin.metrics', () => {
     expect(body.retention).toEqual({
       nextDay: { cohortUsers: 0, retainedUsers: 0, rate: null },
       day7: { cohortUsers: 0, retainedUsers: 0, rate: null },
+    });
+  });
+
+  it('counts a UTC midnight timestamp on that calendar day and excludes the previous millisecond', async () => {
+    await clearFixtureWindow();
+    const onMidnight = await fixtureUser('metmid', '2001-06-01T00:00:00.000Z');
+    const nextMidnight = await fixtureUser('metnxt', '2001-06-02T00:00:00.000Z');
+    await fixtureUser('metprev', '2001-05-31T23:59:59.999Z');
+    await active(onMidnight.id, '2001-06-02');
+
+    const suffix = `${Date.now().toString(36)}${sequence.toString(36)}`;
+    const series = await prisma.series.create({
+      data: { slug: `metrics-midnight-${suffix}`.slice(0, 64), title: '午夜' },
+    });
+    createdSeriesIds.push(series.id);
+    const card = await prisma.card.create({
+      data: {
+        slug: `metrics-midnight-card-${suffix}`.slice(0, 64),
+        name: '午夜卡',
+        seriesId: series.id,
+      },
+    });
+    await prisma.comment.createMany({
+      data: [
+        {
+          content: '六月一日零点',
+          userId: onMidnight.id,
+          cardId: card.id,
+          createdAt: at('2001-06-01T00:00:00.000Z'),
+        },
+        {
+          content: '五月三十一末',
+          userId: onMidnight.id,
+          cardId: card.id,
+          createdAt: at('2001-05-31T23:59:59.999Z'),
+        },
+        {
+          content: '六月二日零点',
+          userId: nextMidnight.id,
+          cardId: card.id,
+          createdAt: at('2001-06-02T00:00:00.000Z'),
+        },
+      ],
+    });
+
+    const response = await get(
+      'admin.metrics',
+      { from: '2001-06-01', to: '2001-06-01' },
+      adminToken,
+      '203.0.113.102',
+    );
+    expect(response.status).toBe(200);
+    const body = resultData(response.body);
+    const registrations = body.registrations as {
+      total: number;
+      byDay: Array<{ date: string; count: number }>;
+    };
+    expect(registrations).toEqual({
+      total: 1,
+      byDay: [{ date: '2001-06-01', count: 1 }],
+    });
+    expect(body.comments).toEqual({ total: 1, perDay: 1 });
+    expect(body.retention).toEqual({
+      nextDay: { cohortUsers: 1, retainedUsers: 1, rate: 1 },
+      day7: { cohortUsers: 1, retainedUsers: 0, rate: 0 },
     });
   });
 });

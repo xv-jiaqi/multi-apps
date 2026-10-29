@@ -21,6 +21,7 @@ import { RedisService } from '../modules/redis/redis.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
 import { DEFAULT_CORS_ORIGIN } from '../modules/seo/public-web-origin';
+import { serverTiming } from '../common/server-timing';
 import { configureApp } from './configure-app';
 import { jsonBodyParser } from './json-body';
 import { createRateLimiters, type RateLimitOverrides } from './rate-limiters';
@@ -83,8 +84,6 @@ export async function createApp(options: CreateAppOptions = {}) {
   // the app is still starting.
   app.flushLogs();
   configureApp(app);
-  // Before helmet and the JSON parser, so a 400/413 still gets a request id.
-  attachRequestLogging(app);
 
   const config = app.get(ConfigService);
   const trpcService = app.get(TrpcService);
@@ -97,6 +96,12 @@ export async function createApp(options: CreateAppOptions = {}) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+
+  // Before helmet, CORS, and the JSON parser. Preflight ends inside CORS, and
+  // a 400/413 ends inside the parser; both still need these headers.
+  app.use(serverTiming(corsOrigin));
+  // Before helmet and the JSON parser, so a 400/413 still gets a request id.
+  attachRequestLogging(app);
 
   // helmet hardens HTTP headers (HSTS, X-Frame-Options, etc.). The default
   // contentSecurityPolicy is too strict for the tRPC + JSON workflow during

@@ -19,8 +19,10 @@ import { ListingCloseControl } from '../components/listing-close-control';
 import { SignOutAllDialog } from '../components/sign-out-all-dialog';
 import { trpc } from '../lib/trpc';
 import { useStores } from '../stores/root-store';
+import { CollectionSection } from './collection-section';
+import { SectionSkeleton } from './me-skeleton';
 
-type SectionId = 'me-listings' | 'me-topics' | 'me-comments' | 'me-security';
+type SectionId = 'me-listings' | 'me-topics' | 'me-comments' | 'me-security' | 'me-collection';
 type LoadMoreQuery = {
   fetchNextPage: () => Promise<{
     isError: boolean;
@@ -94,27 +96,6 @@ function ErrorState({
         {retryLabel}
       </button>
     </div>
-  );
-}
-
-function SectionSkeleton({ withThumb }: { withThumb?: boolean }) {
-  return (
-    <ul className="divide-y divide-neutral-200/70">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <li
-          key={index}
-          className={`grid animate-pulse motion-reduce:animate-none gap-3 py-3 first:pt-0 last:pb-0 ${
-            withThumb ? 'grid-cols-[auto_minmax(0,1fr)]' : ''
-          }`}
-        >
-          {withThumb ? <div className="aspect-[63/88] w-10 rounded-sm bg-neutral-200" /> : null}
-          <div className="min-w-0 space-y-2">
-            <div className="h-4 w-3/4 rounded bg-neutral-200" />
-            <div className="h-3 w-1/2 rounded bg-neutral-200" />
-          </div>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -251,7 +232,8 @@ export const MePage = observer(function MePage() {
     const target = location.hash as `#${SectionId}` | '';
     if (!target || loadedHashRef.current === target) return;
     const id = target.slice(1);
-    if (!['me-listings', 'me-topics', 'me-comments', 'me-security'].includes(id)) return;
+    if (!['me-listings', 'me-topics', 'me-comments', 'me-security', 'me-collection'].includes(id))
+      return;
     loadedHashRef.current = target;
     requestAnimationFrame(() => {
       document.getElementById(id)?.scrollIntoView({ block: 'start' });
@@ -458,6 +440,10 @@ export const MePage = observer(function MePage() {
               {
                 id: 'me-security' as const,
                 label: tt('me.security.title'),
+              },
+              {
+                id: 'me-collection' as const,
+                label: tt('collection.title'),
               },
             ].map((section) => (
               <li key={section.id}>
@@ -844,6 +830,8 @@ export const MePage = observer(function MePage() {
             </li>
           </ul>
         </MeSection>
+
+        <CollectionSection />
       </div>
     </PageShell>
   );

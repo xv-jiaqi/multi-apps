@@ -56,6 +56,16 @@ describe('recordDailyActivity', () => {
     );
   });
 
+  it('releases the Redis lock when the database write fails after SET NX', async () => {
+    const createMany = jest.fn().mockRejectedValue(new Error('db down'));
+    const set = jest.fn().mockResolvedValue('OK');
+    const del = jest.fn().mockResolvedValue(1);
+    const redis: DailyActivityRedis = { set, del };
+    await recordDailyActivity(store(createMany), 'user-1', { now, redis, warn: () => undefined });
+
+    expect(del).toHaveBeenCalledWith(`${DAILY_ACTIVITY_KEY_PREFIX}user-1:2001-04-02`);
+  });
+
   it('writes the database when the Redis lock command fails', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });
     const redis: DailyActivityRedis = {
