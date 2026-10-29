@@ -180,7 +180,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 <CardTitle
                   id="comment-section-title"
                   tabIndex={-1}
-                  className="text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="scroll-mt-20 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   {tt('card.detail.commentsTitle')}
                 </CardTitle>

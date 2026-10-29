@@ -1,6 +1,6 @@
 import { APP_ERROR_CODES } from '@repo/shared';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -204,7 +204,13 @@ describe('CommentSection (unauthenticated)', () => {
 
   it('renders the sign-in prompt and no form', () => {
     renderShell();
-    expect(screen.getByRole('link', { name: /登录后即可发表评论/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /登录后即可发表评论/ })).toHaveClass(
+      'rounded',
+      'text-brand-600',
+      'focus-visible:outline-none',
+      'focus-visible:ring-2',
+      'focus-visible:ring-brand-500',
+    );
     expect(screen.queryByRole('button', { name: /发布评论/ })).not.toBeInTheDocument();
   });
 
@@ -921,11 +927,17 @@ describe('CommentSection replies', () => {
   it('sizes delete with the other actions and wraps a reply author instead of truncating it', () => {
     rootStore.session.signIn('jwt.token', { id: 'u2', username: 'bob', role: 'admin' });
     renderShell();
-    expect(screen.getByRole('button', { name: '删除 @bob 的评论' })).toHaveClass('text-xs', 'text-red-700');
+    expect(screen.getByRole('button', { name: '删除 @bob 的评论' })).toHaveClass(
+      'text-xs',
+      'text-red-700',
+    );
     const author = screen.getByText('@cara');
     expect(author).toHaveClass('wrap-anywhere');
     expect(author).not.toHaveClass('truncate');
-    expect(screen.getByRole('button', { name: '删除 @cara 的评论' })).toHaveClass('text-xs', 'text-red-700');
+    expect(screen.getByRole('button', { name: '删除 @cara 的评论' })).toHaveClass(
+      'text-xs',
+      'text-red-700',
+    );
     expect(screen.getAllByText('0 / 500')[0]).toHaveClass('text-neutral-600');
     expect(screen.getAllByRole('button', { name: '举报' })[0]).toHaveClass('text-neutral-600');
     expect(screen.getByText('top comment').previousElementSibling).toHaveClass('text-neutral-600');
@@ -1060,6 +1072,7 @@ describe('CommentSection replies', () => {
       limit: 20,
     });
     expect(screen.getByRole('alert')).toHaveTextContent('回复加载失败');
+    expect(screen.getByRole('button', { name: '重试' })).toHaveFocus();
     expect(screen.getByText('older reply')).toBeInTheDocument();
 
     listRepliesFetch.mockResolvedValueOnce({
@@ -1077,6 +1090,48 @@ describe('CommentSection replies', () => {
     expect(screen.getByText('fourth')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /展开其余/ })).not.toBeInTheDocument();
     expect(document.getElementById('reply-r4')).toHaveFocus();
+  });
+
+  it('keeps focus on retry when another reply page fails, and leaves other focus alone', async () => {
+    const user = userEvent.setup();
+    queryState.data = [
+      {
+        ...thread,
+        replyCount: 4,
+        repliesNextCursor: '33333333-3333-4333-8333-333333333333',
+        replies: [
+          thread.replies[0]!,
+          {
+            id: '44444444-4444-4444-8444-444444444444',
+            content: 'second',
+            createdAt: '2026-05-01T01:10:00.000Z',
+            user: { id: 'u2', username: 'bob' },
+          },
+          {
+            id: '33333333-3333-4333-8333-333333333333',
+            content: 'third',
+            createdAt: '2026-05-01T01:20:00.000Z',
+            user: { id: 'u3', username: 'cara' },
+          },
+        ],
+      },
+    ];
+    listRepliesFetch.mockRejectedValue(new Error('nope'));
+    renderShell();
+    const elsewhere = document.createElement('input');
+    document.body.appendChild(elsewhere);
+    elsewhere.focus();
+    fireEvent.click(screen.getByRole('button', { name: '展开其余 1 条回复' }));
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('回复加载失败');
+    });
+    expect(elsewhere).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: '重试' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '重试' })).toHaveFocus();
+    });
+    elsewhere.remove();
   });
 
   it('hides reply when signed out and does not render an empty reply list', () => {
