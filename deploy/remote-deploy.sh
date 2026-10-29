@@ -100,7 +100,7 @@ read_previous_image() {
     echo "Refusing deploy: ${svc} has $(count_lines "${ids}") containers; cannot choose a rollback image. The running API was not replaced." >&2
     exit 1
   fi
-  id="$(printf '%s\n' "${ids}" | head -n 1)"
+  id="${ids%%$'\n'*}"
   err="$(mktemp)"
   rc=0
   image="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>"${err}")" || rc=$?
@@ -348,7 +348,7 @@ normalize_web_sentry_dsn() {
   # Same shape the web entrypoint accepts, plus no $ or backtick: compose
   # interpolates $ in the env file, and the value is placed in a shell
   # assignment before that.
-  if printf '%s' "${value}" | grep -Eq '^https?://[^[:space:]"\\$`]+$'; then
+  if grep -Eq '^https?://[^[:space:]"\\$`]+$' <<< "${value}"; then
     printf '%s' "${value}"
     return 0
   fi
@@ -748,7 +748,8 @@ main() {
       echo "api container ${id:0:12} /health probe failed" >&2
       return 1
     fi
-    sha="$(printf '%s\n' "${body}" | sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' | head -n 1)"
+    sha="$(printf '%s\n' "${body}" | sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p')"
+    sha="${sha%%$'\n'*}"
     if [ "${sha}" != "${expected_sha}" ]; then
       echo "api container ${id:0:12} gitSha='${sha}' expected '${expected_sha}'. body='${body}'" >&2
       return 1
@@ -898,7 +899,8 @@ main() {
     while [ "${SECONDS}" -lt "${deadline}" ]; do
       if public_https_get "${domain}" "/health" "${response_file}"; then
         last_body="$(cat "${response_file}")"
-        last_sha="$(sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' "${response_file}" | head -n 1)"
+        last_sha="$(sed -n 's/.*"gitSha"[[:space:]]*:[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' "${response_file}")"
+        last_sha="${last_sha%%$'\n'*}"
         if [ "${last_sha}" = "${expected}" ]; then
           echo "Verified ${domain} gitSha=${last_sha}"
           return 0
@@ -944,8 +946,13 @@ main() {
 
   compose pull api web
   compose up -d postgres redis
-  wait_for_container_healthy "$(service_ids postgres | head -n 1)" postgres
-  wait_for_container_healthy "$(service_ids redis | head -n 1)" redis
+  local postgres_id redis_id
+  postgres_id="$(service_ids postgres)"
+  postgres_id="${postgres_id%%$'\n'*}"
+  redis_id="$(service_ids redis)"
+  redis_id="${redis_id%%$'\n'*}"
+  wait_for_container_healthy "${postgres_id}" postgres
+  wait_for_container_healthy "${redis_id}" redis
 
   # Migrations finish before the API swap. A failure here exits without
   # calling rollback, so the container that is already serving stays up.

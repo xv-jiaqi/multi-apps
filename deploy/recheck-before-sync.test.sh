@@ -186,17 +186,26 @@ echo "OK sync marker absent; nothing was uploaded"
 step_keys() {
   local job="$1"
   local step="$2"
+  # The second awk used to exit at the next step. That closes the pipe while
+  # the first awk is still writing the rest of the job, so pipefail turns a
+  # passing check into SIGPIPE (exit 141). Keep reading until EOF.
   awk -v job="${job}" -v step="${step}" '
     BEGIN { header = "  " job ":" }
     $0 == header { in_job = 1; next }
     in_job && /^  [^ ]/ { exit }
     in_job { print }
   ' "${workflow}" | awk -v step="${step}" '
+    done { next }
     /^      - name: / {
-      if (capturing) exit
+      if (capturing) {
+        capturing = 0
+        done = 1
+        next
+      }
       name = substr($0, 15)
       gsub(/^"|"$/, "", name)
       if (name == step) capturing = 1
+      next
     }
     capturing { print }
   '
@@ -215,12 +224,43 @@ do
     echo "FAIL ${job}: missing step ${step}" >&2
     exit 1
   fi
-  if printf '%s\n' "${block}" | grep -Eq '^        (if:|continue-on-error:)'; then
+  if grep -Eq '^        (if:|continue-on-error:)' <<< "${block}"; then
     echo "FAIL ${job}: ${step} has if: or continue-on-error" >&2
     printf '%s\n' "${block}" >&2
     exit 1
   fi
   echo "OK ${job}: ${step} has no if: or continue-on-error"
 done
+
+# The real deploy job is smaller than a pipe buffer, so the old early exit
+# only shows up when the writer is still going. Pad past that buffer. Before
+# step_keys read through EOF, this call exited 141.
+saved_workflow="${workflow}"
+workflow="${tmp}/sigpipe-padded.yml"
+awk '
+  {
+    print
+  }
+  inserted == 0 && $0 == "      - name: Sync deploy files" {
+    inserted = 1
+    pad = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+    for (i = 0; i < 4000; i++) {
+      printf "        echo sigpipe-pad-%04d %s\n", i, pad
+    }
+  }
+' "${saved_workflow}" > "${workflow}"
+padded_block="$(step_keys deploy "Re-check deploy tree before sync")"
+workflow="${saved_workflow}"
+if ! grep -F -q 'resolve-deploy-inputs.sh --assert' <<< "${padded_block}"; then
+  echo "FAIL padded deploy job: re-check step text missing after step_keys" >&2
+  exit 1
+fi
+if grep -Eq '^        (if:|continue-on-error:)' <<< "${padded_block}"; then
+  echo "FAIL padded deploy job: re-check step has if: or continue-on-error" >&2
+  exit 1
+fi
+echo "OK padded deploy job: step_keys finished without SIGPIPE"
+
+bash "${root}/deploy/no-early-pipe-exit.test.sh"
 
 echo "recheck-before-sync tests passed"

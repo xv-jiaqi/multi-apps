@@ -94,7 +94,7 @@ golden="$(printf '%s\n' \
 file="${work}/staging.env"
 new_file "${file}" "${base_body}" 600
 chgrp "$(id -g)" "${file}"
-extra_gid="$(id -G | tr ' ' '\n' | awk -v primary="$(id -g)" '$0 != primary { print; exit }')"
+extra_gid="$(id -G | tr ' ' '\n' | awk -v primary="$(id -g)" 'seen { next } $0 != primary { print; seen = 1 }')"
 if [ -n "${extra_gid}" ]; then
   chgrp "${extra_gid}" "${file}"
 fi
@@ -343,21 +343,24 @@ edge_job="$(awk '
   in_job { print }
 ' "${workflow}")"
 assert "deploy job reads the environment secret" "$(
-  printf '%s\n' "${deploy_job}" | grep -F -q 'WEB_SENTRY_DSN: ${{ secrets.WEB_SENTRY_DSN }}' && echo 0 || echo 1
+  grep -F -q 'WEB_SENTRY_DSN: ${{ secrets.WEB_SENTRY_DSN }}' <<< "${deploy_job}" && echo 0 || echo 1
 )"
 assert "deploy job uses the selected environment" "$(
-  awk '
-    /^  deploy:$/ { in_job = 1; next }
-    in_job && /^    environment:/ { print; exit }
-    in_job && /^  [^ ]/ { exit }
-  ' "${workflow}" | grep -F -q 'environment: ${{ needs.edge.outputs.environment }}' && echo 0 || echo 1
+  env_line="$(
+    awk '
+      /^  deploy:$/ { in_job = 1; next }
+      in_job && /^    environment:/ { print; exit }
+      in_job && /^  [^ ]/ { exit }
+    ' "${workflow}"
+  )"
+  grep -F -q 'environment: ${{ needs.edge.outputs.environment }}' <<< "${env_line}" && echo 0 || echo 1
 )"
 assert "auto-deploy selects the staging environment" "$(
   grep -F -q "environment: \${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}" "${workflow}" && echo 0 || echo 1
 )"
-assert "edge job does not read the DSN" "$(printf '%s\n' "${edge_job}" | grep -F -q 'WEB_SENTRY_DSN' && echo 1 || echo 0)"
+assert "edge job does not read the DSN" "$(grep -F -q 'WEB_SENTRY_DSN' <<< "${edge_job}" && echo 1 || echo 0)"
 assert "deploy step does not echo the secret" "$(
-  printf '%s\n' "${deploy_job}" | grep -E -q 'echo[[:space:]].*(\$\{?(WEB_SENTRY_DSN|dsn|dsn_quoted)\}?|secrets\.WEB_SENTRY_DSN)' && echo 1 || echo 0
+  grep -E -q 'echo[[:space:]].*(\$\{?(WEB_SENTRY_DSN|dsn|dsn_quoted)\}?|secrets\.WEB_SENTRY_DSN)' <<< "${deploy_job}" && echo 1 || echo 0
 )"
 
 extracted="${work}/deploy-on-vps.sh"
@@ -468,9 +471,15 @@ assert "workflow bad URL does not ssh" "$([ ! -e "${work}/ssh.log" ] && echo 0 |
 assert "workflow bad URL is not printed" "$(no_leak "${log}" && no_leak "${err}" && echo 0 || echo 1)"
 assert "workflow bad URL explains the rule" "$(grep -F -q 'must be an http or https URL' "${err}" && echo 0 || echo 1)"
 
-apply_line="$(grep -n 'apply_web_sentry_dsn "${env_file}"' "${deploy_script}" | head -n 1 | cut -d: -f1)"
-armed_line="$(grep -n 'rollback_armed=1' "${deploy_script}" | head -n 1 | cut -d: -f1)"
-up_line="$(grep -n 'compose up -d postgres redis' "${deploy_script}" | head -n 1 | cut -d: -f1)"
+apply_line="$(grep -n 'apply_web_sentry_dsn "${env_file}"' "${deploy_script}")"
+apply_line="${apply_line%%$'\n'*}"
+apply_line="${apply_line%%:*}"
+armed_line="$(grep -n 'rollback_armed=1' "${deploy_script}")"
+armed_line="${armed_line%%$'\n'*}"
+armed_line="${armed_line%%:*}"
+up_line="$(grep -n 'compose up -d postgres redis' "${deploy_script}")"
+up_line="${up_line%%$'\n'*}"
+up_line="${up_line%%:*}"
 assert "DSN write is before containers change" "$(
   [ -n "${apply_line}" ] && [ -n "${armed_line}" ] && [ -n "${up_line}" ] \
     && [ "${apply_line}" -lt "${armed_line}" ] && [ "${apply_line}" -lt "${up_line}" ] \
