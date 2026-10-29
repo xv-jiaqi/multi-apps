@@ -710,9 +710,14 @@ export const TradeListPage = observer(function TradeListPage() {
                               </time>
                             </p>
                             {!isMine ? (
-                              <div className="ml-auto flex items-center gap-2">
-                                <ReportButton targetType="LISTING" targetId={listing.id} />
-                              </div>
+                              <ReportButton targetType="LISTING" targetId={listing.id}>
+                                {({ trigger, form }) => (
+                                  <>
+                                    <div className="ml-auto flex items-center gap-2">{trigger}</div>
+                                    {form}
+                                  </>
+                                )}
+                              </ReportButton>
                             ) : null}
                             {canClose ? (
                               <ListingCloseControl

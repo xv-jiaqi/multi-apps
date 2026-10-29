@@ -27,7 +27,7 @@ function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
 export const CardDetailPage = observer(function CardDetailPage() {
   const { cardSlug = '' } = useParams<{ cardSlug: string }>();
   const { locale } = useStores();
-  const tt = (key: string) => t(locale.locale, key);
+  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const query = trpc.cards.bySlug.useQuery({ slug: cardSlug }, { enabled: !!cardSlug });
   const view = queryFallback(query);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -130,7 +130,18 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 </h1>
                 <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
               </div>
-              <p className="min-w-0 text-neutral-600 wrap-anywhere">{card.description}</p>
+              {card.cardNumber || card.subset ? (
+                <p className="wrap-anywhere text-sm text-neutral-600">
+                  {card.cardNumber ? (
+                    <span>{tt('card.detail.number', { number: card.cardNumber })}</span>
+                  ) : null}
+                  {card.cardNumber && card.subset ? <span aria-hidden> · </span> : null}
+                  {card.subset ? <span className="wrap-anywhere">{card.subset.name}</span> : null}
+                </p>
+              ) : null}
+              {card.description ? (
+                <p className="min-w-0 text-neutral-600 wrap-anywhere">{card.description}</p>
+              ) : null}
               <p className="text-sm text-neutral-600">
                 {tt('card.detail.seriesLabel')}
                 <Link to={`/series/${card.seriesSlug}`} className="text-brand-600 hover:underline">

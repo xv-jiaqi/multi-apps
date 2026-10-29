@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, type Ref } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { isAppErrorCode, t } from '@repo/shared';
+import { isAppErrorCode, t, type Locale } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -14,6 +14,7 @@ import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
 import { cn } from '@repo/ui-web';
+import { displayCardNumber, formatCatalogDate, groupSeriesCards } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
@@ -29,9 +30,18 @@ type SeriesHeroProps = {
   alt: string;
   cardCountLabel: string;
   headingRef: Ref<HTMLHeadingElement>;
+  category?: { slug: string; name: string } | null;
+  releaseDate?: { iso: string; label: string } | null;
 };
 
-function SeriesHero({ series, alt, cardCountLabel, headingRef }: SeriesHeroProps) {
+function SeriesHero({
+  series,
+  alt,
+  cardCountLabel,
+  headingRef,
+  category,
+  releaseDate,
+}: SeriesHeroProps) {
   const art = useArtImage({
     src: series.coverUrl,
     alt,
@@ -49,11 +59,16 @@ function SeriesHero({ series, alt, cardCountLabel, headingRef }: SeriesHeroProps
       )}
     >
       {hasImage ? <img key={series.coverUrl} {...art.imgProps} /> : null}
-      <div
-        className={cn('absolute inset-0', hasImage ? 'bg-black/65' : 'bg-black/15')}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-black/65" aria-hidden />
       <div className="relative space-y-3">
+        {category ? (
+          <Link
+            to={`/categories/${category.slug}`}
+            className="inline-flex min-h-6 items-center rounded-full bg-white/90 px-2 text-xs font-medium text-neutral-900 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            {category.name}
+          </Link>
+        ) : null}
         <h1
           ref={headingRef}
           tabIndex={-1}
@@ -65,6 +80,11 @@ function SeriesHero({ series, alt, cardCountLabel, headingRef }: SeriesHeroProps
           {series.description ?? ''}
         </p>
         <p className="text-xs uppercase tracking-widest text-white/80">{cardCountLabel}</p>
+        {releaseDate ? (
+          <p className="text-xs text-white/90">
+            <time dateTime={releaseDate.iso}>{releaseDate.label}</time>
+          </p>
+        ) : null}
       </div>
     </header>
   );
@@ -120,6 +140,124 @@ function SeriesCardArt({ card }: SeriesCardArtProps) {
         </span>
       )}
     </div>
+  );
+}
+
+function SeriesCardLink({
+  card,
+  locale,
+}: {
+  card: {
+    slug: string;
+    name: string;
+    rarity: string | null;
+    imageUrl: string | null;
+    cardNumber?: string | null;
+  };
+  locale: Locale;
+}) {
+  const number = card.cardNumber?.trim();
+  return (
+    <Link
+      to={`/cards/${card.slug}`}
+      className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
+      <SeriesCardArt card={card} />
+      <div className="flex min-w-0 items-center justify-between gap-3 p-4">
+        <span className="min-w-0">
+          {number ? (
+            <span className="mr-2 font-mono text-xs tabular-nums text-neutral-600 wrap-anywhere">
+              {displayCardNumber(number)}
+            </span>
+          ) : null}
+          <span className="text-base font-semibold text-neutral-900 wrap-anywhere">
+            {card.name}
+          </span>
+        </span>
+        <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale} />
+      </div>
+    </Link>
+  );
+}
+
+function SeriesCardGroups({
+  cards,
+  subsets,
+  title,
+  locale,
+  tt,
+}: {
+  cards: Array<{
+    slug: string;
+    name: string;
+    rarity: string | null;
+    imageUrl: string | null;
+    cardNumber?: string | null;
+    subsetSlug?: string | null;
+  }>;
+  subsets?: Array<{ slug: string; name: string; kind: 'BASE' | 'INSERT'; sortOrder: number }>;
+  title: string;
+  locale: Locale;
+  tt: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const grouped = groupSeriesCards(subsets, cards);
+  const jumpTargets = grouped.groups.filter((group) => group.kind !== 'UNGROUPED');
+
+  const grid = (items: typeof cards) => (
+    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((card) => (
+        <li key={card.slug} className="min-w-0">
+          <SeriesCardLink card={card} locale={locale} />
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
+      {!grouped.flat && jumpTargets.length >= 2 ? (
+        <nav aria-label={tt('series.detail.subsetNav')} className="flex flex-wrap gap-2">
+          {jumpTargets.map((group) => (
+            <a
+              key={group.id}
+              href={`#subset-${group.id}`}
+              className="inline-flex min-h-6 min-w-0 max-w-full items-center rounded px-1 text-sm text-brand-700 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              onClick={(event) => {
+                event.preventDefault();
+                document.getElementById(`subset-${group.id}`)?.focus();
+              }}
+            >
+              {group.name}
+            </a>
+          ))}
+        </nav>
+      ) : null}
+      {grouped.flat
+        ? grid(cards)
+        : grouped.groups.map((group) => (
+            <section key={group.id} aria-labelledby={`subset-${group.id}`} className="space-y-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h3
+                  id={`subset-${group.id}`}
+                  tabIndex={-1}
+                  className="text-base font-semibold text-neutral-900 wrap-anywhere focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                >
+                  {group.kind === 'UNGROUPED' ? tt('series.detail.ungrouped') : group.name}
+                </h3>
+                <span className="text-xs text-neutral-600">
+                  {tt('series.detail.subsetCount', { count: group.cards.length })}
+                </span>
+                {group.kind === 'INSERT' ? (
+                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
+                    {tt('series.detail.insert')}
+                  </span>
+                ) : null}
+              </div>
+              {grid(group.cards)}
+            </section>
+          ))}
+    </section>
   );
 }
 
@@ -220,11 +358,23 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
       <PageMeta title={series.title} />
       <div className="space-y-8">
         <Breadcrumbs
-          items={[
-            { label: tt('breadcrumb.home'), to: '/' },
-            { label: tt('breadcrumb.series'), to: '/series' },
-            { label: series.title },
-          ]}
+          items={
+            series.category
+              ? [
+                  { label: tt('breadcrumb.home'), to: '/' },
+                  { label: tt('nav.categories'), to: '/categories' },
+                  {
+                    label: series.category.name,
+                    to: `/categories/${series.category.slug}`,
+                  },
+                  { label: series.title },
+                ]
+              : [
+                  { label: tt('breadcrumb.home'), to: '/' },
+                  { label: tt('breadcrumb.series'), to: '/series' },
+                  { label: series.title },
+                ]
+          }
         />
 
         <SeriesHero
@@ -232,27 +382,26 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           alt={tt('artwork.seriesAlt', { title: series.title })}
           cardCountLabel={tt('series.cardCount', { count: series.cards.length })}
           headingRef={headingRef}
+          category={series.category}
+          releaseDate={
+            series.releaseDate
+              ? {
+                  iso: series.releaseDate,
+                  label: tt('series.releaseDate', {
+                    date: formatCatalogDate(locale.locale, series.releaseDate),
+                  }),
+                }
+              : null
+          }
         />
 
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold">{tt('series.detail.cardsTitle')}</h2>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {series.cards.map((card) => (
-              <li key={card.slug}>
-                <Link
-                  to={`/cards/${card.slug}`}
-                  className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <SeriesCardArt card={card} />
-                  <div className="flex items-center justify-between p-4">
-                    <span className="text-base font-semibold text-neutral-900">{card.name}</span>
-                    <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <SeriesCardGroups
+          cards={series.cards}
+          subsets={series.subsets}
+          title={tt('series.detail.cardsTitle')}
+          locale={locale.locale}
+          tt={tt}
+        />
 
         <Card className="border-white/60 bg-white/70 backdrop-blur">
           <CardHeader>

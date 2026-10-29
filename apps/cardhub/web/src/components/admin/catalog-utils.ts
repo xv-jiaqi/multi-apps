@@ -17,6 +17,9 @@ export interface AdminSeriesItem {
   coverUrl: string | null;
   cardCount: number;
   commentCount: number;
+  subsetCount?: number;
+  releaseDate?: string | null;
+  category?: { slug: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,6 +34,8 @@ export interface AdminCardItem {
   attributes: Record<string, string | number | boolean>;
   seriesSlug: string;
   seriesTitle: string;
+  cardNumber?: string | null;
+  subsetSlug?: string | null;
   commentCount: number;
   createdAt: string;
   updatedAt: string;

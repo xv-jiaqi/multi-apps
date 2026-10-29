@@ -138,6 +138,9 @@ export const SiteHeader = observer(function SiteHeader() {
           <NavLink to="/" end className={navItemClass}>
             {tt('nav.home')}
           </NavLink>
+          <NavLink to="/categories" className={navItemClass}>
+            {tt('nav.categories')}
+          </NavLink>
           <NavLink to="/series" className={navItemClass}>
             {tt('nav.series')}
           </NavLink>
@@ -257,6 +260,9 @@ export const SiteHeader = observer(function SiteHeader() {
             </div>
             <NavLink to="/" end className={mobileNavItemClass} onClick={closeMenu}>
               {tt('nav.home')}
+            </NavLink>
+            <NavLink to="/categories" className={mobileNavItemClass} onClick={closeMenu}>
+              {tt('nav.categories')}
             </NavLink>
             <NavLink to="/series" className={mobileNavItemClass} onClick={closeMenu}>
               {tt('nav.series')}

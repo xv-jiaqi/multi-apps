@@ -42,6 +42,21 @@ vi.mock('../../lib/trpc', () => ({
           useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
         },
       },
+      subsets: {
+        list: {
+          useQuery: () => ({
+            data: { items: [] },
+            isLoading: false,
+            isError: false,
+            isFetching: false,
+            error: null,
+            refetch: vi.fn(),
+          }),
+        },
+        create: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
+        update: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
+        delete: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
+      },
     },
     series: {
       bySlug: {

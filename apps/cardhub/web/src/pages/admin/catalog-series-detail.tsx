@@ -10,6 +10,7 @@ import { CardThumb } from '../../components/card-thumb';
 import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
 import { RarityBadge } from '../../components/rarity-badge';
+import { SubsetSection } from '../../components/admin/subset-section';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
 import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import {
@@ -167,6 +168,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
           </Button>
         </div>
       </header>
+      <SubsetSection seriesSlug={slug} onForbidden={reportForbidden} />
       <PageMeta title={series?.title ?? tt('nav.catalog')} />
       <AdminStatus message={notice} statusRef={statusRef} />
       {detailView === 'error' ? (
