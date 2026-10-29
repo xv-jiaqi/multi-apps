@@ -18,7 +18,8 @@ function Probe() {
   const location = useLocation();
   return (
     <p data-testid="probe">
-      {location.pathname}|{JSON.stringify(location.state)}
+      {location.pathname}
+      {location.search}|{JSON.stringify(location.state)}
     </p>
   );
 }
@@ -30,6 +31,7 @@ function renderAt(path: string) {
       <Routes>
         <Route path="/forum" element={<Probe />} />
         <Route path="/forum/topic" element={<Probe />} />
+        <Route path="/cards/:cardSlug" element={<Probe />} />
         <Route path="/login" element={<Probe />} />
         <Route path="/me" element={<Probe />} />
         <Route path="/me/password" element={<Probe />} />
@@ -102,6 +104,62 @@ describe('SessionExpiryWatcher', () => {
     });
     expect(rootStore.session.token).toBe('token');
     expect(screen.getByTestId('probe')).toHaveTextContent('/me/password|null');
+  });
+
+  it('sends a card page to login when collection.byCard rejects the stored session', () => {
+    renderAt('/cards/aurora-knight?tab=1#own');
+    act(() => {
+      noteTrpcFailure({
+        data: {
+          code: 'UNAUTHORIZED',
+          httpStatus: 401,
+          appCode: APP_ERROR_CODES.UNAUTHORIZED,
+          path: 'collection.byCard',
+        },
+      });
+    });
+    expect(rootStore.session.token).toBeNull();
+    expect(clearActiveQueryClient).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('probe')).toHaveTextContent(
+      '/login|{"from":"/cards/aurora-knight?tab=1#own","notice":"sessionExpired"}',
+    );
+    expect(screen.getByTestId('probe')).not.toHaveTextContent('redirect=');
+  });
+
+  it('sends a card page to login when auth.me rejects the token before byCard is handled', () => {
+    renderAt('/cards/aurora-knight');
+    act(() => {
+      noteTrpcFailure({
+        data: {
+          code: 'UNAUTHORIZED',
+          httpStatus: 401,
+          appCode: APP_ERROR_CODES.UNAUTHORIZED,
+          path: 'auth.me',
+        },
+      });
+    });
+    expect(rootStore.session.token).toBeNull();
+    expect(screen.getByTestId('probe')).toHaveTextContent(
+      '/login|{"from":"/cards/aurora-knight","notice":"sessionExpired"}',
+    );
+  });
+
+  it('returns a public forum page to login when a write is rejected', () => {
+    renderAt('/forum/topic');
+    act(() => {
+      noteTrpcFailure({
+        data: {
+          code: 'UNAUTHORIZED',
+          httpStatus: 401,
+          appCode: APP_ERROR_CODES.UNAUTHORIZED,
+          path: 'comments.create',
+        },
+      });
+    });
+    expect(rootStore.session.token).toBeNull();
+    expect(screen.getByTestId('probe')).toHaveTextContent(
+      '/login|{"from":"/forum/topic","notice":"sessionExpired"}',
+    );
   });
 
   it('does not treat a failed login as an expired session', () => {

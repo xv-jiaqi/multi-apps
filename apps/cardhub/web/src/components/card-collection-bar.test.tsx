@@ -73,6 +73,8 @@ vi.mock('../lib/trpc', () => ({
 }));
 
 import { CardCollectionBar, collectionWriteFailure } from './card-collection-bar';
+import { SessionExpiryWatcher } from './session-expiry-watcher';
+import { noteTrpcFailure } from '../lib/session-expiry';
 
 function useCollectionQuery() {
   useSyncExternalStore(bus.subscribe, bus.version, bus.version);
@@ -121,6 +123,7 @@ function LoginProbe() {
 function renderBar() {
   return render(
     <MemoryRouter initialEntries={['/cards/aurora-knight']}>
+      <SessionExpiryWatcher />
       <Routes>
         <Route
           path="/cards/:cardSlug"
@@ -135,6 +138,7 @@ function renderBar() {
 function renderBarBesideLogin() {
   return render(
     <MemoryRouter initialEntries={['/cards/aurora-knight']}>
+      <SessionExpiryWatcher />
       <CardCollectionBar cardSlug="aurora-knight" cardName="极光骑士" />
       <Routes>
         <Route path="/cards/:cardSlug" element={null} />
@@ -681,7 +685,7 @@ describe('card collection bar', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('rolls an optimistic write back, then opens login with redirect and sessionExpired', async () => {
+  it('rolls an optimistic write back, then the session watcher opens login with state.from', async () => {
     const user = userEvent.setup();
     signIn();
     queryState.data = { ownedCount: 2, wanted: true };
@@ -698,8 +702,13 @@ describe('card collection bar', () => {
     expect(want).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent(
-      '/login?redirect=%2Fcards%2Faurora-knight|{"from":"/cards/aurora-knight","notice":"sessionExpired"}',
+    expect(screen.queryByText(/\/login\|/)).not.toBeInTheDocument();
+
+    await act(async () => {
+      noteTrpcFailure(unauthorized);
+    });
+    expect(screen.getByText(/\/login\|/)).toHaveTextContent(
+      '/login|{"from":"/cards/aurora-knight","notice":"sessionExpired"}',
     );
   });
 
@@ -716,9 +725,13 @@ describe('card collection bar', () => {
     queryState.errorUpdateCount = 1;
     renderBar();
 
-    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent('redirect');
-    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent('sessionExpired');
-    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent('/cards/aurora-knight');
+    expect(screen.queryByText('收藏状态加载失败')).not.toBeInTheDocument();
+    act(() => {
+      noteTrpcFailure(queryState.error);
+    });
+    expect(screen.getByText(/\/login\|/)).toHaveTextContent(
+      '/login|{"from":"/cards/aurora-knight","notice":"sessionExpired"}',
+    );
     expect(screen.queryByText('收藏状态加载失败')).not.toBeInTheDocument();
     expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
   });

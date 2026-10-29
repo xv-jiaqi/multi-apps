@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { appErrorMessage, t } from '@repo/shared';
+import { appErrorMessage, t, type Locale } from '@repo/shared';
+import { collectionQuantityMessage } from '../lib/collection-quantity-message';
 import { Button, Card, CardContent, CardHeader } from '@repo/ui-web';
 import { CardThumb } from '../components/card-thumb';
 import { ErrorBox, dataErrorRetryClassName } from '../components/error-box';
@@ -35,6 +36,13 @@ function readAppCode(error: unknown): unknown {
   const data = error.data;
   if (typeof data !== 'object' || data === null || !('appCode' in data)) return undefined;
   return data.appCode;
+}
+
+function collectionErrorText(locale: Locale, error: unknown): string {
+  return (
+    collectionQuantityMessage(locale, error) ??
+    appErrorMessage(locale, typeof readAppCode(error) === 'string' ? readAppCode(error) : undefined)
+  );
 }
 
 export function sortCollectionProgress(items: ProgressItem[], locale: string): ProgressItem[] {
@@ -91,18 +99,18 @@ export function CollectionSection() {
     progressState === 'error'
       ? {
           id: progress.errorUpdateCount,
-          text: appErrorMessage(locale.locale, readAppCode(progress.error)),
+          text: collectionErrorText(locale.locale, progress.error),
         }
       : null;
   const showProgress =
     progressState === 'loading' || progressError !== null || progressItems.length > 0;
   const listError =
     listState === 'error'
-      ? { id: list.errorUpdateCount, text: appErrorMessage(locale.locale, readAppCode(list.error)) }
+      ? { id: list.errorUpdateCount, text: collectionErrorText(locale.locale, list.error) }
       : null;
   const moreError =
     list.data && list.isError
-      ? { id: list.errorUpdateCount, text: appErrorMessage(locale.locale, readAppCode(list.error)) }
+      ? { id: list.errorUpdateCount, text: collectionErrorText(locale.locale, list.error) }
       : null;
 
   useFocusOnPersistentError(Boolean(progressError && progressError.id > 1), progressRetryRef);
