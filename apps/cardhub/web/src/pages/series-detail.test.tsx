@@ -341,7 +341,7 @@ describe('series detail meta description', () => {
     renderSeries();
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
       'content',
-      '天穹黎明: 1 cards. See card details and discussion on Cardhub. 黎明。',
+      '天穹黎明: 1 card. See card details and discussion on Cardhub. 黎明。',
     );
   });
 

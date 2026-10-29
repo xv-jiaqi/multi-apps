@@ -58,7 +58,7 @@ describe('series and card meta descriptions', () => {
     ).toBe(EN_CARD);
   });
 
-  it('keeps the count sentence for zero cards and the spec wording for one card', () => {
+  it('keeps the zero-card sentence', () => {
     expect(
       seriesMetaDescription({
         locale: 'zh-CN',
@@ -71,10 +71,40 @@ describe('series and card meta descriptions', () => {
       seriesMetaDescription({
         locale: 'en-US',
         title: 'Base Set',
+        cardCount: 0,
+        description: null,
+      }),
+    ).toBe('Base Set: 0 cards. See card details and discussion on Cardhub.');
+  });
+
+  it('uses the English singular when the series has one card', () => {
+    expect(
+      seriesMetaDescription({
+        locale: 'en-US',
+        title: 'Base Set',
         cardCount: 1,
         description: null,
       }),
-    ).toBe('Base Set: 1 cards. See card details and discussion on Cardhub.');
+    ).toBe('Base Set: 1 card. See card details and discussion on Cardhub.');
+    expect(
+      seriesMetaDescription({
+        locale: 'zh-CN',
+        title: '基础系列',
+        cardCount: 1,
+        description: null,
+      }),
+    ).toBe('基础系列 系列，共 1 张卡牌。在 Cardhub 查看卡牌资料和讨论。');
+  });
+
+  it('uses the English plural when the series has two cards', () => {
+    expect(
+      seriesMetaDescription({
+        locale: 'en-US',
+        title: 'Base Set',
+        cardCount: 2,
+        description: null,
+      }),
+    ).toBe('Base Set: 2 cards. See card details and discussion on Cardhub.');
   });
 
   it('omits the card number and its prefix when the number is missing', () => {

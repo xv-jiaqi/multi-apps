@@ -856,6 +856,8 @@ const enUS: Dictionary = {
   'series.cardCount_one': '{count} card inside',
   'series.cardCount_other': '{count} cards inside',
   'meta.series': '{title}: {count} cards. See card details and discussion on Cardhub.',
+  'meta.series_one': '{title}: {count} card. See card details and discussion on Cardhub.',
+  'meta.series_other': '{title}: {count} cards. See card details and discussion on Cardhub.',
   'meta.seriesNoCount': '{title}. See card details and discussion on Cardhub.',
   'meta.card': '{name} from {series}{number}. See details, trades, and discussion on Cardhub.',
   'meta.cardNumber': ', No. {number}',
