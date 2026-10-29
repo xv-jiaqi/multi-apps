@@ -32,10 +32,15 @@ function harness(options?: {
   return { createMany, findUnique, verify, warn, call };
 }
 
+function settle(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
 describe('makeCreateContext daily activity', () => {
   it('records the UTC day for a verified user and still returns that user', async () => {
     const { createMany, call } = harness();
     const ctx = await call('Bearer token');
+    await settle();
     expect(ctx.user).toEqual({
       sub: 'user-1',
       username: 'ada',
@@ -54,8 +59,37 @@ describe('makeCreateContext daily activity', () => {
     const { createMany, call } = harness({ redis: { set } });
     expect((await call('Bearer token')).user?.sub).toBe('user-1');
     expect((await call('Bearer token')).user?.sub).toBe('user-1');
+    await settle();
     expect(createMany).toHaveBeenCalledTimes(1);
     expect(set).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns the user without waiting when Redis never answers', async () => {
+    const set = jest.fn().mockReturnValue(new Promise(() => undefined));
+    const { call } = harness({ redis: { set } });
+    const result = await Promise.race([
+      call('Bearer token').then(() => 'done'),
+      new Promise((resolve) => setTimeout(() => resolve('stuck'), 200)),
+    ]);
+    expect(result).toBe('done');
+    expect(set).toHaveBeenCalled();
+  });
+
+  it('writes the activity row when Redis stays silent for more than 200ms', async () => {
+    const set = jest.fn().mockReturnValue(new Promise(() => undefined));
+    const { createMany, call } = harness({ redis: { set } });
+    const started = Date.now();
+    const ctx = await call('Bearer token');
+    expect(Date.now() - started).toBeLessThan(100);
+    expect(ctx.user?.sub).toBe('user-1');
+    expect(createMany).not.toHaveBeenCalled();
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(createMany).toHaveBeenCalledWith({
+      data: [{ userId: 'user-1', day: expect.any(Date) }],
+      skipDuplicates: true,
+    });
   });
 
   it('returns the user when the activity write fails', async () => {
@@ -63,6 +97,7 @@ describe('makeCreateContext daily activity', () => {
       createMany: jest.fn().mockRejectedValue(new Error('db down')),
     });
     const ctx = await call('Bearer token');
+    await settle();
     expect(ctx.user?.sub).toBe('user-1');
     expect(warn).toHaveBeenCalledWith({ errCode: 'unknown' }, 'daily activity write failed');
   });

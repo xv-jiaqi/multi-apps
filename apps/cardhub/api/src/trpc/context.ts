@@ -48,11 +48,17 @@ export function makeCreateContext(
             select: { tokenVersion: true, role: true, bannedAt: true },
           });
           if (row && row.tokenVersion === tokenVer) {
-            await recordDailyActivity(prisma, payload.sub, {
+            // Do not await. A slow or stuck Redis must not hold the request.
+            void recordDailyActivity(prisma, payload.sub, {
               redis,
               warn: (code) => {
                 req.log?.warn({ errCode: code }, 'daily activity write failed');
               },
+            }).catch((error: unknown) => {
+              req.log?.warn(
+                { errCode: error instanceof Error ? error.name : 'unknown' },
+                'daily activity write failed',
+              );
             });
             return {
               req,
