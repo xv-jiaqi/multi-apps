@@ -75,6 +75,23 @@ describe('makeCreateContext daily activity', () => {
     expect(set).toHaveBeenCalled();
   });
 
+  it('writes the activity row when Redis stays silent for more than 200ms', async () => {
+    const set = jest.fn().mockReturnValue(new Promise(() => undefined));
+    const { createMany, call } = harness({ redis: { set } });
+    const started = Date.now();
+    const ctx = await call('Bearer token');
+    expect(Date.now() - started).toBeLessThan(100);
+    expect(ctx.user?.sub).toBe('user-1');
+    expect(createMany).not.toHaveBeenCalled();
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(createMany).toHaveBeenCalledWith({
+      data: [{ userId: 'user-1', day: expect.any(Date) }],
+      skipDuplicates: true,
+    });
+  });
+
   it('returns the user when the activity write fails', async () => {
     const { call, warn } = harness({
       createMany: jest.fn().mockRejectedValue(new Error('db down')),
