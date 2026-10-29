@@ -97,6 +97,19 @@ const mock = vi.hoisted(() => {
     listingState: makeState(),
     topicState: makeState(),
     commentState: makeState(),
+    progressState: {
+      data: { items: [] as Array<Record<string, unknown>> },
+      isLoading: false,
+      isPending: false,
+      isFetching: false,
+      isError: false,
+      isSuccess: true,
+      error: null as { data?: { appCode?: string }; message: string } | null,
+      errorUpdateCount: 0,
+      dataUpdatedAt: 1,
+      refetch: vi.fn(),
+    },
+    listState: makeState(),
   };
 });
 
@@ -173,6 +186,14 @@ vi.mock('../lib/trpc', () => ({
         useInfiniteQuery: () => mock.commentState,
       },
     },
+    collection: {
+      progress: {
+        useQuery: () => mock.progressState,
+      },
+      list: {
+        useInfiniteQuery: () => mock.listState,
+      },
+    },
     listings: {
       mine: {
         useInfiniteQuery: () => mock.listingState,
@@ -246,6 +267,19 @@ beforeEach(() => {
   meState.error = null;
   meState.refetch.mockReset();
 
+  Object.assign(mock.progressState, {
+    data: { items: [] },
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isError: false,
+    isSuccess: true,
+    error: null,
+    errorUpdateCount: 0,
+    dataUpdatedAt: 1,
+  });
+  mock.progressState.refetch.mockReset();
+  Object.assign(mock.listState, makeInfiniteState());
   Object.assign(listingState, makeInfiniteState<ListingFixture>());
   listingState.data = {
     pages: [{ items: [listing('1'), listing('2', 'CLOSED')], nextCursor: null }],
