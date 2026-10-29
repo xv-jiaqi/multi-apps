@@ -329,12 +329,20 @@ API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次
 
 ### 7.5.3 本地验证生产构建
 
+CI 的 `api-image` job 会构建 API 镜像并运行 [`scripts/check-api-image.sh`](../../scripts/check-api-image.sh)。脚本检查 `/health`（`gitSha`、`db`、`redis`）、`Server-Timing`、`Timing-Allow-Origin`、超大 body 的 413 和坏 JSON 的 400。PR 用这条 job 的日志代替手贴这些响应。本地要复现时，把镜像接到真实的 Postgres 16 和 Redis 7，再跑同一个脚本：
+
 ```bash
-docker build -f Dockerfile.api -t cardhub-api:test .
+docker build -f Dockerfile.api --build-arg GIT_SHA="$(git rev-parse HEAD)" -t cardhub-api:test .
 docker build -f Dockerfile.web -t cardhub-web:test .
 ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config
 ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config
+EXPECTED_GIT_SHA="$(git rev-parse HEAD)" \
+  API_BASE_URL=http://127.0.0.1:4000 \
+  API_CONTAINER=cardhub-api-test \
+  bash scripts/check-api-image.sh
 ```
+
+`Server-Timing` 只有 `app`、`db`、`cache` 的 `dur`。不写 SQL、表名、缓存键或用户信息。`Timing-Allow-Origin` 只回写已经在 `CORS_ORIGIN` 白名单里的 Origin，不用 `*`。设了 `REDIS_CONTAINER` 时，脚本会停掉那个 Redis，并要求一条已登录请求在 300ms 内返回。
 
 ## 8. 接手 Agent 工作建议
 
