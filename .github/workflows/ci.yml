@@ -229,6 +229,8 @@ jobs:
           bash deploy/sync-whitelist.test.sh
           bash deploy/web-security-headers.test.sh
           bash deploy/sitemap-proxy.test.sh
+          bash deploy/container-log-archive.test.sh
+          bash deploy/edge-access-log.test.sh
 
   audit:
     name: pnpm audit (high+)
