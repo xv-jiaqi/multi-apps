@@ -1,3 +1,4 @@
+import axe from 'axe-core';
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -185,4 +186,31 @@ describe('card detail comment header at 375', () => {
       expect(metrics.report?.right ?? Infinity).toBeLessThanOrEqual(375);
     },
   );
+});
+
+const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] as const;
+
+describe('card detail WCAG', () => {
+  it.each([
+    ['zh-CN', 1440],
+    ['zh-CN', 375],
+    ['en-US', 1440],
+    ['en-US', 375],
+  ] as const)('has no %s violations at %i px', async (locale, width) => {
+    rootStore.locale.setLocale(locale);
+    await commands.setViewport(width, 900);
+    renderCard();
+    expect(await screen.findByRole('heading', { level: 1, name: '极光骑士' })).toBeInTheDocument();
+
+    const results = await axe.run(document.body, {
+      runOnly: { type: 'tag', values: [...AXE_TAGS] },
+    });
+    expect(
+      results.violations.map((violation) => ({
+        id: violation.id,
+        impact: violation.impact,
+        targets: violation.nodes.map((node) => node.target).slice(0, 3),
+      })),
+    ).toEqual([]);
+  });
 });

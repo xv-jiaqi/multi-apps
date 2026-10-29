@@ -192,7 +192,7 @@ Playwright 冒烟另用库 `cardhub_e2e`（可用 `DATABASE_URL` 覆盖）。每
 
 API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../../apps/cardhub/web/src/main.tsx) 都用 `if (DSN)` 守卫包住 `Sentry.init()`，**dev 留空 DSN 时不上报、不增加任何运行时开销**。当 API `SENTRY_DSN` 或 Web `WEB_SENTRY_DSN` 设置后：
 
-- API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）；environment 取 `SENTRY_ENVIRONMENT`（compose 中等于 `ENV_NAME`），release 取 `GIT_SHA`。请求上的 id 写入 Sentry 标签 `request_id`（见 §6.18）。
+- API：`SentryExceptionFilter` 全局拦截 5xx；tRPC `onError` 仅上报 `INTERNAL_SERVER_ERROR`（避免 `BAD_REQUEST` / `UNAUTHORIZED` 噪音）；environment 取 `SENTRY_ENVIRONMENT`（compose 中等于 `ENV_NAME`），release 取 `GIT_SHA`。请求上的 id 写入 Sentry 标签 `request_id`（见 §6.19）。
 - Web：`ErrorBoundary` 的 `onError` 调 `Sentry.captureException`。
 
 真实 DSN 不要写进仓库。API 的 DSN 放在 VPS 的 `/opt/cardhub/<environment>/<environment>.env` 的 `SENTRY_DSN`；Web 的 DSN 放在同一 env 文件的 `WEB_SENTRY_DSN`。Web Docker 入口脚本会把 `WEB_SENTRY_DSN`、`SENTRY_ENVIRONMENT` 和镜像 `GIT_SHA` 写入运行时 `/config.js`，因此同一个 Web 镜像可同时用于 staging 和 production。`VITE_SENTRY_DSN` 仅保留给非容器静态构建 fallback，不用于 Docker 部署。
@@ -250,10 +250,14 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 2. **Prisma 迁移只增不删**：发布时 `prisma migrate deploy` 先于新容器执行，失败回滚只换镜像。已合入 `main` 的迁移文件不能删改；删列和改名不能写进同一次迁移。约定见 [development-backlog.md](development-backlog.md) §1.3。
 3. **`seed-catalog` 会覆盖同 slug 的数据**：它按 slug upsert，不要在生产重复执行；内容管理后台（CH-107）上线时要改为只插入缺失记录。
 4. **env 文件里的 `CORS_ORIGIN` 会覆盖代码默认值**：代码默认值包含 Tauri 来源，`deploy/.env.example` 的生产值只有 `https://card-hub.app`。桌面 / 移动端连生产 API 前必须补上 Tauri 来源（CH-303）。
-5. **限流按 IP，计数在 Redis**：`trust proxy` 只信任 1 跳（Caddy）。如果以后在 Caddy 前再加 CDN / SLB，要同步调整，否则所有用户会共享同一个 IP 的限额。各限流器前缀是 `cardhub:rl:v1:<名称>:`。Redis 故障时 `passOnStoreError` 放行，不要改回“失败就 500”。公开目录缓存前缀是 `cardhub:cache:v1:`，TTL 5 分钟；停 Redis 时读接口回源。API 测试需要本机 Redis（CI 用 service container）。Jest 里每个 `createApp` 用独立限流前缀，缓存键带 worker id，避免并行用例互相顶掉计数或列表缓存。Redis 地址在创建客户端时读当前 `process.env`：`ConfigModule.forRoot` 会在 `AppModule` 第一次求值时把环境变量冻成快照，之后再改 `REDIS_PORT` 若只走 `ConfigService.get` 仍会连到原来的实例。停 Redis 期间的后台写无法删键；连接断开或删键失败后，下次 `ready` 会 `SCAN` + `UNLINK` 清掉整个 `cardhub:cache:v1:*`，不要改成 `KEYS`，也不要扫到 `cardhub:rl:v1:*`。清除失败按 200ms 起指数退避，最多 6 次，单次等待不超过 30 秒，到上限后停；下一次断线再重新计。`X-Cache` 只在 `ENV_NAME=staging` 且 `CATALOG_CACHE_HEADER=true` 时出现，生产默认关闭。这两个变量必须写在 `deploy/docker-compose.yml` 的 api `environment:` 里，env 文件本身不会进容器。`deploy.yml` 读取 `vars.CATALOG_CACHE_HEADER`，只有精确的 `true` 保持 true，空值和其他值都写成 `false`，再由 `remote-deploy.sh` 原地写入 env 文件。生产默认 false，所以不会输出 `X-Cache`。staging 要打开就在 GitHub Environment 里把该变量设为 `true`。一次 HTTP 里有多个 procedure 时，头只留一个值：有 BYPASS 就是 BYPASS，否则有 MISS 就是 MISS，否则 HIT。这是部署配置，合入要守夜人手动做；staging env 设 `CATALOG_CACHE_HEADER=true`，生产不设。
+5. **限流按 IP，计数在 Redis**：`trust proxy` 只信任 1 跳（Caddy）。如果以后在 Caddy 前再加 CDN / SLB，要同步调整，否则所有用户会共享同一个 IP 的限额。各限流器前缀是 `cardhub:rl:v1:<名称>:`。Redis 故障时 `passOnStoreError` 放行，不要改回“失败就 500”。公开目录缓存前缀是 `cardhub:cache:v1:`，TTL 5 分钟；停 Redis 时读接口回源。API 测试需要本机 Redis（CI 用 service container）。Jest 里每个 `createApp` 用独立限流前缀，缓存键带 worker id，避免并行用例互相顶掉计数或列表缓存。Redis 地址在创建客户端时读当前 `process.env`：`ConfigModule.forRoot` 会在 `AppModule` 第一次求值时把环境变量冻成快照，之后再改 `REDIS_PORT` 若只走 `ConfigService.get` 仍会连到原来的实例。停 Redis 期间的后台写无法删键；连接断开或删键失败后，下次 `ready` 会 `SCAN` + `UNLINK` 清掉整个 `cardhub:cache:v1:*`，不要改成 `KEYS`，也不要扫到 `cardhub:rl:v1:*`。清除失败按 200ms 起指数退避，最多 6 次，单次等待不超过 30 秒，到上限后停；下一次断线再重新计。`X-Cache` 只在 `ENV_NAME=staging` 且 `CATALOG_CACHE_HEADER=true` 时出现，生产默认关闭。这两个变量必须写在 `deploy/docker-compose.yml` 的 api `environment:` 里，env 文件本身不会进容器。`deploy.yml` 读取 `vars.CATALOG_CACHE_HEADER`，只有精确的 `true` 保持 true，空值和其他值都写成 `false`，再由 `remote-deploy.sh` 原地写入 env 文件。生产默认 false，所以不会输出 `X-Cache`。staging 要打开就在 GitHub Environment 里把该变量设为 `true`。一次 HTTP 里有多个 procedure 时，头只留一个值：有 BYPASS 就是 BYPASS，否则有 MISS 就是 MISS，否则 HIT。这是部署配置，合入要守夜人手动做；staging env 设 `CATALOG_CACHE_HEADER=true`，生产不设。`cards.listBySeries` 的键在同一个 `cardhub:cache:v1:` 前缀下，并且带上 series、q、rarity、subset、sort、page、pageSize；省略的参数按默认值写入，避免和显式默认值分成两份。改卡牌、系列或子集时按该系列的键前缀删除；卡牌变更如果没有系列 slug，就删掉整个 `cards.listBySeries:` 前缀。
 6. **本机办公网络可能拦截 `card-hub.app`**：在 owner 的办公网络下访问线上域名会返回安全策略拦截页（HTTP 403）。线上验证请在外网进行，或通过 VPS 上的 `curl --resolve` 检查。
 
-### 6.18 API 日志是 JSON，request id 有格式
+### 6.18 系列清单的卡号顺序
+
+`cards.listBySeries` 的 `sort=number` 只取卡号里第一段连续 ASCII 数字做数值比较（去掉前导 0 后按位数再按字典序，所以超过安全整数也稳定），然后比较去掉这段数字后剩下的前缀和后缀原文。空卡号在最后。没有数字的非空卡号（如 `PROMO`）排在有数字的卡号之后。相同键按 `id` 升序。因此 `2` 在 `10` 前、`A2` 在 `A10` 前，但 `B2` 也在 `A10` 前，因为整数优先于字母。这是 CH-202 字面要求的读法，不是按前缀分组。关键词在这一次读出的结果里做大小写不敏感子串匹配，`%` 和 `_` 是字面量，不要改回 SQL `LIKE`。
+
+### 6.19 API 日志是 JSON，request id 有格式
 
 `apps/cardhub/api` 用 `nestjs-pino`。`createApp` 里要保留 `app.useLogger(app.get(NativeLogger))`，否则 Nest 的 `Logger` 仍是文本，请求上下文也不会挂上。
 

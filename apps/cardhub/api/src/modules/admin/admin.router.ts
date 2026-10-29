@@ -24,6 +24,7 @@ import {
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { buildAdminTaxonomyRouter } from './admin-taxonomy';
 import { buildAdminAuditRouter, buildAdminUsersRouter } from './governance.router';
+import { buildAdminMetricsProcedure } from '../metrics/metrics.router';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { CatalogCache, DirectCatalogCache } from '../redis/catalog-cache';
@@ -851,6 +852,7 @@ export class AdminRouter {
       ...buildAdminTaxonomyRouter(t, prisma, cache),
       users: buildAdminUsersRouter(t, prisma),
       audit: buildAdminAuditRouter(t, prisma),
+      metrics: buildAdminMetricsProcedure(t, prisma),
     });
   }
 }

@@ -2,12 +2,23 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { hasCardSearchConditions, parseCardSearchQuery, slugSchema } from '@repo/shared';
+import {
+  cardsListBySeriesInput,
+  hasCardSearchConditions,
+  parseCardSearchQuery,
+  slugSchema,
+} from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
-import { CatalogCache, DirectCatalogCache, cardBySlugKey } from '../redis/catalog-cache';
-import { cardBySlugSchema } from '../redis/public-cache.schema';
+import {
+  CatalogCache,
+  DirectCatalogCache,
+  cardBySlugKey,
+  cardsListBySeriesCacheKey,
+} from '../redis/catalog-cache';
+import { cardBySlugSchema, cardsListBySeriesSchema } from '../redis/public-cache.schema';
 import { assertParsedSearch, buildCardSearchWhere } from '../search/search-query';
+import { loadCardsBySeries } from './list-by-series';
 
 type CardSearchRow = Prisma.CardGetPayload<{
   include: { series: { select: { slug: true; title: true } } };
@@ -107,6 +118,12 @@ export class CardsRouter {
             })),
           };
         }),
+
+      listBySeries: t.procedure.input(cardsListBySeriesInput).query(({ input }) => {
+        return cache.read(cardsListBySeriesCacheKey(input), cardsListBySeriesSchema, () =>
+          loadCardsBySeries(prisma, input),
+        );
+      }),
     });
   }
 }

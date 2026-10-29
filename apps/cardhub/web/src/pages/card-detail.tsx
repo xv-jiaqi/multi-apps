@@ -6,6 +6,7 @@ import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
+import { cardMetaDescription } from '../lib/meta-description';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -95,7 +96,16 @@ export const CardDetailPage = observer(function CardDetailPage() {
 
   return (
     <PageShell>
-      <PageMeta title={card.name} />
+      <PageMeta
+        title={card.name}
+        description={cardMetaDescription({
+          locale: locale.locale,
+          name: card.name,
+          seriesTitle: card.seriesTitle,
+          cardNumber: card.cardNumber,
+          description: card.description,
+        })}
+      />
       <div className="space-y-8">
         <Breadcrumbs
           items={[

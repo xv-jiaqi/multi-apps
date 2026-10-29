@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { CARD_SERIES_LIST_PAGE_SIZE_DEFAULT } from '@repo/shared';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -11,6 +12,9 @@ import {
   categoryBySlugKey,
   categoryBySlugPrefix,
   cardsBySlugPrefix,
+  cardsListBySeriesCacheKey,
+  cardsListBySeriesPrefix,
+  cardsListBySeriesSeriesPrefix,
   seriesBySlugKey,
   seriesBySlugPrefix,
   seriesListCacheKey,
@@ -47,22 +51,71 @@ describe('catalog cache keys', () => {
       cacheDeletion({ kind: 'card', cardSlug: 'aurora', seriesSlugs: ['dawn', 'dawn'] }),
     ).toEqual({
       keys: [cardBySlugKey('aurora'), seriesBySlugKey('dawn')],
-      prefixes: [seriesListPrefix(), categoryBySlugPrefix()],
+      prefixes: [seriesListPrefix(), categoryBySlugPrefix(), cardsListBySeriesSeriesPrefix('dawn')],
+    });
+    expect(cacheDeletion({ kind: 'card', cardSlug: 'aurora', seriesSlugs: [] })).toEqual({
+      keys: [cardBySlugKey('aurora')],
+      prefixes: [seriesListPrefix(), categoryBySlugPrefix(), cardsListBySeriesPrefix()],
     });
     expect(cacheDeletion({ kind: 'series', seriesSlug: 'dawn' })).toEqual({
       keys: [seriesBySlugKey('dawn'), categoriesListKey()],
-      prefixes: [seriesListPrefix(), categoryBySlugPrefix(), cardsBySlugPrefix()],
+      prefixes: [
+        seriesListPrefix(),
+        categoryBySlugPrefix(),
+        cardsBySlugPrefix(),
+        cardsListBySeriesSeriesPrefix('dawn'),
+      ],
     });
     expect(cacheDeletion({ kind: 'category', categorySlug: 'deck' })).toEqual({
       keys: [categoryBySlugKey('deck'), categoriesListKey()],
       prefixes: [seriesListPrefix(), seriesBySlugPrefix()],
     });
-    expect(cacheDeletion({ kind: 'subset', seriesSlug: 'dawn' }).keys).toEqual([
-      seriesBySlugKey('dawn'),
-    ]);
+    expect(cacheDeletion({ kind: 'subset', seriesSlug: 'dawn' })).toEqual({
+      keys: [seriesBySlugKey('dawn')],
+      prefixes: [cardsBySlugPrefix(), cardsListBySeriesSeriesPrefix('dawn')],
+    });
     expect(cacheDeletion({ kind: 'catalog' }).prefixes).toEqual([
       cardBySlugKey('x').slice(0, cardBySlugKey('x').indexOf('cards.bySlug:')),
     ]);
+  });
+
+  it('puts every listBySeries parameter in the cache key and folds defaults', () => {
+    const defaults = cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn' });
+    expect(defaults).toBe(
+      cardsListBySeriesCacheKey({
+        seriesSlug: 'celestial-dawn',
+        q: undefined,
+        rarity: undefined,
+        subsetSlug: undefined,
+        sort: 'number',
+        page: 1,
+        pageSize: CARD_SERIES_LIST_PAGE_SIZE_DEFAULT,
+      }),
+    );
+    expect(defaults.startsWith('cardhub:cache:v1:')).toBe(true);
+    expect(defaults).toContain('cards.listBySeries:series=celestial-dawn&');
+    expect(defaults).toContain('q=&rarity=&subset=&sort=number&page=1&pageSize=60');
+
+    const varied = [
+      { q: '龙' },
+      { rarity: 'rare' },
+      { subsetSlug: 'base' },
+      { sort: 'name' },
+      { page: 2 },
+      { pageSize: 20 },
+      { seriesSlug: 'other-series' },
+    ];
+    for (const patch of varied) {
+      expect(cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', ...patch })).not.toBe(
+        defaults,
+      );
+    }
+    expect(cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', q: 'a&b' })).toContain(
+      'q=a%26b',
+    );
+    expect(cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', q: 'a&b' })).not.toContain(
+      'q=a&b',
+    );
   });
 });
 
