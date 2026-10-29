@@ -1,8 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useLayoutEffect } from 'react';
 import { Outlet, useLocation, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
 import { SessionExpiryWatcher } from './components/session-expiry-watcher';
-import { ErrorBoundary, isChunkLoadError } from './components/error-boundary';
+import { ErrorBoundary, clearChunkRetryPath, isChunkLoadError } from './components/error-boundary';
 import { CardDetailSkeleton } from './components/card-detail-skeleton';
 import { RouteErrorFallback } from './components/route-error';
 import { captureSentryException } from './lib/sentry';
@@ -134,7 +134,13 @@ export function LazyRoute({
   );
 }
 
-function AppLayout() {
+export function AppLayout() {
+  // Runs after child layout effects, so an error fallback can focus Retry
+  // from the chunk-reload marker before this clears it.
+  useLayoutEffect(() => {
+    clearChunkRetryPath();
+  }, []);
+
   return (
     <>
       <AuthBootstrap />

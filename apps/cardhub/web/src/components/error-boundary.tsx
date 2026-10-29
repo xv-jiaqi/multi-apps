@@ -1,4 +1,4 @@
-import { Component, useRef, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useLayoutEffect, useRef, type ErrorInfo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
 import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
@@ -21,6 +21,33 @@ export function isChunkLoadError(error: unknown): boolean {
     message.includes('Loading CSS chunk') ||
     message.includes('Loading chunk')
   );
+}
+
+/** One-shot path written before a chunk-error reload. */
+export const CHUNK_RETRY_PATH_KEY = 'cardhub:chunkRetryPath';
+
+export function readChunkRetryPath(): string | null {
+  try {
+    return window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function writeChunkRetryPath(pathname: string): void {
+  try {
+    window.sessionStorage.setItem(CHUNK_RETRY_PATH_KEY, pathname);
+  } catch {
+    // sessionStorage may be unavailable; the reload still proceeds.
+  }
+}
+
+export function clearChunkRetryPath(): void {
+  try {
+    window.sessionStorage.removeItem(CHUNK_RETRY_PATH_KEY);
+  } catch {
+    // sessionStorage may be unavailable.
+  }
 }
 
 interface ErrorBoundaryProps {
@@ -140,6 +167,14 @@ export const ErrorFallback = observer(function ErrorFallback({
   const tt = (key: string) => t(locale.locale, key);
   const retryRef = useRef<HTMLButtonElement>(null);
   useFocusOnPersistentError(restoreFocus, retryRef);
+  useLayoutEffect(() => {
+    const marked = readChunkRetryPath();
+    if (marked == null) return;
+    clearChunkRetryPath();
+    if (marked === window.location.pathname) {
+      retryRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
 
   const alert = (
     <div
@@ -156,6 +191,7 @@ export const ErrorFallback = observer(function ErrorFallback({
           retryingLabel={tt('state.retrying')}
           onRetry={() => {
             if (isChunkLoadError(error)) {
+              writeChunkRetryPath(window.location.pathname);
               window.location.reload();
               return;
             }

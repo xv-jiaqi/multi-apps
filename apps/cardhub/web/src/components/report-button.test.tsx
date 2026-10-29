@@ -45,6 +45,17 @@ beforeEach(() => {
 });
 
 describe('report form focus', () => {
+  it('gives the logged-out report link the same trigger classes', () => {
+    rootStore.session.signOut();
+    renderReport();
+    expect(screen.getByRole('link', { name: '举报' })).toHaveClass(
+      'hover:underline',
+      'focus-visible:outline-none',
+      'focus-visible:ring-2',
+      'focus-visible:ring-brand-500',
+    );
+  });
+
   it('moves focus into the textarea and back to the report button', async () => {
     const user = userEvent.setup();
     renderReport();
