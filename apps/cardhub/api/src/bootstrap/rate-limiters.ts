@@ -19,7 +19,8 @@ export type RateLimitName =
   | 'forumTopicCreate'
   | 'forumReplyCreate'
   | 'listingPublish'
-  | 'reportCreate';
+  | 'reportCreate'
+  | 'collectionUpsert';
 
 export type RateLimitOverrides = Partial<Record<RateLimitName, Partial<RateLimitOverrideConfig>>>;
 
@@ -194,6 +195,11 @@ export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> 
     windowMs: 60 * 60_000,
     limit: 20,
     skip: urlDoesNotInclude('reports.create'),
+  },
+  collectionUpsert: {
+    windowMs: 60_000,
+    limit: 60,
+    skip: urlDoesNotInclude('collection.upsert'),
   },
 };
 
