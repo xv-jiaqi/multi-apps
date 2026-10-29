@@ -1,0 +1,17 @@
+{
+  "extends": "@repo/config-ts/base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
+  "include": [
+    "playwright.config.ts",
+    "global-setup.ts",
+    "ensure-db.ts",
+    "harness.ts",
+    "tests/**/*.ts"
+  ]
+}

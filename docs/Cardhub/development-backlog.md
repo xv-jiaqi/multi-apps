@@ -95,7 +95,7 @@
 | CH-303 | Tauri 桌面发布（签名、更新、CORS）              | P3     | M    | —                     | 待领取                                                |
 | CH-304 | iOS / Android 真机构建与上架流程                | P3     | L    | CH-303                | 待领取                                                |
 | CH-305 | 深色模式                                        | P3     | M    | —                     | 待领取                                                |
-| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | 待领取                                                |
+| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | ✅ #178                                               |
 | CH-307 | 可观测性：结构化日志 + request id               | P3     | S    | —                     | 待领取                                                |
 | CH-308 | 产品指标统计                                    | P3     | M    | —                     | 待领取                                                |
 | CH-309 | Web 安全响应头 + Tauri CSP                      | P3     | S    | CH-005                | 进行中（cursor/ch-309-security-headers-9131）         |
@@ -624,8 +624,8 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-306 测试补齐 + E2E 冒烟
 
-- 补 `series.router.spec.ts`；替换 `apps/cardhub/api/test/placeholder.e2e-spec.ts` 为基于 supertest 的真实链路测试。
-- 引入 Playwright 冒烟用例：浏览 → 卡牌详情 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报。CI 中以独立 job 运行（可设为 nightly）。
+- `series.router.spec.ts` 与 supertest API e2e 已在 main。占位文件 `apps/cardhub/api/test/placeholder.e2e-spec.ts` 已删除。
+- Playwright 用户流程冒烟在 `apps/cardhub/e2e`：浏览 → 卡牌详情 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报。CI workflow 里的独立 job `e2e-smoke` 在 push / pull request 上运行，不进 `pnpm test`。
 
 #### CH-307 可观测性
 

@@ -1,0 +1,19 @@
+{
+  "name": "@cardhub/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright user-flow smoke for Cardhub Web against a real API.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@repo/config-ts": "workspace:*",
+    "@types/node": "^25.6.0",
+    "@types/pg": "^8.15.6",
+    "pg": "^8.16.3",
+    "typescript": "^6.0.3"
+  }
+}

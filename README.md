@@ -133,12 +133,14 @@ pnpm dev
 | API 含覆盖率     | `pnpm --filter @cardhub/api test:cov` |
 | 仅 Web（vitest） | `pnpm --filter @cardhub/web test`     |
 | Web 含覆盖率     | `pnpm --filter @cardhub/web test:cov` |
+| Playwright 冒烟  | `pnpm --filter @cardhub/e2e test:e2e` |
 
 - API 单元测试位于 `apps/cardhub/api/src/**/*.spec.ts`，集成测试位于 `apps/cardhub/api/test/**/*.e2e-spec.ts`。
 - Web 测试位于 `apps/cardhub/web/src/**/*.{test,spec}.{ts,tsx}`，setup 在 `apps/cardhub/web/test/setup.ts`。
 - 本地跑 Web browser mode（含 ui-web Combobox）需要已安装 Chromium：`pnpm exec playwright install chromium`。
+- Playwright 用户流程冒烟在 `apps/cardhub/e2e`，不进 `pnpm test`。先构建 API 和 Web（`pnpm exec turbo run build --filter=@cardhub/api --filter=@cardhub/web`），本机 Postgres 与 Redis 要已启动，再 `pnpm --filter @cardhub/e2e exec playwright install chromium`。默认库是 `postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_e2e`，API 在 `:4100`，页面在 `:4173`。`alice` / `admin` 的密码每次运行现生成，不写入仓库。
 - 覆盖率门槛：全局 60% / `auth/*` 80%，CI 不达标会失败。
-- 运行 e2e 时记得用独立的测试库：
+- 运行 API e2e 时记得用独立的测试库：
 
   ```bash
   DATABASE_URL="postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=public" \
@@ -153,6 +155,7 @@ pnpm dev
 2. Prisma generate + `prisma migrate deploy`（用 service container 起的 Postgres 16）
 3. `pnpm lint` / `pnpm typecheck` / `pnpm build` / `pnpm test`
 4. 并行：`pnpm audit --prod --audit-level high`
+5. 独立 job `e2e-smoke`：Playwright 用户流程冒烟（浏览 → 卡牌 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报）。自带 Postgres 与 Redis，不进 `pnpm test`。
 
 [`.github/dependabot.yml`](.github/dependabot.yml) 每周一开 minor/patch 升级 PR（npm 与 GitHub Actions 各一组）。
 

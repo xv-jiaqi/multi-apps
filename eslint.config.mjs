@@ -27,6 +27,14 @@ const dialogNames = [
 export default [
   ...base,
   {
+    ignores: [
+      'apps/cardhub/e2e/.auth/**',
+      'apps/cardhub/e2e/test-results/**',
+      'apps/cardhub/e2e/playwright-report/**',
+      'apps/cardhub/e2e/blob-report/**',
+    ],
+  },
+  {
     files: ['apps/agent-hub/web/src/**/*.{ts,tsx}'],
     ignores: ['apps/agent-hub/web/src/components/hub-dialog.tsx'],
     rules: {

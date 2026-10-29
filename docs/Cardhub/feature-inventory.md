@@ -406,11 +406,12 @@ erDiagram
 2. `cards.name` 的 btree 索引对 `ILIKE '%q%'` 无效。`cards.name` 与 `series.title` 已加 `pg_trgm` GIN 索引（CH-106）。线上 cards 9 行、series 3 行时全表扫描是正常的；短于 3 个字符的词可能仍不走索引。
 3. API 错误信息只有中文（CH-211）。
 4. 按 `deploy/.env.example` 配置的生产 `CORS_ORIGIN` 只包含 `https://card-hub.app`，Tauri 桌面 / 移动端（`tauri://localhost`、`https://tauri.localhost`、`http://tauri.localhost`）请求生产 API 会被 CORS 拦截；桌面端发布前必须处理（CH-303）。
-5. `series` 路由没有单测；API e2e 只有占位文件；小程序与原生壳没有测试（CH-306）。
+5. 小程序与原生壳没有测试。
 
 ## 10. 测试基线
 
 - API（Jest）：`apps/cardhub/api/src/**/*.spec.ts`，覆盖 auth、cards、comments、forum、listings、reports、health、限流代理、seed 脚本。覆盖率门槛：全局语句 60%、分支 50%；`auth/*` 语句 80%。
 - Web（Vitest + RTL，jsdom）：评论区组件、登录回跳、渐变映射、运行时配置脚本、ui-web 表单控件、全局搜索页与顶栏搜索。`markdown-view.test.tsx` 断言正文容器是 `wrap-anywhere`，代码块带 `overflow-x-auto` 和 `max-w-full`，表格包在滚动容器里。Combobox 键盘（第一次 Esc 只关闭列表并保留输入；select 模式编辑后 Esc 恢复已选值；末项 ArrowDown 取消高亮并回到输入框；0 条结果时 `aria-expanded` 不为 true；高亮变化时对该项调用 `scrollIntoView({ block: 'nearest' })`，CardPicker 共用同一个 Combobox）另有 Chromium 测试 `combobox.browser.test.tsx`（Vitest browser mode + Playwright）。`markdown-view.browser.test.tsx` 在 375 宽检查长 URL、行内代码和代码块：页面不横向溢出，代码块在自己的框里滚动。jsdom 复现不了 Radix 在 document capture 阶段拦截 Esc。
-- CI 用 Postgres 16 service container 执行 `prisma migrate deploy` 后跑全量测试，并在测试前安装 Playwright Chromium。
-- 缺口：`series` 路由、小程序、原生壳、端到端流程（CH-306）。
+- CI 的 `verify` job 用 Postgres 16 service container 执行 `prisma migrate deploy` 后跑全量测试，并在测试前安装 Playwright Chromium（给 Vitest browser mode）。
+- Playwright 用户流程冒烟在 `apps/cardhub/e2e`，由 CI job `e2e-smoke` 单独跑：浏览到卡牌并登录评论、发帖回帖、发布并关闭交易意向、管理员处理举报。命令是 `pnpm --filter @cardhub/e2e test:e2e`。它不在 `pnpm test` 里。
+- 缺口：小程序、原生壳。
