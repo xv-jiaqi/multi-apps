@@ -15,6 +15,8 @@ if (process.env.SENTRY_DSN) {
   });
 }
 
+// Before routers and env schemas. Object schemas call `new Function` unless jitless is already set.
+import './configure-zod';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createApp } from './bootstrap/create-app';

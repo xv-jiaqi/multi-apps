@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # PASSWORD_PREHASH_WRITE is copied from the GitHub Environment into the
 # server env file at deploy time. Unset or blank leaves the file alone.
-# true and false replace every assignment of that key, or append one.
+# true and false replace every assignment of that key in place. An
+# `export ` prefix is kept. The key is appended only when it is absent.
 # The rewrite must not print other env values.
 set -euo pipefail
 
@@ -177,6 +178,61 @@ spaced_golden="$(printf '%s\n' \
   "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_staging" \
   )"
 assert "spaced or quoted key is replaced" "$([ "${rc}" -eq 0 ] && printf '%s\n' "${spaced_golden}" | cmp -s - "${file}" && echo 0 || echo 1)"
+
+# Plain assignments are replaced in place, `export KEY=...` keeps its prefix
+# and is not duplicated at the end, and a missing key is appended once.
+plain_body="$(printf '%s\n' \
+  "ENV_NAME=staging" \
+  "PASSWORD_PREHASH_WRITE=false" \
+  "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_staging" \
+  )"
+new_file "${file}" "${plain_body}" 600
+rc="$(capture_apply set true "${file}" "${log}" "${err}")"
+plain_golden="$(printf '%s\n' \
+  "ENV_NAME=staging" \
+  "PASSWORD_PREHASH_WRITE=true" \
+  "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_staging" \
+  )"
+assert "plain line is replaced in place" "$([ "${rc}" -eq 0 ] && printf '%s\n' "${plain_golden}" | cmp -s - "${file}" && echo 0 || echo 1)"
+assert "plain line is not duplicated" "$([ "$(grep -c '^PASSWORD_PREHASH_WRITE=' "${file}")" -eq 1 ] && echo 0 || echo 1)"
+
+export_body="$(printf '%s\n' \
+  "ENV_NAME=staging" \
+  "# keep the comment" \
+  "export PASSWORD_PREHASH_WRITE=false" \
+  "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_staging" \
+  )"
+new_file "${file}" "${export_body}" 600
+rc="$(capture_apply set true "${file}" "${log}" "${err}")"
+export_golden="$(printf '%s\n' \
+  "ENV_NAME=staging" \
+  "# keep the comment" \
+  "export PASSWORD_PREHASH_WRITE=true" \
+  "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_staging" \
+  )"
+assert "export line is replaced in place" "$([ "${rc}" -eq 0 ] && printf '%s\n' "${export_golden}" | cmp -s - "${file}" && echo 0 || echo 1)"
+assert "export prefix is kept" "$(grep -qx 'export PASSWORD_PREHASH_WRITE=true' "${file}" && echo 0 || echo 1)"
+assert "export line is not appended" "$([ "$(grep -c 'PASSWORD_PREHASH_WRITE=' "${file}")" -eq 1 ] && echo 0 || echo 1)"
+rc="$(capture_apply set true "${file}" "${log}" "${err}")"
+assert "export line stays one assignment" "$([ "${rc}" -eq 0 ] && printf '%s\n' "${export_golden}" | cmp -s - "${file}" && echo 0 || echo 1)"
+
+absent_body="$(printf '%s\n' \
+  "ENV_NAME=staging" \
+  "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_staging" \
+  )"
+new_file "${file}" "${absent_body}" 600
+rc="$(capture_apply set false "${file}" "${log}" "${err}")"
+absent_golden="$(printf '%s\n' \
+  "ENV_NAME=staging" \
+  "DATABASE_URL=postgresql://cardhub:${secret}@postgres:5432/cardhub_staging" \
+  "PASSWORD_PREHASH_WRITE=false" \
+  )"
+assert "missing key is appended" "$([ "${rc}" -eq 0 ] && printf '%s\n' "${absent_golden}" | cmp -s - "${file}" && echo 0 || echo 1)"
+assert "missing key append has no export prefix" "$(
+  grep -qx 'PASSWORD_PREHASH_WRITE=false' "${file}" \
+    && ! grep -q '^export PASSWORD_PREHASH_WRITE=' "${file}" \
+    && echo 0 || echo 1
+)"
 
 printf 'ENV_NAME=staging\r\nPASSWORD_PREHASH_WRITE=false\r\nDATABASE_URL=postgresql://cardhub:%s@postgres/db\r\n' "${secret}" > "${file}"
 chmod 600 "${file}"

@@ -138,9 +138,11 @@ normalize_password_prehash_write() {
   esac
 }
 
-# Replace every PASSWORD_PREHASH_WRITE assignment, or append one. Comments
-# and other keys are copied through and are not printed. Unset, empty, and
-# whitespace leave the file untouched, including its inode.
+# Replace every PASSWORD_PREHASH_WRITE assignment, or append one. A line
+# whose name is `export PASSWORD_PREHASH_WRITE` is rewritten in place and
+# keeps the export prefix. Comments and other keys are copied through and
+# are not printed. Unset, empty, and whitespace leave the file untouched,
+# including its inode.
 apply_password_prehash_write() {
   local file="$1"
   local value key tmp
@@ -161,6 +163,19 @@ apply_password_prehash_write() {
       gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
       return s
     }
+    function assignment_kind(raw,    eq, name, rest) {
+      eq = index(raw, "=")
+      if (eq == 0) return ""
+      name = trim(substr(raw, 1, eq - 1))
+      if (name == key) return "plain"
+      rest = name
+      if (sub(/^export[[:space:]]+/, "", rest)) {
+        rest = trim(rest)
+        if (rest == key) return "export"
+      }
+      return ""
+    }
+    BEGIN { found = 0 }
     {
       raw = $0
       sub(/\r$/, "", raw)
@@ -168,39 +183,26 @@ apply_password_prehash_write() {
         print
         next
       }
-      eq = index(raw, "=")
-      if (eq == 0) {
-        print
+      kind = assignment_kind(raw)
+      if (kind == "plain") {
+        print key "=" value
+        found = 1
         next
       }
-      name = trim(substr(raw, 1, eq - 1))
-      if (name == key) {
-        print key "=" value
+      if (kind == "export") {
+        print "export " key "=" value
+        found = 1
         next
       }
       print
+    }
+    END {
+      if (!found) print key "=" value
     }
   ' "${file}" > "${tmp}"; then
     rm -f "${tmp}"
     echo "Refusing to update ${file}: could not rewrite ${key}" >&2
     return 1
-  fi
-
-  if ! awk -v key="${key}" '
-    BEGIN { found = 0 }
-    {
-      raw = $0
-      sub(/\r$/, "", raw)
-      if (raw ~ /^[[:space:]]*#/ || raw ~ /^[[:space:]]*$/) next
-      eq = index(raw, "=")
-      if (eq == 0) next
-      name = substr(raw, 1, eq - 1)
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
-      if (name == key) found = 1
-    }
-    END { exit found ? 0 : 1 }
-  ' "${tmp}"; then
-    printf '%s=%s\n' "${key}" "${value}" >> "${tmp}"
   fi
 
   if [ -s "${file}" ] && [ ! -s "${tmp}" ]; then
