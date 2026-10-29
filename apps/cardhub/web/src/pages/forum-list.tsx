@@ -118,7 +118,7 @@ export const ForumListPage = observer(function ForumListPage() {
                     className="group block rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-neutral-900 group-hover:text-brand-700">
+                      <h2 className="flex min-w-0 flex-wrap items-center gap-2 text-lg font-semibold text-neutral-900 wrap-anywhere group-hover:text-brand-700">
                         {topic.pinned ? (
                           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
                             <Pin className="size-3" aria-hidden />
