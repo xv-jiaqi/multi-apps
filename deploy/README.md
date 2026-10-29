@@ -141,9 +141,11 @@ and fails if that binary is missing.
 that environment's API (`{$ENV_NAME}-api:4000` and `staging-api:4000`). The
 web container still serves `/robots.txt`. `www` keeps the 308, so
 `/sitemap.xml` and `/robots.txt` on `www` follow the same redirect as every
-other path. `PUBLIC_WEB_ORIGIN` (default `https://${WEB_DOMAIN}`) is the
-absolute origin in sitemap `<loc>` values and in the `Sitemap` line the web
-entrypoint writes. Recreate the edge container after this Caddyfile change;
+other path. An empty `PUBLIC_WEB_ORIGIN` becomes `https://${WEB_DOMAIN}`.
+Compose refuses to render the file when `WEB_DOMAIN` is unset or empty, so
+the origin cannot collapse to `https://`. That value is the absolute origin
+in sitemap `<loc>` entries and in the `Sitemap` line the web entrypoint
+writes. Recreate the edge container after this Caddyfile change;
 until then the running proxy still sends `/sitemap.xml` to the web container,
 and nginx falls through to the SPA. `deploy/sitemap-proxy.test.sh` checks the
 route. Page descriptions and prerender are not part of this route.

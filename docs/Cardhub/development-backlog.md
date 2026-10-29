@@ -476,7 +476,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-207 SEO：sitemap / robots / 页面 meta
 
-- **进度**（2026-10-29）：sitemap 与 robots 已做，页面 `description` 仍等设计稿，本项不写文案。`GET /sitemap.xml` 由 API 列出系列（`/series/:slug`）、卡牌（`/cards/:slug`）和话题（`/forum/:slug`）。非法 slug 不进入文档。单类最多 50,000 条；文章和发售日历仍等 CH-214、CH-215。边缘 Caddy 在根域名和 staging Web 域名上把 `/sitemap.xml` 反代到 API。`/robots.txt` 禁止 `/reports`、`/admin`、`/me`，`Sitemap` 指向同一 Web 源。`PUBLIC_WEB_ORIGIN` 未设置时，compose 用 `https://${WEB_DOMAIN}`。D7 预渲染 / SSR 未做。
+- **进度**（2026-10-29）：sitemap 与 robots 已做，页面 `description` 仍等设计稿，本项不写文案。`GET /sitemap.xml` 由 API 列出系列（`/series/:slug`）、卡牌（`/cards/:slug`）和话题（`/forum/:slug`）。非法 slug 不进入文档。单类最多 50,000 条；文章和发售日历仍等 CH-214、CH-215。边缘 Caddy 在根域名和 staging Web 域名上把 `/sitemap.xml` 反代到 API。`/robots.txt` 禁止 `/reports`、`/admin`、`/me`，`Sitemap` 指向同一 Web 源。`PUBLIC_WEB_ORIGIN` 为空时，compose 用 `https://${WEB_DOMAIN}`；`WEB_DOMAIN` 缺失或为空则渲染失败。D7 预渲染 / SSR 未做。
 - **改动范围**
   - API：新增 REST 端点 `GET /sitemap.xml`，从数据库生成系列、卡牌、话题的 URL；Caddy 在 Web 域名上把 `/sitemap.xml` 反代到 API（修改 `deploy/edge/optional/root-web.caddy` 和 staging 站点块）。
   - Web：`public/robots.txt`（指向 sitemap，禁止抓取 `/reports`、`/admin`、`/me`）；在 CH-108 的 `<PageMeta>` 上补 `description`。
