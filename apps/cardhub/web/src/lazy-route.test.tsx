@@ -1,12 +1,30 @@
 import { lazy } from 'react';
 import { render, screen } from '@testing-library/react';
 import * as Sentry from '@sentry/react';
+import { MemoryRouter } from 'react-router';
 import { LazyRoute } from './app';
 import { rootStore } from './stores/root-store';
 
 vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
   init: vi.fn(),
+}));
+
+vi.mock('./lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
+  trpc: {
+    search: {
+      global: {
+        useQuery: () => ({
+          data: undefined,
+          isLoading: false,
+          isFetching: false,
+          isError: false,
+          isSuccess: false,
+        }),
+      },
+    },
+  },
 }));
 
 const chunkError = new Error('Failed to fetch dynamically imported module: /assets/login.js');
@@ -30,9 +48,11 @@ describe('LazyRoute chunk failures', () => {
     window.__CARDHUB_CONFIG__ = { SENTRY_DSN: 'https://public@example.invalid/1' };
 
     render(
-      <LazyRoute name="/login">
-        <FailedChunk />
-      </LazyRoute>,
+      <MemoryRouter>
+        <LazyRoute name="/login">
+          <FailedChunk />
+        </LazyRoute>
+      </MemoryRouter>,
     );
 
     const alert = await screen.findByRole('alert');
@@ -50,9 +70,11 @@ describe('LazyRoute chunk failures', () => {
 
     expect(() =>
       render(
-        <LazyRoute name="/forum/:slug">
-          <FailedChunk />
-        </LazyRoute>,
+        <MemoryRouter>
+          <LazyRoute name="/forum/:slug">
+            <FailedChunk />
+          </LazyRoute>
+        </MemoryRouter>,
       ),
     ).not.toThrow();
 
@@ -68,9 +90,11 @@ describe('LazyRoute chunk failures', () => {
     window.__CARDHUB_CONFIG__ = { SENTRY_DSN: 'https://public@example.invalid/1' };
 
     render(
-      <LazyRoute name="/search">
-        <RenderBoom />
-      </LazyRoute>,
+      <MemoryRouter>
+        <LazyRoute name="/search">
+          <RenderBoom />
+        </LazyRoute>
+      </MemoryRouter>,
     );
 
     expect(screen.getByRole('alert')).toHaveTextContent('页面出错了');

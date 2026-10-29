@@ -57,6 +57,8 @@ describe('route error element', () => {
     const retry = screen.getByRole('button', { name: '重试' });
     const home = screen.getByRole('link', { name: '返回首页' });
     expect(alert).toHaveTextContent('页面出错了');
+    expect(screen.getByRole('link', { name: '跳到主内容' })).toBeInTheDocument();
+    expect(alert.parentElement).toHaveAttribute('id', 'main');
     expect(alert).toHaveClass('rounded-lg', 'border-red-200', 'bg-red-50');
     expect(alert.className).not.toMatch(/rounded-2xl/);
     expect(screen.getByText('页面出错了')).toHaveClass('font-medium');
