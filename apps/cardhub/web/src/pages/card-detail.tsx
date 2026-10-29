@@ -10,6 +10,7 @@ import { cardMetaDescription } from '../lib/meta-description';
 import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
+import { CardCollectionBar } from '../components/card-collection-bar';
 import { CommentSection } from '../components/comment-section';
 import { ListingsForCard } from '../components/listings-for-card';
 import { Artwork } from '../components/artwork';
@@ -159,6 +160,8 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 </Link>
               </p>
             </div>
+
+            <CardCollectionBar cardSlug={card.slug} cardName={card.name} />
 
             <Card className="border-white/60 bg-white/70 backdrop-blur">
               <CardHeader>

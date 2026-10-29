@@ -1,6 +1,6 @@
 import axe from 'axe-core';
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { commands } from 'vitest/browser';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -24,6 +24,30 @@ const card = {
   seriesSlug: 'celestial-dawn',
   seriesTitle: '天穹黎明',
   attributes: { Cost: '3' },
+};
+
+const collectionQuery: {
+  data: { ownedCount: number; wanted: boolean } | null;
+  isLoading: boolean;
+  isPending: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  isSuccess: boolean;
+  error: { data?: { appCode?: string; code?: string } } | null;
+  errorUpdateCount: number;
+  dataUpdatedAt: number;
+  refetch: ReturnType<typeof vi.fn>;
+} = {
+  data: null,
+  isLoading: false,
+  isPending: false,
+  isFetching: false,
+  isError: false,
+  isSuccess: true,
+  error: null,
+  errorUpdateCount: 0,
+  dataUpdatedAt: 1,
+  refetch: vi.fn(),
 };
 
 const readyQuery = {
@@ -67,6 +91,14 @@ vi.mock('../lib/trpc', () => ({
     listings: {
       byCard: {
         useQuery: () => readyQuery,
+      },
+    },
+    collection: {
+      byCard: {
+        useQuery: () => collectionQuery,
+      },
+      upsert: {
+        useMutation: () => ({ mutate: vi.fn(), isPending: false }),
       },
     },
     comments: {
@@ -155,6 +187,15 @@ function measure(listLabel: string) {
 beforeEach(async () => {
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signOut();
+  collectionQuery.data = null;
+  collectionQuery.isLoading = false;
+  collectionQuery.isPending = false;
+  collectionQuery.isFetching = false;
+  collectionQuery.isError = false;
+  collectionQuery.isSuccess = true;
+  collectionQuery.error = null;
+  collectionQuery.errorUpdateCount = 0;
+  collectionQuery.dataUpdatedAt = 1;
   await commands.setViewport(375, 900);
 });
 
@@ -212,5 +253,86 @@ describe('card detail WCAG', () => {
         targets: violation.nodes.map((node) => node.target).slice(0, 3),
       })),
     ).toEqual([]);
+  });
+
+  it.each([
+    ['zh-CN', 1440],
+    ['zh-CN', 375],
+    ['en-US', 1440],
+    ['en-US', 375],
+  ] as const)('has no %s violations with a saved collection at %i px', async (locale, width) => {
+    rootStore.locale.setLocale(locale);
+    rootStore.session.signIn('token', { id: 'u1', username: 'alice' });
+    collectionQuery.data = { ownedCount: 2, wanted: true };
+    await commands.setViewport(width, 900);
+    renderCard();
+    expect(
+      await screen.findByRole('button', { pressed: true, name: /我有|I have it/ }),
+    ).toBeInTheDocument();
+
+    const results = await axe.run(document.body, {
+      runOnly: { type: 'tag', values: [...AXE_TAGS] },
+    });
+    expect(
+      results.violations.map((violation) => ({
+        id: violation.id,
+        impact: violation.impact,
+        targets: violation.nodes.map((node) => node.target).slice(0, 3),
+      })),
+    ).toEqual([]);
+  });
+});
+
+describe('collection bar layout', () => {
+  function box(name: string) {
+    return screen.getByRole('button', { name }).getBoundingClientRect();
+  }
+
+  it.each([
+    ['zh-CN', '我有', '想要', '分享', '数量'],
+    ['en-US', 'I have it', 'Want', 'Share', 'Quantity'],
+  ] as const)(
+    'uses two rows at 375 and one row at 1440 (%s)',
+    async (locale, ownName, wantName, shareName, quantityName) => {
+      rootStore.locale.setLocale(locale);
+      rootStore.session.signIn('token', { id: 'u1', username: 'alice' });
+      collectionQuery.data = { ownedCount: 2, wanted: true };
+      await commands.setViewport(375, 900);
+      const narrow = renderCard();
+
+      const own = box(ownName);
+      const want = box(wantName);
+      const share = box(shareName);
+      const quantity = screen.getByRole('textbox', { name: quantityName }).getBoundingClientRect();
+      expect(own.height).toBeGreaterThanOrEqual(40);
+      expect(want.height).toBeGreaterThanOrEqual(40);
+      expect(share.height).toBeGreaterThanOrEqual(40);
+      expect(quantity.height).toBeGreaterThanOrEqual(40);
+      expect(Math.abs(own.top - quantity.top)).toBeLessThan(8);
+      expect(Math.abs(want.top - share.top)).toBeLessThan(8);
+      expect(want.top).toBeGreaterThan(own.top + 20);
+      expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
+        document.documentElement.clientWidth,
+      );
+
+      narrow.unmount();
+      await commands.setViewport(1440, 900);
+      renderCard();
+      const ownWide = box(ownName);
+      const wantWide = box(wantName);
+      const shareWide = box(shareName);
+      expect(Math.abs(ownWide.top - wantWide.top)).toBeLessThan(8);
+      expect(Math.abs(wantWide.top - shareWide.top)).toBeLessThan(8);
+      expect(shareWide.left).toBeGreaterThan(wantWide.right);
+    },
+  );
+
+  it('keeps the signed-out login hint at least 24px tall', async () => {
+    await commands.setViewport(375, 900);
+    renderCard();
+    const link = within(screen.getByRole('region', { name: '我的收藏' })).getByRole('link', {
+      name: '登录',
+    });
+    expect(link.getBoundingClientRect().height).toBeGreaterThanOrEqual(24);
   });
 });

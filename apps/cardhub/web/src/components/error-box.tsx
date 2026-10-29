@@ -12,36 +12,39 @@ export function ErrorBox({
   title,
   retryLabel,
   retryingLabel,
-  retrying,
+  retrying = false,
   retry,
   headingAs = 'p',
   retryClassName = tradeListRetryClassName,
   retryRef,
 }: {
   title: string;
-  retryLabel: string;
-  retryingLabel: string;
-  retrying: boolean;
-  retry: () => void;
+  retryLabel?: string;
+  retryingLabel?: string;
+  retrying?: boolean;
+  retry?: () => void;
   headingAs?: 'p' | 'h1';
   retryClassName?: string;
   retryRef?: Ref<HTMLButtonElement>;
 }) {
   const Heading = headingAs;
+  const showRetry = retry != null && retryLabel != null && retryingLabel != null;
   return (
     <div
       role="alert"
       className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
     >
       <Heading className="font-medium">{title}</Heading>
-      <RetryButton
-        ref={retryRef}
-        retrying={retrying}
-        label={retryLabel}
-        retryingLabel={retryingLabel}
-        onRetry={retry}
-        className={retryClassName}
-      />
+      {showRetry ? (
+        <RetryButton
+          ref={retryRef}
+          retrying={retrying}
+          label={retryLabel}
+          retryingLabel={retryingLabel}
+          onRetry={retry}
+          className={retryClassName}
+        />
+      ) : null}
     </div>
   );
 }
