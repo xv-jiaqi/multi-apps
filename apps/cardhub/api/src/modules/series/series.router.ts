@@ -89,6 +89,9 @@ export class SeriesRouter {
                 orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }, { slug: 'asc' }],
                 select: { slug: true, name: true, kind: true, sortOrder: true },
               },
+              // Pending removal. The miniapp and the current web series page
+              // still read this full list in createdAt order. Checklist
+              // search, numeric order, and paging live on cards.listBySeries.
               cards: {
                 orderBy: { createdAt: 'asc' },
                 select: {

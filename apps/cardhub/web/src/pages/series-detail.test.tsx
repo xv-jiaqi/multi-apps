@@ -136,6 +136,7 @@ function resetSeries() {
 beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signOut();
+  series.description = '黎明。';
   resetSeries();
 });
 
@@ -156,6 +157,7 @@ describe('series detail server errors', () => {
     expect(document.body.textContent).not.toContain('prisma');
     expect(document.title).toBe('出了点问题，请稍后再试 · Cardhub');
     expect(document.title).not.toContain(SERVER_TEXT);
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('shows the localized alert in en and never the server text', () => {
@@ -181,6 +183,7 @@ describe('series detail server errors', () => {
     expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument();
     expect(document.body.textContent).not.toContain(SERVER_TEXT);
     expect(document.title).toBe('missing-series · Cardhub');
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('uses the generic sentence for forbidden, unauthorized, and unknown codes', () => {
@@ -219,6 +222,7 @@ describe('series detail server errors', () => {
 
     expect(document.querySelector('.animate-pulse')).toBeTruthy();
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('keeps the alert while a retry is in flight and does not disable the button', () => {
@@ -236,6 +240,7 @@ describe('series detail server errors', () => {
     expect(button).toHaveAttribute('aria-busy', 'true');
     expect(button).not.toBeDisabled();
     expect(document.querySelector('.h-48')).toBeNull();
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('does not move focus on the first error', () => {
@@ -307,5 +312,49 @@ describe('series detail server errors', () => {
     });
     expect(document.activeElement?.tagName).toBe('H1');
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
+  });
+});
+
+describe('series detail meta description', () => {
+  function showSeries() {
+    seriesQuery.data = series;
+    seriesQuery.isLoading = false;
+    seriesQuery.isPending = false;
+    seriesQuery.isFetching = false;
+    seriesQuery.isError = false;
+    seriesQuery.error = null;
+    seriesQuery.dataUpdatedAt = 1;
+  }
+
+  it('describes the loaded series in Chinese and English', () => {
+    showSeries();
+    const view = renderSeries();
+
+    expect(document.title).toBe('天穹黎明 · Cardhub');
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      '天穹黎明 系列，共 1 张卡牌。在 Cardhub 查看卡牌资料和讨论。 黎明。',
+    );
+
+    view.unmount();
+    rootStore.locale.setLocale('en-US');
+    renderSeries();
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      '天穹黎明: 1 card. See card details and discussion on Cardhub. 黎明。',
+    );
+  });
+
+  it('puts the plain text of a Markdown description after the template', () => {
+    series.description = `# 标题\n\n**这是一段足够长的第一句**。\n\n${'后续'.repeat(40)}`;
+    showSeries();
+    renderSeries();
+
+    const content = document.querySelector('meta[name="description"]')?.getAttribute('content');
+    expect(content).toBe(
+      '天穹黎明 系列，共 1 张卡牌。在 Cardhub 查看卡牌资料和讨论。 标题 这是一段足够长的第一句。…',
+    );
+    expect(content).not.toContain('#');
+    expect(content).not.toContain('**');
   });
 });
