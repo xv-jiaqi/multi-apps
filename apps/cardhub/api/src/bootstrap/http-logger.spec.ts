@@ -6,9 +6,13 @@ import { z } from 'zod';
 import { attachLogLineReader, createHttpLoggerOptions } from './http-logger';
 
 const logLineSchema = z.looseObject({
-  requestId: z.string().nullable(),
+  requestId: z.string().nullable().optional(),
   message: z.unknown().optional(),
 });
+
+function requestIdKeyCount(line: string): number {
+  return line.split('"requestId":').length - 1;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -62,6 +66,9 @@ describe('http logger', () => {
       res.status(204).end();
     });
     app.post('/secret', (_req, res) => {
+      res.setHeader('Authorization', 'Bearer LEAK_RES_AUTH');
+      res.setHeader('Cookie', 'session=LEAK_RES_COOKIE');
+      res.setHeader('Set-Cookie', 'sid=LEAK_SET_COOKIE');
       res.status(400).json({ ok: false });
     });
 
@@ -74,6 +81,8 @@ describe('http logger', () => {
       .set('X-Request-Id', 'id,other')
       .set('Authorization', 'Bearer LEAK_AUTH_MARKER')
       .set('Cookie', 'session=LEAK_COOKIE_MARKER')
+      .set('Set-Cookie', 'sid=LEAK_REQ_SET_COOKIE')
+      .set('X-Forwarded-For', '203.0.113.10')
       .send({ SECRET_BODY_MARKER: true });
     expect(bad.status).toBe(400);
     expect(bad.headers['x-request-id']).toMatch(UUID);
@@ -88,11 +97,65 @@ describe('http logger', () => {
       .set('X-Request-Id', 'query-1');
     expect(withQuery.headers['x-request-id']).toBe('query-1');
 
+    for (const line of lines) {
+      const count = requestIdKeyCount(line);
+      if (line.includes('"message":"startup"')) {
+        expect(count).toBe(0);
+        continue;
+      }
+      expect(count).toBe(1);
+      expect(line).not.toContain('"requestId":null');
+    }
+
+    const echoed = bad.headers['x-request-id'];
+    expect(typeof echoed).toBe('string');
+    if (typeof echoed !== 'string') {
+      throw new Error('missing request id');
+    }
+    const rejectedRaw = lines.find(
+      (line) => line.includes(`"requestId":"${echoed}"`) && line.includes('"statusCode":400'),
+    );
+    expect(rejectedRaw).toBeDefined();
+    if (rejectedRaw === undefined) {
+      throw new Error('missing completion log');
+    }
+    const rejectedLogged = z
+      .object({
+        req: z
+          .object({
+            headers: z
+              .object({
+                authorization: z.literal('[Redacted]'),
+                cookie: z.literal('[Redacted]'),
+                'set-cookie': z.literal('[Redacted]'),
+                'x-forwarded-for': z.literal('203.0.113.10'),
+              })
+              .loose(),
+          })
+          .loose(),
+        res: z
+          .object({
+            headers: z
+              .object({
+                authorization: z.literal('[Redacted]'),
+                cookie: z.literal('[Redacted]'),
+                'set-cookie': z.literal('[Redacted]'),
+              })
+              .loose(),
+          })
+          .loose(),
+      })
+      .loose()
+      .parse(JSON.parse(rejectedRaw));
+    expect(rejectedLogged.req.headers.authorization).toBe('[Redacted]');
+
     const parsed = parseLines(lines);
     expect(
-      parsed.every((line) => line.requestId === null || typeof line.requestId === 'string'),
+      parsed.every((line) => line.requestId === undefined || typeof line.requestId === 'string'),
     ).toBe(true);
-    expect(parsed.some((line) => line.message === 'startup' && line.requestId === null)).toBe(true);
+    expect(parsed.some((line) => line.message === 'startup' && line.requestId === undefined)).toBe(
+      true,
+    );
 
     const handler = parsed.find((line) => line.message === 'handler-log');
     expect(handler?.requestId).toBe('edge-7');

@@ -129,9 +129,11 @@ export function redactSerializedResponse(res: unknown): Record<string, unknown> 
 /**
  * JSON logs for the API process.
  *
- * `requestId: null` lives on the root bindings so every line has the field.
- * A request child sets the same key to the real id. Pino writes child bindings
- * after the parent, and JSON.parse keeps the last duplicate key.
+ * Do not put `requestId` on the root `base`. pino-http binds the same key on
+ * the request child (`customAttributeKeys.reqId`). Pino concatenates child
+ * bindings after the parent string and does not replace an existing key, so a
+ * root `requestId: null` and a child id show up as two keys in the raw line.
+ * Lines outside a request omit the key. A request line has it once.
  */
 export function createHttpLoggerOptions(): Options {
   const level = logLevelSchema.safeParse(process.env.LOG_LEVEL);
@@ -141,7 +143,6 @@ export function createHttpLoggerOptions(): Options {
     base: {
       pid: process.pid,
       hostname: hostname(),
-      requestId: null,
     },
     quietReqLogger: true,
     customAttributeKeys: {

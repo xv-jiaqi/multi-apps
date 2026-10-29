@@ -636,7 +636,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 落地：
 
-- API 用 `nestjs-pino` 的 `NativeLogger`。每条 JSON 日志都有 `requestId`；没有请求时为 `null`。`attachRequestLogging` 在 JSON parser 之前挂上，这样 400/413 也会带请求 id。
+- API 用 `nestjs-pino` 的 `NativeLogger`。请求日志只有一个 `requestId`。根绑定不再写 `requestId: null`，否则会和请求子 logger 的同名绑定一起出现在原始 JSON 里。`attachRequestLogging` 在 JSON parser 之前挂上，这样 400/413 也会带请求 id。
 - `X-Request-Id` 用 zod 校验：trim 后 1–128 字符，字符集 `[A-Za-z0-9._:-]`，首字符必须是字母或数字。不合法就换成 UUID，原始头不进日志、也不回写。响应头回写最终采用的 id。
 - Sentry 标签是 `request_id`。tRPC 错误日志带同一个 id；只有 `INTERNAL_SERVER_ERROR` 上报 Sentry。
 - `deploy/docker-compose.yml`、`deploy/edge/docker-compose.yml`、`docker/docker-compose.yml` 的每个服务使用 `json-file`，`max-size` 为 `10m`，`max-file` 为 `5`。改 compose 后要重建容器，`docker inspect` 才能看到。staging 上的检查由守夜人做。

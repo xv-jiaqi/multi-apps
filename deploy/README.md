@@ -690,7 +690,7 @@ rm -f /tmp/cardhub-oss-rclone.env
 
 API logs are one JSON object per line (`nestjs-pino`). The HTTP logger is
 mounted before the JSON body parser, so a 400 or 413 still carries `requestId`.
-Every line has `requestId`. Lines emitted outside a request use `null`. A request keeps the
+A request log contains `requestId` once. Lines emitted outside a request omit the key, so the root logger does not also bind `requestId: null` (pino would append the child id and emit the key twice). A request keeps the
 incoming `X-Request-Id` when that value is 1–128 characters from
 `[A-Za-z0-9._:-]` and starts with a letter or digit. Any other value, including
 a missing header, is replaced with a UUID. The raw rejected header is not
@@ -698,8 +698,10 @@ written to the log. The response echoes the chosen id in `X-Request-Id`.
 
 Sentry events for that request carry the same value as the tag `request_id`.
 Only 5xx and tRPC `INTERNAL_SERVER_ERROR` are reported. `LOG_LEVEL` selects the
-pino level (`info` when unset or invalid). `authorization`, `cookie`, and
-request bodies are not written. Query keys `input`, `token`, `code`,
+pino level (`info` when unset or invalid). `authorization`, `cookie`,
+`set-cookie`, and request bodies are not written. `x-forwarded-for` is kept:
+rate limiting reads `req.ip` from the live request, and behind Caddy
+`remoteAddress` is only the proxy. Query keys `input`, `token`, `code`,
 `access_token`, `refresh_token`, `id_token`, and `reset_token` are replaced
 with `[Redacted]` in both `url` and `query`.
 

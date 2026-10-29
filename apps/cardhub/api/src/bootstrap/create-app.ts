@@ -141,8 +141,9 @@ export async function createApp(options: CreateAppOptions = {}) {
       createContext: makeCreateContext(authService, prisma),
       onError: ({ error, path, type, req }) => {
         const requestId = requestIdFrom(req);
+        // requestId is already a child binding on req.log. Repeating it here
+        // writes a second key into the raw JSON line.
         const fields = {
-          requestId: requestId ?? null,
           trpcPath: path ?? 'unknown',
           trpcType: type,
           code: error.code,

@@ -8,7 +8,7 @@ import { subscribeLogLines } from '../src/bootstrap/http-logger';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const logLineSchema = z.looseObject({
-  requestId: z.string().nullable(),
+  requestId: z.string().nullable().optional(),
   message: z.unknown().optional(),
   code: z.string().optional(),
 });
@@ -78,9 +78,25 @@ describe('request logging through the Nest bootstrap', () => {
       .set('X-Request-Id', 'trpc-miss-1');
     expect(rejected.headers['x-request-id']).toBe('trpc-miss-1');
 
+    for (const id of [
+      'parse-400',
+      'too-large-413',
+      'trpc-miss-1',
+      generated.headers['x-request-id'],
+    ]) {
+      expect(typeof id).toBe('string');
+      if (typeof id !== 'string') continue;
+      const matched = lines.slice(start).filter((line) => line.includes(`"requestId":"${id}"`));
+      expect(matched.length).toBeGreaterThan(0);
+      for (const line of matched) {
+        expect(line.split('"requestId":').length - 1).toBe(1);
+        expect(line).not.toContain('"requestId":null');
+      }
+    }
+
     const parsed = parsedSince(start);
     expect(
-      parsed.every((line) => line.requestId === null || typeof line.requestId === 'string'),
+      parsed.every((line) => line.requestId === undefined || typeof line.requestId === 'string'),
     ).toBe(true);
     expect(
       parsed.some((line) => line.requestId === 'parse-400' && statusCodeOf(line) === 400),
