@@ -58,6 +58,10 @@ describe('field error codes', () => {
       'Use a 3-letter uppercase currency code.',
     );
     expect(fieldErrorMessage('zh-CN', 'identifier_too_short')).toBe('邮箱或用户名不能为空');
+    expect(fieldErrorMessage('zh-CN', 'description_too_long')).toBe('简介最多 5000 个字符');
+    expect(fieldErrorMessage('en-US', 'description_too_long')).toBe(
+      'Use at most 5000 characters for the description.',
+    );
     expect(fieldErrorMessage('zh-CN', 'reason_too_short')).toBe('原因至少 4 个字符');
     expect(fieldErrorMessage('en-US', 'reason_too_short')).toBe(
       'Use at least 4 characters for the reason.',

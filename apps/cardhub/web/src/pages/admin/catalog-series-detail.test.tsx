@@ -201,4 +201,37 @@ describe('subset form server validation', () => {
     expect(document.getElementById('subset-kind-error')).toHaveTextContent('这个选项不可用');
     expect(screen.queryByText(/^kind:/)).not.toBeInTheDocument();
   });
+
+  it('names the description and the 5000-character limit on the form alert', async () => {
+    const user = userEvent.setup();
+    subsetCreate.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          appCode: 'VALIDATION',
+          zodError: {
+            issues: [
+              {
+                code: 'too_big',
+                maximum: 5000,
+                path: ['description'],
+                message: 'description_too_long',
+              },
+            ],
+          },
+        },
+      };
+    };
+    renderPage();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'base');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '主卡');
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('简介最多 5000 个字符');
+    expect(screen.queryByText('内容超出长度限制')).not.toBeInTheDocument();
+    expect(screen.queryByText('description_too_long')).not.toBeInTheDocument();
+    expect(screen.queryByText(/description:/)).not.toBeInTheDocument();
+    expect(document.getElementById('subset-name-error')).not.toBeInTheDocument();
+  });
 });

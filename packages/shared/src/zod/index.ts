@@ -430,7 +430,7 @@ export const adminSubsetUpsertInput = z.object({
   seriesSlug: slugSchema,
   slug: slugSchema,
   name: z.string().trim().min(1).max(120),
-  description: z.string().trim().max(5000).optional(),
+  description: z.string().trim().max(5000, 'description_too_long').optional(),
   kind: z.enum(SUBSET_KIND_VALUES),
   sortOrder: catalogSortOrderSchema.default(0),
 });
