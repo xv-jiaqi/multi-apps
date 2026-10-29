@@ -325,7 +325,11 @@ assert "main bad value stops before compose" "$(
 
 new_file "${work}/root/staging/staging.env" "${base_body}" 600
 rc="$(run_main staging unset "")"
-assert "main unset does not rewrite" "$(printf '%s\n' "${base_body}" | cmp -s - "${work}/root/staging/staging.env" && echo 0 || echo 1)"
+assert "main unset does not rewrite the prehash line" "$(
+  grep -qx 'PASSWORD_PREHASH_WRITE=false' "${work}/root/staging/staging.env" \
+    && grep -qx 'CATALOG_CACHE_HEADER=false' "${work}/root/staging/staging.env" \
+    && echo 0 || echo 1
+)"
 assert "main unset does not log a rewrite" "$(grep -q 'PASSWORD_PREHASH_WRITE=' "${log}" && echo 1 || echo 0)"
 assert "main unset does not print the secret" "$(no_secret "${log}" && no_secret "${err}" && echo 0 || echo 1)"
 

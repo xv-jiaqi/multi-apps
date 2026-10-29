@@ -218,6 +218,7 @@ jobs:
           bash deploy/recheck-before-sync.test.sh
           bash deploy/remote-deploy-entrypoint.test.sh
           bash deploy/password-prehash-env.test.sh
+          bash deploy/catalog-cache-header-env.test.sh
           bash deploy/web-sentry-dsn-env.test.sh
           bash deploy/rollback-preserves-previous-image.test.sh
           bash deploy/migrate-entrypoint.test.sh

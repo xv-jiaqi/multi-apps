@@ -225,6 +225,104 @@ apply_password_prehash_write() {
   printf '%s\n' "${key}=${value}"
 }
 
+# Print true or false. Only the exact string true enables X-Cache. Empty,
+# whitespace, and every other value are false. The raw value is not printed.
+normalize_catalog_cache_header() {
+  local value
+  value="${CATALOG_CACHE_HEADER-}"
+  value="${value//$'\r'/}"
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  if [ "${value}" = "true" ]; then
+    printf '%s' "true"
+  else
+    printf '%s' "false"
+  fi
+}
+
+# Replace every CATALOG_CACHE_HEADER assignment, or append one. A line whose
+# name is `export CATALOG_CACHE_HEADER` is rewritten in place and keeps the
+# export prefix. The key is not appended again when a line already exists.
+# Comments and other keys are copied through and are not printed.
+apply_catalog_cache_header() {
+  local file="$1"
+  local value key tmp
+  key="CATALOG_CACHE_HEADER"
+  value="$(normalize_catalog_cache_header)"
+  if [ ! -f "${file}" ]; then
+    echo "Missing env file: ${file}" >&2
+    return 1
+  fi
+
+  tmp="$(mktemp "${file}.tmp.XXXXXX")" || return 1
+  chmod 600 "${tmp}"
+  if ! awk -v key="${key}" -v value="${value}" '
+    function trim(s) {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
+      return s
+    }
+    function assignment_kind(raw,    eq, name, rest) {
+      eq = index(raw, "=")
+      if (eq == 0) return ""
+      name = trim(substr(raw, 1, eq - 1))
+      if (name == key) return "plain"
+      rest = name
+      if (sub(/^export[[:space:]]+/, "", rest)) {
+        rest = trim(rest)
+        if (rest == key) return "export"
+      }
+      return ""
+    }
+    BEGIN { found = 0 }
+    {
+      raw = $0
+      sub(/\r$/, "", raw)
+      if (raw ~ /^[[:space:]]*#/ || raw ~ /^[[:space:]]*$/) {
+        print
+        next
+      }
+      kind = assignment_kind(raw)
+      if (kind == "plain") {
+        print key "=" value
+        found = 1
+        next
+      }
+      if (kind == "export") {
+        print "export " key "=" value
+        found = 1
+        next
+      }
+      print
+    }
+    END {
+      if (!found) print key "=" value
+    }
+  ' "${file}" > "${tmp}"; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: could not rewrite ${key}" >&2
+    return 1
+  fi
+
+  if [ -s "${file}" ] && [ ! -s "${tmp}" ]; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: rewrite produced an empty file" >&2
+    return 1
+  fi
+
+  if cmp -s "${file}" "${tmp}"; then
+    rm -f "${tmp}"
+    return 0
+  fi
+
+  chmod --reference="${file}" "${tmp}" || chmod 600 "${tmp}"
+  if ! mv -f "${tmp}" "${file}"; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: could not replace it" >&2
+    return 1
+  fi
+  printf '%s\n' "${key}=${value}"
+}
+
 # Print the DSN, or nothing. Empty means the GitHub secret is unset and the
 # env file must be left alone. Anything else must be an http or https URL
 # with no whitespace, quotes, backslashes, or shell substitutions. The value
@@ -408,6 +506,12 @@ main() {
   # every assignment of that key, including an export prefix, or appends
   # one. The value is not printed.
   apply_web_sentry_dsn "${env_file}" || exit $?
+
+  # GitHub Environment variable, forwarded by deploy.yml. Only the exact
+  # string true is kept; empty and every other value are written as false.
+  # Runs after the checks above so a rejected prehash or DSN does not
+  # rewrite this file. ENV_NAME is already staging or prod.
+  apply_catalog_cache_header "${env_file}" || exit $?
 
   cd "${app_dir}"
 

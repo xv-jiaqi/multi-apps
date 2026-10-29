@@ -308,6 +308,7 @@ assert "unset PASSWORD_PREHASH_WRITE leaves staging.env unchanged" "$(
 ENV_NAME=staging
 API_DOMAIN=api-staging.example.test
 MIGRATE_DATABASE_URL=
+CATALOG_CACHE_HEADER=false
 EOF
   cmp -s "${CASE_ROOT}/expected-staging.env" "${CASE_ROOT}/staging/staging.env" && echo 0 || echo 1
 )"
