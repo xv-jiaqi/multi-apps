@@ -129,6 +129,7 @@ jobs:
           bash deploy/backup-status.test.sh
           bash deploy/check-backup-log.test.sh
           bash deploy/sync-whitelist.test.sh
+          bash deploy/web-security-headers.test.sh
 
   audit:
     name: pnpm audit (high+)

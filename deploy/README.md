@@ -123,6 +123,9 @@ container did not send CSP. A current image sends the full policy, including
 `connect-src` from `TRPC_URL` and `SENTRY_DSN`; rolling the web image back
 still leaves `frame-ancestors`. Ship the web image to staging and production
 before recreating the edge. `lb_try_duration` is unchanged.
+`deploy/web-security-headers.test.sh` checks these three web headers. CI
+installs Caddy 2.11.7, the version currently reported by `caddy:2-alpine`,
+and fails if that binary is missing.
 
 After changing any edge env vars manually, recreate the Caddy container so
 Compose injects the new environment; `caddy reload` does not pick up env-file
