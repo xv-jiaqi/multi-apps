@@ -97,6 +97,10 @@ vi.mock('../lib/trpc', () => ({
         useQuery: () => idleQuery,
       },
     },
+    collection: {
+      byCard: { useQuery: () => idleQuery },
+      upsert: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+    },
     comments: {
       listForCard: { useQuery: () => idleQuery },
       listForSeries: { useQuery: () => idleQuery },
@@ -291,5 +295,20 @@ describe('card detail meta description', () => {
       'content',
       '极光骑士 · 天穹黎明 No.001。在 Cardhub 查看卡牌资料、交易和讨论。 辉光足够。',
     );
+  });
+
+  it('places the collection bar after the title and before attributes', () => {
+    showCard();
+    renderCard();
+
+    const title = screen.getByRole('heading', { level: 1, name: '极光骑士' });
+    const region = screen.getByRole('region', { name: '我的收藏' });
+    const attributes = screen.getByRole('heading', { name: '属性' });
+    expect(title.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      region.compareDocumentPosition(attributes) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: '我有' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('textbox', { name: '数量' })).not.toBeInTheDocument();
   });
 });

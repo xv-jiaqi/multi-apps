@@ -114,6 +114,10 @@ vi.mock('../lib/trpc', () => ({
     listings: {
       byCard: { useQuery: () => ({ ...ready, data: [] }) },
     },
+    collection: {
+      byCard: { useQuery: () => ({ ...ready, data: null }) },
+      upsert: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+    },
     comments: {
       listForCard: { useQuery: () => ({ ...ready, data: [] }) },
       listForSeries: { useQuery: () => ({ ...ready, data: [] }) },

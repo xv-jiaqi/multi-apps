@@ -66,6 +66,10 @@ describe('field error codes', () => {
     expect(fieldErrorMessage('en-US', 'reason_too_short')).toBe(
       'Use at least 4 characters for the reason.',
     );
+    expect(fieldErrorMessage('zh-CN', 'collection_quantity')).toBe('数量只能是 0 到 99 的整数');
+    expect(fieldErrorMessage('en-US', 'collection_quantity')).toBe(
+      'Enter a whole number from 0 to 99.',
+    );
     expect(t('en-US', 'error.app.TOO_MANY_REQUESTS')).toBe('Too many actions. Try again later.');
     expect(t('zh-CN', 'error.app.TOO_MANY_REQUESTS')).toBe('操作太频繁，请稍后再试');
   });
