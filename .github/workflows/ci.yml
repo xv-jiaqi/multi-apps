@@ -63,6 +63,8 @@ jobs:
           ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example --profile migrate config >"${tmp}"
           ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
           bash deploy/public-web-origin-compose.test.sh
+          bash deploy/catalog-cache-header-compose.test.sh
+          bash deploy/ci-redis-install.test.sh
           rm -f "${tmp}"
           bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh
           sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
@@ -121,6 +123,7 @@ jobs:
           sudo chmod +x /usr/sbin/policy-rc.d
           sudo apt-get update
           sudo apt-get install -y redis-server
+          sudo rm -f /usr/sbin/policy-rc.d
           command -v redis-server
 
       - name: Test
