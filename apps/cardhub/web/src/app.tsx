@@ -103,10 +103,11 @@ export function LazyRoute({
 }) {
   const location = useLocation();
   // Per-route ErrorBoundary so a single page crash doesn't kill the shell.
-  // location.key remounts the boundary when navigation leaves the crashed page.
+  // Reset only after an error when the pathname changes. Search params and
+  // hashes keep the page mounted so focus and local state survive.
   return (
     <ErrorBoundary
-      key={location.key}
+      pathname={location.pathname}
       withShell
       onError={(error) => {
         if (!isChunkLoadError(error)) return;

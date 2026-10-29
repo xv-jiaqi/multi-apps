@@ -35,6 +35,11 @@ interface ErrorBoundaryProps {
   onError?: (error: unknown, info: ErrorInfo) => void;
   /** Route crashes render inside the normal page shell. The root boundary does not. */
   withShell?: boolean;
+  /**
+   * While the boundary is showing an error, a new pathname clears it.
+   * Search params and hashes leave the boundary mounted.
+   */
+  pathname?: string;
 }
 
 interface ErrorBoundaryState {
@@ -46,6 +51,8 @@ interface ErrorBoundaryState {
    * the children render. The first catch stays false.
    */
   restoreFocus: boolean;
+  /** Pathname captured while healthy, or when the error first appeared. */
+  caughtPathname?: string;
 }
 
 /**
@@ -58,6 +65,28 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   static getDerivedStateFromError(error: unknown): Pick<ErrorBoundaryState, 'hasError' | 'error'> {
     return { hasError: true, error };
+  }
+
+  static getDerivedStateFromProps(
+    props: ErrorBoundaryProps,
+    state: ErrorBoundaryState,
+  ): Partial<ErrorBoundaryState> | null {
+    if (props.pathname === undefined) return null;
+    if (state.hasError && state.caughtPathname === undefined) {
+      return { caughtPathname: props.pathname };
+    }
+    if (state.hasError && state.caughtPathname !== props.pathname) {
+      return {
+        hasError: false,
+        error: null,
+        restoreFocus: false,
+        caughtPathname: props.pathname,
+      };
+    }
+    if (!state.hasError && state.caughtPathname !== props.pathname) {
+      return { caughtPathname: props.pathname };
+    }
+    return null;
   }
 
   override componentDidCatch(error: unknown, info: ErrorInfo): void {

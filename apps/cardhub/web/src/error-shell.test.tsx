@@ -87,7 +87,44 @@ describe('route error shell', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('resets the same route after the location key changes', async () => {
+  it('stays on the error when only the search or hash changes', async () => {
+    function Page() {
+      const { seriesSlug } = useParams();
+      if (seriesSlug === 'celestial-dawn') {
+        throw new Error('Failed to fetch dynamically imported module: /assets/series-detail.js');
+      }
+      return <p>loaded {seriesSlug}</p>;
+    }
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/series/:seriesSlug',
+          element: (
+            <LazyRoute name="/series/:seriesSlug">
+              <Page />
+            </LazyRoute>
+          ),
+        },
+      ],
+      { initialEntries: ['/series/celestial-dawn'] },
+    );
+    render(<RouterProvider router={router} />);
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+
+    await act(async () => {
+      await router.navigate('/series/celestial-dawn?q=1');
+    });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+
+    await act(async () => {
+      await router.navigate('/series/celestial-dawn#comments');
+    });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText('loaded celestial-dawn')).not.toBeInTheDocument();
+  });
+
+  it('resets the same route when the pathname changes', async () => {
     function Page() {
       const { seriesSlug } = useParams();
       if (seriesSlug === 'celestial-dawn') {
