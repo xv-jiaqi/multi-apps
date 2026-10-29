@@ -90,13 +90,13 @@ cat > "${negative_dir}/root-web.caddy" <<'EOF'
 	import cardhub_api_headers
 }
 EOF
-if require_site_import "comment-only staging" "${negative_dir}/Caddyfile" '^\{[$]STAGING_WEB_DOMAIN\}'; then
+if require_site_import "comment-only staging" "${negative_dir}/Caddyfile" '^\{[$]STAGING_WEB_DOMAIN\}' >/dev/null 2>&1; then
   echo "FAIL comment-only import was accepted for staging" >&2
   failed=1
 else
   echo "OK comment-only staging import is rejected"
 fi
-if require_site_import "comment-only apex" "${negative_dir}/root-web.caddy" '^\{[$]ROOT_WEB_DOMAINS'; then
+if require_site_import "comment-only apex" "${negative_dir}/root-web.caddy" '^\{[$]ROOT_WEB_DOMAINS' >/dev/null 2>&1; then
   echo "FAIL comment-only import was accepted for apex" >&2
   failed=1
 else
