@@ -83,7 +83,7 @@
 | CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 待领取                                                |
 | CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105                | 待领取                                                |
 | CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 进行中（#145，基于 #144）                             |
-| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | 进行中（cursor/ch-210-redis-cache-97d7）              |
+| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | ✅ PR #181                                            |
 | CH-211 | API 错误信息国际化                              | P2     | M    | —                     | 待领取                                                |
 | CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102                | 待领取                                                |
 | CH-213 | 平行版本与限量编号                              | P2     | L    | CH-201                | 待领取                                                |
