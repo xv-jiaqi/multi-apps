@@ -15,7 +15,14 @@ import {
   t as translate,
 } from '@repo/shared';
 import { z } from 'zod';
+import { categoryIdForSlug, subsetIdForSlug } from '../catalog/catalog-links';
+import {
+  cardNumberForInput,
+  formatReleaseDate,
+  releaseDateForInput,
+} from '../catalog/release-date';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
+import { buildAdminTaxonomyRouter } from './admin-taxonomy';
 import { buildAdminAuditRouter, buildAdminUsersRouter } from './governance.router';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
@@ -70,8 +77,15 @@ interface NormalizedImport {
 }
 
 const seriesAdminInclude = {
-  _count: { select: { cards: true, comments: true } },
+  _count: { select: { cards: true, comments: true, subsets: true } },
   cards: { select: { _count: { select: { comments: true } } } },
+  category: { select: { slug: true, name: true } },
+} as const;
+
+const cardAdminInclude = {
+  series: { select: { slug: true, title: true } },
+  subset: { select: { slug: true, name: true } },
+  _count: { select: { comments: true } },
 } as const;
 
 type SeriesListRow = Prisma.SeriesGetPayload<{
@@ -79,10 +93,7 @@ type SeriesListRow = Prisma.SeriesGetPayload<{
 }>;
 
 type CardAdminRow = Prisma.CardGetPayload<{
-  include: {
-    series: { select: { slug: true; title: true } };
-    _count: { select: { comments: true } };
-  };
+  include: typeof cardAdminInclude;
 }>;
 
 function normalizeOptionalText(value: string | undefined): string | null {
@@ -166,6 +177,9 @@ function formatCard(card: CardAdminRow) {
     attributes: normalizeDbAttributes(card.attributes),
     seriesSlug: card.series.slug,
     seriesTitle: card.series.title,
+    cardNumber: card.cardNumber ?? null,
+    subsetSlug: card.subset?.slug ?? null,
+    subsetName: card.subset?.name ?? null,
     commentCount: card._count.comments,
     createdAt: card.createdAt.toISOString(),
     updatedAt: card.updatedAt.toISOString(),
@@ -187,6 +201,9 @@ function formatSeries(series: SeriesListRow) {
     coverUrl: series.coverUrl,
     cardCount: series._count.cards,
     commentCount: seriesCommentCount(series),
+    subsetCount: series._count.subsets ?? 0,
+    releaseDate: formatReleaseDate(series.releaseDate),
+    category: series.category ? { slug: series.category.slug, name: series.category.name } : null,
     createdAt: series.createdAt.toISOString(),
     updatedAt: series.updatedAt.toISOString(),
   };
@@ -536,6 +553,12 @@ export class AdminRouter {
               cause: { code: 'SERIES_NOT_FOUND', slug: card.seriesSlug },
             });
           }
+          const existing = await tx.card.findUnique({
+            where: { slug: card.slug },
+            select: { seriesId: true, subsetId: true },
+          });
+          const subsetId =
+            existing && existing.seriesId !== seriesId && existing.subsetId ? null : undefined;
           await tx.card.upsert({
             where: { slug: card.slug },
             update: {
@@ -545,6 +568,7 @@ export class AdminRouter {
               imageUrl: card.imageUrl,
               attributes: card.attributes,
               seriesId,
+              ...(subsetId !== undefined ? { subsetId } : {}),
             },
             create: {
               slug: card.slug,
@@ -566,6 +590,8 @@ export class AdminRouter {
       series: t.router({
         list: listSeries,
         create: t.adminProcedure.input(adminSeriesUpsertInput).mutation(async ({ input }) => {
+          const categoryId = await categoryIdForSlug(prisma, input.categorySlug);
+          const releaseDate = releaseDateForInput(input.releaseDate);
           try {
             const series = await prisma.series.create({
               data: {
@@ -573,6 +599,8 @@ export class AdminRouter {
                 title: input.title,
                 description: normalizeOptionalText(input.description),
                 coverUrl: normalizeImageUrl(input.coverUrl),
+                ...(categoryId !== undefined ? { categoryId } : {}),
+                ...(releaseDate !== undefined ? { releaseDate } : {}),
               },
               include: seriesAdminInclude,
             });
@@ -589,6 +617,8 @@ export class AdminRouter {
           }
         }),
         update: t.adminProcedure.input(adminSeriesUpsertInput).mutation(async ({ input }) => {
+          const categoryId = await categoryIdForSlug(prisma, input.categorySlug);
+          const releaseDate = releaseDateForInput(input.releaseDate);
           try {
             const series = await prisma.series.update({
               where: { slug: input.slug },
@@ -596,6 +626,8 @@ export class AdminRouter {
                 title: input.title,
                 description: normalizeOptionalText(input.description),
                 coverUrl: normalizeImageUrl(input.coverUrl),
+                ...(categoryId !== undefined ? { categoryId } : {}),
+                ...(releaseDate !== undefined ? { releaseDate } : {}),
               },
               include: seriesAdminInclude,
             });
@@ -645,10 +677,7 @@ export class AdminRouter {
         get: t.adminProcedure.input(z.object({ slug: slugSchema })).query(async ({ input }) => {
           const card = await prisma.card.findUnique({
             where: { slug: input.slug },
-            include: {
-              series: { select: { slug: true, title: true } },
-              _count: { select: { comments: true } },
-            },
+            include: cardAdminInclude,
           });
           if (!card) throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
           return formatCard(card);
@@ -665,6 +694,8 @@ export class AdminRouter {
               cause: { code: 'SERIES_NOT_FOUND' },
             });
           }
+          const subsetId = await subsetIdForSlug(prisma, series.id, input.subsetSlug);
+          const cardNumber = cardNumberForInput(input.cardNumber);
           try {
             const card = await prisma.card.create({
               data: {
@@ -675,11 +706,10 @@ export class AdminRouter {
                 imageUrl: normalizeImageUrl(input.imageUrl),
                 attributes: input.attributes,
                 seriesId: series.id,
+                ...(subsetId !== undefined ? { subsetId } : {}),
+                ...(cardNumber !== undefined ? { cardNumber } : {}),
               },
-              include: {
-                series: { select: { slug: true, title: true } },
-                _count: { select: { comments: true } },
-              },
+              include: cardAdminInclude,
             });
             return formatCard(card);
           } catch (error) {
@@ -705,6 +735,17 @@ export class AdminRouter {
               cause: { code: 'SERIES_NOT_FOUND' },
             });
           }
+          let subsetId = await subsetIdForSlug(prisma, series.id, input.subsetSlug);
+          if (subsetId === undefined) {
+            const existing = await prisma.card.findUnique({
+              where: { slug: input.slug },
+              select: { seriesId: true, subsetId: true },
+            });
+            if (existing && existing.seriesId !== series.id && existing.subsetId) {
+              subsetId = null;
+            }
+          }
+          const cardNumber = cardNumberForInput(input.cardNumber);
           try {
             const card = await prisma.card.update({
               where: { slug: input.slug },
@@ -715,11 +756,10 @@ export class AdminRouter {
                 imageUrl: normalizeImageUrl(input.imageUrl),
                 attributes: input.attributes,
                 seriesId: series.id,
+                ...(subsetId !== undefined ? { subsetId } : {}),
+                ...(cardNumber !== undefined ? { cardNumber } : {}),
               },
-              include: {
-                series: { select: { slug: true, title: true } },
-                _count: { select: { comments: true } },
-              },
+              include: cardAdminInclude,
             });
             return formatCard(card);
           } catch (error) {
@@ -766,6 +806,7 @@ export class AdminRouter {
             return input.dryRun ? previewImport(input.data) : applyImport(input.data);
           }),
       }),
+      ...buildAdminTaxonomyRouter(t, prisma),
       users: buildAdminUsersRouter(t, prisma),
       audit: buildAdminAuditRouter(t, prisma),
     });

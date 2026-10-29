@@ -15,6 +15,8 @@ export const ADMIN_CATALOG_ERROR_CODES = [
   'INVALID_TYPE',
   'SERIES_NOT_FOUND',
   'SERIES_HAS_CARDS',
+  'CATEGORY_NOT_FOUND',
+  'SUBSET_NOT_FOUND',
 ] as const;
 
 export type AdminCatalogErrorCode = (typeof ADMIN_CATALOG_ERROR_CODES)[number];

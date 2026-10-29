@@ -13,7 +13,9 @@ interface UserUpsertArgs {
 }
 
 function makePrisma() {
+  const categoryUpsert = jest.fn(() => Promise.resolve({ id: 'category-deck-builder' }));
   const seriesUpsert = jest.fn(({ where }) => Promise.resolve({ id: `series-${where.slug}` }));
+  const subsetUpsert = jest.fn(() => Promise.resolve({}));
   const cardUpsert = jest.fn(() => Promise.resolve({}));
   const seriesCount = jest.fn(() => Promise.resolve(CATALOG_SERIES.length));
   const cardCount = jest.fn(() =>
@@ -23,7 +25,9 @@ function makePrisma() {
   const userCount = jest.fn(() => Promise.resolve(DEMO_USERS.length));
 
   const prisma = {
+    category: { upsert: categoryUpsert },
     series: { upsert: seriesUpsert, count: seriesCount },
+    subset: { upsert: subsetUpsert },
     card: { upsert: cardUpsert, count: cardCount },
     user: { upsert: userUpsert, count: userCount },
   } as unknown as PrismaClient;

@@ -327,11 +327,66 @@ export const adminAttributesSchema = z
     message: `At most ${ADMIN_ATTRIBUTE_MAX_KEYS} attributes`,
   });
 
+/** Printed card number. Empty string clears it. The grid renders a leading #. */
+export const CARD_NUMBER_MAX = 20;
+
+export const SUBSET_KIND_VALUES = ['BASE', 'INSERT'] as const;
+export type SubsetKindValue = (typeof SUBSET_KIND_VALUES)[number];
+
+/** Omitted sort keeps the historical `createdAt` ascending order. */
+export const SERIES_LIST_SORT_VALUES = [
+  'createdAtAsc',
+  'createdAtDesc',
+  'releaseDateAsc',
+  'releaseDateDesc',
+] as const;
+export type SeriesListSort = (typeof SERIES_LIST_SORT_VALUES)[number];
+
+const RELEASE_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Calendar date `YYYY-MM-DD`. Rejects impossible days such as 2024-02-31. */
+export const releaseDateSchema = z
+  .string()
+  .trim()
+  .superRefine((value, ctx) => {
+    const match = RELEASE_DATE_PATTERN.exec(value);
+    if (!match) {
+      ctx.addIssue({ code: 'custom', message: 'Invalid date' });
+      return;
+    }
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      ctx.addIssue({ code: 'custom', message: 'Invalid date' });
+    }
+  });
+
+/** Empty string clears the value. Omitted leaves the stored value alone. */
+export const optionalSlugOrEmpty = z.union([slugSchema, z.literal('')]).optional();
+export const optionalReleaseDateInput = z.union([releaseDateSchema, z.literal('')]).optional();
+
+const catalogSortOrderSchema = z.number().int().min(-2_147_483_648).max(2_147_483_647);
+
+export const seriesListInput = paginationSchema.extend({
+  categorySlug: slugSchema.optional(),
+  year: z.number().int().min(1).max(9999).optional(),
+  sort: z.enum(SERIES_LIST_SORT_VALUES).optional(),
+});
+export type SeriesListInput = z.infer<typeof seriesListInput>;
+
 export const adminSeriesUpsertInput = z.object({
   slug: slugSchema,
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(5000).optional(),
   coverUrl: adminImageUrlSchema,
+  categorySlug: optionalSlugOrEmpty,
+  releaseDate: optionalReleaseDateInput,
 });
 export type AdminSeriesUpsertInput = z.infer<typeof adminSeriesUpsertInput>;
 
@@ -343,8 +398,44 @@ export const adminCardUpsertInput = z.object({
   imageUrl: adminImageUrlSchema,
   attributes: adminAttributesSchema.default({}),
   seriesSlug: slugSchema,
+  cardNumber: z.string().trim().max(CARD_NUMBER_MAX).optional(),
+  subsetSlug: optionalSlugOrEmpty,
 });
 export type AdminCardUpsertInput = z.infer<typeof adminCardUpsertInput>;
+
+export const adminCategoryUpsertInput = z.object({
+  slug: slugSchema,
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(5000).optional(),
+  sortOrder: catalogSortOrderSchema.default(0),
+});
+export type AdminCategoryUpsertInput = z.infer<typeof adminCategoryUpsertInput>;
+
+export const adminCategoryDeleteInput = z.object({
+  slug: slugSchema,
+});
+export type AdminCategoryDeleteInput = z.infer<typeof adminCategoryDeleteInput>;
+
+export const adminSubsetListInput = z.object({
+  seriesSlug: slugSchema,
+});
+export type AdminSubsetListInput = z.infer<typeof adminSubsetListInput>;
+
+export const adminSubsetUpsertInput = z.object({
+  seriesSlug: slugSchema,
+  slug: slugSchema,
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(5000).optional(),
+  kind: z.enum(SUBSET_KIND_VALUES),
+  sortOrder: catalogSortOrderSchema.default(0),
+});
+export type AdminSubsetUpsertInput = z.infer<typeof adminSubsetUpsertInput>;
+
+export const adminSubsetDeleteInput = z.object({
+  seriesSlug: slugSchema,
+  slug: slugSchema,
+});
+export type AdminSubsetDeleteInput = z.infer<typeof adminSubsetDeleteInput>;
 
 /** Optional admin delete reason. Trimmed, then 0–500 characters. */
 export const DELETE_REASON_MAX = 500;

@@ -173,6 +173,42 @@ describe('AdminRouter auth', () => {
     ],
     ['cards.delete', (admin: AdminCaller) => admin.cards.delete({ slug: 'existing-card' })],
     ['catalog.import', (admin: AdminCaller) => admin.catalog.import({ dryRun: false, data: [] })],
+    ['categories.list', (admin: AdminCaller) => admin.categories.list()],
+    [
+      'categories.create',
+      (admin: AdminCaller) => admin.categories.create({ slug: 'deck-builder', name: '构筑' }),
+    ],
+    [
+      'categories.update',
+      (admin: AdminCaller) => admin.categories.update({ slug: 'deck-builder', name: '构筑' }),
+    ],
+    ['categories.delete', (admin: AdminCaller) => admin.categories.delete({ slug: 'deck-builder' })],
+    ['subsets.list', (admin: AdminCaller) => admin.subsets.list({ seriesSlug: 'existing-series' })],
+    [
+      'subsets.create',
+      (admin: AdminCaller) =>
+        admin.subsets.create({
+          seriesSlug: 'existing-series',
+          slug: 'base',
+          name: '主卡',
+          kind: 'BASE',
+        }),
+    ],
+    [
+      'subsets.update',
+      (admin: AdminCaller) =>
+        admin.subsets.update({
+          seriesSlug: 'existing-series',
+          slug: 'base',
+          name: '主卡',
+          kind: 'INSERT',
+        }),
+    ],
+    [
+      'subsets.delete',
+      (admin: AdminCaller) =>
+        admin.subsets.delete({ seriesSlug: 'existing-series', slug: 'base' }),
+    ],
   ] as const)('rejects non-admin callers for %s with FORBIDDEN', async (_name, invoke) => {
     const router = makeRouter();
 
@@ -227,8 +263,9 @@ describe('AdminRouter.series.list', () => {
     expect(seriesFindMany).toHaveBeenCalledWith({
       orderBy: [{ title: 'asc' }, { slug: 'asc' }],
       include: {
-        _count: { select: { cards: true, comments: true } },
+        _count: { select: { cards: true, comments: true, subsets: true } },
         cards: { select: { _count: { select: { comments: true } } } },
+        category: { select: { slug: true, name: true } },
       },
     });
     expect(result.items[0]).toMatchObject({

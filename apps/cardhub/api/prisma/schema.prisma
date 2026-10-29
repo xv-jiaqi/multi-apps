@@ -49,20 +49,64 @@ model User {
   @@map("users")
 }
 
-model Series {
+model Category {
   id          String   @id @default(uuid())
   slug        String   @unique
-  title       String
+  name        String
   description String?
-  coverUrl    String?
+  sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  series Series[]
+
+  @@index([sortOrder, name])
+  @@map("categories")
+}
+
+model Series {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  description String?
+  coverUrl    String?
+  // Null means the series is not in a category. Deleting a category sets this
+  // to null and leaves the series in place. Old servers ignore the column.
+  categoryId  String?
+  // Calendar date, no time. Null means the release date is unknown. Old
+  // servers ignore the column.
+  releaseDate DateTime? @db.Date
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subsets  Subset[]
   cards    Card[]
   comments Comment[]
 
+  @@index([categoryId])
+  @@index([releaseDate])
   @@index([title(ops: raw("gin_trgm_ops"))], map: "series_title_trgm_idx", type: Gin)
   @@map("series")
+}
+
+model Subset {
+  id          String     @id @default(uuid())
+  seriesId    String
+  slug        String
+  name        String
+  kind        SubsetKind
+  sortOrder   Int        @default(0)
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  cards  Card[]
+
+  @@unique([seriesId, slug])
+  @@index([seriesId, sortOrder])
+  @@map("subsets")
 }
 
 model Card {
@@ -74,13 +118,20 @@ model Card {
   rarity      String?
   attributes  Json?
   seriesId    String
+  // Null means the card has no printed number. Old servers ignore the column.
+  cardNumber  String?
+  // Null means the card is not in a subset (ungrouped). Deleting a subset
+  // sets this to null and leaves the card in place.
+  subsetId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   series   Series    @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  subset   Subset?   @relation(fields: [subsetId], references: [id], onDelete: SetNull)
   comments Comment[]
 
   @@index([seriesId])
+  @@index([subsetId])
   @@index([name])
   @@index([name(ops: raw("gin_trgm_ops"))], map: "cards_name_trgm_idx", type: Gin)
   @@map("cards")
@@ -153,6 +204,11 @@ model Reply {
 
   @@index([topicId, createdAt])
   @@map("replies")
+}
+
+enum SubsetKind {
+  BASE
+  INSERT
 }
 
 enum ListingKind {

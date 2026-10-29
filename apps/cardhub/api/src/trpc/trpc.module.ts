@@ -3,6 +3,7 @@ import { TrpcBaseModule } from './trpc-base.module';
 import { TrpcService } from './trpc.service';
 import { HealthModule } from '../modules/health/health.module';
 import { SeriesModule } from '../modules/series/series.module';
+import { CategoriesModule } from '../modules/categories/categories.module';
 import { CardsModule } from '../modules/cards/cards.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CommentsModule } from '../modules/comments/comments.module';
@@ -18,6 +19,7 @@ import { AdminModule } from '../modules/admin/admin.module';
     TrpcBaseModule,
     HealthModule,
     SeriesModule,
+    CategoriesModule,
     CardsModule,
     AuthModule,
     CommentsModule,
