@@ -522,6 +522,100 @@ describe('card collection bar', () => {
     expect(screen.queryByRole('textbox', { name: '数量' })).not.toBeInTheDocument();
   });
 
+  it('rejects 100, -1, and a decimal locally without writing', async () => {
+    const user = userEvent.setup();
+    signIn();
+    queryState.data = { ownedCount: 2, wanted: true };
+    renderBar();
+
+    const quantity = screen.getByRole('textbox', { name: '数量' });
+    for (const value of ['100', '-1', '1.5']) {
+      await user.clear(quantity);
+      await user.type(quantity, value);
+      await user.tab();
+      expect(calls).toHaveLength(0);
+      expect(quantity).toHaveValue(value);
+      expect(quantity).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByText('数量只能是 0 到 99 的整数')).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    }
+  });
+
+  it('uses the English quantity sentence for a local out-of-range value', async () => {
+    const user = userEvent.setup();
+    rootStore.locale.setLocale('en-US');
+    signIn();
+    queryState.data = { ownedCount: 2, wanted: false };
+    renderBar();
+
+    const quantity = screen.getByRole('textbox', { name: 'Quantity' });
+    await user.clear(quantity);
+    await user.type(quantity, '100');
+    await user.tab();
+    expect(calls).toHaveLength(0);
+    expect(quantity).toHaveValue('100');
+    expect(screen.getByText('Enter a whole number from 0 to 99.')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['zh-CN', 'too_small', '数量只能是 0 到 99 的整数', '填写的内容不符合要求，请修改后再试'],
+    ['zh-CN', 'too_big', '数量只能是 0 到 99 的整数', '填写的内容不符合要求，请修改后再试'],
+    ['zh-CN', 'invalid_type', '数量只能是 0 到 99 的整数', '填写的内容不符合要求，请修改后再试'],
+    [
+      'zh-CN',
+      'collection_quantity',
+      '数量只能是 0 到 99 的整数',
+      '填写的内容不符合要求，请修改后再试',
+    ],
+    [
+      'en-US',
+      'too_big',
+      'Enter a whole number from 0 to 99.',
+      'Some fields need to be changed before you can continue.',
+    ],
+    [
+      'en-US',
+      'collection_quantity',
+      'Enter a whole number from 0 to 99.',
+      'Some fields need to be changed before you can continue.',
+    ],
+  ] as const)(
+    'shows the quantity sentence for %s ownedCount code %s, not the generic validation sentence',
+    async (locale, code, sentence, generic) => {
+      const user = userEvent.setup();
+      rootStore.locale.setLocale(locale);
+      signIn();
+      queryState.data = { ownedCount: 2, wanted: false };
+      renderBar();
+
+      const quantityName = locale === 'zh-CN' ? '数量' : 'Quantity';
+      const quantity = screen.getByRole('textbox', { name: quantityName });
+      await user.clear(quantity);
+      await user.type(quantity, '4');
+      await user.tab();
+      expect(calls[0]?.input.ownedCount).toBe(4);
+      await act(async () => {
+        calls[0]?.opts.onError?.({
+          message: generic,
+          data: {
+            code: 'BAD_REQUEST',
+            httpStatus: 400,
+            appCode: APP_ERROR_CODES.VALIDATION,
+            zodError: {
+              fieldErrors: { ownedCount: [code] },
+              issues: [{ path: ['ownedCount'], message: code }],
+            },
+          },
+        });
+      });
+      expect(screen.getByRole('textbox', { name: quantityName })).toHaveValue('2');
+      expect(screen.getByText(sentence)).toBeInTheDocument();
+      expect(screen.queryByText(generic)).not.toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    },
+  );
+
   it('rejects an illegal quantity without writing, and submits 0 as clearing 我有', async () => {
     const user = userEvent.setup();
     signIn();
