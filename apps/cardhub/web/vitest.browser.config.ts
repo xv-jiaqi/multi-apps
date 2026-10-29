@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import type { Page } from 'playwright';
@@ -62,10 +63,26 @@ const emulateReducedMotion: BrowserCommand<['reduce' | 'no-preference']> = async
   await page.emulateMedia({ reducedMotion });
 };
 
+function pnpmStore(): string {
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 8; i += 1) {
+    const candidate = path.join(dir, 'node_modules', '.pnpm');
+    try {
+      readdirSync(candidate);
+      return candidate;
+    } catch {
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  }
+  throw new Error('pnpm store not found');
+}
+
 function loadPngjs(): {
   PNG: { sync: { read: (buffer: Buffer) => { width: number; height: number; data: Buffer } } };
 } {
-  const root = '/workspace/node_modules/.pnpm';
+  const root = pnpmStore();
   const dir = readdirSync(root).find((name) => name.startsWith('pngjs@'));
   if (!dir) throw new Error('pngjs is not installed');
   const require = createRequire(import.meta.url);
