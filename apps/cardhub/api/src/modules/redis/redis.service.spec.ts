@@ -1,9 +1,27 @@
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { RedisService } from './redis.service';
+import {
+  PURGE_RETRY_ATTEMPT_CAP,
+  RedisService,
+  purgeRetryDelayMs,
+  purgeRetryScheduled,
+} from './redis.service';
 
 const payloadSchema = z.object({ name: z.string() });
+
+describe('purge retry schedule', () => {
+  it('backs off exponentially and stops at 30s and the attempt cap', () => {
+    expect(purgeRetryDelayMs(0)).toBe(200);
+    expect(purgeRetryDelayMs(1)).toBe(400);
+    expect(purgeRetryDelayMs(2)).toBe(800);
+    expect(purgeRetryDelayMs(8)).toBe(30_000);
+    expect(purgeRetryDelayMs(20)).toBe(30_000);
+    expect(purgeRetryScheduled(0)).toBe(true);
+    expect(purgeRetryScheduled(PURGE_RETRY_ATTEMPT_CAP - 1)).toBe(true);
+    expect(purgeRetryScheduled(PURGE_RETRY_ATTEMPT_CAP)).toBe(false);
+  });
+});
 
 describe('RedisService.getOrSet', () => {
   const keys: string[] = [];

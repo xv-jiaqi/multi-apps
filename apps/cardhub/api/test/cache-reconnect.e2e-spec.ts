@@ -289,4 +289,28 @@ describe('X-Cache header', () => {
     expect(disabled.status).toBe(200);
     expect(disabled.headers['x-cache']).toBeUndefined();
   });
+
+  it('reports MISS for a batch when any procedure missed, even if another hit', async () => {
+    if (!app) throw new Error('app did not start');
+    process.env.ENV_NAME = 'staging';
+    process.env.CATALOG_CACHE_HEADER = 'true';
+    const warmed = await request(app.getHttpServer())
+      .get('/trpc/cards.bySlug')
+      .query({ input: JSON.stringify({ slug: cardSlug }) });
+    expect(warmed.status).toBe(200);
+    expect(warmed.headers['x-cache']).toBe('HIT');
+
+    const batched = await request(app.getHttpServer())
+      .get('/trpc/series.list,cards.bySlug')
+      .query({
+        batch: '1',
+        input: JSON.stringify({
+          0: { page: 1, pageSize: 7 },
+          1: { slug: cardSlug },
+        }),
+      });
+    expect(batched.status).toBe(200);
+    expect(Array.isArray(batched.body)).toBe(true);
+    expect(batched.headers['x-cache']).toBe('MISS');
+  });
 });

@@ -15,6 +15,21 @@ export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
 /** Reconnect purge target. Matches `PRODUCTION_CACHE_PREFIX` and nothing under `cardhub:rl:`. */
 export const CACHE_PURGE_PREFIX = 'cardhub:cache:v1:';
 
+const PURGE_RETRY_BASE_MS = 200;
+const PURGE_RETRY_MAX_MS = 30_000;
+export const PURGE_RETRY_ATTEMPT_CAP = 6;
+
+/** Delay after `failureCount` failed purges. The delay stops growing at 30s. */
+export function purgeRetryDelayMs(failureCount: number): number {
+  if (!Number.isInteger(failureCount) || failureCount < 0) return PURGE_RETRY_BASE_MS;
+  const shift = Math.min(failureCount, 16);
+  return Math.min(PURGE_RETRY_BASE_MS * 2 ** shift, PURGE_RETRY_MAX_MS);
+}
+
+export function purgeRetryScheduled(failureCount: number): boolean {
+  return failureCount < PURGE_RETRY_ATTEMPT_CAP;
+}
+
 const CONNECT_WAIT_MS = 1_000;
 
 function readRedisHost(value: unknown): string {
@@ -67,6 +82,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private purged = 0;
   private purging = false;
   private closing = false;
+  private purgeFailures = 0;
+  private purgeGaveUp = false;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(@Inject(REDIS_CLIENT) public readonly client: Redis) {
@@ -203,6 +220,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private noteOutage(): void {
     if (this.closing) return;
     this.outage += 1;
+    if (this.purgeGaveUp) {
+      this.purgeFailures = 0;
+      this.purgeGaveUp = false;
+    }
     void this.purgeIfNeeded();
   }
 
@@ -217,7 +238,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.purging = true;
     try {
       await this.unlinkByPrefix(CACHE_PURGE_PREFIX);
-      if (this.outage === target) this.purged = target;
+      if (this.outage === target) {
+        this.purged = target;
+        this.purgeFailures = 0;
+        this.purgeGaveUp = false;
+      }
     } catch (error) {
       this.logger.warn(`cache purge failed: ${error instanceof Error ? error.message : ''}`);
     } finally {
@@ -229,11 +254,20 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   private armPurgeRetry(): void {
-    if (this.retryTimer !== undefined) return;
+    if (this.retryTimer !== undefined || this.closing) return;
+    if (!purgeRetryScheduled(this.purgeFailures)) {
+      if (!this.purgeGaveUp) {
+        this.purgeGaveUp = true;
+        this.logger.warn(`cache purge stopped after ${PURGE_RETRY_ATTEMPT_CAP} failures`);
+      }
+      return;
+    }
+    const delay = purgeRetryDelayMs(this.purgeFailures);
+    this.purgeFailures += 1;
     this.retryTimer = setTimeout(() => {
       this.retryTimer = undefined;
       void this.purgeIfNeeded();
-    }, 200);
+    }, delay);
     this.retryTimer.unref();
   }
 
