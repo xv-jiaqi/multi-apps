@@ -591,7 +591,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                     {tt('forum.badge.pinned')}
                   </span>
                 ) : null}
-                <CardTitle ref={titleRef} tabIndex={-1} className="text-2xl">
+                <CardTitle ref={titleRef} tabIndex={-1} className="min-w-0 wrap-anywhere text-2xl">
                   {topic.title}
                 </CardTitle>
               </div>
