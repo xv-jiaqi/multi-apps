@@ -131,6 +131,7 @@ jobs:
           bash deploy/deploy-tree-guard.test.sh
           bash deploy/recheck-before-sync.test.sh
           bash deploy/remote-deploy-entrypoint.test.sh
+          bash deploy/password-prehash-env.test.sh
           bash deploy/rollback-preserves-previous-image.test.sh
           bash deploy/migrate-entrypoint.test.sh
           bash deploy/read-previous-image.test.sh

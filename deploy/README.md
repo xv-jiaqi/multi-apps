@@ -55,9 +55,12 @@ Caddy publishes host ports.
    `POSTGRES_DB=cardhub_staging` for staging. Database passwords are lowercase
    hex from `openssl rand -hex 32`.
    `PASSWORD_PREHASH_WRITE` must be the exact string `true` to store the
-   pre-hashed password format. Leave it `false` in `production.env`. Set it
-   to `true` in `staging.env`. The API compose service lists the variable
-   explicitly; putting it only in the env file does not inject it.
+   pre-hashed password format. The API compose service lists the variable
+   explicitly; putting it only in the env file does not inject it. Cardhub
+   Deploy writes this key from the GitHub Environment variable
+   `PASSWORD_PREHASH_WRITE` when that variable is `true` or `false`. An unset
+   variable leaves the existing line unchanged. Do not hand-edit the key on
+   the server.
    `POSTGRES_USER` / `POSTGRES_PASSWORD` are the admin superuser (data-directory
    init, restore, emergency admin). `DATABASE_URL` is the runtime role and
    `MIGRATE_DATABASE_URL` is the schema owner. Leave `MIGRATE_DATABASE_URL`
@@ -159,6 +162,12 @@ For GitHub Actions deploys, configure environment-scoped secrets:
 - `DEPLOY_SSH_KEY`
 - `DEPLOY_KNOWN_HOSTS`
 
+`PASSWORD_PREHASH_WRITE` is an environment variable on that same GitHub
+Environment, not a secret. Set `true` on staging and `false` on production
+when deploys should own the key. Leave the variable unset to keep the value
+already in `/opt/cardhub/<env>/<env>.env`. The workflow forwards only `true`
+or `false` and does not print the env file.
+
 `DEPLOY_KNOWN_HOSTS` must contain the pinned host key line for the VPS (for
 example from a trusted console or first-party host-key inventory). The workflow
 uses `StrictHostKeyChecking=yes` and does not run `ssh-keyscan`.
@@ -201,6 +210,15 @@ That tag selects the API and web images only. The workflow checks out
 commit. It does not check out the image tag. Rolling an older image back
 cannot replace the shared Caddyfile or the rolling deploy script with the
 copies stored in that older commit.
+
+`remote-deploy.sh` writes `PASSWORD_PREHASH_WRITE` into that environment's
+env file after `ENV_NAME` matches and before it replaces containers. The
+value comes from the GitHub Environment variable of the same name. `true`
+and `false` replace every assignment of that key, or append one when it is
+missing. An unset or blank variable does not change the file. A later
+failure leaves the new key on disk; containers that are already running keep
+the environment they started with until a rollout recreates them. The script
+does not print the rest of the env file.
 
 Both the edge job and the deploy job run `deploy/resolve-deploy-inputs.sh`
 after that checkout. The script fetches `origin/main` and exits 1 unless

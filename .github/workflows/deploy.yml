@@ -297,6 +297,9 @@ jobs:
 
       - name: Deploy on VPS
         shell: bash
+        env:
+          # Environment variable, not a secret. Empty when the variable is unset.
+          PASSWORD_PREHASH_WRITE: ${{ vars.PASSWORD_PREHASH_WRITE }}
         run: |
           set -euo pipefail
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
@@ -304,5 +307,23 @@ jobs:
           image_tag="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
           expected_sha="$(printf '%q' "${DEPLOY_EXPECTED_SHA}")"
           remote_script="$(printf '%q' "/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy/remote-deploy.sh")"
+          # Unset or blank keeps the server line. Only true or false is sent,
+          # and the raw value is not printed. The remote script writes the key.
+          prehash="$(
+            # shellcheck disable=SC1091
+            source deploy/remote-deploy.sh
+            normalize_password_prehash_write
+          )"
+          case "${prehash}" in
+            ""|true|false) ;;
+            *)
+              echo "PASSWORD_PREHASH_WRITE must be the exact string true or false" >&2
+              exit 1
+              ;;
+          esac
+          prehash_prefix=""
+          if [ -n "${prehash}" ]; then
+            prehash_prefix="PASSWORD_PREHASH_WRITE=${prehash} "
+          fi
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"
+            "${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"
