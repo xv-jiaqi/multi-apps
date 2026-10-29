@@ -12,6 +12,7 @@ import {
   LISTING_PRICE_STRING_MAX,
   adminCardUpsertInput,
   adminSeriesUpsertInput,
+  adminSubsetUpsertInput,
   authTokenSchema,
   cursorPaginationInput,
   emailSchema,
@@ -92,6 +93,33 @@ describe('procedure input upper bounds', () => {
     };
     expect(adminSeriesUpsertInput.safeParse(series).success).toBe(true);
     expectUnderBodyLimit('admin.series.create', series);
+
+    const subset = {
+      seriesSlug: 'celestial-dawn',
+      slug: 'base',
+      name: '主卡',
+      kind: 'BASE' as const,
+      description: cjk(5000),
+    };
+    expect(adminSubsetUpsertInput.safeParse(subset).success).toBe(true);
+    const overlongSubset = adminSubsetUpsertInput.safeParse({
+      ...subset,
+      description: cjk(5001),
+    });
+    expect(overlongSubset.success).toBe(false);
+    if (!overlongSubset.success) {
+      expect(overlongSubset.error.issues[0]?.path).toEqual(['description']);
+      expect(overlongSubset.error.issues[0]?.message).toBe('description_too_long');
+    }
+    const overlongSeries = adminSeriesUpsertInput.safeParse({
+      slug: 'a',
+      title: '标题',
+      description: cjk(5001),
+    });
+    expect(overlongSeries.success).toBe(false);
+    if (!overlongSeries.success) {
+      expect(overlongSeries.error.issues[0]?.message).not.toBe('description_too_long');
+    }
 
     const topic = { title: cjk(120), body: cjk(10_000) };
     expect(topicCreateInput.safeParse(topic).success).toBe(true);

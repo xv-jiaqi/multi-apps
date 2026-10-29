@@ -12,14 +12,18 @@ import { attachRequestLogging } from './http-logger';
 import { REQUEST_ID_HEADER_NAME, requestIdFrom } from './request-id';
 import { AuthService } from '../modules/auth/auth.service';
 import { PrismaService } from '../modules/prisma/prisma.service';
+import { RedisService } from '../modules/redis/redis.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
+import { DEFAULT_CORS_ORIGIN } from '../modules/seo/public-web-origin';
 import { configureApp } from './configure-app';
 import { jsonBodyParser } from './json-body';
 import { createRateLimiters, type RateLimitOverrides } from './rate-limiters';
 
 export type CreateAppOptions = {
   rateLimitOverrides?: RateLimitOverrides;
+  /** Overrides the Redis key prefix. Tests pass one prefix to share a bucket. */
+  rateLimitPrefix?: string;
 };
 
 function splitVary(
@@ -81,12 +85,10 @@ export async function createApp(options: CreateAppOptions = {}) {
   const trpcService = app.get(TrpcService);
   const authService = app.get(AuthService);
   const prisma = app.get(PrismaService);
+  const redis = app.get(RedisService);
 
   const corsOrigin = config
-    .get<string>(
-      'CORS_ORIGIN',
-      'http://localhost:5173,http://localhost:10086,https://card-hub.app,https://staging.card-hub.app,tauri://localhost,https://tauri.localhost',
-    )
+    .get<string>('CORS_ORIGIN', DEFAULT_CORS_ORIGIN)
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
@@ -122,7 +124,11 @@ export async function createApp(options: CreateAppOptions = {}) {
   // SENTRY_DSN is unset so local dev is unaffected.
   app.useGlobalFilters(new SentryExceptionFilter());
 
-  for (const { path, middleware } of createRateLimiters(options.rateLimitOverrides)) {
+  for (const { path, middleware } of createRateLimiters(
+    redis,
+    options.rateLimitOverrides,
+    options.rateLimitPrefix,
+  )) {
     app.use(path, middleware);
   }
 

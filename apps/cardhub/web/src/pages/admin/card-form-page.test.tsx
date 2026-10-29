@@ -443,6 +443,71 @@ describe('card form server validation', () => {
     expect(screen.queryByText('Invalid key in record')).not.toBeInTheDocument();
   });
 
+  it('shows an over-long card number under the card number field', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          appCode: 'VALIDATION',
+          zodError: {
+            issues: [
+              {
+                code: 'too_big',
+                maximum: 20,
+                path: ['cardNumber'],
+                message: '填写的内容不符合要求，请修改后再试',
+              },
+            ],
+          },
+        },
+      };
+    };
+
+    await submitNewCard(user);
+
+    const input = screen.getByRole('textbox', { name: '卡号' });
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAttribute('aria-describedby', expect.stringContaining('card-number-error'));
+    expect(document.getElementById('card-number-error')).toHaveTextContent('内容超出长度限制');
+    expect(screen.queryByText(/cardNumber/)).not.toBeInTheDocument();
+    const alert = screen.queryByRole('alert');
+    if (alert) expect(alert).not.toHaveTextContent('cardNumber');
+  });
+
+  it('shows a server subset slug error under the subset control', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          appCode: 'VALIDATION',
+          zodError: {
+            issues: [
+              {
+                code: 'custom',
+                path: ['subsetSlug'],
+                message: 'slug_format',
+              },
+            ],
+          },
+        },
+      };
+    };
+
+    await submitNewCard(user);
+
+    const subset = document.getElementById('card-subset');
+    expect(subset).toHaveAttribute('aria-invalid', 'true');
+    expect(subset).toHaveAttribute('aria-describedby', 'card-subset-error');
+    expect(document.getElementById('card-subset-error')).toHaveTextContent(
+      '只能用小写字母、数字和短横线',
+    );
+    expect(screen.queryByText(/subsetSlug/)).not.toBeInTheDocument();
+  });
+
   it('invalidates the previous series list when the card moves', async () => {
     const user = userEvent.setup();
     seriesState.items = [

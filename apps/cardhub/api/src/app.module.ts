@@ -6,6 +6,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
+import { SeoModule } from './modules/seo/seo.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TrpcModule } from './trpc/trpc.module';
 import { validateEnv } from './config/env.validation';
@@ -39,6 +40,7 @@ import { appLogStream, createHttpLoggerOptions } from './bootstrap/http-logger';
     RedisModule,
     AuthModule,
     HealthModule,
+    SeoModule,
     TrpcModule,
   ],
   providers: [

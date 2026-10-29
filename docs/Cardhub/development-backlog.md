@@ -80,10 +80,10 @@
 | CH-204 | 评论回复（单层）                                | P2     | M    | CH-002                | ✅ #147                                               |
 | CH-205 | 首页改版                                        | P2     | M    | CH-201、CH-106        | 待领取                                                |
 | CH-206 | 卡牌详情页改版（大图、长描述）                  | P2     | M    | CH-105、CH-107        | 待领取                                                |
-| CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 待领取                                                |
+| CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 进行中（sitemap / robots；description 待 Spec）       |
 | CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105                | 待领取                                                |
 | CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 进行中（#145，基于 #144）                             |
-| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | 待领取                                                |
+| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | ✅ PR #181                                            |
 | CH-211 | API 错误信息国际化                              | P2     | M    | —                     | 待领取                                                |
 | CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102                | 待领取                                                |
 | CH-213 | 平行版本与限量编号                              | P2     | L    | CH-201                | 待领取                                                |
@@ -95,7 +95,7 @@
 | CH-303 | Tauri 桌面发布（签名、更新、CORS）              | P3     | M    | —                     | 待领取                                                |
 | CH-304 | iOS / Android 真机构建与上架流程                | P3     | L    | CH-303                | 待领取                                                |
 | CH-305 | 深色模式                                        | P3     | M    | —                     | 待领取                                                |
-| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | 待领取                                                |
+| CH-306 | 测试补齐 + E2E 冒烟                             | P3     | M    | —                     | ✅ #178                                               |
 | CH-307 | 可观测性：结构化日志 + request id               | P3     | S    | —                     | ✅ PR #182                                            |
 | CH-308 | 产品指标统计                                    | P3     | M    | —                     | 待领取                                                |
 | CH-309 | Web 安全响应头 + Tauri CSP                      | P3     | S    | CH-005                | 进行中（cursor/ch-309-security-headers-9131）         |
@@ -476,6 +476,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-207 SEO：sitemap / robots / 页面 meta
 
+- **进度**（2026-10-29）：sitemap 与 robots 已做，页面 `description` 仍等设计稿，本项不写文案。`GET /sitemap.xml` 由 API 列出系列（`/series/:slug`）、卡牌（`/cards/:slug`）和话题（`/forum/:slug`）。非法 slug 不进入文档。单类最多 50,000 条；文章和发售日历仍等 CH-214、CH-215。边缘 Caddy 在根域名和 staging Web 域名上把 `/sitemap.xml` 反代到 API。`/robots.txt` 禁止 `/reports`、`/admin`、`/me`，`Sitemap` 指向同一 Web 源。`PUBLIC_WEB_ORIGIN` 为空时，compose 用 `https://${WEB_DOMAIN}`；`WEB_DOMAIN` 缺失或为空则渲染失败。D7 预渲染 / SSR 未做。
 - **改动范围**
   - API：新增 REST 端点 `GET /sitemap.xml`，从数据库生成系列、卡牌、话题的 URL；Caddy 在 Web 域名上把 `/sitemap.xml` 反代到 API（修改 `deploy/edge/optional/root-web.caddy` 和 staging 站点块）。
   - Web：`public/robots.txt`（指向 sitemap，禁止抓取 `/reports`、`/admin`、`/me`）；在 CH-108 的 `<PageMeta>` 上补 `description`。
@@ -509,6 +510,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-210 Redis 缓存 + 限流 Redis 存储
 
+- **进度**（2026-10-29）：`series.list`、`series.bySlug`、`cards.bySlug`、`categories.list`、`categories.bySlug` 走 `CatalogCache.getOrSet`，TTL 5 分钟，键前缀 `cardhub:cache:v1:`。后台对系列、卡牌、品类、子集和目录导入的成功写会按键删除缓存。限流计数在 Redis（`cardhub:rl:v1:<limiter>:`），`passOnStoreError: true`。Redis 连不上时读接口回源数据库，限流放行，两者都不返回 5xx。这些响应是公开目录，不要把 CH-203 的按用户收藏字段放进同一条缓存。
 - **改动范围**
   - 在 `RedisService` 增加 `getOrSet(key, ttl, loader)`：Redis 不可用时直接走数据库，不能导致 500。缓存 `series.list`、`series.bySlug`、`cards.bySlug`、`categories.*`，TTL 5 分钟，key 前缀 `cardhub:cache:v1:`；CH-107 的后台写操作中按 key 失效。
   - 限流存储换成 `rate-limit-redis`，各限流器独立前缀，开启 `passOnStoreError: true`，Redis 故障时放行而不是报错。
@@ -624,8 +626,8 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-306 测试补齐 + E2E 冒烟
 
-- 补 `series.router.spec.ts`；替换 `apps/cardhub/api/test/placeholder.e2e-spec.ts` 为基于 supertest 的真实链路测试。
-- 引入 Playwright 冒烟用例：浏览 → 卡牌详情 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报。CI 中以独立 job 运行（可设为 nightly）。
+- `series.router.spec.ts` 与 supertest API e2e 已在 main。占位文件 `apps/cardhub/api/test/placeholder.e2e-spec.ts` 已删除。
+- Playwright 用户流程冒烟在 `apps/cardhub/e2e`：浏览 → 卡牌详情 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报。CI workflow 里的独立 job `e2e-smoke` 在 push / pull request 上运行，不进 `pnpm test`。
 
 #### CH-307 可观测性
 

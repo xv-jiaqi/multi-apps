@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /reports
+Disallow: /admin
+Disallow: /me
+
+Sitemap: https://card-hub.app/sitemap.xml

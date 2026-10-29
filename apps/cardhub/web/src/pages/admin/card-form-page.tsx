@@ -192,6 +192,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     if (key === 'name') nameRef.current?.focus();
     if (key === 'description') descriptionRef.current?.focus();
     if (key === 'imageUrl') imageRef.current?.focus();
+    if (key === 'cardNumber') document.getElementById('card-number')?.focus();
+    if (key === 'subsetSlug') document.getElementById('card-subset')?.focus();
     if (key === 'series') {
       document.getElementById('card-series')?.focus();
     }
@@ -223,7 +225,15 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     setErrors(next);
     setAttrErrors(attributes.ok ? {} : attributes.errors);
     if (Object.keys(next).length > 0) {
-      const order = ['series', 'slug', 'name', 'description', 'imageUrl'];
+      const order = [
+        'series',
+        'slug',
+        'subsetSlug',
+        'cardNumber',
+        'name',
+        'description',
+        'imageUrl',
+      ];
       const first = order.find((key) => next[key]);
       if (first) focusField(first);
       return;
@@ -288,6 +298,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       const feedback = applyValidationFeedback(locale.locale, error, 'admin.saveFailed', [
         'series',
         'slug',
+        'subsetSlug',
+        'cardNumber',
         'name',
         'description',
         'imageUrl',
@@ -302,7 +314,16 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           ...fieldErrors,
           ...(attributeMessage ? { attributes: attributeMessage } : {}),
         });
-        const order = ['series', 'slug', 'name', 'description', 'imageUrl', 'rarity'];
+        const order = [
+          'series',
+          'slug',
+          'subsetSlug',
+          'cardNumber',
+          'name',
+          'description',
+          'imageUrl',
+          'rarity',
+        ];
         const first = order.find((key) => fieldErrors[key]);
         if (first) focusField(first);
         else document.getElementById('card-attributes')?.focus();
@@ -413,7 +434,13 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 value={subsetSlug || 'none'}
                 onValueChange={(value) => setSubsetSlug(value === 'none' ? '' : value)}
               >
-                <SelectTrigger id="card-subset" size="sm" className="w-full">
+                <SelectTrigger
+                  id="card-subset"
+                  size="sm"
+                  className="w-full"
+                  aria-invalid={errors.subsetSlug ? true : undefined}
+                  aria-describedby={errors.subsetSlug ? 'card-subset-error' : undefined}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -425,6 +452,11 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                   ))}
                 </SelectContent>
               </Select>
+              {errors.subsetSlug ? (
+                <p id="card-subset-error" className="text-xs text-red-700">
+                  {errors.subsetSlug}
+                </p>
+              ) : null}
             </div>
             <AdminField
               id="card-number"

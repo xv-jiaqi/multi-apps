@@ -32,6 +32,16 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # Cache reads and the Redis rate-limit store fail open when this is
+      # down, but the tests that expect a 429 need a live Redis.
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
       DATABASE_URL: postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=public
@@ -52,6 +62,7 @@ jobs:
           ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
           ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example --profile migrate config >"${tmp}"
           ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
+          bash deploy/public-web-origin-compose.test.sh
           rm -f "${tmp}"
           bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh
           sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
@@ -110,6 +121,65 @@ jobs:
         # worker count and 35.9s with --maxWorkers=2.
         run: pnpm exec turbo run test --concurrency=2
 
+  e2e-smoke:
+    name: Playwright user-flow smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cardhub
+          POSTGRES_PASSWORD: cardhub
+          POSTGRES_DB: cardhub_e2e
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U cardhub -d cardhub_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_e2e?schema=public
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:generate
+
+      - name: Build API and Web
+        run: pnpm exec turbo run build --filter=@cardhub/api --filter=@cardhub/web
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @cardhub/e2e --fail-if-no-match exec playwright install --with-deps chromium
+
+      - name: User-flow smoke
+        run: pnpm --filter @cardhub/e2e --fail-if-no-match exec pnpm run test:e2e
+
   deploy-scripts:
     name: Deploy script tests
     runs-on: ubuntu-latest
@@ -141,6 +211,7 @@ jobs:
           bash deploy/check-backup-log.test.sh
           bash deploy/sync-whitelist.test.sh
           bash deploy/web-security-headers.test.sh
+          bash deploy/sitemap-proxy.test.sh
 
   audit:
     name: pnpm audit (high+)

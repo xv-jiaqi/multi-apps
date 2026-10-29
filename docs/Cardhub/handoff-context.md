@@ -109,6 +109,7 @@ M6 起 demo seed 预置两个账号（`pnpm --filter @cardhub/api db:seed` 自�
 | 灌本地 demo 种子数据 | 设置 `DEMO_USER_PASSWORD` / `DEMO_ADMIN_PASSWORD` 后运行 `pnpm --filter @cardhub/api db:seed` |
 | 全仓 typecheck       | `pnpm typecheck`                                                                              |
 | 全仓 lint            | `pnpm lint`                                                                                   |
+| Playwright 冒烟      | 构建 API 与 Web 后 `pnpm --filter @cardhub/e2e test:e2e`（需本机 Postgres 与 Redis）          |
 
 ## 6. 关键设计决策与"别再踩"清单
 
@@ -185,6 +186,8 @@ DATABASE_URL="postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=pu
 pnpm --filter @cardhub/api prisma migrate reset --force --skip-seed
 ```
 
+Playwright 冒烟另用库 `cardhub_e2e`（可用 `DATABASE_URL` 覆盖）。每次运行在 global setup 里生成 `alice` / `admin` 的密码并写入 gitignore 的 `.auth/passwords.json`，不把密码放进仓库。冒烟会自己拉起 API 和 `vite preview`，写接口的内存限流随进程重启清掉。
+
 ### 6.13 Sentry 守卫式初始化
 
 API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../../apps/cardhub/web/src/main.tsx) 都用 `if (DSN)` 守卫包住 `Sentry.init()`，**dev 留空 DSN 时不上报、不增加任何运行时开销**。当 API `SENTRY_DSN` 或 Web `WEB_SENTRY_DSN` 设置后：
@@ -200,7 +203,7 @@ API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../
 
 1. Tauri + Android + 开发模式 → `http://10.0.2.2:4000/trpc`（Android 模拟器访问宿主机的地址不是 `localhost`）。
 2. Tauri（检测 `__TAURI_INTERNALS__`）→ `VITE_TRPC_URL_TAURI`，没有则 `VITE_TRPC_URL`；必须是以 `/trpc` 结尾的绝对 http(s) 地址，否则直接抛错。iOS 模拟器与宿主同网络，也走这一条。
-3. 浏览器 → 运行时 `window.__CARDHUB_CONFIG__.TRPC_URL`（Web 容器启动时由 nginx 入口脚本写入 `/config.js`）→ 构建时 `VITE_TRPC_URL` → 同源 `/trpc`（本地开发由 Vite 代理到 4000 端口）。
+3. 浏览器 → 运行时 `window.__CARDHUB_CONFIG__.TRPC_URL`（Web 容器启动时由 nginx 入口脚本写入 `/config.js`）→ 构建时 `VITE_TRPC_URL` → 同源 `/trpc`（本地开发由 Vite 代理到 `CARDHUB_API_ORIGIN`，默认 `http://localhost:4000`。Playwright 冒烟把这个变量指到自己的 API 端口，`vite dev` 和 `vite preview` 共用同一份代理）。
 
 `.env.development` / `.env.staging` / `.env.production` 三套配置按 `vite build --mode <mode>` 选用。生产镜像的 `VITE_TRPC_URL` 留空，让同一个镜像通过运行时 `TRPC_URL` 同时服务预发和生产。
 
@@ -247,7 +250,7 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 2. **Prisma 迁移只增不删**：发布时 `prisma migrate deploy` 先于新容器执行，失败回滚只换镜像。已合入 `main` 的迁移文件不能删改；删列和改名不能写进同一次迁移。约定见 [development-backlog.md](development-backlog.md) §1.3。
 3. **`seed-catalog` 会覆盖同 slug 的数据**：它按 slug upsert，不要在生产重复执行；内容管理后台（CH-107）上线时要改为只插入缺失记录。
 4. **env 文件里的 `CORS_ORIGIN` 会覆盖代码默认值**：代码默认值包含 Tauri 来源，`deploy/.env.example` 的生产值只有 `https://card-hub.app`。桌面 / 移动端连生产 API 前必须补上 Tauri 来源（CH-303）。
-5. **限流按 IP 且在进程内存中计数**：`trust proxy` 只信任 1 跳（Caddy）。如果以后在 Caddy 前再加 CDN / SLB，要同步调整，否则所有用户会共享同一个 IP 的限额；多实例部署时换 Redis store（CH-210）。
+5. **限流按 IP，计数在 Redis**：`trust proxy` 只信任 1 跳（Caddy）。如果以后在 Caddy 前再加 CDN / SLB，要同步调整，否则所有用户会共享同一个 IP 的限额。各限流器前缀是 `cardhub:rl:v1:<名称>:`。Redis 故障时 `passOnStoreError` 放行，不要改回“失败就 500”。公开目录缓存前缀是 `cardhub:cache:v1:`，TTL 5 分钟；停 Redis 时读接口回源。API 测试需要本机 Redis（CI 用 service container）。Jest 里每个 `createApp` 用独立限流前缀，缓存键带 worker id，避免并行用例互相顶掉计数或列表缓存。Redis 地址在创建客户端时读当前 `process.env`：`ConfigModule.forRoot` 会在 `AppModule` 第一次求值时把环境变量冻成快照，之后再改 `REDIS_PORT` 若只走 `ConfigService.get` 仍会连到原来的实例。
 6. **本机办公网络可能拦截 `card-hub.app`**：在 owner 的办公网络下访问线上域名会返回安全策略拦截页（HTTP 403）。线上验证请在外网进行，或通过 VPS 上的 `curl --resolve` 检查。
 
 ### 6.18 API 日志是 JSON，request id 有格式
@@ -299,7 +302,7 @@ Cardhub 以平台无关的方式部署在阿里云香港的一台 Ubuntu 24.04 V
 
 - 镜像：仓库根 [`Dockerfile.api`](../../Dockerfile.api) 与 [`Dockerfile.web`](../../Dockerfile.web)。Web Docker 镜像使用 PR #38 的 nginx entrypoint，在容器启动时由运行时 `TRPC_URL` 生成未缓存的 `/config.js`。
 - 编排：[`deploy/docker-compose.yml`](../../deploy/docker-compose.yml) 启动 API / Web / Postgres 16 / Redis 7；Postgres/Redis 仅在各 compose project 默认网络内。
-- 代理：[`deploy/edge`](../../deploy/edge) 的共享 Caddy 负责 80/443、自动 HTTPS 和反向代理；API/Web 通过 external `edge` 网络上的 `ENV_NAME-api` / `ENV_NAME-web` 别名接入。生产 Web 根域名路由由 `deploy/edge/optional/root-web.caddy` 提供，`/opt/cardhub/edge/edge.env` 中需保持 `ROOT_WEB_DOMAINS=card-hub.app`。
+- 代理：[`deploy/edge`](../../deploy/edge) 的共享 Caddy 负责 80/443、自动 HTTPS 和反向代理；API/Web 通过 external `edge` 网络上的 `ENV_NAME-api` / `ENV_NAME-web` 别名接入。生产 Web 根域名路由由 `deploy/edge/optional/root-web.caddy` 提供，`/opt/cardhub/edge/edge.env` 中需保持 `ROOT_WEB_DOMAINS=card-hub.app`。根域名和 staging Web 域名上的 `GET /sitemap.xml` 反代到对应 API；`/robots.txt` 仍由 Web 容器提供。改完 Caddyfile 后要重建边缘容器，否则 `/sitemap.xml` 仍会落到 SPA。
 - 配置：复制 [`deploy/.env.example`](../../deploy/.env.example) 到 `/opt/cardhub/production/production.env` 与 `/opt/cardhub/staging/staging.env`，两套环境用同一个 app compose 文件和不同 project name（`cardhub-prod` / `cardhub-staging`）。生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。
 - 运行手册：见 [`deploy/README.md`](../../deploy/README.md)，包含服务器 bootstrap、GHCR 登录、DNS、部署、回滚、备份/恢复、日志查看、GitHub Environment 保护规则和单主机 staging/prod key 隔离限制。
 

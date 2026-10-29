@@ -9,6 +9,7 @@ import {
 } from '@repo/shared';
 import type { TrpcBase } from '../../trpc/trpc-base';
 import type { PrismaService } from '../prisma/prisma.service';
+import type { CatalogCache } from '../redis/catalog-cache';
 import { requireSeriesId } from '../catalog/catalog-links';
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -63,7 +64,7 @@ function formatSubset(subset: SubsetRow) {
   };
 }
 
-export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService) {
+export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService, cache: CatalogCache) {
   return {
     categories: t.router({
       list: t.adminProcedure.query(async () => {
@@ -85,6 +86,7 @@ export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService) {
             },
             include: categoryInclude,
           });
+          await cache.invalidate({ kind: 'category', categorySlug: category.slug });
           return formatCategory(category);
         } catch (error) {
           if (isPrismaUniqueError(error)) {
@@ -109,6 +111,7 @@ export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService) {
             },
             include: categoryInclude,
           });
+          await cache.invalidate({ kind: 'category', categorySlug: category.slug });
           return formatCategory(category);
         } catch (error) {
           if (isPlainObject(error) && error.code === 'P2025') {
@@ -125,6 +128,7 @@ export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService) {
         });
         if (!category) throw new TRPCError({ code: 'NOT_FOUND', message: '品类不存在' });
         await prisma.category.delete({ where: { slug: input.slug } });
+        await cache.invalidate({ kind: 'category', categorySlug: input.slug });
         return { ok: true as const, slug: input.slug, seriesCount: category._count.series };
       }),
     }),
@@ -154,6 +158,7 @@ export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService) {
             },
             include: subsetInclude,
           });
+          await cache.invalidate({ kind: 'subset', seriesSlug: input.seriesSlug });
           return formatSubset(subset);
         } catch (error) {
           if (isPrismaUniqueError(error)) {
@@ -180,6 +185,7 @@ export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService) {
             },
             include: subsetInclude,
           });
+          await cache.invalidate({ kind: 'subset', seriesSlug: input.seriesSlug });
           return formatSubset(subset);
         } catch (error) {
           if (isPlainObject(error) && error.code === 'P2025') {
@@ -197,6 +203,7 @@ export function buildAdminTaxonomyRouter(t: TrpcBase, prisma: PrismaService) {
         });
         if (!subset) throw new TRPCError({ code: 'NOT_FOUND', message: '子集不存在' });
         await prisma.subset.delete({ where: { id: subset.id } });
+        await cache.invalidate({ kind: 'subset', seriesSlug: input.seriesSlug });
         return { ok: true as const, slug: input.slug, cardCount: subset._count.cards };
       }),
     }),

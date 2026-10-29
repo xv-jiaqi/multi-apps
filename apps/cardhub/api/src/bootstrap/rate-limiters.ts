@@ -1,5 +1,8 @@
+import { Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import type { Request, RequestHandler, Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { RedisStore, type RedisReply } from 'rate-limit-redis';
 import { APP_ERROR_CODES, t } from '@repo/shared';
 
 type RateLimitConfig = {
@@ -73,11 +76,87 @@ function trpcRateLimitHandler(req: Request, res: Response): void {
 // tRPC procedures live behind Express middleware, so NestJS guards / the
 // ThrottlerGuard do not intercept them. We layer express-rate-limit on the
 // sensitive write paths instead. Reads (queries) stay un-throttled here.
+// Counters live in Redis so API replicas share one bucket. Each limiter has
+// its own prefix. passOnStoreError lets the request through when Redis is down.
 //
 // Why per-route limiters instead of a single global one: each mutation has
 // a different abuse profile — login attempts deserve a 1-minute window
 // while topic creation deserves a 1-hour window. A single limiter would
 // either be too lax to deter spam or too strict to be usable.
+export const RATE_LIMIT_KEY_PREFIX = 'cardhub:rl:v1:';
+
+export function defaultRateLimitPrefix(): string {
+  if (process.env.NODE_ENV === 'test') return `cardhub:rl:test:${randomUUID()}:`;
+  return RATE_LIMIT_KEY_PREFIX;
+}
+
+export function rateLimitStorePrefix(name: RateLimitName, base: string): string {
+  return `${base}${name}:`;
+}
+
+type RateLimitRedis = {
+  sendCommand(args: readonly string[]): Promise<unknown>;
+};
+
+const rateLimitLogger = new Logger('RateLimit');
+
+function storeLog(error: unknown, message?: string): void {
+  const detail = error instanceof Error ? error.message : '';
+  const text =
+    message && detail ? `${message}: ${detail}` : message || detail || 'rate limit store error';
+  rateLimitLogger.warn(text);
+}
+
+const redisStoreLogger = {
+  error: storeLog,
+  warn: storeLog,
+};
+
+function isRedisData(value: unknown): value is boolean | number | string {
+  return typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string';
+}
+
+function toRedisReply(value: unknown): RedisReply {
+  if (value === null || value === undefined) return false;
+  if (Buffer.isBuffer(value)) return value.toString();
+  if (isRedisData(value)) return value;
+  if (!Array.isArray(value)) throw new Error('Unexpected Redis reply');
+
+  const items: Array<boolean | number | string> = [];
+  for (const item of value) {
+    if (item === null || item === undefined) {
+      items.push(false);
+      continue;
+    }
+    if (Buffer.isBuffer(item)) {
+      items.push(item.toString());
+      continue;
+    }
+    if (!isRedisData(item)) throw new Error('Unexpected Redis reply');
+    items.push(item);
+  }
+  return items;
+}
+
+async function sendRedisCommand(
+  redis: RateLimitRedis,
+  args: readonly string[],
+): Promise<RedisReply> {
+  return toRedisReply(await redis.sendCommand(args));
+}
+
+function createRedisStore(redis: RateLimitRedis, prefix: string): RedisStore {
+  const store = new RedisStore({
+    prefix,
+    sendCommand: (...command: string[]) => sendRedisCommand(redis, command),
+  });
+  // SCRIPT LOAD starts in the constructor. A rejected promise with no handler
+  // crashes Node, which would take the API down whenever Redis is down.
+  void store.incrementScriptSha.catch(() => undefined);
+  void store.getScriptSha.catch(() => undefined);
+  return store;
+}
+
 export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> = {
   authMutation: {
     windowMs: 60_000,
@@ -118,7 +197,11 @@ export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> 
   },
 };
 
-export function createRateLimiters(overrides: RateLimitOverrides = {}): MountedRateLimiter[] {
+export function createRateLimiters(
+  redis: RateLimitRedis,
+  overrides: RateLimitOverrides = {},
+  keyPrefix: string = defaultRateLimitPrefix(),
+): MountedRateLimiter[] {
   return (Object.entries(productionRateLimitConfigs) as [RateLimitName, RateLimitConfig][]).map(
     ([name, config]) => {
       const resolved = { ...config, ...overrides[name] };
@@ -132,6 +215,9 @@ export function createRateLimiters(overrides: RateLimitOverrides = {}): MountedR
           keyGenerator: ipKey,
           skip: resolved.skip,
           handler: trpcRateLimitHandler,
+          passOnStoreError: true,
+          logger: redisStoreLogger,
+          store: createRedisStore(redis, rateLimitStorePrefix(name, keyPrefix)),
         }),
       };
     },

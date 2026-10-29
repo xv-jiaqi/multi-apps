@@ -133,12 +133,14 @@ pnpm dev
 | API 含覆盖率     | `pnpm --filter @cardhub/api test:cov` |
 | 仅 Web（vitest） | `pnpm --filter @cardhub/web test`     |
 | Web 含覆盖率     | `pnpm --filter @cardhub/web test:cov` |
+| Playwright 冒烟  | `pnpm --filter @cardhub/e2e test:e2e` |
 
 - API 单元测试位于 `apps/cardhub/api/src/**/*.spec.ts`，集成测试位于 `apps/cardhub/api/test/**/*.e2e-spec.ts`。
 - Web 测试位于 `apps/cardhub/web/src/**/*.{test,spec}.{ts,tsx}`，setup 在 `apps/cardhub/web/test/setup.ts`。
 - 本地跑 Web browser mode（含 ui-web Combobox）需要已安装 Chromium：`pnpm exec playwright install chromium`。
+- Playwright 用户流程冒烟在 `apps/cardhub/e2e`，不进 `pnpm test`。先构建 API 和 Web（`pnpm exec turbo run build --filter=@cardhub/api --filter=@cardhub/web`），本机 Postgres 与 Redis 要已启动，再 `pnpm --filter @cardhub/e2e exec playwright install chromium`。默认库是 `postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_e2e`，API 在 `:4100`，页面在 `:4173`。`alice` / `admin` 的密码每次运行现生成，不写入仓库。
 - 覆盖率门槛：全局 60% / `auth/*` 80%，CI 不达标会失败。
-- 运行 e2e 时记得用独立的测试库：
+- 运行 API e2e 时记得用独立的测试库：
 
   ```bash
   DATABASE_URL="postgresql://cardhub:cardhub@localhost:5432/cardhub_test?schema=public" \
@@ -153,6 +155,7 @@ pnpm dev
 2. Prisma generate + `prisma migrate deploy`（用 service container 起的 Postgres 16）
 3. `pnpm lint` / `pnpm typecheck` / `pnpm build` / `pnpm test`
 4. 并行：`pnpm audit --prod --audit-level high`
+5. 独立 job `e2e-smoke`：Playwright 用户流程冒烟（浏览 → 卡牌 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报）。自带 Postgres 与 Redis，不进 `pnpm test`。
 
 [`.github/dependabot.yml`](.github/dependabot.yml) 每周一开 minor/patch 升级 PR（npm 与 GitHub Actions 各一组）。
 
@@ -161,7 +164,8 @@ pnpm dev
 Cardhub 使用平台无关的 Docker 镜像 + Docker Compose 部署到单台 Linux VPS，当前运行在阿里云香港（详见 [`deploy/README.md`](deploy/README.md)）。
 
 - **API 镜像（仓库根）**：[`Dockerfile.api`](Dockerfile.api) — 构建阶段会 `prisma generate`。一次性 `migrate` 容器用 `MIGRATE_DATABASE_URL` 执行 `prisma migrate deploy`（未设置时回退到 `DATABASE_URL`），长驻 API 容器只拿 `DATABASE_URL` 并 `exec node dist/main.js`。生产库的角色拆分见 [`deploy/db/README.md`](deploy/db/README.md)。
-- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；该变量必填，缺失或格式不合法时容器拒绝启动。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
+- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；该变量必填，缺失或格式不合法时容器拒绝启动。`PUBLIC_WEB_ORIGIN` 会重写 `/robots.txt` 的 `Sitemap` 行；不设置时沿用镜像里的 `https://card-hub.app/sitemap.xml`。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
+- **站点地图**：`GET /sitemap.xml` 由 API 生成系列、卡牌和话题地址。边缘 Caddy 在 Web 域名上把它反代到 API。页面 `description` 和预渲染不在这项里。
 - **VPS 部署**：[`deploy/docker-compose.yml`](deploy/docker-compose.yml) 启动 API / Web / Postgres / Redis；[`deploy/edge`](deploy/edge) 的共享 Caddy 负责 HTTPS 和反向代理。
 - 多端 tRPC URL：Web Docker 用运行时 `TRPC_URL`；非容器静态托管可用 `VITE_TRPC_URL` fallback；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
 

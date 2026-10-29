@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PUBLIC_WEB_ORIGIN_ERROR, resolvePublicWebOrigin } from '../modules/seo/public-web-origin';
 
 export const BANNED_PRODUCTION_JWT_SECRETS = [
   'dev-insecure-secret',
@@ -10,6 +11,7 @@ const envSchema = z.looseObject({
   NODE_ENV: z.string().optional(),
   JWT_SECRET: z.string().optional(),
   DATABASE_URL: z.string().optional(),
+  PUBLIC_WEB_ORIGIN: z.string().optional(),
   PASSWORD_PREHASH_WRITE: z.union([z.boolean(), z.string(), z.null()]).optional(),
 });
 
@@ -42,8 +44,23 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
     PASSWORD_PREHASH_WRITE: passwordPrehashWriteSchema.parse(config.PASSWORD_PREHASH_WRITE),
   };
 
+  let originError: string | undefined;
+  try {
+    const corsOrigin = config.CORS_ORIGIN;
+    resolvePublicWebOrigin({
+      nodeEnv: parsed.data.NODE_ENV,
+      publicWebOrigin: parsed.data.PUBLIC_WEB_ORIGIN,
+      corsOrigin: typeof corsOrigin === 'string' ? corsOrigin : undefined,
+    });
+  } catch (error) {
+    originError = error instanceof Error ? error.message : PUBLIC_WEB_ORIGIN_ERROR;
+  }
+
   const nodeEnv = envString(parsed.data.NODE_ENV);
   if (nodeEnv !== 'production') {
+    if (originError !== undefined) {
+      throw new Error(`Invalid Cardhub API environment configuration:\n- ${originError}`);
+    }
     return normalized;
   }
 
@@ -69,6 +86,10 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
 
   if (!databaseUrl) {
     messages.push('DATABASE_URL is required when NODE_ENV=production');
+  }
+
+  if (originError !== undefined) {
+    messages.push(originError);
   }
 
   if (messages.length > 0) {

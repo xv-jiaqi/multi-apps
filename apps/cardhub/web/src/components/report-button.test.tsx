@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -7,14 +7,16 @@ import { ReportButton } from './report-button';
 
 const harness = vi.hoisted(() => ({
   onSuccess: undefined as (() => void) | undefined,
+  onError: undefined as ((error: unknown) => void) | undefined,
 }));
 
 vi.mock('../lib/trpc', () => ({
   trpc: {
     reports: {
       create: {
-        useMutation: (options?: { onSuccess?: () => void }) => {
+        useMutation: (options?: { onSuccess?: () => void; onError?: (error: unknown) => void }) => {
           harness.onSuccess = options?.onSuccess;
+          harness.onError = options?.onError;
           return { mutate: vi.fn(), isPending: false };
         },
       },
@@ -39,7 +41,20 @@ function renderReport() {
   );
 }
 
+const reasonTooShortError = {
+  message: '填写的内容不符合要求，请修改后再试',
+  data: {
+    code: 'BAD_REQUEST',
+    appCode: 'VALIDATION',
+    zodError: {
+      issues: [{ path: ['reason'], message: 'reason_too_short', code: 'too_small', minimum: 4 }],
+    },
+  },
+};
+
 beforeEach(() => {
+  harness.onSuccess = undefined;
+  harness.onError = undefined;
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signIn('token', { id: 'u1', username: 'qa_user', role: 'user' });
 });
@@ -97,6 +112,42 @@ describe('report form focus', () => {
       'focus-visible:ring-2',
       'focus-visible:ring-brand-500',
     );
+  });
+
+  it('shows a server reason_too_short error under the reason field', async () => {
+    const user = userEvent.setup();
+    renderReport();
+    await user.click(screen.getByRole('button', { name: '举报' }));
+    const textarea = screen.getByRole('textbox');
+    await user.type(textarea, 'long enough');
+    await user.click(screen.getByRole('button', { name: '提交举报' }));
+    await act(async () => {
+      harness.onError?.(reasonTooShortError);
+    });
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('原因至少 4 个字符');
+    expect(alert).not.toHaveTextContent('填写的内容不符合要求，请修改后再试');
+    expect(textarea).toHaveAttribute('aria-invalid', 'true');
+    expect(textarea).toHaveAttribute('aria-describedby', alert.id);
+  });
+
+  it('shows the English reason_too_short sentence under the reason field', async () => {
+    rootStore.locale.setLocale('en-US');
+    const user = userEvent.setup();
+    renderReport();
+    await user.click(screen.getByRole('button', { name: 'Report' }));
+    const textarea = screen.getByRole('textbox');
+    await user.type(textarea, 'long enough');
+    await user.click(screen.getByRole('button', { name: 'Submit report' }));
+    await act(async () => {
+      harness.onError?.(reasonTooShortError);
+    });
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Use at least 4 characters for the reason.');
+    expect(textarea).toHaveAttribute('aria-invalid', 'true');
+    expect(textarea).toHaveAttribute('aria-describedby', alert.id);
   });
 
   it('returns focus to the textarea when the reason is too short', async () => {

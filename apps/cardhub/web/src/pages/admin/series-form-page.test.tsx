@@ -515,6 +515,46 @@ describe('series form unsaved changes', () => {
     expect(router.state.location.pathname).toBe('/admin/catalog/series/new');
   });
 
+  it('shows server category and release-date errors on those fields', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          appCode: 'VALIDATION',
+          zodError: {
+            issues: [
+              { code: 'custom', path: ['categorySlug'], message: 'slug_format' },
+              { code: 'custom', path: ['releaseDate'], message: 'invalid_date' },
+            ],
+          },
+        },
+      };
+    };
+    renderSeries('/admin/catalog/series/new');
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    const category = document.getElementById('series-category');
+    const release = screen.getByLabelText('发售日期');
+    expect(category).toHaveAttribute('aria-invalid', 'true');
+    expect(category).toHaveAttribute('aria-describedby', 'series-category-error');
+    expect(document.getElementById('series-category-error')).toHaveTextContent(
+      '只能用小写字母、数字和短横线',
+    );
+    expect(release).toHaveAttribute('aria-invalid', 'true');
+    expect(release).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('series-release-error'),
+    );
+    expect(document.getElementById('series-release-error')).toHaveTextContent(
+      '日期必须是有效的 YYYY-MM-DD',
+    );
+    expect(screen.queryByText(/categorySlug|releaseDate/)).not.toBeInTheDocument();
+  });
+
   it('registers beforeunload only after the series form changes', async () => {
     const user = userEvent.setup();
     const added: EventListener[] = [];
