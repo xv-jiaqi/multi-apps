@@ -1,3 +1,4 @@
+import { PUBLIC_WEB_ORIGIN_ERROR } from '../modules/seo/public-web-origin';
 import { validateEnv } from './env.validation';
 
 const VALID_PRODUCTION_ENV = {
@@ -104,5 +105,37 @@ describe('validateEnv', () => {
 
   it('leaves PASSWORD_PREHASH_WRITE off when the variable is unset', () => {
     expect(validateEnv({ ...VALID_PRODUCTION_ENV }).PASSWORD_PREHASH_WRITE).toBe(false);
+  });
+
+  it('accepts an explicit public web origin', () => {
+    expect(
+      validateEnv({
+        ...VALID_PRODUCTION_ENV,
+        PUBLIC_WEB_ORIGIN: 'https://staging.card-hub.app',
+      }),
+    ).toMatchObject({
+      PUBLIC_WEB_ORIGIN: 'https://staging.card-hub.app',
+    });
+  });
+
+  it.each(['https://card-hub.app/sitemap.xml', 'javascript:alert(1)', 'https://card-hub.app:0'])(
+    'rejects production startup when PUBLIC_WEB_ORIGIN is %s',
+    (publicWebOrigin) => {
+      expect(() =>
+        validateEnv({
+          ...VALID_PRODUCTION_ENV,
+          PUBLIC_WEB_ORIGIN: publicWebOrigin,
+        }),
+      ).toThrow(PUBLIC_WEB_ORIGIN_ERROR);
+    },
+  );
+
+  it('rejects a non-production PUBLIC_WEB_ORIGIN with a path', () => {
+    expect(() =>
+      validateEnv({
+        NODE_ENV: 'development',
+        PUBLIC_WEB_ORIGIN: 'http://localhost:5173/sitemap.xml',
+      }),
+    ).toThrow(PUBLIC_WEB_ORIGIN_ERROR);
   });
 });

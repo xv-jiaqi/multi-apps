@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,16 +11,19 @@ function runScript(trpcUrl: string, extraEnv: Record<string, string | undefined>
   const dir = mkdtempSync(path.join(tmpdir(), 'cardhub-runtime-config-'));
   const configPath = path.join(dir, 'config.js');
   const headersPath = path.join(dir, 'security-headers.inc');
+  const robotsPath = path.join(dir, 'robots.txt');
   try {
     execFileSync('sh', [scriptPath], {
       env: {
         ...process.env,
         CARDHUB_CONFIG_FILE: configPath,
         CARDHUB_SECURITY_HEADERS_FILE: headersPath,
+        CARDHUB_ROBOTS_FILE: robotsPath,
         TRPC_URL: trpcUrl,
         SENTRY_DSN: '',
         SENTRY_ENVIRONMENT: '',
         GIT_SHA: '',
+        PUBLIC_WEB_ORIGIN: '',
         ...extraEnv,
       },
       encoding: 'utf8',
@@ -30,6 +33,7 @@ function runScript(trpcUrl: string, extraEnv: Record<string, string | undefined>
       ok: true as const,
       config: readFileSync(configPath, 'utf8'),
       headers: readFileSync(headersPath, 'utf8'),
+      robots: existsSync(robotsPath) ? readFileSync(robotsPath, 'utf8') : undefined,
     };
   } catch (error) {
     return {
@@ -172,5 +176,50 @@ describe('runtime config entrypoint', () => {
     });
 
     expect(result.ok).toBe(false);
+  });
+
+  it('leaves robots.txt untouched when PUBLIC_WEB_ORIGIN is unset', () => {
+    const result = runScript('https://api.card-hub.app/trpc');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.robots).toBeUndefined();
+  });
+
+  it('rewrites robots.txt to the public web origin', () => {
+    const result = runScript('https://api-staging.card-hub.app/trpc', {
+      PUBLIC_WEB_ORIGIN: 'https://staging.card-hub.app',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.robots).toBe(
+      [
+        'User-agent: *',
+        'Disallow: /reports',
+        'Disallow: /admin',
+        'Disallow: /me',
+        '',
+        'Sitemap: https://staging.card-hub.app/sitemap.xml',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it.each([
+    'https://staging.card-hub.app/sitemap.xml',
+    'https://staging.card-hub.app/',
+    'javascript:alert(1)',
+    'https://card-hub.app:0',
+    'https://card-hub.app:65536',
+  ])('rejects PUBLIC_WEB_ORIGIN %s', (origin) => {
+    const result = runScript('https://api.card-hub.app/trpc', {
+      PUBLIC_WEB_ORIGIN: origin,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result).toMatchObject({
+      stderr: expect.stringContaining('PUBLIC_WEB_ORIGIN'),
+    });
   });
 });

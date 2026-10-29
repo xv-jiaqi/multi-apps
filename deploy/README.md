@@ -137,6 +137,17 @@ before recreating the edge. `lb_try_duration` is unchanged.
 installs Caddy 2.11.7, the version currently reported by `caddy:2-alpine`,
 and fails if that binary is missing.
 
+`GET /sitemap.xml` on the apex and on `staging.card-hub.app` is proxied to
+that environment's API (`{$ENV_NAME}-api:4000` and `staging-api:4000`). The
+web container still serves `/robots.txt`. `www` keeps the 308, so
+`/sitemap.xml` and `/robots.txt` on `www` follow the same redirect as every
+other path. `PUBLIC_WEB_ORIGIN` (default `https://${WEB_DOMAIN}`) is the
+absolute origin in sitemap `<loc>` values and in the `Sitemap` line the web
+entrypoint writes. Recreate the edge container after this Caddyfile change;
+until then the running proxy still sends `/sitemap.xml` to the web container,
+and nginx falls through to the SPA. `deploy/sitemap-proxy.test.sh` checks the
+route. Page descriptions and prerender are not part of this route.
+
 After changing any edge env vars manually, recreate the Caddy container so
 Compose injects the new environment; `caddy reload` does not pick up env-file
 changes:
