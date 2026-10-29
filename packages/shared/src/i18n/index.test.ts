@@ -46,7 +46,21 @@ describe('field error codes', () => {
       expect(zh).not.toContain(code);
       expect(en.toLowerCase()).not.toContain(code);
       expect(zh).not.toBe('出了点问题，请稍后再试');
+      expect(zh).not.toContain('最长');
+      expect(zh).not.toContain('须为');
+      expect(zh).not.toMatch(/需以|需留空/);
+      expect(zh).not.toMatch(/\d 字$/);
+      expect(zh).not.toContain('位');
     }
+    expect(fieldErrorMessage('en-US', 'invalid')).toBe(fieldErrorMessage('en-US', 'invalid_union'));
+    expect(fieldErrorMessage('zh-CN', 'price_needs_currency')).toBe('先选货币，再填价格区间');
+    expect(fieldErrorMessage('en-US', 'currency_format')).toBe(
+      'Use a 3-letter uppercase currency code.',
+    );
+    expect(fieldErrorMessage('zh-CN', 'identifier_too_short')).toBe('邮箱或用户名不能为空');
+    expect(fieldErrorMessage('zh-CN', 'reason_too_short')).toBe('原因不能为空');
+    expect(t('en-US', 'error.app.TOO_MANY_REQUESTS')).toBe('Too many actions. Try again later.');
+    expect(t('zh-CN', 'error.app.TOO_MANY_REQUESTS')).toBe('操作太频繁，请稍后再试');
   });
 });
 

@@ -65,7 +65,7 @@ export interface AdminCatalogDetails {
 
 const ERROR_KEYS: Record<string, string> = {
   REQUIRED: 'admin.error.required',
-  TOO_LONG: 'admin.error.tooLong',
+  TOO_LONG: 'error.field.too_big',
   SLUG_FORMAT: 'admin.error.slugFormat',
   SLUG_TAKEN: 'admin.error.slugTaken',
   SLUG_DUPLICATE_IN_FILE: 'admin.error.slugDuplicateInFile',
@@ -183,6 +183,15 @@ function nestedKeyMaximum(issue: ZodIssueLike): number {
   return ADMIN_ATTRIBUTE_KEY_MAX;
 }
 
+const FIELD_ERROR_CODE = /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/;
+
+function mappedFieldCopy(locale: Locale, message: string): string | null {
+  if (!FIELD_ERROR_CODE.test(message)) return null;
+  const text = fieldErrorMessage(locale, message);
+  if (text === t(locale, 'error.app.UNKNOWN')) return null;
+  return text;
+}
+
 function localizeAdminIssue(locale: Locale, issue: ZodIssueLike, path: string[]): string {
   const code = issueCode(issue);
   const head = path[0];
@@ -204,7 +213,7 @@ function localizeAdminIssue(locale: Locale, issue: ZodIssueLike, path: string[])
         max: issueMaximum(issue, ADMIN_ATTRIBUTE_VALUE_MAX),
       });
     }
-    return t(locale, 'admin.error.tooLong');
+    return mappedFieldCopy(locale, message) ?? fieldErrorMessage(locale, 'title_too_long');
   }
   if (code === 'custom' && (head === 'imageUrl' || head === 'coverUrl') && path.length === 1) {
     return t(locale, 'admin.error.imageUrl');
@@ -296,6 +305,11 @@ export function readValidationFeedback(
     return { fields: {}, message: appErrorMessage(locale, failure.appCode) };
   }
   if (raw && raw !== failure.trpcCode) {
+    const mapped = mappedFieldCopy(locale, raw);
+    if (mapped) return { fields: {}, message: mapped };
+    if (FIELD_ERROR_CODE.test(raw)) {
+      return { fields: {}, message: t(locale, 'error.app.UNKNOWN') };
+    }
     return { fields: {}, message: t(locale, 'admin.error.unknown', { message: raw }) };
   }
   return { fields: {}, message: t(locale, fallbackKey) };
@@ -334,12 +348,12 @@ export function validateSlug(value: string, locale: Locale): string | null {
 export function validateRequiredText(value: string, max: number, locale: Locale): string | null {
   const trimmed = value.trim();
   if (!trimmed) return t(locale, 'admin.error.required');
-  if (value.length > max) return t(locale, 'admin.error.tooLong');
+  if (value.length > max) return fieldErrorMessage(locale, 'title_too_long');
   return null;
 }
 
 export function validateOptionalText(value: string, max: number, locale: Locale): string | null {
-  if (value.length > max) return t(locale, 'admin.error.tooLong');
+  if (value.length > max) return fieldErrorMessage(locale, 'title_too_long');
   return null;
 }
 

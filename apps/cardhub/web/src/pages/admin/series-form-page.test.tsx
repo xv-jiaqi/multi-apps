@@ -249,6 +249,61 @@ describe('series form', () => {
     expect(screen.getByRole('textbox', { name: '封面图片链接' })).toHaveFocus();
   });
 
+  it('maps a title_too_long code on a server too_big issue', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: JSON.stringify([
+          { code: 'too_big', path: ['title'], message: 'title_too_long', maximum: 120 },
+        ]),
+        data: { code: 'BAD_REQUEST' },
+      };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    expect(await screen.findByText('标题最多 120 个字符')).toBeInTheDocument();
+    expect(screen.queryByText('title_too_long')).not.toBeInTheDocument();
+    expect(screen.queryByText('超出字数上限')).not.toBeInTheDocument();
+    expect(screen.queryByText('Too long')).not.toBeInTheDocument();
+  });
+
+  it('does not render a raw code when the server message has no zod error', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw { message: 'not_a_mapped_code', data: { code: 'BAD_REQUEST' } };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('出了点问题，请稍后再试');
+    expect(alert).not.toHaveTextContent('not_a_mapped_code');
+    expect(alert).not.toHaveTextContent('出错了：');
+  });
+
+  it('maps price_needs_currency instead of showing the code', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw { message: 'price_needs_currency', data: { code: 'BAD_REQUEST' } };
+    };
+    renderSeries('/admin/catalog/series/new');
+
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'new-series');
+    await user.type(screen.getByRole('textbox', { name: '标题' }), '新系列');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('先选货币，再填价格区间');
+    expect(alert).not.toHaveTextContent('price_needs_currency');
+  });
+
   it('shows a server message when the error has no field path', async () => {
     const user = userEvent.setup();
     createImpl.current = async () => {
