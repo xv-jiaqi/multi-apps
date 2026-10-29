@@ -116,6 +116,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Caddy 2.11.7
+        run: |
+          set -euo pipefail
+          version=2.11.7
+          curl -fsSL -o /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v${version}/caddy_${version}_linux_amd64.tar.gz"
+          sudo tar -xzf /tmp/caddy.tar.gz -C /usr/local/bin caddy
+          sudo chmod +x /usr/local/bin/caddy
+          caddy version
+
       - name: Edge plan, deploy tree guard, rollback previous image
         run: |
           bash deploy/plan-edge-apply.test.sh

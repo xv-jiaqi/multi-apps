@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Infra-c AC2-5: the three web security headers are emitted by the edge,
-# which overwrites the same fields from the web container.
+# Infra-c AC2-5 plus the web container CSP. The three headers are emitted by
+# the edge snippet. CI must actually run caddy and curl them.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,11 +9,47 @@ root_site="${root}/deploy/edge/optional/root-web.caddy"
 nginx="${root}/apps/cardhub/web/nginx-spa.conf"
 failed=0
 
-block="$(awk '
-  $0 ~ /^\(cardhub_web_headers\)/ { capture = 1 }
-  capture { print }
-  capture && /^}/ { exit }
-' "${caddyfile}")"
+# Brace-balanced block starting at the first line that matches start_re.
+# Comment lines are omitted so a commented import cannot satisfy the check.
+site_block() {
+  local file="$1"
+  local start_re="$2"
+  awk -v start="$start_re" '
+    $0 ~ start && !capture {
+      capture = 1
+      depth = 0
+    }
+    capture {
+      line = $0
+      if (line !~ /^[[:space:]]*#/) {
+        print line
+      }
+      opens = gsub(/\{/, "{", line)
+      closes = gsub(/\}/, "}", line)
+      depth += opens - closes
+      if (depth <= 0) exit
+    }
+  ' "$file"
+}
+
+require_site_import() {
+  local name="$1"
+  local file="$2"
+  local start_re="$3"
+  local body
+  body="$(site_block "$file" "$start_re")"
+  if [ -z "${body}" ]; then
+    echo "FAIL ${name}: site block not found" >&2
+    return 1
+  fi
+  if ! printf '%s\n' "${body}" | grep -Eq '^[[:space:]]*import cardhub_web_headers[[:space:]]*$'; then
+    echo "FAIL ${name}: site block does not import cardhub_web_headers" >&2
+    return 1
+  fi
+  echo "OK ${name}"
+}
+
+block="$(site_block "${caddyfile}" '^\(cardhub_web_headers\)')"
 
 require_line() {
   local name="$1"
@@ -29,26 +65,50 @@ require_line() {
 require_line "hsts" '		Strict-Transport-Security "max-age=31536000; includeSubDomains"'
 require_line "nosniff" '		X-Content-Type-Options nosniff'
 require_line "frame" '		X-Frame-Options DENY'
+require_line "csp-fallback" '		?Content-Security-Policy "frame-ancestors '\''none'\''"'
+require_line "defer" '		defer'
 
-if ! grep -q 'import cardhub_web_headers' "${caddyfile}"; then
-  echo "FAIL staging web does not import cardhub_web_headers" >&2
+if ! require_site_import "staging web" "${caddyfile}" '^\{[$]STAGING_WEB_DOMAIN\}'; then
   failed=1
-else
-  echo "OK staging web imports cardhub_web_headers"
+fi
+if ! require_site_import "apex web" "${root_site}" '^\{[$]ROOT_WEB_DOMAINS'; then
+  failed=1
 fi
 
-if ! grep -q 'import cardhub_web_headers' "${root_site}"; then
-  echo "FAIL apex web does not import cardhub_web_headers" >&2
+negative_dir="$(mktemp -d)"
+cat > "${negative_dir}/Caddyfile" <<'EOF'
+# import cardhub_web_headers
+{$STAGING_WEB_DOMAIN} {
+	# import cardhub_web_headers
+	import cardhub_api_headers
+}
+EOF
+cat > "${negative_dir}/root-web.caddy" <<'EOF'
+# import cardhub_web_headers
+{$ROOT_WEB_DOMAINS:http://root-web-disabled.invalid} {
+	# import cardhub_web_headers
+	import cardhub_api_headers
+}
+EOF
+if require_site_import "comment-only staging" "${negative_dir}/Caddyfile" '^\{[$]STAGING_WEB_DOMAIN\}'; then
+  echo "FAIL comment-only import was accepted for staging" >&2
   failed=1
 else
-  echo "OK apex web imports cardhub_web_headers"
+  echo "OK comment-only staging import is rejected"
 fi
-
-if grep -Eq 'Strict-Transport-Security|X-Content-Type-Options|X-Frame-Options' "${nginx}"; then
-  echo "FAIL nginx-spa.conf sets a security header; the edge defer handler is what clients see" >&2
+if require_site_import "comment-only apex" "${negative_dir}/root-web.caddy" '^\{[$]ROOT_WEB_DOMAINS'; then
+  echo "FAIL comment-only import was accepted for apex" >&2
   failed=1
 else
-  echo "OK nginx-spa.conf leaves the three headers to the edge"
+  echo "OK comment-only apex import is rejected"
+fi
+rm -rf "${negative_dir}"
+
+if ! grep -q 'include /etc/nginx/conf.d/security-headers.inc' "${nginx}"; then
+  echo "FAIL nginx-spa.conf does not include the generated security headers" >&2
+  failed=1
+else
+  echo "OK nginx include"
 fi
 
 caddy_bin="${CADDY_BIN:-}"
@@ -56,7 +116,13 @@ if [ -z "${caddy_bin}" ] && command -v caddy >/dev/null 2>&1; then
   caddy_bin="$(command -v caddy)"
 fi
 
-if [ -n "${caddy_bin}" ]; then
+if [ -z "${caddy_bin}" ]; then
+  if [ "${CI:-}" = "true" ]; then
+    echo "FAIL caddy is required when CI=true" >&2
+    exit 1
+  fi
+  echo "SKIP live caddy; set CADDY_BIN to also curl -I"
+else
   work="$(mktemp -d)"
   port="${CADDY_TEST_PORT:-18080}"
   cat > "${work}/Caddyfile" <<EOF
@@ -69,8 +135,6 @@ if [ -n "${caddy_bin}" ]; then
 	respond "ok" 200
 }
 EOF
-  # The snippet lives in the repo Caddyfile. Prepend it so this site uses the
-  # same handler production imports.
   {
     printf '%s\n' "${block}"
     cat "${work}/Caddyfile"
@@ -92,6 +156,7 @@ EOF
     cat "${work}/caddy.log" >&2 || true
     exit 1
   fi
+  echo "LIVE curl -sI"
   headers="$(curl -sI "http://127.0.0.1:${port}/")"
   printf '%s\n' "${headers}"
   for expected in \
@@ -109,8 +174,6 @@ EOF
   kill "${caddy_pid}" >/dev/null 2>&1 || true
   trap - EXIT
   rm -rf "${work}"
-else
-  echo "SKIP live caddy; set CADDY_BIN to also curl -I"
 fi
 
 if [ "${failed}" -ne 0 ]; then
