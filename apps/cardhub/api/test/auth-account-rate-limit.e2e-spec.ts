@@ -91,6 +91,7 @@ describe('auth account rate limit', () => {
     const prefix = `cardhub:rl:test:${randomUUID()}:`;
     const app = await createApp({ rateLimitPrefix: prefix });
     await app.init();
+    await app.listen(0);
     try {
       let previous = LOGIN_LIMIT;
       for (let attempt = 0; attempt < LOGIN_LIMIT; attempt += 1) {
@@ -126,6 +127,7 @@ describe('auth account rate limit', () => {
     try {
       app = await createApp();
       await app.init();
+      await app.listen(0);
       let previous = LOGIN_LIMIT;
       for (let attempt = 0; attempt < LOGIN_LIMIT; attempt += 1) {
         const response = await postLogin(app, 'offline.user@cardhub.test', clientIp(attempt + 20));
@@ -153,6 +155,7 @@ describe('auth account rate limit', () => {
   it('keeps counting after SCRIPT FLUSH', async () => {
     const app = await createApp();
     await app.init();
+    await app.listen(0);
     try {
       const first = await postLogin(app, 'flush.user@cardhub.test', clientIp(50));
       expect(first.status).not.toBe(429);
@@ -171,6 +174,7 @@ describe('auth account rate limit', () => {
   it('clears the account counter after a successful login', async () => {
     const app = await createApp();
     await app.init();
+    await app.listen(0);
     const prisma = app.get(PrismaService);
     const suffix = randomUUID().slice(0, 8);
     const email = `clear.${suffix}@cardhub.test`;
@@ -230,6 +234,7 @@ describe('auth account rate limit', () => {
     const prefix = `cardhub:rl:test:${randomUUID()}:`;
     const app = await createApp({ rateLimitPrefix: prefix });
     await app.init();
+    await app.listen(0);
     const prisma = app.get(PrismaService);
     const suffix = randomUUID().slice(0, 8);
     const existing = `exists.${suffix}@cardhub.test`;
@@ -290,6 +295,7 @@ describe('auth account rate limit', () => {
       rateLimitOverrides: { authMutation: { limit: 2, windowMs: 60_000 } },
     });
     await app.init();
+    await app.listen(0);
     const email = `batch.${randomUUID().slice(0, 8)}@cardhub.test`;
     try {
       for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -348,6 +354,7 @@ describe('auth account rate limit', () => {
   it('rejects a multi-login batch before login runs and still limits later single attempts', async () => {
     const app = await createApp();
     await app.init();
+    await app.listen(0);
     const prisma = app.get(PrismaService);
     const suffix = randomUUID().slice(0, 8);
     const email = `slots.${suffix}@cardhub.test`;
@@ -410,6 +417,7 @@ describe('auth account rate limit', () => {
       rateLimitOverrides: { authMutation: { limit: 2, windowMs: 60_000 } },
     });
     await app.init();
+    await app.listen(0);
     const email = `one.${randomUUID().slice(0, 8)}@cardhub.test`;
     try {
       const atCap = Array.from({ length: TRPC_MAX_BATCH_SIZE }, () => 'health.ping').join(',');
@@ -447,6 +455,7 @@ describe('auth account rate limit', () => {
   it('counts percent-encoded login paths and ignores variants tRPC does not route', async () => {
     const app = await createApp();
     await app.init();
+    await app.listen(0);
     const email = `enc.${randomUUID().slice(0, 8)}@cardhub.test`;
     try {
       const malformed = await request(app.getHttpServer())
