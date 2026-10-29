@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module';
+import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -58,6 +60,53 @@ const emulateReducedMotion: BrowserCommand<['reduce' | 'no-preference']> = async
 ) => {
   const page = playwrightPage(context);
   await page.emulateMedia({ reducedMotion });
+};
+
+function loadPngjs(): {
+  PNG: { sync: { read: (buffer: Buffer) => { width: number; height: number; data: Buffer } } };
+} {
+  const root = '/workspace/node_modules/.pnpm';
+  const dir = readdirSync(root).find((name) => name.startsWith('pngjs@'));
+  if (!dir) throw new Error('pngjs is not installed');
+  const require = createRequire(import.meta.url);
+  return require(`${root}/${dir}/node_modules/pngjs`) as {
+    PNG: { sync: { read: (buffer: Buffer) => { width: number; height: number; data: Buffer } } };
+  };
+}
+
+const readPixels: BrowserCommand<
+  [string, { x: number; y: number; width: number; height: number }]
+> = async (context, selector, rect) => {
+  const page = playwrightPage(context);
+  const locator = page.frameLocator('iframe[data-vitest="true"]').locator(selector).first();
+  const [png, box] = await Promise.all([locator.screenshot(), locator.boundingBox()]);
+  if (!box) throw new Error(`missing box for ${selector}`);
+  const image = loadPngjs().PNG.sync.read(png);
+  const scaleX = image.width / box.width;
+  const scaleY = image.height / box.height;
+  const x0 = Math.max(0, Math.floor(rect.x * scaleX));
+  const y0 = Math.max(0, Math.floor(rect.y * scaleY));
+  const x1 = Math.min(image.width, Math.ceil((rect.x + rect.width) * scaleX));
+  const y1 = Math.min(image.height, Math.ceil((rect.y + rect.height) * scaleY));
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+  let count = 0;
+  for (let y = y0; y < y1; y += 1) {
+    for (let x = x0; x < x1; x += 1) {
+      const index = (y * image.width + x) * 4;
+      red += image.data[index] ?? 0;
+      green += image.data[index + 1] ?? 0;
+      blue += image.data[index + 2] ?? 0;
+      count += 1;
+    }
+  }
+  if (count === 0) {
+    throw new Error(
+      `empty pixel sample ${JSON.stringify({ rect, box, image: [image.width, image.height] })}`,
+    );
+  }
+  return { r: red / count, g: green / count, b: blue / count };
 };
 
 const setViewport: BrowserCommand<[number, number]> = async (context, width, height) => {
@@ -123,6 +172,7 @@ export default defineConfig({
         clickInFrame,
         pressEnterInFrame,
         setViewport,
+        readPixels,
         emulateReducedMotion,
       },
     },

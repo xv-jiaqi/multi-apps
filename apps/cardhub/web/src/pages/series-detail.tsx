@@ -59,10 +59,7 @@ function SeriesHero({
       )}
     >
       {hasImage ? <img key={series.coverUrl} {...art.imgProps} /> : null}
-      <div
-        className={cn('absolute inset-0', hasImage ? 'bg-black/65' : 'bg-black/15')}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-black/65" aria-hidden />
       <div className="relative space-y-3">
         {category ? (
           <Link
@@ -225,7 +222,7 @@ function SeriesCardGroups({
             <a
               key={group.id}
               href={`#subset-${group.id}`}
-              className="inline-flex min-h-6 items-center rounded px-1 text-sm text-brand-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="inline-flex min-h-6 min-w-0 max-w-full items-center rounded px-1 text-sm text-brand-700 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onClick={(event) => {
                 event.preventDefault();
                 document.getElementById(`subset-${group.id}`)?.focus();
