@@ -258,6 +258,8 @@ EOF
 
   script_rc=0
   env \
+    -u PASSWORD_PREHASH_WRITE \
+    -u WEB_SENTRY_DSN \
     PATH="${work}/bin:${PATH}" \
     CARDHUB_ROOT="${work}/root" \
     CARDHUB_HEALTH_TIMEOUT_SECONDS=5 \
@@ -301,6 +303,15 @@ run_case complete ""
 assert "complete script succeeds" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 assert "complete runs migrate" "$(grep -q 'Running database migrations before the API rollout' "${CASE_LOG}" && echo 0 || echo 1)"
 assert "complete compose run once" "$([ "$(count_sub "${CASE_DOCKER}" run)" -eq 1 ] && echo 0 || echo 1)"
+assert "unset PASSWORD_PREHASH_WRITE leaves staging.env unchanged" "$(
+  cat > "${CASE_ROOT}/expected-staging.env" << 'EOF'
+ENV_NAME=staging
+API_DOMAIN=api-staging.example.test
+MIGRATE_DATABASE_URL=
+EOF
+  cmp -s "${CASE_ROOT}/expected-staging.env" "${CASE_ROOT}/staging/staging.env" && echo 0 || echo 1
+)"
+assert "unset PASSWORD_PREHASH_WRITE does not log a rewrite" "$(grep -q 'PASSWORD_PREHASH_WRITE=' "${CASE_LOG}" && echo 1 || echo 0)"
 
 # True old image: both files absent, migrator URL empty. The probe's own
 # status is 10. Skip the one-shot migrate and still roll the API.

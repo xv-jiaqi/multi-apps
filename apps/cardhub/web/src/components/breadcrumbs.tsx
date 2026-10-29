@@ -19,7 +19,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ items }: { items: Bre
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;
           return (
-            <li key={idx} className="flex items-center gap-1.5">
+            <li key={idx} className="flex min-w-0 items-center gap-1.5">
               {item.to && !isLast ? (
                 <Link
                   to={item.to}
@@ -30,7 +30,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ items }: { items: Bre
               ) : (
                 <span
                   aria-current={isLast ? 'page' : undefined}
-                  className={isLast ? 'text-neutral-900' : undefined}
+                  className={isLast ? 'min-w-0 wrap-anywhere text-neutral-900' : undefined}
                 >
                   {item.label}
                 </span>

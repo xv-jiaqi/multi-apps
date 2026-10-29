@@ -47,17 +47,24 @@ Caddy publishes host ports.
    `ENV_NAME=staging` in `staging.env`. In `production.env`, also set
    `SENTRY_ENVIRONMENT=production` so Sentry events from both API and Web match
    production monitors while `ENV_NAME` remains `prod` for container and network
-   names. Set `SENTRY_DSN` for API events and `WEB_SENTRY_DSN` for browser
-   events. Leave either DSN empty to disable that side cleanly. `TRPC_URL`
-   should point at that
-   environment's API `/trpc` endpoint. Use separate database names:
+   names. Set `SENTRY_DSN` for API events and leave it empty to disable API
+   events. `WEB_SENTRY_DSN` is the browser DSN. Deploy writes it from the
+   GitHub Environment secret of the same name when that secret is a non-empty
+   http(s) URL, for manual staging, manual production, and the staging
+   auto-deploy. An unset secret leaves the line already in the env file.
+   Leave that line empty to disable browser events until the secret is set.
+   `TRPC_URL` should point at that environment's API `/trpc` endpoint. Use
+   separate database names:
    `POSTGRES_DB=cardhub_prod` for production and
    `POSTGRES_DB=cardhub_staging` for staging. Database passwords are lowercase
    hex from `openssl rand -hex 32`.
    `PASSWORD_PREHASH_WRITE` must be the exact string `true` to store the
-   pre-hashed password format. Leave it `false` in `production.env`. Set it
-   to `true` in `staging.env`. The API compose service lists the variable
-   explicitly; putting it only in the env file does not inject it.
+   pre-hashed password format. The API compose service lists the variable
+   explicitly; putting it only in the env file does not inject it. Cardhub
+   Deploy writes this key from the GitHub Environment variable
+   `PASSWORD_PREHASH_WRITE` when that variable is `true` or `false`. An unset
+   variable leaves the existing line unchanged. Do not hand-edit the key on
+   the server.
    `POSTGRES_USER` / `POSTGRES_PASSWORD` are the admin superuser (data-directory
    init, restore, emergency admin). `DATABASE_URL` is the runtime role and
    `MIGRATE_DATABASE_URL` is the schema owner. Leave `MIGRATE_DATABASE_URL`
@@ -116,7 +123,10 @@ The edge sends HSTS, `X-Content-Type-Options: nosniff`, and
 `X-Frame-Options: DENY`. `card-hub.app` (`optional/root-web.caddy`) and
 `staging.card-hub.app` send
 `Strict-Transport-Security: max-age=31536000; includeSubDomains` (no
-`preload`). Both API hostnames send that same HSTS value and `nosniff`.
+`preload`). The `www` 308 to the apex imports the same
+`cardhub_web_headers` snippet, so that redirect carries the same HSTS
+value, `nosniff`, `X-Frame-Options: DENY`, and the CSP fallback. Both API
+hostnames send that same HSTS value and `nosniff`.
 The handlers use `defer`, so they replace the same fields from upstream.
 `?Content-Security-Policy` adds `frame-ancestors 'none'` only when the web
 container did not send CSP. A current image sends the full policy, including
@@ -158,6 +168,17 @@ For GitHub Actions deploys, configure environment-scoped secrets:
 - `DEPLOY_USER`
 - `DEPLOY_SSH_KEY`
 - `DEPLOY_KNOWN_HOSTS`
+- `WEB_SENTRY_DSN` (optional browser Sentry DSN). Set this environment secret
+  on both `staging` and `production`. The value must be an `http://` or
+  `https://` URL. Unset leaves the server env file unchanged. The workflow
+  passes it to `remote-deploy.sh` as an environment variable and masks it.
+  The value is not printed.
+
+`PASSWORD_PREHASH_WRITE` is an environment variable on that same GitHub
+Environment, not a secret. Set `true` on staging and `false` on production
+when deploys should own the key. Leave the variable unset to keep the value
+already in `/opt/cardhub/<env>/<env>.env`. The workflow forwards only `true`
+or `false` and does not print the env file.
 
 `DEPLOY_KNOWN_HOSTS` must contain the pinned host key line for the VPS (for
 example from a trusted console or first-party host-key inventory). The workflow
@@ -201,6 +222,22 @@ That tag selects the API and web images only. The workflow checks out
 commit. It does not check out the image tag. Rolling an older image back
 cannot replace the shared Caddyfile or the rolling deploy script with the
 copies stored in that older commit.
+
+`remote-deploy.sh` writes `PASSWORD_PREHASH_WRITE` into that environment's
+env file after `ENV_NAME` matches and before it replaces containers. The
+value comes from the GitHub Environment variable of the same name. `true`
+and `false` replace every assignment of that key, or append one when it is
+missing. An unset or blank variable does not change the file. A later
+failure leaves the new key on disk; containers that are already running keep
+the environment they started with until a rollout recreates them. The script
+does not print the rest of the env file.
+
+It writes `WEB_SENTRY_DSN` the same way, from the GitHub Environment secret
+of that name. A non-empty http(s) URL replaces every assignment of that key,
+including a line with an `export` prefix, or appends one when the key is
+missing. The rewrite keeps the file owner and mode (`600` on the server).
+An unset or blank secret does not change the file. The script does not print
+the DSN.
 
 Both the edge job and the deploy job run `deploy/resolve-deploy-inputs.sh`
 after that checkout. The script fetches `origin/main` and exits 1 unless

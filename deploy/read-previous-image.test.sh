@@ -265,6 +265,8 @@ EOF
     set -e
   elif [ "${driver}" = "hook" ]; then
     env \
+      -u PASSWORD_PREHASH_WRITE \
+      -u WEB_SENTRY_DSN \
       PATH="${work}/bin:${PATH}" \
       CARDHUB_ROOT="${work}/root" \
       CARDHUB_STOP_AFTER_PREVIOUS_IMAGE=1 \

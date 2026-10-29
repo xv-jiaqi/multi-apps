@@ -25,10 +25,17 @@ export function readSentryRelease(): string | undefined {
   return nonEmpty(runtimeConfig?.GIT_SHA);
 }
 
-export function captureSentryException(error: unknown, extra?: Record<string, unknown>): void {
+export function captureSentryException(
+  error: unknown,
+  extra?: Record<string, unknown>,
+  tags?: Record<string, string>,
+): void {
   if (!readSentryDsn()) return;
-  if (extra) {
-    Sentry.captureException(error, { extra });
+  if (extra || tags) {
+    Sentry.captureException(error, {
+      ...(extra ? { extra } : {}),
+      ...(tags ? { tags } : {}),
+    });
     return;
   }
   Sentry.captureException(error);

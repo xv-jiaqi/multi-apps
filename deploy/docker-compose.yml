@@ -19,8 +19,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
       # Only the exact string true writes sha256$ password hashes. Anything
-      # else, including an empty value, stays on legacy bcrypt. Staging sets
-      # true; production stays false until an operator enables it.
+      # else, including an empty value, stays on legacy bcrypt. Deploy copies
+      # the GitHub Environment variable into the env file when it is true or
+      # false, and leaves this line unchanged when that variable is unset.
       PASSWORD_PREHASH_WRITE: ${PASSWORD_PREHASH_WRITE:-false}
       CORS_ORIGIN: ${CORS_ORIGIN}
       SENTRY_DSN: ${SENTRY_DSN}
