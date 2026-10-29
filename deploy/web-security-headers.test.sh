@@ -49,7 +49,8 @@ require_site_import() {
   echo "OK ${name}"
 }
 
-block="$(site_block "${caddyfile}" '^\(cardhub_web_headers\)')"
+# Character classes, not backslash escapes: Ubuntu CI's mawk treats `\(` as `(`.
+block="$(site_block "${caddyfile}" '^[(]cardhub_web_headers[)]')"
 
 require_line() {
   local name="$1"
@@ -68,10 +69,10 @@ require_line "frame" '		X-Frame-Options DENY'
 require_line "csp-fallback" '		?Content-Security-Policy "frame-ancestors '\''none'\''"'
 require_line "defer" '		defer'
 
-if ! require_site_import "staging web" "${caddyfile}" '^\{[$]STAGING_WEB_DOMAIN\}'; then
+if ! require_site_import "staging web" "${caddyfile}" '^[{][$]STAGING_WEB_DOMAIN[}]'; then
   failed=1
 fi
-if ! require_site_import "apex web" "${root_site}" '^\{[$]ROOT_WEB_DOMAINS'; then
+if ! require_site_import "apex web" "${root_site}" '^[{][$]ROOT_WEB_DOMAINS'; then
   failed=1
 fi
 
@@ -90,13 +91,13 @@ cat > "${negative_dir}/root-web.caddy" <<'EOF'
 	import cardhub_api_headers
 }
 EOF
-if require_site_import "comment-only staging" "${negative_dir}/Caddyfile" '^\{[$]STAGING_WEB_DOMAIN\}' >/dev/null 2>&1; then
+if require_site_import "comment-only staging" "${negative_dir}/Caddyfile" '^[{][$]STAGING_WEB_DOMAIN[}]' >/dev/null 2>&1; then
   echo "FAIL comment-only import was accepted for staging" >&2
   failed=1
 else
   echo "OK comment-only staging import is rejected"
 fi
-if require_site_import "comment-only apex" "${negative_dir}/root-web.caddy" '^\{[$]ROOT_WEB_DOMAINS' >/dev/null 2>&1; then
+if require_site_import "comment-only apex" "${negative_dir}/root-web.caddy" '^[{][$]ROOT_WEB_DOMAINS' >/dev/null 2>&1; then
   echo "FAIL comment-only import was accepted for apex" >&2
   failed=1
 else
