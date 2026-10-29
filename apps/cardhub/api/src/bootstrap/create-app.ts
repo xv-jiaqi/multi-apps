@@ -1,12 +1,15 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NativeLogger } from 'nestjs-pino';
 import * as Sentry from '@sentry/node';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import type { RequestHandler, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from '../app.module';
 import { SentryExceptionFilter } from '../common/sentry-exception.filter';
+import { attachRequestLogging } from './http-logger';
+import { REQUEST_ID_HEADER_NAME, requestIdFrom } from './request-id';
 import { AuthService } from '../modules/auth/auth.service';
 import { PrismaService } from '../modules/prisma/prisma.service';
 import {
@@ -72,7 +75,16 @@ export async function createApp(options: CreateAppOptions = {}) {
   // 1MB procedure input plus 16KB of tRPC batch envelope, without raising the
   // 100kb cap on every other route.
   const app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false });
+  // NativeLogger keeps Nest's (message, stack, context) call shape and writes
+  // JSON through the request-scoped pino child, so every line has requestId.
+  app.useLogger(app.get(NativeLogger));
+  // bufferLogs holds Nest lines until flush. listen() flushes too late for
+  // tests that only call init(), and too late for the lines emitted while
+  // the app is still starting.
+  app.flushLogs();
   configureApp(app);
+  // Before helmet and the JSON parser, so a 400/413 still gets a request id.
+  attachRequestLogging(app);
 
   const config = app.get(ConfigService);
   const trpcService = app.get(TrpcService);
@@ -102,6 +114,7 @@ export async function createApp(options: CreateAppOptions = {}) {
       callback(null, origin ? corsOrigin.includes(origin) : false);
     },
     credentials: true,
+    exposedHeaders: [REQUEST_ID_HEADER_NAME],
   });
 
   app.useGlobalPipes(
@@ -147,12 +160,28 @@ export async function createApp(options: CreateAppOptions = {}) {
     trpcExpress.createExpressMiddleware({
       router: trpcService.appRouter,
       createContext: makeCreateContext(authService, prisma),
-      onError: ({ error, path, type }) => {
-        if (error.code === 'INTERNAL_SERVER_ERROR' && process.env.SENTRY_DSN) {
-          Sentry.captureException(error.cause ?? error, {
-            tags: { trpcPath: path ?? 'unknown', trpcType: type },
-          });
+      onError: ({ error, path, type, req }) => {
+        const requestId = requestIdFrom(req);
+        // requestId is already a child binding on req.log. Repeating it here
+        // writes a second key into the raw JSON line.
+        const fields = {
+          trpcPath: path ?? 'unknown',
+          trpcType: type,
+          code: error.code,
+        };
+        if (error.code === 'INTERNAL_SERVER_ERROR') {
+          req.log.error(fields, 'tRPC request failed');
+          if (process.env.SENTRY_DSN) {
+            const tags: Record<string, string> = {
+              trpcPath: path ?? 'unknown',
+              trpcType: type,
+            };
+            if (requestId) tags.request_id = requestId;
+            Sentry.captureException(error.cause ?? error, { tags });
+          }
+          return;
         }
+        req.log.warn(fields, 'tRPC request rejected');
       },
     }),
   );

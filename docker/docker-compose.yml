@@ -1,10 +1,17 @@
 name: cardhub-dev
 
+x-logging: &json-file-logs
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: cardhub-postgres
     restart: unless-stopped
+    logging: *json-file-logs
     environment:
       POSTGRES_USER: cardhub
       POSTGRES_PASSWORD: cardhub
@@ -23,6 +30,7 @@ services:
     image: redis:7-alpine
     container_name: cardhub-redis
     restart: unless-stopped
+    logging: *json-file-logs
     ports:
       - '6379:6379'
     volumes:
@@ -38,6 +46,7 @@ services:
     image: dpage/pgadmin4:latest
     container_name: cardhub-pgadmin
     restart: unless-stopped
+    logging: *json-file-logs
     profiles: ['tools']
     environment:
       PGADMIN_DEFAULT_EMAIL: dev@cardhub.local

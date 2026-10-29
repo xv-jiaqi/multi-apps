@@ -8,6 +8,7 @@ import {
   parserClientFailure,
   type ParserFailure,
 } from '../bootstrap/json-body';
+import { requestIdFrom } from '../bootstrap/request-id';
 
 /**
  * Forwards uncaught NestJS exceptions to Sentry while preserving the default
@@ -101,12 +102,13 @@ export class SentryExceptionFilter implements ExceptionFilter {
           this.logger.error('Unknown exception', String(exception));
         }
       }
-      Sentry.captureException(exception, {
-        tags: {
-          path: request?.originalUrl ?? 'unknown',
-          method: request?.method ?? 'unknown',
-        },
-      });
+      const requestId = requestIdFrom(request);
+      const tags: Record<string, string> = {
+        path: request?.originalUrl ?? 'unknown',
+        method: request?.method ?? 'unknown',
+      };
+      if (requestId) tags.request_id = requestId;
+      Sentry.captureException(exception, { tags });
     } else if (failure) {
       this.logger.warn(`Rejected a client parser error with status ${failure.status}`);
     } else if (!(exception instanceof HttpException) && exception instanceof Error) {
