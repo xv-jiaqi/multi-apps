@@ -7,12 +7,16 @@ import type { ArgumentsHost } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { SentryExceptionFilter } from './sentry-exception.filter';
 
-function capture(exception: unknown, originalUrl = '/trpc/comments.create') {
+function capture(exception: unknown, originalUrl = '/trpc/comments.create', requestId?: string) {
   const json = jest.fn();
   const response = {
     status: jest.fn().mockReturnValue({ json }),
   };
-  const request = { originalUrl, method: 'POST' };
+  const request = {
+    originalUrl,
+    method: 'POST',
+    ...(requestId === undefined ? {} : { id: requestId }),
+  };
   const host = {
     switchToHttp: () => ({
       getRequest: () => request,
@@ -270,6 +274,31 @@ describe('SentryExceptionFilter', () => {
       statusCode: 400,
     });
     expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('attaches a valid request id to the Sentry event and ignores an unsafe one', () => {
+    const crash = new Error('database down');
+    capture(crash, '/trpc/comments.create', 'edge-9');
+    capture(crash, '/health', 'bad\nid');
+
+    expect(captureException).toHaveBeenNthCalledWith(
+      1,
+      crash,
+      expect.objectContaining({
+        tags: {
+          path: '/trpc/comments.create',
+          method: 'POST',
+          request_id: 'edge-9',
+        },
+      }),
+    );
+    expect(captureException).toHaveBeenNthCalledWith(
+      2,
+      crash,
+      expect.objectContaining({
+        tags: { path: '/health', method: 'POST' },
+      }),
+    );
   });
 
   it('reports a thrown Error and an HttpException 500', () => {
