@@ -277,6 +277,25 @@ describe('series detail at 375px', () => {
     const releasePainted = composite(releaseColor, releaseColor.a, releaseBackground);
     const releaseRatio = contrast(releasePainted, releaseBackground);
 
+    const description = screen.getByText('浅色渐变，用来量没有封面时的白字。');
+    const descriptionColor = parseColor(getComputedStyle(description).color);
+    const descriptionBox = description.getBoundingClientRect();
+    const descriptionBackground = await averageAt(
+      'header.rounded-3xl',
+      heroBox,
+      descriptionBox,
+      4,
+      -6,
+      24,
+      3,
+    );
+    const descriptionPainted = composite(
+      descriptionColor,
+      descriptionColor.a,
+      descriptionBackground,
+    );
+    const descriptionRatio = contrast(descriptionPainted, descriptionBackground);
+
     const chip = screen
       .getAllByRole('link', { name: '构筑对战' })
       .find((node) => node.className.includes('rounded-full'));
@@ -307,6 +326,9 @@ describe('series detail at 375px', () => {
     console.info(
       JSON.stringify({
         releaseRatio: Number(releaseRatio.toFixed(2)),
+        descriptionRatio: Number(descriptionRatio.toFixed(2)),
+        descriptionBackground,
+        descriptionPainted,
         ringRatio: Number(ringRatio.toFixed(2)),
         ringDx: ringSample.dx,
         releaseBackground,
@@ -316,6 +338,7 @@ describe('series detail at 375px', () => {
     );
 
     expect(releaseRatio).toBeGreaterThanOrEqual(4.5);
+    expect(descriptionRatio).toBeGreaterThanOrEqual(4.5);
     expect(ringRatio).toBeGreaterThanOrEqual(3);
   });
 });
