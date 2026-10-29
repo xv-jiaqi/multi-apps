@@ -120,6 +120,8 @@ Security headers are set on the edge, not in the web image. nginx in
 `Content-Security-Policy: frame-ancestors 'none'`. Both API hostnames send
 that same HSTS value and `nosniff`. The handlers use `defer`, so they replace
 the same fields from upstream. `lb_try_duration` is unchanged.
+`deploy/web-security-headers.test.sh` checks these three web headers and,
+when `caddy` is installed, requests the handler with `curl -I`.
 
 After changing any edge env vars manually, recreate the Caddy container so
 Compose injects the new environment; `caddy reload` does not pick up env-file

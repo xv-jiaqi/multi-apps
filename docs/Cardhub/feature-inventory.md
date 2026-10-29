@@ -159,7 +159,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 | CI（lint / typecheck / build / test / audit / compose 校验）      | ✅   | `.github/workflows/ci.yml`                                                                                                              |
 | 镜像构建、staging 自动部署、prod 手动部署、健康校验、失败自动回滚 | ✅   | `images.yml` / `deploy.yml` / `deploy/remote-deploy.sh`                                                                                 |
 | 数据库备份（7 日 + 4 周，可选 OSS 异地）                          | ✅   | OSS 生命周期规则仍待 owner 配置（见 deploy/README.md 的 TODO）                                                                          |
-| Web 安全响应头（CSP、nosniff、Referrer-Policy）                   | ❌   | nginx 只设置了缓存头（CH-309）                                                                                                          |
+| Web 安全响应头（HSTS、nosniff、X-Frame-Options）               | ✅   | Infra-c AC2-5。对外生效点是 `deploy/edge/Caddyfile` 的 `cardhub_web_headers`：HSTS `max-age=31536000; includeSubDomains`（无 preload）、`X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`。生产 `card-hub.app` 和预发 `staging.card-hub.app` 都 import 它。`defer` 会盖掉容器里的同名头，所以 nginx 只保留缓存头。完整 CSP 和 Referrer-Policy 仍是 CH-309 |
 | 结构化日志 / request id                                           | ❌   | CH-307                                                                                                                                  |
 | 产品指标（MAU、注册、留存、日评论数）                             | ❌   | 项目简报定义了 KPI，但没有任何埋点（CH-308）                                                                                            |
 
