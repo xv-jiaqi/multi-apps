@@ -31,6 +31,7 @@ const card = {
   rarity: 'rare',
   seriesSlug: 'celestial-dawn',
   seriesTitle: '天穹黎明',
+  cardNumber: null as string | null,
   attributes: { Cost: '3' },
 };
 
@@ -141,6 +142,8 @@ function renderCard(slug = 'aurora-knight') {
 beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signOut();
+  card.description = '黎明降临。';
+  card.cardNumber = null;
   resetCard();
 });
 
@@ -160,6 +163,7 @@ describe('card detail data errors', () => {
     );
     expect(document.body.textContent).not.toContain(INJECTED);
     expect(document.title).toBe('卡牌加载失败 · Cardhub');
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('uses the English card failure copy', () => {
@@ -186,6 +190,7 @@ describe('card detail data errors', () => {
     expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument();
     expect(document.body.textContent).not.toContain(INJECTED);
     expect(document.title).toBe('not-exist · Cardhub');
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('shows the skeleton while loading and no alert', () => {
@@ -200,6 +205,7 @@ describe('card detail data errors', () => {
     );
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
     expect(screen.queryByText('卡牌加载失败')).not.toBeInTheDocument();
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('keeps the alert while a retry is in flight', () => {
@@ -215,6 +221,7 @@ describe('card detail data errors', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '重试中…' })).toHaveAttribute('aria-busy', 'true');
     expect(document.querySelector('.aspect-\\[63\\/88\\]')).toBeNull();
+    expect(document.querySelector('meta[name="description"]')).toBeNull();
   });
 
   it('moves focus to the card name after a successful retry', async () => {
@@ -240,5 +247,49 @@ describe('card detail data errors', () => {
     });
     expect(document.activeElement?.tagName).toBe('H1');
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
+  });
+});
+
+describe('card detail meta description', () => {
+  function showCard() {
+    cardQuery.data = card;
+    cardQuery.isLoading = false;
+    cardQuery.isPending = false;
+    cardQuery.isFetching = false;
+    cardQuery.isError = false;
+    cardQuery.error = null;
+    cardQuery.dataUpdatedAt = 1;
+  }
+
+  it('omits a missing number and includes one when the card has it', () => {
+    showCard();
+    const view = renderCard();
+
+    expect(document.title).toBe('极光骑士 · Cardhub');
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      '极光骑士 · 天穹黎明。在 Cardhub 查看卡牌资料、交易和讨论。 黎明降临。',
+    );
+
+    view.unmount();
+    card.cardNumber = '58';
+    rootStore.locale.setLocale('en-US');
+    renderCard();
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      '极光骑士 from 天穹黎明, No. 58. See details, trades, and discussion on Cardhub. 黎明降临。',
+    );
+  });
+
+  it('puts the plain text of a Markdown description after the template', () => {
+    card.description = '```\ncode\n```\n**辉光**足够。';
+    card.cardNumber = '001';
+    showCard();
+    renderCard();
+
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      '极光骑士 · 天穹黎明 No.001。在 Cardhub 查看卡牌资料、交易和讨论。 辉光足够。',
+    );
   });
 });

@@ -561,3 +561,13 @@ export type CollectionUpsertInput = z.infer<typeof collectionUpsertInput>;
 
 export const collectionListInput = cursorPaginationInput;
 export type CollectionListInput = z.infer<typeof collectionListInput>;
+
+export {
+  METRICS_RANGE_MAX_DAYS,
+  adminMetricsInput,
+  formatUtcCalendarDate,
+  inclusiveUtcDayCount,
+  utcCalendarDate,
+  utcCalendarDateFromInstant,
+} from './metrics';
+export type { AdminMetricsInput } from './metrics';
