@@ -47,8 +47,8 @@ write_config_pair() {
 
 reject_control_chars "TRPC_URL" "$TRPC_URL_VALUE"
 
-if ! printf '%s' "$TRPC_URL_VALUE" | grep -Eq '^https?://[^[:space:]"\\]+/trpc$'; then
-  echo "ERROR: TRPC_URL must be set to a full http(s) URL ending in /trpc without whitespace, quotes, or backslashes (for example: https://api.card-hub.app/trpc)." >&2
+if ! printf '%s' "$TRPC_URL_VALUE" | grep -Eq '^https?://[^[:space:]"\\;'"'"']+/trpc$'; then
+  echo "ERROR: TRPC_URL must be set to a full http(s) URL ending in /trpc without whitespace, quotes, backslashes, or semicolons (for example: https://api.card-hub.app/trpc)." >&2
   exit 1
 fi
 

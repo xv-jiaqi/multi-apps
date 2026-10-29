@@ -138,6 +138,18 @@ describe('runtime config entrypoint', () => {
   });
 
   it.each([
+    ['semicolon', 'https://api.card-hub.app;x/trpc'],
+    ['single quote', "https://api.card-hub.app'/trpc"],
+  ])('rejects a %s in TRPC_URL', (_name, value) => {
+    const result = runScript(value);
+
+    expect(result.ok).toBe(false);
+    expect(result).toMatchObject({
+      stderr: expect.stringContaining('semicolons'),
+    });
+  });
+
+  it.each([
     ['embedded newline', 'https://api.card-hub.app/trpc\nhttps://evil.example/trpc'],
     ['trailing newline', 'https://api.card-hub.app/trpc\n'],
     ['carriage return', 'https://api.card-hub.app/trpc\r'],

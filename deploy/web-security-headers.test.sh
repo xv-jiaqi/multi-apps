@@ -126,6 +126,8 @@ if [ -z "${caddy_bin}" ]; then
 else
   work="$(mktemp -d)"
   port="${CADDY_TEST_PORT:-18080}"
+  upstream_port="${CADDY_UPSTREAM_PORT:-18082}"
+  edge_port="${CADDY_EDGE_PORT:-18081}"
   cat > "${work}/Caddyfile" <<EOF
 {
 	admin off
@@ -134,6 +136,14 @@ else
 :${port} {
 	import cardhub_web_headers
 	respond "ok" 200
+}
+:${upstream_port} {
+	header Content-Security-Policy "default-src 'self'; script-src 'self'; frame-ancestors 'none'"
+	respond "full" 200
+}
+:${edge_port} {
+	import cardhub_web_headers
+	reverse_proxy 127.0.0.1:${upstream_port}
 }
 EOF
   {
@@ -146,7 +156,8 @@ EOF
   trap 'kill "${caddy_pid}" >/dev/null 2>&1 || true; rm -rf "${work}"' EXIT
   ready=0
   for _ in 1 2 3 4 5 6 7 8 9 10; do
-    if curl -sf -o /dev/null "http://127.0.0.1:${port}/"; then
+    if curl -sf -o /dev/null "http://127.0.0.1:${port}/" \
+      && curl -sf -o /dev/null "http://127.0.0.1:${edge_port}/"; then
       ready=1
       break
     fi
@@ -172,6 +183,18 @@ EOF
       echo "OK curl ${expected}"
     fi
   done
+  echo "LIVE curl -sI upstream CSP preserved"
+  preserved="$(curl -sI "http://127.0.0.1:${edge_port}/")"
+  printf '%s\n' "${preserved}"
+  csp_count="$(printf '%s\n' "${preserved}" | grep -ci '^Content-Security-Policy:' || true)"
+  if [ "${csp_count}" -ne 1 ] \
+    || ! printf '%s\n' "${preserved}" | grep -qi "^Content-Security-Policy: default-src 'self'; script-src 'self'; frame-ancestors 'none'" \
+    || ! printf '%s\n' "${preserved}" | grep -qi '^Strict-Transport-Security:'; then
+    echo "FAIL edge overwrote or dropped the upstream CSP" >&2
+    failed=1
+  else
+    echo "OK curl upstream CSP preserved"
+  fi
   kill "${caddy_pid}" >/dev/null 2>&1 || true
   trap - EXIT
   rm -rf "${work}"
