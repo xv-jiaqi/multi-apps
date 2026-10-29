@@ -7,6 +7,12 @@ import { CardDetailSkeleton } from './components/card-detail-skeleton';
 import { RouteErrorFallback } from './components/route-error';
 import { HomePage } from './pages/home';
 
+const CategoryListPage = lazy(() =>
+  import('./pages/category-list').then((m) => ({ default: m.CategoryListPage })),
+);
+const CategoryDetailPage = lazy(() =>
+  import('./pages/category-detail').then((m) => ({ default: m.CategoryDetailPage })),
+);
 const SeriesListPage = lazy(() =>
   import('./pages/series-list').then((m) => ({ default: m.SeriesListPage })),
 );
@@ -47,6 +53,15 @@ const ReportsListPage = lazy(() =>
 );
 const CatalogSeriesPage = lazy(() =>
   import('./pages/admin/catalog-series').then((m) => ({ default: m.CatalogSeriesPage })),
+);
+const CatalogCategoriesPage = lazy(() =>
+  import('./pages/admin/catalog-categories').then((m) => ({ default: m.CatalogCategoriesPage })),
+);
+const NewCategoryPage = lazy(() =>
+  import('./pages/admin/category-form-page').then((m) => ({ default: m.NewCategoryPage })),
+);
+const EditCategoryPage = lazy(() =>
+  import('./pages/admin/category-form-page').then((m) => ({ default: m.EditCategoryPage })),
 );
 const AdminUsersPage = lazy(() =>
   import('./pages/admin/users').then((m) => ({ default: m.AdminUsersPage })),
@@ -120,6 +135,8 @@ export const appRoutes: RouteObject[] = [
     errorElement: <RouteErrorFallback />,
     children: [
       { path: '/', element: <HomePage /> },
+      { path: '/categories', element: lazyPage(<CategoryListPage />) },
+      { path: '/categories/:slug', element: lazyPage(<CategoryDetailPage />) },
       { path: '/series', element: lazyPage(<SeriesListPage />) },
       { path: '/series/:seriesSlug', element: lazyPage(<SeriesDetailPage />) },
       {
@@ -143,6 +160,9 @@ export const appRoutes: RouteObject[] = [
       { path: '/trade/new', element: lazyPage(<TradePublishPage />) },
       { path: '/reports', element: lazyPage(<ReportsListPage />) },
       { path: '/admin/catalog', element: lazyPage(<CatalogSeriesPage />) },
+      { path: '/admin/catalog/categories/new', element: lazyPage(<NewCategoryPage />) },
+      { path: '/admin/catalog/categories/:slug/edit', element: lazyPage(<EditCategoryPage />) },
+      { path: '/admin/catalog/categories', element: lazyPage(<CatalogCategoriesPage />) },
       { path: '/admin/users', element: lazyPage(<AdminUsersPage />) },
       { path: '/admin/audit', element: lazyPage(<AdminAuditPage />) },
       { path: '/admin/catalog/import', element: lazyPage(<CatalogImportPage />) },

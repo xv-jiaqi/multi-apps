@@ -37,7 +37,13 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
   onForbidden,
   onCloseAutoFocus,
 }: {
-  series: { slug: string; title: string; cardCount: number; commentCount: number } | null;
+  series: {
+    slug: string;
+    title: string;
+    cardCount: number;
+    commentCount: number;
+    subsetCount?: number;
+  } | null;
   onOpenChange: (open: boolean) => void;
   onConfirm: (reason: string) => Promise<void>;
   onForbidden: () => void;
@@ -116,6 +122,11 @@ export const DeleteSeriesDialog = observer(function DeleteSeriesDialog({
                       comments: formatAdminCount(locale.locale, 'comments', series.commentCount),
                     })}
               </AlertDialogDescription>
+              {series.subsetCount ? (
+                <p className="text-sm text-neutral-600">
+                  {tt('admin.series.forceSubsets', { count: series.subsetCount })}
+                </p>
+              ) : null}
             </AlertDialogHeader>
             <div className="mt-4 space-y-4 text-sm text-neutral-800">
               <DeleteReasonTextarea
