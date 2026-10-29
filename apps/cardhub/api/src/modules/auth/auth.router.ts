@@ -7,7 +7,12 @@ import { passwordPrehashWriteEnabled } from '../../config/env.validation';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
-import { hashPassword, legacyPasswordExceedsBcryptLimit, verifyPassword } from './password-hash';
+import {
+  compareDummyPassword,
+  hashPassword,
+  legacyPasswordExceedsBcryptLimit,
+  verifyPassword,
+} from './password-hash';
 import {
   CLEAR_LOGIN_ACCOUNT_LIMIT,
   type ClearLoginAccountLimit,
@@ -100,6 +105,7 @@ export class AuthRouter {
           },
         });
         if (!user) {
+          await compareDummyPassword(input.password);
           throw new TRPCError({
             code: 'UNAUTHORIZED',
             message: '用户名或密码错误',

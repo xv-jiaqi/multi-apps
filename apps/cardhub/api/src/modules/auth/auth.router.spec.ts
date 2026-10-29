@@ -5,6 +5,7 @@ import { APP_ERROR_CODES } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import type { TrpcContext } from '../../trpc/context';
 import { AuthRouter } from './auth.router';
+import { BCRYPT_ROUNDS, DUMMY_PASSWORD_HASH } from './password-hash';
 import type { AuthService } from './auth.service';
 import type { PrismaService } from '../prisma/prisma.service';
 
@@ -184,12 +185,22 @@ describe('AuthRouter.register', () => {
 
 describe('AuthRouter.login', () => {
   it('rejects unknown identifier with UNAUTHORIZED', async () => {
+    const compare = jest.spyOn(bcrypt, 'compare');
     const { caller, userMock } = makeRouter();
     userMock.findFirst.mockResolvedValueOnce(null);
 
-    await expect(
-      caller.login({ identifier: 'nobody', password: TEST_PASSWORD }),
-    ).rejects.toBeInstanceOf(TRPCError);
+    try {
+      await expect(
+        caller.login({ identifier: 'nobody', password: TEST_PASSWORD }),
+      ).rejects.toMatchObject({
+        code: 'UNAUTHORIZED',
+        message: '用户名或密码错误',
+      });
+      expect(DUMMY_PASSWORD_HASH.split('$')[2]).toBe(String(BCRYPT_ROUNDS));
+      expect(compare).toHaveBeenCalledWith(TEST_PASSWORD, DUMMY_PASSWORD_HASH);
+    } finally {
+      compare.mockRestore();
+    }
   });
 
   it('rejects wrong password with UNAUTHORIZED', async () => {

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { APP_ERROR_CODES } from '@repo/shared';
 import request from 'supertest';
 import { createApp } from '../src/bootstrap/create-app';
-import { productionRateLimitConfigs } from '../src/bootstrap/rate-limiters';
+import { productionRateLimitConfigs, TRPC_MAX_BATCH_SIZE } from '../src/bootstrap/rate-limiters';
 import { hashPassword } from '../src/modules/auth/password-hash';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 import { RedisService } from '../src/modules/redis/redis.service';
@@ -46,6 +46,18 @@ function limitHeaders(response: request.Response): Record<string, string> {
   }
   return headers;
 }
+
+const BAD_REQUEST = {
+  error: {
+    message: '请求无效，请检查后再试',
+    code: -32600,
+    data: {
+      code: 'BAD_REQUEST',
+      appCode: APP_ERROR_CODES.BAD_REQUEST,
+      httpStatus: 400,
+    },
+  },
+};
 
 const LOGIN_BLOCKED = {
   error: {
@@ -328,6 +340,163 @@ describe('auth account rate limit', () => {
         },
       ]);
       expect(JSON.stringify(blocked.body).toLowerCase()).not.toContain(email.split('@')[0]);
+    } finally {
+      await close(app);
+    }
+  });
+
+  it('rejects a multi-login batch before login runs and still limits later single attempts', async () => {
+    const app = await createApp();
+    await app.init();
+    const prisma = app.get(PrismaService);
+    const suffix = randomUUID().slice(0, 8);
+    const email = `slots.${suffix}@cardhub.test`;
+    const password = 'correct-password';
+    const slots = Array.from({ length: 11 }, () => 'auth.login').join(',');
+    const body: Record<string, { identifier: string; password: string }> = {};
+    for (let index = 0; index < 11; index += 1) {
+      body[String(index)] = { identifier: email, password };
+    }
+    try {
+      await prisma.user.create({
+        data: {
+          email,
+          username: `slt${suffix}`,
+          password: await hashPassword(password),
+        },
+      });
+
+      const rejected = await request(app.getHttpServer())
+        .post(`/trpc/${slots}?batch=1`)
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', clientIp(220))
+        .send(body);
+      expect(rejected.status).toBe(400);
+      expect(rejected.body).toEqual(BAD_REQUEST);
+      expect(Array.isArray(rejected.body)).toBe(false);
+      expect(JSON.stringify(rejected.body)).not.toContain('token');
+
+      const encodedPair = await request(app.getHttpServer())
+        .post('/trpc/auth.login%2Cauth.login?batch=1')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', clientIp(221))
+        .send({
+          0: { identifier: email, password },
+          1: { identifier: email, password },
+        });
+      expect(encodedPair.status).toBe(400);
+      expect(encodedPair.body).toEqual(BAD_REQUEST);
+      expect(JSON.stringify(encodedPair.body)).not.toContain('token');
+
+      let previous = LOGIN_LIMIT;
+      for (let attempt = 0; attempt < LOGIN_LIMIT; attempt += 1) {
+        const response = await postLogin(app, email, clientIp(222 + attempt));
+        expect(response.status).not.toBe(429);
+        const left = remaining(response);
+        expect(left).toBe(previous - 1);
+        previous = left;
+      }
+      const blocked = await postLogin(app, email, clientIp(240));
+      expect(blocked.status).toBe(429);
+      expect(blocked.body).toEqual(LOGIN_BLOCKED);
+    } finally {
+      await prisma.user.deleteMany({ where: { email } });
+      await close(app);
+    }
+  });
+
+  it('returns 400 above maxBatchSize and still counts a one-slot login batch', async () => {
+    const app = await createApp({
+      rateLimitOverrides: { authMutation: { limit: 2, windowMs: 60_000 } },
+    });
+    await app.init();
+    const email = `one.${randomUUID().slice(0, 8)}@cardhub.test`;
+    try {
+      const atCap = Array.from({ length: TRPC_MAX_BATCH_SIZE }, () => 'health.ping').join(',');
+      const allowed = await request(app.getHttpServer()).get(`/trpc/${atCap}?batch=1`);
+      expect(allowed.status).not.toBe(400);
+      expect(Array.isArray(allowed.body)).toBe(true);
+      expect(allowed.body).toHaveLength(TRPC_MAX_BATCH_SIZE);
+
+      const over = Array.from({ length: TRPC_MAX_BATCH_SIZE + 1 }, () => 'health.ping').join(',');
+      const rejected = await request(app.getHttpServer()).get(`/trpc/${over}?batch=1`);
+      expect(rejected.status).toBe(400);
+      expect(rejected.body).toEqual(BAD_REQUEST);
+      expect(JSON.stringify(rejected.body)).not.toContain('maximum size');
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const response = await request(app.getHttpServer())
+          .post('/trpc/auth.login?batch=1')
+          .set('Content-Type', 'application/json')
+          .set('X-Forwarded-For', clientIp(250 + attempt))
+          .send({ 0: { identifier: email, password: 'not-the-password' } });
+        expect(response.status).not.toBe(429);
+      }
+      const blocked = await request(app.getHttpServer())
+        .post('/trpc/auth.login?batch=1')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', clientIp(252))
+        .send({ 0: { identifier: email, password: 'not-the-password' } });
+      expect(blocked.status).toBe(429);
+      expect(blocked.body).toEqual([LOGIN_BLOCKED]);
+    } finally {
+      await close(app);
+    }
+  });
+
+  it('counts percent-encoded login paths and ignores variants tRPC does not route', async () => {
+    const app = await createApp();
+    await app.init();
+    const email = `enc.${randomUUID().slice(0, 8)}@cardhub.test`;
+    try {
+      const malformed = await request(app.getHttpServer())
+        .post('/trpc/%E0%A4%A')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', clientIp(1))
+        .send({ identifier: email, password: 'not-the-password' });
+      expect(malformed.status).toBe(400);
+      expect(malformed.body).toEqual(BAD_REQUEST);
+
+      const wrongCase = await request(app.getHttpServer())
+        .post('/trpc/Auth.Login')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', clientIp(2))
+        .send({ identifier: email, password: 'not-the-password' });
+      expect(wrongCase.status).not.toBe(401);
+      expect(wrongCase.status).not.toBe(429);
+
+      const doubleEncoded = await request(app.getHttpServer())
+        .post('/trpc/auth%252Elogin')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', clientIp(3))
+        .send({ identifier: email, password: 'not-the-password' });
+      expect(doubleEncoded.status).not.toBe(401);
+      expect(doubleEncoded.status).not.toBe(429);
+
+      let previous = LOGIN_LIMIT;
+      for (let attempt = 0; attempt < LOGIN_LIMIT; attempt += 1) {
+        const path = attempt % 2 === 0 ? '/trpc/auth%2Elogin' : '/trpc/auth%2elogin';
+        const response = await request(app.getHttpServer())
+          .post(path)
+          .set('Content-Type', 'application/json')
+          .set('X-Forwarded-For', clientIp(10 + attempt))
+          .send({
+            identifier: attempt % 2 === 0 ? `  ${email.toUpperCase()}  ` : email,
+            password: 'not-the-password',
+          });
+        expect(response.status).not.toBe(429);
+        const left = remaining(response);
+        expect(left).toBe(previous - 1);
+        previous = left;
+      }
+
+      const blocked = await request(app.getHttpServer())
+        .post('/trpc/auth%2Elogin')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', clientIp(30))
+        .send({ identifier: email, password: 'not-the-password' });
+      expect(blocked.status).toBe(429);
+      expect(blocked.body).toEqual(LOGIN_BLOCKED);
     } finally {
       await close(app);
     }
