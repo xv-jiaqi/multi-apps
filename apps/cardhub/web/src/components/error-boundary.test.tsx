@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { act } from 'react';
+import { act, StrictMode } from 'react';
 import { stubReload } from '../../test/stub-reload';
 import { rootStore } from '../stores/root-store';
-import { ErrorBoundary } from './error-boundary';
+import { CHUNK_RETRY_PATH_KEY, ErrorBoundary } from './error-boundary';
 
 beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
@@ -113,7 +113,9 @@ describe('ErrorBoundary fallback', () => {
       expect(screen.getByRole('alert')).not.toHaveTextContent(label);
       await user.click(screen.getByRole('button', { name: '重试' }));
       expect(reload.reload).toHaveBeenCalledTimes(1);
+      expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBe(window.location.pathname);
     } finally {
+      window.sessionStorage.removeItem(CHUNK_RETRY_PATH_KEY);
       consoleError.mockRestore();
       reload.restore();
     }
@@ -179,5 +181,82 @@ describe('ErrorBoundary fallback', () => {
     expect(screen.queryByText('boundary-secret')).not.toBeInTheDocument();
 
     consoleError.mockRestore();
+  });
+
+  it('focuses retry from the chunk marker and then clears it', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    window.sessionStorage.setItem(CHUNK_RETRY_PATH_KEY, window.location.pathname);
+
+    function Child(): never {
+      throw new Error('Loading chunk 12 failed.');
+    }
+
+    try {
+      render(
+        <StrictMode>
+          <ErrorBoundary>
+            <Child />
+          </ErrorBoundary>
+        </StrictMode>,
+      );
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: '重试' }));
+      expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBeNull();
+    } finally {
+      window.sessionStorage.removeItem(CHUNK_RETRY_PATH_KEY);
+      consoleError.mockRestore();
+    }
+  });
+
+  it('reloads a chunk error when sessionStorage cannot be written', async () => {
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const reload = stubReload();
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('denied');
+    });
+
+    function Child(): never {
+      const error = new Error('Loading chunk 12 failed.');
+      error.name = 'ChunkLoadError';
+      throw error;
+    }
+
+    try {
+      render(
+        <ErrorBoundary>
+          <Child />
+        </ErrorBoundary>,
+      );
+      await user.click(screen.getByRole('button', { name: '重试' }));
+      expect(reload.reload).toHaveBeenCalledTimes(1);
+    } finally {
+      setItem.mockRestore();
+      consoleError.mockRestore();
+      reload.restore();
+    }
+  });
+
+  it('still shows retry when sessionStorage cannot be read', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('denied');
+    });
+
+    function Child(): never {
+      throw new Error('Loading chunk 12 failed.');
+    }
+
+    try {
+      render(
+        <ErrorBoundary>
+          <Child />
+        </ErrorBoundary>,
+      );
+      expect(screen.getByRole('button', { name: '重试' })).toBeInTheDocument();
+      expect(document.activeElement).not.toBe(screen.getByRole('button', { name: '重试' }));
+    } finally {
+      getItem.mockRestore();
+      consoleError.mockRestore();
+    }
   });
 });

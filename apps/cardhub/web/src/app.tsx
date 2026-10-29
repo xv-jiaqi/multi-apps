@@ -2,7 +2,11 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useLocation, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
 import { SessionExpiryWatcher } from './components/session-expiry-watcher';
-import { ErrorBoundary, isChunkLoadError } from './components/error-boundary';
+import {
+  ClearChunkRetryOnSuccess,
+  ErrorBoundary,
+  isChunkLoadError,
+} from './components/error-boundary';
 import { CardDetailSkeleton } from './components/card-detail-skeleton';
 import { RouteErrorFallback } from './components/route-error';
 import { captureSentryException } from './lib/sentry';
@@ -129,12 +133,15 @@ export function LazyRoute({
         captureSentryException(error, undefined, { route: name });
       }}
     >
-      <Suspense fallback={fallback}>{children}</Suspense>
+      <Suspense fallback={fallback}>
+        <ClearChunkRetryOnSuccess />
+        {children}
+      </Suspense>
     </ErrorBoundary>
   );
 }
 
-function AppLayout() {
+export function AppLayout() {
   return (
     <>
       <AuthBootstrap />
@@ -161,7 +168,15 @@ export const appRoutes: RouteObject[] = [
     element: <AppLayout />,
     errorElement: <RouteErrorFallback />,
     children: [
-      { path: '/', element: <HomePage /> },
+      {
+        path: '/',
+        element: (
+          <>
+            <ClearChunkRetryOnSuccess />
+            <HomePage />
+          </>
+        ),
+      },
       { path: '/categories', element: lazyPage('/categories', <CategoryListPage />) },
       {
         path: '/categories/:slug',

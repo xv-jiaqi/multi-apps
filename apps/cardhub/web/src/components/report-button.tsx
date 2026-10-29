@@ -21,9 +21,6 @@ interface ReportButtonProps {
 const triggerClassName =
   'inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-600 hover:text-neutral-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
-const loginClassName =
-  'inline-flex min-h-6 items-center rounded px-1 text-xs text-neutral-600 hover:text-neutral-900 hover:underline';
-
 /**
  * Inline report control. The trigger stays mounted while the form is open so
  * focus can return to it. Pass children to put the form on the next row.
@@ -86,7 +83,7 @@ export const ReportButton = observer(function ReportButton({
       <Link
         to="/login"
         state={{ from: `${location.pathname}${location.search}${location.hash}` }}
-        className={loginClassName}
+        className={triggerClassName}
       >
         {tt('report.button')}
       </Link>

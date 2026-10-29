@@ -5,6 +5,7 @@ import { act, type ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { stubReload } from '../test/stub-reload';
 import { appRoutes } from './app';
+import { CHUNK_RETRY_PATH_KEY } from './components/error-boundary';
 import { TrpcProvider } from './lib/trpc';
 import { rootStore } from './stores/root-store';
 
@@ -118,8 +119,10 @@ describe('route error element', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('card.js');
     await user.click(screen.getByRole('button', { name: '重试' }));
     expect(reload.reload).toHaveBeenCalledTimes(1);
+    expect(window.sessionStorage.getItem(CHUNK_RETRY_PATH_KEY)).toBe(window.location.pathname);
     expect(Sentry.captureException).toHaveBeenCalled();
 
+    window.sessionStorage.removeItem(CHUNK_RETRY_PATH_KEY);
     consoleError.mockRestore();
     reload.restore();
   });
