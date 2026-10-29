@@ -47,10 +47,14 @@ Caddy publishes host ports.
    `ENV_NAME=staging` in `staging.env`. In `production.env`, also set
    `SENTRY_ENVIRONMENT=production` so Sentry events from both API and Web match
    production monitors while `ENV_NAME` remains `prod` for container and network
-   names. Set `SENTRY_DSN` for API events and `WEB_SENTRY_DSN` for browser
-   events. Leave either DSN empty to disable that side cleanly. `TRPC_URL`
-   should point at that
-   environment's API `/trpc` endpoint. Use separate database names:
+   names. Set `SENTRY_DSN` for API events and leave it empty to disable API
+   events. `WEB_SENTRY_DSN` is the browser DSN. Deploy writes it from the
+   GitHub Environment secret of the same name when that secret is a non-empty
+   http(s) URL, for manual staging, manual production, and the staging
+   auto-deploy. An unset secret leaves the line already in the env file.
+   Leave that line empty to disable browser events until the secret is set.
+   `TRPC_URL` should point at that environment's API `/trpc` endpoint. Use
+   separate database names:
    `POSTGRES_DB=cardhub_prod` for production and
    `POSTGRES_DB=cardhub_staging` for staging. Database passwords are lowercase
    hex from `openssl rand -hex 32`.
@@ -164,6 +168,11 @@ For GitHub Actions deploys, configure environment-scoped secrets:
 - `DEPLOY_USER`
 - `DEPLOY_SSH_KEY`
 - `DEPLOY_KNOWN_HOSTS`
+- `WEB_SENTRY_DSN` (optional browser Sentry DSN). Set this environment secret
+  on both `staging` and `production`. The value must be an `http://` or
+  `https://` URL. Unset leaves the server env file unchanged. The workflow
+  passes it to `remote-deploy.sh` as an environment variable and masks it.
+  The value is not printed.
 
 `PASSWORD_PREHASH_WRITE` is an environment variable on that same GitHub
 Environment, not a secret. Set `true` on staging and `false` on production
@@ -222,6 +231,13 @@ missing. An unset or blank variable does not change the file. A later
 failure leaves the new key on disk; containers that are already running keep
 the environment they started with until a rollout recreates them. The script
 does not print the rest of the env file.
+
+It writes `WEB_SENTRY_DSN` the same way, from the GitHub Environment secret
+of that name. A non-empty http(s) URL replaces every assignment of that key,
+including a line with an `export` prefix, or appends one when the key is
+missing. The rewrite keeps the file owner and mode (`600` on the server).
+An unset or blank secret does not change the file. The script does not print
+the DSN.
 
 Both the edge job and the deploy job run `deploy/resolve-deploy-inputs.sh`
 after that checkout. The script fetches `origin/main` and exits 1 unless

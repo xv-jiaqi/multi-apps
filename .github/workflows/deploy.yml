@@ -300,6 +300,10 @@ jobs:
         env:
           # Environment variable, not a secret. Empty when the variable is unset.
           PASSWORD_PREHASH_WRITE: ${{ vars.PASSWORD_PREHASH_WRITE }}
+          # Environment secret on staging and production. Empty when unset.
+          # This step is the manual staging path, the manual production path,
+          # and the staging auto-deploy after CI. Do not echo the value.
+          WEB_SENTRY_DSN: ${{ secrets.WEB_SENTRY_DSN }}
         run: |
           set -euo pipefail
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
@@ -325,5 +329,27 @@ jobs:
           if [ -n "${prehash}" ]; then
             prehash_prefix="PASSWORD_PREHASH_WRITE=${prehash} "
           fi
+          # Unset or blank keeps the server line. normalize writes the URL to
+          # stdout for this capture only. Mask that captured value before it
+          # is placed on the ssh command line. GitHub Actions consumes
+          # ::add-mask:: and does not print it.
+          dsn_rc=0
+          dsn="$(
+            # shellcheck disable=SC1091
+            source deploy/remote-deploy.sh
+            normalize_web_sentry_dsn
+          )" || dsn_rc=$?
+          if [ "${dsn_rc}" -ne 0 ]; then
+            exit "${dsn_rc}"
+          fi
+          dsn_prefix=""
+          if [ -n "${dsn}" ]; then
+            printf '%s\n' "::add-mask::${dsn}"
+            printf -v dsn_quoted '%q' "${dsn}"
+            if [ "${dsn_quoted}" != "${dsn}" ]; then
+              printf '%s\n' "::add-mask::${dsn_quoted}"
+            fi
+            dsn_prefix="WEB_SENTRY_DSN=${dsn_quoted} "
+          fi
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"
+            "${dsn_prefix}${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"
