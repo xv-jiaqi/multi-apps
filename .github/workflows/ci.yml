@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # Stacked PRs use the parent head as their base. Without that name here,
+    # GitHub never starts this workflow for them.
+    branches: [main, cursor/ch-309-security-headers-9131]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
