@@ -1,6 +1,11 @@
 import { Prisma } from '@prisma/client';
 import type { PrismaService } from '../prisma/prisma.service';
-import { recordDailyActivity } from './daily-activity';
+import {
+  DAILY_ACTIVITY_KEY_PREFIX,
+  recordDailyActivity,
+  secondsUntilNextUtcMidnight,
+  type DailyActivityRedis,
+} from './daily-activity';
 
 function store(createMany: jest.Mock): PrismaService {
   return { userDailyActivity: { createMany } } as unknown as PrismaService;
@@ -9,7 +14,7 @@ function store(createMany: jest.Mock): PrismaService {
 describe('recordDailyActivity', () => {
   const now = new Date('2001-04-02T23:30:00.000Z');
 
-  it('writes one row for the UTC day and ignores duplicates in the database', async () => {
+  it('writes on every call when Redis is unavailable', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });
     await recordDailyActivity(store(createMany), 'user-1', { now });
     await recordDailyActivity(store(createMany), 'user-1', { now });
@@ -23,6 +28,47 @@ describe('recordDailyActivity', () => {
       data: [{ userId: 'user-1', day: new Date('2001-04-02T00:00:00.000Z') }],
       skipDuplicates: true,
     });
+  });
+
+  it('writes the database once per user per UTC day when Redis accepts the lock', async () => {
+    const createMany = jest.fn().mockResolvedValue({ count: 1 });
+    const set = jest.fn().mockResolvedValueOnce('OK').mockResolvedValueOnce(null);
+    const redis: DailyActivityRedis = { set };
+    await recordDailyActivity(store(createMany), 'user-1', { now, redis });
+    await recordDailyActivity(store(createMany), 'user-1', { now, redis });
+
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(set).toHaveBeenNthCalledWith(
+      1,
+      `${DAILY_ACTIVITY_KEY_PREFIX}user-1:2001-04-02`,
+      '1',
+      'EX',
+      30 * 60,
+      'NX',
+    );
+    expect(set).toHaveBeenNthCalledWith(
+      2,
+      `${DAILY_ACTIVITY_KEY_PREFIX}user-1:2001-04-02`,
+      '1',
+      'EX',
+      30 * 60,
+      'NX',
+    );
+  });
+
+  it('writes the database when the Redis lock command fails', async () => {
+    const createMany = jest.fn().mockResolvedValue({ count: 1 });
+    const redis: DailyActivityRedis = {
+      set: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+    };
+    await recordDailyActivity(store(createMany), 'user-1', { now, redis });
+    expect(createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('sets the lock to expire at the next UTC midnight', () => {
+    expect(secondsUntilNextUtcMidnight(new Date('2001-04-02T23:30:00.000Z'))).toBe(30 * 60);
+    expect(secondsUntilNextUtcMidnight(new Date('2001-04-02T23:59:59.200Z'))).toBe(1);
+    expect(secondsUntilNextUtcMidnight(new Date('2001-04-03T00:00:00.000Z'))).toBe(24 * 60 * 60);
   });
 
   it('uses the next UTC date after midnight', async () => {

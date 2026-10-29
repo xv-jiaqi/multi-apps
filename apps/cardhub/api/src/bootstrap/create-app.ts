@@ -159,7 +159,7 @@ export async function createApp(options: CreateAppOptions = {}) {
     '/trpc',
     trpcExpress.createExpressMiddleware({
       router: trpcService.appRouter,
-      createContext: makeCreateContext(authService, prisma),
+      createContext: makeCreateContext(authService, prisma, redis.client),
       onError: ({ error, path, type, req }) => {
         const requestId = requestIdFrom(req);
         // requestId is already a child binding on req.log. Repeating it here

@@ -432,4 +432,28 @@ describe('admin.metrics', () => {
       await prisma.userDailyActivity.count({ where: { userId: registered.id, day: day(today) } }),
     ).toBe(1);
   });
+
+  it('does not put a user who registered today into the next-day cohort', async () => {
+    const createdAt = new Date();
+    const today = formatUtcCalendarDate(utcCalendarDateFromInstant(createdAt));
+    const registeredToday = await fixtureUser('mettoday', createdAt.toISOString());
+    expect(formatUtcCalendarDate(utcCalendarDateFromInstant(registeredToday.createdAt))).toBe(
+      today,
+    );
+
+    const response = await get(
+      'admin.metrics',
+      { from: today, to: today },
+      adminToken,
+      '203.0.113.101',
+    );
+    expect(response.status).toBe(200);
+    const body = resultData(response.body);
+    const registrations = body.registrations as { total: number };
+    expect(registrations.total).toBeGreaterThanOrEqual(1);
+    expect(body.retention).toEqual({
+      nextDay: { cohortUsers: 0, retainedUsers: 0, rate: null },
+      day7: { cohortUsers: 0, retainedUsers: 0, rate: null },
+    });
+  });
 });

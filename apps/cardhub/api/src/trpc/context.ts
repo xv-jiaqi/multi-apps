@@ -1,6 +1,6 @@
 import type { CreateExpressContextOptions } from '@trpc/server/adapters/express';
 import { InvalidAuthTokenError, type AuthService } from '../modules/auth/auth.service';
-import { recordDailyActivity } from '../modules/metrics/daily-activity';
+import { recordDailyActivity, type DailyActivityRedis } from '../modules/metrics/daily-activity';
 import type { PrismaService } from '../modules/prisma/prisma.service';
 
 export interface TrpcUser {
@@ -30,7 +30,11 @@ const BEARER_PREFIX = 'Bearer ';
  * code, including adminProcedure, must reuse that row instead of querying
  * the user again for the role.
  */
-export function makeCreateContext(auth: AuthService, prisma: PrismaService) {
+export function makeCreateContext(
+  auth: AuthService,
+  prisma: PrismaService,
+  redis?: DailyActivityRedis,
+) {
   return async ({ req, res }: CreateExpressContextOptions): Promise<TrpcContext> => {
     const header = req.headers['authorization'];
     if (typeof header === 'string' && header.startsWith(BEARER_PREFIX)) {
@@ -45,6 +49,7 @@ export function makeCreateContext(auth: AuthService, prisma: PrismaService) {
           });
           if (row && row.tokenVersion === tokenVer) {
             await recordDailyActivity(prisma, payload.sub, {
+              redis,
               warn: (code) => {
                 req.log?.warn({ errCode: code }, 'daily activity write failed');
               },

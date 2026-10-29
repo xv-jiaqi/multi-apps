@@ -5,6 +5,7 @@ import {
   formatUtcCalendarDate,
   inclusiveUtcDayCount,
   utcCalendarDate,
+  utcCalendarDateFromInstant,
   type AdminMetricsInput,
 } from '@repo/shared';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -98,9 +99,10 @@ type ActiveRow = { activeUsers: number | bigint };
 type DayRow = { day: string; count: number | bigint };
 type MonthRow = { month: string; activeUsers: number | bigint };
 type RetentionRow = {
-  cohortUsers: number | bigint;
-  nextDay: number | bigint;
-  day7: number | bigint;
+  nextDayCohort: number | bigint;
+  nextDayRetained: number | bigint;
+  day7Cohort: number | bigint;
+  day7Retained: number | bigint;
 };
 
 function retentionSlice(retainedUsers: number, cohortUsers: number): RetentionSlice {
@@ -119,6 +121,7 @@ export async function loadProductMetrics(
   const to = requireCalendarDate(input.to);
   const fromIso = formatUtcCalendarDate(from);
   const toIso = formatUtcCalendarDate(to);
+  const todayIso = formatUtcCalendarDate(utcCalendarDateFromInstant(new Date()));
   const dayCount = inclusiveUtcDayCount(from, to);
 
   const [activeRows, monthRows, registrationRows, retentionRows, commentRows] = await Promise.all([
@@ -144,29 +147,43 @@ export async function loadProductMetrics(
       ORDER BY 1
     `,
     prisma.$queryRaw<RetentionRow[]>`
-      WITH cohort AS (
+      WITH activity_start AS (
+        SELECT MIN(day) AS started_on FROM user_daily_activities
+      ),
+      cohort AS (
         SELECT id, ${utcDay} AS registered_on
         FROM users
         WHERE ${utcDay} BETWEEN CAST(${fromIso} AS date) AND CAST(${toIso} AS date)
       )
       SELECT
-        COUNT(*)::int AS "cohortUsers",
         COUNT(*) FILTER (
-          WHERE EXISTS (
-            SELECT 1
-            FROM user_daily_activities AS activity
-            WHERE activity."userId" = cohort.id
-              AND activity.day = cohort.registered_on + 1
-          )
-        )::int AS "nextDay",
+          WHERE registered_on + 1 >= (SELECT started_on FROM activity_start)
+            AND registered_on + 1 < CAST(${todayIso} AS date)
+        )::int AS "nextDayCohort",
         COUNT(*) FILTER (
-          WHERE EXISTS (
-            SELECT 1
-            FROM user_daily_activities AS activity
-            WHERE activity."userId" = cohort.id
-              AND activity.day = cohort.registered_on + 7
-          )
-        )::int AS "day7"
+          WHERE registered_on + 1 >= (SELECT started_on FROM activity_start)
+            AND registered_on + 1 < CAST(${todayIso} AS date)
+            AND EXISTS (
+              SELECT 1
+              FROM user_daily_activities AS activity
+              WHERE activity."userId" = cohort.id
+                AND activity.day = cohort.registered_on + 1
+            )
+        )::int AS "nextDayRetained",
+        COUNT(*) FILTER (
+          WHERE registered_on + 7 >= (SELECT started_on FROM activity_start)
+            AND registered_on + 7 < CAST(${todayIso} AS date)
+        )::int AS "day7Cohort",
+        COUNT(*) FILTER (
+          WHERE registered_on + 7 >= (SELECT started_on FROM activity_start)
+            AND registered_on + 7 < CAST(${todayIso} AS date)
+            AND EXISTS (
+              SELECT 1
+              FROM user_daily_activities AS activity
+              WHERE activity."userId" = cohort.id
+                AND activity.day = cohort.registered_on + 7
+            )
+        )::int AS "day7Retained"
       FROM cohort
     `,
     prisma.$queryRaw<CountRow[]>`
@@ -191,7 +208,6 @@ export async function loadProductMetrics(
   }));
 
   const retention = retentionRows[0];
-  const cohortUsers = readCount(retention?.cohortUsers ?? 0);
   const commentTotal = readCount(commentRows[0]?.count ?? 0);
 
   return {
@@ -207,8 +223,14 @@ export async function loadProductMetrics(
       byDay,
     },
     retention: {
-      nextDay: retentionSlice(readCount(retention?.nextDay ?? 0), cohortUsers),
-      day7: retentionSlice(readCount(retention?.day7 ?? 0), cohortUsers),
+      nextDay: retentionSlice(
+        readCount(retention?.nextDayRetained ?? 0),
+        readCount(retention?.nextDayCohort ?? 0),
+      ),
+      day7: retentionSlice(
+        readCount(retention?.day7Retained ?? 0),
+        readCount(retention?.day7Cohort ?? 0),
+      ),
     },
     comments: {
       total: commentTotal,

@@ -1,11 +1,17 @@
 import type { CreateExpressContextOptions } from '@trpc/server/adapters/express';
 import { InvalidAuthTokenError, type AuthService } from '../modules/auth/auth.service';
+import type { DailyActivityRedis } from '../modules/metrics/daily-activity';
 import type { PrismaService } from '../modules/prisma/prisma.service';
 import { makeCreateContext } from './context';
 
 const userRow = { tokenVersion: 0, role: 'user', bannedAt: null };
 
-function harness(options?: { createMany?: jest.Mock; findUnique?: jest.Mock; verify?: jest.Mock }) {
+function harness(options?: {
+  createMany?: jest.Mock;
+  findUnique?: jest.Mock;
+  verify?: jest.Mock;
+  redis?: DailyActivityRedis;
+}) {
   const createMany = options?.createMany ?? jest.fn().mockResolvedValue({ count: 1 });
   const findUnique = options?.findUnique ?? jest.fn().mockResolvedValue(userRow);
   const verify =
@@ -16,7 +22,7 @@ function harness(options?: { createMany?: jest.Mock; findUnique?: jest.Mock; ver
   } as unknown as PrismaService;
   const auth = { verify } as unknown as AuthService;
   const warn = jest.fn();
-  const createContext = makeCreateContext(auth, prisma);
+  const createContext = makeCreateContext(auth, prisma, options?.redis);
   const call = (authorization?: string) =>
     createContext({
       req: { headers: authorization ? { authorization } : {}, log: { warn } },
@@ -41,6 +47,15 @@ describe('makeCreateContext daily activity', () => {
       data: [{ userId: 'user-1', day: expect.any(Date) }],
       skipDuplicates: true,
     });
+  });
+
+  it('writes the activity row once when the same user is seen twice in one UTC day', async () => {
+    const set = jest.fn().mockResolvedValueOnce('OK').mockResolvedValueOnce(null);
+    const { createMany, call } = harness({ redis: { set } });
+    expect((await call('Bearer token')).user?.sub).toBe('user-1');
+    expect((await call('Bearer token')).user?.sub).toBe('user-1');
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(set).toHaveBeenCalledTimes(2);
   });
 
   it('returns the user when the activity write fails', async () => {

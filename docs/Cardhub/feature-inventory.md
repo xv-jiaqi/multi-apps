@@ -250,7 +250,7 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 
 表 `user_daily_activities`：一个用户一个 UTC 日一行（`userId` + `day` 唯一）。一次已鉴权的 tRPC 请求写入当天。也就是 context 里解析出了仍然有效的用户（token 能通过，`tokenVersion` 匹配，用户还在）。不写 IP、UA、邮箱、用户名，只写用户 id 和日期。
 
-同一用户同一天再请求，数据库 `ON CONFLICT DO NOTHING`，仍然只有一行。写入失败只打一条不含用户 id 的日志，原来的请求照常返回。
+同一用户同一 UTC 日先用 Redis `SET key 1 EX <到下一个 UTC 午夜的秒数> NX` 占位，键是 `cardhub:activity:v1:<userId>:<YYYY-MM-DD>`。只有第一次拿到锁才写库。Redis 命令失败或连不上时改为直接写库。写库失败只打一条不含用户 id 的日志，原来的请求照常返回。库上的 `(userId, day)` 唯一约束仍在，Redis 失效时重复插入也不会多出一行。
 
 注册和登录发生在鉴权之前，那一次请求本身不算活跃。之后带有效 token 的请求才算，包括公开接口。token 无效、用户已删除或 `tokenVersion` 不一致，不记。token 有效但 procedure 随后拒绝（例如非 admin 调用 `admin.metrics`），这一天仍然记下。
 
@@ -270,12 +270,18 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 
 #### 次日留存和 7 日留存
 
-同期群是 `createdAt` 的 UTC 日历日 D 落在 `[from, to]` 的用户。
+候选用户的 `createdAt` UTC 日历日 D 落在 `[from, to]`。次日留存和 7 日留存各有自己的 `cohortUsers`，不共用一个分母。
 
-- 次日留存：存在 `day = D+1` 的活跃行。注册日是第 0 天。
-- 7 日留存：存在 `day = D+7` 的活跃行。看的是第 7 天当天，不是 D+1 到 D+7 之间任意一天。
+活跃记录开始日 S 是 `user_daily_activities.day` 的最小值。表是空的时没有 S，两个口径都没有可统计的用户。
 
-`D+1` 和 `D+7` 可以晚于 `to`，仍然算。`cohortUsers` 是同期群人数，`retainedUsers` 是留下的人数，`rate = retainedUsers / cohortUsers`。
+一个用户进入次日留存的分母，要同时满足：
+
+- D+1 已经完整结束，也就是 D+1 早于查询当下的 UTC 日。今天还没过完，今天注册的用户不进这个分母。
+- D+1 不早于 S。回访日落在活跃表有记录之前时，当时不可能记下回访，这个用户不进分母。
+
+7 日留存用 D+7 套用同一对条件。注册日是第 0 天。留下是指存在 `day = D+N` 的活跃行，看的是那一天当天，不是 D+1 到 D+7 之间任意一天。
+
+`D+N` 可以晚于查询范围的 `to`。`retainedUsers` 是分母里有活跃行的人数。`rate = retainedUsers / cohortUsers`。分母为 0 时 `cohortUsers` 和 `retainedUsers` 都是 0，`rate` 是 `null`。查只有今天的范围时，次日留存是 `null`，不是 0。
 
 活跃和注册是两套数据。范围外注册、但范围内有活跃的用户计入 MAU，不进这批留存。
 
