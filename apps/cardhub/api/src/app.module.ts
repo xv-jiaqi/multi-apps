@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
+import { SeoModule } from './modules/seo/seo.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TrpcModule } from './trpc/trpc.module';
 import { validateEnv } from './config/env.validation';
@@ -31,6 +32,7 @@ import { validateEnv } from './config/env.validation';
     RedisModule,
     AuthModule,
     HealthModule,
+    SeoModule,
     TrpcModule,
   ],
   providers: [

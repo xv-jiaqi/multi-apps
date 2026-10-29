@@ -288,7 +288,7 @@ Cardhub 以平台无关的方式部署在阿里云香港的一台 Ubuntu 24.04 V
 
 - 镜像：仓库根 [`Dockerfile.api`](../../Dockerfile.api) 与 [`Dockerfile.web`](../../Dockerfile.web)。Web Docker 镜像使用 PR #38 的 nginx entrypoint，在容器启动时由运行时 `TRPC_URL` 生成未缓存的 `/config.js`。
 - 编排：[`deploy/docker-compose.yml`](../../deploy/docker-compose.yml) 启动 API / Web / Postgres 16 / Redis 7；Postgres/Redis 仅在各 compose project 默认网络内。
-- 代理：[`deploy/edge`](../../deploy/edge) 的共享 Caddy 负责 80/443、自动 HTTPS 和反向代理；API/Web 通过 external `edge` 网络上的 `ENV_NAME-api` / `ENV_NAME-web` 别名接入。生产 Web 根域名路由由 `deploy/edge/optional/root-web.caddy` 提供，`/opt/cardhub/edge/edge.env` 中需保持 `ROOT_WEB_DOMAINS=card-hub.app`。
+- 代理：[`deploy/edge`](../../deploy/edge) 的共享 Caddy 负责 80/443、自动 HTTPS 和反向代理；API/Web 通过 external `edge` 网络上的 `ENV_NAME-api` / `ENV_NAME-web` 别名接入。生产 Web 根域名路由由 `deploy/edge/optional/root-web.caddy` 提供，`/opt/cardhub/edge/edge.env` 中需保持 `ROOT_WEB_DOMAINS=card-hub.app`。根域名和 staging Web 域名上的 `GET /sitemap.xml` 反代到对应 API；`/robots.txt` 仍由 Web 容器提供。改完 Caddyfile 后要重建边缘容器，否则 `/sitemap.xml` 仍会落到 SPA。
 - 配置：复制 [`deploy/.env.example`](../../deploy/.env.example) 到 `/opt/cardhub/production/production.env` 与 `/opt/cardhub/staging/staging.env`，两套环境用同一个 app compose 文件和不同 project name（`cardhub-prod` / `cardhub-staging`）。生产 `TRPC_URL=https://api.card-hub.app/trpc`，预发 `TRPC_URL=https://api-staging.card-hub.app/trpc`。
 - 运行手册：见 [`deploy/README.md`](../../deploy/README.md)，包含服务器 bootstrap、GHCR 登录、DNS、部署、回滚、备份/恢复、日志查看、GitHub Environment 保护规则和单主机 staging/prod key 隔离限制。
 

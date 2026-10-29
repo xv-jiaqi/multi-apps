@@ -2,10 +2,12 @@
 set -eu
 
 CONFIG_FILE=${CARDHUB_CONFIG_FILE:-/usr/share/nginx/html/config.js}
+ROBOTS_FILE=${CARDHUB_ROBOTS_FILE:-/usr/share/nginx/html/robots.txt}
 TRPC_URL_VALUE=${TRPC_URL:-}
 SENTRY_DSN_VALUE=${SENTRY_DSN:-}
 SENTRY_ENVIRONMENT_VALUE=${SENTRY_ENVIRONMENT:-}
 GIT_SHA_VALUE=${GIT_SHA:-}
+PUBLIC_WEB_ORIGIN_VALUE=${PUBLIC_WEB_ORIGIN:-}
 
 reject_control_chars() {
   name=$1
@@ -68,6 +70,28 @@ if [ -n "$GIT_SHA_VALUE" ] && [ "$GIT_SHA_VALUE" != unknown ]; then
   reject_js_string_breakout "GIT_SHA" "$GIT_SHA_VALUE"
 fi
 
+# Empty keeps the image's robots.txt (production sitemap). A set value rewrites
+# the Sitemap line so staging and production share one image.
+if [ -n "$PUBLIC_WEB_ORIGIN_VALUE" ]; then
+  reject_control_chars "PUBLIC_WEB_ORIGIN" "$PUBLIC_WEB_ORIGIN_VALUE"
+  if ! printf '%s' "$PUBLIC_WEB_ORIGIN_VALUE" | grep -Eq '^https?://[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(:[0-9]{1,5})?$'; then
+    echo "ERROR: PUBLIC_WEB_ORIGIN must be an absolute http(s) origin without a path, query, or trailing slash." >&2
+    exit 1
+  fi
+  origin_port=$(printf '%s' "$PUBLIC_WEB_ORIGIN_VALUE" | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p')
+  if [ -n "$origin_port" ]; then
+    # dash has no 10# prefix. Strip leading zeros so 08 is not an octal error.
+    origin_port_num=$(printf '%s' "$origin_port" | sed 's/^0*//')
+    if [ -z "$origin_port_num" ]; then
+      origin_port_num=0
+    fi
+    if [ "$origin_port_num" -lt 1 ] || [ "$origin_port_num" -gt 65535 ]; then
+      echo "ERROR: PUBLIC_WEB_ORIGIN must be an absolute http(s) origin without a path, query, or trailing slash." >&2
+      exit 1
+    fi
+  fi
+fi
+
 printf 'window.__CARDHUB_CONFIG__ = {\n' > "$CONFIG_FILE"
 first_config_pair=true
 write_config_pair "TRPC_URL" "$TRPC_URL_VALUE"
@@ -85,6 +109,17 @@ if [ -n "$GIT_SHA_VALUE" ] && [ "$GIT_SHA_VALUE" != unknown ]; then
 fi
 
 printf '\n};\n' >> "$CONFIG_FILE"
+
+if [ -n "$PUBLIC_WEB_ORIGIN_VALUE" ]; then
+  printf '%s\n' \
+    'User-agent: *' \
+    'Disallow: /reports' \
+    'Disallow: /admin' \
+    'Disallow: /me' \
+    '' \
+    "Sitemap: ${PUBLIC_WEB_ORIGIN_VALUE}/sitemap.xml" \
+    > "$ROBOTS_FILE"
+fi
 
 # nginx add_header inside a location replaces every server-level add_header,
 # so the same snippet is included from the server and from each location.

@@ -80,7 +80,7 @@
 | CH-204 | 评论回复（单层）                                | P2     | M    | CH-002                | ✅ #147                                               |
 | CH-205 | 首页改版                                        | P2     | M    | CH-201、CH-106        | 待领取                                                |
 | CH-206 | 卡牌详情页改版（大图、长描述）                  | P2     | M    | CH-105、CH-107        | 待领取                                                |
-| CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 待领取                                                |
+| CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 进行中（sitemap / robots；description 待 Spec）       |
 | CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105                | 待领取                                                |
 | CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 进行中（#145，基于 #144）                             |
 | CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | 待领取                                                |
@@ -476,6 +476,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-207 SEO：sitemap / robots / 页面 meta
 
+- **进度**（2026-10-29）：sitemap 与 robots 已做，页面 `description` 仍等设计稿，本项不写文案。`GET /sitemap.xml` 由 API 列出系列（`/series/:slug`）、卡牌（`/cards/:slug`）和话题（`/forum/:slug`）。非法 slug 不进入文档。单类最多 50,000 条；文章和发售日历仍等 CH-214、CH-215。边缘 Caddy 在根域名和 staging Web 域名上把 `/sitemap.xml` 反代到 API。`/robots.txt` 禁止 `/reports`、`/admin`、`/me`，`Sitemap` 指向同一 Web 源。`PUBLIC_WEB_ORIGIN` 为空时，compose 用 `https://${WEB_DOMAIN}`；`WEB_DOMAIN` 缺失或为空则渲染失败。D7 预渲染 / SSR 未做。
 - **改动范围**
   - API：新增 REST 端点 `GET /sitemap.xml`，从数据库生成系列、卡牌、话题的 URL；Caddy 在 Web 域名上把 `/sitemap.xml` 反代到 API（修改 `deploy/edge/optional/root-web.caddy` 和 staging 站点块）。
   - Web：`public/robots.txt`（指向 sitemap，禁止抓取 `/reports`、`/admin`、`/me`）；在 CH-108 的 `<PageMeta>` 上补 `description`。

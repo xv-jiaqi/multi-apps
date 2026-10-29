@@ -6,6 +6,8 @@
 # missing or invalid.
 # Example local run:
 #   docker run -e TRPC_URL=https://api.card-hub.app/trpc cardhub-web:latest
+# PUBLIC_WEB_ORIGIN, when set, rewrites /robots.txt so its Sitemap line uses
+# that origin. Unset keeps the image default (https://card-hub.app/sitemap.xml).
 
 ARG NODE_VERSION=22-alpine
 ARG GIT_SHA=unknown

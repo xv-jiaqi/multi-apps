@@ -24,6 +24,10 @@ services:
       # false, and leaves this line unchanged when that variable is unset.
       PASSWORD_PREHASH_WRITE: ${PASSWORD_PREHASH_WRITE:-false}
       CORS_ORIGIN: ${CORS_ORIGIN}
+      # Absolute web origin for sitemap <loc>. An empty PUBLIC_WEB_ORIGIN uses
+      # https://WEB_DOMAIN. WEB_DOMAIN must be set in that case; compose stops
+      # instead of publishing https://.
+      PUBLIC_WEB_ORIGIN: ${PUBLIC_WEB_ORIGIN:-https://${WEB_DOMAIN:?WEB_DOMAIN is required}}
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-${ENV_NAME:-}}
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
@@ -72,6 +76,10 @@ services:
     stop_grace_period: 30s
     environment:
       TRPC_URL: ${TRPC_URL}
+      # Rewrites robots.txt Sitemap. An empty PUBLIC_WEB_ORIGIN uses
+      # https://WEB_DOMAIN. WEB_DOMAIN must be set in that case; compose stops
+      # instead of publishing https://.
+      PUBLIC_WEB_ORIGIN: ${PUBLIC_WEB_ORIGIN:-https://${WEB_DOMAIN:?WEB_DOMAIN is required}}
       SENTRY_DSN: ${WEB_SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-${ENV_NAME:-}}
     depends_on:

@@ -52,6 +52,7 @@ jobs:
           ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
           ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example --profile migrate config >"${tmp}"
           ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config >"${tmp}"
+          bash deploy/public-web-origin-compose.test.sh
           rm -f "${tmp}"
           bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh
           sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
@@ -200,6 +201,7 @@ jobs:
           bash deploy/check-backup-log.test.sh
           bash deploy/sync-whitelist.test.sh
           bash deploy/web-security-headers.test.sh
+          bash deploy/sitemap-proxy.test.sh
 
   audit:
     name: pnpm audit (high+)
