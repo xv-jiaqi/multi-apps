@@ -5,7 +5,6 @@ import { SessionExpiryWatcher } from './components/session-expiry-watcher';
 import { ErrorBoundary } from './components/error-boundary';
 import { CardDetailSkeleton } from './components/card-detail-skeleton';
 import { RouteErrorFallback } from './components/route-error';
-import { captureSentryException } from './lib/sentry';
 import { HomePage } from './pages/home';
 
 const SeriesListPage = lazy(() =>
@@ -92,18 +91,10 @@ function RouteFallback() {
   );
 }
 
-export function LazyRoute({ children }: { children: React.ReactNode }) {
+function LazyRoute({ children }: { children: React.ReactNode }) {
   // Per-route ErrorBoundary so a single page crash doesn't kill the shell.
-  // Load failures stay inside this boundary, so report them here the same way
-  // the root boundary does. They never reach main.tsx.
   return (
-    <ErrorBoundary
-      onError={(error, info) => {
-        captureSentryException(error, {
-          componentStack: info.componentStack ?? '',
-        });
-      }}
-    >
+    <ErrorBoundary>
       <Suspense fallback={<RouteFallback />}>{children}</Suspense>
     </ErrorBoundary>
   );
