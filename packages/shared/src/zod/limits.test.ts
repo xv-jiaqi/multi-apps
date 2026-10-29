@@ -10,10 +10,13 @@ import {
   LISTING_IMAGE_MAX_COUNT,
   LISTING_IMAGE_URL_MAX,
   LISTING_PRICE_STRING_MAX,
+  COLLECTION_OWNED_COUNT_MAX,
+  COLLECTION_OWNED_COUNT_MIN,
   adminCardUpsertInput,
   adminSeriesUpsertInput,
   adminSubsetUpsertInput,
   authTokenSchema,
+  collectionUpsertInput,
   cursorPaginationInput,
   emailSchema,
   listingPublishInput,
@@ -135,5 +138,28 @@ describe('procedure input upper bounds', () => {
     expect(cursorPaginationInput.safeParse({ cursor: `${cursor}a` }).success).toBe(false);
     expect(pageCursorPaginationInput.safeParse({ pageCursor: cursor, cursor }).success).toBe(true);
     expectUnderBodyLimit('cursor page', { cursor, pageCursor: cursor, limit: 50 });
+
+    expect(COLLECTION_OWNED_COUNT_MIN).toBe(0);
+    expect(COLLECTION_OWNED_COUNT_MAX).toBe(99);
+    expect(
+      collectionUpsertInput.safeParse({ cardSlug: 'alpha', ownedCount: 0, wanted: true }).success,
+    ).toBe(true);
+    expect(
+      collectionUpsertInput.safeParse({ cardSlug: 'alpha', ownedCount: 99, wanted: false }).success,
+    ).toBe(true);
+    for (const ownedCount of [-1, 100, 1.5, '2', null]) {
+      const parsed = collectionUpsertInput.safeParse({
+        cardSlug: 'alpha',
+        ownedCount,
+        wanted: false,
+      });
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.issues.some((issue) => issue.path[0] === 'ownedCount')).toBe(true);
+      }
+    }
+    expect(
+      collectionUpsertInput.safeParse({ cardSlug: 'alpha', ownedCount: 1, wanted: 'yes' }).success,
+    ).toBe(false);
   });
 });
