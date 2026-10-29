@@ -553,6 +553,12 @@ export class AdminRouter {
               cause: { code: 'SERIES_NOT_FOUND', slug: card.seriesSlug },
             });
           }
+          const existing = await tx.card.findUnique({
+            where: { slug: card.slug },
+            select: { seriesId: true, subsetId: true },
+          });
+          const subsetId =
+            existing && existing.seriesId !== seriesId && existing.subsetId ? null : undefined;
           await tx.card.upsert({
             where: { slug: card.slug },
             update: {
@@ -562,6 +568,7 @@ export class AdminRouter {
               imageUrl: card.imageUrl,
               attributes: card.attributes,
               seriesId,
+              ...(subsetId !== undefined ? { subsetId } : {}),
             },
             create: {
               slug: card.slug,

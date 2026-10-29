@@ -295,4 +295,94 @@ describe('catalog taxonomy', () => {
     expect(detached?.categoryId).toBeNull();
     expect(await prisma.category.findUnique({ where: { slug: categorySlug } })).toBeNull();
   });
+
+  it('clears subsetId when an import moves a card onto another series', async () => {
+    const sourceSlug = `imp-src-${suffix}`.slice(0, 64);
+    const destSlug = `imp-dst-${suffix}`.slice(0, 64);
+    const movedSlug = `imp-card-${suffix}`.slice(0, 64);
+    try {
+      expect(
+        (await post('admin.series.create', { slug: sourceSlug, title: '导入来源' }, adminToken))
+          .status,
+      ).toBe(200);
+      expect(
+        (
+          await post(
+            'admin.subsets.create',
+            { seriesSlug: sourceSlug, slug: 'a-base', name: '来源子集', kind: 'BASE' },
+            adminToken,
+          )
+        ).status,
+      ).toBe(200);
+      expect(
+        (
+          await post(
+            'admin.cards.create',
+            {
+              slug: movedSlug,
+              name: '挪走的卡',
+              rarity: 'common',
+              attributes: {},
+              seriesSlug: sourceSlug,
+              subsetSlug: 'a-base',
+              cardNumber: '001',
+            },
+            adminToken,
+          )
+        ).status,
+      ).toBe(200);
+      expect(
+        (await post('admin.series.create', { slug: destSlug, title: '导入目标' }, adminToken))
+          .status,
+      ).toBe(200);
+      expect(
+        (
+          await post(
+            'admin.subsets.create',
+            { seriesSlug: destSlug, slug: 'b-base', name: '目标子集', kind: 'BASE' },
+            adminToken,
+          )
+        ).status,
+      ).toBe(200);
+
+      const imported = await post(
+        'admin.catalog.import',
+        {
+          dryRun: false,
+          data: [
+            {
+              slug: destSlug,
+              title: '导入目标',
+              cards: [
+                {
+                  slug: movedSlug,
+                  name: '挪走的卡',
+                  rarity: 'common',
+                  attributes: {},
+                },
+              ],
+            },
+          ],
+        },
+        adminToken,
+      );
+      expect(imported.status).toBe(200);
+
+      const dest = await prisma.series.findUnique({ where: { slug: destSlug } });
+      const moved = await prisma.card.findUnique({ where: { slug: movedSlug } });
+      expect(moved?.seriesId).toBe(dest?.id);
+      expect(moved?.subsetId).toBeNull();
+
+      const detail = await get('series.bySlug', { slug: destSlug });
+      expect(detail.status).toBe(200);
+      const body = resultData(detail.body);
+      const subsets = body.subsets as Array<{ slug: string }>;
+      expect(subsets.map((subset) => subset.slug)).toEqual(['b-base']);
+      const cards = body.cards as Array<{ slug: string; subsetSlug: string | null }>;
+      expect(cards.find((card) => card.slug === movedSlug)?.subsetSlug).toBeNull();
+    } finally {
+      await prisma.card.deleteMany({ where: { slug: movedSlug } });
+      await prisma.series.deleteMany({ where: { slug: { in: [sourceSlug, destSlug] } } });
+    }
+  });
 });
