@@ -94,7 +94,8 @@ if [ -z "\${output}" ]; then
   echo "lab curl stub expected -o <file>" >&2
   exit 1
 fi
-id="\$(${real_docker} ps -q --filter label=com.docker.compose.project=cardhub-staging --filter label=com.docker.compose.service=api | head -n 1)"
+ids="\$(${real_docker} ps -q --filter label=com.docker.compose.project=cardhub-staging --filter label=com.docker.compose.service=api)"
+id="\${ids%%\$'\n'*}"
 if [ -z "\${id}" ]; then
   echo "lab curl stub found no staging api container" >&2
   exit 1
@@ -281,7 +282,7 @@ for repo_name in cardhub-api cardhub-web; do
     exit 1
   fi
   keep="$(grep "KEEP ${ref} " "${cleanup_log}" || true)"
-  if [ -z "${keep}" ] || ! printf '%s\n' "${keep}" | grep -q 'previous'; then
+  if [ -z "${keep}" ] || ! grep -q 'previous' <<< "${keep}"; then
     echo "FAIL cleanup did not keep ${ref} as a previous image" >&2
     echo "line=${keep}" >&2
     cat "${cleanup_log}" >&2

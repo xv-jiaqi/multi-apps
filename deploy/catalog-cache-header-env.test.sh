@@ -111,7 +111,7 @@ deploy_job="$(awk '
   in_job { print }
 ' "${workflow}")"
 assert "deploy job reads the GitHub variable" "$(
-  printf '%s\n' "${deploy_job}" | grep -F -q 'CATALOG_CACHE_HEADER: ${{ vars.CATALOG_CACHE_HEADER }}' && echo 0 || echo 1
+  grep -F -q 'CATALOG_CACHE_HEADER: ${{ vars.CATALOG_CACHE_HEADER }}' <<< "${deploy_job}" && echo 0 || echo 1
 )"
 
 extracted="${work}/deploy-on-vps.sh"
@@ -179,10 +179,11 @@ assert "workflow other value forwards false" "$(
   [ "${rc}" -eq 0 ] && grep -F -q "CATALOG_CACHE_HEADER=false ${remote_cmd}" "${work}/ssh.log" && echo 0 || echo 1
 )"
 
-env_check="$(grep -n 'ENV_NAME in ${env_file} must be' "${deploy_script}" | head -n 1)"
+env_check="$(grep -n 'ENV_NAME in ${env_file} must be' "${deploy_script}")"
+env_check="${env_check%%$'\n'*}"
 echo "ENV_NAME check: ${env_check}"
 assert "deploy refuses a staging file whose ENV_NAME is not staging" "$(
-  printf '%s\n' "${env_check}" | grep -F -q "must be" && echo 0 || echo 1
+  grep -F -q "must be" <<< "${env_check}" && echo 0 || echo 1
 )"
 
 if [ "${failed}" -ne 0 ]; then

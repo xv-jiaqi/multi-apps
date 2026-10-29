@@ -55,20 +55,22 @@ read_whitelist() {
     echo "FAIL ${file}: deploy workflow has no Sync deploy files step" >&2
     return 1
   fi
-  if printf '%s\n' "${body}" | grep -q '^[[:space:]]*sync_members=('; then
-    printf '%s\n' "${body}" | awk '
+  if grep -q '^[[:space:]]*sync_members=(' <<< "${body}"; then
+    awk '
+      done { next }
       /^[[:space:]]*sync_members=\(/ { in_arr = 1; next }
-      in_arr && /^[[:space:]]*\)/ { exit }
+      in_arr && /^[[:space:]]*\)/ { done = 1; next }
       in_arr {
         line = $0
         sub(/#.*/, "", line)
         n = split(line, parts, /[[:space:]]+/)
         for (i = 1; i <= n; i++) if (parts[i] != "") print parts[i]
       }
-    '
+    ' <<< "${body}"
     return 0
   fi
-  printf '%s\n' "${body}" | awk '
+  awk '
+    done { next }
     /tar -C deploy -czf -/ { in_tar = 1 }
     in_tar {
       line = $0
@@ -80,9 +82,9 @@ read_whitelist() {
       gsub(/\\/, " ", line)
       n = split(line, parts, /[[:space:]]+/)
       for (i = 1; i <= n; i++) if (parts[i] != "") print parts[i]
-      if (in_tar == 2) exit
+      if (in_tar == 2) done = 1
     }
-  '
+  ' <<< "${body}"
 }
 
 list_scripts() {
@@ -301,19 +303,19 @@ fi
 echo "OK whitelist: members exist and every *.sh is executable"
 
 body="$(step_body "${workflow}")"
-if ! printf '%s\n' "${body}" | grep -Fq 'for member in "${sync_members[@]}"'; then
+if ! grep -Fq 'for member in "${sync_members[@]}"' <<< "${body}"; then
   echo "FAIL Sync deploy files does not walk sync_members to build the remote assert" >&2
   exit 1
 fi
-if ! printf '%s\n' "${body}" | grep -Fq '*.sh) sh_scripts+=("${member}")'; then
+if ! grep -Fq '*.sh) sh_scripts+=("${member}")' <<< "${body}"; then
   echo "FAIL Sync deploy files does not select every whitelist *.sh" >&2
   exit 1
 fi
-if ! printf '%s\n' "${body}" | grep -Fq 'tar -C deploy -czf - "${sync_members[@]}"'; then
+if ! grep -Fq 'tar -C deploy -czf - "${sync_members[@]}"' <<< "${body}"; then
   echo "FAIL tar does not upload sync_members" >&2
   exit 1
 fi
-assert_line="$(printf '%s\n' "${body}" | grep -E '^[[:space:]]*remote_assert=' || true)"
+assert_line="$(grep -E '^[[:space:]]*remote_assert=' <<< "${body}" || true)"
 if [ -z "${assert_line}" ]; then
   echo "FAIL Sync deploy files step has no remote_assert" >&2
   exit 1
@@ -322,30 +324,31 @@ if [ "$(printf '%s\n' "${assert_line}" | wc -l)" -ne 1 ]; then
   echo "FAIL Sync deploy files step has more than one remote_assert" >&2
   exit 1
 fi
-if printf '%s\n' "${assert_line}" | grep -q '\.sh'; then
+if grep -q '\.sh' <<< "${assert_line}"; then
   echo "FAIL remote_assert hardcodes a script name; it must loop over whitelist *.sh" >&2
   printf '%s\n' "${assert_line}" >&2
   exit 1
 fi
-if ! printf '%s\n' "${assert_line}" | grep -q 'sh_scripts'; then
+if ! grep -q 'sh_scripts' <<< "${assert_line}"; then
   echo "FAIL remote_assert does not use the scripts taken from the whitelist" >&2
   exit 1
 fi
-if ! printf '%s\n' "${body}" | grep -Fq '&& ${remote_assert}'; then
+if ! grep -Fq '&& ${remote_assert}' <<< "${body}"; then
   echo "FAIL remote_assert is not the remote command after tar extract" >&2
   exit 1
 fi
 
-fragment="$(printf '%s\n' "${body}" | awk '
+fragment="$(awk '
+  done { next }
   /^[[:space:]]*sync_members=\(/ { p = 1 }
-  p && /^[[:space:]]*remote_assert=/ { print; exit }
+  p && /^[[:space:]]*remote_assert=/ { print; done = 1; next }
   p { print }
-')"
+' <<< "${body}")"
 if [ -z "${fragment}" ]; then
   echo "FAIL could not isolate the sync_members/remote_assert fragment" >&2
   exit 1
 fi
-if printf '%s\n' "${fragment}" | grep -Eq '(^|[[:space:]])(ssh|tar)([[:space:]]|$)'; then
+if grep -Eq '(^|[[:space:]])(ssh|tar)([[:space:]]|$)' <<< "${fragment}"; then
   echo "FAIL refusing to evaluate tar or ssh from the Sync deploy files step" >&2
   exit 1
 fi
@@ -382,11 +385,11 @@ if [ "${for_list}" != "${expected_sh[*]}" ]; then
   printf 'whitelist: %s\n' "${expected_sh[*]}" >&2
   exit 1
 fi
-if ! printf '%s\n' "${remote_assert}" | grep -Fq 'missing or not executable'; then
+if ! grep -Fq 'missing or not executable' <<< "${remote_assert}"; then
   echo "FAIL remote_assert has no clear failure message" >&2
   exit 1
 fi
-if ! printf '%s\n' "${remote_assert}" | grep -Fq '[ ! -f ' || ! printf '%s\n' "${remote_assert}" | grep -Fq '[ ! -x '; then
+if ! grep -Fq '[ ! -f ' <<< "${remote_assert}" || ! grep -Fq '[ ! -x ' <<< "${remote_assert}"; then
   echo "FAIL remote_assert does not require the file to exist and be executable" >&2
   exit 1
 fi

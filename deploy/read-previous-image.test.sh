@@ -131,7 +131,7 @@ if [ "${cmd}" = "ps" ]; then
   emit_named() {
     local id="$1"
     local project_label="$2"
-    if printf '%s' "${ps_format}" | grep -q 'com.docker.compose.project'; then
+    if grep -q 'com.docker.compose.project' <<< "${ps_format}"; then
       printf '%s\t%s\n' "${id}" "${project_label}"
     else
       printf '%s\n' "${id}"
@@ -143,7 +143,7 @@ if [ "${cmd}" = "ps" ]; then
       if [ "${project_value}" = "cardhub-staging" ] && [ -n "${service_value}" ]; then
         exit 0
       fi
-      if [ "${service_value}" = "web" ] || printf '%s' "${name_filter}" | grep -q 'web'; then
+      if [ "${service_value}" = "web" ] || grep -q 'web' <<< "${name_filter}"; then
         emit_named otherweb other-project
       else
         emit_named otherapi other-project
@@ -151,7 +151,7 @@ if [ "${cmd}" = "ps" ]; then
       exit 0
       ;;
     labeled-leftover)
-      if [ "${service_value}" = "web" ] || printf '%s' "${name_filter}" | grep -q 'web'; then
+      if [ "${service_value}" = "web" ] || grep -q 'web' <<< "${name_filter}"; then
         echo leftoverweb
       else
         echo leftoverapi
@@ -165,7 +165,7 @@ if [ "${cmd}" = "ps" ]; then
       if [ -z "${name_filter}" ]; then
         exit 0
       fi
-      if printf '%s' "${name_filter}" | grep -q 'web'; then
+      if grep -q 'web' <<< "${name_filter}"; then
         emit_named leftoverweb ""
       else
         emit_named leftoverapi ""

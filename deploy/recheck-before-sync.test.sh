@@ -232,4 +232,35 @@ do
   echo "OK ${job}: ${step} has no if: or continue-on-error"
 done
 
+# The real deploy job is smaller than a pipe buffer, so the old early exit
+# only shows up when the writer is still going. Pad past that buffer. Before
+# step_keys read through EOF, this call exited 141.
+saved_workflow="${workflow}"
+workflow="${tmp}/sigpipe-padded.yml"
+awk '
+  {
+    print
+  }
+  inserted == 0 && $0 == "      - name: Sync deploy files" {
+    inserted = 1
+    pad = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+    for (i = 0; i < 4000; i++) {
+      printf "        echo sigpipe-pad-%04d %s\n", i, pad
+    }
+  }
+' "${saved_workflow}" > "${workflow}"
+padded_block="$(step_keys deploy "Re-check deploy tree before sync")"
+workflow="${saved_workflow}"
+if ! grep -F -q 'resolve-deploy-inputs.sh --assert' <<< "${padded_block}"; then
+  echo "FAIL padded deploy job: re-check step text missing after step_keys" >&2
+  exit 1
+fi
+if grep -Eq '^        (if:|continue-on-error:)' <<< "${padded_block}"; then
+  echo "FAIL padded deploy job: re-check step has if: or continue-on-error" >&2
+  exit 1
+fi
+echo "OK padded deploy job: step_keys finished without SIGPIPE"
+
+bash "${root}/deploy/no-early-pipe-exit.test.sh"
+
 echo "recheck-before-sync tests passed"

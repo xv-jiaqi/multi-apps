@@ -361,10 +361,10 @@ edge_job="$(awk '
   in_job && /^  [^ ]/ { exit }
   in_job { print }
 ' "${workflow}")"
-assert "deploy job reads the GitHub variable" "$(printf '%s\n' "${deploy_job}" | grep -F -q 'PASSWORD_PREHASH_WRITE: ${{ vars.PASSWORD_PREHASH_WRITE }}' && echo 0 || echo 1)"
-assert "edge job does not read the variable" "$(printf '%s\n' "${edge_job}" | grep -F -q 'PASSWORD_PREHASH_WRITE' && echo 1 || echo 0)"
+assert "deploy job reads the GitHub variable" "$(grep -F -q 'PASSWORD_PREHASH_WRITE: ${{ vars.PASSWORD_PREHASH_WRITE }}' <<< "${deploy_job}" && echo 0 || echo 1)"
+assert "edge job does not read the variable" "$(grep -F -q 'PASSWORD_PREHASH_WRITE' <<< "${edge_job}" && echo 1 || echo 0)"
 assert "deploy step does not echo the variable" "$(
-  printf '%s\n' "${deploy_job}" | grep -E -q 'echo[[:space:]].*(\$\{?(PASSWORD_PREHASH_WRITE|prehash)\}?|vars\.PASSWORD_PREHASH_WRITE)' && echo 1 || echo 0
+  grep -E -q 'echo[[:space:]].*(\$\{?(PASSWORD_PREHASH_WRITE|prehash)\}?|vars\.PASSWORD_PREHASH_WRITE)' <<< "${deploy_job}" && echo 1 || echo 0
 )"
 
 extracted="${work}/deploy-on-vps.sh"
@@ -450,9 +450,15 @@ assert "workflow rejects a bad value" "$([ "${rc}" -ne 0 ] && echo 0 || echo 1)"
 assert "workflow bad value does not ssh" "$([ ! -e "${work}/ssh.log" ] && echo 0 || echo 1)"
 assert "workflow bad value is not printed" "$(no_secret "${log}" && no_secret "${err}" && echo 0 || echo 1)"
 
-apply_line="$(grep -n 'apply_password_prehash_write "${env_file}"' "${deploy_script}" | head -n 1 | cut -d: -f1)"
-armed_line="$(grep -n 'rollback_armed=1' "${deploy_script}" | head -n 1 | cut -d: -f1)"
-up_line="$(grep -n 'compose up -d postgres redis' "${deploy_script}" | head -n 1 | cut -d: -f1)"
+apply_line="$(grep -n 'apply_password_prehash_write "${env_file}"' "${deploy_script}")"
+apply_line="${apply_line%%$'\n'*}"
+apply_line="${apply_line%%:*}"
+armed_line="$(grep -n 'rollback_armed=1' "${deploy_script}")"
+armed_line="${armed_line%%$'\n'*}"
+armed_line="${armed_line%%:*}"
+up_line="$(grep -n 'compose up -d postgres redis' "${deploy_script}")"
+up_line="${up_line%%$'\n'*}"
+up_line="${up_line%%:*}"
 assert "flag write is before containers change" "$(
   [ -n "${apply_line}" ] && [ -n "${armed_line}" ] && [ -n "${up_line}" ] \
     && [ "${apply_line}" -lt "${armed_line}" ] && [ "${apply_line}" -lt "${up_line}" ] \
