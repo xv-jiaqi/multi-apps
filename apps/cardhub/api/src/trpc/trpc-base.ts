@@ -146,7 +146,7 @@ function isZodCause(cause: unknown): boolean {
 
 const ZOD_DEFAULT_MESSAGE = /^(?:Too small|Too big|Invalid(?: input)?|Expected |Unrecognized key)/;
 
-interface PublicSchemaIssue {
+export interface PublicSchemaIssue {
   path: Array<string | number>;
   message: string;
   code?: string;
@@ -154,7 +154,7 @@ interface PublicSchemaIssue {
   maximum?: number;
 }
 
-interface PublicZodError {
+export interface PublicZodError {
   formErrors: string[];
   fieldErrors: Record<string, string[]>;
   issues: PublicSchemaIssue[];
