@@ -133,31 +133,31 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 
 ### 3.9 体验与无障碍
 
-| 能力                                       | 状态 | 说明                                                                                                            |
-| ------------------------------------------ | ---- | --------------------------------------------------------------------------------------------------------------- |
-| 响应式布局 + 移动端汉堡菜单                | ✅   | 375 宽用户内容 wrap-anywhere，代码块只在框内横向滚动（W-REG-1 / AC1-4）                                         |
-| skip-to-content、focus-visible、aria 标注  | ✅   | 开发模式下 `@axe-core/react` 自动扫描                                                                           |
-| 元数据文字对比度                           | ✅   | CH-216 v2.1，已由 #159 完成。页面底上列入规格的次要文字为 `text-neutral-600`；白卡上的 `text-neutral-500` 保留  |
-| 路由懒加载 + 双层 ErrorBoundary            | ✅   | 崩溃页按当前语言显示；chunk 失败整页刷新，原始错误只进控制台                                                    |
-| 加载 / 错误 / 空状态、骨架屏               | ✅   | 卡牌详情主包预留 63:88 骨架，避免路由 chunk 到达前跳动（CH-109）                                                |
-| 刘海屏 safe-area + 页面横向留白            | ✅   | `.app-safe-top / .app-safe-x / .app-safe-bottom`；`.app-safe-x` 同时保证页面最小横向留白（< sm 16px，sm+ 24px） |
+| 能力                                       | 状态 | 说明                                                                                                                |
+| ------------------------------------------ | ---- | ------------------------------------------------------------------------------------------------------------------- |
+| 响应式布局 + 移动端汉堡菜单                | ✅   | 375 宽用户内容 wrap-anywhere，代码块只在框内横向滚动（W-REG-1 / AC1-4）                                             |
+| skip-to-content、focus-visible、aria 标注  | ✅   | 开发模式下 `@axe-core/react` 自动扫描                                                                               |
+| 元数据文字对比度                           | ✅   | CH-216 v2.1，已由 #159 完成。页面底上列入规格的次要文字为 `text-neutral-600`；白卡上的 `text-neutral-500` 保留      |
+| 路由懒加载 + 双层 ErrorBoundary            | ✅   | 崩溃页按当前语言显示；chunk 失败整页刷新，原始错误只进控制台                                                        |
+| 加载 / 错误 / 空状态、骨架屏               | ✅   | 卡牌详情主包预留 63:88 骨架，避免路由 chunk 到达前跳动（CH-109）                                                    |
+| 刘海屏 safe-area + 页面横向留白            | ✅   | `.app-safe-top / .app-safe-x / .app-safe-bottom`；`.app-safe-x` 同时保证页面最小横向留白（< sm 16px，sm+ 24px）     |
 | 页面级 `<title>` / description             | 🟡   | 页面 `<title>` 已按 `{页面名} · Cardhub` 设置。sitemap 与 robots 已上；description 仍等设计稿，不做预渲染（CH-207） |
-| 首页精选分类、最新系列横滑、页脚、入场动效 | ❌   | UI 规范与历史 AI 前端指令要求（CH-205）                                                                         |
-| 收藏、分享                                 | ❌   | CH-203（含集齐进度）                                                                                            |
-| 深色模式                                   | ❌   | CH-305                                                                                                          |
+| 首页精选分类、最新系列横滑、页脚、入场动效 | ❌   | UI 规范与历史 AI 前端指令要求（CH-205）                                                                             |
+| 收藏、分享                                 | ❌   | CH-203（含集齐进度）                                                                                                |
+| 深色模式                                   | ❌   | CH-305                                                                                                              |
 
 ### 3.10 平台与运维
 
 | 能力                                                              | 状态 | 说明                                                                                                                                                                                                                                                                                                  |
 | ----------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /health`（db / redis / gitSha / buildTime，DB 异常返回 503） | ✅   | 部署脚本用 `gitSha` 校验上线版本；另有 `health.ping`                                                                                                                                                                                                                                                  |
-| `GET /sitemap.xml`、`/robots.txt`                                  | ✅   | API 生成系列、卡牌、话题 URL。Caddy 在 Web 域名把 sitemap 反代到 API。robots 禁止 `/reports`、`/admin`、`/me`。description 与预渲染仍留给 CH-207                                                                                      |
-| 写接口限流（express-rate-limit，按 IP）                           | ✅   | 内存存储，单实例足够；多实例需要 Redis store（CH-210）。`trust proxy` 只信任 1 跳（Caddy）                                                                                                                                                                                                            |
+| `GET /sitemap.xml`、`/robots.txt`                                 | ✅   | API 生成系列、卡牌、话题 URL。Caddy 在 Web 域名把 sitemap 反代到 API。robots 禁止 `/reports`、`/admin`、`/me`。description 与预渲染仍留给 CH-207                                                                                                                                                      |
+| 写接口限流（express-rate-limit，按 IP）                           | ✅   | 计数在 Redis（`rate-limit-redis`，各限流器独立前缀，`passOnStoreError`）。Redis 故障时放行。`trust proxy` 只信任 1 跳（Caddy）                                                                                                                                                                        |
 | helmet（API，CSP 关闭）+ CORS 白名单                              | ✅   | `CORS_ORIGIN` 逗号分隔。代码默认值包含 Tauri 来源，但 `deploy/.env.example` 的生产值只有 `https://card-hub.app`，会覆盖默认值（CH-303）                                                                                                                                                               |
 | Sentry（API）                                                     | ✅   | 配置 `SENTRY_DSN` 才启用；只上报 5xx / `INTERNAL_SERVER_ERROR`                                                                                                                                                                                                                                        |
 | Sentry（Web）                                                     | ✅   | Web 容器启动时从 `WEB_SENTRY_DSN` / `SENTRY_ENVIRONMENT` / `GIT_SHA` 生成运行时 `/config.js`；空 DSN 时不上报                                                                                                                                                                                         |
 | 生产配置启动校验                                                  | ✅   | `NODE_ENV=production` 时启动前校验 `JWT_SECRET`（≥ 32 字符且不是占位值）与 `DATABASE_URL`；开发 / 测试保留现有默认值                                                                                                                                                                                  |
-| Redis                                                             | 🟡   | 只用于健康检查 ping，未用于缓存（CH-210）                                                                                                                                                                                                                                                             |
+| Redis                                                             | ✅   | 健康检查、公开目录缓存（`cardhub:cache:v1:`，TTL 5 分钟，后台写入按键失效）和限流计数。Redis 故障时缓存回源、限流放行，不返回 5xx（CH-210）                                                                                                                                                           |
 | CI（lint / typecheck / build / test / audit / compose 校验）      | ✅   | `.github/workflows/ci.yml`                                                                                                                                                                                                                                                                            |
 | 镜像构建、staging 自动部署、prod 手动部署、健康校验、失败自动回滚 | ✅   | `images.yml` / `deploy.yml` / `deploy/remote-deploy.sh`                                                                                                                                                                                                                                               |
 | 数据库备份（7 日 + 4 周，可选 OSS 异地）                          | ✅   | OSS 生命周期规则仍待 owner 配置（见 deploy/README.md 的 TODO）                                                                                                                                                                                                                                        |
@@ -386,7 +386,7 @@ erDiagram
 | 货币                | `^[A-Z]{3}$`（ISO 4217）                      |
 | cursor 分页 `limit` | 1–50，默认 20                                 |
 
-限流（`apps/cardhub/api/src/bootstrap/rate-limiters.ts`，按 IP，超限返回 tRPC `TOO_MANY_REQUESTS`）：
+限流（`apps/cardhub/api/src/bootstrap/rate-limiters.ts`，按 IP，超限返回 tRPC `TOO_MANY_REQUESTS`）。计数存在 Redis，键前缀 `cardhub:rl:v1:<名称>:`；Redis 不可用时放行，不返回 5xx：
 
 | 名称               | 匹配的 procedure              | 窗口   | 上限 |
 | ------------------ | ----------------------------- | ------ | ---- |
@@ -413,6 +413,6 @@ erDiagram
 
 - API（Jest）：`apps/cardhub/api/src/**/*.spec.ts`，覆盖 auth、cards、comments、forum、listings、reports、health、限流代理、seed 脚本。覆盖率门槛：全局语句 60%、分支 50%；`auth/*` 语句 80%。
 - Web（Vitest + RTL，jsdom）：评论区组件、登录回跳、渐变映射、运行时配置脚本、ui-web 表单控件、全局搜索页与顶栏搜索。`markdown-view.test.tsx` 断言正文容器是 `wrap-anywhere`，代码块带 `overflow-x-auto` 和 `max-w-full`，表格包在滚动容器里。Combobox 键盘（第一次 Esc 只关闭列表并保留输入；select 模式编辑后 Esc 恢复已选值；末项 ArrowDown 取消高亮并回到输入框；0 条结果时 `aria-expanded` 不为 true；高亮变化时对该项调用 `scrollIntoView({ block: 'nearest' })`，CardPicker 共用同一个 Combobox）另有 Chromium 测试 `combobox.browser.test.tsx`（Vitest browser mode + Playwright）。`markdown-view.browser.test.tsx` 在 375 宽检查长 URL、行内代码和代码块：页面不横向溢出，代码块在自己的框里滚动。jsdom 复现不了 Radix 在 document capture 阶段拦截 Esc。
-- CI 的 `verify` job 用 Postgres 16 service container 执行 `prisma migrate deploy` 后跑全量测试，并在测试前安装 Playwright Chromium（给 Vitest browser mode）。
+- CI 的 `verify` job 用 Postgres 16 和 Redis 7 service container。Postgres 上执行 `prisma migrate deploy` 后跑全量测试，并在测试前安装 Playwright Chromium（给 Vitest browser mode）。限流测试要 Redis 才能打出 429；Redis 不在时那些用例会失败，而不是改走内存计数。
 - Playwright 用户流程冒烟在 `apps/cardhub/e2e`，由 CI job `e2e-smoke` 单独跑：浏览到卡牌并登录评论、发帖回帖、发布并关闭交易意向、管理员处理举报。命令是 `pnpm --filter @cardhub/e2e test:e2e`。它不在 `pnpm test` 里。
 - 缺口：小程序、原生壳。

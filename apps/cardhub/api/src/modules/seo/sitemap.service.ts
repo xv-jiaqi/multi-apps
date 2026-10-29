@@ -47,7 +47,10 @@ async function loadRows(
   return sortRows(entries);
 }
 
-function toUrls(prefix: '/series' | '/cards' | '/forum', rows: readonly SitemapRow[]): SitemapUrl[] {
+function toUrls(
+  prefix: '/series' | '/cards' | '/forum',
+  rows: readonly SitemapRow[],
+): SitemapUrl[] {
   return rows.map((row) => ({
     path: `${prefix}/${row.slug}`,
     updatedAt: row.updatedAt,

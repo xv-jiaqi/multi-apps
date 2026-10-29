@@ -83,7 +83,7 @@
 | CH-207 | SEO：sitemap / robots / 页面 meta               | P2     | M    | CH-108                | 进行中（sitemap / robots；description 待 Spec）       |
 | CH-208 | 图片上传（阿里云 OSS 直传）                     | P2     | L    | CH-105                | 待领取                                                |
 | CH-209 | 用户治理：封禁、用户管理、操作审计              | P2     | M    | CH-001、CH-107        | 进行中（#145，基于 #144）                             |
-| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | 待领取                                                |
+| CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | ✅ PR #181                                            |
 | CH-211 | API 错误信息国际化                              | P2     | M    | —                     | 待领取                                                |
 | CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102                | 待领取                                                |
 | CH-213 | 平行版本与限量编号                              | P2     | L    | CH-201                | 待领取                                                |
@@ -510,6 +510,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-210 Redis 缓存 + 限流 Redis 存储
 
+- **进度**（2026-10-29）：`series.list`、`series.bySlug`、`cards.bySlug`、`categories.list`、`categories.bySlug` 走 `CatalogCache.getOrSet`，TTL 5 分钟，键前缀 `cardhub:cache:v1:`。后台对系列、卡牌、品类、子集和目录导入的成功写会按键删除缓存。限流计数在 Redis（`cardhub:rl:v1:<limiter>:`），`passOnStoreError: true`。Redis 连不上时读接口回源数据库，限流放行，两者都不返回 5xx。这些响应是公开目录，不要把 CH-203 的按用户收藏字段放进同一条缓存。
 - **改动范围**
   - 在 `RedisService` 增加 `getOrSet(key, ttl, loader)`：Redis 不可用时直接走数据库，不能导致 500。缓存 `series.list`、`series.bySlug`、`cards.bySlug`、`categories.*`，TTL 5 分钟，key 前缀 `cardhub:cache:v1:`；CH-107 的后台写操作中按 key 失效。
   - 限流存储换成 `rate-limit-redis`，各限流器独立前缀，开启 `passOnStoreError: true`，Redis 故障时放行而不是报错。
