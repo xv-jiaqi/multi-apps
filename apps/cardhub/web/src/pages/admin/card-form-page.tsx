@@ -71,6 +71,8 @@ interface CardBaseline {
   description: string;
   imageUrl: string;
   attributes: AttributeSnapshot[];
+  subsetSlug: string;
+  cardNumber: string;
 }
 
 const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' | 'edit' }) {
@@ -96,6 +98,12 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const [rarity, setRarity] = useState<Rarity>('common');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [subsetSlug, setSubsetSlug] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const subsetsQuery = trpc.admin.subsets.list.useQuery(
+    { seriesSlug },
+    { enabled: Boolean(seriesSlug) },
+  );
   const [rows, setRows] = useState<AttributeRow[]>([]);
   const [attrErrors, setAttrErrors] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -111,6 +119,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           description: '',
           imageUrl: '',
           attributes: [],
+          subsetSlug: '',
+          cardNumber: '',
         }
       : null,
   );
@@ -139,6 +149,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       description: card.description ?? '',
       imageUrl: card.imageUrl ?? '',
       attributes: attributeSnapshots(nextRows),
+      subsetSlug: card.subsetSlug ?? '',
+      cardNumber: card.cardNumber ?? '',
     };
     setSeriesSlug(next.seriesSlug);
     setSlugValue(next.slug);
@@ -146,6 +158,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     setRarity(next.rarity);
     setDescription(next.description);
     setImageUrl(next.imageUrl);
+    setSubsetSlug(next.subsetSlug);
+    setCardNumber(next.cardNumber);
     setRows(nextRows);
     setBaseline(next);
     setHydrated(true);
@@ -159,6 +173,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       rarity !== baseline.rarity ||
       description !== baseline.description ||
       imageUrl !== baseline.imageUrl ||
+      subsetSlug !== baseline.subsetSlug ||
+      cardNumber !== baseline.cardNumber ||
       !sameAttributeRows(attributeSnapshots(rows), baseline.attributes));
   const unsaved = useUnsavedChanges(dirty);
 
@@ -202,6 +218,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     if (descriptionError) next.description = descriptionError;
     const imageError = imageUrlError(imageUrl, locale.locale);
     if (imageError) next.imageUrl = imageError;
+    if (cardNumber.trim().length > 20) next.cardNumber = tt('admin.error.tooLong');
     const attributes = validateAttributeRows(rows, locale.locale);
     setErrors(next);
     setAttrErrors(attributes.ok ? {} : attributes.errors);
@@ -225,6 +242,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       imageUrl: imageUrl.trim() || undefined,
       attributes: attributes.attributes,
       seriesSlug,
+      subsetSlug,
+      cardNumber: cardNumber.trim(),
     };
     try {
       if (mode === 'create') {
@@ -386,6 +405,43 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 <p className="text-xs text-neutral-600">{tt('admin.field.slugLocked')}</p>
               </div>
             )}
+            <div className="space-y-1">
+              <label htmlFor="card-subset" className="text-sm font-medium text-neutral-800">
+                {tt('admin.field.subset')}
+              </label>
+              <Select
+                value={subsetSlug || 'none'}
+                onValueChange={(value) => setSubsetSlug(value === 'none' ? '' : value)}
+              >
+                <SelectTrigger id="card-subset" size="sm" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{tt('admin.field.subsetNone')}</SelectItem>
+                  {(subsetsQuery.data?.items ?? []).map((subset) => (
+                    <SelectItem key={subset.slug} value={subset.slug}>
+                      {subset.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <AdminField
+              id="card-number"
+              label={tt('admin.field.cardNumber')}
+              hint={tt('admin.field.cardNumberHint')}
+              error={errors.cardNumber}
+              count={cardNumber.length}
+              max={20}
+            >
+              <Input
+                value={cardNumber}
+                autoComplete="off"
+                className="font-mono"
+                maxLength={20}
+                onChange={(event) => setCardNumber(event.target.value)}
+              />
+            </AdminField>
             <AdminField
               id="card-name"
               label={tt('admin.field.name')}

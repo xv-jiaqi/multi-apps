@@ -7,6 +7,7 @@ import { ART_ASPECT } from '../../components/artwork';
 import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
+import { CatalogTabs } from '../../components/admin/catalog-tabs';
 import { AdminGate, useReportForbidden } from '../../components/admin/admin-gate';
 import { queryFallback, useFocusOnRecovery } from '../../components/retry-button';
 import {
@@ -50,6 +51,7 @@ export const CatalogSeriesPage = observer(function CatalogSeriesPage() {
             { label: tt('nav.catalog') },
           ]}
         />
+        <CatalogTabs />
         <AdminGate>
           <CatalogSeriesBody />
         </AdminGate>

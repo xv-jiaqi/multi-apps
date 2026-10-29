@@ -74,7 +74,7 @@
 | CH-107 | 内容管理后台（系列 / 卡牌 CRUD + JSON 导入）    | P1     | L    | —                     | ✅ PR #71 + #76 + #81（未保存拦截已经完成；属性上限） |
 | CH-108 | 文案清理、页面标题、小型无障碍修复              | P1     | S    | —                     | ✅ PR #61；崩溃页单语                                 |
 | CH-109 | 卡牌详情页 CLS                                  | P1     | S    | —                     | ✅ 主包骨架占位                                       |
-| CH-201 | 分类体系：品类、系列、子集、卡号与发售日期      | P2     | L    | CH-107                | 进行中（cursor/ch-201-taxonomy-api-c202）             |
+| CH-201 | 分类体系：品类、系列、子集、卡号与发售日期      | P2     | L    | CH-107                | 进行中（#167，后端 #168）                             |
 | CH-202 | 系列清单：搜索、排序、分页与属性本地化          | P2     | M    | CH-201                | 待领取                                                |
 | CH-203 | 收藏管理、集齐进度与分享                        | P2     | L    | CH-102                | 待领取                                                |
 | CH-204 | 评论回复（单层）                                | P2     | M    | CH-002                | ✅ #147                                               |
@@ -383,7 +383,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-201 分类体系：品类、系列、子集、卡号与发售日期
 
-- **进度**（2026-10-29）：迁移 `add_catalog_taxonomy` 和读写接口在后端 PR。`series.list` 省略 `sort` 时仍按 `createdAt` 升序，避免改到已经上线的调用方；发售日期倒序由调用方传 `releaseDateDesc`。`years` 是全库有发售日期的年份，不受当前筛选影响。`/search` 的 `c:`、`y:` 按规格本期不做。`seed:catalog` 只在插入时写分类、子集和卡号，`update: {}` 不覆盖已有行。
+- **进度**（2026-10-29）：后端已合入 #168。Web 分类页、系列筛选、子集分组、卡号、发售日期和后台品类 / 子集表单在 #167。`series.list` 省略 `sort` 时仍按 `createdAt` 升序，避免改到已经上线的调用方；发售日期倒序由调用方传 `releaseDateDesc`。`years` 是全库有发售日期的年份，不受当前筛选影响。`/search` 的 `c:`、`y:` 按规格本期不做。`seed:catalog` 只在插入时写分类、子集和卡号，`update: {}` 不覆盖已有行。JSON 导入把卡牌换到别的系列且没有合法子集时，把 `subsetId` 置空。
 - **来源**：PRD §3.2“按系列、年份、类型浏览”、§3.3“分类列表页”；UI 规范站点地图；历史 ERD 中的 `categories`、`series.release_date`、`cards.card_number`。业内清单的层级见 [industry-benchmark.md](industry-benchmark.md) 第 5 节。平行版本和限量编号拆到 CH-213，避免本卡一次迁移做不完。
 - **改动范围**
   - Prisma：新增 `Category { id, slug @unique, name, description?, sortOrder Int @default(0), createdAt, updatedAt }`。新增枚举 `SubsetKind`，取值 `BASE`、`INSERT`。新增 `Subset { id, seriesId, slug, name, kind, sortOrder Int @default(0), description?, createdAt, updatedAt }`，`@@unique([seriesId, slug])`，删除系列时级联删除子集。`Series` 增加 `categoryId String?`（`onDelete: SetNull`）和 `releaseDate DateTime? @db.Date`。`Card` 增加 `cardNumber String?`、`subsetId String?`（`onDelete: SetNull`）。迁移名 `add_catalog_taxonomy`。

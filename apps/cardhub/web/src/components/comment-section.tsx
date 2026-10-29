@@ -1,5 +1,12 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react';
 import { Link } from 'react-router';
 import { Button } from '@repo/ui-web';
 import {
@@ -104,7 +111,8 @@ function resolveCursor(
   visible: ReplyItem[],
   count: number,
 ): string | null {
-  const cursor = overlay.cursor === undefined ? (comment.repliesNextCursor ?? null) : overlay.cursor;
+  const cursor =
+    overlay.cursor === undefined ? (comment.repliesNextCursor ?? null) : overlay.cursor;
   if (count <= visible.length) return null;
   if (!cursor || overlay.removed.includes(cursor)) return visible.at(-1)?.id ?? null;
   return cursor;
@@ -191,9 +199,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const draftsRef = useRef<Record<string, string>>({});
   const openParentRef = useRef<string | null>(null);
-  const pendingFocus = useRef<{ type: 'opener' | 'show-more' | 'title'; id: string } | null>(
-    null,
-  );
+  const pendingFocus = useRef<{ type: 'opener' | 'show-more' | 'title'; id: string } | null>(null);
   const [replyFocusId, setReplyFocusId] = useState<string | null>(null);
   const threadsRef = useRef(threads);
   threadsRef.current = threads;
@@ -347,9 +353,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     setDeleteReason('');
     setDeleteError(null);
     showStatus(
-      count > 0
-        ? tt('comment.deletedWithReplies', { count })
-        : tt('card.detail.commentDeleted'),
+      count > 0 ? tt('comment.deletedWithReplies', { count }) : tt('card.detail.commentDeleted'),
       true,
     );
     invalidateList();
@@ -404,8 +408,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       }
 
       const ownerId = ownerOf(variables.id);
-      const keepReason =
-        session.isAdmin && ownerId !== undefined && session.user?.id !== ownerId;
+      const keepReason = session.isAdmin && ownerId !== undefined && session.user?.id !== ownerId;
       setDeleteError({
         id: variables.id,
         message:
@@ -787,51 +790,58 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
                   {comment.content}
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  {canReply ? (
-                    <button
-                      type="button"
-                      ref={(node) => {
-                        replyButtonRefs.current[replyKey] = node;
-                      }}
-                      aria-expanded={composerOpen && openerKey === replyKey}
-                      aria-controls={inputId}
-                      aria-label={tt('comment.replyAria', { user: comment.user.username })}
-                      onClick={() => openReply(comment.id, comment.id, comment.user.username, null)}
-                      className={replyActionClassName}
-                    >
-                      {tt('comment.reply')}
-                    </button>
-                  ) : null}
-                  {!isConfirming && session.user?.id !== comment.user.id ? (
-                    <ReportButton targetType="COMMENT" targetId={comment.id} />
-                  ) : null}
-                  {!isConfirming && canDelete ? (
-                    <button
-                      type="button"
-                      ref={(node) => {
-                        deleteButtonRefs.current[comment.id] = node;
-                      }}
-                      aria-label={tt('card.detail.commentDeleteAria', {
-                        user: comment.user.username,
-                      })}
-                      onClick={() => {
-                        setDeleteError(null);
-                        setStatusMessage('');
-                        setDeleteReason('');
-                        setConfirmingId(comment.id);
-                      }}
-                      className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                    >
-                      {tt('card.detail.commentDelete')}
-                    </button>
-                  ) : null}
-                  {replyCount > 0 ? (
-                    <span className="text-xs text-neutral-600">
-                      {tt('comment.replyCount', { count: replyCount })}
-                    </span>
-                  ) : null}
-                </div>
+                <ReportButton targetType="COMMENT" targetId={comment.id}>
+                  {({ trigger, form }) => (
+                    <>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        {canReply ? (
+                          <button
+                            type="button"
+                            ref={(node) => {
+                              replyButtonRefs.current[replyKey] = node;
+                            }}
+                            aria-expanded={composerOpen && openerKey === replyKey}
+                            aria-controls={inputId}
+                            aria-label={tt('comment.replyAria', { user: comment.user.username })}
+                            onClick={() =>
+                              openReply(comment.id, comment.id, comment.user.username, null)
+                            }
+                            className={replyActionClassName}
+                          >
+                            {tt('comment.reply')}
+                          </button>
+                        ) : null}
+                        {!isConfirming && session.user?.id !== comment.user.id ? trigger : null}
+                        {!isConfirming && canDelete ? (
+                          <button
+                            type="button"
+                            ref={(node) => {
+                              deleteButtonRefs.current[comment.id] = node;
+                            }}
+                            aria-label={tt('card.detail.commentDeleteAria', {
+                              user: comment.user.username,
+                            })}
+                            onClick={() => {
+                              setDeleteError(null);
+                              setStatusMessage('');
+                              setDeleteReason('');
+                              setConfirmingId(comment.id);
+                            }}
+                            className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                          >
+                            {tt('card.detail.commentDelete')}
+                          </button>
+                        ) : null}
+                        {replyCount > 0 ? (
+                          <span className="text-xs text-neutral-600">
+                            {tt('comment.replyCount', { count: replyCount })}
+                          </span>
+                        ) : null}
+                      </div>
+                      {form}
+                    </>
+                  )}
+                </ReportButton>
                 {isConfirming ? (
                   <div
                     role="group"
@@ -900,10 +910,8 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                     className="mt-3 space-y-3 border-l-2 border-neutral-200 pl-3 sm:pl-4"
                   >
                     {replies.map((reply) => {
-                      const replyCanDelete =
-                        session.user?.id === reply.user.id || session.isAdmin;
-                      const replyShowReason =
-                        session.isAdmin && session.user?.id !== reply.user.id;
+                      const replyCanDelete = session.user?.id === reply.user.id || session.isAdmin;
+                      const replyShowReason = session.isAdmin && session.user?.id !== reply.user.id;
                       const replyConfirming = confirmingId === reply.id;
                       const replyDeleting =
                         deleteComment.isPending && deleteComment.variables?.id === reply.id;
@@ -916,41 +924,49 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           aria-busy={replyDeleting ? true : undefined}
                           className="focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
-                          <div className="flex min-h-6 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600">
-                            <span className="font-semibold text-neutral-900 wrap-anywhere">
-                              @{reply.user.username}
-                            </span>
-                            {!replyConfirming ? (
-                              <div className="ml-auto flex max-w-full flex-wrap items-center gap-x-3 gap-y-1">
-                                <time dateTime={reply.createdAt} className="whitespace-nowrap">
-                                  {formatDateTime(reply.createdAt, locale.locale)}
-                                </time>
-                                {session.user?.id !== reply.user.id ? (
-                                  <ReportButton targetType="COMMENT" targetId={reply.id} />
-                                ) : null}
-                                {replyCanDelete ? (
-                                  <button
-                                    type="button"
-                                    ref={(node) => {
-                                      deleteButtonRefs.current[reply.id] = node;
-                                    }}
-                                    aria-label={tt('card.detail.commentDeleteAria', {
-                                      user: reply.user.username,
-                                    })}
-                                    onClick={() => {
-                                      setDeleteError(null);
-                                      setStatusMessage('');
-                                      setDeleteReason('');
-                                      setConfirmingId(reply.id);
-                                    }}
-                                    className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                                  >
-                                    {tt('card.detail.commentDelete')}
-                                  </button>
-                                ) : null}
-                              </div>
-                            ) : null}
-                          </div>
+                          <ReportButton targetType="COMMENT" targetId={reply.id}>
+                            {({ trigger, form }) => (
+                              <>
+                                <div className="flex min-h-6 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600">
+                                  <span className="font-semibold text-neutral-900 wrap-anywhere">
+                                    @{reply.user.username}
+                                  </span>
+                                  {!replyConfirming ? (
+                                    <div className="ml-auto flex max-w-full flex-wrap items-center gap-x-3 gap-y-1">
+                                      <time
+                                        dateTime={reply.createdAt}
+                                        className="whitespace-nowrap"
+                                      >
+                                        {formatDateTime(reply.createdAt, locale.locale)}
+                                      </time>
+                                      {session.user?.id !== reply.user.id ? trigger : null}
+                                      {replyCanDelete ? (
+                                        <button
+                                          type="button"
+                                          ref={(node) => {
+                                            deleteButtonRefs.current[reply.id] = node;
+                                          }}
+                                          aria-label={tt('card.detail.commentDeleteAria', {
+                                            user: reply.user.username,
+                                          })}
+                                          onClick={() => {
+                                            setDeleteError(null);
+                                            setStatusMessage('');
+                                            setDeleteReason('');
+                                            setConfirmingId(reply.id);
+                                          }}
+                                          className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                                        >
+                                          {tt('card.detail.commentDelete')}
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+                                </div>
+                                {form}
+                              </>
+                            )}
+                          </ReportButton>
                           <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
                             <CommentText content={reply.content} />
                           </p>
@@ -964,7 +980,12 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               aria-controls={inputId}
                               aria-label={tt('comment.replyAria', { user: reply.user.username })}
                               onClick={() =>
-                                openReply(comment.id, reply.id, reply.user.username, reply.user.username)
+                                openReply(
+                                  comment.id,
+                                  reply.id,
+                                  reply.user.username,
+                                  reply.user.username,
+                                )
                               }
                               className={`${replyActionClassName} mt-2`}
                             >
@@ -982,7 +1003,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               }
                               onKeyDown={(event) => onConfirmKeyDown(event, reply.id)}
                             >
-                              <span className={replyShowReason ? 'text-red-700' : 'mr-auto text-red-700'}>
+                              <span
+                                className={
+                                  replyShowReason ? 'text-red-700' : 'mr-auto text-red-700'
+                                }
+                              >
                                 {tt('comment.reply.confirmDelete')}
                               </span>
                               {replyShowReason ? (
@@ -993,7 +1018,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                                   onChange={setDeleteReason}
                                 />
                               ) : null}
-                              <div className={replyShowReason ? 'flex justify-end gap-3' : 'contents'}>
+                              <div
+                                className={replyShowReason ? 'flex justify-end gap-3' : 'contents'}
+                              >
                                 <button
                                   type="button"
                                   disabled={replyDeleting}
