@@ -118,9 +118,11 @@ The edge sends HSTS, `X-Content-Type-Options: nosniff`, and
 `Strict-Transport-Security: max-age=31536000; includeSubDomains` (no
 `preload`). Both API hostnames send that same HSTS value and `nosniff`.
 The handlers use `defer`, so they replace the same fields from upstream.
-They do not set `Content-Security-Policy`: the web container writes that
-header, including `frame-ancestors 'none'` and a `connect-src` built from
-`TRPC_URL` and `SENTRY_DSN`. `lb_try_duration` is unchanged.
+`?Content-Security-Policy` adds `frame-ancestors 'none'` only when the web
+container did not send CSP. A current image sends the full policy, including
+`connect-src` from `TRPC_URL` and `SENTRY_DSN`; rolling the web image back
+still leaves `frame-ancestors`. Ship the web image to staging and production
+before recreating the edge. `lb_try_duration` is unchanged.
 
 After changing any edge env vars manually, recreate the Caddy container so
 Compose injects the new environment; `caddy reload` does not pick up env-file

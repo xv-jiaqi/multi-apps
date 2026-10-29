@@ -17,14 +17,15 @@
 }
 
 # HSTS stays on the edge because nginx does not terminate TLS. nosniff and
-# X-Frame-Options stay here as well. Content-Security-Policy is set by the web
-# container from its runtime TRPC_URL and Sentry DSN; defer would replace that
-# policy, so this handler does not set CSP.
+# X-Frame-Options stay here as well. The ? prefix fills Content-Security-Policy
+# only when the web container did not send one, so a rollback to an older
+# image still keeps frame-ancestors. defer runs after the upstream response.
 (cardhub_web_headers) {
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
+		?Content-Security-Policy "frame-ancestors 'none'"
 		defer
 	}
 }

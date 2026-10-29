@@ -84,6 +84,45 @@ describe('runtime config entrypoint', () => {
     );
   });
 
+  it('keeps a custom Sentry port in connect-src', () => {
+    const result = runScript('https://api.card-hub.app/trpc', {
+      SENTRY_DSN: 'https://k@sentry.example.com:9000/2',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.headers).toContain('https://sentry.example.com:9000');
+  });
+
+  it('exits when the nginx header file cannot be written', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'cardhub-runtime-config-'));
+    const configPath = path.join(dir, 'config.js');
+    try {
+      execFileSync('sh', [scriptPath], {
+        env: {
+          ...process.env,
+          CARDHUB_CONFIG_FILE: configPath,
+          CARDHUB_SECURITY_HEADERS_FILE: '',
+          TRPC_URL: 'https://api.card-hub.app/trpc',
+          SENTRY_DSN: '',
+          SENTRY_ENVIRONMENT: '',
+          GIT_SHA: '',
+        },
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      throw new Error('expected the entrypoint to fail');
+    } catch (error) {
+      const stderr =
+        error instanceof Error && 'stderr' in error
+          ? String((error as Error & { stderr: unknown }).stderr)
+          : String(error);
+      expect(stderr).toContain('cannot write /etc/nginx/conf.d/security-headers.inc');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('omits empty Sentry config and unknown git sha', () => {
     const result = runScript('https://api.card-hub.app/trpc', {
       SENTRY_DSN: '',
