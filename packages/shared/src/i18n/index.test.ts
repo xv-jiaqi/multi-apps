@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { appErrorMessage, t } from './index';
+import { slugSchema } from '../zod';
+import { appErrorMessage, fieldErrorCodes, fieldErrorMessage, t } from './index';
 
 const counts = [0, 1, 2] as const;
 
@@ -10,6 +11,44 @@ function searchSummary(locale: 'zh-CN' | 'en-US', cards: number, series: number)
     results: t(locale, 'form.resultsCount', { count: cards + series }),
   });
 }
+
+describe('field error codes', () => {
+  it('maps slug_format and hides unknown codes', () => {
+    const parsed = slugSchema.safeParse('Not A Slug');
+    expect(parsed.success).toBe(false);
+    if (parsed.success) return;
+    expect(parsed.error.issues[0]?.message).toBe('slug_format');
+    expect(fieldErrorMessage('zh-CN', 'slug_format')).toBe('只能用小写字母、数字和短横线');
+    expect(fieldErrorMessage('en-US', 'slug_format')).toBe(
+      'Use lowercase letters, numbers, and hyphens only.',
+    );
+    expect(fieldErrorMessage('zh-CN', 'not_a_mapped_code')).toBe('出了点问题，请稍后再试');
+    expect(fieldErrorMessage('en-US', 'not_a_mapped_code')).toBe(
+      'Something went wrong. Try again later.',
+    );
+    expect(fieldErrorMessage('zh-CN', 'not_a_mapped_code')).not.toContain('not_a_mapped_code');
+    expect(fieldErrorMessage('en-US', 'Must be a kebab-case slug')).toBe(
+      'Something went wrong. Try again later.',
+    );
+    expect(fieldErrorMessage('zh-CN', undefined)).toBe('出了点问题，请稍后再试');
+  });
+
+  it('gives every field code a sentence in both languages', () => {
+    const codes = fieldErrorCodes('zh-CN');
+    expect(codes).toEqual(fieldErrorCodes('en-US'));
+    expect(codes.length).toBeGreaterThan(0);
+    for (const code of codes) {
+      expect(code).toMatch(/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/);
+      const zh = fieldErrorMessage('zh-CN', code);
+      const en = fieldErrorMessage('en-US', code);
+      expect(zh.endsWith('。')).toBe(false);
+      expect(en.endsWith('.')).toBe(true);
+      expect(zh).not.toContain(code);
+      expect(en.toLowerCase()).not.toContain(code);
+      expect(zh).not.toBe('出了点问题，请稍后再试');
+    }
+  });
+});
 
 describe('app error copy', () => {
   it('maps a known code and hides unknown codes behind the generic sentence', () => {

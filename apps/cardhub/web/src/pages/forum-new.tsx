@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { t, topicCreateInput } from '@repo/shared';
+import { fieldErrorMessage, t, topicCreateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -48,7 +48,11 @@ export const ForumNewPage = observer(function ForumNewPage() {
     setError(null);
     const parsed = topicCreateInput.safeParse(values);
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tt('state.error'));
+      setError(
+        parsed.error.issues[0]
+          ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+          : tt('state.error'),
+      );
       return;
     }
     create.mutate(parsed.data);

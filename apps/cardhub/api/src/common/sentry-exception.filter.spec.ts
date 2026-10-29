@@ -70,6 +70,7 @@ describe('SentryExceptionFilter', () => {
         data: {
           code: 'PAYLOAD_TOO_LARGE',
           httpStatus: 413,
+          appCode: 'PAYLOAD_TOO_LARGE',
           path: 'comments.create',
         },
       },
@@ -82,6 +83,7 @@ describe('SentryExceptionFilter', () => {
         data: {
           code: 'PAYLOAD_TOO_LARGE',
           httpStatus: 413,
+          appCode: 'PAYLOAD_TOO_LARGE',
           path: 'admin.catalog.import',
         },
       },
@@ -89,7 +91,7 @@ describe('SentryExceptionFilter', () => {
     expect(bad.response.status).toHaveBeenCalledWith(400);
     expect(bad.json).toHaveBeenCalledWith({
       error: {
-        message: '请求格式有误',
+        message: '请求无法解析，请重试',
         code: -32600,
         data: {
           code: 'BAD_REQUEST',
@@ -106,6 +108,7 @@ describe('SentryExceptionFilter', () => {
         data: {
           code: 'PAYLOAD_TOO_LARGE',
           httpStatus: 413,
+          appCode: 'PAYLOAD_TOO_LARGE',
           path: 'comments.create',
         },
       },
@@ -158,7 +161,7 @@ describe('SentryExceptionFilter', () => {
     const result = capture(forged);
 
     expect(result.response.status).toHaveBeenCalledWith(500);
-    expect(result.json).toHaveBeenCalledWith({ message: 'Internal server error' });
+    expect(result.json).toHaveBeenCalledWith({ message: '出了点问题，请稍后再试' });
     expect(JSON.stringify(result.json.mock.calls)).not.toContain(secret);
     expect(JSON.stringify(result.json.mock.calls)).not.toContain('s3cret');
     expect(captureException).toHaveBeenCalledTimes(1);
@@ -179,7 +182,7 @@ describe('SentryExceptionFilter', () => {
     expect(onTrpc.response.status).toHaveBeenCalledWith(400);
     expect(onTrpc.json).toHaveBeenCalledWith({
       error: {
-        message: '请求格式有误',
+        message: '请求无法解析，请重试',
         code: -32600,
         data: {
           code: 'BAD_REQUEST',
@@ -192,7 +195,7 @@ describe('SentryExceptionFilter', () => {
     expect(outside.response.status).toHaveBeenCalledWith(400);
     expect(outside.json).toHaveBeenCalledWith({
       statusCode: 400,
-      message: '请求格式有误',
+      message: '请求无法解析，请重试',
     });
     const serialized = JSON.stringify([onTrpc.json.mock.calls, outside.json.mock.calls]);
     expect(serialized).not.toContain('LEAK_MARKER');
@@ -226,6 +229,7 @@ describe('SentryExceptionFilter', () => {
         data: {
           code: 'PAYLOAD_TOO_LARGE',
           httpStatus: 413,
+          appCode: 'PAYLOAD_TOO_LARGE',
           path: 'admin.catalog.import',
         },
       },
@@ -258,10 +262,10 @@ describe('SentryExceptionFilter', () => {
   });
 
   it('does not report an HttpException 4xx and keeps its response body', () => {
-    const result = capture(new BadRequestException('nope'));
+    const result = capture(new BadRequestException('保留原文'));
     expect(result.response.status).toHaveBeenCalledWith(400);
     expect(result.json).toHaveBeenCalledWith({
-      message: 'nope',
+      message: '保留原文',
       error: 'Bad Request',
       statusCode: 400,
     });
@@ -276,7 +280,7 @@ describe('SentryExceptionFilter', () => {
     capture(http);
 
     expect(crashed.response.status).toHaveBeenCalledWith(500);
-    expect(crashed.json).toHaveBeenCalledWith({ message: 'Internal server error' });
+    expect(crashed.json).toHaveBeenCalledWith({ message: '出了点问题，请稍后再试' });
     expect(JSON.stringify(crashed.json.mock.calls)).not.toContain('database down');
     expect(captureException).toHaveBeenCalledTimes(2);
     expect(captureException).toHaveBeenNthCalledWith(

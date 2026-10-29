@@ -290,7 +290,8 @@ describe('auth session revocation', () => {
     expect(serialized).not.toContain('is not valid JSON');
     expect(serialized).not.toContain('Unexpected token');
     expect(serialized).not.toContain('Prisma');
-    expect(serialized).toContain('密码过长');
+    expect(serialized).toContain('password_too_long');
+    expect(serialized).not.toContain('密码过长');
   });
 
   it('rejects an oversize body with 413 and a bad JSON body with 400', async () => {
@@ -310,8 +311,9 @@ describe('auth session revocation', () => {
       .set('X-Forwarded-For', identity.ip)
       .send(body);
     expect(tooLarge.status).toBe(413);
+    expect(tooLarge.body.error.message).toBe('内容太大，请精简后重试');
     expect(tooLarge.body.error.data.code).toBe('PAYLOAD_TOO_LARGE');
-    expect(tooLarge.body.error.data).not.toHaveProperty('appCode');
+    expect(tooLarge.body.error.data.appCode).toBe(APP_ERROR_CODES.PAYLOAD_TOO_LARGE);
     expect(JSON.stringify(tooLarge.body)).not.toContain('entity.too.large');
     expect(JSON.stringify(tooLarge.body)).not.toContain('request entity too large');
 

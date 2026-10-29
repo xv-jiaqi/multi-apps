@@ -56,10 +56,13 @@ describe('catalog import limits', () => {
     ).toBe(`You can import at most ${CATALOG_IMPORT_MAX_ROWS} rows at a time (this file has 501)`);
     expect(t('en-US', 'admin.import.tooLarge')).toContain('1MB');
     expect(t('en-US', 'error.payloadTooLarge')).toBe(
-      'This content is too large. Shorten it and try again.',
+      'This is too large. Shorten it and try again.',
     );
-    expect(t('zh-CN', 'error.malformedRequest')).toBe('请求格式有误');
-    expect(t('en-US', 'error.malformedRequest')).toBe('The request format is invalid.');
+    expect(t('zh-CN', 'error.app.PAYLOAD_TOO_LARGE')).toBe('内容太大，请精简后重试');
+    expect(t('en-US', 'error.app.PAYLOAD_TOO_LARGE')).toBe(
+      'This is too large. Shorten it and try again.',
+    );
+    expect(t('zh-CN', 'error.app.PARSE_ERROR')).toBe('请求无法解析，请重试');
     expect(t('zh-CN', 'error.unsupportedMedia')).toBe('不支持这种内容格式');
     expect(t('en-US', 'error.unsupportedMedia')).toBe('This content format is not supported.');
     expect(t('zh-CN', 'error.requestRejected')).toBe('请求未能通过校验');

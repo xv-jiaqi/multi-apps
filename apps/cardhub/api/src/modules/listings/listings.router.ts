@@ -100,7 +100,7 @@ export class ListingsRouter {
         if ((usesPriceFilter || usesPriceSort) && !input.currency) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'trade.filter.priceNeedsCurrency',
+            message: 'price_needs_currency',
           });
         }
 

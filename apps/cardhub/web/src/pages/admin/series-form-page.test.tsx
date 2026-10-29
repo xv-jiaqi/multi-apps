@@ -161,6 +161,28 @@ describe('series form', () => {
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'new-series' });
   });
 
+  it('shows slug_format under the field in the active language', async () => {
+    const user = userEvent.setup();
+    const zh = renderSeries('/admin/catalog/series/new');
+    const slug = screen.getByRole('textbox', { name: /slug/i });
+    await user.type(slug, 'Not A Slug');
+    await user.tab();
+    expect(screen.getByText('只能用小写字母、数字和短横线')).toBeInTheDocument();
+    expect(screen.queryByText('slug_format')).not.toBeInTheDocument();
+    expect(screen.queryByText(/kebab-case/)).not.toBeInTheDocument();
+    zh.unmount();
+
+    rootStore.locale.setLocale('en-US');
+    renderSeries('/admin/catalog/series/new');
+    const slugEn = screen.getByRole('textbox', { name: /slug/i });
+    await user.type(slugEn, 'Not A Slug');
+    await user.tab();
+    expect(
+      screen.getByText('Use lowercase letters, numbers, and hyphens only.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('slug_format')).not.toBeInTheDocument();
+  });
+
   it('rejects http image links on blur and blocks submit', async () => {
     const user = userEvent.setup();
     renderSeries('/admin/catalog/series/new');

@@ -4,6 +4,7 @@ import {
   ADMIN_ATTRIBUTE_VALUE_MAX,
   LISTING_IMAGE_URL_MAX,
   appErrorMessage,
+  fieldErrorMessage,
   slugSchema,
   t,
   type Locale,
@@ -208,7 +209,8 @@ function localizeAdminIssue(locale: Locale, issue: ZodIssueLike, path: string[])
   if (code === 'custom' && (head === 'imageUrl' || head === 'coverUrl') && path.length === 1) {
     return t(locale, 'admin.error.imageUrl');
   }
-  return message || t(locale, 'admin.error.invalidType');
+  if (!message) return t(locale, 'admin.error.invalidType');
+  return fieldErrorMessage(locale, message);
 }
 
 function isAttributeCapIssue(path: string[], issue: ZodIssueLike): boolean {
@@ -324,7 +326,8 @@ export function isAllowedImageUrl(value: string): boolean {
 export function validateSlug(value: string, locale: Locale): string | null {
   const trimmed = value.trim();
   if (!trimmed) return t(locale, 'admin.error.required');
-  if (!slugSchema.safeParse(trimmed).success) return t(locale, 'admin.error.slugFormat');
+  const parsed = slugSchema.safeParse(trimmed);
+  if (!parsed.success) return fieldErrorMessage(locale, parsed.error.issues[0]?.message);
   return null;
 }
 

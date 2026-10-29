@@ -708,7 +708,6 @@ const zhCN: Dictionary = {
   'admin.import.tooManyRows': '一次最多导入 {max} 行，当前 {count} 行',
   'admin.import.tooLarge': '一次最多导入 1MB',
   'error.payloadTooLarge': '内容太大，请精简后重试',
-  'error.malformedRequest': '请求格式有误',
   'error.internal': '出了点问题，请稍后再试',
   'error.actionFailed': '操作没有完成，请稍后再试',
   'error.notFound': '内容不存在或已被删除',
@@ -728,7 +727,7 @@ const zhCN: Dictionary = {
   'error.app.TIMEOUT': '请求超时，请稍后再试',
   'error.app.CONFLICT': '已经有相同的内容，请修改后再试',
   'error.app.PRECONDITION_FAILED': '当前状态不允许这个操作',
-  'error.app.PAYLOAD_TOO_LARGE': '内容太长，请缩短后再试',
+  'error.app.PAYLOAD_TOO_LARGE': '内容太大，请精简后重试',
   'error.app.UNSUPPORTED_MEDIA_TYPE': '不支持这种内容格式',
   'error.app.UNPROCESSABLE_CONTENT': '无法处理提交的内容',
   'error.app.TOO_MANY_REQUESTS': '操作太频繁，请稍后再试',
@@ -744,6 +743,50 @@ const zhCN: Dictionary = {
   'error.app.unknown': '出了点问题，请稍后再试',
   'error.unsupportedMedia': '不支持这种内容格式',
   'error.requestRejected': '请求未能通过校验',
+  'error.field.slug_format': '只能用小写字母、数字和短横线',
+  'error.field.username_too_short': '用户名至少 3 个字符',
+  'error.field.username_too_long': '用户名最多 24 个字符',
+  'error.field.username_format': '只能用字母、数字、下划线和连字符',
+  'error.field.email_format': '邮箱格式不正确',
+  'error.field.email_too_long': '邮箱最长 128 个字符',
+  'error.field.password_too_short': '密码至少 8 位',
+  'error.field.password_too_long': '密码最长 128 位',
+  'error.field.identifier_too_short': '请输入邮箱或用户名',
+  'error.field.identifier_too_long': '邮箱或用户名最长 128 个字符',
+  'error.field.comment_required': '评论不能为空',
+  'error.field.comment_too_long': '评论最多 500 字',
+  'error.field.title_required': '标题不能为空',
+  'error.field.title_too_long': '标题最多 120 字',
+  'error.field.body_required': '正文不能为空',
+  'error.field.body_too_long': '正文最多 10000 字',
+  'error.field.reply_required': '回帖不能为空',
+  'error.field.reply_too_long': '回帖最多 5000 字',
+  'error.field.currency_format': '货币代码必须是 3 个大写字母',
+  'error.field.price_range': '价格必须是 0 到 9,999,999,999.99 之间的数字',
+  'error.field.image_https': '图片链接需以 https:// 开头',
+  'error.field.image_too_many': '最多 4 张图片',
+  'error.field.contact_too_short': '联系方式至少 2 个字符',
+  'error.field.contact_too_long': '联系方式最多 200 字',
+  'error.field.note_too_long': '说明最多 500 字',
+  'error.field.variant_note_too_long': '版本备注最多 40 字',
+  'error.field.reason_too_short': '请简要说明原因，至少 4 个字符',
+  'error.field.reason_too_long': '原因最多 500 字',
+  'error.field.resolution_too_long': '处理说明最多 500 字',
+  'error.field.image_url': '图片链接需留空，或以 https://、gradient: 开头',
+  'error.field.attributes_too_many': '最多 40 个属性',
+  'error.field.invalid_date': '日期须为有效的 YYYY-MM-DD',
+  'error.field.delete_reason_too_long': '删除原因最多 500 字',
+  'error.field.invalid': '填写的内容不符合要求',
+  'error.field.invalid_type': '填写的类型不正确',
+  'error.field.too_big': '内容超出长度限制',
+  'error.field.too_small': '内容长度不够',
+  'error.field.invalid_format': '格式不正确',
+  'error.field.not_multiple_of': '数值必须是规定的倍数',
+  'error.field.unrecognized_keys': '包含无法识别的字段',
+  'error.field.invalid_union': '填写的内容不符合要求',
+  'error.field.invalid_key': '字段名不符合要求',
+  'error.field.invalid_element': '列表里有不符合要求的值',
+  'error.field.invalid_value': '这个选项不可用',
   'admin.import.back': '返回内容管理',
   'admin.import.already': '这份内容已经导入过，请修改后再导入',
   // Miniapp-specific copy (reused across weapp/alipay/h5).
@@ -1504,8 +1547,7 @@ const enUS: Dictionary = {
   'admin.import.failed': 'Import failed. Nothing was changed.',
   'admin.import.tooManyRows': 'You can import at most {max} rows at a time (this file has {count})',
   'admin.import.tooLarge': 'You can import at most 1MB at a time',
-  'error.payloadTooLarge': 'This content is too large. Shorten it and try again.',
-  'error.malformedRequest': 'The request format is invalid.',
+  'error.payloadTooLarge': 'This is too large. Shorten it and try again.',
   'error.internal': 'Something went wrong. Try again later.',
   'error.actionFailed': "That didn't work. Try again.",
   'error.notFound': "That content doesn't exist or was removed.",
@@ -1525,7 +1567,7 @@ const enUS: Dictionary = {
   'error.app.TIMEOUT': 'The request timed out. Try again.',
   'error.app.CONFLICT': 'This already exists. Change it and try again.',
   'error.app.PRECONDITION_FAILED': 'This action is not allowed in the current state.',
-  'error.app.PAYLOAD_TOO_LARGE': 'That content is too long. Shorten it and try again.',
+  'error.app.PAYLOAD_TOO_LARGE': 'This is too large. Shorten it and try again.',
   'error.app.UNSUPPORTED_MEDIA_TYPE': 'That content format is not supported.',
   'error.app.UNPROCESSABLE_CONTENT': 'The submitted content could not be processed.',
   'error.app.TOO_MANY_REQUESTS': 'Too many attempts. Try again later.',
@@ -1541,6 +1583,50 @@ const enUS: Dictionary = {
   'error.app.unknown': 'Something went wrong. Try again later.',
   'error.unsupportedMedia': 'This content format is not supported.',
   'error.requestRejected': 'The request could not be verified.',
+  'error.field.slug_format': 'Use lowercase letters, numbers, and hyphens only.',
+  'error.field.username_too_short': 'Use at least 3 characters for the username.',
+  'error.field.username_too_long': 'Use at most 24 characters for the username.',
+  'error.field.username_format': 'Use letters, numbers, underscores, and hyphens only.',
+  'error.field.email_format': 'Enter a valid email address.',
+  'error.field.email_too_long': 'Use at most 128 characters for the email.',
+  'error.field.password_too_short': 'Use at least 8 characters for the password.',
+  'error.field.password_too_long': 'Use at most 128 characters for the password.',
+  'error.field.identifier_too_short': 'Enter an email or username.',
+  'error.field.identifier_too_long': 'Use at most 128 characters for the email or username.',
+  'error.field.comment_required': 'Enter a comment.',
+  'error.field.comment_too_long': 'Use at most 500 characters for the comment.',
+  'error.field.title_required': 'Enter a title.',
+  'error.field.title_too_long': 'Use at most 120 characters for the title.',
+  'error.field.body_required': 'Enter a body.',
+  'error.field.body_too_long': 'Use at most 10000 characters for the body.',
+  'error.field.reply_required': 'Enter a reply.',
+  'error.field.reply_too_long': 'Use at most 5000 characters for the reply.',
+  'error.field.currency_format': 'Use a 3-letter currency code.',
+  'error.field.price_range': 'Enter a price from 0 to 9,999,999,999.99.',
+  'error.field.image_https': 'Use an image link that starts with https://.',
+  'error.field.image_too_many': 'Use at most 4 images.',
+  'error.field.contact_too_short': 'Use at least 2 characters for the contact.',
+  'error.field.contact_too_long': 'Use at most 200 characters for the contact.',
+  'error.field.note_too_long': 'Use at most 500 characters for the note.',
+  'error.field.variant_note_too_long': 'Use at most 40 characters for the variant note.',
+  'error.field.reason_too_short': 'Enter a reason of at least 4 characters.',
+  'error.field.reason_too_long': 'Use at most 500 characters for the reason.',
+  'error.field.resolution_too_long': 'Use at most 500 characters for the resolution.',
+  'error.field.image_url': 'Leave the image URL empty, or start it with https:// or gradient:.',
+  'error.field.attributes_too_many': 'Use at most 40 attributes.',
+  'error.field.invalid_date': 'Enter a valid date as YYYY-MM-DD.',
+  'error.field.delete_reason_too_long': 'Use at most 500 characters for the delete reason.',
+  'error.field.invalid': 'Enter a value that matches the field.',
+  'error.field.invalid_type': 'Enter a value of the expected type.',
+  'error.field.too_big': 'Use a shorter value.',
+  'error.field.too_small': 'Use a longer value.',
+  'error.field.invalid_format': 'Use the required format.',
+  'error.field.not_multiple_of': 'Enter a value that matches the required multiple.',
+  'error.field.unrecognized_keys': 'Remove unrecognized fields.',
+  'error.field.invalid_union': 'Enter a value that matches the required shape.',
+  'error.field.invalid_key': 'Use a valid field name.',
+  'error.field.invalid_element': 'Fix the value that does not match.',
+  'error.field.invalid_value': 'Choose one of the allowed values.',
   'admin.import.back': 'Back to catalog',
   'admin.import.already': 'This content was already imported. Change it before importing again.',
   'miniapp.home.browse': 'Browse series',
@@ -1601,4 +1687,24 @@ export function appErrorMessage(locale: Locale, appCode: unknown): string {
     if (text !== key) return text;
   }
   return t(locale, 'error.app.unknown');
+}
+
+const FIELD_ERROR_CODE = /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/;
+
+export function fieldErrorCodes(locale: Locale): string[] {
+  return Object.keys(dictionaries[locale] ?? {})
+    .filter((key) => key.startsWith('error.field.'))
+    .map((key) => key.slice('error.field.'.length))
+    .sort();
+}
+
+/**
+ * Localized copy for a zod issue message that is a snake_case field code.
+ * Anything else, including an unmapped code, uses `error.app.UNKNOWN`.
+ */
+export function fieldErrorMessage(locale: Locale, code: unknown): string {
+  const unknown = t(locale, 'error.app.UNKNOWN');
+  if (typeof code !== 'string' || !FIELD_ERROR_CODE.test(code)) return unknown;
+  const text = dictionaries[locale]?.[`error.field.${code}`];
+  return text ?? unknown;
 }

@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Button } from '@repo/ui-web';
-import { reportCreateInput, t, type ReportTargetType } from '@repo/shared';
+import { fieldErrorMessage, reportCreateInput, t, type ReportTargetType } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
@@ -111,7 +111,11 @@ export const ReportButton = observer(function ReportButton({
       reason: reason.trim(),
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tt('state.error'));
+      setError(
+        parsed.error.issues[0]
+          ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+          : tt('state.error'),
+      );
       textareaRef.current?.focus();
       return;
     }

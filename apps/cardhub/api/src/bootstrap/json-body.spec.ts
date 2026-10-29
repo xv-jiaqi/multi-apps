@@ -8,7 +8,12 @@ import type { NextFunction, Request, Response } from 'express';
 import express from 'express';
 import request from 'supertest';
 import { SentryExceptionFilter } from '../common/sentry-exception.filter';
-import { CATALOG_IMPORT_HTTP_BODY_LIMIT, jsonBodyParser } from './json-body';
+import {
+  CATALOG_IMPORT_HTTP_BODY_LIMIT,
+  clientParserHttpBody,
+  jsonBodyParser,
+  parserClientFailure,
+} from './json-body';
 
 const DEFAULT_LIMIT_BYTES = 100 * 1024;
 
@@ -66,6 +71,7 @@ describe('json body limits', () => {
           data: {
             code: 'PAYLOAD_TOO_LARGE',
             httpStatus: 413,
+            appCode: 'PAYLOAD_TOO_LARGE',
             path: 'comments.create',
           },
         },
@@ -87,6 +93,7 @@ describe('json body limits', () => {
     expect(response.body.error.data).toEqual({
       code: 'PAYLOAD_TOO_LARGE',
       httpStatus: 413,
+      appCode: 'PAYLOAD_TOO_LARGE',
       path: 'admin.catalog.import',
     });
     expect(harness.captureException).not.toHaveBeenCalled();
@@ -130,7 +137,7 @@ describe('json body limits', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
       error: {
-        message: '请求格式有误',
+        message: '请求无法解析，请重试',
         code: -32600,
         data: {
           code: 'BAD_REQUEST',
@@ -156,10 +163,34 @@ describe('json body limits', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
       statusCode: 400,
-      message: '请求格式有误',
+      message: '请求无法解析，请重试',
     });
     expect(JSON.stringify(response.body)).not.toContain('HEALTH_LEAK_MARKER');
     expect(JSON.stringify(response.body)).not.toContain('Unterminated');
+  });
+
+  it('uses BAD_REQUEST copy for a non-parse 400 and does not leak the parser text', () => {
+    const aborted = Object.assign(new Error('request aborted SECRET_ABORT'), {
+      type: 'request.aborted',
+    });
+    const failure = parserClientFailure(aborted);
+    expect(failure).toEqual({ status: 400, reason: 'request' });
+    if (!failure) return;
+    const body = clientParserHttpBody({ originalUrl: '/trpc/comments.create' }, failure);
+    expect(body).toEqual({
+      error: {
+        message: '请求无效，请检查后再试',
+        code: -32600,
+        data: {
+          code: 'BAD_REQUEST',
+          httpStatus: 400,
+          appCode: 'BAD_REQUEST',
+          path: 'comments.create',
+        },
+      },
+    });
+    expect(JSON.stringify(body)).not.toContain('SECRET_ABORT');
+    expect(JSON.stringify(body)).not.toContain('request aborted');
   });
 
   it('still reports a real 500 to Sentry', async () => {
@@ -167,7 +198,7 @@ describe('json body limits', () => {
     const response = await request(harness.app).get('/boom');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ message: 'Internal server error' });
+    expect(response.body).toEqual({ message: '出了点问题，请稍后再试' });
     expect(harness.captureException).toHaveBeenCalledTimes(1);
     expect(harness.captureException.mock.calls[0]?.[0]).toEqual(expect.any(Error));
     expect((harness.captureException.mock.calls[0]?.[0] as Error).message).toBe('database down');

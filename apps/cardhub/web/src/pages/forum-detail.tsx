@@ -14,7 +14,7 @@ import {
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { Pin } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { appErrorMessage, replyBodySchema, t } from '@repo/shared';
+import { appErrorMessage, fieldErrorMessage, replyBodySchema, t } from '@repo/shared';
 import { DeleteReasonField } from '../components/delete-reason-field';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -528,7 +528,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     clearDeleteState();
     const parsed = replyBodySchema.safeParse(replyBody);
     if (!parsed.success) {
-      setReplyError(parsed.error.issues[0]?.message ?? tt('state.error'));
+      setReplyError(
+        parsed.error.issues[0]
+          ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+          : tt('state.error'),
+      );
       return;
     }
     createReply.mutate({ topicId: topic.id, body: parsed.data });

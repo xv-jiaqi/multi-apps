@@ -127,6 +127,8 @@ describe('localized API error codes', () => {
   it('comment zod failure returns VALIDATION', async () => {
     const response = await post('comments.create', { cardSlug, content: '' }, token);
     expectAppCode(response, 400, APP_ERROR_CODES.VALIDATION, 'BAD_REQUEST');
+    expect(response.body.error.message).toContain('comment_required');
+    expect(JSON.stringify(response.body)).not.toContain('评论不能为空');
     expect(JSON.stringify(response.body)).not.toContain('INTERNAL_SERVER_ERROR');
   });
 
@@ -196,6 +198,11 @@ describe('localized API error codes', () => {
       token,
     );
     expectAppCode(response, 400, APP_ERROR_CODES.VALIDATION, 'BAD_REQUEST');
+    expect(response.body.error.message).toContain('slug_format');
+    const serialized = JSON.stringify(response.body);
+    expect(serialized).not.toContain('kebab');
+    expect(serialized).not.toContain('Must be');
+    expect(serialized).not.toContain('Bad Slug');
   });
 
   it('report zod failure returns VALIDATION', async () => {

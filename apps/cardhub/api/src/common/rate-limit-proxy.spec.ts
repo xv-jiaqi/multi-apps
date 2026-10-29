@@ -93,7 +93,7 @@ describe('rate limit proxy IP handling', () => {
         .expect((res) => {
           expect(res.body).toEqual({
             error: {
-              message: 'Too many requests',
+              message: '操作太频繁，请稍后再试',
               code: -32029,
               data: {
                 code: 'TOO_MANY_REQUESTS',
@@ -125,7 +125,7 @@ describe('rate limit proxy IP handling', () => {
           expect(res.body).toEqual([
             {
               error: {
-                message: 'Too many requests',
+                message: '操作太频繁，请稍后再试',
                 code: -32029,
                 data: {
                   code: 'TOO_MANY_REQUESTS',
@@ -137,7 +137,7 @@ describe('rate limit proxy IP handling', () => {
             },
             {
               error: {
-                message: 'Too many requests',
+                message: '操作太频繁，请稍后再试',
                 code: -32029,
                 data: {
                   code: 'TOO_MANY_REQUESTS',
@@ -192,7 +192,7 @@ describe('rate limit proxy IP handling', () => {
         .expect((res) => {
           expect(res.body).toEqual({
             error: {
-              message: 'Too many requests',
+              message: '操作太频繁，请稍后再试',
               code: -32029,
               data: {
                 code: 'TOO_MANY_REQUESTS',

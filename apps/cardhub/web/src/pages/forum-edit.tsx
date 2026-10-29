@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { APP_ERROR_CODES, t, topicUpdateInput } from '@repo/shared';
+import { APP_ERROR_CODES, fieldErrorMessage, t, topicUpdateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -195,7 +195,11 @@ export const ForumEditPage = observer(function ForumEditPage() {
     setError(null);
     const parsed = topicUpdateInput.safeParse({ id: topic.id, ...values });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tt('state.error'));
+      setError(
+        parsed.error.issues[0]
+          ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+          : tt('state.error'),
+      );
       return;
     }
     updateTopic.mutate(parsed.data);

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { observer } from 'mobx-react-lite';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { APP_ERROR_CODES, appErrorMessage, loginInput, t } from '@repo/shared';
+import { APP_ERROR_CODES, appErrorMessage, fieldErrorMessage, loginInput, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -67,9 +67,7 @@ export const LoginPage = observer(function LoginPage() {
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
       setError(
-        issue?.code === 'too_big' && issue.path[0] === 'identifier'
-          ? tt('auth.errors.identifier.tooLong')
-          : (issue?.message ?? tt('auth.errors.required')),
+        issue ? fieldErrorMessage(locale.locale, issue.message) : tt('auth.errors.required'),
       );
       return;
     }

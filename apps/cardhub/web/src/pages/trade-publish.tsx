@@ -23,6 +23,7 @@ import {
   LISTING_LANGUAGE_VALUES,
   TRADE_CURRENCY_VALUES,
   APP_ERROR_CODES,
+  fieldErrorMessage,
   listingPublishInput,
   t,
   type ListingCondition,
@@ -231,7 +232,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
             ? issue.path.length === 1
               ? tt('trade.publish.error.tooManyImages')
               : tt('trade.publish.error.imageTooLong')
-            : tt(issue.message);
+            : fieldErrorMessage(locale.locale, issue.message);
       } else if (issue?.path[0] === 'price') {
         mapped.price =
           issue.code === 'too_big'

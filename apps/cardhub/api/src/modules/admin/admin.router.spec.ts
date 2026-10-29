@@ -182,7 +182,10 @@ describe('AdminRouter auth', () => {
       'categories.update',
       (admin: AdminCaller) => admin.categories.update({ slug: 'deck-builder', name: '构筑' }),
     ],
-    ['categories.delete', (admin: AdminCaller) => admin.categories.delete({ slug: 'deck-builder' })],
+    [
+      'categories.delete',
+      (admin: AdminCaller) => admin.categories.delete({ slug: 'deck-builder' }),
+    ],
     ['subsets.list', (admin: AdminCaller) => admin.subsets.list({ seriesSlug: 'existing-series' })],
     [
       'subsets.create',
@@ -206,8 +209,7 @@ describe('AdminRouter auth', () => {
     ],
     [
       'subsets.delete',
-      (admin: AdminCaller) =>
-        admin.subsets.delete({ seriesSlug: 'existing-series', slug: 'base' }),
+      (admin: AdminCaller) => admin.subsets.delete({ seriesSlug: 'existing-series', slug: 'base' }),
     ],
   ] as const)('rejects non-admin callers for %s with FORBIDDEN', async (_name, invoke) => {
     const router = makeRouter();
@@ -1052,6 +1054,7 @@ describe('AdminRouter HTTP error formatting', () => {
           data: {
             code: 'PAYLOAD_TOO_LARGE',
             httpStatus: 413,
+            appCode: 'PAYLOAD_TOO_LARGE',
             path: 'admin.catalog.import',
           },
         },
@@ -1132,6 +1135,7 @@ describe('AdminRouter HTTP error formatting', () => {
         data: {
           code: 'PAYLOAD_TOO_LARGE',
           httpStatus: 413,
+          appCode: 'PAYLOAD_TOO_LARGE',
           path: 'admin.series.list',
         },
       },

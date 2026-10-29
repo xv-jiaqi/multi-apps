@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import Taro from '@tarojs/taro';
 import { ScrollView, View, Text } from '@tarojs/components';
 import { BreadcrumbsMini, Field, Link, PrimaryButton, SectionCard } from '@repo/ui-mini';
-import { loginInput, t } from '@repo/shared';
+import { fieldErrorMessage, loginInput, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 
@@ -20,7 +20,11 @@ export default observer(function LoginPage() {
     setError(null);
     const parsed = loginInput.safeParse({ identifier, password });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? tt('auth.errors.required'));
+      setError(
+        parsed.error.issues[0]
+          ? fieldErrorMessage(locale.locale, parsed.error.issues[0].message)
+          : tt('auth.errors.required'),
+      );
       return;
     }
     setSubmitting(true);

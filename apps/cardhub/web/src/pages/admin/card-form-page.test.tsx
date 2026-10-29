@@ -330,8 +330,10 @@ describe('card form server validation', () => {
     await submitNewCard(user);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'attributes.cost: Invalid input: expected number, received object',
+      'attributes.cost: 出了点问题，请稍后再试',
     );
+    expect(screen.queryByText(/Invalid input/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/expected number/)).not.toBeInTheDocument();
     expect(screen.queryByText('保存失败，请重试')).not.toBeInTheDocument();
   });
 

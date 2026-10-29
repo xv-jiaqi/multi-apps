@@ -5,7 +5,7 @@ import { createApp } from '../src/bootstrap/create-app';
 
 const FIXED_TRPC_BODY = {
   error: {
-    message: '请求格式有误',
+    message: '请求无法解析，请重试',
     code: -32600,
     data: {
       code: 'BAD_REQUEST',
@@ -87,6 +87,7 @@ describe('malformed JSON through the Nest bootstrap', () => {
       .send('{"content":"PARSER_LEAK_MARKER"');
 
     expect(badJson.status).toBe(400);
+    expect(badJson.body.error.message).toBe('请求无法解析，请重试');
     expect(badJson.body.error.data.code).toBe('BAD_REQUEST');
     expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
     const badSerialized = JSON.stringify(badJson.body);
@@ -101,9 +102,10 @@ describe('malformed JSON through the Nest bootstrap', () => {
       .send(Buffer.alloc(100 * 1024 + 1, 0x78));
 
     expect(tooLarge.status).toBe(413);
+    expect(tooLarge.body.error.message).toBe('内容太大，请精简后重试');
     expect(tooLarge.body.error.data.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(tooLarge.body.error.data.appCode).toBe(APP_ERROR_CODES.PAYLOAD_TOO_LARGE);
     expect(tooLarge.body.error.data.httpStatus).toBe(413);
-    expect(tooLarge.body.error.data).not.toHaveProperty('appCode');
     const largeSerialized = JSON.stringify(tooLarge.body);
     expect(largeSerialized).not.toContain('entity.too.large');
     expect(largeSerialized).not.toContain('request entity too large');
@@ -118,7 +120,7 @@ describe('malformed JSON through the Nest bootstrap', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
       statusCode: 400,
-      message: '请求格式有误',
+      message: '请求无法解析，请重试',
     });
     const serialized = JSON.stringify(response.body);
     expect(serialized).not.toContain('HEALTH_LEAK_MARKER');
