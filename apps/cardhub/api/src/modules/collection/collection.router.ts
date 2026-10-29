@@ -1,12 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
-import { APP_ERROR_CODES, collectionListInput, collectionUpsertInput } from '@repo/shared';
+import {
+  APP_ERROR_CODES,
+  collectionByCardInput,
+  collectionListInput,
+  collectionUpsertInput,
+} from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { decodeCollectionCursor, encodeCollectionCursor } from './collection-cursor';
+import { retryUniqueConflict } from './collection-write';
 
 type CollectionCardRef = {
   slug: string;
   name: string;
+  imageUrl: string | null;
   series: { slug: string; title: string };
 };
 
@@ -23,6 +31,7 @@ type CollectionEntryBase = {
   id: string;
   cardSlug: string;
   cardName: string;
+  imageUrl: string | null;
   seriesSlug: string;
   seriesTitle: string;
   createdAt: string;
@@ -74,6 +83,7 @@ function entryBase(row: CollectionRow): CollectionEntryBase {
     id: row.id,
     cardSlug: row.card.slug,
     cardName: row.card.name,
+    imageUrl: row.card.imageUrl,
     seriesSlug: row.card.series.slug,
     seriesTitle: row.card.series.title,
     createdAt: row.createdAt.toISOString(),
@@ -112,6 +122,51 @@ function savedResult(item: CollectionEntry): CollectionUpsertResult {
 function removedResult(cardSlug: string): CollectionUpsertResult {
   const result: CollectionUpsertResult = { outcome: 'removed', cardSlug };
   return result;
+}
+
+const collectionCardSelect = {
+  slug: true,
+  name: true,
+  imageUrl: true,
+  series: { select: { slug: true, title: true } },
+} as const;
+
+type ListState = 'all' | 'owned' | 'wanted';
+
+function visibilityWhere(state: ListState) {
+  if (state === 'owned') return { ownedCount: { gt: 0 } };
+  if (state === 'wanted') return { wanted: true };
+  return { OR: [{ ownedCount: { gt: 0 } }, { wanted: true }] };
+}
+
+function keysetWhere(point: { updatedAt: Date; id: string }) {
+  return {
+    OR: [
+      { updatedAt: { lt: point.updatedAt } },
+      { AND: [{ updatedAt: point.updatedAt }, { id: { lt: point.id } }] },
+    ],
+  };
+}
+
+/**
+ * A keyset cursor already carries the boundary. An older cursor is the row id:
+ * use that row's updatedAt while it still exists. A deleted id has no
+ * boundary, so the page is empty instead of a 500 from Prisma's cursor lookup.
+ */
+async function readListCursor(
+  prisma: PrismaService,
+  userId: string,
+  cursor: string | undefined,
+): Promise<{ updatedAt: Date; id: string } | 'missing' | null> {
+  if (!cursor) return null;
+  const decoded = decodeCollectionCursor(cursor);
+  if (decoded) return decoded;
+  const row = await prisma.collectionItem.findFirst({
+    where: { id: cursor, userId },
+    select: { id: true, updatedAt: true },
+  });
+  if (!row) return 'missing';
+  return row;
 }
 
 function progressItems(input: {
@@ -180,60 +235,59 @@ export class CollectionRouter {
           return removedResult(card.slug);
         }
 
-        const saved = await prisma.collectionItem.upsert({
-          where: { userId_cardId: { userId, cardId: card.id } },
-          create: {
-            userId,
-            cardId: card.id,
-            ownedCount: input.ownedCount,
-            wanted: input.wanted,
-          },
-          update: {
-            ownedCount: input.ownedCount,
-            wanted: input.wanted,
-          },
-          include: {
-            card: {
-              select: {
-                slug: true,
-                name: true,
-                series: { select: { slug: true, title: true } },
-              },
+        const saved = await retryUniqueConflict(() =>
+          prisma.collectionItem.upsert({
+            where: { userId_cardId: { userId, cardId: card.id } },
+            create: {
+              userId,
+              cardId: card.id,
+              ownedCount: input.ownedCount,
+              wanted: input.wanted,
             },
-          },
-        });
+            update: {
+              ownedCount: input.ownedCount,
+              wanted: input.wanted,
+            },
+            include: { card: { select: collectionCardSelect } },
+          }),
+        );
         return savedResult(toEntry(saved));
+      }),
+
+      byCard: t.authedProcedure.input(collectionByCardInput).query(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const row = await prisma.collectionItem.findFirst({
+          where: { userId: ctx.user.sub, card: { slug: input.cardSlug } },
+          select: { ownedCount: true, wanted: true },
+        });
+        if (!row) return null;
+        return { ownedCount: row.ownedCount, wanted: row.wanted };
       }),
 
       list: t.authedProcedure.input(collectionListInput).query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const userId = ctx.user.sub;
+        const point = await readListCursor(prisma, userId, input.cursor);
+        if (point === 'missing') return { items: [], nextCursor: null };
         const items = await prisma.collectionItem.findMany({
           where: {
-            userId: ctx.user.sub,
-            OR: [{ ownedCount: { gt: 0 } }, { wanted: true }],
+            userId,
+            AND: [visibilityWhere(input.state), ...(point ? [keysetWhere(point)] : [])],
           },
           take: input.limit + 1,
           orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
-          ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
-          include: {
-            card: {
-              select: {
-                slug: true,
-                name: true,
-                series: { select: { slug: true, title: true } },
-              },
-            },
-          },
+          include: { card: { select: collectionCardSelect } },
         });
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
         const last = sliced[sliced.length - 1];
         return {
           items: sliced.map((row) => toEntry(row)),
-          nextCursor: hasMore && last ? last.id : null,
+          nextCursor: hasMore && last ? encodeCollectionCursor(last.updatedAt, last.id) : null,
         };
       }),
 
+      // Want-only rows stay in the list. Spec v1.2 §3 shows them as owned 0 / total N.
       progress: t.authedProcedure.query(async ({ ctx }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const stored = await prisma.collectionItem.findMany({

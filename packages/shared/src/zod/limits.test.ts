@@ -155,7 +155,9 @@ describe('procedure input upper bounds', () => {
       });
       expect(parsed.success).toBe(false);
       if (!parsed.success) {
-        expect(parsed.error.issues.some((issue) => issue.path[0] === 'ownedCount')).toBe(true);
+        const owned = parsed.error.issues.filter((issue) => issue.path[0] === 'ownedCount');
+        expect(owned.length).toBeGreaterThan(0);
+        expect(owned.every((issue) => issue.message === 'collection_quantity')).toBe(true);
       }
     }
     expect(

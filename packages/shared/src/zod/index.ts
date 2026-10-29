@@ -511,10 +511,10 @@ export const COLLECTION_OWNED_COUNT_MIN = 0;
 export const COLLECTION_OWNED_COUNT_MAX = 99;
 
 export const collectionOwnedCountSchema = z
-  .number()
-  .int()
-  .min(COLLECTION_OWNED_COUNT_MIN)
-  .max(COLLECTION_OWNED_COUNT_MAX);
+  .number('collection_quantity')
+  .int('collection_quantity')
+  .min(COLLECTION_OWNED_COUNT_MIN, 'collection_quantity')
+  .max(COLLECTION_OWNED_COUNT_MAX, 'collection_quantity');
 
 export const collectionUpsertInput = z.object({
   cardSlug: slugSchema,
@@ -523,5 +523,18 @@ export const collectionUpsertInput = z.object({
 });
 export type CollectionUpsertInput = z.infer<typeof collectionUpsertInput>;
 
-export const collectionListInput = cursorPaginationInput;
+/** `all` is every stored row. `owned` is ownedCount > 0. `wanted` is wanted. */
+export const COLLECTION_LIST_STATE_VALUES = ['all', 'owned', 'wanted'] as const;
+export type CollectionListState = (typeof COLLECTION_LIST_STATE_VALUES)[number];
+
+export const collectionListInput = z.object({
+  cursor: z.string().max(CURSOR_MAX).optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+  state: z.enum(COLLECTION_LIST_STATE_VALUES).default('all'),
+});
 export type CollectionListInput = z.infer<typeof collectionListInput>;
+
+export const collectionByCardInput = z.object({
+  cardSlug: slugSchema,
+});
+export type CollectionByCardInput = z.infer<typeof collectionByCardInput>;
