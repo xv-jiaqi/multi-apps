@@ -253,7 +253,7 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 
 表 `user_daily_activities`：一个用户一个 UTC 日一行（`userId` + `day` 唯一）。一次已鉴权的 tRPC 请求写入当天。也就是 context 里解析出了仍然有效的用户（token 能通过，`tokenVersion` 匹配，用户还在）。不写 IP、UA、邮箱、用户名，只写用户 id 和日期。
 
-同一用户同一 UTC 日先用 Redis `SET key 1 EX <到下一个 UTC 午夜的秒数> NX` 占位，键是 `cardhub:activity:v1:<userId>:<YYYY-MM-DD>`。只有第一次拿到锁才写库。这次写入不阻塞请求。Redis 命令失败或连不上时改为直接写库。写库失败时删掉刚占的键，并打一条不含用户 id 的结构化 warn，原来的请求照常返回。库上的 `(userId, day)` 唯一约束仍在，Redis 失效时重复插入也不会多出一行。注册数、评论数和留存同期群按 `createdAt >= 日初 AND createdAt < 次日日初` 过滤，日初是 UTC 午夜。
+同一用户同一 UTC 日先用 Redis `SET key 1 EX <到下一个 UTC 午夜的秒数> NX` 占位，键是 `cardhub:activity:v1:<userId>:<YYYY-MM-DD>`。只有第一次拿到锁才写库。这次写入不阻塞请求。Redis 命令失败、连不上，或超过 200ms 没有返回时，改为直接写库。写库失败时删掉刚占的键，并打一条不含用户 id 的结构化 warn，原来的请求照常返回。库上的 `(userId, day)` 唯一约束仍在，Redis 失效时重复插入也不会多出一行。注册数、评论数和留存同期群按 `createdAt >= 日初 AND createdAt < 次日日初` 过滤，日初是 UTC 午夜。
 
 注册和登录发生在鉴权之前，那一次请求本身不算活跃。之后带有效 token 的请求才算，包括公开接口。token 无效、用户已删除或 `tokenVersion` 不一致，不记。token 有效但 procedure 随后拒绝（例如非 admin 调用 `admin.metrics`），这一天仍然记下。
 

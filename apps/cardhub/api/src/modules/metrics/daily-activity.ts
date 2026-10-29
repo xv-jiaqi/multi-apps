@@ -8,6 +8,9 @@ const activityLogger = new Logger('UserDailyActivity');
 /** Not under `cardhub:cache:v1:`, so a catalog cache purge does not clear it. */
 export const DAILY_ACTIVITY_KEY_PREFIX = 'cardhub:activity:v1:';
 
+/** A Redis call slower than this is treated as Redis being unavailable. */
+export const DAILY_ACTIVITY_REDIS_TIMEOUT_MS = 200;
+
 export interface DailyActivityRedis {
   set(
     key: string,
@@ -30,6 +33,25 @@ function errorCode(error: unknown): string {
   return 'unknown';
 }
 
+function withRedisTimeout<T>(promise: Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('redis timeout')),
+      DAILY_ACTIVITY_REDIS_TIMEOUT_MS,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error instanceof Error ? error : new Error('redis'));
+      },
+    );
+  });
+}
+
 async function claimUtcDay(
   redis: DailyActivityRedis | undefined,
   userId: string,
@@ -38,12 +60,8 @@ async function claimUtcDay(
 ): Promise<'claimed' | 'seen' | 'unavailable'> {
   if (!redis) return 'unavailable';
   try {
-    const result = await redis.set(
-      `${DAILY_ACTIVITY_KEY_PREFIX}${userId}:${day}`,
-      '1',
-      'EX',
-      ttlSeconds,
-      'NX',
+    const result = await withRedisTimeout(
+      redis.set(`${DAILY_ACTIVITY_KEY_PREFIX}${userId}:${day}`, '1', 'EX', ttlSeconds, 'NX'),
     );
     if (result === 'OK') return 'claimed';
     if (result === null) return 'seen';
@@ -86,9 +104,11 @@ export async function recordDailyActivity(
       skipDuplicates: true,
     });
   } catch (error) {
-    if (claim === 'claimed') {
+    if (claim === 'claimed' && options?.redis?.del) {
       try {
-        await options?.redis?.del?.(`${DAILY_ACTIVITY_KEY_PREFIX}${userId}:${dayIso}`);
+        await withRedisTimeout(
+          options.redis.del(`${DAILY_ACTIVITY_KEY_PREFIX}${userId}:${dayIso}`),
+        );
       } catch {
         activityLogger.warn('daily activity lock release failed');
       }
