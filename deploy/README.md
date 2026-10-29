@@ -112,14 +112,15 @@ redirects `ROOT_WEB_REDIRECT_DOMAINS=www.card-hub.app` to
 `https://card-hub.app` with a permanent redirect; keep
 `ROOT_WEB_REDIRECT_TARGET=card-hub.app` in `/opt/cardhub/edge/edge.env`.
 
-Security headers are set on the edge, not in the web image. nginx in
-`Dockerfile.web` only sets cache headers. `card-hub.app`
-(`optional/root-web.caddy`) and `staging.card-hub.app` send
+The edge sends HSTS, `X-Content-Type-Options: nosniff`, and
+`X-Frame-Options: DENY`. `card-hub.app` (`optional/root-web.caddy`) and
+`staging.card-hub.app` send
 `Strict-Transport-Security: max-age=31536000; includeSubDomains` (no
-`preload`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and
-`Content-Security-Policy: frame-ancestors 'none'`. Both API hostnames send
-that same HSTS value and `nosniff`. The handlers use `defer`, so they replace
-the same fields from upstream. `lb_try_duration` is unchanged.
+`preload`). Both API hostnames send that same HSTS value and `nosniff`.
+The handlers use `defer`, so they replace the same fields from upstream.
+They do not set `Content-Security-Policy`: the web container writes that
+header, including `frame-ancestors 'none'` and a `connect-src` built from
+`TRPC_URL` and `SENTRY_DSN`. `lb_try_duration` is unchanged.
 
 After changing any edge env vars manually, recreate the Caddy container so
 Compose injects the new environment; `caddy reload` does not pick up env-file
