@@ -212,6 +212,8 @@ jobs:
           caddy version
 
       - name: Edge plan, deploy tree guard, rollback previous image
+        env:
+          CADDY_BIN: /usr/local/bin/caddy
         run: |
           bash deploy/plan-edge-apply.test.sh
           bash deploy/deploy-tree-guard.test.sh
@@ -229,6 +231,8 @@ jobs:
           bash deploy/sync-whitelist.test.sh
           bash deploy/web-security-headers.test.sh
           bash deploy/sitemap-proxy.test.sh
+          bash deploy/container-log-archive.test.sh
+          bash deploy/edge-access-log.test.sh
 
   audit:
     name: pnpm audit (high+)

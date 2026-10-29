@@ -28,9 +28,105 @@ if ! [[ "${health_timeout_seconds}" =~ ^[0-9]+$ ]]; then
   exit 64
 fi
 
+# Archived api/web logs for both compose projects. 20160 minutes is 14 days.
+# 1073741824 bytes is 1 GiB, shared by cardhub-prod and cardhub-staging.
+# Tests set the variables after sourcing. A non-integer falls back inside
+# the prune helper and does not fail the deploy.
+container_log_retention_minutes="${CARDHUB_CONTAINER_LOG_RETENTION_MINUTES:-20160}"
+container_log_cap_bytes="${CARDHUB_CONTAINER_LOG_CAP_BYTES:-1073741824}"
+if ! [[ "${container_log_retention_minutes}" =~ ^[0-9]+$ ]] || [ "${container_log_retention_minutes}" -eq 0 ]; then
+  echo "Invalid CARDHUB_CONTAINER_LOG_RETENTION_MINUTES; using 20160" >&2
+  container_log_retention_minutes=20160
+fi
+if ! [[ "${container_log_cap_bytes}" =~ ^[0-9]+$ ]]; then
+  echo "Invalid CARDHUB_CONTAINER_LOG_CAP_BYTES; using 1073741824" >&2
+  container_log_cap_bytes=1073741824
+fi
+
 # Lookup helpers are top-level so a test can source this file and call
 # read_previous_image. main uses the same functions. Nothing here returns
 # success before the image switch.
+#
+# archive_removed_container_logs and prune_saved_container_logs are also
+# top-level for the same reason. `project` is main's local; bash dynamic
+# scope passes it through rollout_service. A failure in either helper must
+# not trip the ERR trap (that trap rolls the deploy back). The work runs in
+# a subshell that clears ERR before any command that can fail, and the
+# caller still chains `|| true`.
+
+# True for the gzip names this script writes.
+archive_log_basename() {
+  [[ "$1" =~ ^(api|web)-[0-9a-f]{12}(-[0-9a-f]{12})?-[0-9]{8}T[0-9]{6}Z\.log\.gz$ ]]
+}
+
+# Absolute archive directory, or nothing and status 1.
+# The only names allowed are cardhub-prod and cardhub-staging, under
+# ${cardhub_root}/logs (default root /opt/cardhub). Empty, relative, `..`,
+# and any symlink in that path are refused. Callers must not `find` a path
+# this function did not print.
+prepare_container_log_dir() {
+  local project_name="$1"
+  local root logs dir resolved
+  case "${project_name}" in
+    cardhub-prod|cardhub-staging) ;;
+    *)
+      echo "Warning: container log path refused for project ${project_name}." >&2
+      return 1
+      ;;
+  esac
+  root="${cardhub_root-}"
+  if [ -z "${root}" ] || [ "${root}" = "/" ]; then
+    echo "Warning: container log path refused; CARDHUB_ROOT is empty." >&2
+    return 1
+  fi
+  case "${root}" in
+    /*) ;;
+    *)
+      echo "Warning: container log path refused; CARDHUB_ROOT is not absolute." >&2
+      return 1
+      ;;
+  esac
+  root="${root%/}"
+  case "${root}" in
+    *..*)
+      echo "Warning: container log path refused; CARDHUB_ROOT contains .." >&2
+      return 1
+      ;;
+  esac
+  if [ ! -d "${root}" ] || [ -L "${root}" ]; then
+    echo "Warning: container log path refused; CARDHUB_ROOT is not a real directory." >&2
+    return 1
+  fi
+  resolved="$(cd "${root}" && pwd -P)" || return 1
+  if [ "${resolved}" != "${root}" ]; then
+    echo "Warning: container log path refused; ${root} is not canonical." >&2
+    return 1
+  fi
+  logs="${root}/logs"
+  if [ -L "${logs}" ]; then
+    echo "Warning: container log path refused; ${logs} is a symlink." >&2
+    return 1
+  fi
+  dir="${logs}/${project_name}"
+  if [ -L "${dir}" ]; then
+    echo "Warning: container log path refused; ${dir} is a symlink." >&2
+    return 1
+  fi
+  if [ ! -d "${dir}" ] && ! mkdir -p "${dir}"; then
+    echo "Warning: could not create ${dir}." >&2
+    return 1
+  fi
+  if [ -L "${dir}" ] || [ ! -d "${dir}" ]; then
+    echo "Warning: container log path refused; ${dir} is not a real directory." >&2
+    return 1
+  fi
+  resolved="$(cd "${dir}" && pwd -P)" || return 1
+  if [ "${resolved}" != "${dir}" ]; then
+    echo "Warning: container log path refused; ${dir} resolved to ${resolved}." >&2
+    return 1
+  fi
+  printf '%s\n' "${resolved}"
+}
 
 compose() {
   : "${env_name:?}" "${active_image_tag:?}" "${project:?}" "${env_file:?}" "${compose_file:?}"
@@ -434,6 +530,217 @@ apply_web_sentry_dsn() {
   fi
 }
 
+# Copy docker logs for one api or web container into
+# ${cardhub_root}/logs/<project>/<service>-<shortsha>-<UTC>.log.gz
+# then prune. Returns 0 even when the copy fails.
+archive_removed_container_logs() {
+  local id="${1-}"
+  local svc="${2-}"
+  # shellcheck disable=SC2154 # project is main's local, visible by dynamic scope
+  local project_name="${project-}"
+  local root="${cardhub_root-}"
+  (
+    trap - ERR
+    set +e
+    if [ -z "${root}" ] || [ -z "${project_name}" ]; then
+      echo "Warning: container log archive skipped; root or project is empty. Deploy continues." >&2
+      exit 0
+    fi
+    case "${project_name}" in
+      cardhub-prod|cardhub-staging) ;;
+      *)
+        echo "Warning: container log archive skipped for project ${project_name}. Deploy continues." >&2
+        exit 0
+        ;;
+    esac
+    case "${svc}" in
+      api|web) ;;
+      *)
+        echo "Warning: container log archive skipped for service ${svc}. Deploy continues." >&2
+        exit 0
+        ;;
+    esac
+    if ! [[ "${id}" =~ ^[0-9a-f]{12,64}$ ]]; then
+      echo "Warning: container log archive skipped; id is not a docker hex id. Deploy continues." >&2
+      exit 0
+    fi
+
+    local image short stamp dir dest tmp partial
+    image="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>/dev/null)" || image=""
+    short=""
+    if [[ "${image}" =~ :sha-([0-9a-f]{40})$ ]]; then
+      short="${BASH_REMATCH[1]:0:12}"
+    fi
+    if [ -z "${short}" ]; then
+      short="${id:0:12}"
+    fi
+    stamp="$(date -u +%Y%m%dT%H%M%SZ 2>/dev/null)" || stamp=""
+    if ! [[ "${stamp}" =~ ^[0-9]{8}T[0-9]{6}Z$ ]]; then
+      echo "Warning: could not format a container log timestamp for ${svc} ${id:0:12}. Deploy continues." >&2
+      exit 0
+    fi
+    dir="$(prepare_container_log_dir "${project_name}")" || dir=""
+    if [ -z "${dir}" ]; then
+      echo "Warning: ${svc} logs were not saved. Deploy continues." >&2
+      exit 0
+    fi
+    dest="${dir}/${svc}-${short}-${stamp}.log.gz"
+    if [ -e "${dest}" ]; then
+      dest="${dir}/${svc}-${short}-${id:0:12}-${stamp}.log.gz"
+    fi
+    tmp="$(mktemp "${dir}/.${svc}-${short}.XXXXXX")" || {
+      echo "Warning: could not create a temp file under ${dir}. Deploy continues." >&2
+      exit 0
+    }
+    if ! docker logs "${id}" >"${tmp}" 2>&1; then
+      echo "Warning: docker logs failed for ${svc} ${id:0:12}. Deploy continues." >&2
+      rm -f "${tmp}"
+      exit 0
+    fi
+    partial="${dest}.partial"
+    if ! gzip -c "${tmp}" >"${partial}"; then
+      echo "Warning: gzip failed for ${svc} ${id:0:12}. Deploy continues." >&2
+      rm -f "${tmp}" "${partial}"
+      exit 0
+    fi
+    rm -f "${tmp}"
+    if ! mv -f "${partial}" "${dest}"; then
+      echo "Warning: could not place ${dest}. Deploy continues." >&2
+      rm -f "${partial}"
+      exit 0
+    fi
+    echo "Saved ${svc} logs to ${dest}"
+  ) || true
+  prune_saved_container_logs || true
+  return 0
+}
+
+# Drop incomplete copies, then archives older than the retention window,
+# then the oldest remaining archives until both projects together are at
+# or under the byte cap. The cap wins when the two limits disagree.
+# Never returns non-zero.
+prune_saved_container_logs() {
+  (
+    trap - ERR
+    set +e
+    local root minutes cap dir f base size mtime total removed inventory sorted
+    root="${cardhub_root-}"
+    if [ -z "${root}" ]; then
+      echo "Warning: container log prune skipped; CARDHUB_ROOT is empty." >&2
+      exit 0
+    fi
+    minutes="${container_log_retention_minutes-20160}"
+    cap="${container_log_cap_bytes-1073741824}"
+    if ! [[ "${minutes}" =~ ^[0-9]+$ ]] || [ "${minutes}" -eq 0 ]; then
+      minutes=20160
+    fi
+    if ! [[ "${cap}" =~ ^[0-9]+$ ]]; then
+      cap=1073741824
+    fi
+    removed=0
+    now="$(date +%s)" || exit 0
+    cutoff=$((now - minutes * 60))
+    shopt -s nullglob
+    for project_name in cardhub-prod cardhub-staging; do
+      dir="$(prepare_container_log_dir "${project_name}")" || dir=""
+      if [ -z "${dir}" ]; then
+        continue
+      fi
+      for f in "${dir}/.api-"* "${dir}/.web-"* "${dir}/"*.log.gz.partial; do
+        [ -n "${f}" ] || continue
+        [ -L "${f}" ] && continue
+        [ -f "${f}" ] || continue
+        case "${f}" in
+          "${dir}"/*) ;;
+          *) continue ;;
+        esac
+        if rm -f -- "${f}"; then
+          removed=$((removed + 1))
+        fi
+      done
+      while IFS= read -r f; do
+        [ -n "${f}" ] || continue
+        [ -L "${f}" ] && continue
+        case "${f}" in
+          "${dir}"/*) ;;
+          *) continue ;;
+        esac
+        base="${f##*/}"
+        case "${base}" in
+          */*) continue ;;
+        esac
+        archive_log_basename "${base}" || continue
+        mtime="$(stat -c '%Y' "${f}" 2>/dev/null)" || continue
+        [[ "${mtime}" =~ ^[0-9]+$ ]] || continue
+        if [ "${mtime}" -lt "${cutoff}" ]; then
+          if rm -f -- "${f}"; then
+            removed=$((removed + 1))
+          fi
+        fi
+      done < <(find "${dir}" -maxdepth 1 -type f -name '*.log.gz')
+    done
+    shopt -u nullglob
+
+    inventory="$(mktemp)" || exit 0
+    sorted="$(mktemp)" || {
+      rm -f "${inventory}"
+      exit 0
+    }
+    : >"${inventory}"
+    for project_name in cardhub-prod cardhub-staging; do
+      dir="$(prepare_container_log_dir "${project_name}")" || dir=""
+      if [ -z "${dir}" ]; then
+        continue
+      fi
+      while IFS= read -r f; do
+        [ -n "${f}" ] || continue
+        [ -L "${f}" ] && continue
+        case "${f}" in
+          "${dir}"/*) ;;
+          *) continue ;;
+        esac
+        base="${f##*/}"
+        case "${base}" in
+          */*) continue ;;
+        esac
+        archive_log_basename "${base}" || continue
+        size="$(stat -c '%s' "${f}" 2>/dev/null)" || continue
+        mtime="$(stat -c '%Y' "${f}" 2>/dev/null)" || continue
+        [[ "${size}" =~ ^[0-9]+$ ]] || continue
+        printf '%s\t%s\t%s\n' "${mtime}" "${size}" "${f}" >>"${inventory}"
+      done < <(find "${dir}" -maxdepth 1 -type f -name '*.log.gz')
+    done
+
+    if ! sort -n -k1,1 "${inventory}" >"${sorted}"; then
+      rm -f "${inventory}" "${sorted}"
+      exit 0
+    fi
+
+    total=0
+    while IFS=$'\t' read -r mtime size f; do
+      [ -n "${f}" ] || continue
+      total=$((total + size))
+    done <"${sorted}"
+
+    if [ "${total}" -gt "${cap}" ]; then
+      while IFS=$'\t' read -r mtime size f; do
+        [ "${total}" -gt "${cap}" ] || break
+        [ -n "${f}" ] || continue
+        if rm -f -- "${f}"; then
+          total=$((total - size))
+          removed=$((removed + 1))
+        fi
+      done <"${sorted}"
+    fi
+    rm -f "${inventory}" "${sorted}"
+
+    if [ "${removed}" -gt 0 ]; then
+      echo "Pruned ${removed} container log archive file(s); ${total} bytes remain under ${root}/logs (cap ${cap})."
+    fi
+  ) || true
+  return 0
+}
+
 main() {
   local environment image_tag expected_sha env_name project base_dir
   environment="$1"
@@ -589,6 +896,10 @@ main() {
     echo "Timed out waiting for ${cardhub_root}/.rollout.lock; another rollout is still adding a replica" >&2
     exit 1
   fi
+
+  # Every deploy, including one that does not remove a container. The helper
+  # cannot fail this script.
+  prune_saved_container_logs || true
 
   local svc id n
   for svc in api web; do
@@ -868,6 +1179,10 @@ main() {
 
     echo "Stopping old ${svc} ${old_id:0:12} (grace ${stop_grace_seconds}s)"
     docker stop -t "${stop_grace_seconds}" "${old_id}" >/dev/null
+    # json-file logs are deleted with the container. Copy them first.
+    # `|| true` is not enough on its own: set -E runs the ERR trap inside
+    # the helper before it returns. The helper clears that trap.
+    archive_removed_container_logs "${old_id}" "${svc}" || true
     docker rm "${old_id}" >/dev/null
     compose up -d --no-deps --scale "${svc}=1" --no-recreate "${svc}"
     survivor="$(compose ps -q "${svc}" | awk 'NF')"
