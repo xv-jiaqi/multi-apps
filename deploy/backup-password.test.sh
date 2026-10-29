@@ -139,12 +139,12 @@ fi
 
 if [ "${cmd}" = "run" ]; then
   joined="$*"
-  if printf '%s\n' "${joined}" | grep -q 'pg_dump'; then
-    if ! printf '%s\n' "${joined}" | grep -F -q -- "--network ${PROJECT:?}_default"; then
+  if grep -q 'pg_dump' <<< "${joined}"; then
+    if ! grep -F -q -- "--network ${PROJECT:?}_default" <<< "${joined}"; then
       echo "stub docker: pg_dump must use --network ${PROJECT}_default" >&2
       exit 99
     fi
-    if printf '%s\n' "${joined}" | grep -q -- '-h postgres'; then
+    if grep -q -- '-h postgres' <<< "${joined}"; then
       if [ "${PGPASSWORD:-}" != "${BACKUP_STUB_PASSWORD:?}" ]; then
         echo 'pg_dump: error: connection to server at "postgres" (172.18.0.5), port 5432 failed: FATAL: password authentication failed for user "cardhub_backup"' >&2
         exit 1
@@ -166,11 +166,11 @@ if [ "${cmd}" = "run" ]; then
     dump_sql
     exit 0
   fi
-  if printf '%s\n' "${joined}" | grep -q 'copyto'; then
+  if grep -q 'copyto' <<< "${joined}"; then
     : > "${BACKUP_STUB_UPLOAD:?}"
     exit 0
   fi
-  if printf '%s\n' "${joined}" | grep -q ' check '; then
+  if grep -q ' check ' <<< "${joined}"; then
     exit 0
   fi
   echo "stub docker: unexpected run" >&2
@@ -246,7 +246,10 @@ assert "zero postgres is refused" "$(grep -F -q 'expected exactly one postgres c
 assert "zero postgres does not dump" "$(grep -F -q 'pg_dump' "${CASE_DOCKER}" && echo 1 || echo 0)"
 assert "zero postgres does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
 assert "zero postgres writes no backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 1 || echo 0)"
-assert "zero postgres leaves no file" "$(find "${CASE_BACKUP_DIR}" -type f -print | grep -q . && echo 1 || echo 0)"
+assert "zero postgres leaves no file" "$(
+  files="$(find "${CASE_BACKUP_DIR}" -type f -print || true)"
+  grep -q . <<< "${files}" && echo 1 || echo 0
+)"
 
 run_case "${right_password}" two
 assert "two postgres exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
@@ -254,7 +257,10 @@ assert "two postgres is refused" "$(grep -F -q 'expected exactly one postgres co
 assert "two postgres does not dump" "$(grep -F -q 'pg_dump' "${CASE_DOCKER}" && echo 1 || echo 0)"
 assert "two postgres does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
 assert "two postgres writes no backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 1 || echo 0)"
-assert "two postgres leaves no file" "$(find "${CASE_BACKUP_DIR}" -type f -print | grep -q . && echo 1 || echo 0)"
+assert "two postgres leaves no file" "$(
+  files="$(find "${CASE_BACKUP_DIR}" -type f -print || true)"
+  grep -q . <<< "${files}" && echo 1 || echo 0
+)"
 
 # More than 1KB then exit 1. The size check would pass this payload, so a
 # green run means pg_dump's own status failed the script. `|| true` after
@@ -266,7 +272,10 @@ assert "partial dump is not a size rejection" "$(grep -F -q 'unexpectedly small'
 assert "partial dump ran pg_dump" "$(grep -F -q 'pg_dump' "${CASE_DOCKER}" && echo 0 || echo 1)"
 assert "partial dump does not upload" "$([ ! -e "${CASE_UPLOAD}" ] && echo 0 || echo 1)"
 assert "partial dump writes no backup" "$(compgen -G "${CASE_BACKUP_DIR}/*.sql.gz" > /dev/null && echo 1 || echo 0)"
-assert "partial dump leaves no file" "$(find "${CASE_BACKUP_DIR}" -type f -print | grep -q . && echo 1 || echo 0)"
+assert "partial dump leaves no file" "$(
+  files="$(find "${CASE_BACKUP_DIR}" -type f -print || true)"
+  grep -q . <<< "${files}" && echo 1 || echo 0
+)"
 
 if [ "${failed}" -ne 0 ]; then
   echo "backup password tests failed" >&2

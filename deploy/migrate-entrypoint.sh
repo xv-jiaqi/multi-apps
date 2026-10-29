@@ -120,7 +120,12 @@ if ! role_line="$(awk '
   exit 1
 fi
 
-if ! printf '%s\n' "${role_line}" | grep -Eq '^current_user=[A-Za-z_][A-Za-z0-9_]* rolsuper=(true|false)$'; then
+# /bin/sh has no here-string. A here-document is fully written before grep
+# runs, so grep -q cannot SIGPIPE this script.
+if ! grep -Eq '^current_user=[A-Za-z_][A-Za-z0-9_]* rolsuper=(true|false)$' <<EOF
+${role_line}
+EOF
+then
   echo "Refusing to migrate: current_user query returned an unexpected shape" >&2
   exit 1
 fi

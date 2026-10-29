@@ -275,7 +275,9 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 
 `collection_items` 是 CH-203 cut-3 的新表。旧进程不读它。应用回滚到上一个 SHA 时表留着，不要用删迁移文件的方式回滚。
 
-`collection.list` 和 `collection.progress` 只按当前登录用户查询。不要把 `ownedCount` / `wanted` 放进 `cards.bySlug` 或 `cardhub:cache:v1:` 的目录缓存；那条缓存是公开的。平行版本分母等 CH-213，这次的 `total` 是系列里的全部卡牌。
+`collection.list`、`collection.byCard` 和 `collection.progress` 只按当前登录用户查询。不要把 `ownedCount` / `wanted` 放进 `cards.bySlug` 或 `cardhub:cache:v1:` 的目录缓存；那条缓存是公开的。`byCard` 没有收藏行时返回 `null`，不要为了它去改公开目录。平行版本分母等 CH-213，这次的 `total` 是系列里的全部卡牌。
+
+`collection.list` 的 `nextCursor` 是不透明键集（`updatedAt` + `id`），不是行 id。同一时间戳用 id 决胜。游标指向的行被删掉或稍后被改过，下一页仍从当时的边界继续。传入旧的行 id 时，该行还在就按它的 `updatedAt` 继续；行已经没了就返回空页，而不是 500。`state` 省略等于 `all`。列表里的 `imageUrl` 是 `Card.imageUrl`，没有新列，也没有新迁移。
 
 ## 7. 路线图
 

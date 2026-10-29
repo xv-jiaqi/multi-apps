@@ -79,7 +79,8 @@ assert_ok_line() {
       "^BACKUP_RESULT=ok project=${CASE_PROJECT} ts=[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z file=[^ ]+\\.sql\\.gz$" \
       "${CASE_LOG}" && echo 0 || echo 1
   )"
-  file_name="$(sed -n 's/^BACKUP_RESULT=ok .* file=\([^ ]*\)$/\1/p' "${CASE_LOG}" | head -n 1)"
+  file_name="$(sed -n 's/^BACKUP_RESULT=ok .* file=\([^ ]*\)$/\1/p' "${CASE_LOG}")"
+  file_name="${file_name%%$'\n'*}"
   assert "${name} file exists" "$([ -n "${file_name}" ] && [ -f "${CASE_BACKUP_DIR}/${file_name}" ] && echo 0 || echo 1)"
 }
 
@@ -172,12 +173,12 @@ fi
 
 if [ "${cmd}" = "run" ]; then
   joined="$*"
-  if printf '%s\n' "${joined}" | grep -q 'pg_dump'; then
-    if ! printf '%s\n' "${joined}" | grep -F -q -- "--network ${PROJECT:?}_default"; then
+  if grep -q 'pg_dump' <<< "${joined}"; then
+    if ! grep -F -q -- "--network ${PROJECT:?}_default" <<< "${joined}"; then
       echo "stub docker: pg_dump must use --network ${PROJECT}_default" >&2
       exit 99
     fi
-    if ! printf '%s\n' "${joined}" | grep -q -- '-h postgres'; then
+    if ! grep -q -- '-h postgres' <<< "${joined}"; then
       echo "stub docker: pg_dump must use -h postgres" >&2
       exit 99
     fi
@@ -213,11 +214,11 @@ if [ "${cmd}" = "run" ]; then
         ;;
     esac
   fi
-  if printf '%s\n' "${joined}" | grep -q 'copyto'; then
+  if grep -q 'copyto' <<< "${joined}"; then
     : > "${BACKUP_STUB_UPLOAD:?}"
     exit 0
   fi
-  if printf '%s\n' "${joined}" | grep -q ' check '; then
+  if grep -q ' check ' <<< "${joined}"; then
     exit 0
   fi
   echo "stub docker: unexpected run" >&2

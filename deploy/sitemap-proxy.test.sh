@@ -33,7 +33,7 @@ require_line() {
   local name="$1"
   local body="$2"
   local line="$3"
-  if ! printf '%s\n' "${body}" | grep -qxF "${line}"; then
+  if ! grep -qxF "${line}" <<< "${body}"; then
     echo "FAIL ${name}: missing ${line}" >&2
     failed=1
     return
@@ -59,7 +59,7 @@ require_line "staging headers" "${staging}" '	import cardhub_web_headers'
 require_line "staging sitemap" "${staging}" '	import cardhub_sitemap staging-api:4000'
 require_line "staging web" "${staging}" '		import cardhub_upstream staging-web:8080'
 
-if printf '%s\n' "${redirect}" | grep -q 'cardhub_sitemap\|reverse_proxy'; then
+if grep -q 'cardhub_sitemap\|reverse_proxy' <<< "${redirect}"; then
   echo "FAIL www redirect proxies the sitemap instead of redirecting" >&2
   failed=1
 else
@@ -90,7 +90,7 @@ else
       "${caddy_bin}" adapt --config Caddyfile --adapter caddyfile
   )"
   for needle in '/sitemap.xml' 'prod-api:4000' 'staging-api:4000' 'staging-web:8080' 'prod-web:8080'; do
-    if ! printf '%s\n' "${adapted}" | grep -qF "${needle}"; then
+    if ! grep -qF "${needle}" <<< "${adapted}"; then
       echo "FAIL adapted Caddyfile missing ${needle}" >&2
       failed=1
     else

@@ -251,11 +251,12 @@ postgres_image="$(docker inspect -f '{{.Config.Image}}' "${postgres_id}")" || {
 }
 pg_network="$(
   docker inspect -f '{{range $name, $conf := .NetworkSettings.Networks}}{{range $conf.Aliases}}{{if eq . "postgres"}}{{$name}}{{"\n"}}{{end}}{{end}}{{end}}' "${postgres_id}" \
-    | awk 'NF' | head -n 1
+    | awk 'NF'
 )" || {
   echo "Could not read the postgres network; refusing to dump" >&2
   exit 1
 }
+pg_network="${pg_network%%$'\n'*}"
 if [ -z "${postgres_image}" ] || [ -z "${pg_network}" ]; then
   echo "Could not find the postgres image or compose network; refusing to dump" >&2
   exit 1
