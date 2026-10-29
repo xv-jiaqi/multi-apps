@@ -57,6 +57,7 @@ export function CollectionSection() {
   const [filter, setFilter] = useState<CollectionFilter>('all');
   const progressRetryRef = useRef<HTMLButtonElement>(null);
   const listRetryRef = useRef<HTMLButtonElement>(null);
+  const loadMoreLocked = useRef(false);
 
   const progress = trpc.collection.progress.useQuery(undefined, {
     enabled: session.isAuthenticated,
@@ -93,6 +94,8 @@ export function CollectionSection() {
           text: appErrorMessage(locale.locale, readAppCode(progress.error)),
         }
       : null;
+  const showProgress =
+    progressState === 'loading' || progressError !== null || progressItems.length > 0;
   const listError =
     listState === 'error'
       ? { id: list.errorUpdateCount, text: appErrorMessage(locale.locale, readAppCode(list.error)) }
@@ -105,6 +108,14 @@ export function CollectionSection() {
   useFocusOnPersistentError(Boolean(progressError && progressError.id > 1), progressRetryRef);
   useFocusOnPersistentError(Boolean(listError && listError.id > 1), listRetryRef);
   useFocusOnPersistentError(Boolean(moreError && moreError.id > 1), listRetryRef);
+
+  const requestNextPage = () => {
+    if (loadMoreLocked.current || list.isFetchingNextPage) return;
+    loadMoreLocked.current = true;
+    void Promise.resolve(list.fetchNextPage()).finally(() => {
+      loadMoreLocked.current = false;
+    });
+  };
 
   return (
     <section
@@ -125,165 +136,161 @@ export function CollectionSection() {
         </CardHeader>
         <CardContent className="space-y-6">
           {bothLoading ? <SectionSkeleton withThumb /> : null}
-          {!bothLoading && nothingCollected ? (
-            <>
-              <FilterBar filter={filter} onFilter={setFilter} label={tt} />
-              <p className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-600">
-                {tt('collection.empty')}
-              </p>
-            </>
-          ) : null}
-          {!bothLoading && !nothingCollected ? (
-            <>
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-neutral-900">
-                  {tt('collection.sectionProgress')}
-                </h3>
-                {progressError ? (
-                  <ErrorBox
-                    key={progressError.id}
-                    title={progressError.text}
-                    retryLabel={tt('collection.retry')}
-                    retryingLabel={tt('state.retrying')}
-                    retrying={progress.isFetching}
-                    retry={() => {
-                      void progress.refetch();
-                    }}
-                    retryRef={progressRetryRef}
-                    retryClassName={retryClassName}
-                  />
-                ) : null}
-                {progressState === 'loading' ? <SectionSkeleton /> : null}
-                {progressState === 'ready' ? (
-                  <ul className="space-y-4">
-                    {progressItems.map((item) => (
-                      <li key={item.seriesSlug} className="min-w-0">
-                        <div className="flex min-w-0 flex-col items-start gap-1 md:flex-row md:items-baseline md:justify-between">
-                          <Link
-                            to={`/series/${item.seriesSlug}`}
-                            className="min-w-0 py-1 text-brand-600 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-                          >
-                            {item.seriesTitle}
-                          </Link>
-                          <p className="text-sm text-neutral-600 tabular-nums">
-                            {tt('collection.progress', { owned: item.owned, total: item.total })}
-                            {item.total > 0 && item.owned === item.total
-                              ? ` ${tt('collection.complete')}`
-                              : null}
-                          </p>
-                        </div>
-                        {item.total > 0 ? (
+          {!bothLoading && showProgress ? (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-neutral-900">
+                {tt('collection.sectionProgress')}
+              </h3>
+              {progressError ? (
+                <ErrorBox
+                  key={progressError.id}
+                  title={progressError.text}
+                  retryLabel={tt('collection.retry')}
+                  retryingLabel={tt('state.retrying')}
+                  retrying={progress.isFetching}
+                  retry={() => {
+                    void progress.refetch();
+                  }}
+                  retryRef={progressRetryRef}
+                  retryClassName={retryClassName}
+                />
+              ) : null}
+              {progressState === 'loading' ? <SectionSkeleton /> : null}
+              {progressState === 'ready' ? (
+                <ul className="space-y-4">
+                  {progressItems.map((item) => (
+                    <li key={item.seriesSlug} className="min-w-0">
+                      <div className="flex min-w-0 flex-col items-start gap-1 md:flex-row md:items-baseline md:justify-between">
+                        <Link
+                          to={`/series/${item.seriesSlug}`}
+                          className="min-w-0 py-1 text-brand-600 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                        >
+                          {item.seriesTitle}
+                        </Link>
+                        <p className="text-sm text-neutral-600 tabular-nums">
+                          {tt('collection.progress', { owned: item.owned, total: item.total })}
+                          {item.total > 0 && item.owned === item.total
+                            ? ` ${tt('collection.complete')}`
+                            : null}
+                        </p>
+                      </div>
+                      {item.total > 0 ? (
+                        <div
+                          role="progressbar"
+                          aria-valuenow={item.owned}
+                          aria-valuemin={0}
+                          aria-valuemax={item.total}
+                          aria-label={item.seriesTitle}
+                          className="mt-2 h-2 rounded-full bg-neutral-200"
+                        >
                           <div
-                            role="progressbar"
-                            aria-valuenow={item.owned}
-                            aria-valuemin={0}
-                            aria-valuemax={item.total}
-                            aria-label={item.seriesTitle}
-                            className="mt-2 h-2 rounded-full bg-neutral-200"
-                          >
-                            <div
-                              className="h-2 rounded-full bg-brand-600"
-                              style={{
-                                width: `${Math.min(100, (item.owned / item.total) * 100)}%`,
-                              }}
-                            />
-                          </div>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-neutral-900">
-                  {tt('collection.sectionList')}
-                </h3>
-                <FilterBar filter={filter} onFilter={setFilter} label={tt} />
-                {listError ? (
-                  <ErrorBox
-                    key={listError.id}
-                    title={listError.text}
-                    retryLabel={tt('collection.retry')}
-                    retryingLabel={tt('state.retrying')}
-                    retrying={list.isFetching}
-                    retry={() => {
-                      void list.refetch();
-                    }}
-                    retryRef={listRetryRef}
-                    retryClassName={retryClassName}
-                  />
-                ) : null}
-                {listState === 'loading' ? <SectionSkeleton withThumb /> : null}
-                {listState === 'ready' && listItems.length === 0 ? (
-                  <p className="text-sm text-neutral-600">{tt('collection.none')}</p>
-                ) : null}
-                {listState === 'ready' && listItems.length > 0 ? (
-                  <ul className="divide-y divide-neutral-200/70">
-                    {listItems.map((item) => (
-                      <li key={item.id} className="flex min-w-0 gap-3 py-3 first:pt-0 last:pb-0">
-                        <CardThumb width="w-10" src={item.imageUrl} slug={item.cardSlug} />
-                        <div className="min-w-0 space-y-1">
-                          <Link
-                            to={`/cards/${item.cardSlug}`}
-                            className="inline-block min-w-0 py-1 font-medium text-neutral-900 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-                          >
-                            {item.cardName}
-                          </Link>
-                          <p className="min-w-0 text-sm text-neutral-600 wrap-anywhere">
-                            {item.seriesTitle}
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            {item.ownedCount > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-sm text-neutral-600">
-                                <span aria-hidden="true">✓</span>
-                                {item.ownedCount >= 2
-                                  ? tt('collection.badgeOwned', { count: item.ownedCount })
-                                  : tt('collection.own')}
-                              </span>
-                            ) : null}
-                            {item.wanted ? (
-                              <span className="inline-flex items-center gap-1 text-sm text-neutral-600">
-                                <span aria-hidden="true">✓</span>
-                                {tt('collection.badgeWanted')}
-                              </span>
-                            ) : null}
-                          </div>
+                            className="h-2 rounded-full bg-brand-600"
+                            style={{
+                              width: `${Math.min(100, (item.owned / item.total) * 100)}%`,
+                            }}
+                          />
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                {listState === 'ready' && list.hasNextPage ? (
-                  <div className="flex justify-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={list.isFetchingNextPage}
-                      aria-busy={list.isFetchingNextPage || undefined}
-                      onClick={() => {
-                        void list.fetchNextPage();
-                      }}
-                    >
-                      {list.isFetchingNextPage ? tt('state.loading') : tt('me.loadMore')}
-                    </Button>
-                  </div>
-                ) : null}
-                {moreError ? (
-                  <ErrorBox
-                    key={moreError.id}
-                    title={moreError.text}
-                    retryLabel={tt('collection.retry')}
-                    retryingLabel={tt('state.retrying')}
-                    retrying={list.isFetchingNextPage}
-                    retry={() => {
-                      void list.fetchNextPage();
-                    }}
-                    retryRef={listRetryRef}
-                    retryClassName={retryClassName}
-                  />
-                ) : null}
-              </div>
-            </>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+          {!bothLoading ? (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-neutral-900">
+                {tt('collection.sectionList')}
+              </h3>
+              <FilterBar filter={filter} onFilter={setFilter} label={tt} />
+              {nothingCollected ? (
+                <p className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-600">
+                  {tt('collection.empty')}
+                </p>
+              ) : null}
+              {!nothingCollected && listError ? (
+                <ErrorBox
+                  key={listError.id}
+                  title={listError.text}
+                  retryLabel={tt('collection.retry')}
+                  retryingLabel={tt('state.retrying')}
+                  retrying={list.isFetching}
+                  retry={() => {
+                    void list.refetch();
+                  }}
+                  retryRef={listRetryRef}
+                  retryClassName={retryClassName}
+                />
+              ) : null}
+              {!nothingCollected && listState === 'loading' ? <SectionSkeleton withThumb /> : null}
+              {!nothingCollected && listState === 'ready' && listItems.length === 0 ? (
+                <p className="text-sm text-neutral-600">{tt('collection.none')}</p>
+              ) : null}
+              {!nothingCollected && listState === 'ready' && listItems.length > 0 ? (
+                <ul className="divide-y divide-neutral-200/70">
+                  {listItems.map((item) => (
+                    <li key={item.id} className="flex min-w-0 gap-3 py-3 first:pt-0 last:pb-0">
+                      <CardThumb width="w-10" src={item.imageUrl} slug={item.cardSlug} />
+                      <div className="min-w-0 space-y-1">
+                        <Link
+                          to={`/cards/${item.cardSlug}`}
+                          className="inline-block min-w-0 py-1 font-medium text-neutral-900 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                        >
+                          {item.cardName}
+                        </Link>
+                        <p className="min-w-0 text-sm text-neutral-600 wrap-anywhere">
+                          {item.seriesTitle}
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          {item.ownedCount > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-sm text-neutral-600">
+                              <span aria-hidden="true">✓</span>
+                              {item.ownedCount >= 2
+                                ? tt('collection.badgeOwned', { count: item.ownedCount })
+                                : tt('collection.own')}
+                            </span>
+                          ) : null}
+                          {item.wanted ? (
+                            <span className="inline-flex items-center gap-1 text-sm text-neutral-600">
+                              <span aria-hidden="true">✓</span>
+                              {tt('collection.badgeWanted')}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {!nothingCollected && listState === 'ready' && list.hasNextPage ? (
+                <div className="flex justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-disabled={list.isFetchingNextPage || undefined}
+                    aria-busy={list.isFetchingNextPage || undefined}
+                    className={
+                      list.isFetchingNextPage ? 'cursor-not-allowed opacity-50' : undefined
+                    }
+                    onClick={requestNextPage}
+                  >
+                    {list.isFetchingNextPage ? tt('state.loading') : tt('me.loadMore')}
+                  </Button>
+                </div>
+              ) : null}
+              {!nothingCollected && moreError ? (
+                <ErrorBox
+                  key={moreError.id}
+                  title={moreError.text}
+                  retryLabel={tt('collection.retry')}
+                  retryingLabel={tt('state.retrying')}
+                  retrying={list.isFetchingNextPage}
+                  retry={requestNextPage}
+                  retryRef={listRetryRef}
+                  retryClassName={retryClassName}
+                />
+              ) : null}
+            </div>
           ) : null}
         </CardContent>
       </Card>

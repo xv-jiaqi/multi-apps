@@ -91,6 +91,7 @@ function readyEmpty() {
   mock.list.error = null;
   mock.list.errorUpdateCount = 0;
   mock.list.hasNextPage = false;
+  mock.list.isFetchingNextPage = false;
 }
 
 beforeEach(() => {
@@ -232,6 +233,88 @@ describe('CollectionSection', () => {
     );
     expect(screen.getByText('暂无')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '加载更多' })).not.toBeInTheDocument();
+  });
+
+  it.each(['我有', '想要'])(
+    'keeps focus on %s after leaving the empty collection',
+    async (name) => {
+      const user = userEvent.setup();
+      const view = renderSection();
+      await user.click(screen.getByRole('button', { name }));
+      expect(screen.getByRole('group', { name: '筛选' })).toBeInTheDocument();
+      expect(screen.getAllByRole('group', { name: '筛选' })).toHaveLength(1);
+      expect(screen.getByRole('button', { name })).toHaveFocus();
+      expect(document.activeElement).toBe(screen.getByRole('button', { name }));
+      view.unmount();
+    },
+  );
+
+  it('keeps focus on load more after the next page fails', async () => {
+    const user = userEvent.setup();
+    mock.progress.data = {
+      items: [{ seriesSlug: 'dawn', seriesTitle: '黎明', owned: 1, total: 2 }],
+    };
+    mock.list.data = {
+      pages: [
+        {
+          items: [
+            {
+              id: '1',
+              cardSlug: 'alpha',
+              cardName: '阿尔法',
+              imageUrl: null,
+              seriesSlug: 'dawn',
+              seriesTitle: '黎明',
+              state: 'owned',
+              ownedCount: 1,
+              wanted: false,
+            },
+          ],
+          nextCursor: 'next',
+        },
+      ],
+    };
+    mock.list.hasNextPage = true;
+
+    const view = renderSection();
+    const more = screen.getByRole('button', { name: '加载更多' });
+    await user.click(more);
+    expect(mock.list.fetchNextPage).toHaveBeenCalledTimes(1);
+
+    mock.list.isFetchingNextPage = true;
+    view.rerender(
+      <MemoryRouter>
+        <CollectionSection />
+      </MemoryRouter>,
+    );
+    const busy = screen.getByRole('button', { name: '加载中…' });
+    expect(busy).toHaveFocus();
+    expect(busy).toHaveAttribute('aria-disabled', 'true');
+    expect(busy).not.toBeDisabled();
+    await user.click(busy);
+    expect(mock.list.fetchNextPage).toHaveBeenCalledTimes(1);
+
+    mock.list.isFetchingNextPage = false;
+    mock.list.isError = true;
+    mock.list.error = { data: { appCode: 'INTERNAL_SERVER_ERROR' }, message: 'down' };
+    mock.list.errorUpdateCount = 1;
+    view.rerender(
+      <MemoryRouter>
+        <CollectionSection />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('button', { name: '加载更多' })).toHaveFocus();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '加载更多' }));
+  });
+
+  it('omits the progress heading when there is no progress data', async () => {
+    const user = userEvent.setup();
+    renderSection();
+    expect(screen.queryByRole('heading', { name: '系列进度' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '我有' }));
+    expect(screen.queryByRole('heading', { name: '系列进度' })).not.toBeInTheDocument();
+    expect(screen.queryByText('已有 0 / 共 0')).not.toBeInTheDocument();
   });
 
   it('keeps a successful list when progress fails, and keeps cards when load-more fails', () => {
