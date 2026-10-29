@@ -31,6 +31,11 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-${ENV_NAME:-}}
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
+      # The API reads these from the process environment. This service has no
+      # env_file, so an env-file entry alone never reaches the container.
+      # Empty CATALOG_CACHE_HEADER keeps X-Cache off. Staging sets it to true.
+      ENV_NAME: ${ENV_NAME:-}
+      CATALOG_CACHE_HEADER: ${CATALOG_CACHE_HEADER:-}
     depends_on:
       postgres:
         condition: service_healthy
