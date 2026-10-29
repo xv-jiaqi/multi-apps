@@ -163,7 +163,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 | 数据库备份（7 日 + 4 周，可选 OSS 异地）                          | ✅   | OSS 生命周期规则仍待 owner 配置（见 deploy/README.md 的 TODO）                                                                                                                                                                                                                                                                                                                                                                     |
 | Web 安全响应头（HSTS、nosniff、CSP）                              | ✅   | 容器发 nosniff、Referrer-Policy、Permissions-Policy 和 CSP，`connect-src` 来自运行时 `TRPC_URL` 与 `SENTRY_DSN`。边缘发 HSTS、nosniff、`X-Frame-Options: DENY`，并用 `?Content-Security-Policy` 只在容器没发 CSP 时补 `frame-ancestors 'none'`。先发 web 镜像，再重建边缘（CH-309 / Infra-c AC2-5）。                                                                                                                              |
 | 结构化日志 / request id                                           | ✅   | API JSON 日志（`nestjs-pino`）。合法 `X-Request-Id` 沿用，否则生成 UUID，并写回响应头。请求日志只有一个 `requestId`（进程级日志不写这个键，避免和子绑定拼成两个键）。Sentry 标签 `request_id`。compose 各服务 `json-file` `max-size=10m` `max-file=5`，staging 由守夜人 `docker inspect`（CH-307）                                                                                                                                 |
-| 产品指标（MAU、注册、留存、日评论数）                             | ❌   | 项目简报定义了 KPI，但没有任何埋点（CH-308）                                                                                                                                                                                                                                                                                                                                                                                       |
+| 产品指标（MAU、注册、留存、日评论数）                             | ✅   | `admin.metrics` 从 Postgres 聚合。活跃按用户、按 UTC 日去重，不记 IP / UA / 个人信息。定义见 §5.1（CH-308）                                                                                                                                                                                                                                                                                                                        |
 
 ## 4. 多端覆盖矩阵
 
@@ -232,8 +232,56 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `admin.cards.update`       | mutation | admin                   | 同 create                                                                                                             | 按 slug 更新；可移动所属系列                                                                                             |
 | `admin.cards.delete`       | mutation | admin                   | `{ slug }`                                                                                                            | 删除卡牌并级联评论                                                                                                       |
 | `admin.catalog.import`     | mutation | admin                   | `{ data, dryRun }`                                                                                                    | dryRun 逐行返回 `created/updated/unchanged/error`；正式导入在单个 `$transaction` 内执行                                  |
+| `admin.metrics`            | query    | admin                   | `{ from, to }` UTC 日期，含首尾，最长 366 天                                                                          | MAU、每日注册、次日留存、7 日留存、日均评论。只返回聚合数字。定义见 §5.1                                                 |
 
 另有 NestJS REST 端点 `GET /health`（不经过 tRPC，跳过全局 Throttler）。
+
+### 5.1 产品指标（`admin.metrics`）
+
+只给 admin。未登录是 `UNAUTHORIZED`，已登录但不是 admin 是 `FORBIDDEN`。响应里没有用户 id、邮箱、用户名、IP 或 UA。没有 Web 页面，也不接第三方统计。
+
+入参 `from`、`to` 是 `YYYY-MM-DD`，两端都包含。日历日按 **UTC**，不是北京时间，也不是滚动 24 小时。最长 366 天（含首尾）。`from` 晚于 `to`、不存在的日期（如 `2024-02-31`）、超过 366 天，都由 `adminMetricsInput` 在 procedure 边界拒绝，`appCode` 为 `VALIDATION`。
+
+`dayCount` 是这个闭区间的天数，至少为 1。比例（留存 `rate`、`comments.perDay`）保留 4 位小数，四舍五入，0.5 向远离 0 的方向（正数即向大）。留存的分母为 0 时 `rate` 是 `null`。没有评论时 `perDay` 是 0。
+
+已删除的用户会级联删掉活跃记录和评论，已删除的评论也不在表里。指标只统计当前还在库里的行。
+
+#### 活跃
+
+表 `user_daily_activities`：一个用户一个 UTC 日一行（`userId` + `day` 唯一）。一次已鉴权的 tRPC 请求写入当天。也就是 context 里解析出了仍然有效的用户（token 能通过，`tokenVersion` 匹配，用户还在）。不写 IP、UA、邮箱、用户名，只写用户 id 和日期。
+
+同一用户同一天再请求，数据库 `ON CONFLICT DO NOTHING`，仍然只有一行。写入失败只打一条不含用户 id 的日志，原来的请求照常返回。
+
+注册和登录发生在鉴权之前，那一次请求本身不算活跃。之后带有效 token 的请求才算，包括公开接口。token 无效、用户已删除或 `tokenVersion` 不一致，不记。token 有效但 procedure 随后拒绝（例如非 admin 调用 `admin.metrics`），这一天仍然记下。
+
+这张表上线之前没有活跃记录，不能从旧请求回推 MAU 或留存。注册数和评论数用的是 `users.createdAt` 和 `comments.createdAt`，上线前的日期可以查。
+
+#### MAU
+
+`mau.activeUsers`：`day` 落在 `[from, to]` 里的去重用户数。调用方把 `from` / `to` 设成某个自然月的第一天和最后一天时，这就是该月 MAU。
+
+`mau.byMonth`：范围内每个自然月一条，月份没有活跃也是 0。该月人数只数“活跃日既在这个月、又在 `[from, to]` 里”的用户。跨月但没有铺满整月时，这不是完整自然月 MAU。
+
+#### 每日注册数
+
+`registrations.byDay`：范围内每个 UTC 日一条，包含 0。`count` 是 `users.createdAt` 的 UTC 日历日等于这一天的用户数。`registrations.total` 等于这些 `count` 的和。
+
+例如 `createdAt` 为 `2001-04-30T23:30:00.000Z` 算 4 月 30 日；`2001-05-01T00:00:00.000Z` 不算 4 月。
+
+#### 次日留存和 7 日留存
+
+同期群是 `createdAt` 的 UTC 日历日 D 落在 `[from, to]` 的用户。
+
+- 次日留存：存在 `day = D+1` 的活跃行。注册日是第 0 天。
+- 7 日留存：存在 `day = D+7` 的活跃行。看的是第 7 天当天，不是 D+1 到 D+7 之间任意一天。
+
+`D+1` 和 `D+7` 可以晚于 `to`，仍然算。`cohortUsers` 是同期群人数，`retainedUsers` 是留下的人数，`rate = retainedUsers / cohortUsers`。
+
+活跃和注册是两套数据。范围外注册、但范围内有活跃的用户计入 MAU，不进这批留存。
+
+#### 日均评论数
+
+`comments.total` 是 `comments.createdAt` 的 UTC 日历日落在范围内的行数，顶层评论和回复都算。`comments.perDay = total / dayCount`。
 
 ## 6. 数据模型
 
@@ -242,6 +290,7 @@ Schema：[apps/cardhub/api/prisma/schema.prisma](../../apps/cardhub/api/prisma/s
 ```mermaid
 erDiagram
   User ||--o{ Comment : writes
+  User ||--o{ UserDailyActivity : active
   User ||--o{ Topic : posts
   User ||--o{ Reply : posts
   User ||--o{ Listing : publishes
@@ -329,6 +378,7 @@ erDiagram
 - `Comment` 通过可空的 `cardId` / `seriesId` 指向卡牌或系列；数据库 CHECK 约束保证两者恰好有一个非空。
 - `Report.targetType + targetId` 是多态指针，没有外键；目标被删后举报记录保留用于审计。已处理记录通过可空的 `resolvedAt`、`resolvedById` 和 `resolution` 保存处理信息；处理人被删除时保留举报记录并把处理人置空。
 - 所有关联用户的外键都是 `onDelete: Cascade`。
+- `UserDailyActivity`（表 `user_daily_activities`）每个用户每个 UTC 日一行，用户删除时级联删除。只存用户 id 和日期，不存 IP、UA 或个人资料。迁移 `20261029170031_add_user_daily_activity` 只建这张表。口径见 §5.1。
 - 迁移顺序：`20260501165944_init` → `20260502184922_add_user_role_and_forum` → `20260502185947_add_listings_and_reports` → `20261016185000_add_report_resolution` → `20261017070000_add_series_comments` → `20261017071000_add_listing_facets` → `20261017080000_add_topic_editing_and_pinning`。
 
 ## 7. 页面清单
@@ -370,21 +420,22 @@ erDiagram
 
 输入校验的唯一来源是 [packages/shared/src/zod/index.ts](../../packages/shared/src/zod/index.ts)，前端提交前用同一份 schema 做 `safeParse`。
 
-| 字段                | 规则                                          |
-| ------------------- | --------------------------------------------- |
-| slug                | kebab-case，1–64 字符                         |
-| 用户名              | 3–24 字符，`[A-Za-z0-9_-]`                    |
-| 密码                | 8–128 字符                                    |
-| 邮箱                | 合法邮箱，存储前 trim + 转小写                |
-| 卡牌评论            | 1–500 字                                      |
-| 话题标题 / 正文     | 1–120 字 / 1–10000 字                         |
-| 回帖                | 1–5000 字                                     |
-| 举报原因            | 4–500 字                                      |
-| 交易联系方式 / 备注 | 2–200 字 / ≤ 500 字                           |
-| 交易图片            | ≤ 4 个 URL                                    |
-| 交易价格            | 0–9,999,999,999.99，四舍五入到 2 位小数；可空 |
-| 货币                | `^[A-Z]{3}$`（ISO 4217）                      |
-| cursor 分页 `limit` | 1–50，默认 20                                 |
+| 字段                 | 规则                                                   |
+| -------------------- | ------------------------------------------------------ |
+| slug                 | kebab-case，1–64 字符                                  |
+| 用户名               | 3–24 字符，`[A-Za-z0-9_-]`                             |
+| 密码                 | 8–128 字符                                             |
+| 邮箱                 | 合法邮箱，存储前 trim + 转小写                         |
+| 卡牌评论             | 1–500 字                                               |
+| 话题标题 / 正文      | 1–120 字 / 1–10000 字                                  |
+| 回帖                 | 1–5000 字                                              |
+| 举报原因             | 4–500 字                                               |
+| 交易联系方式 / 备注  | 2–200 字 / ≤ 500 字                                    |
+| 交易图片             | ≤ 4 个 URL                                             |
+| 交易价格             | 0–9,999,999,999.99，四舍五入到 2 位小数；可空          |
+| 货币                 | `^[A-Z]{3}$`（ISO 4217）                               |
+| cursor 分页 `limit`  | 1–50，默认 20                                          |
+| `admin.metrics` 日期 | `from` / `to` 为 UTC `YYYY-MM-DD`，含首尾，最多 366 天 |
 
 限流（`apps/cardhub/api/src/bootstrap/rate-limiters.ts`，按 IP，超限返回 tRPC `TOO_MANY_REQUESTS`）。计数存在 Redis，键前缀 `cardhub:rl:v1:<名称>:`；Redis 不可用时放行，不返回 5xx：
 
