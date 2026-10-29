@@ -110,6 +110,19 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm --filter @cardhub/web --fail-if-no-match exec playwright install --with-deps chromium
 
+      - name: Install redis-server for the reconnect purge test
+        # The service container on 6379 stays up for the rest of the suite.
+        # policy-rc.d stops the package from starting a second server on that port.
+        run: |
+          sudo tee /usr/sbin/policy-rc.d >/dev/null <<'EOF'
+          #!/bin/sh
+          exit 101
+          EOF
+          sudo chmod +x /usr/sbin/policy-rc.d
+          sudo apt-get update
+          sudo apt-get install -y redis-server
+          command -v redis-server
+
       - name: Test
         # ubuntu-latest has 4 vCPUs. turbo's default runs every ready test
         # task together, and each vitest/jest then forks about one worker per
