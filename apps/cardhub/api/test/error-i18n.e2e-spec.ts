@@ -127,7 +127,8 @@ describe('localized API error codes', () => {
   it('comment zod failure returns VALIDATION', async () => {
     const response = await post('comments.create', { cardSlug, content: '' }, token);
     expectAppCode(response, 400, APP_ERROR_CODES.VALIDATION, 'BAD_REQUEST');
-    expect(response.body.error.message).toContain('comment_required');
+    expect(response.body.error.message).toBe('填写的内容不符合要求，请修改后再试');
+    expect(response.body.error.data.zodError.issues[0].message).toBe('comment_required');
     expect(JSON.stringify(response.body)).not.toContain('评论不能为空');
     expect(JSON.stringify(response.body)).not.toContain('INTERNAL_SERVER_ERROR');
   });
@@ -198,7 +199,8 @@ describe('localized API error codes', () => {
       token,
     );
     expectAppCode(response, 400, APP_ERROR_CODES.VALIDATION, 'BAD_REQUEST');
-    expect(response.body.error.message).toContain('slug_format');
+    expect(response.body.error.message).toBe('填写的内容不符合要求，请修改后再试');
+    expect(response.body.error.data.zodError.issues[0].message).toBe('slug_format');
     const serialized = JSON.stringify(response.body);
     expect(serialized).not.toContain('kebab');
     expect(serialized).not.toContain('Must be');

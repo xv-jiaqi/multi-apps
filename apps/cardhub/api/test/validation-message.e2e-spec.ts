@@ -35,12 +35,12 @@ describe('BAD_REQUEST copy (CH-114)', () => {
         path: 'search.global',
       }),
     );
-    expect(response.body.error.data.zodError.fieldErrors.seriesLimit).toEqual([CH114]);
+    expect(response.body.error.data.zodError.fieldErrors.seriesLimit).toEqual(['too_big']);
     expect(response.body.error.data.zodError.issues).toEqual([
       expect.objectContaining({
         path: ['seriesLimit'],
         code: 'too_big',
-        message: CH114,
+        message: 'too_big',
       }),
     ]);
 
@@ -73,7 +73,7 @@ describe('BAD_REQUEST copy (CH-114)', () => {
       .send('{"q":"PARSER_LEAK_MARKER"');
 
     expect(badJson.status).toBe(400);
-    expect(badJson.body.error.message).toBe('请求格式有误');
+    expect(badJson.body.error.message).toBe('请求无法解析，请重试');
     expect(badJson.body.error.data.code).toBe('BAD_REQUEST');
     expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
     const badSerialized = JSON.stringify(badJson.body);
