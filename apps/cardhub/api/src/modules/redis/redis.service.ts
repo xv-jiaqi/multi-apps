@@ -32,6 +32,14 @@ export function purgeRetryScheduled(failureCount: number): boolean {
 
 const CONNECT_WAIT_MS = 1_000;
 
+/**
+ * One in-flight Redis command. A socket that is still `ready` but no longer
+ * answers used to block for `connectTimeout` (1s). Rate-limit reloads its
+ * script after that failure, so one request waited about 2s. 200ms keeps the
+ * request on the degraded path.
+ */
+export const REDIS_COMMAND_TIMEOUT_MS = 200;
+
 function readRedisHost(value: unknown): string {
   if (typeof value === 'string' && value.trim().length > 0) return value.trim();
   return 'localhost';
@@ -85,6 +93,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private purgeFailures = 0;
   private purgeGaveUp = false;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Skip further commands until this time after Redis stops answering. */
+  private unavailableUntil = 0;
 
   constructor(@Inject(REDIS_CLIENT) public readonly client: Redis) {
     client.on('error', (err: Error) => this.logger.warn(`Redis error: ${err.message}`));
@@ -92,6 +102,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     client.on('close', () => this.noteOutage());
     client.on('end', () => this.noteOutage());
     client.on('ready', () => {
+      this.unavailableUntil = 0;
       void this.purgeIfNeeded();
     });
   }
@@ -104,7 +115,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       ...(password ? { password } : {}),
       lazyConnect: true,
       connectTimeout: CONNECT_WAIT_MS,
-      commandTimeout: CONNECT_WAIT_MS,
+      commandTimeout: REDIS_COMMAND_TIMEOUT_MS,
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
       retryStrategy(times: number): number {
@@ -190,7 +201,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async sendCommand(args: readonly string[]): Promise<unknown> {
     const command = args[0];
     if (command === undefined) throw new Error('Redis command is missing');
-    return this.client.call(command, ...args.slice(1));
+    if (this.redisCommandsPaused()) throw new Error('redis unavailable');
+    try {
+      return await this.client.call(command, ...args.slice(1));
+    } catch (error) {
+      this.noteCommandFailure(error);
+      throw error;
+    }
   }
 
   async ping(): Promise<boolean> {
@@ -209,6 +226,20 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.retryTimer = undefined;
     }
     this.client.disconnect();
+  }
+
+  private redisCommandsPaused(): boolean {
+    return this.client.status !== 'ready' || Date.now() < this.unavailableUntil;
+  }
+
+  /**
+   * A Redis reply such as NOSCRIPT is not an outage: the rate-limit store
+   * reloads its script and tries once more. A timeout or a dead socket is.
+   * Pausing the next command keeps that retry from waiting out another timeout.
+   */
+  private noteCommandFailure(error: unknown): void {
+    if (error instanceof Error && error.name === 'ReplyError') return;
+    this.unavailableUntil = Date.now() + REDIS_COMMAND_TIMEOUT_MS;
   }
 
   /**

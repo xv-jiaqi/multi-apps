@@ -161,7 +161,7 @@ describe('Redis stays silent after the handshake', () => {
       if (elapsed >= 300) throw new Error(`${path} took ${elapsed}ms`);
       if (path === 'series.list') {
         const list = response.body?.result?.data;
-        expect(Array.isArray(list?.items), 'series.list fell through to the database').toBe(true);
+        expect(Array.isArray(list?.items)).toBe(true);
       }
       if (path === 'users.me') {
         expect(response.body?.result?.data?.id).toBe(userId);
