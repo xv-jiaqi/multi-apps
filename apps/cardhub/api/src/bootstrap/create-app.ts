@@ -12,6 +12,7 @@ import { PrismaService } from '../modules/prisma/prisma.service';
 import { RedisService } from '../modules/redis/redis.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
+import { DEFAULT_CORS_ORIGIN } from '../modules/seo/public-web-origin';
 import { configureApp } from './configure-app';
 import { jsonBodyParser } from './json-body';
 import { createRateLimiters, type RateLimitOverrides } from './rate-limiters';
@@ -75,10 +76,7 @@ export async function createApp(options: CreateAppOptions = {}) {
   const redis = app.get(RedisService);
 
   const corsOrigin = config
-    .get<string>(
-      'CORS_ORIGIN',
-      'http://localhost:5173,http://localhost:10086,https://card-hub.app,https://staging.card-hub.app,tauri://localhost,https://tauri.localhost',
-    )
+    .get<string>('CORS_ORIGIN', DEFAULT_CORS_ORIGIN)
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);

@@ -67,6 +67,12 @@ apps/**/miniapp/.swc/
 apps/**/prisma/generated/
 apps/**/prisma/migrations/dev/
 
+# Playwright smoke (passwords are generated per run)
+apps/cardhub/e2e/.auth/
+apps/cardhub/e2e/test-results/
+apps/cardhub/e2e/playwright-report/
+apps/cardhub/e2e/blob-report/
+
 # Coverage
 coverage/
 .nyc_output/
