@@ -261,7 +261,7 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 
 `X-Request-Id` 用 zod 校验：trim 后 1–128 字符，字符集 `[A-Za-z0-9._:-]`，首字符必须是字母或数字。空、换行、超长都会换成新的 UUID。不要把原始头写进日志。响应头 `X-Request-Id` 是最终采用的值。
 
-每条 JSON 日志都有 `requestId`。请求内是该 id，进程级日志是 `null`。Sentry 事件标签是 `request_id`。`authorization`、`cookie` 和请求体不进日志。`url` 和 `query` 里的 `input`、`token`、`code`、`access_token`、`refresh_token`、`id_token`、`reset_token` 记为 `[Redacted]`，避免 tRPC 的 `?input=` 或以后的验证链接进日志。
+请求日志只有一个 `requestId`。不要在 pino 的根 `base` 上再写 `requestId: null`：pino 会把子 logger 的绑定接在父绑定后面，同名键会在原始 JSON 里出现两次。进程级日志没有这个键。Sentry 事件标签是 `request_id`。`authorization`、`cookie`、`set-cookie` 和请求体不进日志。`x-forwarded-for` 保留：限流读的是请求上的 `req.ip`，不读日志；Caddy 后面 `remoteAddress` 只是代理地址，排障要靠这一个头对上客户端。`url` 和 `query` 里的 `input`、`token`、`code`、`access_token`、`refresh_token`、`id_token`、`reset_token` 记为 `[Redacted]`，避免 tRPC 的 `?input=` 或以后的验证链接进日志。
 
 `LOG_LEVEL` 只接受 pino 的级别名，其它值回到 `info`。Compose 把这个变量注入 API 容器。
 

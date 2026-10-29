@@ -47,7 +47,7 @@ class ProbeController {
 class ProbeModule {}
 
 const logLineSchema = z.looseObject({
-  requestId: z.string().nullable(),
+  requestId: z.string().nullable().optional(),
   message: z.unknown().optional(),
 });
 
@@ -84,8 +84,17 @@ describe('Nest request logger', () => {
       }),
     );
 
-    const parsed = lines.map((line) => logLineSchema.parse(JSON.parse(line)));
-    expect(parsed.every((line) => 'requestId' in line)).toBe(true);
+    const probeLines = lines.filter(
+      (line) => line.includes('probe-line') || line.includes('probe-boom'),
+    );
+    expect(probeLines.length).toBeGreaterThan(0);
+    for (const line of probeLines) {
+      expect(line.split('"requestId":').length - 1).toBe(1);
+      expect(line).toContain('"requestId":"probe-1"');
+      expect(line).not.toContain('"requestId":null');
+    }
+
+    const parsed = probeLines.map((line) => logLineSchema.parse(JSON.parse(line)));
     expect(parsed.find((line) => line.message === 'probe-line')?.requestId).toBe('probe-1');
     expect(parsed.find((line) => line.message === 'probe-boom')?.requestId).toBe('probe-1');
   });
