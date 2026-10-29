@@ -75,6 +75,16 @@ fi
 if ! require_site_import "apex web" "${root_site}" '^[{][$]ROOT_WEB_DOMAINS'; then
   failed=1
 fi
+if ! require_site_import "www redirect" "${root_site}" '^[{][$]ROOT_WEB_REDIRECT_DOMAINS'; then
+  failed=1
+fi
+redirect_body="$(site_block "${root_site}" '^[{][$]ROOT_WEB_REDIRECT_DOMAINS')"
+if ! printf '%s\n' "${redirect_body}" | grep -Eq '^[[:space:]]*redir https://\{\$ROOT_WEB_REDIRECT_TARGET:card-hub\.app\}\{uri\} 308[[:space:]]*$'; then
+  echo "FAIL www redirect: site block does not 308 to the apex" >&2
+  failed=1
+else
+  echo "OK www redirect target"
+fi
 
 negative_dir="$(mktemp -d)"
 cat > "${negative_dir}/Caddyfile" <<'EOF'
@@ -90,6 +100,10 @@ cat > "${negative_dir}/root-web.caddy" <<'EOF'
 	# import cardhub_web_headers
 	import cardhub_api_headers
 }
+{$ROOT_WEB_REDIRECT_DOMAINS:http://root-web-redirect-disabled.invalid} {
+	# import cardhub_web_headers
+	redir https://{$ROOT_WEB_REDIRECT_TARGET:card-hub.app}{uri} 308
+}
 EOF
 if require_site_import "comment-only staging" "${negative_dir}/Caddyfile" '^[{][$]STAGING_WEB_DOMAIN[}]' >/dev/null 2>&1; then
   echo "FAIL comment-only import was accepted for staging" >&2
@@ -102,6 +116,12 @@ if require_site_import "comment-only apex" "${negative_dir}/root-web.caddy" '^[{
   failed=1
 else
   echo "OK comment-only apex import is rejected"
+fi
+if require_site_import "comment-only www redirect" "${negative_dir}/root-web.caddy" '^[{][$]ROOT_WEB_REDIRECT_DOMAINS' >/dev/null 2>&1; then
+  echo "FAIL comment-only import was accepted for www redirect" >&2
+  failed=1
+else
+  echo "OK comment-only www redirect import is rejected"
 fi
 rm -rf "${negative_dir}"
 
@@ -128,6 +148,7 @@ else
   port="${CADDY_TEST_PORT:-18080}"
   upstream_port="${CADDY_UPSTREAM_PORT:-18082}"
   edge_port="${CADDY_EDGE_PORT:-18081}"
+  redirect_port="${CADDY_REDIRECT_PORT:-18083}"
   cat > "${work}/Caddyfile" <<EOF
 {
 	admin off
@@ -145,6 +166,10 @@ else
 	import cardhub_web_headers
 	reverse_proxy 127.0.0.1:${upstream_port}
 }
+:${redirect_port} {
+	import cardhub_web_headers
+	redir https://card-hub.app{uri} 308
+}
 EOF
   {
     printf '%s\n' "${block}"
@@ -157,7 +182,8 @@ EOF
   ready=0
   for _ in 1 2 3 4 5 6 7 8 9 10; do
     if curl -sf -o /dev/null "http://127.0.0.1:${port}/" \
-      && curl -sf -o /dev/null "http://127.0.0.1:${edge_port}/"; then
+      && curl -sf -o /dev/null "http://127.0.0.1:${edge_port}/" \
+      && curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${redirect_port}/" | grep -qx '308'; then
       ready=1
       break
     fi
@@ -195,6 +221,34 @@ EOF
   else
     echo "OK curl upstream CSP preserved"
   fi
+  echo "LIVE curl -sI www redirect"
+  redirected="$(curl -sI "http://127.0.0.1:${redirect_port}/cards/1?q=a" | tr -d '\r')"
+  printf '%s\n' "${redirected}"
+  if ! printf '%s\n' "${redirected}" | grep -qi '^HTTP/.* 308'; then
+    echo "FAIL www redirect status is not 308" >&2
+    failed=1
+  else
+    echo "OK curl www redirect 308"
+  fi
+  if ! printf '%s\n' "${redirected}" | grep -qi '^Location: https://card-hub.app/cards/1?q=a$'; then
+    echo "FAIL www redirect location" >&2
+    failed=1
+  else
+    echo "OK curl www redirect location"
+  fi
+  for expected in \
+    'Strict-Transport-Security: max-age=31536000; includeSubDomains' \
+    'X-Content-Type-Options: nosniff' \
+    'X-Frame-Options: DENY' \
+    "Content-Security-Policy: frame-ancestors 'none'"
+  do
+    if ! printf '%s\n' "${redirected}" | grep -qi "^${expected}"; then
+      echo "FAIL www redirect missing ${expected}" >&2
+      failed=1
+    else
+      echo "OK curl www redirect ${expected}"
+    fi
+  done
   kill "${caddy_pid}" >/dev/null 2>&1 || true
   trap - EXIT
   rm -rf "${work}"

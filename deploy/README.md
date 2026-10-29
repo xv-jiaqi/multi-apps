@@ -119,7 +119,10 @@ The edge sends HSTS, `X-Content-Type-Options: nosniff`, and
 `X-Frame-Options: DENY`. `card-hub.app` (`optional/root-web.caddy`) and
 `staging.card-hub.app` send
 `Strict-Transport-Security: max-age=31536000; includeSubDomains` (no
-`preload`). Both API hostnames send that same HSTS value and `nosniff`.
+`preload`). The `www` 308 to the apex imports the same
+`cardhub_web_headers` snippet, so that redirect carries the same HSTS
+value, `nosniff`, `X-Frame-Options: DENY`, and the CSP fallback. Both API
+hostnames send that same HSTS value and `nosniff`.
 The handlers use `defer`, so they replace the same fields from upstream.
 `?Content-Security-Policy` adds `frame-ancestors 'none'` only when the web
 container did not send CSP. A current image sends the full policy, including
