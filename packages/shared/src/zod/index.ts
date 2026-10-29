@@ -505,3 +505,23 @@ export const adminAuditListInput = z.object({
   limit: z.number().int().min(1).max(50).default(50),
 });
 export type AdminAuditListInput = z.infer<typeof adminAuditListInput>;
+
+/** Inclusive bounds for how many copies of one card a person can record. */
+export const COLLECTION_OWNED_COUNT_MIN = 0;
+export const COLLECTION_OWNED_COUNT_MAX = 99;
+
+export const collectionOwnedCountSchema = z
+  .number()
+  .int()
+  .min(COLLECTION_OWNED_COUNT_MIN)
+  .max(COLLECTION_OWNED_COUNT_MAX);
+
+export const collectionUpsertInput = z.object({
+  cardSlug: slugSchema,
+  ownedCount: collectionOwnedCountSchema,
+  wanted: z.boolean(),
+});
+export type CollectionUpsertInput = z.infer<typeof collectionUpsertInput>;
+
+export const collectionListInput = cursorPaginationInput;
+export type CollectionListInput = z.infer<typeof collectionListInput>;

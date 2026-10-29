@@ -280,7 +280,7 @@ Limitless 是赛事运营工具加元游戏媒体。每周的地区赛都要有�
 | 卡牌详情层次           | 部分实现。无真实大图，无长描述       | Scryfall、Pokéllector            | CH-105、CH-206 |
 | 品相、语言、意向筛选   | 部分实现。只有出/求，卡牌显示为 slug | TCGplayer、Cardmarket            | CH-104         |
 | 站内库存与结算         | 明确不做                             | TCGplayer、Cardmarket            | 不建任务       |
-| 私人收藏与系列进度     | 未实现                               | Pokéllector、TCDB                | CH-203         |
+| 私人收藏与系列进度     | 部分实现。API 已有，页面和分享还没有 | Pokéllector、TCDB                | CH-203         |
 | 金库、拍卖、保管估值   | 明确不做                             | Fanatics Collect                 | 不建任务       |
 | 用户自报价格与折线     | 未实现。确认前不做                   | Card Ladder 的 “记下价格” 这一层 | CH-313         |
 | 指数、成交库、人口报告 | 明确不做                             | Card Ladder                      | 不建任务       |
