@@ -72,14 +72,14 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 
 ### 3.4 卡牌评论
 
-| 能力                         | 状态 | 入口       | 接口                                                  | 说明                                                                                                          |
-| ---------------------------- | ---- | ---------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 查看评论（最新 50 条，倒序） | ✅   | 卡牌详情页 | `comments.listForCard`                                | 无分页；正文 wrap-anywhere（W-REG-1）                                                                         |
-| 发表评论（≤ 500 字）         | ✅   | 卡牌详情页 | `comments.create`                                     | 需登录；按 IP 限流 30 次 / 小时                                                                               |
-| 删除评论（本人 / 管理员）    | ✅   | 卡牌详情页 | `comments.delete`                                     | Web / Tauri 使用行内二次确认；成功后显示可见状态提示并聚焦提示，失败后焦点回到删除按钮。小程序同步留到 CH-301 |
-| 举报评论                     | ✅   | 评论旁     | `reports.create`                                      | 自己的评论不显示举报按钮                                                                                      |
-| 系列页评论                   | ✅   | 系列详情页 | `comments.listForSeries` / `comments.createForSeries` | Web / Tauri 复用卡牌评论区交互；小程序同步留到 CH-301                                                         |
-| 评论加载失败可重试           | ✅   | 卡牌和系列 | `comments.listForCard` / `comments.listForSeries`     | 评论加载失败可以重试；重试时保留错误框，按钮显示「重试中」且焦点留在按钮上。点击「重试中」不会穿透            |
+| 能力                         | 状态 | 入口               | 接口                                                                                    | 说明                                                                                                                                     |
+| ---------------------------- | ---- | ------------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 查看评论（最新 50 条，倒序） | ✅   | 卡牌详情页         | `comments.listForCard`                                                                  | 无分页；正文 wrap-anywhere（W-REG-1）                                                                                                    |
+| 发表评论（≤ 500 字）         | ✅   | 卡牌详情页         | `comments.create`                                                                       | 需登录；按 IP 限流 30 次 / 小时                                                                                                          |
+| 删除评论（本人 / 管理员）    | ✅   | 卡牌详情页         | `comments.delete`                                                                       | Web / Tauri 使用行内二次确认；成功后显示可见状态提示并聚焦提示，失败后焦点回到删除按钮。小程序同步留到 CH-301                            |
+| 举报评论                     | ✅   | 评论旁             | `reports.create`                                                                        | 自己的评论不显示举报按钮                                                                                                                 |
+| 系列页评论                   | ✅   | 系列详情页         | `comments.listForSeries` / `comments.createForSeries`                                   | Web / Tauri 复用卡牌评论区交互；小程序同步留到 CH-301                                                                                    |
+| 评论加载失败可重试           | ✅   | 卡牌和系列         | `comments.listForCard` / `comments.listForSeries`                                       | 评论加载失败可以重试；重试时保留错误框，按钮显示「重试中」且焦点留在按钮上。点击「重试中」不会穿透                                       |
 | 评论回复                     | ✅   | 卡牌详情、系列详情 | `comments.listForCard` / `listForSeries` / `listReplies` / `create` / `createForSeries` | 单层。顶层最新 50 条；每条最多 3 条回复、`replyCount`（硬删后只数现存行）和 `repliesNextCursor`。回复最旧在前，每页 20。小程序只显示顶层 |
 
 ### 3.5 论坛
@@ -147,21 +147,21 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 
 ### 3.10 平台与运维
 
-| 能力                                                              | 状态 | 说明                                                                                                                                    |
-| ----------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /health`（db / redis / gitSha / buildTime，DB 异常返回 503） | ✅   | 部署脚本用 `gitSha` 校验上线版本；另有 `health.ping`                                                                                    |
-| 写接口限流（express-rate-limit，按 IP）                           | ✅   | 内存存储，单实例足够；多实例需要 Redis store（CH-210）。`trust proxy` 只信任 1 跳（Caddy）                                              |
-| helmet（API，CSP 关闭）+ CORS 白名单                              | ✅   | `CORS_ORIGIN` 逗号分隔。代码默认值包含 Tauri 来源，但 `deploy/.env.example` 的生产值只有 `https://card-hub.app`，会覆盖默认值（CH-303） |
-| Sentry（API）                                                     | ✅   | 配置 `SENTRY_DSN` 才启用；只上报 5xx / `INTERNAL_SERVER_ERROR`                                                                          |
-| Sentry（Web）                                                     | ✅   | Web 容器启动时从 `WEB_SENTRY_DSN` / `SENTRY_ENVIRONMENT` / `GIT_SHA` 生成运行时 `/config.js`；空 DSN 时不上报                           |
-| 生产配置启动校验                                                  | ✅   | `NODE_ENV=production` 时启动前校验 `JWT_SECRET`（≥ 32 字符且不是占位值）与 `DATABASE_URL`；开发 / 测试保留现有默认值                    |
-| Redis                                                             | 🟡   | 只用于健康检查 ping，未用于缓存（CH-210）                                                                                               |
-| CI（lint / typecheck / build / test / audit / compose 校验）      | ✅   | `.github/workflows/ci.yml`                                                                                                              |
-| 镜像构建、staging 自动部署、prod 手动部署、健康校验、失败自动回滚 | ✅   | `images.yml` / `deploy.yml` / `deploy/remote-deploy.sh`                                                                                 |
-| 数据库备份（7 日 + 4 周，可选 OSS 异地）                          | ✅   | OSS 生命周期规则仍待 owner 配置（见 deploy/README.md 的 TODO）                                                                          |
-| Web 安全响应头（CSP、nosniff、Referrer-Policy）                   | ❌   | nginx 只设置了缓存头（CH-309）                                                                                                          |
-| 结构化日志 / request id                                           | ❌   | CH-307                                                                                                                                  |
-| 产品指标（MAU、注册、留存、日评论数）                             | ❌   | 项目简报定义了 KPI，但没有任何埋点（CH-308）                                                                                            |
+| 能力                                                              | 状态 | 说明                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`（db / redis / gitSha / buildTime，DB 异常返回 503） | ✅   | 部署脚本用 `gitSha` 校验上线版本；另有 `health.ping`                                                                                                                                                                                                              |
+| 写接口限流（express-rate-limit，按 IP）                           | ✅   | 内存存储，单实例足够；多实例需要 Redis store（CH-210）。`trust proxy` 只信任 1 跳（Caddy）                                                                                                                                                                        |
+| helmet（API，CSP 关闭）+ CORS 白名单                              | ✅   | `CORS_ORIGIN` 逗号分隔。代码默认值包含 Tauri 来源，但 `deploy/.env.example` 的生产值只有 `https://card-hub.app`，会覆盖默认值（CH-303）                                                                                                                           |
+| Sentry（API）                                                     | ✅   | 配置 `SENTRY_DSN` 才启用；只上报 5xx / `INTERNAL_SERVER_ERROR`                                                                                                                                                                                                    |
+| Sentry（Web）                                                     | ✅   | Web 容器启动时从 `WEB_SENTRY_DSN` / `SENTRY_ENVIRONMENT` / `GIT_SHA` 生成运行时 `/config.js`；空 DSN 时不上报                                                                                                                                                     |
+| 生产配置启动校验                                                  | ✅   | `NODE_ENV=production` 时启动前校验 `JWT_SECRET`（≥ 32 字符且不是占位值）与 `DATABASE_URL`；开发 / 测试保留现有默认值                                                                                                                                              |
+| Redis                                                             | 🟡   | 只用于健康检查 ping，未用于缓存（CH-210）                                                                                                                                                                                                                         |
+| CI（lint / typecheck / build / test / audit / compose 校验）      | ✅   | `.github/workflows/ci.yml`                                                                                                                                                                                                                                        |
+| 镜像构建、staging 自动部署、prod 手动部署、健康校验、失败自动回滚 | ✅   | `images.yml` / `deploy.yml` / `deploy/remote-deploy.sh`                                                                                                                                                                                                           |
+| 数据库备份（7 日 + 4 周，可选 OSS 异地）                          | ✅   | OSS 生命周期规则仍待 owner 配置（见 deploy/README.md 的 TODO）                                                                                                                                                                                                    |
+| Web 安全响应头（CSP、nosniff、Referrer-Policy）                   | ✅   | Web 容器在每个会覆盖 `add_header` 的 location 里复用同一片段。CSP 的 `connect-src` 来自运行时 `TRPC_URL` 和 `SENTRY_DSN`，并包含 `frame-ancestors 'none'`。边缘 Caddy 仍发 HSTS、nosniff 和 `X-Frame-Options`，不再覆盖 CSP。Tauri `csp` 已写成显式策略（CH-309） |
+| 结构化日志 / request id                                           | ❌   | CH-307                                                                                                                                                                                                                                                            |
+| 产品指标（MAU、注册、留存、日评论数）                             | ❌   | 项目简报定义了 KPI，但没有任何埋点（CH-308）                                                                                                                                                                                                                      |
 
 ## 4. 多端覆盖矩阵
 
