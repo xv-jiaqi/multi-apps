@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { APP_ERROR_CODES, appErrorMessage, t } from '@repo/shared';
-import { clearActiveQueryClient } from './trpc';
 import { isSessionInvalidError } from './session-expiry';
+import { applySessionExpiry } from './session-expiry-redirect';
 import { refreshSignedInSession } from './session-refresh';
 import { rootStore } from '../stores/root-store';
 
@@ -10,10 +10,11 @@ export type MutationErrorCopy = Partial<Record<string, string>>;
 
 /**
  * One handler for user-initiated writes (comment, report, forum, trade).
- * A session-invalid appCode clears the session and returns to /login with
- * the current URL in state.from. NOT_FOUND and FORBIDDEN use retry-free
- * copy. Every other failure is localized copy. The raw tRPC code and the
- * server message are never shown.
+ * A session-invalid appCode uses the same expiry sequence as
+ * SessionExpiryWatcher (clear the session, /login, state.from,
+ * sessionExpired). NOT_FOUND and FORBIDDEN use retry-free copy. Every other
+ * failure is localized copy. The raw tRPC code and the server message are
+ * never shown.
  */
 export function useAppMutationError() {
   const navigate = useNavigate();
@@ -23,10 +24,13 @@ export function useAppMutationError() {
   return useCallback(
     (error: unknown, copy?: MutationErrorCopy): string | null => {
       if (isSessionInvalidError(error)) {
-        const from = `${location.pathname}${location.search}${location.hash}`;
-        rootStore.session.signOut();
-        clearActiveQueryClient();
-        navigate('/login', { replace: true, state: { from, notice: 'sessionExpired' } });
+        applySessionExpiry({
+          pathname: location.pathname,
+          search: location.search,
+          hash: location.hash,
+          navigate,
+          error,
+        });
         return null;
       }
       const appCode = readMutationAppCode(error);

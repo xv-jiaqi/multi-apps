@@ -45,7 +45,10 @@ const mock = vi.hoisted(() => ({
     isPending: false,
     isFetching: false,
     isError: false,
-    error: null as { data?: { appCode?: string }; message: string } | null,
+    error: null as {
+      data?: { appCode?: string; code?: string; zodError?: unknown };
+      message: string;
+    } | null,
     errorUpdateCount: 0,
     dataUpdatedAt: 1,
     hasNextPage: false,
@@ -353,5 +356,82 @@ describe('CollectionSection', () => {
     expect(screen.getByText('阿尔法')).toBeInTheDocument();
     expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: '加载更多' })).toBeInTheDocument();
+  });
+
+  function showListFailure(error: NonNullable<typeof mock.list.error>) {
+    mock.progress.data = { items: [] };
+    mock.progress.isLoading = false;
+    mock.progress.isPending = false;
+    mock.progress.isError = false;
+    mock.progress.error = null;
+    mock.list.data = undefined;
+    mock.list.isLoading = false;
+    mock.list.isPending = false;
+    mock.list.isFetching = false;
+    mock.list.isError = true;
+    mock.list.error = error;
+    mock.list.errorUpdateCount = 1;
+    mock.list.dataUpdatedAt = 0;
+  }
+
+  function ownedCountError(code: string, field: 'ownedCount' | 'quantity' = 'ownedCount') {
+    const generic = '填写的内容不符合要求，请修改后再试';
+    return {
+      message: generic,
+      data: {
+        appCode: 'VALIDATION',
+        code: 'BAD_REQUEST',
+        zodError: {
+          fieldErrors: { [field]: [code === 'collection_quantity' ? code : generic] },
+          issues: [{ path: [field], message: code === 'collection_quantity' ? code : generic, code }],
+        },
+      },
+    };
+  }
+
+  it.each(['collection_quantity', 'too_small', 'too_big', 'invalid_type'])(
+    'shows the Chinese quantity sentence for list ownedCount code %s',
+    (code) => {
+      const generic = '填写的内容不符合要求，请修改后再试';
+      showListFailure(ownedCountError(code));
+      renderSection();
+      expect(screen.getByRole('alert')).toHaveTextContent('数量只能是 0 到 99 的整数');
+      expect(screen.getByRole('alert')).not.toHaveTextContent(generic);
+    },
+  );
+
+  it('shows the English quantity sentence for an ownedCount too_big and for collection_quantity', () => {
+    rootStore.locale.setLocale('en-US');
+    const generic = 'Some fields need to be changed before you can continue.';
+    showListFailure(ownedCountError('too_big'));
+    const view = renderSection();
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a whole number from 0 to 99.');
+    expect(screen.getByRole('alert')).not.toHaveTextContent(generic);
+
+    showListFailure(ownedCountError('collection_quantity'));
+    view.rerender(
+      <MemoryRouter>
+        <CollectionSection />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a whole number from 0 to 99.');
+    expect(screen.getByRole('alert')).not.toHaveTextContent(generic);
+  });
+
+  it('shows the quantity sentence when collection_quantity is the field code, and keeps other paths generic', () => {
+    const generic = '填写的内容不符合要求，请修改后再试';
+    showListFailure(ownedCountError('collection_quantity', 'quantity'));
+    const view = renderSection();
+    expect(screen.getByRole('alert')).toHaveTextContent('数量只能是 0 到 99 的整数');
+    expect(screen.getByRole('alert')).not.toHaveTextContent(generic);
+
+    showListFailure(ownedCountError('too_big', 'quantity'));
+    view.rerender(
+      <MemoryRouter>
+        <CollectionSection />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(generic);
+    expect(screen.getByRole('alert')).not.toHaveTextContent('数量只能是 0 到 99 的整数');
   });
 });

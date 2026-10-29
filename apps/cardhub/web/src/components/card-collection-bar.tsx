@@ -4,22 +4,16 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { Check } from 'lucide-react';
 import { Button, Input } from '@repo/ui-web';
 import { APP_ERROR_CODES, appErrorMessage, fieldErrorMessage, t, type Locale } from '@repo/shared';
+import { collectionQuantityMessage } from '../lib/collection-quantity-message';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { queryFallback } from './retry-button';
 import { ToggleSkeleton } from '../pages/me-skeleton';
-import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
+import { isSessionInvalidError } from '../lib/session-expiry';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
 /** Whole numbers 0–99. Leading zeros and surrounding spaces stay invalid. */
 const QUANTITY_PATTERN = /^(?:0|[1-9]\d?)$/;
-
-const OWNED_COUNT_FIELD_CODES = new Set([
-  'collection_quantity',
-  'too_small',
-  'too_big',
-  'invalid_type',
-]);
 
 const PRESSED_CLASS =
   'border-brand-600 bg-brand-600 text-white hover:bg-brand-600 hover:text-white';
@@ -61,47 +55,17 @@ function readTrpcCode(error: unknown): string | undefined {
   return typeof code === 'string' ? code : undefined;
 }
 
-function readPath(error: unknown): string | undefined {
-  const path = readData(error)?.path;
-  return typeof path === 'string' ? path : undefined;
-}
-
-function pushSignal(signals: string[], value: unknown) {
-  if (typeof value === 'string' && value.length > 0) signals.push(value);
-}
-
-/** Codes on an `ownedCount` issue. The API's top-level message is the generic validation sentence. */
-function ownedCountSignals(error: unknown): string[] {
-  const zodError = readData(error)?.zodError;
-  if (!isRecord(zodError)) return [];
-  const signals: string[] = [];
-  if (Array.isArray(zodError.issues)) {
-    for (const issue of zodError.issues) {
-      if (!isRecord(issue)) continue;
-      const path = Array.isArray(issue.path) ? issue.path : [];
-      if (path[0] !== 'ownedCount') continue;
-      pushSignal(signals, issue.message);
-      pushSignal(signals, issue.code);
-    }
-  }
-  const fieldErrors = zodError.fieldErrors;
-  if (!isRecord(fieldErrors) || !Array.isArray(fieldErrors.ownedCount)) return signals;
-  for (const item of fieldErrors.ownedCount) pushSignal(signals, item);
-  return signals;
-}
-
 /**
- * Save-failure copy for the detail bar. An ownedCount `collection_quantity`
- * code (or the generic zod codes the spec still names) uses the field
- * sentence, never the server's generic validation message.
+ * Save-failure copy for the detail bar. Quantity failures use the shared
+ * ownedCount mapping. A rejected session does not get bar copy; the expiry
+ * watcher sends the person to login.
  */
 export function collectionWriteFailure(locale: Locale, error: unknown): CollectionWriteFailure {
   if (isSessionInvalidError(error)) {
     return { kind: 'redirect' };
   }
-  if (ownedCountSignals(error).some((code) => OWNED_COUNT_FIELD_CODES.has(code))) {
-    return { kind: 'field', text: fieldErrorMessage(locale, 'collection_quantity') };
-  }
+  const quantity = collectionQuantityMessage(locale, error);
+  if (quantity) return { kind: 'field', text: quantity };
   const appCode = readAppCode(error);
   const trpcCode = readTrpcCode(error);
   if (appCode === APP_ERROR_CODES.NOT_FOUND || trpcCode === 'NOT_FOUND') {
@@ -192,32 +156,9 @@ export const CardCollectionBar = observer(function CardCollectionBar({
   });
   writeRef.current.slug = cardSlug;
 
-  const goLogin = useCallback(
-    (notice?: 'sessionExpired') => {
-      const from = fromRef.current;
-      navigate(
-        notice ? { pathname: '/login', search: `?redirect=${encodeURIComponent(from)}` } : '/login',
-        {
-          replace: Boolean(notice),
-          state: notice ? { from, notice } : { from },
-        },
-      );
-    },
-    [navigate],
-  );
-
-  useEffect(() => {
-    return subscribeSessionExpired((error) => {
-      const path = readPath(error);
-      if (path !== 'collection.byCard' && path !== 'collection.upsert') return;
-      goLogin('sessionExpired');
-    });
-  }, [goLogin]);
-
-  useEffect(() => {
-    if (!sessionInvalid) return;
-    goLogin('sessionExpired');
-  }, [goLogin, sessionInvalid]);
+  const goLogin = useCallback(() => {
+    navigate('/login', { state: { from: fromRef.current } });
+  }, [navigate]);
 
   useEffect(() => {
     writeRef.current.queue = [];
@@ -263,10 +204,7 @@ export const CardCollectionBar = observer(function CardCollectionBar({
 
   const showWriteFailure = (error: unknown) => {
     const failure = collectionWriteFailure(localeRef.current, error);
-    if (failure.kind === 'redirect') {
-      goLogin('sessionExpired');
-      return;
-    }
+    if (failure.kind === 'redirect') return;
     if (failure.kind === 'field') {
       setFieldError(failure.text);
       return;
