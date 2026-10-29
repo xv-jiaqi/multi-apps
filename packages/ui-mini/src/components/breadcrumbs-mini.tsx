@@ -26,7 +26,7 @@ export function BreadcrumbsMini({ items }: BreadcrumbsMiniProps) {
         gap: '8rpx',
         marginBottom: '16rpx',
         fontSize: '24rpx',
-        color: '#6b7280',
+        color: '#525252',
       }}
     >
       {items.map((item, idx) => {
@@ -41,7 +41,7 @@ export function BreadcrumbsMini({ items }: BreadcrumbsMiniProps) {
           );
         }
         return (
-          <Text key={`${idx}-${item.label}`} style={{ color: last ? '#171717' : '#6b7280' }}>
+          <Text key={`${idx}-${item.label}`} style={{ color: last ? '#171717' : '#525252' }}>
             {label}
           </Text>
         );

@@ -46,7 +46,7 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 | 卡牌 / 系列图片          | 🟡   | 全站图位              | `Card.imageUrl` / `Series.coverUrl`                         | Web / Tauri 已支持 https 真实图片：加载中固定灰底、加载完淡入、坏链或 `gradient:` 回退原渐变；卡牌详情用 63:88 contain，其余卡图按 63:88 cover，系列封面按 2:1 或现有背景容器 cover。现有 seed 仍是 `gradient:...`，小程序同步留给 CH-301 |
 | 分类 / 年份 / 类型浏览   | ❌   | —                     | —                                                           | PRD §3.2/§3.3、UI 规范“分类列表页”要求（CH-201）。平行版本与限量编号见 CH-213                                                                                                                                                             |
 | 内容维护                 | ✅   | `/admin/catalog`      | `admin.series.*` / `admin.cards.*` / `admin.catalog.import` | 管理员可新建、编辑、删除系列和卡牌，并先预览再导入 JSON。改系列刷新旧列表，保存刷新前台。超限不提交，未保存离开会确认。属性上限 40。空系列行内确认删除；仍有卡牌或评论时输入 slug 强制删除。`seed:catalog` 只插入缺失记录，不覆盖后台编辑 |
-| 面包屑                   | ✅   | 所有深层页面          | —                                                           |                                                                                                                                                                                                                                           |
+| 面包屑                   | ✅   | 所有深层页面          | —                                                           | 链接和非当前项 `text-neutral-600`，当前页 `text-neutral-900`，分隔符 `text-neutral-300` 且 `aria-hidden`（CH-117）。小程序容器和非链接项 `#525252`，链接 `#2563eb`，当前页 `#171717`。                                                    |
 
 ### 3.2 搜索
 
@@ -137,6 +137,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 | ------------------------------------------ | ---- | --------------------------------------------------------------------------------------------------------------- |
 | 响应式布局 + 移动端汉堡菜单                | ✅   | 375 宽用户内容 wrap-anywhere，代码块只在框内横向滚动（W-REG-1 / AC1-4）                                         |
 | skip-to-content、focus-visible、aria 标注  | ✅   | 开发模式下 `@axe-core/react` 自动扫描                                                                           |
+| 元数据文字对比度                           | ✅   | CH-216 v2.1，已由 #159 完成。页面底上列入规格的次要文字为 `text-neutral-600`；白卡上的 `text-neutral-500` 保留  |
 | 路由懒加载 + 双层 ErrorBoundary            | ✅   | 崩溃页按当前语言显示；chunk 失败整页刷新，原始错误只进控制台                                                    |
 | 加载 / 错误 / 空状态、骨架屏               | ✅   | 卡牌详情主包预留 63:88 骨架，避免路由 chunk 到达前跳动（CH-109）                                                |
 | 刘海屏 safe-area + 页面横向留白            | ✅   | `.app-safe-top / .app-safe-x / .app-safe-bottom`；`.app-safe-x` 同时保证页面最小横向留白（< sm 16px，sm+ 24px） |
