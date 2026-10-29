@@ -193,7 +193,12 @@ step_keys() {
     in_job { print }
   ' "${workflow}" | awk -v step="${step}" '
     /^      - name: / {
-      if (capturing) exit
+      # Do not exit here. The producer is still writing the rest of the job,
+      # and pipefail turns that SIGPIPE into exit 141.
+      if (capturing) {
+        capturing = 0
+        next
+      }
       name = substr($0, 15)
       gsub(/^"|"$/, "", name)
       if (name == step) capturing = 1
