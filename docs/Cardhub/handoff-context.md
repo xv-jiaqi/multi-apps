@@ -271,6 +271,12 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 
 日志轮转是 `json-file` 的 `max-size=10m`、`max-file=5`。改 compose 后要重建容器，`docker inspect` 才能看到。守夜人在 staging 验收。
 
+### 6.19 收藏是私人数据，迁移只加表
+
+`collection_items` 是 CH-203 cut-3 的新表。旧进程不读它。应用回滚到上一个 SHA 时表留着，不要用删迁移文件的方式回滚。
+
+`collection.list` 和 `collection.progress` 只按当前登录用户查询。不要把 `ownedCount` / `wanted` 放进 `cards.bySlug` 或 `cardhub:cache:v1:` 的目录缓存；那条缓存是公开的。平行版本分母等 CH-213，这次的 `total` 是系列里的全部卡牌。
+
 ## 7. 路线图
 
 下面的 M0–M7 路线图**已全部完成**，保留作历史参考（原计划文件 `.cursor/plans/cardhub-roadmap-execution_*.plan.md` 未纳入仓库）。后续工作统一在 [development-backlog.md](development-backlog.md) 中排期和领取。

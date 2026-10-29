@@ -76,7 +76,7 @@
 | CH-109 | 卡牌详情页 CLS                                  | P1     | S    | —                     | ✅ 主包骨架占位                                         |
 | CH-201 | 分类体系：品类、系列、子集、卡号与发售日期      | P2     | L    | CH-107                | 进行中（#167，后端 #168）                               |
 | CH-202 | 系列清单：搜索、排序、分页与属性本地化          | P2     | M    | CH-201                | 进行中（后端 cursor/ch-202-series-list-524d；界面未做） |
-| CH-203 | 收藏管理、集齐进度与分享                        | P2     | L    | CH-102                | 待领取                                                  |
+| CH-203 | 收藏管理、集齐进度与分享                        | P2     | L    | CH-102                | 进行中（cursor/ch-203-collection-api-4c2c，后端）       |
 | CH-204 | 评论回复（单层）                                | P2     | M    | CH-002                | ✅ #147                                                 |
 | CH-205 | 首页改版                                        | P2     | M    | CH-201、CH-106        | 待领取                                                  |
 | CH-206 | 卡牌详情页改版（大图、长描述）                  | P2     | M    | CH-105、CH-107        | 待领取                                                  |
@@ -421,20 +421,21 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-203 收藏管理、集齐进度与分享
 
+- **进度**（2026-10-29）：cut-3 只做后端，分支 `cursor/ch-203-collection-api-4c2c`。迁移 `add_collection_items` 只建新表 `collection_items`，旧版本不读它。回滚是把应用退回上一个 SHA，表留在库里；不要删这张表，也不要改已经合入的 `migration.sql`。Web 的“我有 / 想要 / 分享”、`/me` 收藏分区、平行版本开关都还没做。
 - **来源**：UI 规范 §4 卡牌详情“收藏 / 分享按钮”。Pokéllector 的“已拥有 / 完成条”和 TCDB 的私人账本见 [industry-benchmark.md](industry-benchmark.md) 第 7 节。多本收藏、评级、未拆盒和按外部行情估值都不在本卡。
 - **改动范围**
-  - Prisma：`CollectionItem { id, userId, cardId, quantity Int @default(1), wanted Boolean @default(false), createdAt, updatedAt, @@unique([userId, cardId]) }`。两个外键都级联删除。数量为 0 且 `wanted` 为 false 时删除这一行，不留空记录。不做公开的收藏人数。
-  - API：新建 `collection` 模块。`collection.upsert({ cardSlug, quantity, wanted })`、`collection.remove({ cardSlug })`、`collection.mine({ cursor })`、`collection.progress()`。进度按系列返回 `{ seriesSlug, seriesTitle, owned, total }`。`owned` 只数 `quantity > 0` 的卡。`total` 是该系列卡牌数；CH-213 上线后，默认排除 `parallelOfId` 非空的卡。`cards.bySlug` 在已登录时返回当前用户的 `collection: { quantity, wanted } | null`。`upsert` 限流每分钟 60 次。
+  - Prisma：`CollectionItem { id, userId, cardId, ownedCount Int @default(0), wanted Boolean @default(false), createdAt, updatedAt, @@unique([userId, cardId]) }`。`ownedCount` 是 0–99 的整数。两个外键都级联删除，并且各自有索引。数量为 0 且 `wanted` 为 false 时删除这一行，不留空记录。不做公开的收藏人数。
+  - API（cut-3 已做）：`collection.upsert({ cardSlug, ownedCount, wanted })`、`collection.list({ cursor?, limit? })`、`collection.progress()`。进度按系列返回 `{ seriesSlug, seriesTitle, owned, total }`。`owned` 按卡计，只数 `ownedCount > 0`，不把数量相加；只想要的卡不进分子。`total` 是该系列卡牌数。CH-213 未合并，这次没有 `includeParallels`，分母包含系列里的全部卡。`upsert` 限流每分钟 60 次。不改 `cards.bySlug`：那条响应在公开目录缓存里，不能塞按用户的收藏。清空收藏用 upsert（0 且不想要），没有单独的 `collection.remove`。
   - shared：输入 schema 放 `packages/shared/src/zod/index.ts`。数量为 0 到 99 的整数。
   - Web：卡牌详情用“我有”和数量，以及“想要”。未登录跳转登录。乐观更新。分享按钮优先用 `navigator.share`，不支持时复制链接并提示。`/me` 增加“我的收藏”：拥有的卡、想要的卡、每个系列的“已有 / 共”。本地开关“把平行版本计入进度”存在 `localStorage`，只影响 `progress` 的请求参数 `includeParallels`。CH-213 未合并时隐藏这个开关，分母就是系列内全部卡牌。
   - i18n：`collection.*`。
   - 小程序：本卡不做。
 - **验收标准**
   1. 登录用户可以把一张卡记为拥有 2 张，或只标记想要。刷新后状态还在。
-  2. 系列进度等于该用户拥有的张数卡（按卡计，不按 quantity 累加）除以系列卡牌数。只标记想要的卡不进分子。
+  2. 系列进度等于该用户拥有的卡数（按卡计，不按 `ownedCount` 累加）除以系列卡牌数。只标记想要的卡不进分子。
   3. 其他用户看不到这份收藏。未登录访问 `/me` 的行为仍遵循 CH-102。
   4. 分享在没有系统分享面板时复制当前卡牌地址。
-- **测试**：成功、未登录拒绝、数量非法、进度不把“只想要”算进去。
+- **测试**：`apps/cardhub/api/test/collection.e2e-spec.ts` 覆盖再次读取仍在、未登录 `UNAUTHORIZED`、数量不是 0–99 的整数时 `VALIDATION`、进度不把“只想要”算进去、两个账号隔离、数量为 0 且不想要时删行。
 - **依赖**：CH-102。平行版本的分母规则与 CH-213 对齐，但本卡不依赖它先合并。
 - **规模**：L。
 

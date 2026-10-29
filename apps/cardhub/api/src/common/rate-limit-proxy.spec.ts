@@ -30,6 +30,17 @@ describe('rate limit proxy IP handling', () => {
     expect(productionRateLimitConfigs.commentCreate.limit).toBe(30);
   });
 
+  it('keeps the production collection.upsert limit at 60 per minute', () => {
+    expect(productionRateLimitConfigs.collectionUpsert.windowMs).toBe(60_000);
+    expect(productionRateLimitConfigs.collectionUpsert.limit).toBe(60);
+    expect(productionRateLimitConfigs.collectionUpsert.skip({ url: '/trpc/collection.list' })).toBe(
+      true,
+    );
+    expect(
+      productionRateLimitConfigs.collectionUpsert.skip({ url: '/trpc/collection.upsert' }),
+    ).toBe(false);
+  });
+
   it('sets Vary: Origin on CORS responses for dynamic origins', async () => {
     const app = await makeTestApp();
     try {

@@ -13,6 +13,7 @@ import { ReportsModule } from '../modules/reports/reports.module';
 import { UsersModule } from '../modules/users/users.module';
 import { SearchModule } from '../modules/search/search.module';
 import { AdminModule } from '../modules/admin/admin.module';
+import { CollectionModule } from '../modules/collection/collection.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AdminModule } from '../modules/admin/admin.module';
     UsersModule,
     SearchModule,
     AdminModule,
+    CollectionModule,
   ],
   providers: [TrpcService],
   exports: [TrpcService],
