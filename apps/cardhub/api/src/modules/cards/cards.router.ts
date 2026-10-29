@@ -28,6 +28,7 @@ export class CardsRouter {
           where: { slug: input.slug },
           include: {
             series: { select: { slug: true, title: true } },
+            subset: { select: { slug: true, name: true, kind: true } },
           },
         });
         if (!card) {
@@ -50,6 +51,10 @@ export class CardsRouter {
           attributes,
           seriesSlug: card.series.slug,
           seriesTitle: card.series.title,
+          cardNumber: card.cardNumber ?? null,
+          subset: card.subset
+            ? { slug: card.subset.slug, name: card.subset.name, kind: card.subset.kind }
+            : null,
           createdAt: card.createdAt.toISOString(),
           updatedAt: card.updatedAt.toISOString(),
         };

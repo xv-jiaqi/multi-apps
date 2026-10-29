@@ -7,6 +7,15 @@ export interface SeedCard {
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   imageUrl: string;
   attributes: Prisma.InputJsonValue;
+  cardNumber?: string;
+  subsetSlug?: string;
+}
+
+export interface SeedSubset {
+  slug: string;
+  name: string;
+  kind: 'BASE' | 'INSERT';
+  sortOrder: number;
 }
 
 export interface SeedSeries {
@@ -14,8 +23,18 @@ export interface SeedSeries {
   title: string;
   description: string;
   coverUrl: string;
+  /** `YYYY-MM-DD`. Omitted when the series has no release date. */
+  releaseDate?: string;
+  subsets: SeedSubset[];
   cards: SeedCard[];
 }
+
+export const CATALOG_CATEGORY = {
+  slug: 'deck-builder',
+  name: '构筑对战',
+  description: '以套牌构筑为主的卡牌品类。',
+  sortOrder: 0,
+} as const;
 
 export const CATALOG_SERIES: SeedSeries[] = [
   {
@@ -23,6 +42,11 @@ export const CATALOG_SERIES: SeedSeries[] = [
     title: '天穹黎明',
     description: '故事开端的限定系列，收录构筑型套牌中最具代表性的元素卡，画风偏冷色调玻璃质感。',
     coverUrl: 'gradient:from-sky-400-via-indigo-400-to-purple-500',
+    releaseDate: '2024-03-15',
+    subsets: [
+      { slug: 'base', name: '主卡', kind: 'BASE', sortOrder: 0 },
+      { slug: 'inserts', name: '异画', kind: 'INSERT', sortOrder: 1 },
+    ],
     cards: [
       {
         slug: 'aurora-knight',
@@ -31,6 +55,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'legendary',
         imageUrl: 'gradient:from-sky-200-via-indigo-300-to-violet-500',
         attributes: { cost: 8, attack: 9, health: 9, type: '随从' },
+        cardNumber: '001',
+        subsetSlug: 'base',
       },
       {
         slug: 'glacier-sentinel',
@@ -39,6 +65,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'epic',
         imageUrl: 'gradient:from-cyan-200-via-sky-300-to-blue-500',
         attributes: { cost: 6, attack: 6, health: 7, type: '随从' },
+        cardNumber: '002',
+        subsetSlug: 'base',
       },
       {
         slug: 'moonlit-raven',
@@ -47,6 +75,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'rare',
         imageUrl: 'gradient:from-slate-300-via-indigo-300-to-slate-700',
         attributes: { cost: 4, attack: 4, health: 5, type: '随从' },
+        cardNumber: 'I01',
+        subsetSlug: 'inserts',
       },
       {
         slug: 'starlight-novice',
@@ -55,6 +85,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'common',
         imageUrl: 'gradient:from-amber-100-via-rose-200-to-indigo-300',
         attributes: { cost: 2, attack: 2, health: 3, type: '随从' },
+        cardNumber: '004',
+        subsetSlug: 'base',
       },
     ],
   },
@@ -63,6 +95,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
     title: '翠裂之地',
     description: '森林与古代文明交织的中期系列，强调长尾节奏与生态共生主题，色调以暖绿与琥珀为主。',
     coverUrl: 'gradient:from-emerald-400-via-lime-400-to-amber-300',
+    releaseDate: '2025-11-02',
+    subsets: [{ slug: 'base', name: '主卡', kind: 'BASE', sortOrder: 0 }],
     cards: [
       {
         slug: 'ancient-treant',
@@ -71,6 +105,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'legendary',
         imageUrl: 'gradient:from-emerald-300-via-green-500-to-lime-600',
         attributes: { cost: 8, attack: 9, health: 9, type: '随从' },
+        cardNumber: '001',
+        subsetSlug: 'base',
       },
       {
         slug: 'spore-warden',
@@ -79,6 +115,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'rare',
         imageUrl: 'gradient:from-lime-200-via-emerald-300-to-emerald-700',
         attributes: { cost: 4, attack: 4, health: 5, type: '随从' },
+        cardNumber: '002',
+        subsetSlug: 'base',
       },
       {
         slug: 'amber-mystic',
@@ -87,6 +125,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'epic',
         imageUrl: 'gradient:from-amber-200-via-orange-300-to-amber-600',
         attributes: { cost: 6, attack: 6, health: 7, type: '随从' },
+        cardNumber: '003',
+        subsetSlug: 'base',
       },
     ],
   },
@@ -95,6 +135,7 @@ export const CATALOG_SERIES: SeedSeries[] = [
     title: '泰坦熔炉',
     description: '机械与火焰的中后期系列，代表卡多为主动技能强势的高费随从，画风偏暖橘加粗体描边。',
     coverUrl: 'gradient:from-orange-500-via-red-500-to-rose-700',
+    subsets: [{ slug: 'base', name: '主卡', kind: 'BASE', sortOrder: 0 }],
     cards: [
       {
         slug: 'forge-titan',
@@ -103,6 +144,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'legendary',
         imageUrl: 'gradient:from-amber-400-via-orange-500-to-red-700',
         attributes: { cost: 8, attack: 9, health: 9, type: '随从' },
+        cardNumber: '001',
+        subsetSlug: 'base',
       },
       {
         slug: 'lava-wraith',
@@ -111,6 +154,8 @@ export const CATALOG_SERIES: SeedSeries[] = [
         rarity: 'epic',
         imageUrl: 'gradient:from-rose-400-via-red-500-to-orange-600',
         attributes: { cost: 6, attack: 6, health: 7, type: '随从' },
+        cardNumber: '002',
+        subsetSlug: 'base',
       },
     ],
   },
