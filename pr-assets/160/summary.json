@@ -1,0 +1,1344 @@
+{
+  "startedAt": "2026-10-29T01:33:49.147Z",
+  "finishedAt": "2026-10-29T01:34:14.018Z",
+  "reference": {
+    "neutral600OnF6": 7.23,
+    "neutral900OnF6": 16.59
+  },
+  "rows": [
+    {
+      "tag": "series-zh-1440",
+      "path": "/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": {
+        "outline": "rgb(16, 16, 16) none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "ring": "0 0 0 calc(2px + 2px) #3b82f6"
+      },
+      "hover": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ]
+      }
+    },
+    {
+      "tag": "card-zh-1440",
+      "path": "/cards/demo-card",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "forum-zh-1440",
+      "path": "/forum/welcome",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "import-zh-1440",
+      "path": "/admin/catalog/import",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "导入 JSON"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "管理"
+      },
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "series-zh-375",
+      "path": "/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 343,
+        "height": 70
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": {
+        "outline": "rgb(16, 16, 16) none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "ring": "0 0 0 calc(2px + 2px) #3b82f6"
+      },
+      "hover": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ]
+      }
+    },
+    {
+      "tag": "card-zh-375",
+      "path": "/cards/demo-card",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 343,
+        "height": 116
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "forum-zh-375",
+      "path": "/forum/welcome",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 343,
+        "height": 70
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "import-zh-375",
+      "path": "/admin/catalog/import",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "首页"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "导入 JSON"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "管理"
+      },
+      "navBox": {
+        "width": 343,
+        "height": 24
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "series-en-1440",
+      "path": "/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": {
+        "outline": "rgb(16, 16, 16) none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "ring": "0 0 0 calc(2px + 2px) #3b82f6"
+      },
+      "hover": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ]
+      }
+    },
+    {
+      "tag": "card-en-1440",
+      "path": "/cards/demo-card",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "forum-en-1440",
+      "path": "/forum/welcome",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "import-en-1440",
+      "path": "/admin/catalog/import",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "Import JSON"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Admin"
+      },
+      "navBox": {
+        "width": 1104,
+        "height": 24
+      },
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "series-en-375",
+      "path": "/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 343,
+        "height": 70
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": {
+        "outline": "rgb(16, 16, 16) none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "ring": "0 0 0 calc(2px + 2px) #3b82f6"
+      },
+      "hover": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ]
+      }
+    },
+    {
+      "tag": "card-en-375",
+      "path": "/cards/demo-card",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 343,
+        "height": 116
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "forum-en-375",
+      "path": "/forum/welcome",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": null,
+      "navBox": {
+        "width": 343,
+        "height": 70
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": null,
+      "hover": null
+    },
+    {
+      "tag": "import-en-375",
+      "path": "/admin/catalog/import",
+      "link": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Home"
+      },
+      "current": {
+        "specified": "oklch(0.205 0 0)",
+        "rgb": [
+          23,
+          23,
+          23
+        ],
+        "text": "Import JSON"
+      },
+      "separator": {
+        "specified": "oklch(0.87 0 0)",
+        "rgb": [
+          212,
+          212,
+          212
+        ],
+        "text": "/",
+        "ariaHidden": "true"
+      },
+      "middle": {
+        "specified": "oklch(0.439 0 0)",
+        "rgb": [
+          82,
+          82,
+          82
+        ],
+        "text": "Admin"
+      },
+      "navBox": {
+        "width": 343,
+        "height": 24
+      },
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "focus": null,
+      "hover": null
+    }
+  ],
+  "axe": [
+    {
+      "tag": "series-zh-1440",
+      "url": "http://127.0.0.1:5175/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "timestamp": "2026-10-29T01:33:52.117Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "card-zh-1440",
+      "url": "http://127.0.0.1:5175/cards/demo-card",
+      "timestamp": "2026-10-29T01:33:54.433Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "definition-list",
+        "dlitem",
+        "document-title",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "forum-zh-1440",
+      "url": "http://127.0.0.1:5175/forum/welcome",
+      "timestamp": "2026-10-29T01:33:55.783Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "import-zh-1440",
+      "url": "http://127.0.0.1:5175/admin/catalog/import",
+      "timestamp": "2026-10-29T01:33:57.086Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "summary-name",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "series-zh-375",
+      "url": "http://127.0.0.1:5175/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "timestamp": "2026-10-29T01:33:58.264Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "html-has-lang",
+        "html-lang-valid",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "card-zh-375",
+      "url": "http://127.0.0.1:5175/cards/demo-card",
+      "timestamp": "2026-10-29T01:34:00.062Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "definition-list",
+        "dlitem",
+        "document-title",
+        "html-has-lang",
+        "html-lang-valid",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "forum-zh-375",
+      "url": "http://127.0.0.1:5175/forum/welcome",
+      "timestamp": "2026-10-29T01:34:01.179Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "html-has-lang",
+        "html-lang-valid",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "import-zh-375",
+      "url": "http://127.0.0.1:5175/admin/catalog/import",
+      "timestamp": "2026-10-29T01:34:02.277Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "summary-name",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "series-en-1440",
+      "url": "http://127.0.0.1:5175/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "timestamp": "2026-10-29T01:34:03.505Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "card-en-1440",
+      "url": "http://127.0.0.1:5175/cards/demo-card",
+      "timestamp": "2026-10-29T01:34:05.750Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "definition-list",
+        "dlitem",
+        "document-title",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "forum-en-1440",
+      "url": "http://127.0.0.1:5175/forum/welcome",
+      "timestamp": "2026-10-29T01:34:06.955Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "import-en-1440",
+      "url": "http://127.0.0.1:5175/admin/catalog/import",
+      "timestamp": "2026-10-29T01:34:08.124Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "summary-name",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "series-en-375",
+      "url": "http://127.0.0.1:5175/series/breadcrumb-wrap-abcdefghijklmnopqrstuvwxyz-0123456789ab",
+      "timestamp": "2026-10-29T01:34:09.216Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "html-has-lang",
+        "html-lang-valid",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "card-en-375",
+      "url": "http://127.0.0.1:5175/cards/demo-card",
+      "timestamp": "2026-10-29T01:34:11.825Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "definition-list",
+        "dlitem",
+        "document-title",
+        "html-has-lang",
+        "html-lang-valid",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "forum-en-375",
+      "url": "http://127.0.0.1:5175/forum/welcome",
+      "timestamp": "2026-10-29T01:34:12.929Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "html-has-lang",
+        "html-lang-valid",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "target-size"
+      ]
+    },
+    {
+      "tag": "import-en-375",
+      "url": "http://127.0.0.1:5175/admin/catalog/import",
+      "timestamp": "2026-10-29T01:34:13.990Z",
+      "testEngine": {
+        "name": "axe-core",
+        "version": "4.11.4"
+      },
+      "violations": [],
+      "colorContrastViolations": 0,
+      "passes": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-hidden-body",
+        "aria-hidden-focus",
+        "aria-prohibited-attr",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "bypass",
+        "color-contrast",
+        "document-title",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "html-has-lang",
+        "html-lang-valid",
+        "label",
+        "link-name",
+        "list",
+        "listitem",
+        "meta-viewport",
+        "nested-interactive",
+        "summary-name",
+        "target-size"
+      ]
+    }
+  ]
+}
