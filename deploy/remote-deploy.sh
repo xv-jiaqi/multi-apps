@@ -223,6 +223,117 @@ apply_password_prehash_write() {
   printf '%s\n' "${key}=${value}"
 }
 
+# Print the DSN, or nothing. Empty means the GitHub secret is unset and the
+# env file must be left alone. Anything else must be an http or https URL
+# with no whitespace, quotes, backslashes, or shell substitutions. The value
+# is written to stdout only so the caller can capture it. It is never logged.
+normalize_web_sentry_dsn() {
+  local value
+  value="${WEB_SENTRY_DSN-}"
+  while [ -n "${value}" ] && { [ "${value: -1}" = $'\n' ] || [ "${value: -1}" = $'\r' ]; }; do
+    value="${value%?}"
+  done
+  case "${value}" in
+    *$'\n'*|*$'\r'*)
+      echo "WEB_SENTRY_DSN must be an http or https URL" >&2
+      return 64
+      ;;
+  esac
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  if [ -z "${value}" ]; then
+    printf '%s' ""
+    return 0
+  fi
+  # Same shape the web entrypoint accepts, plus no $ or backtick: compose
+  # interpolates $ in the env file, and the value is placed in a shell
+  # assignment before that.
+  if printf '%s' "${value}" | grep -Eq '^https?://[^[:space:]"\\$`]+$'; then
+    printf '%s' "${value}"
+    return 0
+  fi
+  echo "WEB_SENTRY_DSN must be an http or https URL" >&2
+  return 64
+}
+
+# Replace every WEB_SENTRY_DSN assignment, including a line whose name has an
+# export prefix, or append one. Comments and other keys are copied through
+# and are not printed. Unset, empty, and whitespace leave the file untouched,
+# including its inode. Owner and mode are kept the same way as
+# PASSWORD_PREHASH_WRITE (env files are 600). The DSN is never printed.
+apply_web_sentry_dsn() {
+  local file="$1"
+  local value key tmp
+  key="WEB_SENTRY_DSN"
+  value="$(normalize_web_sentry_dsn)" || return $?
+  if [ -z "${value}" ]; then
+    return 0
+  fi
+  if [ ! -f "${file}" ]; then
+    echo "Missing env file: ${file}" >&2
+    return 1
+  fi
+
+  tmp="$(mktemp "${file}.tmp.XXXXXX")" || return 1
+  chmod 600 "${tmp}"
+  if ! awk -v key="${key}" -v value="${value}" '
+    function assignment_name(raw,    name, eq) {
+      eq = index(raw, "=")
+      if (eq == 0) return ""
+      name = substr(raw, 1, eq - 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
+      sub(/^export[[:space:]]+/, "", name)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
+      return name
+    }
+    BEGIN { found = 0 }
+    {
+      raw = $0
+      sub(/\r$/, "", raw)
+      if (raw ~ /^[[:space:]]*#/ || raw ~ /^[[:space:]]*$/) {
+        print
+        next
+      }
+      if (assignment_name(raw) == key) {
+        print key "=" value
+        found = 1
+        next
+      }
+      print
+    }
+    END {
+      if (!found) print key "=" value
+    }
+  ' "${file}" > "${tmp}"; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: could not rewrite ${key}" >&2
+    return 1
+  fi
+
+  if [ -s "${file}" ] && [ ! -s "${tmp}" ]; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: rewrite produced an empty file" >&2
+    return 1
+  fi
+
+  if cmp -s "${file}" "${tmp}"; then
+    rm -f "${tmp}"
+    return 0
+  fi
+
+  if ! chown --reference="${file}" "${tmp}"; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: could not preserve owner" >&2
+    return 1
+  fi
+  chmod --reference="${file}" "${tmp}" || chmod 600 "${tmp}"
+  if ! mv -f "${tmp}" "${file}"; then
+    rm -f "${tmp}"
+    echo "Refusing to update ${file}: could not replace it" >&2
+    return 1
+  fi
+}
+
 main() {
   local environment image_tag expected_sha env_name project base_dir
   environment="$1"
@@ -289,6 +400,12 @@ main() {
   # is set). true and false are written before any container is replaced.
   # Other lines in the env file are secrets and are not printed.
   apply_password_prehash_write "${env_file}" || exit $?
+
+  # GitHub Environment secret WEB_SENTRY_DSN, forwarded by deploy.yml.
+  # Unset or blank keeps the line already on disk. An http(s) URL replaces
+  # every assignment of that key, including an export prefix, or appends
+  # one. The value is not printed.
+  apply_web_sentry_dsn "${env_file}" || exit $?
 
   cd "${app_dir}"
 

@@ -229,13 +229,13 @@ EOF
   : > "${log}"
   : > "${err}"
   if [ "${prehash_mode}" = "unset" ]; then
-    env -u PASSWORD_PREHASH_WRITE \
+    env -u PASSWORD_PREHASH_WRITE -u WEB_SENTRY_DSN \
       PATH="${bin}:${PATH}" \
       CARDHUB_ROOT="${work}/root" \
       DOCKER_LOG="${work}/docker.log" \
       bash "${deploy_script}" "${environment}" "${tag}" "${sha}" >"${log}" 2>"${err}" || rc=$?
   else
-    env \
+    env -u WEB_SENTRY_DSN \
       PATH="${bin}:${PATH}" \
       CARDHUB_ROOT="${work}/root" \
       DOCKER_LOG="${work}/docker.log" \
@@ -338,7 +338,7 @@ run_workflow() {
   if [ "${mode}" = "unset" ]; then
     (
       cd "${root}"
-      env -u PASSWORD_PREHASH_WRITE \
+      env -u PASSWORD_PREHASH_WRITE -u WEB_SENTRY_DSN \
         PATH="${work}/sshbin:${PATH}" \
         DEPLOY_USER=deploy \
         DEPLOY_HOST=example.test \
@@ -351,7 +351,7 @@ run_workflow() {
   else
     (
       cd "${root}"
-      env \
+      env -u WEB_SENTRY_DSN \
         PATH="${work}/sshbin:${PATH}" \
         DEPLOY_USER=deploy \
         DEPLOY_HOST=example.test \

@@ -259,6 +259,7 @@ EOF
   script_rc=0
   env \
     -u PASSWORD_PREHASH_WRITE \
+    -u WEB_SENTRY_DSN \
     PATH="${work}/bin:${PATH}" \
     CARDHUB_ROOT="${work}/root" \
     CARDHUB_HEALTH_TIMEOUT_SECONDS=5 \
