@@ -23,7 +23,13 @@ import { makeCreateContext } from '../trpc/context';
 import { DEFAULT_CORS_ORIGIN } from '../modules/seo/public-web-origin';
 import { configureApp } from './configure-app';
 import { jsonBodyParser } from './json-body';
-import { createRateLimiters, type RateLimitOverrides } from './rate-limiters';
+import {
+  CLEAR_LOGIN_ACCOUNT_LIMIT,
+  createAuthAccountLimiter,
+  createRateLimiters,
+  defaultRateLimitPrefix,
+  type RateLimitOverrides,
+} from './rate-limiters';
 
 export type CreateAppOptions = {
   rateLimitOverrides?: RateLimitOverrides;
@@ -129,15 +135,26 @@ export async function createApp(options: CreateAppOptions = {}) {
   // SENTRY_DSN is unset so local dev is unaffected.
   app.useGlobalFilters(new SentryExceptionFilter());
 
+  // One prefix so the IP buckets and the account bucket share a test namespace.
+  const rateLimitPrefix = options.rateLimitPrefix ?? defaultRateLimitPrefix();
   for (const { path, middleware } of createRateLimiters(
     redis,
     options.rateLimitOverrides,
-    options.rateLimitPrefix,
+    rateLimitPrefix,
   )) {
     app.use(path, middleware);
   }
 
   app.use(jsonBodyParser());
+  // After the JSON parser so req.body is available. IP limiters stay in front
+  // of the parser; they only need req.ip.
+  const accountLimiter = createAuthAccountLimiter(
+    redis,
+    options.rateLimitOverrides,
+    rateLimitPrefix,
+  );
+  app.getHttpAdapter().getInstance().set(CLEAR_LOGIN_ACCOUNT_LIMIT, accountLimiter.clear);
+  app.use('/trpc', accountLimiter.middleware);
   const catalogCacheHeader: RequestHandler = (_req, res, next) => {
     if (!catalogCacheHeaderEnabled()) {
       next();

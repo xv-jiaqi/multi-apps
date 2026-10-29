@@ -26,7 +26,11 @@ type MockPrismaUser = {
   updateMany: jest.Mock;
 };
 
-function makeRouter(user: TrpcContext['user'] = null, prehashWrite = false) {
+function makeRouter(
+  user: TrpcContext['user'] = null,
+  prehashWrite = false,
+  req: TrpcContext['req'] = {} as TrpcContext['req'],
+) {
   const userMock: MockPrismaUser = {
     findFirst: jest.fn(),
     findUnique: jest.fn(),
@@ -45,7 +49,7 @@ function makeRouter(user: TrpcContext['user'] = null, prehashWrite = false) {
   process.env.PASSWORD_PREHASH_WRITE = prehashWrite ? 'true' : 'false';
   const router = new AuthRouter(new TrpcBase(), prisma, auth);
   const caller = router.build().createCaller({
-    req: {} as never,
+    req,
     res: {} as never,
     user,
   });
@@ -267,6 +271,56 @@ describe('AuthRouter.login', () => {
 
     const where = userMock.findFirst.mock.calls[0]?.[0]?.where;
     expect(where).toEqual({ email: 'alice@cardhub.test' });
+  });
+
+  it('clears the account limit after a valid login and keeps the token when reset fails', async () => {
+    const clear = jest
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('redis unavailable'));
+    const req = {
+      app: { get: () => clear },
+    } as unknown as TrpcContext['req'];
+    const { caller, userMock } = makeRouter(null, false, req);
+    const hashedPassword = await bcrypt.hash(TEST_PASSWORD, 4);
+    userMock.findFirst.mockResolvedValue({
+      id: 'u1',
+      email: 'alice@cardhub.test',
+      username: 'alice',
+      password: hashedPassword,
+      role: 'admin',
+      tokenVersion: 4,
+    });
+
+    const first = await caller.login({ identifier: 'Alice', password: TEST_PASSWORD });
+    expect(first.token).toBe('signed.jwt.token');
+    expect(clear).toHaveBeenCalledWith('Alice');
+
+    const second = await caller.login({ identifier: 'Alice', password: TEST_PASSWORD });
+    expect(second.token).toBe('signed.jwt.token');
+    expect(clear).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not clear the account limit when the password is wrong', async () => {
+    const clear = jest.fn();
+    const req = {
+      app: { get: () => clear },
+    } as unknown as TrpcContext['req'];
+    const { caller, userMock } = makeRouter(null, false, req);
+    const hashedPassword = await bcrypt.hash(TEST_PASSWORD, 4);
+    userMock.findFirst.mockResolvedValueOnce({
+      id: 'u1',
+      email: 'alice@cardhub.test',
+      username: 'alice',
+      password: hashedPassword,
+      role: 'admin',
+      tokenVersion: 4,
+    });
+
+    await expect(
+      caller.login({ identifier: 'alice', password: INCORRECT_PASSWORD }),
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    expect(clear).not.toHaveBeenCalled();
   });
 });
 
