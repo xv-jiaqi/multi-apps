@@ -7,6 +7,20 @@ import path from 'node:path';
 
 const enableVisualizer = process.env.BUNDLE_VISUALIZE === '1';
 
+// The Playwright smoke job points this at an API that is not on :4000.
+// Unset keeps the local `pnpm dev` proxy.
+const apiOrigin = process.env.CARDHUB_API_ORIGIN ?? 'http://localhost:4000';
+const apiProxy = {
+  '/trpc': {
+    target: apiOrigin,
+    changeOrigin: true,
+  },
+  '/health': {
+    target: apiOrigin,
+    changeOrigin: true,
+  },
+};
+
 export default defineConfig({
   plugins: [
     react(),
@@ -28,16 +42,10 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: {
-      '/trpc': {
-        target: 'http://localhost:4000',
-        changeOrigin: true,
-      },
-      '/health': {
-        target: 'http://localhost:4000',
-        changeOrigin: true,
-      },
-    },
+    proxy: apiProxy,
+  },
+  preview: {
+    proxy: apiProxy,
   },
   build: {
     outDir: 'dist',
