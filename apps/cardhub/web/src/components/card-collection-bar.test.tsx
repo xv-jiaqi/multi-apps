@@ -115,7 +115,7 @@ const unauthorized = trpcError({
 
 function LoginProbe() {
   const location = useLocation();
-  return <p>{`${location.pathname}|${JSON.stringify(location.state)}`}</p>;
+  return <p>{`${location.pathname}${location.search}|${JSON.stringify(location.state)}`}</p>;
 }
 
 function renderBar() {
@@ -126,6 +126,18 @@ function renderBar() {
           path="/cards/:cardSlug"
           element={<CardCollectionBar cardSlug="aurora-knight" cardName="极光骑士" />}
         />
+        <Route path="/login" element={<LoginProbe />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+function renderBarBesideLogin() {
+  return render(
+    <MemoryRouter initialEntries={['/cards/aurora-knight']}>
+      <CardCollectionBar cardSlug="aurora-knight" cardName="极光骑士" />
+      <Routes>
+        <Route path="/cards/:cardSlug" element={null} />
         <Route path="/login" element={<LoginProbe />} />
       </Routes>
     </MemoryRouter>,
@@ -162,9 +174,10 @@ describe('collection write failure copy', () => {
       const failure = collectionWriteFailure('zh-CN', zodOwned(code));
       expect(failure).toEqual({ kind: 'field', text: '数量只能是 0 到 99 的整数' });
     }
-    expect(collectionWriteFailure('en-US', zodOwned('too_big')).text).toBe(
-      'Enter a whole number from 0 to 99.',
-    );
+    expect(collectionWriteFailure('en-US', zodOwned('too_big'))).toEqual({
+      kind: 'field',
+      text: 'Enter a whole number from 0 to 99.',
+    });
     const otherField = trpcError({
       code: 'BAD_REQUEST',
       appCode: APP_ERROR_CODES.VALIDATION,
@@ -177,15 +190,20 @@ describe('collection write failure copy', () => {
       kind: 'alert',
       text: '填写的内容不符合要求，请修改后再试',
     });
-    expect(collectionWriteFailure('zh-CN', notFound).text).toBe('内容不存在或已被删除');
-    expect(collectionWriteFailure('zh-CN', tooMany).text).toBe('操作太频繁，请稍后再试');
-    expect(collectionWriteFailure('en-US', tooMany).text).toBe(
-      'Too many actions. Try again later.',
-    );
-    expect(collectionWriteFailure('zh-CN', unauthorized)).toEqual({
-      kind: 'redirect',
-      text: '登录已失效，请重新登录',
+    expect(collectionWriteFailure('zh-CN', notFound)).toEqual({
+      kind: 'alert',
+      text: '内容不存在或已被删除',
     });
+    expect(collectionWriteFailure('zh-CN', tooMany)).toEqual({
+      kind: 'alert',
+      text: '操作太频繁，请稍后再试',
+    });
+    expect(collectionWriteFailure('en-US', tooMany)).toEqual({
+      kind: 'alert',
+      text: 'Too many actions. Try again later.',
+    });
+    expect(collectionWriteFailure('zh-CN', unauthorized)).toEqual({ kind: 'redirect' });
+    expect(collectionWriteFailure('en-US', unauthorized)).toEqual({ kind: 'redirect' });
     const genericMessage = '填写的内容不符合要求，请修改后再试';
     const ranged = {
       message: genericMessage,
@@ -202,8 +220,14 @@ describe('collection write failure copy', () => {
       kind: 'field',
       text: '数量只能是 0 到 99 的整数',
     });
-    expect(collectionWriteFailure('en-US', ranged).text).toBe('Enter a whole number from 0 to 99.');
-    expect(collectionWriteFailure('zh-CN', ranged).text).not.toBe(genericMessage);
+    expect(collectionWriteFailure('en-US', ranged)).toEqual({
+      kind: 'field',
+      text: 'Enter a whole number from 0 to 99.',
+    });
+    expect(collectionWriteFailure('zh-CN', ranged)).not.toEqual({
+      kind: 'alert',
+      text: genericMessage,
+    });
   });
 });
 
@@ -563,16 +587,26 @@ describe('card collection bar', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('sends an expired write to login with the card path', async () => {
+  it('rolls an optimistic write back, then opens login with redirect and sessionExpired', async () => {
     const user = userEvent.setup();
     signIn();
-    renderBar();
+    queryState.data = { ownedCount: 2, wanted: true };
+    renderBarBesideLogin();
 
-    await user.click(screen.getByRole('button', { name: '我有' }));
+    const own = screen.getByRole('button', { name: '我有' });
+    const want = screen.getByRole('button', { name: '想要' });
+    await user.click(want);
+    expect(want).toHaveAttribute('aria-pressed', 'false');
     await act(async () => {
       calls[0]?.opts.onError?.(unauthorized);
     });
-    expect(screen.getByText('/login|{"from":"/cards/aurora-knight"}')).toBeInTheDocument();
+    expect(own).toHaveAttribute('aria-pressed', 'true');
+    expect(want).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent(
+      '/login?redirect=%2Fcards%2Faurora-knight|{"from":"/cards/aurora-knight","notice":"sessionExpired"}',
+    );
   });
 
   it('sends an expired byCard read to login instead of the load-failed box', () => {
@@ -588,8 +622,11 @@ describe('card collection bar', () => {
     queryState.errorUpdateCount = 1;
     renderBar();
 
-    expect(screen.getByText('/login|{"from":"/cards/aurora-knight"}')).toBeInTheDocument();
+    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent('redirect');
+    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent('sessionExpired');
+    expect(screen.getByText(/\/login\?redirect=/)).toHaveTextContent('/cards/aurora-knight');
     expect(screen.queryByText('收藏状态加载失败')).not.toBeInTheDocument();
+    expect(screen.queryByText('登录已失效，请重新登录')).not.toBeInTheDocument();
   });
 });
 

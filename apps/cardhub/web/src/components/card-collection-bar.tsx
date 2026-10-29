@@ -6,6 +6,7 @@ import { Button, Input } from '@repo/ui-web';
 import { APP_ERROR_CODES, appErrorMessage, fieldErrorMessage, t, type Locale } from '@repo/shared';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { queryFallback } from './retry-button';
+import { ToggleSkeleton } from '../pages/me-skeleton';
 import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
@@ -37,7 +38,7 @@ type UpsertResult =
 const EMPTY: Entry = { ownedCount: 0, wanted: false };
 
 export type CollectionWriteFailure =
-  | { kind: 'redirect'; text: string }
+  | { kind: 'redirect' }
   | { kind: 'field'; text: string }
   | { kind: 'alert'; text: string };
 
@@ -96,10 +97,7 @@ function ownedCountSignals(error: unknown): string[] {
  */
 export function collectionWriteFailure(locale: Locale, error: unknown): CollectionWriteFailure {
   if (isSessionInvalidError(error)) {
-    return {
-      kind: 'redirect',
-      text: appErrorMessage(locale, APP_ERROR_CODES.UNAUTHORIZED),
-    };
+    return { kind: 'redirect' };
   }
   if (ownedCountSignals(error).some((code) => OWNED_COUNT_FIELD_CODES.has(code))) {
     return { kind: 'field', text: fieldErrorMessage(locale, 'collection_quantity') };
@@ -194,22 +192,32 @@ export const CardCollectionBar = observer(function CardCollectionBar({
   });
   writeRef.current.slug = cardSlug;
 
-  const goLogin = () => {
-    navigate('/login', { state: { from: fromRef.current } });
-  };
+  const goLogin = useCallback(
+    (notice?: 'sessionExpired') => {
+      const from = fromRef.current;
+      navigate(
+        notice ? { pathname: '/login', search: `?redirect=${encodeURIComponent(from)}` } : '/login',
+        {
+          replace: Boolean(notice),
+          state: notice ? { from, notice } : { from },
+        },
+      );
+    },
+    [navigate],
+  );
 
   useEffect(() => {
     return subscribeSessionExpired((error) => {
       const path = readPath(error);
       if (path !== 'collection.byCard' && path !== 'collection.upsert') return;
-      navigate('/login', { state: { from: fromRef.current } });
+      goLogin('sessionExpired');
     });
-  }, [navigate]);
+  }, [goLogin]);
 
   useEffect(() => {
     if (!sessionInvalid) return;
-    navigate('/login', { state: { from: fromRef.current } });
-  }, [navigate, sessionInvalid]);
+    goLogin('sessionExpired');
+  }, [goLogin, sessionInvalid]);
 
   useEffect(() => {
     writeRef.current.queue = [];
@@ -256,8 +264,7 @@ export const CardCollectionBar = observer(function CardCollectionBar({
   const showWriteFailure = (error: unknown) => {
     const failure = collectionWriteFailure(localeRef.current, error);
     if (failure.kind === 'redirect') {
-      setSaveError(failure.text);
-      goLogin();
+      goLogin('sessionExpired');
       return;
     }
     if (failure.kind === 'field') {
@@ -314,6 +321,12 @@ export const CardCollectionBar = observer(function CardCollectionBar({
   const ownPressed = ready && entry.ownedCount > 0;
   const wantPressed = ready && entry.wanted;
   const showQuantity = ownPressed;
+
+  const blockLockedKey = (event: { key: string; preventDefault: () => void }) => {
+    if (!loadLocked) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+  };
 
   const onOwn = () => {
     if (loadLocked) return;
@@ -386,7 +399,6 @@ export const CardCollectionBar = observer(function CardCollectionBar({
   const loginLabel = tt('auth.login.title');
   const hint = tt('collection.signInHint');
   const hintAt = hint.indexOf(loginLabel);
-  const unauthorized = appErrorMessage(locale.locale, APP_ERROR_CODES.UNAUTHORIZED);
 
   return (
     <section aria-labelledby="collection-title" className="min-w-0">
@@ -403,6 +415,7 @@ export const CardCollectionBar = observer(function CardCollectionBar({
             disabled={loadFailed}
             aria-disabled={loadLocked || undefined}
             onClick={onOwn}
+            onKeyDown={blockLockedKey}
             className={`w-full transition-none md:w-auto ${ownPressed ? PRESSED_CLASS : ''}`}
           >
             {ownPressed ? <Check aria-hidden="true" className="size-4" /> : null}
@@ -444,6 +457,7 @@ export const CardCollectionBar = observer(function CardCollectionBar({
             disabled={loadFailed}
             aria-disabled={loadLocked || undefined}
             onClick={onWant}
+            onKeyDown={blockLockedKey}
             className={`w-full transition-none md:w-auto ${wantPressed ? PRESSED_CLASS : ''}`}
           >
             {wantPressed ? <Check aria-hidden="true" className="size-4" /> : null}
@@ -500,11 +514,6 @@ export const CardCollectionBar = observer(function CardCollectionBar({
           {fieldError.text}
         </p>
       ) : null}
-      {sessionInvalid && authenticated ? (
-        <div className="mt-3">
-          <ErrorBox title={unauthorized} />
-        </div>
-      ) : null}
       {saveError ? (
         <div key={saveError.id} className="mt-3">
           <ErrorBox title={saveError.text} />
@@ -527,12 +536,3 @@ export const CardCollectionBar = observer(function CardCollectionBar({
     </section>
   );
 });
-
-function ToggleSkeleton() {
-  return (
-    <span
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-10 animate-pulse rounded bg-neutral-200 motion-reduce:animate-none"
-    />
-  );
-}
