@@ -7,7 +7,17 @@ import { passwordPrehashWriteEnabled } from '../../config/env.validation';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
-import { hashPassword, legacyPasswordExceedsBcryptLimit, verifyPassword } from './password-hash';
+import {
+  compareDummyPassword,
+  hashPassword,
+  legacyPasswordExceedsBcryptLimit,
+  verifyPassword,
+} from './password-hash';
+import {
+  CLEAR_LOGIN_ACCOUNT_LIMIT,
+  type ClearLoginAccountLimit,
+} from '../../bootstrap/rate-limiters';
+import type { TrpcContext } from '../../trpc/context';
 
 function sessionRejected(): TRPCError {
   return new TRPCError({
@@ -26,6 +36,18 @@ export class AuthRouter {
     private readonly prisma: PrismaService,
     private readonly auth: AuthService,
   ) {}
+
+  /** Drop the account bucket after a correct password. A failed reset must not turn the login into a 500. */
+  private async clearLoginAccountLimit(req: TrpcContext['req'], identifier: string): Promise<void> {
+    const clear = req.app?.get(CLEAR_LOGIN_ACCOUNT_LIMIT) as ClearLoginAccountLimit | undefined;
+    if (typeof clear !== 'function') return;
+    try {
+      await clear(identifier);
+    } catch (error) {
+      const reported = error instanceof Error ? error : new Error(String(error));
+      this.logger.warn(`login account limit reset failed: ${reported.message}`);
+    }
+  }
 
   build() {
     const t = this.t;
@@ -65,7 +87,7 @@ export class AuthRouter {
         };
       }),
 
-      login: t.procedure.input(loginInput).mutation(async ({ input }) => {
+      login: t.procedure.input(loginInput).mutation(async ({ ctx, input }) => {
         const isEmail = input.identifier.includes('@');
         const user = await prisma.user.findFirst({
           where: isEmail
@@ -83,6 +105,7 @@ export class AuthRouter {
           },
         });
         if (!user) {
+          await compareDummyPassword(input.password);
           throw new TRPCError({
             code: 'UNAUTHORIZED',
             message: '用户名或密码错误',
@@ -118,6 +141,7 @@ export class AuthRouter {
         }
 
         const token = auth.sign({ sub: user.id, username: user.username, ver: user.tokenVersion });
+        await this.clearLoginAccountLimit(ctx.req, input.identifier);
         return {
           token,
           user: {

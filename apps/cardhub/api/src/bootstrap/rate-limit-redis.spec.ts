@@ -2,7 +2,11 @@ import type { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { createApp } from './create-app';
-import { RATE_LIMIT_KEY_PREFIX, rateLimitStorePrefix } from './rate-limiters';
+import {
+  RATE_LIMIT_KEY_PREFIX,
+  rateLimitRedisErrorCount,
+  rateLimitStorePrefix,
+} from './rate-limiters';
 import { CatalogCache } from '../modules/redis/catalog-cache';
 import { RedisService } from '../modules/redis/redis.service';
 
@@ -57,7 +61,7 @@ describe('Redis rate limit store', () => {
     }
   });
 
-  it('lets rate-limited routes through when Redis is down', async () => {
+  it('falls back to an in-process limit when Redis is down', async () => {
     const previousHost = process.env.REDIS_HOST;
     const previousPort = process.env.REDIS_PORT;
     process.env.REDIS_HOST = '127.0.0.1';
@@ -70,13 +74,20 @@ describe('Redis rate limit store', () => {
       });
       await app.init();
       expect(app.get(RedisService).client.options.port).toBe(6390);
-      for (let i = 0; i < 3; i += 1) {
-        const response = await request(app.getHttpServer())
-          .get('/trpc/auth.login')
-          .set('X-Forwarded-For', '203.0.113.41');
-        expect(response.status).toBeLessThan(500);
-        expect(response.status).not.toBe(429);
-      }
+      const before = rateLimitRedisErrorCount();
+      const first = await request(app.getHttpServer())
+        .get('/trpc/auth.login')
+        .set('X-Forwarded-For', '203.0.113.41');
+      expect(first.status).toBeLessThan(500);
+      expect(first.status).not.toBe(429);
+      const second = await request(app.getHttpServer())
+        .get('/trpc/auth.login')
+        .set('X-Forwarded-For', '203.0.113.41');
+      expect(second.status).toBe(429);
+      const read = await request(app.getHttpServer()).get('/trpc/health.ping');
+      expect(read.status).not.toBe(429);
+      expect(read.status).toBeLessThan(500);
+      expect(rateLimitRedisErrorCount()).toBeGreaterThan(before);
     } finally {
       await close(app);
       if (previousHost === undefined) delete process.env.REDIS_HOST;

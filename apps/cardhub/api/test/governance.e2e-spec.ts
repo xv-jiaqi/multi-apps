@@ -56,6 +56,9 @@ describe('user governance', () => {
   beforeAll(async () => {
     app = await createApp();
     await app.init();
+    // Keep the server open. A parallel supertest call that had to listen
+    // closes it when that response ends.
+    await app.listen(0);
     prisma = app.get(PrismaService);
 
     const admin = nextIdentity('govadm');

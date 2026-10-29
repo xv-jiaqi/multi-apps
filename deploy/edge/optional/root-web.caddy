@@ -1,4 +1,5 @@
 {$ROOT_WEB_DOMAINS:http://root-web-disabled.invalid} {
+	import cardhub_access_log
 	import cardhub_web_headers
 	import cardhub_sitemap {$ENV_NAME}-api:4000
 	handle {
@@ -7,6 +8,7 @@
 }
 
 {$ROOT_WEB_REDIRECT_DOMAINS:http://root-web-redirect-disabled.invalid} {
+	import cardhub_access_log
 	import cardhub_web_headers
 	redir https://{$ROOT_WEB_REDIRECT_TARGET:card-hub.app}{uri} 308
 }

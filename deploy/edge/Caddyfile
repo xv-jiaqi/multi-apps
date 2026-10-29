@@ -1,3 +1,51 @@
+# Access log for every site, on the caddy_data volume (/data). That volume
+# is already mounted, so a reload starts the file without recreating the
+# container. A new bind mount would not attach: apply-edge-config.sh does
+# not recreate Caddy when the running container already sees the Caddyfile
+# directory. 50 MiB x (1 active + 9 rolled) is about 500 MiB. 336h is 14
+# days. Rolled files are gzipped. The default logger keeps admin and
+# process lines on stderr and does not also copy access lines there.
+# Credential headers are deleted. Request bodies are not logged.
+# Query keys match apps/cardhub/api http-logger.ts REDACTED_QUERY_KEYS.
+# `input` is removed (tRPC GET payload, which can carry a token or email).
+# The other keys stay so the name is visible, with the value REDACTED.
+# The path is kept, including /trpc/auth.login,auth.login. Referer is
+# deleted so a copied query cannot put the same values back in the line.
+{
+	log default {
+		exclude http.log.access
+	}
+	log cardhub_access {
+		include http.log.access
+		output file /data/logs/access.log {
+			mode 644
+			roll_size 50MiB
+			roll_keep 9
+			roll_keep_for 336h
+		}
+		format filter {
+			wrap json
+			request>headers>Authorization delete
+			request>headers>Proxy-Authorization delete
+			request>headers>Cookie delete
+			request>headers>Set-Cookie delete
+			request>headers>X-Api-Key delete
+			request>headers>Referer delete
+			resp_headers>Set-Cookie delete
+			request>uri query {
+				delete input
+				replace token REDACTED
+				replace code REDACTED
+				replace access_token REDACTED
+				replace refresh_token REDACTED
+				replace id_token REDACTED
+				replace reset_token REDACTED
+			}
+		}
+		level INFO
+	}
+}
+
 # GET/HEAD may be retried for a few seconds. Dial errors bypass lb_retry_match
 # and are retried for every method while lb_try_duration is non-zero, so any
 # other method (including tRPC POST mutations) is a separate proxy with
@@ -57,14 +105,22 @@
 	}
 }
 
+# Names the site logger http.log.access so the global cardhub_access
+# logger above is the only writer. One file for every site.
+(cardhub_access_log) {
+	log
+}
+
 import optional/root-web.caddy
 
 {$API_DOMAIN} {
+	import cardhub_access_log
 	import cardhub_api_headers
 	import cardhub_upstream {$ENV_NAME}-api:4000
 }
 
 {$STAGING_WEB_DOMAIN} {
+	import cardhub_access_log
 	import cardhub_web_headers
 	import cardhub_sitemap staging-api:4000
 	handle {
@@ -73,6 +129,7 @@ import optional/root-web.caddy
 }
 
 {$STAGING_API_DOMAIN} {
+	import cardhub_access_log
 	import cardhub_api_headers
 	import cardhub_upstream staging-api:4000
 }

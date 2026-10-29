@@ -24,7 +24,15 @@ import { DEFAULT_CORS_ORIGIN } from '../modules/seo/public-web-origin';
 import { serverTiming } from '../common/server-timing';
 import { configureApp } from './configure-app';
 import { jsonBodyParser } from './json-body';
-import { createRateLimiters, type RateLimitOverrides } from './rate-limiters';
+import {
+  CLEAR_LOGIN_ACCOUNT_LIMIT,
+  createAuthAccountLimiter,
+  createRateLimiters,
+  defaultRateLimitPrefix,
+  rejectInvalidTrpcCall,
+  TRPC_MAX_BATCH_SIZE,
+  type RateLimitOverrides,
+} from './rate-limiters';
 
 export type CreateAppOptions = {
   rateLimitOverrides?: RateLimitOverrides;
@@ -134,15 +142,30 @@ export async function createApp(options: CreateAppOptions = {}) {
   // SENTRY_DSN is unset so local dev is unaffected.
   app.useGlobalFilters(new SentryExceptionFilter());
 
+  // Before the limiters, so a rejected batch does not consume a bucket and
+  // does not run a procedure. The path is in the URL; the body is not read.
+  app.use('/trpc', rejectInvalidTrpcCall());
+
+  // One prefix so the IP buckets and the account bucket share a test namespace.
+  const rateLimitPrefix = options.rateLimitPrefix ?? defaultRateLimitPrefix();
   for (const { path, middleware } of createRateLimiters(
     redis,
     options.rateLimitOverrides,
-    options.rateLimitPrefix,
+    rateLimitPrefix,
   )) {
     app.use(path, middleware);
   }
 
   app.use(jsonBodyParser());
+  // After the JSON parser so req.body is available. IP limiters stay in front
+  // of the parser; they only need req.ip.
+  const accountLimiter = createAuthAccountLimiter(
+    redis,
+    options.rateLimitOverrides,
+    rateLimitPrefix,
+  );
+  app.getHttpAdapter().getInstance().set(CLEAR_LOGIN_ACCOUNT_LIMIT, accountLimiter.clear);
+  app.use('/trpc', accountLimiter.middleware);
   const catalogCacheHeader: RequestHandler = (_req, res, next) => {
     if (!catalogCacheHeaderEnabled()) {
       next();
@@ -164,6 +187,7 @@ export async function createApp(options: CreateAppOptions = {}) {
     '/trpc',
     trpcExpress.createExpressMiddleware({
       router: trpcService.appRouter,
+      maxBatchSize: TRPC_MAX_BATCH_SIZE,
       createContext: makeCreateContext(authService, prisma, redis.client),
       onError: ({ error, path, type, req }) => {
         const requestId = requestIdFrom(req);

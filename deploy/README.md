@@ -295,10 +295,11 @@ rolls API and web one service at a time:
    It then probes that container directly: web must serve `/healthz`, and API
    `/health` must report `gitSha` equal to the deployed SHA. The probe does
    not go through Caddy, because Caddy can still reach the old replica.
-3. It stops the old container by ID (`docker stop` with a 30s grace) and
-   removes it, then returns the service to one replica with
-   `--scale <service>=1 --no-recreate` so Compose does not recreate the
-   survivor.
+3. It stops the old container by ID (`docker stop` with a 30s grace),
+   copies that container's logs to disk, removes it, then returns the
+   service to one replica with `--scale <service>=1 --no-recreate` so
+   Compose does not recreate the survivor. The copy is described under
+   "Saved container logs". A failed copy does not fail the deploy.
 4. After both services are on the new tag, it still checks
    `https://<API_DOMAIN>/health` through Caddy until `gitSha` matches.
 
@@ -711,11 +712,119 @@ docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env
 curl -H 'X-Request-Id: staging-check-1' https://api.cardhub.example.com/health
 ```
 
+`docker compose logs` only shows the container that is still there. Removing
+the old api or web container deletes its json-file logs. The sections below
+are what remains after a release, and what the edge records for every site.
+
+### Saved container logs
+
+`remote-deploy.sh` copies api and web logs after `docker stop` and before
+`docker rm`. `docker logs` is gzipped to:
+
+```text
+/opt/cardhub/logs/<project>/<service>-<12 hex>-<UTC stamp>.log.gz
+```
+
+`<project>` is `cardhub-prod` or `cardhub-staging`. `<service>` is `api` or
+`web`. The 12 hex digits are the first 12 of the image git sha when the
+image tag is `sha-<40 hex>`, otherwise the container id. The stamp is UTC
+`YYYYMMDDTHHMMSSZ`. A second file in the same second is
+`<service>-<12 hex>-<container id>-<stamp>.log.gz`. The script creates
+`/opt/cardhub/logs/cardhub-prod` and `/opt/cardhub/logs/cardhub-staging`.
+Staging and production both go through this script.
+
+If `docker logs`, gzip, or the directory create fails, the script prints a
+warning and continues. That failure does not fail the deploy and does not
+roll it back.
+
+Each deploy then cleans those two directories and no others. The script
+builds the path only as `${CARDHUB_ROOT}/logs/cardhub-prod` and
+`${CARDHUB_ROOT}/logs/cardhub-staging` (`CARDHUB_ROOT` defaults to
+`/opt/cardhub`). An empty root, a relative root, a `..` component, or a
+symlink in that path is skipped. Deletion uses
+`find "$dir" -maxdepth 1 -type f -name '*.log.gz'` with symlinks not
+followed. Incomplete `.partial` files
+and temp files from a crashed copy are removed. Archives older than 14 days
+are removed next. If what remains is still over 1 GiB (1073741824 bytes)
+for both projects together, the oldest archives are removed until the total
+is at or under 1 GiB. The byte cap wins over the 14 days. Files whose names
+do not match the archive pattern are left in place. The cleanup only looks
+at those two project directories.
+
+The saved lines are the container's own stdout and stderr, without a
+`docker logs --timestamps` prefix. API lines stay one JSON object per line.
+Web lines are nginx's combined log, which already includes a time.
+
+```bash
+zgrep -F 'auth.login,auth.login' /opt/cardhub/logs/cardhub-prod/api-*.log.gz
+zgrep -F 'auth.login,auth.login' /opt/cardhub/logs/cardhub-staging/api-*.log.gz
+```
+
+### Edge access log
+
+Caddy writes one JSON access log for all five site blocks: `card-hub.app`,
+`www.card-hub.app`, `api.card-hub.app`, `staging.card-hub.app`, and
+`api-staging.card-hub.app`. The file is `/data/logs/access.log` on the
+existing `caddy_data` volume (compose project `cardhub-edge`). The Caddyfile
+directory is still mounted as a directory. No new bind mount is added, so a
+reload starts the log. `apply-edge-config.sh` does not recreate Caddy when
+the running container already sees that directory, which is why the log is
+not a new host path that would need a recreate to attach.
+
+The file rolls at 50 MiB (`roll_size`), keeps 9 rolled files (`roll_keep`),
+and drops rolled files after 14 days (`roll_keep_for 336h`). Rolled files
+are gzipped (`access-<timestamp>-size.log.gz` or `...-time.log.gz`). The
+active file plus nine rolled files is at most about 500 MiB before gzip.
+The log filter deletes request `Authorization`, `Proxy-Authorization`,
+`Cookie`, `Set-Cookie`, `X-Api-Key`, and `Referer`, and response
+`Set-Cookie`. `Referer` is removed so a copied query cannot keep a token.
+On `request>uri`, `input` is deleted and `token`, `code`, `access_token`,
+`refresh_token`, `id_token`, and `reset_token` are replaced with
+`REDACTED`. That is the query-key list in
+`apps/cardhub/api/src/bootstrap/http-logger.ts`. The path stays, so
+`/trpc/auth.login,auth.login` is still visible. Other query keys, such as
+`batch`, stay. Caddy does not log request bodies.
+
+`apply-edge-config.sh` creates `/data/logs` in the running container and
+chmods it to 755. If that fails, the apply still reloads; Caddy creates the
+directory itself (mode 0700).
+
+```bash
+cid="$(docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env -f /opt/cardhub/edge/deploy/edge/docker-compose.yml ps -q caddy)"
+docker exec "${cid}" grep -F 'auth.login,auth.login' /data/logs/access.log
+docker exec "${cid}" sh -c 'gzip -dc /data/logs/access-*.log.gz' | grep -F 'auth.login,auth.login'
+```
+
+Root on the host can read the same files in the volume:
+
+```bash
+sudo grep -F 'auth.login,auth.login' /var/lib/docker/volumes/cardhub-edge_caddy_data/_data/logs/access.log
+sudo zgrep -F 'auth.login,auth.login' /var/lib/docker/volumes/cardhub-edge_caddy_data/_data/logs/access-*.log.gz
+```
+
+### How much disk
+
+The new logs are capped at 1 GiB (api/web archives, both environments
+together) plus about 500 MiB (edge access log). Worst case is 1.5 GiB.
+That total does not grow with traffic. It is the whole extra disk this
+change can use, so it does not climb toward the host's 80% disk alert on
+its own. It only matters if the disk is already within 1.5 GiB of that
+line.
+
+Nothing in this logging has to be created by hand on the server. The
+deploy script creates the archive directories. The edge apply creates
+`/data/logs` inside the container.
+
 Each service in `deploy/docker-compose.yml`, `deploy/edge/docker-compose.yml`,
 and `docker/docker-compose.yml` uses the `json-file` driver with `max-size`
-`10m` and `max-file` `5` (50MB per container). Compose applies the driver when
-the container is created. After this file is deployed, recreate the container
-and confirm:
+`10m` and `max-file` `5` (50MB per container). The edge service is already
+at that same 10m×5; this logging change does not raise it further. Compose
+applies the driver when the container is created. A container created
+before that block was added keeps the daemon default until it is recreated.
+That recreate is only for the json-file driver. The access log does not
+need it, and recreating the edge container does not delete `/data/logs`,
+because that directory is on the `caddy_data` volume. After a recreate,
+confirm the driver:
 
 ```bash
 docker inspect <container> --format '{{json .HostConfig.LogConfig}}'
@@ -723,7 +832,3 @@ docker inspect <container> --format '{{json .HostConfig.LogConfig}}'
 
 Staging verification of that driver is for 守夜人. A merged commit does not
 recreate containers that are already running.
-
-```
-
-```

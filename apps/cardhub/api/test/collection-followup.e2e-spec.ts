@@ -82,6 +82,11 @@ describe('collection follow-up (CH-203)', () => {
   beforeAll(async () => {
     app = await createApp();
     await app.init();
+    // supertest starts the server itself when nothing is listening, then
+    // closes it when that request finishes. The first of several parallel
+    // requests would drop the others with ECONNRESET. Listen once here so
+    // none of them owns the server.
+    await app.listen(0);
     prisma = app.get(PrismaService);
   });
 

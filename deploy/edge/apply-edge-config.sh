@@ -48,6 +48,25 @@ Until that finishes, do not restart the current Caddy container. A restart reads
 EOF
 }
 
+# /data is the caddy_data volume, so this directory survives recreate.
+# Caddy would create it as mode 0700. Make it first, mode 755, so root on
+# the host can read the files after entering the volume. A failure must
+# not abort the edge apply; Caddy creates the directory on its own.
+ensure_edge_access_log_dir() {
+  local id="$1"
+  if [ -z "${id}" ]; then
+    return 0
+  fi
+  if ! docker exec "${id}" mkdir -p /data/logs; then
+    echo "Warning: could not create /data/logs in edge container ${id}; access logs may be missing" >&2
+    return 0
+  fi
+  if ! docker exec "${id}" chmod 755 /data/logs; then
+    echo "Warning: could not chmod /data/logs in edge container ${id}" >&2
+  fi
+  return 0
+}
+
 require_files() {
   if [ ! -f "$env_file" ]; then
     echo "missing edge env file: $env_file" >&2
@@ -181,6 +200,7 @@ recreate_running() {
     echo "The on-disk config validated. Retry: docker compose -p ${project} --env-file ${env_file} -f ${edge_dir}/docker-compose.yml up -d caddy" >&2
     exit 1
   fi
+  ensure_edge_access_log_dir "${id}"
   if ! sees_synced_files "$id"; then
     echo "Recreated Caddy still cannot see the synced files." >&2
     print_inodes "$id" >&2
@@ -207,6 +227,9 @@ main() {
   local id
   require_files
   id="$(compose ps -q caddy)"
+  if [ -n "${id}" ]; then
+    ensure_edge_access_log_dir "${id}"
+  fi
   if [ -z "$id" ]; then
     if [ "$recreate" -eq 1 ]; then
       echo "No edge Caddy container is running. Validating, then starting one."
@@ -214,6 +237,7 @@ main() {
       compose up -d --no-deps caddy
       id="$(compose ps -q caddy)"
       wait_ready "$id"
+      ensure_edge_access_log_dir "${id}"
       print_inodes "$id"
       echo "Started edge Caddy. Container ${id} is serving the synced files."
       exit 0
