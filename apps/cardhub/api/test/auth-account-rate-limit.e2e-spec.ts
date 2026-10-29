@@ -510,4 +510,72 @@ describe('auth account rate limit', () => {
       await close(app);
     }
   });
+
+  async function countDecoyLogins(batch: boolean) {
+    const app = await createApp();
+    await app.init();
+    await app.listen(0);
+    const victim = `victim.${randomUUID().slice(0, 8)}@cardhub.test`;
+    const password = 'not-the-password';
+    const send = (attempt: number, ip: string) => {
+      const slot = {
+        identifier: attempt % 2 === 0 ? `  ${victim.toUpperCase()}  ` : victim,
+        password,
+        json: { identifier: `decoy.${attempt}@cardhub.test`, password },
+      };
+      const req = request(app.getHttpServer())
+        .post(batch ? '/trpc/auth.login?batch=1' : '/trpc/auth.login')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', ip);
+      return batch ? req.send({ 0: slot }) : req.send(slot);
+    };
+    try {
+      let previous = LOGIN_LIMIT;
+      for (let attempt = 0; attempt < LOGIN_LIMIT; attempt += 1) {
+        const response = await send(attempt, clientIp(attempt + 1));
+        expect(response.status).not.toBe(429);
+        const left = remaining(response);
+        expect(left).toBe(previous - 1);
+        previous = left;
+      }
+      const blocked = await send(LOGIN_LIMIT, clientIp(30));
+      expect(blocked.status).toBe(429);
+      expect(blocked.body).toEqual(batch ? [LOGIN_BLOCKED] : LOGIN_BLOCKED);
+      expect(JSON.stringify(blocked.body).toLowerCase()).not.toContain('decoy');
+      expect(JSON.stringify(blocked.body).toLowerCase()).not.toContain(victim.split('@')[0]);
+    } finally {
+      await close(app);
+    }
+  }
+
+  it('counts the zod identifier when a json field names a different account', async () => {
+    await countDecoyLogins(false);
+  });
+
+  it('counts the zod identifier inside a one-slot batch when json names another account', async () => {
+    await countDecoyLogins(true);
+  });
+
+  it('does not treat /trpc/auth.login/ as auth.login', async () => {
+    const app = await createApp();
+    await app.init();
+    await app.listen(0);
+    const email = `slash.${randomUUID().slice(0, 8)}@cardhub.test`;
+    try {
+      for (let attempt = 0; attempt < LOGIN_LIMIT; attempt += 1) {
+        const response = await request(app.getHttpServer())
+          .post('/trpc/auth.login/')
+          .set('Content-Type', 'application/json')
+          .set('X-Forwarded-For', clientIp(attempt + 1))
+          .send({ identifier: email, password: 'not-the-password' });
+        expect(response.status).not.toBe(401);
+        expect(response.status).not.toBe(429);
+      }
+      const real = await postLogin(app, email, clientIp(40));
+      expect(real.status).not.toBe(429);
+      expect(remaining(real)).toBe(LOGIN_LIMIT - 1);
+    } finally {
+      await close(app);
+    }
+  });
 });

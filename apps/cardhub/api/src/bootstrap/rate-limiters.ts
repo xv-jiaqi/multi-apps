@@ -3,7 +3,7 @@ import { createHmac, randomUUID } from 'node:crypto';
 import type { Request, RequestHandler, Response } from 'express';
 import rateLimit, { ipKeyGenerator, MemoryStore, type Store } from 'express-rate-limit';
 import { RedisStore, type RedisReply } from 'rate-limit-redis';
-import { APP_ERROR_CODES, t } from '@repo/shared';
+import { APP_ERROR_CODES, loginInput, t } from '@repo/shared';
 
 type TrpcCallRequest = {
   path?: string;
@@ -411,24 +411,25 @@ export function authAccountKey(account: string): string {
   return createHmac('sha256', authAccountHmacKey()).update(normalized).digest('hex');
 }
 
-function procedureInput(
-  body: unknown,
-  index: number,
-  batched: boolean,
-): Record<string, unknown> | undefined {
+/**
+ * Raw input for one procedure, matching this server's tRPC setup.
+ * `initTRPC` has no transformer, so deserialize is the identity: a non-batch
+ * body is the input, and a batch body contributes `body[index]` only.
+ * A `json` property is an ordinary field. Zod strips it; it is not an envelope.
+ */
+export function trpcProcedureInput(body: unknown, index: number, batched: boolean): unknown {
+  if (!batched) return body;
   const record = asRecord(body);
-  if (!record) return undefined;
-  if (!batched) return asRecord(record.json) ?? record;
-  const slot = asRecord(record[String(index)]);
-  if (!slot) return undefined;
-  return asRecord(slot.json) ?? slot;
+  if (!record || !Object.prototype.hasOwnProperty.call(record, String(index))) return undefined;
+  return record[String(index)];
 }
 
 /**
- * Normalized login identifier. Missing means this request is not a login
- * attempt with an account, and the account limiter skips it.
- * Accepts the raw JSON body used by curl and the tRPC batch body
- * `{"0":{"identifier":"..."}}` used by the web client.
+ * Account the login mutation will actually check.
+ * Uses the same `loginInput` schema as `auth.login`. A failed parse is the
+ * same rejection tRPC returns before the handler, so there is no password
+ * check to count. A successful parse uses the trimmed identifier zod keeps,
+ * not a sibling `json` object.
  */
 export function readAuthAccount(
   req: TrpcCallRequest & {
@@ -439,9 +440,9 @@ export function readAuthAccount(
   if (!parsed.ok) return undefined;
   const index = parsed.procedures.indexOf('auth.login');
   if (index < 0) return undefined;
-  const raw = procedureInput(req.body, index, parsed.batch)?.identifier;
-  if (typeof raw !== 'string') return undefined;
-  const normalized = normalizeAuthAccount(raw);
+  const login = loginInput.safeParse(trpcProcedureInput(req.body, index, parsed.batch));
+  if (!login.success) return undefined;
+  const normalized = normalizeAuthAccount(login.data.identifier);
   return normalized.length > 0 ? normalized : undefined;
 }
 

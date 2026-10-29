@@ -62,37 +62,76 @@ describe('auth account key', () => {
   });
 
   it('reads a login identifier from a raw body and a tRPC batch body', () => {
-    expect(readAuthAccount({ url: '/trpc/auth.login', body: { identifier: '  A@B.C ' } })).toBe(
-      'a@b.c',
-    );
+    const password = 'long-enough';
+    expect(
+      readAuthAccount({
+        url: '/trpc/auth.login',
+        body: { identifier: '  A@B.C ', password },
+      }),
+    ).toBe('a@b.c');
     expect(
       readAuthAccount({
         url: '/trpc/auth.login?batch=1',
-        body: { 0: { identifier: '  A@B.C ' } },
+        body: { 0: { identifier: '  A@B.C ', password } },
       }),
     ).toBe('a@b.c');
     expect(
       readAuthAccount({
         url: '/trpc/health.ping,auth.login?batch=1',
-        body: { 0: {}, 1: { json: { identifier: 'User' } } },
+        body: {
+          0: {},
+          1: {
+            identifier: 'User',
+            password,
+            json: { identifier: 'decoy@x.test', password },
+          },
+        },
       }),
     ).toBe('user');
+    expect(
+      readAuthAccount({
+        url: '/trpc/auth.login',
+        body: {
+          identifier: 'Victim@X.test',
+          password,
+          json: { identifier: `random-${password}`, password },
+        },
+      }),
+    ).toBe('victim@x.test');
+    expect(
+      readAuthAccount({
+        url: '/trpc/auth.login',
+        body: { json: { identifier: 'only-inside-json', password } },
+      }),
+    ).toBeUndefined();
+    expect(
+      readAuthAccount({ url: '/trpc/auth.login', body: { identifier: '  A@B.C ' } }),
+    ).toBeUndefined();
     expect(
       readAuthAccount({ url: '/trpc/auth.register', body: { email: 'a@b.c' } }),
     ).toBeUndefined();
     expect(readAuthAccount({ url: '/trpc/auth.changePassword', body: {} })).toBeUndefined();
     expect(readAuthAccount({ url: '/trpc/auth.login' })).toBeUndefined();
-    expect(readAuthAccount({ path: '/auth%2Elogin', body: { identifier: 'Encoded@X.test' } })).toBe(
-      'encoded@x.test',
-    );
-    expect(readAuthAccount({ path: '/auth%2elogin', body: { identifier: 'Encoded@X.test' } })).toBe(
-      'encoded@x.test',
-    );
+    expect(
+      readAuthAccount({
+        path: '/auth%2Elogin',
+        body: { identifier: 'Encoded@X.test', password },
+      }),
+    ).toBe('encoded@x.test');
+    expect(
+      readAuthAccount({
+        path: '/auth%2elogin',
+        body: { identifier: 'Encoded@X.test', password },
+      }),
+    ).toBe('encoded@x.test');
     expect(
       readAuthAccount({
         path: '/auth.login%2Cauth.login',
         query: { batch: '1' },
-        body: { 0: { identifier: 'First@X.test' }, 1: { identifier: 'Second@X.test' } },
+        body: {
+          0: { identifier: 'First@X.test', password },
+          1: { identifier: 'Second@X.test', password },
+        },
       }),
     ).toBe('first@x.test');
     expect(
