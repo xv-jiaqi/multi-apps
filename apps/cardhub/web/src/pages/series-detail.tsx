@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type Ref } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
+import { Card, CardContent, CardHeader } from '@repo/ui-web';
 import { isAppErrorCode, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -244,13 +244,13 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
 
         <Card className="border-white/60 bg-white/70 backdrop-blur">
           <CardHeader>
-            <CardTitle
+            <h2
               id="comment-section-title"
               tabIndex={-1}
-              className="scroll-mt-20 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="scroll-mt-20 text-base font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               {tt('series.detail.commentsTitle')}
-            </CardTitle>
+            </h2>
           </CardHeader>
           <CardContent>
             <CommentSection target={{ kind: 'series', slug: series.slug }} />

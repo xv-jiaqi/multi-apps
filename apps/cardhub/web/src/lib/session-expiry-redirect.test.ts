@@ -87,6 +87,24 @@ describe('applySessionExpiry', () => {
     });
   });
 
+  it('returns a notifications page to login when the session is rejected', () => {
+    rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
+    const navigate = vi.fn();
+
+    applySessionExpiry({
+      pathname: '/notifications',
+      search: '',
+      hash: '',
+      navigate,
+      error: unauthorized('auth.me'),
+    });
+
+    expect(navigate).toHaveBeenCalledWith('/login', {
+      replace: true,
+      state: { from: '/notifications', notice: 'sessionExpired' },
+    });
+  });
+
   it('sends a login or register return path home', () => {
     rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
     const navigate = vi.fn();

@@ -240,6 +240,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
               bodyLabel={tt('forum.new.bodyLabel')}
               bodyPlaceholder={tt('forum.new.bodyPlaceholder')}
               markdownHint={tt('forum.new.markdownHint')}
+              mentionHint={tt('comments.mentionHint')}
               showPreviewLabel={tt('forum.new.showPreview')}
               hidePreviewLabel={tt('forum.new.hidePreview')}
               previewEmptyLabel={tt('forum.new.previewEmpty')}
