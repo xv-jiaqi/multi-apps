@@ -49,12 +49,12 @@ describe('MarkdownView', () => {
         ].join('\n')}
       />,
     );
-    const mentions = [...container.querySelectorAll('span.text-brand-700')].map(
+    const mentions = [...container.querySelectorAll('[class~="text-brand-700"]')].map(
       (node) => node.textContent,
     );
     expect(mentions).toEqual(['@Ada']);
     expect(container.querySelector('code')?.textContent).toContain('@Ada');
     expect(container.querySelector('a')?.textContent).toBe('@Ada');
-    expect(container.querySelector('a span.text-brand-700')).toBeNull();
+    expect(container.querySelector('a [class~="text-brand-700"]')).toBeNull();
   });
 });
