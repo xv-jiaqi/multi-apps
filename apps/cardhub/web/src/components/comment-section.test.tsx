@@ -139,6 +139,14 @@ function renderShell() {
   );
 }
 
+function statusByText(text: string) {
+  const status = screen
+    .getAllByRole('status')
+    .find((node) => (node.textContent ?? '').includes(text));
+  if (!status) throw new Error(`没有状态提示：${text}`);
+  return status;
+}
+
 function renderSeriesShell() {
   return render(
     <MemoryRouter>
@@ -307,6 +315,52 @@ describe('CommentSection (unauthenticated)', () => {
     renderShell();
     expect(screen.getByText('great card')).toBeInTheDocument();
     expect(screen.getByText('@alice')).toBeInTheDocument();
+  });
+
+  it('shows a persistent hint for a reply hash and does not probe other threads', async () => {
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'great card',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+        replyCount: 4,
+        repliesNextCursor: 'reply-cursor',
+        replies: [],
+      },
+    ];
+    render(
+      <MemoryRouter
+        initialEntries={['/cards/aurora-knight#reply-2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5']}
+      >
+        <h2 id="comment-section-title" tabIndex={-1}>
+          评论区
+        </h2>
+        <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+      </MemoryRouter>,
+    );
+
+    const hint = await screen.findByText('没能直接跳到这条回复，它在下面的评论里。');
+    expect(hint.closest('[role="status"]')).not.toBeNull();
+    expect(document.getElementById('comment-section-title')).toHaveFocus();
+    expect(listRepliesFetch).not.toHaveBeenCalled();
+  });
+
+  it('styles an @name in the middle and leaves an email alone', () => {
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'hello @Ada_1 and a@b.com',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    renderShell();
+    const mention = screen.getByText('@Ada_1');
+    expect(mention).toHaveClass('font-medium', 'text-brand-700');
+    expect(mention.tagName).toBe('SPAN');
+    expect(mention.closest('a')).toBeNull();
+    expect(mention.parentElement?.textContent).toBe('hello @Ada_1 and a@b.com');
   });
 });
 
@@ -543,8 +597,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
     await user.click(screen.getByRole('button', { name: '删除' }));
 
-    const status = await screen.findByRole('status');
-    expect(status).toHaveTextContent('评论已删除');
+    const status = await screen.findByText('评论已删除');
     expect(status).toHaveClass('bg-emerald-50');
     expect(status).toHaveFocus();
   });
@@ -590,8 +643,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
     await user.click(screen.getByRole('button', { name: '删除' }));
 
-    expect(screen.getByRole('status')).toHaveTextContent('评论已删除');
-    expect(screen.getByRole('status')).toHaveClass('bg-emerald-50');
+    expect(statusByText('评论已删除')).toHaveClass('bg-emerald-50');
   });
 
   it.each([
@@ -625,8 +677,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
     await user.click(screen.getByRole('button', { name: '删除' }));
 
-    const status = await screen.findByRole('status');
-    expect(status).toHaveTextContent('评论已删除');
+    const status = await screen.findByText('评论已删除');
     expect(status).toHaveClass('bg-emerald-50');
     expect(status).toHaveFocus();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -895,8 +946,7 @@ describe('CommentSection replies', () => {
     expect(posted).toHaveTextContent('looks good');
     expect(posted).toHaveFocus();
     expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).not.toHaveFocus();
-    const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('回复已发布');
+    const status = statusByText('回复已发布');
     expect(status).toHaveClass('sr-only');
     expect(screen.getByText('2 条回复')).toBeInTheDocument();
   });
@@ -1178,8 +1228,7 @@ describe('CommentSection replies', () => {
     await user.click(screen.getByRole('button', { name: '删除 @cara 的评论' }));
     expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '删除' }));
-    const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('回复已删除');
+    const status = statusByText('回复已删除');
     expect(status).toHaveClass('bg-emerald-50');
     expect(status).toHaveFocus();
     expect(screen.queryByText('older reply')).not.toBeInTheDocument();

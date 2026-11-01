@@ -1,7 +1,8 @@
 import { memo, type ComponentProps } from 'react';
 import ReactMarkdown, { type ExtraProps } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
+import { rehypeMentions } from '../lib/rehype-mentions';
 
 interface MarkdownViewProps {
   body: string;
@@ -43,7 +44,7 @@ export const MarkdownView = memo(function MarkdownView({ body, className }: Mark
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
+        rehypePlugins={[rehypeSanitize, rehypeMentions]}
         components={{ pre: MarkdownPre, table: MarkdownTable }}
       >
         {body}

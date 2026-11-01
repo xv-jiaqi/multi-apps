@@ -24,6 +24,7 @@ import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { BannedNotice } from '../components/banned-notice';
+import { parseHashTarget, revealElement } from '../lib/hash-target';
 import { trpc } from '../lib/trpc';
 
 interface TopicReply {
@@ -74,6 +75,10 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [autoLoadFailedReplyId, setAutoLoadFailedReplyId] = useState<string | null>(null);
   const [isRetryingReplies, setIsRetryingReplies] = useState(false);
   const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);
+  const [anchoredReplies, setAnchoredReplies] = useState<TopicReply[]>([]);
+  const [hashMissing, setHashMissing] = useState(false);
+  const [hashRevealId, setHashRevealId] = useState<string | null>(null);
+  const hashAttempt = useRef<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<ConfirmingDelete | null>(null);
   const [restoreDeleteFocus, setRestoreDeleteFocus] = useState<DeleteFocusTarget | null>(null);
   const [deleteError, setDeleteError] = useState<DeleteError | null>(null);
@@ -112,8 +117,12 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   );
   const visibleReplies = useMemo(() => {
     const inlineReplies = (topicQuery.data?.replies ?? []) as TopicReply[];
-    return mergeReplies([...inlineReplies, ...(showLoadedReplyPages ? hiddenLoadedReplies : [])]);
-  }, [hiddenLoadedReplies, showLoadedReplyPages, topicQuery.data?.replies]);
+    return mergeReplies([
+      ...inlineReplies,
+      ...(showLoadedReplyPages ? hiddenLoadedReplies : []),
+      ...anchoredReplies,
+    ]);
+  }, [anchoredReplies, hiddenLoadedReplies, showLoadedReplyPages, topicQuery.data?.replies]);
 
   function clearDeleteState() {
     setDeleteError(null);
@@ -387,6 +396,61 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const timer = window.setTimeout(() => setHighlightedReplyId(null), 1000);
     return () => window.clearTimeout(timer);
   }, [highlightedReplyId]);
+
+  const visibleRepliesRef = useRef(visibleReplies);
+  visibleRepliesRef.current = visibleReplies;
+  const utilsRef = useRef(utils);
+  utilsRef.current = utils;
+
+  useEffect(() => {
+    const target = parseHashTarget(location.hash);
+    const topicIdForHash = topicQuery.data?.id;
+    if (!target || target.kind !== 'reply' || !topicIdForHash) return;
+    if (hashAttempt.current === location.hash) return;
+    hashAttempt.current = location.hash;
+    if (visibleRepliesRef.current.some((reply) => reply.id === target.id)) {
+      setHashMissing(false);
+      setHashRevealId(target.id);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const page = await utilsRef.current.forum.replies.list.fetch({
+          topicId: topicIdForHash,
+          aroundId: target.id,
+          limit: 20,
+        });
+        if (cancelled) return;
+        if (!page.items.some((reply) => reply.id === target.id)) {
+          setHashMissing(true);
+          const title = document.getElementById('forum-replies-title');
+          if (title) revealElement(title);
+          return;
+        }
+        setAnchoredReplies(page.items);
+        setHashMissing(false);
+        setHashRevealId(target.id);
+      } catch {
+        if (cancelled) return;
+        setHashMissing(true);
+        const title = document.getElementById('forum-replies-title');
+        if (title) revealElement(title);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [location.hash, topicQuery.data?.id]);
+
+  useLayoutEffect(() => {
+    if (!hashRevealId) return;
+    const node = replyRefs.current.get(hashRevealId);
+    if (!node) return;
+    setHighlightedReplyId(hashRevealId);
+    revealElement(node);
+    setHashRevealId(null);
+  }, [hashRevealId, visibleReplies]);
 
   const fetchNextRepliesPage = useCallback(
     async (failureId: string) => {
@@ -735,9 +799,18 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         </Card>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">
+          <h2
+            id="forum-replies-title"
+            tabIndex={-1}
+            className="scroll-mt-20 text-xl font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
             {tt('forum.detail.repliesTitle', { count: topic.replyCount })}
           </h2>
+          {hashMissing ? (
+            <p role="status" className="text-sm text-neutral-600">
+              {tt('notifications.targetMissing')}
+            </p>
+          ) : null}
           <p
             ref={replyStatusRef}
             role="status"
@@ -886,6 +959,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                     : tt('forum.detail.replySubmit')}
                 </Button>
               </div>
+              <p className="text-xs text-neutral-600">{tt('comments.mentionHint')}</p>
             </form>
           ) : (
             <p className="rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur">
@@ -956,9 +1030,10 @@ const ForumReplyItem = memo(function ForumReplyItem({
           listRef.current.delete(reply.id);
         }
       }}
+      id={`reply-${reply.id}`}
       tabIndex={-1}
       aria-busy={deleting || undefined}
-      className={`rounded-2xl border p-4 backdrop-blur transition-colors ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
+      className={`scroll-mt-20 rounded-2xl border p-4 backdrop-blur transition-colors ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
         highlighted
           ? 'border-brand-200 bg-brand-50 duration-0'
           : 'border-white/60 bg-white/80 duration-1000'

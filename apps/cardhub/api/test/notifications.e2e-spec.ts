@@ -244,21 +244,48 @@ describe('notifications', () => {
     expect(cardReply.status).toBe(200);
     const cardReplyId = expectString(resultData(cardReply.body).id);
 
+    const replyHref = `/cards/${cardSlug}?parentId=${topId}#reply-${cardReplyId}`;
+    const oldReplyHref = `/cards/${cardSlug}#reply-${cardReplyId}`;
     const cardReplyRows = await prisma.notification.findMany({ where: { targetId: cardReplyId } });
     expect(cardReplyRows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           userId: aliceUser.id,
           type: 'COMMENT_REPLY',
-          href: `/cards/${cardSlug}#reply-${cardReplyId}`,
+          href: replyHref,
         }),
         expect.objectContaining({
           userId: caraUser.id,
           type: 'MENTION',
-          href: `/cards/${cardSlug}#reply-${cardReplyId}`,
+          href: replyHref,
         }),
       ]),
     );
+    const aliceReplyRow = cardReplyRows.find((row) => row.userId === aliceUser.id);
+    if (!aliceReplyRow) throw new Error('expected Alice comment-reply notification');
+    await prisma.notification.update({
+      where: { id: aliceReplyRow.id },
+      data: { href: oldReplyHref },
+    });
+    const listedReply = (await list(aliceUser.token)).find((item) => item.id === aliceReplyRow.id);
+    expect(listedReply).toMatchObject({
+      type: 'COMMENT_REPLY',
+      href: replyHref,
+      parentId: topId,
+      excerpt: aliceReplyRow.excerpt,
+    });
+    expect(
+      (
+        await prisma.notification.findUnique({
+          where: { id: aliceReplyRow.id },
+          select: { href: true },
+        })
+      )?.href,
+    ).toBe(oldReplyHref);
+    const listedMention = (await list(caraUser.token)).find(
+      (item) => item.href === replyHref && item.type === 'MENTION',
+    );
+    expect(listedMention).toMatchObject({ parentId: topId });
 
     const mailed = await post(
       'comments.create',
@@ -286,6 +313,11 @@ describe('notifications', () => {
       type: 'MENTION',
       href: `/cards/${cardSlug}#comment-${danaCommentId}`,
     });
+    const listedTop = (await list(danaUser.token)).find((item) =>
+      String(item.href).endsWith(`#comment-${danaCommentId}`),
+    );
+    if (!listedTop) throw new Error('expected Dana top-level mention');
+    expect(listedTop).not.toHaveProperty('parentId');
 
     const selfMention = await post(
       'comments.create',
@@ -674,10 +706,22 @@ describe('notifications', () => {
     const first = await get('notifications.list', { limit: 2 }, owner.token);
     expect(first.status).toBe(200);
     const firstData = resultData(first.body);
-    expect(rowsOf(firstData.items).map((item) => item.id)).toEqual([
+    const firstItems = rowsOf(firstData.items);
+    expect(firstItems.map((item) => item.id)).toEqual([
       '44444444-4444-4444-8444-444444444444',
       '33333333-3333-4333-8333-333333333333',
     ]);
+    for (const item of firstItems) {
+      expect(item).not.toHaveProperty('parentId');
+      expect(item).toEqual(
+        expect.objectContaining({
+          type: 'MENTION',
+          actor: null,
+          href: null,
+          readAt: null,
+        }),
+      );
+    }
     const cursor = expectString(firstData.nextCursor);
     expect(cursor.length).toBeLessThanOrEqual(36);
     const second = await get('notifications.list', { limit: 2, cursor }, owner.token);
@@ -841,7 +885,11 @@ describe('notifications', () => {
     });
     const cardSlug = `fail-card-${suffix}`.slice(0, 64);
     await prisma.card.create({ data: { slug: cardSlug, name: '失败卡', seriesId: series.id } });
-    const plain = await post('forum.topics.create', { title: '先发一条', body: '没有提及' }, aliceUser.token);
+    const plain = await post(
+      'forum.topics.create',
+      { title: '先发一条', body: '没有提及' },
+      aliceUser.token,
+    );
     expect(plain.status).toBe(200);
     const plainId = expectString(resultData(plain.body).id);
 
@@ -852,18 +900,30 @@ describe('notifications', () => {
     const boom = new Error('NOTIFY_WRITE_DOWN');
     const createMany = jest.spyOn(prisma.notification, 'createMany').mockRejectedValue(boom);
     try {
-      const comment = await post('comments.create', { cardSlug, content: commentContent }, aliceUser.token);
+      const comment = await post(
+        'comments.create',
+        { cardSlug, content: commentContent },
+        aliceUser.token,
+      );
       expect(comment.status).toBe(200);
       const commentId = expectString(resultData(comment.body).id);
       expect(JSON.stringify(comment.body)).not.toContain('NOTIFY_WRITE_DOWN');
-      expect(await prisma.comment.count({ where: { userId: aliceUser.id, content: commentContent } })).toBe(1);
+      expect(
+        await prisma.comment.count({ where: { userId: aliceUser.id, content: commentContent } }),
+      ).toBe(1);
       expect(await prisma.notification.count({ where: { targetId: commentId } })).toBe(0);
 
-      const topic = await post('forum.topics.create', { title: '通知失败话题', body: topicBody }, aliceUser.token);
+      const topic = await post(
+        'forum.topics.create',
+        { title: '通知失败话题', body: topicBody },
+        aliceUser.token,
+      );
       expect(topic.status).toBe(200);
       const topicId = expectString(resultData(topic.body).id);
       expect(JSON.stringify(topic.body)).not.toContain('NOTIFY_WRITE_DOWN');
-      expect(await prisma.topic.count({ where: { userId: aliceUser.id, body: topicBody } })).toBe(1);
+      expect(await prisma.topic.count({ where: { userId: aliceUser.id, body: topicBody } })).toBe(
+        1,
+      );
       expect(await prisma.notification.count({ where: { targetId: topicId } })).toBe(0);
 
       const reply = await post(
@@ -894,7 +954,11 @@ describe('notifications', () => {
       expect(report.status).toBe(200);
       const resolved = await post(
         'reports.resolve',
-        { id: expectString(resultData(report.body).id), action: 'MARK_RESOLVED', resolution: 'SECRET' },
+        {
+          id: expectString(resultData(report.body).id),
+          action: 'MARK_RESOLVED',
+          resolution: 'SECRET',
+        },
         adminUser.token,
       );
       expect(resolved.status).toBe(200);
