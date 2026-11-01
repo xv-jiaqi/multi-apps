@@ -32,6 +32,10 @@ Caddy publishes host ports.
    sudo chown -R deploy:deploy /opt/cardhub
    sudo chmod 750 /opt/cardhub /opt/cardhub/production /opt/cardhub/staging /opt/cardhub/edge /opt/cardhub/backups
    ```
+   Nothing in this repo creates or writes `/opt/cardhub/migration-backups`.
+   That directory is not part of the layout. A dump taken before a migration
+   goes in the project backup directory the deploy user already owns:
+   `/opt/cardhub/backups/cardhub-staging` or `/opt/cardhub/backups/cardhub-prod`.
 3. Copy `deploy/docker-compose.yml`, `deploy/remote-deploy.sh`,
    `deploy/backup.sh`, and `deploy/check-backup-log.sh` into each app env's
    `deploy/` directory. Copy `deploy/edge/` into `/opt/cardhub/edge/deploy/edge/`.
@@ -203,7 +207,15 @@ A healthy admin endpoint with `502` on the public names means Caddy is up
 and an upstream name or the external `edge` network is wrong. Do not run
 `docker compose down -v`; that deletes certificates in `caddy_data`.
 
-To serve the last deployed edge config again, restore that tree from its SHA (`git checkout <prev_sha> -- deploy/edge`), sync it to `/opt/cardhub/edge/deploy/edge`, and recreate:
+To serve the last deployed edge config again, restore `deploy/edge` from that SHA, sync it, recreate, then put the working tree back:
+
+```bash
+git checkout <prev_sha> -- deploy/edge
+rsync -a --delete deploy/edge/ <host>:/opt/cardhub/edge/deploy/edge/
+git checkout HEAD -- deploy/edge
+```
+
+`git restore --source=HEAD deploy/edge` restores the same files. On the VPS:
 
 ```bash
 cd /opt/cardhub/edge/deploy/edge
