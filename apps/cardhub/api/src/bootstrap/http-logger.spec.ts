@@ -202,4 +202,48 @@ describe('http logger', () => {
     expect(serialized).toContain('filter[token]');
     expect(serialized).toContain('[Redacted]');
   });
+
+  it('redacts unpaired brackets and a value whose key fails to decode', async () => {
+    const stream = new PassThrough();
+    const lines = listen(stream);
+    const middleware = pinoHttp(createHttpLoggerOptions(), stream);
+    const app = express();
+    app.use(middleware);
+    app.get('/ok', (_req, res) => {
+      res.status(204).end();
+    });
+
+    const response = await request(app).get(
+      '/ok?token[=LEAK_OPEN&token]=LEAK_CLOSE&token%5B=LEAK_ENC_OPEN&token[a]b=LEAK_MID&token%5B%E0%A4%A%5D=LEAK_BAD_KEY&tokens[]=KEEP_TOKENS_BRACKET&filter[token]=KEEP_FILTER_TOKEN&tokenize=KEEP_TOKENIZE&code_challenge[x]=KEEP_CODE_CHALLENGE&code[x]=LEAK_CODE_BRACKET',
+    );
+    expect(response.status).toBe(204);
+
+    const badValue = await request(app).get('/ok?token=%E0%A4%A');
+    expect(badValue.status).toBe(204);
+
+    const serialized = lines.join('\n');
+    for (const leak of [
+      'LEAK_OPEN',
+      'LEAK_CLOSE',
+      'LEAK_ENC_OPEN',
+      'LEAK_MID',
+      'LEAK_BAD_KEY',
+      'LEAK_CODE_BRACKET',
+    ]) {
+      expect(serialized).not.toContain(leak);
+    }
+    expect(serialized).toContain('KEEP_TOKENS_BRACKET');
+    expect(serialized).toContain('KEEP_FILTER_TOKEN');
+    expect(serialized).toContain('KEEP_TOKENIZE');
+    expect(serialized).toContain('KEEP_CODE_CHALLENGE');
+    expect(serialized).toContain('token[');
+    expect(serialized).toContain('token]');
+    expect(serialized).toContain('token%5B%E0%A4%A%5D=');
+    expect(serialized).toContain('tokens[]');
+    expect(serialized).toContain('filter[token]');
+    expect(serialized).toContain('[Redacted]');
+    const valueLine = lines.find((line) => line.includes('token=%5BRedacted%5D'));
+    expect(valueLine).toBeDefined();
+    expect(valueLine).not.toContain('%E0%A4%A');
+  });
 });
