@@ -652,7 +652,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
             </AdminField>
             <fieldset className="space-y-3 rounded-lg border border-neutral-200 p-3">
               <legend className="px-1 text-sm font-medium text-neutral-800">
-                {tt('admin.field.parallelGroup')}
+                {tt('admin.parallel.legend')}
               </legend>
               <div className="space-y-1">
                 <label htmlFor="card-parallel-of" className="text-sm font-medium text-neutral-800">
@@ -710,7 +710,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 )}
                 {baseLocked ? (
                   <p id="card-parallel-of-lock" className="text-xs text-neutral-600">
-                    {tt('admin.parallel.hasChildren', {
+                    {tt('admin.parallel.locked', {
+                      count: card?.parallelChildrenCount ?? 0,
                       n: card?.parallelChildrenCount ?? 0,
                     })}
                   </p>

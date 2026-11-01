@@ -435,7 +435,7 @@ function ResultLists({
                         parallelName={card.parallelName}
                         printRun={card.printRun}
                         isParallel={Boolean(card.parallelName)}
-                        className="mt-1 flex min-w-0 flex-wrap gap-1"
+                        className="mt-2 flex flex-wrap gap-1"
                       />
                       <span className="block truncate text-xs text-neutral-600">
                         {card.seriesTitle}

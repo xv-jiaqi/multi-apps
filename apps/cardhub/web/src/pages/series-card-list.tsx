@@ -156,7 +156,7 @@ export function SeriesCardLink({
           parallelName={card.parallelName}
           printRun={card.printRun}
           isParallel={card.isParallel}
-          className="mt-2 flex min-w-0 flex-wrap gap-1"
+          className="mt-2 flex flex-wrap gap-1"
         />
         {attributeLine ? (
           <p className="mt-1 truncate text-xs tabular-nums text-neutral-600">{attributeLine}</p>
@@ -303,10 +303,20 @@ export const SeriesCardList = observer(function SeriesCardList({
       : tt(filtered ? 'series.list.found' : 'series.list.total', {
           count: filtered ? total : seriesTotal,
         });
-  const emptySeries =
+  const onlyParallels =
     listView !== 'error' &&
+    list.data !== undefined &&
+    !list.isLoading &&
+    !state.parallels &&
+    !filtered &&
     seriesTotal === 0 &&
-    (list.data !== undefined || fallbackCardCount === 0);
+    parallelCount > 0;
+  const emptySeries =
+    !onlyParallels &&
+    listView !== 'error' &&
+    (list.data !== undefined
+      ? seriesTotal === 0 && parallelCount === 0
+      : seriesTotal === 0 && fallbackCardCount === 0);
   const pageCount = list.data ? Math.ceil(list.data.total / SERIES_LIST_PAGE_SIZE) : 0;
 
   useEffect(() => {
@@ -360,7 +370,6 @@ export const SeriesCardList = observer(function SeriesCardList({
     list.data !== undefined &&
     list.data.items.length === 0 &&
     list.data.total === 0 &&
-    seriesTotal > 0 &&
     !list.isLoading;
   const showGrid = !emptySeries && !showError && !!list.data && list.data.items.length > 0;
 
@@ -573,7 +582,7 @@ export const SeriesCardList = observer(function SeriesCardList({
       {showNoMatch ? (
         <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
           <p>{tt('series.list.noMatch')}</p>
-          {!state.parallels && parallelCount > 0 ? (
+          {onlyParallels ? (
             <p className="mt-2 text-sm text-neutral-600">
               {tt('series.parallels.hint', { n: parallelCount })}
             </p>

@@ -340,20 +340,41 @@ describe('SeriesCardList', () => {
     expect(screen.getByRole('button', { name: '筛选（1）' })).toBeInTheDocument();
   });
 
-  it('tells you to turn parallels on when a filtered list is empty, and clear leaves the switch', async () => {
+  it('shows the parallel hint instead of an empty series when the series has only parallels', () => {
+    harness.state.data = {
+      items: [],
+      page: 1,
+      pageSize: 60,
+      total: 0,
+      seriesTotal: 0,
+      parallelCount: 2,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    renderList();
+    expect(screen.getByText('没有符合条件的卡牌')).toBeInTheDocument();
+    expect(screen.getByText('打开「显示平行版本」可查看 2 张平行卡')).toBeInTheDocument();
+    expect(screen.queryByText('这个系列还没有卡牌')).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '显示平行版本' })).not.toBeChecked();
+    expect(screen.getByRole('searchbox', { name: '搜索本系列' })).toBeInTheDocument();
+  });
+
+  it('hides the parallel hint when another filter caused the empty list', async () => {
     const user = userEvent.setup();
     harness.state.data = {
       items: [],
       page: 1,
       pageSize: 60,
       total: 0,
-      seriesTotal: 4,
-      parallelCount: 3,
+      seriesTotal: 0,
+      parallelCount: 2,
       sort: 'number',
       attributeLabels: labels,
     };
     renderList('?q=missing&sort=name');
-    expect(screen.getByText('打开「显示平行版本」可查看 3 张平行卡')).toBeInTheDocument();
+    expect(screen.queryByText(/打开「显示平行版本」/)).not.toBeInTheDocument();
+    expect(screen.getByText('没有符合条件的卡牌')).toBeInTheDocument();
+    expect(screen.queryByText('这个系列还没有卡牌')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '清除筛选' }));
     expect(
       harness.calls.some(
@@ -363,5 +384,28 @@ describe('SeriesCardList', () => {
     ).toBe(true);
     expect(screen.getByRole('searchbox', { name: '搜索本系列' })).toHaveFocus();
     expect(screen.getByRole('checkbox', { name: '显示平行版本' })).not.toBeChecked();
+  });
+
+  it('keeps parallels on when clearing the other filters', async () => {
+    const user = userEvent.setup();
+    harness.state.data = {
+      items: [],
+      page: 1,
+      pageSize: 60,
+      total: 0,
+      seriesTotal: 0,
+      parallelCount: 2,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    renderList('?q=missing&parallels=1&sort=name');
+    expect(screen.queryByText(/打开「显示平行版本」/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '清除筛选' }));
+    expect(
+      harness.calls.some(
+        (call) => call.q === undefined && call.sort === 'name' && call.includeParallels === true,
+      ),
+    ).toBe(true);
+    expect(screen.getByRole('checkbox', { name: '显示平行版本' })).toBeChecked();
   });
 });
