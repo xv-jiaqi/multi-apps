@@ -328,11 +328,47 @@ neither container present, still starts them.
 
 ### When deploy refuses before it replaces containers
 
-Two refusals happen before `docker pull` and before `compose up`. The
-containers that are already running are left as they are. Fix the count,
-then run Cardhub Deploy again. Do not `docker compose down`, do not
-`down -v`, and do not `up -d --force-recreate`. Those stop the container
-that is serving, or delete the database volume.
+`remote-deploy.sh` can exit before `docker pull` and before `compose up`.
+Those exits leave the containers that are already running in place. The
+cleanup further down is only for a service that has more than one
+container, and for the previous-digest refusal. The other exits are fixed
+by correcting the thing the message names.
+
+Before the script looks at api or web containers, it exits for:
+
+- `Docker network 'edge' does not exist. Start deploy/edge first.`
+- `Missing env file: <path>`
+- `ENV_NAME in <file> must be '<staging|prod>', got '<value>'`
+- `PASSWORD_PREHASH_WRITE must be the exact string true or false`
+- `WEB_SENTRY_DSN must be an http or https URL`
+- `Refusing to update <file>: could not rewrite <key>`, and the same
+  prefix when the rewrite is empty, the replace fails, or the DSN rewrite
+  cannot keep the file owner
+- `Refusing deploy: image digest for <sha> is unavailable. The running containers were not changed.`
+- `flock is required so prod and staging do not roll out together`
+- `Timed out waiting for <root>/.rollout.lock; another rollout is still adding a replica`
+
+`Invalid image tag`, `Invalid expected SHA`, and
+`Image tag and expected SHA disagree` exit even earlier, still with no
+container change.
+
+While it is checking containers that are already there, still before
+`docker pull`, it exits for:
+
+- `<service> already has N containers; refusing to add another replica`
+- `Refusing deploy: could not list <service> containers. The running API was not replaced.`
+- `Refusing deploy: docker ps failed while checking for a <service> container. The running API was not replaced.`
+- `Refusing deploy: compose listed no <service> container, but docker ps still shows one. The running API was not replaced.`
+- `Refusing deploy: docker ps failed while checking for a named <service> container. The running API was not replaced.`
+- `Refusing deploy: leftover container <id> occupies <project>-<service> without another project's compose label. The running API was not replaced.`
+- `Refusing deploy: <service> has N containers; cannot choose a rollback image. The running API was not replaced.`
+- `Refusing deploy: docker inspect of the previous <service> container exited <rc>. The running API was not replaced.`
+- `Refusing deploy: an api or web container is already running, but both previous image digests are required before any container is replaced. The running containers were not changed.`
+
+`Previous api/web tags differ (...)` is printed and is not one of these
+exits. A failed `docker pull`, the entrypoint probe, and a failed
+migration are later: they also leave the running containers in place, and
+they are not fixed by the loop below.
 
 `remote-deploy.sh` counts api and web with `docker compose ps -aq`. Stopped
 containers count. More than one id for a service prints
@@ -341,20 +377,34 @@ The same count, if it is seen while reading the previous image, prints
 `Refusing deploy: <service> has N containers; cannot choose a rollback image. The running API was not replaced.`
 
 `Refusing deploy: an api or web container is already running, but both previous image digests are required before any container is replaced.`
-means at least one of api and web still has a container, and the script
-could not read a `sha256:` digest for both. A service with no container
-has no digest, so this also fires when one side is empty and the other is
-not. The check that rejects more than one container runs first, so this
-digest line is the one you see when every service that exists has a single
-container and a digest is still missing. Do not delete the container that
-is serving to make both sides empty.
+means at least one of api and web still has a container, and
+`digest_of_container` did not return a `sha256:` digest for both. That
+function reads `@sha256` from `Config.Image`, then `RepoDigests`, then
+`.Image` when that id is `sha256:` plus 64 hex. A service with no
+container has no digest, so one empty side and one running side is this
+refusal. More than one container is rejected by the count check first.
+Do not delete the only container on a service to make both sides empty:
+the next deploy still refuses while the other side is up, and you no
+longer have a container to pull a digest onto.
 
-Each of api and web has to be exactly one container before the next deploy,
-and that container has to be the one that is serving. Staging is
-`cardhub-staging` with `/opt/cardhub/staging/staging.env`. Production is
-`cardhub-prod` with `/opt/cardhub/production/production.env`. The commands
-below are staging. Swap the project name and the env file for production.
-The compose file is the one already on the server.
+Do not `docker compose down`, do not `down -v`, and do not
+`up -d --force-recreate` on api or web while cleaning up. Those stop the
+container that is serving, or delete the database volume. `up -d --no-deps`
+on the one missing service is the exception in the digest steps below.
+
+Staging is `cardhub-staging` with `/opt/cardhub/staging/staging.env`.
+Production is `cardhub-prod` with `/opt/cardhub/production/production.env`.
+The commands below are staging. Swap the project name and the env file
+for production. The compose file is the one already on the server.
+
+Only a service whose `ps -aq` count is greater than 1 is changed. A
+service with one container, including one `exited` container, is left
+alone. When the count is greater than 1, one container is kept and the
+others are removed. The one kept is the only `healthy` container. If none
+is `healthy`, the one kept is the one with the latest `StartedAt`. If
+more than one is `healthy`, the loop does not delete; use the `/health`
+or `/healthz` commands to choose the one that is serving, then remove the
+other ids yourself.
 
 ```bash
 project=cardhub-staging
@@ -365,40 +415,44 @@ for svc in api web; do
   echo "---- ${svc} ----"
   docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -a "${svc}"
   mapfile -t ids < <(docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -aq "${svc}" | awk 'NF' | sort -u)
-  running=()
+  if [ "${#ids[@]}" -le 1 ]; then
+    echo "${svc} has ${#ids[@]} container; not removing it"
+    continue
+  fi
+  healthy=()
   for id in "${ids[@]}"; do
     [ -n "${id}" ] || continue
     state="$(docker inspect -f '{{.State.Status}}' "${id}")"
     health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${id}")"
-    name="$(docker inspect -f '{{.Name}}' "${id}")"
-    echo "${id:0:12} status=${state} health=${health} name=${name}"
-    if [ "${state}" != "running" ]; then
-      docker rm "${id}"
-    else
-      running+=("${id}")
+    started="$(docker inspect -f '{{.State.StartedAt}}' "${id}")"
+    echo "${id:0:12} status=${state} health=${health} started=${started}"
+    if [ "${state}" = "running" ] && [ "${health}" = "healthy" ]; then
+      healthy+=("${id}")
     fi
   done
-  if [ "${#running[@]}" -le 1 ]; then
+  keep=""
+  if [ "${#healthy[@]}" -eq 1 ]; then
+    keep="${healthy[0]}"
+    echo "keeping the only healthy ${svc} ${keep:0:12}"
+  elif [ "${#healthy[@]}" -eq 0 ]; then
+    keep="$(docker inspect -f '{{.State.StartedAt}} {{.Id}}' "${ids[@]}" | sort | tail -n 1 | awk '{ print $2 }')"
+    echo "no healthy ${svc}; keeping the most recently started ${keep:0:12}"
+  else
+    echo "more than one healthy ${svc}; not deleting. Pick the serving id with the probe below, then docker rm -f the others."
     continue
   fi
-  echo "More than one ${svc} is running. Only a container that is not healthy is removed."
-  for id in "${running[@]}"; do
-    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${id}")"
-    if [ "${health}" != "healthy" ]; then
-      docker rm -f "${id}"
-    fi
+  keep_full="$(docker inspect -f '{{.Id}}' "${keep}")"
+  for id in "${ids[@]}"; do
+    [ "$(docker inspect -f '{{.Id}}' "${id}")" = "${keep_full}" ] && continue
+    docker rm -f "${id}"
+    echo "removed extra ${svc} ${id:0:12}"
   done
 done
 ```
 
-`docker rm` without `-f` does not remove a running container. The loop
-removes stopped extras, then removes a running container only when its
-health is not `healthy`. The healthy container stays up.
-
-If two containers for the same service are still running and both are
-healthy, stop here. Do not pick one by name. For api, the one that is
-serving is the one whose in-container `/health` git SHA matches the live
-site. Read it, then remove only the other id:
+If more than one container is `healthy`, do not pick by name. For api,
+the one that is serving is the one whose in-container `/health` git SHA
+matches the live site. Read it, then remove only the other id:
 
 ```bash
 docker exec <serving-id> node -e 'fetch("http://127.0.0.1:4000/health").then(async (r) => process.stdout.write(await r.text()))'
@@ -412,16 +466,79 @@ docker exec <serving-id> wget -qO- http://127.0.0.1:8080/healthz
 docker rm -f <extra-id>
 ```
 
-Check the count the script uses. Each command must print one id:
+Check the count the script uses. A service that still has a container
+must print one id. A service with no id is the empty side in the next
+step, not something this loop should have deleted.
 
 ```bash
 docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -aq api
 docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -aq web
 ```
 
+When the count is already one per service and deploy still prints the
+digest refusal, one of those containers has no `sha256:` plus 64 hex that
+`digest_of_container` can return. Read it the same way the script does:
+`@sha256` on `Config.Image`, then each `RepoDigests` entry, then `.Image`
+when that id is `sha256:` plus 64 hex. An empty `RepoDigests` on a normal
+container is not itself the refusal, because `.Image` is already that
+shape and the script accepts it. It does mean a later rollback would pull
+`ghcr.io/xv-jiaqi/cardhub-api@sha256:<image id>`, which is not the GHCR
+manifest. `docker pull` of the `sha-<40 hex>` tag records that manifest
+on the same image id and does not recreate the container.
+
+The tag is the `:sha-<40 hex>` in `Config.Image`. A container started by
+digest has no tag there (`name@sha256:...`). The same 40 hex is then on a
+`RepoTags` entry, or on the image label `org.opencontainers.image.revision`.
+If none of those is set, use the git SHA of the last deploy that stayed up.
+
+```bash
+id="$(docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -aq api)"
+docker inspect -f 'config={{.Config.Image}} image={{.Image}}' "${id}"
+image_id="$(docker inspect -f '{{.Image}}' "${id}")"
+docker image inspect -f '{{json .RepoDigests}}' "${image_id}"
+sha="$(docker inspect -f '{{.Config.Image}}' "${id}" | sed -n 's/.*:sha-\([0-9a-f]\{40\}\).*/\1/p')"
+if [ -z "${sha}" ]; then
+  sha="$(docker image inspect -f '{{range .RepoTags}}{{.}}{{"\n"}}{{end}}' "${image_id}" | sed -n 's/.*:sha-\([0-9a-f]\{40\}\)$/\1/p' | head -n 1)"
+fi
+if [ -z "${sha}" ]; then
+  sha="$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "${image_id}" | sed -n 's/^\([0-9a-f]\{40\}\)$/\1/p')"
+fi
+docker pull "ghcr.io/xv-jiaqi/cardhub-api:sha-${sha}"
+docker image inspect -f '{{json .RepoDigests}}' "${image_id}"
+docker inspect -f '{{.Id}} {{.Image}}' "${id}"
+```
+
+Repeat for web and `ghcr.io/xv-jiaqi/cardhub-web`. After the pull, `.Image`
+on the same container id must be unchanged, and `RepoDigests` must list
+`@sha256:`. If `.Image` changed, the registry tag is a different image
+than the one the container is running; leave that container up and do not
+recreate it here.
+
+When one of api or web has no container, that empty side is what makes
+the next deploy print the digest refusal again. Start only that service
+from the image the other side is already running. `--no-deps` does not
+start postgres, redis, or the service that is already up. If the running
+side's `RepoDigests` is empty, pull its `sha-<40 hex>` tag first, then
+read the digest that pull recorded. A known tag can also be passed
+directly as `ghcr.io/xv-jiaqi/cardhub-web:sha-<40 hex>`.
+
+```bash
+sha="<40 hex from the running service>"
+digest="<sha256 from that service RepoDigests>"
+IMAGE_TAG="sha-${sha}" ENV_NAME=staging \
+  API_IMAGE="ghcr.io/xv-jiaqi/cardhub-api@${digest}" \
+  WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web@${digest}" \
+  docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" \
+  up -d --no-deps web
+```
+
+Use `api` instead of `web` when api is the empty side, and use that
+service's own digest when the two images differ. Do not pass `--force-recreate`.
+Both `ps -aq` commands must then print one id, and each id must have a
+`sha256:` digest from `RepoDigests` or from `.Image`.
+
 Then run Cardhub Deploy again (Actions → Cardhub Deploy → Run workflow)
-for that environment and SHA. A service that still has no container has no
-digest, so the digest refusal remains while the other service is up.
+for that environment and SHA.
 
 `remote-deploy.sh` writes `PASSWORD_PREHASH_WRITE` into that environment's
 env file after `ENV_NAME` matches and before it replaces containers. The
