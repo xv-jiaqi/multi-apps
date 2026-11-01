@@ -147,6 +147,12 @@ const KNOWN_FIELDS = new Set([
   'categorySlug',
   'releaseDate',
   'kind',
+  'region',
+  'note',
+  'sourceUrl',
+  'seriesId',
+  'categoryId',
+  'datePrecision',
 ]);
 
 interface ZodIssueLike {

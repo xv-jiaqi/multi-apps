@@ -137,8 +137,13 @@ import { HomePage } from './home';
 
 function expectNoDeadInternalLinks() {
   const anchors = [...document.querySelectorAll('a')];
-  expect(anchors.some((anchor) => anchor.getAttribute('href') === '/calendar')).toBe(false);
-  expect(screen.queryByRole('link', { name: /发售日历|Release calendar/ })).not.toBeInTheDocument();
+  const footer = document.querySelector('footer');
+  const upcoming = document.getElementById('home-upcoming-title')?.closest('section');
+  expect(footer?.querySelector('a[href="/calendar"]')).not.toBeNull();
+  if (upcoming) {
+    expect(upcoming.querySelector('a[href="/calendar"]')).not.toBeNull();
+  }
+  expect(document.querySelector('header a[href="/calendar"]')).not.toBeNull();
 
   for (const anchor of anchors) {
     const href = anchor.getAttribute('href');
@@ -352,7 +357,7 @@ describe('home sections', () => {
     expect(screen.queryByRole('heading', { name: '即将发售' })).not.toBeInTheDocument();
   });
 
-  it('shows three upcoming releases without a calendar link', () => {
+  it('shows three upcoming releases and the calendar link', () => {
     const releases: ReleaseFixture[] = Array.from({ length: 4 }, (_, index) => ({
       id: `rel-${index}`,
       title: `发售${index}`,
@@ -371,17 +376,18 @@ describe('home sections', () => {
       to: addCalendarDays(shanghaiToday(), 365),
     });
     const upcoming = screen.getByRole('heading', { level: 2, name: '即将发售' });
-    expect(upcoming.closest('a')).toBeNull();
-    const titleRow = upcoming.parentElement;
     const section = upcoming.closest('section');
-    expect(titleRow?.querySelector(':scope > a')).toBeNull();
-    expect(titleRow?.className ?? '').not.toMatch(/invisible|opacity-0/);
-    if (titleRow && titleRow !== section) {
-      expect(titleRow.childElementCount).toBe(1);
-    }
+    expect(section).not.toBeNull();
+    expect(
+      within(section as HTMLElement).getByRole('link', { name: '发售日历 →' }),
+    ).toHaveAttribute('href', '/calendar');
     expectNoDeadInternalLinks();
     const footer = screen.getByRole('contentinfo');
-    expect(footer.querySelector('a[href="/calendar"]')).toBeNull();
+    expect(within(footer).getByRole('link', { name: '发售日历' })).toHaveAttribute(
+      'href',
+      '/calendar',
+    );
+    expect(within(footer).queryByRole('link', { name: '发售日历 →' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: '发售0' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: '发售2' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '发售3' })).not.toBeInTheDocument();
@@ -494,7 +500,10 @@ describe('home chrome', () => {
     expect(within(footer).getByRole('link', { name: '系列' })).toHaveAttribute('href', '/series');
     expect(within(footer).getByRole('link', { name: '论坛' })).toHaveAttribute('href', '/forum');
     expect(within(footer).getByRole('link', { name: '交易' })).toHaveAttribute('href', '/trade');
-    expect(within(footer).queryByRole('link', { name: '发售日历' })).not.toBeInTheDocument();
+    expect(within(footer).getByRole('link', { name: '发售日历' })).toHaveAttribute(
+      'href',
+      '/calendar',
+    );
 
     const localeButton = within(footer).getByRole('button', { name: 'English' });
     expect(localeButton).toHaveAttribute('lang', 'en');
@@ -504,6 +513,13 @@ describe('home chrome', () => {
       screen.getByRole('heading', { level: 1, name: 'Welcome to Cardhub' }),
     ).toBeInTheDocument();
     expect(within(footer).getByRole('button', { name: '中文' })).toHaveAttribute('lang', 'zh');
+    expect(within(footer).getByRole('link', { name: 'Release calendar' })).toHaveAttribute(
+      'href',
+      '/calendar',
+    );
+    expect(
+      within(footer).queryByRole('link', { name: 'Release calendar →' }),
+    ).not.toBeInTheDocument();
     expect(footer).toHaveTextContent(
       'Cardhub is an unofficial fan site, not affiliated with any card publisher.',
     );

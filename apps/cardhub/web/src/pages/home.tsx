@@ -417,8 +417,11 @@ function HomeUpcoming({ tt, query }: { tt: Translate; query: ReleasesQuery }) {
 
   return (
     <section aria-labelledby="home-upcoming-title" className="space-y-4">
-      {/* CH-205 §5 lists 「发售日历 →」 only after the CH-215 page exists. */}
-      <SectionTitle id="home-upcoming-title" title={tt('home.upcoming.title')} />
+      <SectionTitle
+        id="home-upcoming-title"
+        title={tt('home.upcoming.title')}
+        action={{ to: '/calendar', label: tt('home.upcoming.all') }}
+      />
       <div id="home-upcoming-panel" ref={panelRef} tabIndex={-1} className={recoveryClass}>
         {view === 'error' ? (
           <BlockError

@@ -3,13 +3,11 @@ import { Link } from 'react-router';
 import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 
-/**
- * CH-205 §7 lists `/calendar` only after the CH-215 page exists.
- * That route is not registered, so the link is omitted (a missing page 404s).
- */
+/** CH-205 §5 / §7: the calendar page and this link ship together. */
 export const FOOTER_LINKS: ReadonlyArray<{ href: string; labelKey: string }> = [
   { href: '/categories', labelKey: 'nav.categories' },
   { href: '/series', labelKey: 'nav.series' },
+  { href: '/calendar', labelKey: 'nav.calendar' },
   { href: '/forum', labelKey: 'nav.forum' },
   { href: '/trade', labelKey: 'nav.trade' },
 ];

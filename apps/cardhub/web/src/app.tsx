@@ -94,6 +94,18 @@ const EditCardPage = lazy(() =>
 const CatalogImportPage = lazy(() =>
   import('./pages/admin/catalog-import').then((m) => ({ default: m.CatalogImportPage })),
 );
+const CalendarPage = lazy(() =>
+  import('./pages/calendar').then((m) => ({ default: m.CalendarPage })),
+);
+const AdminReleasesPage = lazy(() =>
+  import('./pages/admin/releases').then((m) => ({ default: m.AdminReleasesPage })),
+);
+const NewReleasePage = lazy(() =>
+  import('./pages/admin/release-form-page').then((m) => ({ default: m.NewReleasePage })),
+);
+const EditReleasePage = lazy(() =>
+  import('./pages/admin/release-form-page').then((m) => ({ default: m.EditReleasePage })),
+);
 const MePage = lazy(() => import('./pages/me').then((m) => ({ default: m.MePage })));
 const ChangePasswordPage = lazy(() =>
   import('./pages/me-password').then((m) => ({ default: m.ChangePasswordPage })),
@@ -183,6 +195,7 @@ export const appRoutes: RouteObject[] = [
         element: lazyPage('/categories/:slug', <CategoryDetailPage />),
       },
       { path: '/series', element: lazyPage('/series', <SeriesListPage />) },
+      { path: '/calendar', element: lazyPage('/calendar', <CalendarPage />) },
       {
         path: '/series/:seriesSlug',
         element: lazyPage('/series/:seriesSlug', <SeriesDetailPage />),
@@ -202,6 +215,12 @@ export const appRoutes: RouteObject[] = [
       { path: '/trade/new', element: lazyPage('/trade/new', <TradePublishPage />) },
       { path: '/reports', element: lazyPage('/reports', <ReportsListPage />) },
       { path: '/admin/catalog', element: lazyPage('/admin/catalog', <CatalogSeriesPage />) },
+      { path: '/admin/releases/new', element: lazyPage('/admin/releases/new', <NewReleasePage />) },
+      {
+        path: '/admin/releases/:id/edit',
+        element: lazyPage('/admin/releases/:id/edit', <EditReleasePage />),
+      },
+      { path: '/admin/releases', element: lazyPage('/admin/releases', <AdminReleasesPage />) },
       {
         path: '/admin/catalog/categories/new',
         element: lazyPage('/admin/catalog/categories/new', <NewCategoryPage />),
