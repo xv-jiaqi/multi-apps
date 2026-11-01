@@ -98,28 +98,56 @@ classify_runs() {
 }
 
 # Status 0 prints a valid digest. Status 1: artifact present but not a
-# digest. Status 2: artifact missing (historical run, expiry, or download
-# failure). Only status 2 may fall back to the tag.
+# digest. Status 2: this successful run has no such artifact (or it
+# expired). Status 3: the artifact is there but downloading it failed.
+# Only status 2 may fall back to the tag.
 read_run_digest() {
   local run_id="$1"
   local name="$2"
   local raw=""
   if [ -n "${fixture}" ]; then
+    if [ -f "${fixture}/artifacts/${run_id}/${name}.download-fail" ]; then
+      echo "Refusing deploy: could not download digest artifact ${name} from Images run ${run_id}. Running containers were not changed." >&2
+      return 3
+    fi
     local f="${fixture}/artifacts/${run_id}/${name}"
     if [ ! -f "${f}" ]; then
       return 2
     fi
     raw="$(tr -d '[:space:]' < "${f}")"
   else
-    local dir
+    local list dir aname aid aexpired found
+    list="$(mktemp)"
+    if ! gh api --paginate \
+      "/repos/${repository}/actions/runs/${run_id}/artifacts?per_page=100" \
+      --jq '.artifacts[] | [.name, (.id|tostring), (.expired|tostring)] | @tsv' > "${list}"; then
+      rm -f "${list}"
+      echo "Refusing deploy: could not list digest artifacts for Images run ${run_id}. Running containers were not changed." >&2
+      return 3
+    fi
+    found=0
+    while IFS=$'\t' read -r aname aid aexpired; do
+      [ "${aname}" = "${name}" ] || continue
+      found=1
+      if [ "${aexpired}" = "true" ]; then
+        rm -f "${list}"
+        return 2
+      fi
+    done < "${list}"
+    rm -f "${list}"
+    if [ "${found}" -eq 0 ]; then
+      return 2
+    fi
     dir="$(mktemp -d)"
     if ! gh run download "${run_id}" -R "${repository}" -n "${name}" -D "${dir}" >/dev/null 2>&1; then
       rm -rf "${dir}"
-      return 2
+      echo "Refusing deploy: could not download digest artifact ${name} from Images run ${run_id}. Running containers were not changed." >&2
+      return 3
     fi
     if [ ! -f "${dir}/digest" ]; then
       rm -rf "${dir}"
-      return 2
+      echo "Refusing deploy: digest artifact ${name} from Images run ${run_id} has no digest file. Running containers were not changed." >&2
+      return 3
     fi
     raw="$(tr -d '[:space:]' < "${dir}/digest")"
     rm -rf "${dir}"
@@ -211,6 +239,13 @@ web_digest="$(read_run_digest "${run_id}" image-digest-web)" || web_rc=$?
 
 if [ "${api_rc}" -eq 1 ] || [ "${web_rc}" -eq 1 ]; then
   echo "Refusing deploy: Images run ${run_id} published an unusable digest artifact. Running containers were not changed." >&2
+  exit 1
+fi
+if [ "${api_rc}" -eq 3 ] || [ "${web_rc}" -eq 3 ]; then
+  exit 1
+fi
+if [ "${api_rc}" -ne "${web_rc}" ]; then
+  echo "Refusing deploy: Images run ${run_id} is missing one digest artifact. Running containers were not changed." >&2
   exit 1
 fi
 

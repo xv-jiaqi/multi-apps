@@ -23,7 +23,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-      # digest artifacts are how Deploy pins the image this job pushed
+      # Required. The workflow sets permissions: {} and upload-artifact
+      # writes the digest file through the Actions artifact API.
       actions: write
     strategy:
       fail-fast: false

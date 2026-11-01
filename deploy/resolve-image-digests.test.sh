@@ -192,6 +192,20 @@ assert "bad artifact exits non-zero" "$([ "${rc}" -ne 0 ] && echo 0 || echo 1)"
 assert "bad artifact does not resolve the tag" "$([ ! -s "${fx}/tag-called" ] && echo 0 || echo 1)"
 assert "bad artifact prints no resolved digest" "$(grep -F -q 'Resolved api_digest=' "${work}/bad.out" && echo 1 || echo 0)"
 
+fx="${work}/download-fail"
+write_runs "${fx}" \
+  "$(printf '2026-11-02T04:21:00Z\t20\tcompleted\tsuccess\t%s' "${sha}")"
+write_artifact "${fx}" 20 image-digest-api "${api_digest}"
+write_artifact "${fx}" 20 image-digest-web "${web_digest}"
+: > "${fx}/artifacts/20/image-digest-api.download-fail"
+write_tag_cmd "${fx}" ok
+: > "${fx}/github-output"
+rc="$(run_resolve "${fx}" "${work}/dl.out" "${work}/dl.err")"
+assert "artifact download failure exits non-zero" "$([ "${rc}" -ne 0 ] && echo 0 || echo 1)"
+assert "artifact download failure does not resolve the tag" "$([ ! -s "${fx}/tag-called" ] && echo 0 || echo 1)"
+assert "artifact download failure names the download" "$(grep -F -q 'could not download digest artifact' "${work}/dl.err" && echo 0 || echo 1)"
+assert "artifact download failure prints no digest" "$(grep -F -q 'Resolved api_digest=' "${work}/dl.out" && echo 1 || echo 0)"
+
 fx="${work}/historical"
 write_runs "${fx}" \
   "$(printf '2026-10-01T00:00:00Z\t20\tcompleted\tsuccess\t%s' "${sha}")"
