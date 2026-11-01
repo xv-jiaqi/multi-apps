@@ -12,6 +12,14 @@ export function readParentId(search: string): string | null {
   return value;
 }
 
+/** The query includes `parentId`, but the value is empty or not a uuid. */
+export function illegalParentId(search: string): boolean {
+  const params = new URLSearchParams(search);
+  if (!params.has('parentId')) return false;
+  const value = params.get('parentId') ?? '';
+  return !PARENT_ID.test(value);
+}
+
 export function parseHashTarget(hash: string): HashTarget | null {
   const match = HASH_TARGET.exec(hash);
   const kind = match?.[1];

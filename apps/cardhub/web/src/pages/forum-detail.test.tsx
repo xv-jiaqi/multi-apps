@@ -360,6 +360,28 @@ beforeEach(() => {
 });
 
 describe('ForumDetailPage hash target', () => {
+  const inCommentsHint = '没能直接跳到这条回复，它在下面的评论里。';
+  const legalParent = '11111111-1111-4111-8111-111111111111';
+
+  it.each(['not-a-uuid', ''] as const)(
+    'shows the in-comments hint when parentId is %j',
+    async (value) => {
+      renderPage(`/forum/test-topic?parentId=${value}`);
+      const hint = await screen.findByText(inCommentsHint);
+      expect(hint.closest('[role="status"]')).not.toBeNull();
+      expect(document.getElementById('forum-replies-title')).toHaveFocus();
+      expect(repliesListFetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['', `?parentId=${legalParent}`] as const)(
+    'does not hint when parentId is absent or a uuid (%j)',
+    (search) => {
+      renderPage(`/forum/test-topic${search}`);
+      expect(screen.queryByText(inCommentsHint)).not.toBeInTheDocument();
+    },
+  );
+
   it('degrades an illegal reply hash onto the replies title', async () => {
     renderPage('/forum/test-topic#reply-garbage');
 

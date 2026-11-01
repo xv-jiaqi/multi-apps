@@ -25,7 +25,12 @@ import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { BannedNotice } from '../components/banned-notice';
 import { HashTargetNotice } from '../components/hash-target-notice';
-import { illegalHashTarget, parseHashTarget, revealElement } from '../lib/hash-target';
+import {
+  illegalHashTarget,
+  illegalParentId,
+  parseHashTarget,
+  revealElement,
+} from '../lib/hash-target';
 import { trpc } from '../lib/trpc';
 
 interface TopicReply {
@@ -411,7 +416,19 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     const target = parseHashTarget(location.hash);
     const illegalReply =
       illegalHashTarget(location.hash) && location.hash.toLowerCase().startsWith('#reply-');
+    const illegalParent = illegalParentId(location.search);
     const topicIdForHash = topicQuery.data?.id;
+    if (illegalParent) {
+      if (!topicIdForHash) return;
+      const key = `parent:${location.search}${location.hash}`;
+      if (hashAttempt.current === key) return;
+      hashAttempt.current = key;
+      setHashMissing(false);
+      setHashInComments(true);
+      const title = document.getElementById('forum-replies-title');
+      if (title) revealElement(title);
+      return;
+    }
     if ((!target || target.kind !== 'reply') && !illegalReply) return;
     if (!topicIdForHash) return;
     if (hashAttempt.current === location.hash) return;
@@ -458,7 +475,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [location.hash, topicQuery.data?.id]);
+  }, [location.hash, location.search, topicQuery.data?.id]);
 
   useLayoutEffect(() => {
     if (!hashRevealId) return;
