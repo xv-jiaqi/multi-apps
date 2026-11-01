@@ -239,6 +239,21 @@ describe('NotificationsPage', () => {
     expect(document.querySelector('ul[aria-hidden="true"]')).toBeNull();
   });
 
+  it('clamps an 80-character summary to two lines without a block display', () => {
+    rootStore.session.signIn('token', { id: 'u1', username: 'ada', role: 'user' });
+    const excerpt = '字'.repeat(80);
+    unreadState.data = { count: 1 };
+    listState.data = {
+      pages: [{ items: [row({ id: 'n1', excerpt })], nextCursor: null }],
+    };
+    listState.dataUpdatedAt = 1;
+    renderPage();
+
+    const summary = screen.getByText(excerpt);
+    expect(summary).toHaveClass('line-clamp-2');
+    expect(summary.className.split(/\s+/)).not.toContain('block');
+  });
+
   it('shows the empty state without a button', () => {
     rootStore.session.signIn('token', { id: 'u1', username: 'ada', role: 'user' });
     unreadState.data = { count: 0 };

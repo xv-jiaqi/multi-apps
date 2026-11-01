@@ -94,8 +94,3 @@ export function NotificationBell({ className }: { className?: string }) {
     </Link>
   );
 }
-
-export function notificationDrawerText(label: string, count: number | null): string {
-  const badge = count == null ? null : unreadBadgeText(count);
-  return badge ? `${label} ${badge}` : label;
-}

@@ -148,6 +148,33 @@ async function expectNoViolations() {
   ).toEqual([]);
 }
 
+describe('notifications summary clamp', () => {
+  it('keeps an 80-character summary to two lines at 375', async () => {
+    const excerpt = '字'.repeat(80);
+    harness.mode = 'ready';
+    harness.count = 1;
+    harness.items = [
+      {
+        id: 'n-long',
+        type: 'TOPIC_REPLY',
+        actor: { username: 'ada' },
+        excerpt,
+        href: '/forum/topic',
+        readAt: null,
+        createdAt: '2026-05-01T00:00:00.000Z',
+      },
+    ];
+    await commands.setViewport(375, 812);
+    renderPage();
+    const summary = await screen.findByText(excerpt);
+    const style = getComputedStyle(summary);
+    expect(style.getPropertyValue('-webkit-line-clamp')).toBe('2');
+    expect(style.display).not.toBe('block');
+    const lineHeight = Number.parseFloat(style.lineHeight);
+    expect(summary.getBoundingClientRect().height).toBeLessThanOrEqual(lineHeight * 2 + 1);
+  });
+});
+
 describe('notifications page WCAG', () => {
   it.each([
     ['ready', 'zh-CN', 1440],

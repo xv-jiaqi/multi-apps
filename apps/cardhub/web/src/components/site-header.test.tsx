@@ -71,7 +71,7 @@ describe('SiteHeader admin navigation', () => {
       within(menu as HTMLElement)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['内容管理', '用户管理', '举报队列', '操作审计']);
+    ).toEqual(['内容管理', '发售条目', '用户管理', '举报队列', '操作审计']);
     expect(screen.getByRole('link', { name: '操作审计' })).toHaveAttribute('href', '/admin/audit');
 
     await user.keyboard('{Escape}');
@@ -164,8 +164,12 @@ describe('SiteHeader admin navigation', () => {
     if (!(drawer instanceof HTMLElement)) throw new Error('抽屉没有打开');
     const links = within(drawer).getAllByRole('link');
     const meIndex = links.findIndex((link) => link.textContent?.includes('个人中心'));
-    expect(links[meIndex + 1]).toHaveTextContent('通知 3');
-    expect(links[meIndex + 1]).toHaveAttribute('href', '/notifications');
+    const drawerNotifications = links[meIndex + 1];
+    expect(drawerNotifications).toBeDefined();
+    expect(drawerNotifications).toHaveTextContent('通知 3');
+    expect(drawerNotifications).toHaveAccessibleName('通知，3 条未读');
+    expect(drawerNotifications?.querySelector('[aria-hidden="true"]')).toHaveTextContent('3');
+    expect(drawerNotifications).toHaveAttribute('href', '/notifications');
   });
 
   it('shows 99+ and clears cached notifications on sign out', async () => {

@@ -476,7 +476,7 @@ function NotificationItem({
           ) : null}
           {copy.action}
         </span>
-        <span className="mt-1 block text-sm text-neutral-600 line-clamp-2 wrap-anywhere">
+        <span className="mt-1 min-w-0 text-sm text-neutral-600 line-clamp-2 wrap-anywhere">
           {copy.body}
         </span>
         <time

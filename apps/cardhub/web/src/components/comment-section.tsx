@@ -25,7 +25,7 @@ import { BannedNotice } from './banned-notice';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { DeleteReasonField } from './delete-reason-field';
 import { ReportButton } from './report-button';
-import { parseHashTarget, revealElement } from '../lib/hash-target';
+import { parseHashTarget, reducedMotion, revealElement } from '../lib/hash-target';
 import { queryFallback, RetryButton, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
@@ -210,11 +210,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   threadsRef.current = threads;
   const location = useLocation();
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [hashMissing, setHashMissing] = useState(false);
+  const [hashNotice, setHashNotice] = useState('');
   const hashAttempt = useRef<string | null>(null);
   const revealedHash = useRef<string | null>(null);
-  const utilsRef = useRef(utils);
-  utilsRef.current = utils;
   const canReply = session.isAuthenticated && !session.isBanned;
 
   function invalidateList() {
@@ -680,64 +678,25 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     hashAttempt.current = location.hash;
     const elementId = `${target.kind}-${target.id}`;
     if (document.getElementById(elementId)) {
-      setHashMissing(false);
+      setHashNotice('');
       setHighlightedId(target.id);
       return;
     }
-    if (target.kind === 'comment') {
-      setHashMissing(true);
-      const title = document.getElementById('comment-section-title');
-      if (title) revealElement(title);
-      return;
+    // Old comment-reply links have no parentId. Do not probe other threads.
+    const title = document.getElementById('comment-section-title');
+    if (target.kind === 'reply') {
+      setHashNotice(tt('notifications.targetInComments'));
+    } else {
+      setHashNotice(tt('notifications.targetMissing'));
     }
-    let cancelled = false;
-    const threadsToProbe = list.data.flatMap((item) => {
-      if (typeof item !== 'object' || item === null || !('id' in item)) return [];
-      if (typeof item.id !== 'string') return [];
-      const replyCount =
-        'replyCount' in item && typeof item.replyCount === 'number' ? item.replyCount : 0;
-      const replies = 'replies' in item && Array.isArray(item.replies) ? item.replies : [];
-      const shownIds = replies.flatMap((reply) =>
-        reply && typeof reply === 'object' && 'id' in reply && typeof reply.id === 'string'
-          ? [reply.id]
-          : [],
-      );
-      return [{ id: item.id, replyCount, shownIds }];
-    });
-    void (async () => {
-      for (const thread of threadsToProbe) {
-        if (cancelled || thread.replyCount <= thread.shownIds.length) continue;
-        try {
-          const page = await utilsRef.current.comments.listReplies.fetch({
-            parentId: thread.id,
-            aroundId: target.id,
-            limit: 20,
-          });
-          if (cancelled || !page.items.some((reply) => reply.id === target.id)) continue;
-          setThreads((current) => {
-            const prev = current[thread.id] ?? emptyOverlay();
-            const appended = [...prev.appended];
-            for (const reply of page.items) {
-              if (!appended.some((item) => item.id === reply.id)) appended.push(reply);
-            }
-            return { ...current, [thread.id]: { ...prev, appended } };
-          });
-          setHashMissing(false);
-          setHighlightedId(target.id);
-          return;
-        } catch {
-          // Another thread may contain the reply.
-        }
-      }
-      if (cancelled) return;
-      setHashMissing(true);
-      const title = document.getElementById('comment-section-title');
-      if (title) revealElement(title);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [commentsView, list.data, location.hash]);
+    if (title instanceof HTMLElement) {
+      title.scrollIntoView?.({
+        block: 'start',
+        behavior: reducedMotion() ? 'auto' : 'smooth',
+      });
+      title.focus({ preventScroll: true });
+    }
+  }, [commentsView, list.data, location.hash, tt]);
 
   useLayoutEffect(() => {
     if (!highlightedId || revealedHash.current === highlightedId) return;
@@ -753,11 +712,9 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   return (
     <div className="space-y-4" aria-busy={commentsLoading ? true : undefined}>
-      {hashMissing ? (
-        <p role="status" className="text-sm text-neutral-600">
-          {tt('notifications.targetMissing')}
-        </p>
-      ) : null}
+      <p role="status" className={hashNotice ? 'text-sm text-neutral-600' : 'sr-only'}>
+        {hashNotice}
+      </p>
       {session.isAuthenticated && session.isBanned ? (
         <BannedNotice>{tt('ban.cannotComment')}</BannedNotice>
       ) : session.isAuthenticated ? (

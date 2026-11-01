@@ -8,6 +8,10 @@ describe('app routes', () => {
     expect(path('/')).toBe('/');
     expect(path('/forum/new')).toBe('/forum/new');
     expect(path('/forum/some-topic')).toBe('/forum/:slug');
+    expect(path('/calendar')).toBe('/calendar');
+    expect(path('/admin/releases')).toBe('/admin/releases');
+    expect(path('/admin/releases/new')).toBe('/admin/releases/new');
+    expect(path('/admin/releases/rel-1/edit')).toBe('/admin/releases/:id/edit');
     expect(path('/admin/users')).toBe('/admin/users');
     expect(path('/admin/audit')).toBe('/admin/audit');
     expect(path('/admin/catalog/series/new')).toBe('/admin/catalog/series/new');

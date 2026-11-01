@@ -13,7 +13,7 @@ export function unreadBadgeText(count: number): string | null {
 export function notificationBellLabel(locale: Locale, count: number | null): string {
   if (count == null || count <= 0) return t(locale, 'notifications.bellAria');
   if (count >= 100) return t(locale, 'notifications.bellAriaOverflow');
-  return t(locale, 'notifications.bellAriaCount', { n: count });
+  return t(locale, 'notifications.bellAriaCount', { n: count, count });
 }
 
 export function unreadSummary(locale: Locale, count: number): string {

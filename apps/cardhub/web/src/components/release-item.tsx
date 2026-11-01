@@ -48,11 +48,13 @@ function ReleaseArtwork({ series }: { series: NonNullable<ReleaseListItem['serie
 function ReleaseMeta({
   item,
   showDate,
+  dateLabel,
   locale,
   tt,
 }: {
   item: ReleaseListItem;
   showDate: boolean;
+  dateLabel?: string;
   locale: string;
   tt: (key: string) => string;
 }) {
@@ -60,7 +62,11 @@ function ReleaseMeta({
   if (showDate) {
     bits.push({
       key: 'date',
-      node: <time dateTime={item.releaseDate}>{formatCatalogDate(locale, item.releaseDate)}</time>,
+      node: dateLabel ? (
+        <span>{dateLabel}</span>
+      ) : (
+        <time dateTime={item.releaseDate}>{formatCatalogDate(locale, item.releaseDate)}</time>
+      ),
     });
   }
   const region = regionLabel(item.region, tt);
@@ -102,16 +108,27 @@ export const ReleaseItem = observer(function ReleaseItem({
   item,
   titleLevel,
   showDate,
+  dateLabel,
 }: {
   item: ReleaseListItem;
   titleLevel: 'h3' | 'h4';
   showDate: boolean;
+  /** Replaces the formatted day, used for month-precision rows. */
+  dateLabel?: string;
 }) {
   const { locale } = useStores();
   const tt = (key: string) => t(locale.locale, key);
   const source = httpsSource(item.sourceUrl);
   const title = <ReleaseTitle level={titleLevel}>{item.title}</ReleaseTitle>;
-  const meta = <ReleaseMeta item={item} showDate={showDate} locale={locale.locale} tt={tt} />;
+  const meta = (
+    <ReleaseMeta
+      item={item}
+      showDate={showDate}
+      dateLabel={dateLabel}
+      locale={locale.locale}
+      tt={tt}
+    />
+  );
   const note = <ReleaseNote note={item.note} />;
   const sourceLink = source ? <ReleaseSource url={source} tt={tt} /> : null;
 

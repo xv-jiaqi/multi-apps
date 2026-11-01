@@ -16,7 +16,7 @@ export function reducedMotion(): boolean {
 }
 
 export function revealElement(node: HTMLElement): void {
-  node.scrollIntoView({
+  node.scrollIntoView?.({
     block: 'center',
     behavior: reducedMotion() ? 'auto' : 'smooth',
   });
