@@ -329,7 +329,7 @@ API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次
 
 ### 7.5.3 本地验证生产构建
 
-CI 的 `api-image` job 会构建 API 镜像并运行 [`scripts/check-api-image.sh`](../../scripts/check-api-image.sh)。脚本检查 `/health`（`gitSha`、`db`、`redis`）、`Server-Timing`、`Timing-Allow-Origin`、超大 body 的 413 和坏 JSON 的 400。PR 用这条 job 的日志代替手贴这些响应。本地要复现时，把镜像接到真实的 Postgres 16 和 Redis 7，再跑同一个脚本：
+CI 的 `api-image` job（检查名 `API image build`）会构建 API 镜像并运行 [`scripts/check-api-image.sh`](../../scripts/check-api-image.sh)。脚本检查 `/health`（`gitSha`、`db`、`redis`）、`Server-Timing`、`Timing-Allow-Origin`、超大 body 的 413 和坏 JSON 的 400。`web-image`（检查名 `Web image build`）用与 Cardhub Images 相同的 context、`Dockerfile.web` 和 `GIT_SHA` / `BUILD_TIME` 构建 Web 镜像，不登录镜像仓库，也不推送。PR 用这两条 job 的日志代替手贴这些响应。本地要复现 API 检查时，把镜像接到真实的 Postgres 16 和 Redis 7，再跑同一个脚本：
 
 ```bash
 docker build -f Dockerfile.api --build-arg GIT_SHA="$(git rev-parse HEAD)" -t cardhub-api:test .
