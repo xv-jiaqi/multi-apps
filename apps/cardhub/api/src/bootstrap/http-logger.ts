@@ -52,12 +52,25 @@ function decodeQueryKey(rawKey: string): string {
   }
 }
 
+/**
+ * True when the decoded key is a secret name, or that name plus a `[...]`
+ * suffix (`token[]`, `TOKEN[0]`, `input%5Ba%5D`). `tokens[]` and
+ * `filter[token]` stay: the name before `[` is not a secret key.
+ */
+function isRedactedQueryKey(key: string): boolean {
+  const decoded = decodeQueryKey(key).toLowerCase();
+  if (REDACTED_QUERY_KEYS.has(decoded)) return true;
+  const bracket = decoded.indexOf('[');
+  if (bracket <= 0) return false;
+  return REDACTED_QUERY_KEYS.has(decoded.slice(0, bracket));
+}
+
 function redactQuery(query: unknown): unknown {
   if (Array.isArray(query)) return query.map((item) => redactQuery(item));
   if (!isRecord(query)) return query;
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(query)) {
-    out[key] = REDACTED_QUERY_KEYS.has(key.toLowerCase()) ? '[Redacted]' : value;
+    out[key] = isRedactedQueryKey(key) ? '[Redacted]' : value;
   }
   return out;
 }
@@ -73,7 +86,7 @@ function redactUrl(url: string): string {
       if (part.length === 0) return part;
       const eq = part.indexOf('=');
       const rawKey = eq === -1 ? part : part.slice(0, eq);
-      if (!REDACTED_QUERY_KEYS.has(decodeQueryKey(rawKey).toLowerCase())) return part;
+      if (!isRedactedQueryKey(rawKey)) return part;
       return `${rawKey}=${encodeURIComponent('[Redacted]')}`;
     })
     .join('&');
