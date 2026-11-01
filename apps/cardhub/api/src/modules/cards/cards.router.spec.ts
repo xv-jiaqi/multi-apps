@@ -55,6 +55,29 @@ describe('CardsRouter.search', () => {
     expect(args.orderBy).toEqual({ name: 'asc' });
   });
 
+  it('keeps null parallel names when an exclude term misses the printed name', async () => {
+    const { caller, findMany } = makeRouter();
+    findMany.mockResolvedValueOnce([]);
+
+    await caller.search({ q: '-火', limit: 5 });
+
+    expect(findMany.mock.calls[0]?.[0].where).toEqual({
+      AND: [
+        {
+          AND: [
+            { NOT: { name: { contains: '火', mode: 'insensitive' } } },
+            {
+              OR: [
+                { parallelName: null },
+                { NOT: { parallelName: { contains: '火', mode: 'insensitive' } } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   it('accepts explicit rarity and series filters without changing result shape', async () => {
     const { caller, findMany } = makeRouter();
     findMany.mockResolvedValueOnce([]);

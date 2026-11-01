@@ -373,6 +373,43 @@ describe('card parallels', () => {
     expect(whole(resultData(seriesSkipsParallelName.body), 'total')).toBe(0);
   });
 
+  it('keeps base cards when an exclude term misses a null parallel name', async () => {
+    const excludeSlug = slug('excl');
+    await post('admin.series.create', { slug: excludeSlug, title: '排除系列' }, adminToken);
+    await createCard({ slug: slug('sn-ice'), name: '冰霜', seriesSlug: excludeSlug });
+    await createCard({ slug: slug('sn-pct'), name: '百分比', seriesSlug: excludeSlug });
+    await createCard({
+      slug: slug('sn-icegold'),
+      name: '冰金',
+      seriesSlug: excludeSlug,
+      parallelOfSlug: slug('sn-ice'),
+      parallelName: '金箔',
+    });
+    await createCard({
+      slug: slug('sn-flame'),
+      name: '冷卡',
+      seriesSlug: excludeSlug,
+      parallelOfSlug: slug('sn-ice'),
+      parallelName: '火焰',
+    });
+    await createCard({ slug: slug('sn-fire'), name: '火焰', seriesSlug: excludeSlug });
+
+    const query = { q: `s:${excludeSlug} -火`, limit: 10 };
+    const global = await get('search.global', query);
+    expect(global.status).toBe(200);
+    const globalSlugs = rowsOf(global.body, 'cards').map((row) => text(row, 'slug'));
+    expect(globalSlugs.sort()).toEqual([slug('sn-ice'), slug('sn-icegold'), slug('sn-pct')].sort());
+
+    const searched = await get('cards.search', { ...query, seriesSlug: excludeSlug });
+    expect(searched.status).toBe(200);
+    const searchedSlugs = rowsOf(searched.body, 'results').map((row) => text(row, 'slug'));
+    expect(searchedSlugs.sort()).toEqual(
+      [slug('sn-ice'), slug('sn-icegold'), slug('sn-pct')].sort(),
+    );
+
+    await prisma.series.deleteMany({ where: { slug: excludeSlug } });
+  });
+
   it('counts only base cards in collection progress', async () => {
     const ownedBase = await post(
       'collection.upsert',
@@ -764,6 +801,31 @@ describe('card parallels', () => {
     expect(movedChild?.seriesId).toBe(seriesB.id);
     expect(movedChild?.parallelOfId).toBeNull();
     expect(movedChild?.parallelName).toBe('原名');
+
+    const clearBase = await prisma.card.create({
+      data: { slug: slug('clear-base'), name: '显式解绑基础', seriesId: seriesA.id },
+    });
+    const clearChild = await prisma.card.create({
+      data: {
+        slug: slug('clear-child'),
+        name: '显式解绑平行',
+        seriesId: seriesA.id,
+        parallelOfId: clearBase.id,
+        parallelName: '留名',
+      },
+    });
+    await prisma.$executeRaw`
+      UPDATE "cards"
+      SET "seriesId" = ${seriesB.id},
+          "parallelOfId" = CASE WHEN "id" = ${clearChild.id} THEN NULL ELSE "parallelOfId" END
+      WHERE "id" = ${clearBase.id} OR "id" = ${clearChild.id}
+    `;
+    const cleared = await prisma.card.findUnique({ where: { id: clearChild.id } });
+    const clearedBase = await prisma.card.findUnique({ where: { id: clearBase.id } });
+    expect(clearedBase?.seriesId).toBe(seriesB.id);
+    expect(cleared?.seriesId).toBe(seriesB.id);
+    expect(cleared?.parallelOfId).toBeNull();
+    expect(cleared?.parallelName).toBe('留名');
 
     await prisma.series.deleteMany({ where: { id: { in: [seriesA.id, seriesB.id] } } });
   });
