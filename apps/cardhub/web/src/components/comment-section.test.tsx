@@ -346,6 +346,115 @@ describe('CommentSection (unauthenticated)', () => {
     expect(listRepliesFetch).not.toHaveBeenCalled();
   });
 
+  it('loads the around page when the reply link has a parentId', async () => {
+    const parentId = '11111111-1111-4111-8111-111111111111';
+    const replyId = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
+    queryState.data = [
+      {
+        id: parentId,
+        content: 'top comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+        replyCount: 30,
+        replies: [],
+      },
+    ];
+    listRepliesFetch.mockResolvedValue({
+      items: [
+        {
+          id: replyId,
+          content: 'nested reply',
+          createdAt: '2026-05-02T00:00:00Z',
+          user: { id: 'u2', username: 'bob' },
+        },
+      ],
+      nextCursor: null,
+    });
+    render(
+      <MemoryRouter initialEntries={[`/cards/aurora-knight?parentId=${parentId}#reply-${replyId}`]}>
+        <h2 id="comment-section-title" tabIndex={-1}>
+          评论区
+        </h2>
+        <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('nested reply')).toBeInTheDocument();
+    expect(listRepliesFetch).toHaveBeenCalledWith({ parentId, aroundId: replyId, limit: 20 });
+    await waitFor(() => {
+      expect(document.getElementById(`reply-${replyId}`)).toHaveFocus();
+    });
+    expect(screen.queryByRole('link', { name: '查看全部评论' })).not.toBeInTheDocument();
+  });
+
+  it('shows the missing copy and an all-comments link when that page has no reply', async () => {
+    const parentId = '11111111-1111-4111-8111-111111111111';
+    const replyId = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
+    queryState.data = [
+      {
+        id: parentId,
+        content: 'top comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+        replies: [],
+      },
+    ];
+    listRepliesFetch.mockResolvedValue({ items: [], nextCursor: null });
+    render(
+      <MemoryRouter initialEntries={[`/cards/aurora-knight?parentId=${parentId}#reply-${replyId}`]}>
+        <h2 id="comment-section-title" tabIndex={-1}>
+          评论区
+        </h2>
+        <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+      </MemoryRouter>,
+    );
+
+    const hint = await screen.findByText('这条回复可能已被删除或折叠。');
+    expect(hint.closest('[role="status"]')).not.toBeNull();
+    expect(screen.getByRole('link', { name: '查看全部评论' })).toHaveAttribute(
+      'href',
+      '#comment-section-title',
+    );
+    expect(document.getElementById('comment-section-title')).toHaveFocus();
+    expect(listRepliesFetch).toHaveBeenCalledTimes(1);
+
+    const title = document.getElementById('comment-section-title');
+    if (!(title instanceof HTMLElement)) throw new Error('评论区标题不存在');
+    title.blur();
+    expect(title).not.toHaveFocus();
+    await userEvent.click(screen.getByRole('link', { name: '查看全部评论' }));
+    expect(title).toHaveFocus();
+  });
+
+  it('treats an unloaded parent like an old reply link and does not page', async () => {
+    const parentId = '11111111-1111-4111-8111-111111111111';
+    const replyId = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
+    queryState.data = [
+      {
+        id: '22222222-2222-4222-8222-222222222222',
+        content: 'some other comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+        replies: [],
+      },
+    ];
+    render(
+      <MemoryRouter initialEntries={[`/cards/aurora-knight?parentId=${parentId}#reply-${replyId}`]}>
+        <h2 id="comment-section-title" tabIndex={-1}>
+          评论区
+        </h2>
+        <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+      </MemoryRouter>,
+    );
+
+    const hint = await screen.findByText('没能直接跳到这条回复，它在下面的评论里。');
+    expect(hint.closest('[role="status"]')).not.toBeNull();
+    expect(screen.queryByText('这条回复可能已被删除或折叠。')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '查看全部评论' })).not.toBeInTheDocument();
+    expect(document.getElementById('comment-section-title')).toHaveFocus();
+    expect(listRepliesFetch).not.toHaveBeenCalled();
+  });
+
   it('styles an @name in the middle and leaves an email alone', () => {
     queryState.data = [
       {

@@ -3,6 +3,15 @@ const HASH_TARGET =
 
 export type HashTarget = { kind: 'reply' | 'comment'; id: string };
 
+const PARENT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Comment-reply links add this query only when the parent id is a uuid. */
+export function readParentId(search: string): string | null {
+  const value = new URLSearchParams(search).get('parentId');
+  if (!value || !PARENT_ID.test(value)) return null;
+  return value;
+}
+
 export function parseHashTarget(hash: string): HashTarget | null {
   const match = HASH_TARGET.exec(hash);
   const kind = match?.[1];

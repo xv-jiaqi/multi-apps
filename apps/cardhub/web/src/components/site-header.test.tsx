@@ -184,6 +184,19 @@ describe('SiteHeader admin navigation', () => {
     const bell = screen.getAllByRole('link', { name: '通知，99 条以上未读' })[0];
     expect(bell).toBeDefined();
     expect(bell?.textContent).toContain('99+');
+    const badge = bell?.querySelector('[aria-hidden="true"] + [aria-hidden="true"]');
+    expect(badge).toHaveClass(
+      'absolute',
+      '-top-1',
+      '-right-1',
+      'h-4',
+      'min-w-4',
+      'leading-4',
+      'bg-brand-600',
+      'ring-2',
+      'ring-white',
+    );
+    expect(badge).not.toHaveClass('h-5', 'min-w-5', '-top-0.5');
 
     await user.click(screen.getByRole('button', { name: '退出登录' }));
     expect(clearNotificationCache).toHaveBeenCalled();

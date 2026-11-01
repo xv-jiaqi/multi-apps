@@ -25,7 +25,8 @@ import { BannedNotice } from './banned-notice';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { DeleteReasonField } from './delete-reason-field';
 import { ReportButton } from './report-button';
-import { parseHashTarget, reducedMotion, revealElement } from '../lib/hash-target';
+import { HashTargetNotice } from './hash-target-notice';
+import { parseHashTarget, readParentId, reducedMotion, revealElement } from '../lib/hash-target';
 import { queryFallback, RetryButton, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
@@ -211,7 +212,12 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const location = useLocation();
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [hashNotice, setHashNotice] = useState('');
+  const [hashNoticeHref, setHashNoticeHref] = useState<string | null>(null);
   const hashAttempt = useRef<string | null>(null);
+  const utilsRef = useRef(utils);
+  utilsRef.current = utils;
+  const ttRef = useRef(tt);
+  ttRef.current = tt;
   const revealedHash = useRef<string | null>(null);
   const canReply = session.isAuthenticated && !session.isBanned;
 
@@ -674,29 +680,93 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   useEffect(() => {
     const target = parseHashTarget(location.hash);
     if (!target || commentsView !== 'ready' || !list.data) return;
-    if (hashAttempt.current === location.hash) return;
-    hashAttempt.current = location.hash;
-    const elementId = `${target.kind}-${target.id}`;
-    if (document.getElementById(elementId)) {
-      setHashNotice('');
-      setHighlightedId(target.id);
-      return;
-    }
-    // Old comment-reply links have no parentId. Do not probe other threads.
-    const title = document.getElementById('comment-section-title');
-    if (target.kind === 'reply') {
-      setHashNotice(tt('notifications.targetInComments'));
-    } else {
-      setHashNotice(tt('notifications.targetMissing'));
-    }
-    if (title instanceof HTMLElement) {
+    const attemptKey = `${location.search}${location.hash}`;
+    if (hashAttempt.current === attemptKey) return;
+    hashAttempt.current = attemptKey;
+    let settled = false;
+    let cancelled = false;
+
+    const focusTitle = () => {
+      const title = document.getElementById('comment-section-title');
+      if (!(title instanceof HTMLElement)) return;
       title.scrollIntoView?.({
         block: 'start',
         behavior: reducedMotion() ? 'auto' : 'smooth',
       });
       title.focus({ preventScroll: true });
+    };
+    const showFound = (id: string) => {
+      setHashNotice('');
+      setHashNoticeHref(null);
+      setHighlightedId(id);
+    };
+    const showMissing = () => {
+      setHashNotice(ttRef.current('notifications.targetMissing'));
+      setHashNoticeHref('#comment-section-title');
+      focusTitle();
+    };
+    const showInComments = () => {
+      setHashNotice(ttRef.current('notifications.targetInComments'));
+      setHashNoticeHref(null);
+      focusTitle();
+    };
+
+    if (document.getElementById(`${target.kind}-${target.id}`)) {
+      settled = true;
+      showFound(target.id);
+      return;
     }
-  }, [commentsView, list.data, location.hash, tt]);
+    if (target.kind === 'comment') {
+      settled = true;
+      showMissing();
+      return;
+    }
+
+    const parentId = readParentId(location.search);
+    // No parentId, or that parent is not on the loaded page: do not page
+    // through other threads. The reply may still exist further down.
+    if (!parentId || !list.data.some((comment) => comment.id === parentId)) {
+      settled = true;
+      showInComments();
+      return;
+    }
+
+    const replyId = target.id;
+    void (async () => {
+      try {
+        const page = await utilsRef.current.comments.listReplies.fetch({
+          parentId,
+          aroundId: replyId,
+          limit: 20,
+        });
+        if (cancelled) return;
+        settled = true;
+        if (!page.items.some((item) => item.id === replyId)) {
+          showMissing();
+          return;
+        }
+        setThreads((current) => {
+          const prev = current[parentId] ?? emptyOverlay();
+          const appended = [...prev.appended];
+          const seen = new Set(appended.map((reply) => reply.id));
+          for (const item of page.items) {
+            if (!seen.has(item.id)) appended.push(item);
+          }
+          return { ...current, [parentId]: { ...prev, appended } };
+        });
+        showFound(replyId);
+      } catch {
+        if (cancelled) return;
+        settled = true;
+        showInComments();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (!settled) hashAttempt.current = null;
+    };
+  }, [commentsView, list.data, location.hash, location.search]);
 
   useLayoutEffect(() => {
     if (!highlightedId || revealedHash.current === highlightedId) return;
@@ -712,9 +782,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   return (
     <div className="space-y-4" aria-busy={commentsLoading ? true : undefined}>
-      <p role="status" className={hashNotice ? 'text-sm text-neutral-600' : 'sr-only'}>
-        {hashNotice}
-      </p>
+      <HashTargetNotice
+        message={hashNotice}
+        actionHref={hashNoticeHref ?? undefined}
+        actionLabel={hashNoticeHref ? tt('notifications.targetMissingAction') : undefined}
+      />
       {session.isAuthenticated && session.isBanned ? (
         <BannedNotice>{tt('ban.cannotComment')}</BannedNotice>
       ) : session.isAuthenticated ? (
