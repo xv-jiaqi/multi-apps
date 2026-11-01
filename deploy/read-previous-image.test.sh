@@ -254,6 +254,8 @@ EOF
       export env_name="staging"
       export project="cardhub-staging"
       export active_image_tag="${tag}"
+      export active_api_image="ghcr.io/xv-jiaqi/cardhub-api:${tag}"
+      export active_web_image="ghcr.io/xv-jiaqi/cardhub-web:${tag}"
       export env_file="${work}/root/staging/staging.env"
       export compose_file="${work}/root/staging/deploy/docker-compose.yml"
       previous_api_image="$(read_previous_image api)"
@@ -273,6 +275,8 @@ EOF
       PREV_STUB_LOG="${docker_log}" \
       PREV_STUB_MODE="${mode}" \
       PREV_STUB_TAG="${tag}" \
+      API_IMAGE_DIGEST="sha256:$(printf '1%.0s' {1..64})" \
+      WEB_IMAGE_DIGEST="sha256:$(printf '2%.0s' {1..64})" \
       bash "${deploy_script}" staging "${tag}" "${sha}" > "${script_log}" 2>&1 || script_rc=$?
   else
     echo "unknown driver ${driver}" >&2

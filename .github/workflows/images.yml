@@ -23,6 +23,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # digest artifacts are how Deploy pins the image this job pushed
+      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +55,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push ${{ matrix.name }}
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -70,3 +73,25 @@ jobs:
           tags: |
             ${{ matrix.image }}:sha-${{ github.event.workflow_run.head_sha }}
             ${{ matrix.image }}:main
+
+      # The tag can move again after this step. Deploy reads this file from
+      # the successful run and pulls image@digest, not the tag.
+      - name: Record image digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Refusing to publish an image digest that is not sha256:<64 hex>" >&2
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/image-digest"
+          printf '%s\n' "${DIGEST}" > "${RUNNER_TEMP}/image-digest/digest"
+
+      - name: Upload image digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-digest-${{ matrix.name }}
+          path: ${{ runner.temp }}/image-digest/digest
+          retention-days: 90
+          if-no-files-found: error

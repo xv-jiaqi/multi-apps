@@ -12,6 +12,8 @@ workflow="${root}/.github/workflows/deploy.yml"
 header_src="${root}/apps/cardhub/api/src/modules/redis/cache-header.ts"
 sha="$(printf 'c%.0s' {1..40})"
 tag="sha-${sha}"
+api_digest="sha256:$(printf 'a%.0s' {1..64})"
+web_digest="sha256:$(printf 'b%.0s' {1..64})"
 failed=0
 
 assert() {
@@ -147,6 +149,8 @@ run_workflow() {
         DEPLOY_ENVIRONMENT=staging \
         DEPLOY_IMAGE_TAG="${tag}" \
         DEPLOY_EXPECTED_SHA="${sha}" \
+        API_IMAGE_DIGEST="${api_digest}" \
+        WEB_IMAGE_DIGEST="${web_digest}" \
         SSH_LOG="${work}/ssh.log" \
         bash "${extracted}"
     else
@@ -158,6 +162,8 @@ run_workflow() {
         DEPLOY_ENVIRONMENT=staging \
         DEPLOY_IMAGE_TAG="${tag}" \
         DEPLOY_EXPECTED_SHA="${sha}" \
+        API_IMAGE_DIGEST="${api_digest}" \
+        WEB_IMAGE_DIGEST="${web_digest}" \
         SSH_LOG="${work}/ssh.log" \
         bash "${extracted}"
     fi

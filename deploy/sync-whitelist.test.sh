@@ -24,6 +24,7 @@ declare -A not_synced_reason=(
   [resolve-deploy-inputs.sh]="run on the GitHub runner by deploy.yml to resolve the image tag and refuse a stale deploy tree before sync"
   [plan-edge-apply.sh]="run on the GitHub runner by the edge sync step to decide whether apply-edge-config.sh needs --changed"
   [prove-infra-ref.sh]="run on the GitHub runner as a checkout dry-run of resolve-deploy-inputs.sh; it compares the workflow ref with an image commit and is not installed on the VPS"
+  [resolve-image-digests.sh]="run on the GitHub runner by deploy.yml to read the Images run digests for the target SHA before anything is synced to the VPS"
 )
 
 # bf1186a Sync deploy files tar. check-backup-log.sh was already in the tree

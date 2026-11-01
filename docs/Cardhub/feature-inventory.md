@@ -29,7 +29,7 @@ Cardhub 定位为“维基式卡牌知识库 + 社区”。PRD 的 MVP（Epic 1�
 | 预发 | https://staging.card-hub.app | https://api-staging.card-hub.app/trpc   | main 上 CI + 镜像构建成功后自动部署                      |
 | 本地 | http://localhost:5173        | http://localhost:4000/trpc（Vite 代理） | `pnpm db:up && pnpm db:migrate && pnpm dev`              |
 
-部署拓扑：阿里云香港 Ubuntu 24.04 VPS → 共享 Caddy（自动 HTTPS、反向代理）→ `cardhub-prod` 与 `cardhub-staging` 两个 Docker Compose project（各自包含 api / web / Postgres 16 / Redis 7）。镜像在 GHCR，标签为不可变的 `sha-<完整 commit>`。数据库每日 `pg_dump`，可选上传阿里云 OSS（香港）做异地备份。完整运维手册见 [deploy/README.md](../../deploy/README.md)。
+部署拓扑：阿里云香港 Ubuntu 24.04 VPS → 共享 Caddy（自动 HTTPS、反向代理）→ `cardhub-prod` 与 `cardhub-staging` 两个 Docker Compose project（各自包含 api / web / Postgres 16 / Redis 7）。镜像在 GHCR。部署按该 commit 的 Images 构建记录的 digest 拉取 `image@sha256:...`，`sha-<完整 commit>` 只用来点名这次构建。数据库每日 `pg_dump`，可选上传阿里云 OSS（香港）做异地备份。完整运维手册见 [deploy/README.md](../../deploy/README.md)。
 
 生产与预发只运行 catalog seed（3 个系列 / 9 张演示卡牌，中文），不创建 demo 账号。
 

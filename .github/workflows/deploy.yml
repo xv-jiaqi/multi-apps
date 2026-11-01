@@ -186,6 +186,8 @@ jobs:
     permissions:
       contents: read
       packages: read
+      # Read the Images run and its digest artifacts for this SHA.
+      actions: read
     env:
       EVENT_NAME: ${{ github.event_name }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -228,28 +230,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Wait for GHCR images
+      # Polls until the Images run for DEPLOY_EXPECTED_SHA has succeeded,
+      # then reads that run's digest artifacts. An in-progress, failed, or
+      # missing run exits here, before any file is synced and before the
+      # VPS script is started. The wait can take about 10 minutes.
+      - name: Resolve image digests
+        id: image-digests
         shell: bash
-        run: |
-          set -euo pipefail
-          for image in ghcr.io/xv-jiaqi/cardhub-api ghcr.io/xv-jiaqi/cardhub-web; do
-            found=0
-            for _ in {1..30}; do
-              if docker manifest inspect "${image}:${DEPLOY_IMAGE_TAG}" >/dev/null 2>&1; then
-                found=1
-                break
-              fi
-              sleep 10
-            done
-            if [ "${found}" -ne 1 ]; then
-              echo "Timed out waiting for ${image}:${DEPLOY_IMAGE_TAG}" >&2
-              exit 1
-            fi
-          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash deploy/resolve-image-digests.sh
 
-      # Keep this step immediately above "Sync deploy files". The GHCR wait
-      # above can run for about 10 minutes after the first --assert; this
-      # fetch is the check that still matches origin/main at upload time.
+      # Keep this step immediately above "Sync deploy files". Digest
+      # resolution above can run for about 10 minutes after the first
+      # --assert; this fetch is the check that still matches origin/main
+      # at upload time.
       - name: Re-check deploy tree before sync
         shell: bash
         run: |
@@ -307,6 +302,8 @@ jobs:
           # This step is the manual staging path, the manual production path,
           # and the staging auto-deploy after CI. Do not echo the value.
           WEB_SENTRY_DSN: ${{ secrets.WEB_SENTRY_DSN }}
+          API_IMAGE_DIGEST: ${{ steps.image-digests.outputs.api_digest }}
+          WEB_IMAGE_DIGEST: ${{ steps.image-digests.outputs.web_digest }}
         run: |
           set -euo pipefail
           remote="${DEPLOY_USER}@${DEPLOY_HOST}"
@@ -314,6 +311,13 @@ jobs:
           image_tag="$(printf '%q' "${DEPLOY_IMAGE_TAG}")"
           expected_sha="$(printf '%q' "${DEPLOY_EXPECTED_SHA}")"
           remote_script="$(printf '%q' "/opt/cardhub/${DEPLOY_ENVIRONMENT}/deploy/remote-deploy.sh")"
+          if [[ ! "${API_IMAGE_DIGEST:-}" =~ ^sha256:[0-9a-f]{64}$ ]] || [[ ! "${WEB_IMAGE_DIGEST:-}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "API_IMAGE_DIGEST and WEB_IMAGE_DIGEST must be sha256:<64 hex> before the VPS deploy" >&2
+            exit 1
+          fi
+          # Digests are fixed sha256:<64 hex>. They go before the other
+          # prefixes so those prefixes stay immediately in front of bash.
+          digest_prefix="API_IMAGE_DIGEST=${API_IMAGE_DIGEST} WEB_IMAGE_DIGEST=${WEB_IMAGE_DIGEST} "
           # Unset or blank keeps the server line. Only true or false is sent,
           # and the raw value is not printed. The remote script writes the key.
           prehash="$(
@@ -368,4 +372,4 @@ jobs:
             dsn_prefix="WEB_SENTRY_DSN=${dsn_quoted} "
           fi
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "${cache_header_prefix}${dsn_prefix}${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"
+            "${digest_prefix}${cache_header_prefix}${dsn_prefix}${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"

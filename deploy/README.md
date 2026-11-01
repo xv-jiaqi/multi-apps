@@ -269,20 +269,49 @@ Production and staging deploys go through `remote-deploy.sh`. A plain
 one is listening, and the shared edge Caddy then has nothing to dial.
 
 ```bash
-/opt/cardhub/production/deploy/remote-deploy.sh production sha-<full-git-sha> <full-git-sha>
+API_IMAGE_DIGEST=sha256:<api-manifest> WEB_IMAGE_DIGEST=sha256:<web-manifest> \
+  /opt/cardhub/production/deploy/remote-deploy.sh production sha-<full-git-sha> <full-git-sha>
 ```
+
+The two digests are required. Without them the script exits non-zero before
+it pulls or recreates a container. GitHub Actions fills them in: staging
+auto-deploy and the manual production (or staging) run both call
+`deploy/resolve-image-digests.sh` before sync. That script waits until the
+Cardhub Images run for that exact commit has succeeded, then reads the
+`image-digest-api` and `image-digest-web` artifacts written from
+`docker/build-push-action`'s digest output. Pulls and `compose up` use
+`ghcr.io/xv-jiaqi/cardhub-api@sha256:...` and the same form for web, not the
+`sha-<commit>` tag. A tag can be published while the Images run is still
+going, or pushed again later; the artifact is the manifest that run actually
+pushed.
+
+If that Images run is still in progress, failed, or missing, resolution
+exits and the VPS is not contacted. An artifact that is not `sha256:` plus
+64 hex is the same failure. A successful run that has no artifact (a build
+from before this change, or one whose artifact aged out) is the only case
+that resolves `sha-<commit>` to a digest, and only after that run has
+already succeeded. A missing manifest fails the same way.
 
 Use `staging` with `/opt/cardhub/staging/staging.env` for staging. If both run
 on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
 and passwords in each env file. Production deploys are manual; staging can be
-redeployed automatically by GitHub Actions after CI and image builds succeed on
-main. Production deploys require an explicit immutable `sha-<full-git-sha>` tag.
-That tag selects the API and web images only. The workflow checks out
+redeployed automatically by GitHub Actions after CI on main. The image tag
+names the git SHA. It is not the ref that is pulled. The workflow checks out
 `github.sha` (the main commit this run is pinned to) and syncs
 `deploy/docker-compose.yml`, `remote-deploy.sh`, and `deploy/edge/` from that
 commit. It does not check out the image tag. Rolling an older image back
 cannot replace the shared Caddyfile or the rolling deploy script with the
-copies stored in that older commit.
+copies stored in that older commit. Manual rollback is the same workflow
+with the older `sha-<full-git-sha>`: resolution loads that commit's digests.
+
+Re-running a deploy whose api and web containers already have those digests
+does not pull, migrate, or recreate them. It checks the running digests and
+the public `/health` git SHA, then exits. Set `CARDHUB_FORCE_ROLLOUT=1` when
+the same digest must be recreated so a changed env file is applied (the
+database role cutover does this). After `compose up`, each new api and web
+container's image digest (`RepoDigests`, or `.Image` when the image has no
+repo digest) must equal the digest that was pulled. A mismatch fails the
+deploy and the existing rollback starts the previous digests.
 
 `remote-deploy.sh` writes `PASSWORD_PREHASH_WRITE` into that environment's
 env file after `ENV_NAME` matches and before it replaces containers. The
@@ -310,7 +339,7 @@ Either case would otherwise sync old compose files, `remote-deploy.sh`, and
 the shared edge, then reload Caddy.
 
 The first check is not the one that guards the upload. The deploy job then
-waits up to about 10 minutes for the GHCR image. The edge job configures SSH
+waits up to about 10 minutes for the Images run and its digests. The edge job configures SSH
 before it packs `deploy/edge`. Each job runs `git fetch origin main` and
 `deploy/resolve-deploy-inputs.sh --assert` again as the step immediately
 before the step that syncs those files. The deploy job's next command is
@@ -450,9 +479,12 @@ After a switch succeeds, `remote-deploy.sh` records the API and web `sha-`
 tags that were running before that switch in
 `/opt/cardhub/<environment>/.deploy-state/`. A rollback leaves the file
 unchanged.
-After a successful deploy, `image-cleanup.sh` removes only stale
+After a successful deploy, `remote-deploy.sh` also tags the pulled digest
+locally as `sha-<commit>` so cleanup can still see it. `image-cleanup.sh`
+removes only stale
 `ghcr.io/xv-jiaqi/cardhub-api:sha-*` and
-`ghcr.io/xv-jiaqi/cardhub-web:sha-*` images. Cleanup keeps, independently for
+`ghcr.io/xv-jiaqi/cardhub-web:sha-*` images. The running container's image
+reference stays `name@sha256:<digest>`. Cleanup keeps, independently for
 `cardhub-prod` and `cardhub-staging`:
 
 - the images currently referenced by that compose project's containers;
@@ -500,14 +532,20 @@ exit instead of silently falling back to another API URL.
 
 ## Rollback
 
-Set `IMAGE_TAG` to an older immutable `sha-<full-git-sha>` tag in the target
-env file, then redeploy:
+Roll back through Cardhub Deploy with the older `sha-<full-git-sha>` tag, or
+run `remote-deploy.sh` with that SHA and the digests the Images run recorded
+for it. Do not `docker compose pull` the tag. The tag is mutable; the digest
+is the manifest that deploy will run.
 
 ```bash
-cd /opt/cardhub/production/deploy
-IMAGE_TAG=sha-<older-full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env pull api web
-IMAGE_TAG=sha-<older-full-git-sha> ENV_NAME=prod docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env up -d postgres redis api web
+API_IMAGE_DIGEST=sha256:<older-api> WEB_IMAGE_DIGEST=sha256:<older-web> \
+  /opt/cardhub/production/deploy/remote-deploy.sh production sha-<older-full-git-sha> <older-full-git-sha>
 ```
+
+`IMAGE_TAG` in the env file is still what backup and a postgres-only compose
+command interpolate when `API_IMAGE` / `WEB_IMAGE` are unset. Those commands
+do not roll api or web. The shared edge job still receives the git SHA as
+`EDGE_IMAGE_TAG` for the manual recreate hint. It does not pull the app images.
 
 Prisma migrations are not automatically rolled back. Handle schema reversions
 manually if a rollback crosses a database migration. Password hashes have no
