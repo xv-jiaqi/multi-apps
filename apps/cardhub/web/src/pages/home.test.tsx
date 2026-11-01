@@ -383,10 +383,11 @@ describe('home sections', () => {
     ).toHaveAttribute('href', '/calendar');
     expectNoDeadInternalLinks();
     const footer = screen.getByRole('contentinfo');
-    expect(within(footer).getByRole('link', { name: '发售日历 →' })).toHaveAttribute(
+    expect(within(footer).getByRole('link', { name: '发售日历' })).toHaveAttribute(
       'href',
       '/calendar',
     );
+    expect(within(footer).queryByRole('link', { name: '发售日历 →' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: '发售0' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: '发售2' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '发售3' })).not.toBeInTheDocument();
@@ -499,7 +500,7 @@ describe('home chrome', () => {
     expect(within(footer).getByRole('link', { name: '系列' })).toHaveAttribute('href', '/series');
     expect(within(footer).getByRole('link', { name: '论坛' })).toHaveAttribute('href', '/forum');
     expect(within(footer).getByRole('link', { name: '交易' })).toHaveAttribute('href', '/trade');
-    expect(within(footer).getByRole('link', { name: '发售日历 →' })).toHaveAttribute(
+    expect(within(footer).getByRole('link', { name: '发售日历' })).toHaveAttribute(
       'href',
       '/calendar',
     );
@@ -512,10 +513,13 @@ describe('home chrome', () => {
       screen.getByRole('heading', { level: 1, name: 'Welcome to Cardhub' }),
     ).toBeInTheDocument();
     expect(within(footer).getByRole('button', { name: '中文' })).toHaveAttribute('lang', 'zh');
-    expect(within(footer).getByRole('link', { name: 'Release calendar →' })).toHaveAttribute(
+    expect(within(footer).getByRole('link', { name: 'Release calendar' })).toHaveAttribute(
       'href',
       '/calendar',
     );
+    expect(
+      within(footer).queryByRole('link', { name: 'Release calendar →' }),
+    ).not.toBeInTheDocument();
     expect(footer).toHaveTextContent(
       'Cardhub is an unofficial fan site, not affiliated with any card publisher.',
     );

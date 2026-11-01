@@ -4,10 +4,10 @@ import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 
 /** CH-205 §5 / §7: the calendar page and this link ship together. */
-export const FOOTER_LINKS: ReadonlyArray<{ href: string; labelKey: string; suffix?: string }> = [
+export const FOOTER_LINKS: ReadonlyArray<{ href: string; labelKey: string }> = [
   { href: '/categories', labelKey: 'nav.categories' },
   { href: '/series', labelKey: 'nav.series' },
-  { href: '/calendar', labelKey: 'nav.calendar', suffix: ' →' },
+  { href: '/calendar', labelKey: 'nav.calendar' },
   { href: '/forum', labelKey: 'nav.forum' },
   { href: '/trade', labelKey: 'nav.trade' },
 ];
@@ -26,7 +26,6 @@ export const SiteFooter = observer(function SiteFooter() {
         {FOOTER_LINKS.map((link) => (
           <Link key={link.href} to={link.href} className={footerLinkClass}>
             {tt(link.labelKey)}
-            {link.suffix ?? ''}
           </Link>
         ))}
       </nav>
