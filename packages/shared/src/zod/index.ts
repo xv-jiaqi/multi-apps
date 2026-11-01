@@ -84,6 +84,8 @@ export const commentRepliesListInput = z.object({
   parentId: z.string().uuid(),
   cursor: z.string().uuid().optional(),
   limit: z.number().int().min(1).max(50).default(20),
+  // When set, the page that contains this reply is returned and `cursor` is ignored.
+  aroundId: z.string().uuid().optional(),
 });
 export type CommentRepliesListInput = z.infer<typeof commentRepliesListInput>;
 
@@ -159,6 +161,13 @@ export const notificationMarkReadInput = z.object({
   id: z.string().uuid(),
 });
 export type NotificationMarkReadInput = z.infer<typeof notificationMarkReadInput>;
+
+/** Topic replies. `limit` is 1–50, default 20. `aroundId` selects the page that contains that reply. */
+export const forumRepliesListInput = cursorPaginationInput.extend({
+  topicId: z.string().uuid(),
+  aroundId: z.string().uuid().optional(),
+});
+export type ForumRepliesListInput = z.infer<typeof forumRepliesListInput>;
 
 export const pageCursorPaginationInput = z.object({
   pageCursor: cursorSchema.optional(),

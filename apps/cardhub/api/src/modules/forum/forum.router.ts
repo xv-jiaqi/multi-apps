@@ -5,6 +5,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
   cursorPaginationInput,
+  forumRepliesListInput,
   markdownToPlainText,
   optionalDeleteReason,
   replyCreateInput,
@@ -13,6 +14,7 @@ import {
   topicSetPinnedInput,
   topicUpdateInput,
 } from '@repo/shared';
+import { aroundPageSkip } from '../../common/around-page';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { forumReplyHref, forumTopicHref } from '../notifications/href';
 import { notificationExcerpt } from '../notifications/plan';
@@ -295,18 +297,11 @@ export class ForumRouter {
     });
 
     const replies = t.router({
-      list: t.procedure
-        .input(cursorPaginationInput.extend({ topicId: z.string().uuid() }))
-        .query(async ({ input }) => {
-          const items = await prisma.reply.findMany({
-            where: { topicId: input.topicId },
-            take: input.limit + 1,
-            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-            ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
-            include: { user: { select: { id: true, username: true } } },
-          });
-          const hasMore = items.length > input.limit;
-          const sliced = hasMore ? items.slice(0, input.limit) : items;
+      list: t.procedure.input(forumRepliesListInput).query(async ({ input }) => {
+        const include = { user: { select: { id: true, username: true } } };
+        const mapPage = (rows: ReplyWithAuthor[]) => {
+          const hasMore = rows.length > input.limit;
+          const sliced = hasMore ? rows.slice(0, input.limit) : rows;
           return {
             items: sliced.map((r: ReplyWithAuthor) => ({
               id: r.id,
@@ -314,9 +309,44 @@ export class ForumRouter {
               createdAt: r.createdAt.toISOString(),
               author: r.user,
             })),
-            nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
+            nextCursor: hasMore ? (sliced.at(-1)?.id ?? null) : null,
           };
-        }),
+        };
+
+        if (input.aroundId) {
+          const target = await prisma.reply.findFirst({
+            where: { id: input.aroundId, topicId: input.topicId },
+            select: { id: true, createdAt: true },
+          });
+          if (!target) return { items: [], nextCursor: null };
+          const before = await prisma.reply.count({
+            where: {
+              topicId: input.topicId,
+              OR: [
+                { createdAt: { lt: target.createdAt } },
+                { AND: [{ createdAt: target.createdAt }, { id: { lt: target.id } }] },
+              ],
+            },
+          });
+          const rows = await prisma.reply.findMany({
+            where: { topicId: input.topicId },
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+            skip: aroundPageSkip(before, input.limit),
+            take: input.limit + 1,
+            include,
+          });
+          return mapPage(rows);
+        }
+
+        const items = await prisma.reply.findMany({
+          where: { topicId: input.topicId },
+          take: input.limit + 1,
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
+          include,
+        });
+        return mapPage(items);
+      }),
 
       create: t.activeUserProcedure.input(replyCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });

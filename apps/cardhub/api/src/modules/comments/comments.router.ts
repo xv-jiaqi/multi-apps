@@ -12,6 +12,7 @@ import {
   seriesCommentInput,
   slugSchema,
 } from '@repo/shared';
+import { aroundPageSkip } from '../../common/around-page';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { commentHref } from '../notifications/href';
 import { notificationExcerpt } from '../notifications/plan';
@@ -215,6 +216,41 @@ export class CommentsRouter {
           select: { parentId: true },
         });
         if (!parent || parent.parentId !== null) return { items: [], nextCursor: null };
+
+        const mapPage = (rows: CommentWithUser[]) => {
+          const hasMore = rows.length > input.limit;
+          const page = hasMore ? rows.slice(0, input.limit) : rows;
+          return {
+            items: page.map(mapComment),
+            nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
+          };
+        };
+
+        if (input.aroundId) {
+          const target = await prisma.comment.findFirst({
+            where: { id: input.aroundId, parentId: input.parentId },
+            select: { id: true, createdAt: true },
+          });
+          if (!target) return { items: [], nextCursor: null };
+          const before = await prisma.comment.count({
+            where: {
+              parentId: input.parentId,
+              OR: [
+                { createdAt: { lt: target.createdAt } },
+                { AND: [{ createdAt: target.createdAt }, { id: { lt: target.id } }] },
+              ],
+            },
+          });
+          const rows = await prisma.comment.findMany({
+            where: { parentId: input.parentId },
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+            skip: aroundPageSkip(before, input.limit),
+            take: input.limit + 1,
+            include: { user: userSelect },
+          });
+          return mapPage(rows);
+        }
+
         if (input.cursor) {
           const cursorRow = await prisma.comment.findUnique({
             where: { id: input.cursor },
@@ -224,20 +260,14 @@ export class CommentsRouter {
             return { items: [], nextCursor: null };
           }
         }
-        const limit = input.limit;
         const rows = await prisma.comment.findMany({
           where: { parentId: input.parentId },
           orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-          take: limit + 1,
+          take: input.limit + 1,
           ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
           include: { user: userSelect },
         });
-        const hasMore = rows.length > limit;
-        const page = hasMore ? rows.slice(0, limit) : rows;
-        return {
-          items: page.map(mapComment),
-          nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
-        };
+        return mapPage(rows);
       }),
 
       create: t.activeUserProcedure.input(commentInput).mutation(async ({ ctx, input }) => {

@@ -499,6 +499,115 @@ describe('notifications', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('opens the page around a reply and clears href after that reply is deleted', async () => {
+    const aliceIdentity = nextIdentity('ntarounda');
+    const bobIdentity = nextIdentity('ntaroundb');
+    const alice = await register(aliceIdentity);
+    const bob = await register(bobIdentity);
+    const suffix = `${Date.now().toString(36)}${sequence.toString(36)}`;
+    const seriesSlug = `around-series-${suffix}`.slice(0, 64);
+    const cardSlug = `around-card-${suffix}`.slice(0, 64);
+    const series = await prisma.series.create({ data: { slug: seriesSlug, title: '深链系列' } });
+    await prisma.card.create({ data: { slug: cardSlug, name: '深链卡', seriesId: series.id } });
+    const topic = await post(
+      'forum.topics.create',
+      { title: '深链话题', body: '没有提及' },
+      alice.token,
+    );
+    expect(topic.status).toBe(200);
+    const topicId = expectString(resultData(topic.body).id);
+
+    const replyIds: string[] = [];
+    for (let index = 0; index < 5; index += 1) {
+      const created = await post(
+        'forum.replies.create',
+        { topicId, body: `回帖 ${index}` },
+        bob.token,
+      );
+      expect(created.status).toBe(200);
+      const id = expectString(resultData(created.body).id);
+      replyIds.push(id);
+      await prisma.reply.update({
+        where: { id },
+        data: { createdAt: new Date(Date.UTC(2026, 10, 1, 0, 0, index)) },
+      });
+    }
+    const forumPage = await get(
+      'forum.replies.list',
+      { topicId, limit: 2, aroundId: replyIds[4] },
+      alice.token,
+    );
+    expect(forumPage.status).toBe(200);
+    const forumItems = rowsOf(resultData(forumPage.body).items);
+    expect(forumItems.map((item) => item.id)).toEqual([replyIds[4]]);
+    expect(resultData(forumPage.body).nextCursor).toBeNull();
+
+    const forumMiddle = await get(
+      'forum.replies.list',
+      { topicId, limit: 2, aroundId: replyIds[2] },
+      alice.token,
+    );
+    expect(rowsOf(resultData(forumMiddle.body).items).map((item) => item.id)).toEqual([
+      replyIds[2],
+      replyIds[3],
+    ]);
+    const missingForum = await get(
+      'forum.replies.list',
+      { topicId, limit: 2, aroundId: '99999999-9999-4999-8999-999999999999' },
+      alice.token,
+    );
+    expect(resultData(missingForum.body).items).toEqual([]);
+
+    const parent = await post('comments.create', { cardSlug, content: '顶层评论' }, alice.token);
+    expect(parent.status).toBe(200);
+    const parentId = expectString(resultData(parent.body).id);
+    const commentIds: string[] = [];
+    for (let index = 0; index < 5; index += 1) {
+      const created = await post(
+        'comments.create',
+        { cardSlug, content: `楼中楼 ${index}`, parentId },
+        bob.token,
+      );
+      expect(created.status).toBe(200);
+      const id = expectString(resultData(created.body).id);
+      commentIds.push(id);
+      await prisma.comment.update({
+        where: { id },
+        data: { createdAt: new Date(Date.UTC(2026, 10, 2, 0, 0, index)) },
+      });
+    }
+    const commentPage = await get(
+      'comments.listReplies',
+      { parentId, limit: 2, aroundId: commentIds[4] },
+      alice.token,
+    );
+    expect(commentPage.status).toBe(200);
+    expect(rowsOf(resultData(commentPage.body).items).map((item) => item.id)).toEqual([
+      commentIds[4],
+    ]);
+
+    const mention = await post(
+      'comments.create',
+      { cardSlug, content: `@${aliceIdentity.username} 看这里` },
+      bob.token,
+    );
+    expect(mention.status).toBe(200);
+    const mentionId = expectString(resultData(mention.body).id);
+    const beforeDelete = await list(alice.token);
+    const visible = beforeDelete.find(
+      (item) => item.href === `/cards/${cardSlug}#comment-${mentionId}`,
+    );
+    expect(visible?.excerpt).toBe(`@${aliceIdentity.username} 看这里`);
+    const removed = await post('comments.delete', { id: mentionId }, bob.token);
+    expect(removed.status).toBe(200);
+    const afterDelete = await list(alice.token);
+    const hidden = afterDelete.find((item) => item.id === visible?.id);
+    expect(hidden?.href).toBeNull();
+    expect(hidden?.excerpt).toBe(`@${aliceIdentity.username} 看这里`);
+    const bobView = await list(bob.token);
+    expect(bobView.some((item) => item.id === hidden?.id)).toBe(false);
+  });
+
   it('pages with createdAt desc, id desc and ignores another user', async () => {
     const owner = await register(nextIdentity('ntpage'));
     const other = await register(nextIdentity('ntother'));
