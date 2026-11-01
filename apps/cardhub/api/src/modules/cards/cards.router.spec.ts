@@ -55,6 +55,32 @@ describe('CardsRouter.search', () => {
     expect(args.orderBy).toEqual({ name: 'asc' });
   });
 
+  it('escapes LIKE metacharacters in a keyword', async () => {
+    const { caller, findMany } = makeRouter();
+    findMany.mockResolvedValueOnce([]);
+
+    await caller.search({ q: '100%', limit: 5 });
+
+    expect(findMany.mock.calls[0]?.[0].where).toEqual({
+      AND: [
+        {
+          OR: [
+            {
+              AND: [
+                {
+                  OR: [
+                    { name: { contains: '100\\%', mode: 'insensitive' } },
+                    { parallelName: { contains: '100\\%', mode: 'insensitive' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   it('keeps null parallel names when an exclude term misses the printed name', async () => {
     const { caller, findMany } = makeRouter();
     findMany.mockResolvedValueOnce([]);

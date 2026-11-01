@@ -5,6 +5,22 @@ import { seriesReleaseYearFilter } from './release-year';
 
 type ParsedSearch = Extract<CardSearchParseResult, { ok: true }>;
 
+/**
+ * `contains` becomes `ILIKE '%term%'`. `%`, `_`, and `\` are LIKE metacharacters,
+ * and the gin_trgm indexes serve that same ILIKE. Escape them so both paths
+ * match the typed characters. Series-page `q` stays an in-process literal.
+ */
+function escapeLikeTerm(term: string): string {
+  return term.replace(/[\\%_]/g, (character) => `\\${character}`);
+}
+
+function insensitiveContains(term: string): {
+  contains: string;
+  mode: 'insensitive';
+} {
+  return { contains: escapeLikeTerm(term), mode: 'insensitive' };
+}
+
 function seriesPrefixFilter(parsed: ParsedSearch): Prisma.SeriesWhereInput | undefined {
   const where: Prisma.SeriesWhereInput = {};
   if (parsed.seriesSlug) where.slug = parsed.seriesSlug;
@@ -22,10 +38,7 @@ function seriesPrefixFilter(parsed: ParsedSearch): Prisma.SeriesWhereInput | und
  */
 function keywordTerm(term: string): Prisma.CardWhereInput {
   return {
-    OR: [
-      { name: { contains: term, mode: 'insensitive' } },
-      { parallelName: { contains: term, mode: 'insensitive' } },
-    ],
+    OR: [{ name: insensitiveContains(term) }, { parallelName: insensitiveContains(term) }],
   };
 }
 
@@ -40,12 +53,9 @@ function keywordTerm(term: string): Prisma.CardWhereInput {
 function keywordExclude(term: string): Prisma.CardWhereInput {
   return {
     AND: [
-      { NOT: { name: { contains: term, mode: 'insensitive' } } },
+      { NOT: { name: insensitiveContains(term) } },
       {
-        OR: [
-          { parallelName: null },
-          { NOT: { parallelName: { contains: term, mode: 'insensitive' } } },
-        ],
+        OR: [{ parallelName: null }, { NOT: { parallelName: insensitiveContains(term) } }],
       },
     ],
   };
@@ -67,7 +77,7 @@ function seriesTitleGroupWhere(groups: string[][]): Prisma.SeriesWhereInput[] {
   return [
     {
       OR: groups.map((group) => ({
-        AND: group.map((term) => ({ title: { contains: term, mode: 'insensitive' as const } })),
+        AND: group.map((term) => ({ title: insensitiveContains(term) })),
       })),
     },
   ];
@@ -106,7 +116,7 @@ export function buildSeriesSearchWhere(parsed: ParsedSearch): Prisma.SeriesWhere
       : []),
     ...seriesTitleGroupWhere(parsed.includeGroups),
     ...parsed.excludeTerms.map((term) => ({
-      NOT: { title: { contains: term, mode: 'insensitive' as const } },
+      NOT: { title: insensitiveContains(term) },
     })),
   ];
 

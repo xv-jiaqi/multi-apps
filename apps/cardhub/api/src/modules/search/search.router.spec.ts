@@ -156,7 +156,7 @@ describe('SearchRouter.global', () => {
     });
     expect(seriesFindMany).toHaveBeenCalledTimes(1);
     expect(seriesFindMany.mock.calls[0]?.[0].include).toEqual({
-      _count: { select: { cards: true } },
+      _count: { select: { cards: { where: { parallelOfId: null } } } },
     });
   });
 

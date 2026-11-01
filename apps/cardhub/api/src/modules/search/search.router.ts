@@ -11,7 +11,7 @@ type GlobalCardRow = Prisma.CardGetPayload<{
 }>;
 
 type GlobalSeriesRow = Prisma.SeriesGetPayload<{
-  include: { _count: { select: { cards: true } } };
+  include: { _count: { select: { cards: { where: { parallelOfId: null } } } } };
 }>;
 
 const globalSearchInput = z.object({
@@ -52,7 +52,7 @@ export class SearchRouter {
           shouldSearchSeries
             ? prisma.series.findMany({
                 where: buildSeriesSearchWhere(parsed),
-                include: { _count: { select: { cards: true } } },
+                include: { _count: { select: { cards: { where: { parallelOfId: null } } } } },
                 take: seriesLimit,
                 orderBy: { title: 'asc' },
               })
