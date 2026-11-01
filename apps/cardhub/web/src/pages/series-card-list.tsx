@@ -33,6 +33,7 @@ import {
 } from '@repo/ui-web';
 import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
+import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
 import { displayCardNumber } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
@@ -274,6 +275,8 @@ export const SeriesCardList = observer(function SeriesCardList({
     },
     { placeholderData: keepPreviousData },
   );
+  const listView = queryFallback(list);
+  useFocusOnRecovery(listView, titleRef);
 
   const seriesTotal =
     list.data && typeof list.data.seriesTotal === 'number'
@@ -285,7 +288,9 @@ export const SeriesCardList = observer(function SeriesCardList({
     count: filtered ? total : seriesTotal,
   });
   const emptySeries =
-    !list.isError && seriesTotal === 0 && (list.data !== undefined || fallbackCardCount === 0);
+    listView !== 'error' &&
+    seriesTotal === 0 &&
+    (list.data !== undefined || fallbackCardCount === 0);
   const pageCount = list.data ? Math.ceil(list.data.total / SERIES_LIST_PAGE_SIZE) : 0;
 
   useEffect(() => {
@@ -316,17 +321,22 @@ export const SeriesCardList = observer(function SeriesCardList({
   }, [list.data, list.isFetching]);
 
   useLayoutEffect(() => {
-    const busy = list.isError && list.isFetching;
-    const failedRetry = retryWasBusy.current && !busy && list.isError;
+    const busy = listView === 'error' && list.isFetching;
+    const failedRetry = retryWasBusy.current && !busy && listView === 'error';
     retryWasBusy.current = busy;
-    if (failedRetry) retryRef.current?.focus({ preventScroll: true });
-  }, [list.isError, list.isFetching]);
+    const active = document.activeElement;
+    // The button stays mounted, so a keyboard retry keeps its ring. Only pull
+    // focus back when it fell to the document. Another control keeps focus.
+    if (failedRetry && (active === null || active === document.body)) {
+      retryRef.current?.focus({ preventScroll: true });
+    }
+  }, [list.isFetching, listView]);
 
   if (list.error) failureKey.current = seriesFailureKey(list.error);
 
   const activeFilters = (state.q ? 1 : 0) + (state.subset ? 1 : 0) + (state.rarity ? 1 : 0);
-  const showSkeleton = !emptySeries && list.isLoading && !list.data;
-  const showError = !emptySeries && list.isError;
+  const showSkeleton = !emptySeries && listView === 'loading' && !list.data;
+  const showError = !emptySeries && listView === 'error';
   const showNoMatch =
     !emptySeries &&
     !showError &&
