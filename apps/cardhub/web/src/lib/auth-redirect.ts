@@ -46,7 +46,34 @@ function acceptPath(path: string, fallback: string): string {
   return fallback;
 }
 
-export function resolvePostAuthRedirect(state: RedirectState, fallback = '/'): string {
+function pathnameOf(path: string): string {
+  const hashAt = path.indexOf('#');
+  const withoutHash = hashAt === -1 ? path : path.slice(0, hashAt);
+  const queryAt = withoutHash.indexOf('?');
+  const pathname = queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
+  if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1);
+  return pathname;
+}
+
+/** `/login` and `/register` are not places to send someone after they sign in. */
+function isAuthEntryPath(path: string): boolean {
+  let current = path;
+  for (let i = 0; i < 5; i += 1) {
+    const pathname = pathnameOf(current);
+    if (pathname === '/login' || pathname === '/register') return true;
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(current);
+    } catch {
+      return false;
+    }
+    if (decoded === current) return false;
+    current = decoded;
+  }
+  return false;
+}
+
+function readPostAuthRedirect(state: RedirectState, fallback: string): string {
   if (typeof state === 'string') {
     return acceptPath(state, fallback);
   }
@@ -66,4 +93,10 @@ export function resolvePostAuthRedirect(state: RedirectState, fallback = '/'): s
   }
 
   return fallback;
+}
+
+export function resolvePostAuthRedirect(state: RedirectState, fallback = '/'): string {
+  const resolved = readPostAuthRedirect(state, fallback);
+  if (!isAuthEntryPath(resolved)) return resolved;
+  return isAuthEntryPath(fallback) ? '/' : fallback;
 }

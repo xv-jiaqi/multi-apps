@@ -10,6 +10,11 @@ import { rootStore } from '../stores/root-store';
  */
 let returnedToLogin = false;
 
+/** The redirect guard is process-wide. Unit tests reset it before each case. */
+export function resetSessionExpiryRedirectForTests(): void {
+  returnedToLogin = false;
+}
+
 type ExpireNavigation = {
   pathname: string;
   search: string;

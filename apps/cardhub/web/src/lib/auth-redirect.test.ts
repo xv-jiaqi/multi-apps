@@ -90,6 +90,30 @@ describe('resolvePostAuthRedirect', () => {
     expect(resolvePostAuthRedirect('/cards/1?x=1#y')).toBe('/cards/1?x=1#y');
   });
 
+  it('sends a login or register return path home', () => {
+    expect(resolvePostAuthRedirect('/login')).toBe('/');
+    expect(resolvePostAuthRedirect('/register')).toBe('/');
+    expect(resolvePostAuthRedirect('/login/')).toBe('/');
+    expect(resolvePostAuthRedirect('/register/?next=/me')).toBe('/');
+    expect(resolvePostAuthRedirect('/login?from=/me')).toBe('/');
+    expect(resolvePostAuthRedirect('/register#top')).toBe('/');
+    expect(resolvePostAuthRedirect({ from: '/login' })).toBe('/');
+    expect(resolvePostAuthRedirect({ from: '/register?x=1#y' })).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '/login', search: '?a=1', hash: '#b' },
+      }),
+    ).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '/register/', search: '', hash: '' },
+      }),
+    ).toBe('/');
+    expect(resolvePostAuthRedirect('/%6Cogin')).toBe('/');
+    expect(resolvePostAuthRedirect('/login-help')).toBe('/login-help');
+    expect(resolvePostAuthRedirect('/cards/login')).toBe('/cards/login');
+  });
+
   it('returns encoded query values unchanged when every decoded layer is same-site', () => {
     expect(resolvePostAuthRedirect('/trade?card=a%26b&kind=sell')).toBe(
       '/trade?card=a%26b&kind=sell',
