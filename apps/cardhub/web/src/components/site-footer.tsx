@@ -3,14 +3,11 @@ import { Link } from 'react-router';
 import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 
-/**
- * The calendar page is registered, but this footer stays without that link.
- * A separate change hides the homepage and footer entry points before they
- * are turned on.
- */
-export const FOOTER_LINKS: ReadonlyArray<{ href: string; labelKey: string }> = [
+/** CH-205 §5 / §7: the calendar page and this link ship together. */
+export const FOOTER_LINKS: ReadonlyArray<{ href: string; labelKey: string; suffix?: string }> = [
   { href: '/categories', labelKey: 'nav.categories' },
   { href: '/series', labelKey: 'nav.series' },
+  { href: '/calendar', labelKey: 'nav.calendar', suffix: ' →' },
   { href: '/forum', labelKey: 'nav.forum' },
   { href: '/trade', labelKey: 'nav.trade' },
 ];
@@ -29,6 +26,7 @@ export const SiteFooter = observer(function SiteFooter() {
         {FOOTER_LINKS.map((link) => (
           <Link key={link.href} to={link.href} className={footerLinkClass}>
             {tt(link.labelKey)}
+            {link.suffix ?? ''}
           </Link>
         ))}
       </nav>
