@@ -1,0 +1,75 @@
+{
+  "viewport": {
+    "width": 375,
+    "height": 900
+  },
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa",
+    "wcag22aa"
+  ],
+  "cases": [
+    {
+      "locale": "zh-CN",
+      "state": "loading",
+      "file": "admin-zh-375-loading.png",
+      "violations": [],
+      "passes": 22,
+      "frame": {
+        "scrollWidth": 341,
+        "clientWidth": 341,
+        "scrollLeft": 0,
+        "role": null,
+        "name": null,
+        "tabIndex": -1
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "state": "ready",
+      "file": "admin-zh-375-list.png",
+      "violations": [],
+      "passes": 26,
+      "frame": {
+        "scrollWidth": 640,
+        "clientWidth": 341,
+        "scrollLeft": 0,
+        "role": "region",
+        "name": "发售条目列表",
+        "tabIndex": 0
+      }
+    },
+    {
+      "locale": "en-US",
+      "state": "loading",
+      "file": "admin-en-375-loading.png",
+      "violations": [],
+      "passes": 22,
+      "frame": {
+        "scrollWidth": 341,
+        "clientWidth": 341,
+        "scrollLeft": 0,
+        "role": null,
+        "name": null,
+        "tabIndex": -1
+      }
+    },
+    {
+      "locale": "en-US",
+      "state": "ready",
+      "file": "admin-en-375-list.png",
+      "violations": [],
+      "passes": 26,
+      "frame": {
+        "scrollWidth": 640,
+        "clientWidth": 341,
+        "scrollLeft": 0,
+        "role": "region",
+        "name": "Release entries",
+        "tabIndex": 0
+      }
+    }
+  ]
+}
