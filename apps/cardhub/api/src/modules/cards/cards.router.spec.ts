@@ -38,7 +38,14 @@ describe('CardsRouter.search', () => {
         {
           OR: [
             {
-              AND: [{ name: { contains: '极光', mode: 'insensitive' } }],
+              AND: [
+                {
+                  OR: [
+                    { name: { contains: '极光', mode: 'insensitive' } },
+                    { parallelName: { contains: '极光', mode: 'insensitive' } },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -66,7 +73,14 @@ describe('CardsRouter.search', () => {
         {
           OR: [
             {
-              AND: [{ name: { contains: '龙', mode: 'insensitive' } }],
+              AND: [
+                {
+                  OR: [
+                    { name: { contains: '龙', mode: 'insensitive' } },
+                    { parallelName: { contains: '龙', mode: 'insensitive' } },
+                  ],
+                },
+              ],
             },
           ],
         },

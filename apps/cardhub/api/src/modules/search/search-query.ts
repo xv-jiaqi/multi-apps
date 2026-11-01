@@ -14,12 +14,25 @@ function seriesPrefixFilter(parsed: ParsedSearch): Prisma.SeriesWhereInput | und
   return Object.keys(where).length > 0 ? where : undefined;
 }
 
+/**
+ * A free-text term matches the printed name or the parallel name. Card number
+ * stays on the `c:` prefix. Series-page `q` does not use this helper.
+ */
+function keywordTerm(term: string): Prisma.CardWhereInput {
+  return {
+    OR: [
+      { name: { contains: term, mode: 'insensitive' } },
+      { parallelName: { contains: term, mode: 'insensitive' } },
+    ],
+  };
+}
+
 function nameGroupWhere(groups: string[][]): Prisma.CardWhereInput[] {
   if (groups.length === 0) return [];
   return [
     {
       OR: groups.map((group) => ({
-        AND: group.map((term) => ({ name: { contains: term, mode: 'insensitive' as const } })),
+        AND: group.map((term) => keywordTerm(term)),
       })),
     },
   ];
@@ -56,7 +69,7 @@ export function buildCardSearchWhere(parsed: ParsedSearch): Prisma.CardWhereInpu
     ...(series ? [{ series }] : []),
     ...nameGroupWhere(parsed.includeGroups),
     ...parsed.excludeTerms.map((term) => ({
-      NOT: { name: { contains: term, mode: 'insensitive' as const } },
+      NOT: keywordTerm(term),
     })),
   ];
 

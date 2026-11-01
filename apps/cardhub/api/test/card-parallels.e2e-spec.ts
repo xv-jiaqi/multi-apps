@@ -337,6 +337,39 @@ describe('card parallels', () => {
     expect(adminBase.status).toBe(200);
     expect(whole(resultData(adminBase.body), 'parallelChildrenCount')).toBe(5);
     expect(nullableText(resultData(adminBase.body), 'parallelOfSlug')).toBeNull();
+
+    const foil = await createCard({
+      slug: slug('foil'),
+      name: '素卡',
+      seriesSlug,
+      cardNumber: '40',
+      parallelOfSlug: slug('base'),
+      parallelName: '金箔',
+    });
+    expect(text(foil, 'slug')).toBe(slug('foil'));
+
+    const byFoilName = await get('search.global', { q: '金箔', limit: 5 });
+    expect(byFoilName.status).toBe(200);
+    const foilHit = rowsOf(byFoilName.body, 'cards').find((row) => row.slug === slug('foil'));
+    if (!foilHit) throw new Error('expected parallel name hit');
+    expect(text(foilHit, 'name')).toBe('素卡');
+    expect(nullableText(foilHit, 'parallelName')).toBe('金箔');
+
+    const byFoilSearch = await get('cards.search', { q: '金箔', seriesSlug, limit: 5 });
+    expect(byFoilSearch.status).toBe(200);
+    const foilSearchHit = rowsOf(byFoilSearch.body, 'results').find(
+      (row) => row.slug === slug('foil'),
+    );
+    if (!foilSearchHit) throw new Error('expected cards.search parallel name hit');
+    expect(nullableText(foilSearchHit, 'parallelName')).toBe('金箔');
+
+    const seriesSkipsParallelName = await get('cards.listBySeries', {
+      seriesSlug,
+      q: '金箔',
+      includeParallels: true,
+    });
+    expect(seriesSkipsParallelName.status).toBe(200);
+    expect(whole(resultData(seriesSkipsParallelName.body), 'total')).toBe(0);
   });
 
   it('counts only base cards in collection progress', async () => {

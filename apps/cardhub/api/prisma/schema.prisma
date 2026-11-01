@@ -162,6 +162,7 @@ model Card {
   @@index([name])
   @@index([cardNumberNormalized])
   @@index([name(ops: raw("gin_trgm_ops"))], map: "cards_name_trgm_idx", type: Gin)
+  @@index([parallelName(ops: raw("gin_trgm_ops"))], map: "cards_parallelName_trgm_idx", type: Gin)
   @@map("cards")
 }
 
