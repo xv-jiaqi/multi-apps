@@ -207,20 +207,16 @@ A healthy admin endpoint with `502` on the public names means Caddy is up
 and an upstream name or the external `edge` network is wrong. Do not run
 `docker compose down -v`; that deletes certificates in `caddy_data`.
 
-To serve the last deployed edge config again, archive that SHA into a temp directory (the working tree stays as it is), sync that tree, and recreate. On the operator machine:
+To serve the last deployed edge config again, from a checkout of this repo: archive that SHA into a temp directory (the working tree stays as it is), ship it with tar over ssh the way Sync edge files does, replace the remote directory only after that extract succeeds so files added later are not left behind, remove the temp directory, then run `apply-edge-config.sh --recreate`. That validates first and does not recreate when validation fails. After recreate it waits until the container is healthy and probes the four hostnames and the www 308.
 
 ```bash
 tmp=$(mktemp -d)
 git archive <prev_sha> deploy/edge | tar -x -C "$tmp"
-rsync -a --delete "$tmp/deploy/edge/" <host>:/opt/cardhub/edge/deploy/edge/
+ssh <user>@<host> 'rm -rf /opt/cardhub/edge/deploy/edge.new && mkdir -p /opt/cardhub/edge/deploy/edge.new'
+tar -C "$tmp/deploy/edge" -czf - . \
+  | ssh <user>@<host> 'tar -xzf - -C /opt/cardhub/edge/deploy/edge.new && rm -rf /opt/cardhub/edge/deploy/edge && mv /opt/cardhub/edge/deploy/edge.new /opt/cardhub/edge/deploy/edge'
 rm -rf "$tmp"
-```
-
-On the VPS:
-
-```bash
-cd /opt/cardhub/edge/deploy/edge
-docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d --no-deps --force-recreate caddy
+ssh <user>@<host> 'EDGE_ENVIRONMENT=<staging|production> EDGE_IMAGE_TAG=sha-<prev_sha> bash /opt/cardhub/edge/deploy/edge/apply-edge-config.sh --recreate'
 ```
 
 Then repeat the four hostname checks and the www `308` from the host
