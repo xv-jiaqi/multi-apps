@@ -382,6 +382,36 @@ describe('ForumDetailPage hash target', () => {
       limit: 20,
     });
   });
+
+  it('sorts an around page into the loaded replies and drops the duplicate', async () => {
+    const earlyId = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
+    repliesListFetch.mockResolvedValue({
+      items: [
+        {
+          id: earlyId,
+          body: 'Earlier anchored reply',
+          createdAt: '2026-04-01T00:00:00.000Z',
+          author: { id: 'user-x', username: 'ada' },
+        },
+        {
+          id: 'reply-01',
+          body: 'Reply 1',
+          createdAt: '2026-05-01T00:01:00.000Z',
+          author: { id: 'user-1', username: 'user1' },
+        },
+      ],
+      nextCursor: null,
+    });
+    renderPage(`/forum/test-topic#reply-${earlyId}`);
+
+    expect(await screen.findByText('Earlier anchored reply')).toBeInTheDocument();
+    const items = within(repliesSection()).getAllByRole('listitem');
+    const early = items.findIndex((item) => item.textContent?.includes('Earlier anchored reply'));
+    const first = items.findIndex((item) => item.textContent?.includes('Reply 1'));
+    expect(early).toBeGreaterThanOrEqual(0);
+    expect(early).toBeLessThan(first);
+    expect(screen.getAllByText('Reply 1')).toHaveLength(1);
+  });
 });
 
 function statusByForum() {

@@ -211,11 +211,21 @@ export const NotificationsPage = observer(function NotificationsPage() {
     setNotice({ id: noticeSeq.current, text, itemId });
   };
 
+  const reloadReadState = () =>
+    Promise.all([
+      utils.notifications.list.invalidate(LIST_INPUT),
+      utils.notifications.unreadCount.invalidate(),
+    ]).then(() => {
+      const next = utils.notifications.unreadCount.getData();
+      if (!next) return;
+      syncedCount.current = next.count;
+      setAnnounced(next.count);
+    });
+
   const markOne = (id: string) => {
     const current = items.find((item) => item.id === id);
     if (!current || current.readAt) return;
     const epoch = readEpoch.current;
-    const previousReadAt = current.readAt;
     const readAt = new Date().toISOString();
     utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
       if (!pageSet) return pageSet;
@@ -237,26 +247,12 @@ export const NotificationsPage = observer(function NotificationsPage() {
       { id },
       {
         onError: () => {
-          // A later mark-all owns the cache. Restoring this snapshot would undo it.
+          // A later mark-all owns the cache. This failure must not rewrite it.
           if (readEpoch.current !== epoch) return;
-          utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
-            if (!pageSet) return pageSet;
-            return {
-              ...pageSet,
-              pages: pageSet.pages.map((page) => ({
-                ...page,
-                items: page.items.map((item) =>
-                  item.id === id ? { ...item, readAt: previousReadAt } : item,
-                ),
-              })),
-            };
+          void reloadReadState().then(() => {
+            if (readEpoch.current !== epoch) return;
+            showNotice(id, tt('notifications.actionFailed'));
           });
-          utils.notifications.unreadCount.setData(undefined, (count) =>
-            count ? { count: count.count + 1 } : count,
-          );
-          if (syncedCount.current !== null) syncedCount.current += 1;
-          setAnnounced((value) => (value == null ? value : value + 1));
-          showNotice(id, tt('notifications.actionFailed'));
         },
       },
     );
@@ -267,10 +263,6 @@ export const NotificationsPage = observer(function NotificationsPage() {
     readEpoch.current += 1;
     void utils.notifications.list.cancel();
     void utils.notifications.unreadCount.cancel();
-    const previousList = utils.notifications.list.getInfiniteData(LIST_INPUT);
-    const previousCount = utils.notifications.unreadCount.getData();
-    const previousAnnounced = announced;
-    const previousSynced = syncedCount.current;
     const readAt = new Date().toISOString();
     utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
       if (!pageSet) return pageSet;
@@ -289,12 +281,10 @@ export const NotificationsPage = observer(function NotificationsPage() {
     markAllRef.current?.focus({ preventScroll: true });
     markAllRead.mutate(undefined, {
       onError: () => {
-        utils.notifications.list.setInfiniteData(LIST_INPUT, previousList);
-        utils.notifications.unreadCount.setData(undefined, previousCount);
-        syncedCount.current = previousSynced;
-        setAnnounced(previousAnnounced);
-        showNotice(null, tt('notifications.actionFailed'));
-        markAllRef.current?.focus({ preventScroll: true });
+        void reloadReadState().then(() => {
+          showNotice(null, tt('notifications.actionFailed'));
+          markAllRef.current?.focus({ preventScroll: true });
+        });
       },
     });
   };

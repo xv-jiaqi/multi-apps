@@ -22,6 +22,10 @@ const markReadMock = vi.fn();
 const markAllMock = vi.fn();
 const listCancel = vi.fn();
 const countCancel = vi.fn();
+const listInvalidate = vi.fn();
+const countInvalidate = vi.fn();
+let serverList: typeof listState.data;
+let serverCount: { count: number } | undefined;
 const pendingMarkErrors: Array<() => void> = [];
 let failMarkAll = false;
 let failNextPage = false;
@@ -139,6 +143,10 @@ vi.mock('../lib/trpc', () => ({
       notifications: {
         list: {
           cancel: listCancel,
+          invalidate: () => {
+            listInvalidate();
+            if (serverList) listState.data = structuredClone(serverList);
+          },
           getInfiniteData: () => listState.data,
           setInfiniteData: (
             _input: unknown,
@@ -149,6 +157,10 @@ vi.mock('../lib/trpc', () => ({
         },
         unreadCount: {
           cancel: countCancel,
+          invalidate: () => {
+            countInvalidate();
+            if (serverCount) unreadState.data = { ...serverCount };
+          },
           getData: () => unreadState.data,
           setData: (
             _input: unknown,
@@ -194,6 +206,10 @@ beforeEach(() => {
   markAllMock.mockReset();
   listCancel.mockReset();
   countCancel.mockReset();
+  listInvalidate.mockReset();
+  countInvalidate.mockReset();
+  serverList = undefined;
+  serverCount = undefined;
   pendingMarkErrors.length = 0;
   failMarkAll = false;
   failNextPage = false;
@@ -469,13 +485,87 @@ describe('NotificationsPage', () => {
       pages: [{ items: [row({ id: 'fail', href: null, excerpt: 'gone' })], nextCursor: null }],
     };
     listState.dataUpdatedAt = 1;
+    serverList = structuredClone(listState.data);
+    serverCount = { count: 1 };
     renderPage();
 
     const button = screen.getByRole('button', { name: '标为已读' });
     await user.click(button);
     const item = button.closest('li');
     if (!(item instanceof HTMLElement)) throw new Error('条目不存在');
-    expect(within(item).getByRole('alert')).toHaveTextContent('操作失败，请重试。');
+    expect(await within(item).findByRole('alert')).toHaveTextContent('操作失败，请重试。');
     expect(within(item).getByText('未读：')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 条未读');
+  });
+
+  it('keeps the unread count when two single marks fail in a row', async () => {
+    const user = userEvent.setup();
+    deferMarkRead = true;
+    rootStore.session.signIn('token', { id: 'u1', username: 'ada', role: 'user' });
+    unreadState.data = { count: 2 };
+    serverCount = { count: 2 };
+    listState.data = {
+      pages: [
+        {
+          items: [
+            row({ id: 'a', href: null, actor: { username: 'oneuser' }, excerpt: 'first-row' }),
+            row({ id: 'b', href: null, actor: { username: 'twouser' }, excerpt: 'second-row' }),
+          ],
+          nextCursor: null,
+        },
+      ],
+    };
+    serverList = structuredClone(listState.data);
+    listState.dataUpdatedAt = 1;
+    renderPage();
+
+    const marks = screen.getAllByRole('button', { name: '标为已读' });
+    const first = marks[0];
+    const second = marks[1];
+    if (!first || !second) throw new Error('两条已读按钮都要在');
+    await user.click(first);
+    await user.click(second);
+    const [failFirst, failSecond] = pendingMarkErrors;
+    if (!failFirst || !failSecond) throw new Error('两条请求都要挂起');
+    act(() => {
+      failFirst();
+      failSecond();
+    });
+
+    expect(await screen.findByText('2 条未读')).toBeInTheDocument();
+    expect(screen.getAllByText('未读：')).toHaveLength(2);
+    expect(listInvalidate).toHaveBeenCalled();
+    expect(countInvalidate).toHaveBeenCalled();
+  });
+
+  it('reloads the list when mark-all fails instead of restoring the local snapshot', async () => {
+    const user = userEvent.setup();
+    failMarkAll = true;
+    rootStore.session.signIn('token', { id: 'u1', username: 'ada', role: 'user' });
+    unreadState.data = { count: 1 };
+    serverCount = { count: 2 };
+    listState.data = {
+      pages: [{ items: [row({ id: 'a', excerpt: 'only-local', readAt: null })], nextCursor: null }],
+    };
+    serverList = {
+      pages: [
+        {
+          items: [
+            row({ id: 'a', excerpt: 'only-local', readAt: null }),
+            row({ id: 'b', excerpt: 'from-server', readAt: null }),
+          ],
+          nextCursor: null,
+        },
+      ],
+    };
+    listState.dataUpdatedAt = 1;
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: '全部标记为已读' }));
+    expect(await screen.findByText('from-server')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('2 条未读');
+    expect(screen.getByRole('alert')).toHaveTextContent('操作失败，请重试。');
+    expect(listInvalidate).toHaveBeenCalled();
+    expect(countInvalidate).toHaveBeenCalled();
   });
 });

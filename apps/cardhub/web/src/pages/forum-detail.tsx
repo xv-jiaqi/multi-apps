@@ -42,11 +42,14 @@ type DeleteError =
   | { kind: 'reply'; id: string; message: string };
 
 function mergeReplies(replies: TopicReply[]): TopicReply[] {
-  const seen = new Set<string>();
-  return replies.filter((reply) => {
-    if (seen.has(reply.id)) return false;
-    seen.add(reply.id);
-    return true;
+  const byId = new Map<string, TopicReply>();
+  for (const reply of replies) {
+    if (!byId.has(reply.id)) byId.set(reply.id, reply);
+  }
+  return [...byId.values()].sort((left, right) => {
+    const byTime = left.createdAt.localeCompare(right.createdAt);
+    if (byTime !== 0) return byTime;
+    return left.id.localeCompare(right.id);
   });
 }
 

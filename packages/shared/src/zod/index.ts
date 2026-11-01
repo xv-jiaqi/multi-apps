@@ -80,10 +80,21 @@ export const seriesCommentInput = z.object({
 });
 export type SeriesCommentInput = z.infer<typeof seriesCommentInput>;
 
+/** Shared cursor page size. Callers request the default; the API rejects a larger limit. */
+export const CURSOR_PAGE_LIMIT_MAX = 50;
+export const CURSOR_PAGE_LIMIT_DEFAULT = 20;
+
+const cursorPageLimit = z
+  .number()
+  .int()
+  .min(1)
+  .max(CURSOR_PAGE_LIMIT_MAX)
+  .default(CURSOR_PAGE_LIMIT_DEFAULT);
+
 export const commentRepliesListInput = z.object({
   parentId: z.string().uuid(),
   cursor: z.string().uuid().optional(),
-  limit: z.number().int().min(1).max(50).default(20),
+  limit: cursorPageLimit,
   // When set, the page that contains this reply is returned and `cursor` is ignored.
   aroundId: z.string().uuid().optional(),
 });
@@ -149,7 +160,7 @@ const cursorSchema = z.string().max(CURSOR_MAX);
 
 export const cursorPaginationInput = z.object({
   cursor: cursorSchema.optional(),
-  limit: z.number().int().min(1).max(50).default(20),
+  limit: cursorPageLimit,
 });
 export type CursorPaginationInput = z.infer<typeof cursorPaginationInput>;
 
@@ -172,7 +183,7 @@ export type ForumRepliesListInput = z.infer<typeof forumRepliesListInput>;
 export const pageCursorPaginationInput = z.object({
   pageCursor: cursorSchema.optional(),
   cursor: cursorSchema.optional(),
-  limit: z.number().int().min(1).max(50).default(20),
+  limit: cursorPageLimit,
 });
 export type PageCursorPaginationInput = z.infer<typeof pageCursorPaginationInput>;
 
@@ -569,7 +580,7 @@ export const adminUsersListInput = z.object({
   q: z.string().trim().max(EMAIL_MAX).optional(),
   status: z.enum(ADMIN_USER_STATUS_VALUES).optional(),
   cursor: cursorSchema.optional(),
-  limit: z.number().int().min(1).max(50).default(20),
+  limit: cursorPageLimit,
 });
 export type AdminUsersListInput = z.infer<typeof adminUsersListInput>;
 
@@ -618,7 +629,7 @@ export type CollectionListState = (typeof COLLECTION_LIST_STATE_VALUES)[number];
 
 export const collectionListInput = z.object({
   cursor: z.string().max(CURSOR_MAX).optional(),
-  limit: z.number().int().min(1).max(50).default(20),
+  limit: cursorPageLimit,
   state: z.enum(COLLECTION_LIST_STATE_VALUES).default('all'),
 });
 export type CollectionListInput = z.infer<typeof collectionListInput>;
