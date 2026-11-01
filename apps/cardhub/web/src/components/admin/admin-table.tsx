@@ -7,20 +7,43 @@ import { focusRing } from './catalog-utils';
 
 export const actionClass = `inline-flex min-h-6 items-center rounded px-1 ${focusRing}`;
 
+const scrollRegionClass =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2';
+
 export function AdminTable({
   caption,
   busy,
   children,
   className,
+  contained = false,
+  regionLabel,
 }: {
   caption: string;
   busy?: boolean;
   children: ReactNode;
   className?: string;
+  /** Size the table to its container. The loading skeleton uses this so 375px does not scroll sideways. */
+  contained?: boolean;
+  /** Accessible name for the horizontal scroller, when the loaded table has to scroll. */
+  regionLabel?: string;
 }) {
+  const namedScroll = !contained && typeof regionLabel === 'string' && regionLabel.length > 0;
   return (
-    <div className={cn('overflow-x-auto rounded-xl border border-neutral-200 bg-white', className)}>
-      <table aria-busy={busy || undefined} className="w-full min-w-160 text-sm">
+    <div
+      className={cn(
+        contained ? 'max-w-full' : 'overflow-x-auto',
+        'rounded-xl border border-neutral-200 bg-white',
+        namedScroll && scrollRegionClass,
+        className,
+      )}
+      tabIndex={namedScroll ? 0 : undefined}
+      role={namedScroll ? 'region' : undefined}
+      aria-label={namedScroll ? regionLabel : undefined}
+    >
+      <table
+        aria-busy={busy || undefined}
+        className={cn('w-full text-sm', contained ? 'min-w-0' : 'min-w-160')}
+      >
         <caption className="sr-only">{caption}</caption>
         {children}
       </table>
@@ -48,11 +71,7 @@ export function AdminTh({
   return (
     <th
       scope="col"
-      className={cn(
-        'whitespace-nowrap px-3 py-2',
-        align === 'right' && 'text-right',
-        className,
-      )}
+      className={cn('whitespace-nowrap px-3 py-2', align === 'right' && 'text-right', className)}
     >
       {children}
     </th>

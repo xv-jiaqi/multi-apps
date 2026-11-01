@@ -198,4 +198,38 @@ describe('admin release list', () => {
     await user.click(more);
     expect(list.fetchNextPage).not.toHaveBeenCalled();
   });
+
+  it('keeps the loading skeleton out of the scroll region and names the loaded list', () => {
+    list.isLoading = true;
+    list.isPending = true;
+    list.isFetching = true;
+    const loading = renderPage();
+    const busy = screen.getByRole('table', { name: '发售条目' });
+    expect(busy).toHaveAttribute('aria-busy', 'true');
+    expect(busy.parentElement).not.toHaveAttribute('role', 'region');
+    expect(busy).not.toHaveClass('min-w-160');
+    loading.unmount();
+
+    list.isLoading = false;
+    list.isPending = false;
+    list.isFetching = false;
+    list.items = [entry({})];
+    const loaded = renderPage();
+    const region = screen.getByRole('region', { name: '发售条目列表' });
+    expect(region.tabIndex).toBe(0);
+    expect(region).toHaveClass(
+      'focus-visible:outline-none',
+      'focus-visible:ring-2',
+      'focus-visible:ring-brand-500',
+      'focus-visible:ring-offset-2',
+    );
+    expect(screen.getByRole('table', { name: '发售条目' }).parentElement).toBe(region);
+    loaded.unmount();
+
+    rootStore.locale.setLocale('en-US');
+    renderPage();
+    const english = screen.getByRole('region', { name: 'Release entries' });
+    expect(english.tabIndex).toBe(0);
+    expect(screen.getByRole('table', { name: 'Releases' }).parentElement).toBe(english);
+  });
 });

@@ -150,13 +150,13 @@ const AdminReleasesBody = observer(function AdminReleasesBody() {
           />
         )
       ) : listView === 'loading' ? (
-        <AdminTable caption={tt('admin.releases.title')} busy>
+        <AdminTable caption={tt('admin.releases.title')} busy contained>
           <AdminTableHead>
-            <AdminTh>{tt('admin.releases.col.date')}</AdminTh>
-            <AdminTh>{tt('admin.col.title')}</AdminTh>
-            <AdminTh>{tt('admin.releases.col.region')}</AdminTh>
-            <AdminTh>{tt('admin.releases.col.series')}</AdminTh>
-            <AdminTh>{tt('admin.col.actions')}</AdminTh>
+            <AdminTh className="whitespace-normal">{tt('admin.releases.col.date')}</AdminTh>
+            <AdminTh className="whitespace-normal">{tt('admin.col.title')}</AdminTh>
+            <AdminTh className="whitespace-normal">{tt('admin.releases.col.region')}</AdminTh>
+            <AdminTh className="whitespace-normal">{tt('admin.releases.col.series')}</AdminTh>
+            <AdminTh className="whitespace-normal">{tt('admin.col.actions')}</AdminTh>
           </AdminTableHead>
           <tbody>
             {Array.from({ length: 4 }, (_, row) => (
@@ -174,7 +174,10 @@ const AdminReleasesBody = observer(function AdminReleasesBody() {
         <AdminEmpty>{tt('admin.releases.empty')}</AdminEmpty>
       ) : (
         <>
-          <AdminTable caption={tt('admin.releases.title')}>
+          <AdminTable
+            caption={tt('admin.releases.title')}
+            regionLabel={tt('admin.releases.listLabel')}
+          >
             <AdminTableHead>
               <AdminTh>{tt('admin.releases.col.date')}</AdminTh>
               <AdminTh>{tt('admin.col.title')}</AdminTh>
