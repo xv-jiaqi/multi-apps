@@ -53,6 +53,9 @@ export const seriesBySlugSchema = z.object({
       imageUrl: z.string().nullable(),
       cardNumber: z.string().nullable(),
       subsetSlug: z.string().nullable(),
+      parallelName: z.string().nullable(),
+      printRun: z.number().int().nullable(),
+      parallelOfId: z.string().nullable(),
     }),
   ),
 });

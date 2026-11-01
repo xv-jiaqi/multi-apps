@@ -281,7 +281,45 @@ describe('card parallels', () => {
 
     const legacy = await get('series.bySlug', { slug: seriesSlug });
     expect(legacy.status).toBe(200);
-    expect(rowsOf(legacy.body, 'cards')).toHaveLength(7);
+    const legacyCards = rowsOf(legacy.body, 'cards');
+    expect(legacyCards).toHaveLength(7);
+    const baseRow = await prisma.card.findUnique({
+      where: { slug: slug('base') },
+      select: { id: true },
+    });
+    if (!baseRow) throw new Error('expected base card');
+    const gold = legacyCards.find((card) => card.slug === slug('gold'));
+    const plain = legacyCards.find((card) => card.slug === slug('plain'));
+    const baseCard = legacyCards.find((card) => card.slug === slug('base'));
+    expect(gold).toMatchObject({
+      slug: slug('gold'),
+      name: '十限',
+      rarity: 'common',
+      imageUrl: null,
+      cardNumber: '7',
+      subsetSlug: null,
+      parallelName: 'beta',
+      printRun: 10,
+      parallelOfId: baseRow.id,
+    });
+    expect(plain).toMatchObject({
+      slug: slug('plain'),
+      name: '无号卡',
+      cardNumber: '7',
+      subsetSlug: null,
+      parallelName: '无号',
+      printRun: null,
+      parallelOfId: baseRow.id,
+    });
+    expect(baseCard).toMatchObject({
+      slug: slug('base'),
+      name: '基础',
+      cardNumber: '7',
+      subsetSlug: null,
+      parallelName: null,
+      printRun: null,
+      parallelOfId: null,
+    });
   });
 
   it('returns the parallel group from bySlug and the parallel fields from search', async () => {

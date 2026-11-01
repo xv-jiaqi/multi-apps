@@ -102,6 +102,9 @@ export class SeriesRouter {
                   rarity: true,
                   imageUrl: true,
                   cardNumber: true,
+                  parallelName: true,
+                  printRun: true,
+                  parallelOfId: true,
                   subset: { select: { slug: true } },
                 },
               },
@@ -132,6 +135,9 @@ export class SeriesRouter {
               imageUrl: card.imageUrl,
               cardNumber: card.cardNumber,
               subsetSlug: card.subset?.slug ?? null,
+              parallelName: card.parallelName,
+              printRun: card.printRun,
+              parallelOfId: card.parallelOfId,
             })),
           };
         });
