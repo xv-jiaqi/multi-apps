@@ -10,6 +10,8 @@ import {
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { writeReportResolve } from '../audit/content-delete';
+import { notifyModeration } from '../notifications/notify';
+import { readTargetSnapshot } from '../notifications/target-snapshot';
 
 type ReportWithReporter = Prisma.ReportGetPayload<{
   include: {
@@ -100,24 +102,6 @@ async function removeReportedTarget(
       await tx.comment.delete({ where: { id: targetId } });
       return;
   }
-}
-
-async function reportedAuthor(
-  tx: Prisma.TransactionClient,
-  targetType: 'LISTING' | 'TOPIC' | 'REPLY' | 'COMMENT',
-  targetId: string,
-): Promise<{ found: boolean; userId: string | null }> {
-  const select = { userId: true } as const;
-  const row =
-    targetType === 'LISTING'
-      ? await tx.listing.findUnique({ where: { id: targetId }, select })
-      : targetType === 'TOPIC'
-        ? await tx.topic.findUnique({ where: { id: targetId }, select })
-        : targetType === 'REPLY'
-          ? await tx.reply.findUnique({ where: { id: targetId }, select })
-          : await tx.comment.findUnique({ where: { id: targetId }, select });
-  if (!row) return { found: false, userId: null };
-  return { found: true, userId: row.userId };
 }
 
 @Injectable()
@@ -344,7 +328,7 @@ export class ReportsRouter {
             return;
           }
 
-          const author = await reportedAuthor(tx, report.targetType, report.targetId);
+          const snapshot = await readTargetSnapshot(tx, report.targetType, report.targetId);
 
           if (input.action === 'MARK_RESOLVED') {
             await tx.report.update({
@@ -357,7 +341,7 @@ export class ReportsRouter {
               },
             });
           } else {
-            if (!author.found) {
+            if (!snapshot.found) {
               throw new TRPCError({ code: 'NOT_FOUND', message: '举报目标不存在或已被删除' });
             }
             await removeReportedTarget(tx, report.targetType, report.targetId);
@@ -381,8 +365,17 @@ export class ReportsRouter {
             actorUsername: actor.username,
             targetId: report.id,
             targetLabel: report.targetType,
-            targetUserId: author.userId,
+            targetUserId: snapshot.userId,
             reason: resolution,
+          });
+          await notifyModeration(tx, {
+            authorId: snapshot.userId,
+            moderatorId: actor.sub,
+            action: input.action,
+            targetType: report.targetType,
+            targetId: report.targetId,
+            excerpt: snapshot.excerpt,
+            href: snapshot.href,
           });
         });
 

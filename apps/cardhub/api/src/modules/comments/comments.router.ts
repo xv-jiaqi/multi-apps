@@ -13,6 +13,9 @@ import {
   slugSchema,
 } from '@repo/shared';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
+import { commentHref } from '../notifications/href';
+import { notificationExcerpt } from '../notifications/plan';
+import { contentMayNotify, notifyContent } from '../notifications/notify';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { loadReplyPreviews, type ReplyPreview } from './reply-preview';
@@ -81,9 +84,7 @@ export class CommentsRouter {
         }),
         loadReplyPreviews(prisma, ids),
       ]);
-      const countByParent = new Map(
-        counts.map((row) => [row.parentId, row._count._all] as const),
-      );
+      const countByParent = new Map(counts.map((row) => [row.parentId, row._count._all] as const));
       const grouped = new Map<string, ReplyPreview[]>();
       for (const reply of replyRows) {
         const bucket = grouped.get(reply.parentId) ?? [];
@@ -125,12 +126,50 @@ export class CommentsRouter {
     ) {
       const parent = await prisma.comment.findUnique({
         where: { id: parentId },
-        select: { id: true, parentId: true, cardId: true, seriesId: true },
+        select: { id: true, parentId: true, cardId: true, seriesId: true, userId: true },
       });
       if (!parent || parent.parentId !== null) throw parentGone();
       if (scope.cardId && parent.cardId !== scope.cardId) throw parentGone();
       if (scope.seriesId && parent.seriesId !== scope.seriesId) throw parentGone();
       return parent;
+    }
+
+    async function insertComment(input: {
+      content: string;
+      userId: string;
+      cardId?: string;
+      seriesId?: string;
+      parentId?: string;
+      replyUserId: string | null;
+      kind: 'card' | 'series';
+      slug: string;
+    }) {
+      const row = await prisma.comment.create({
+        data: {
+          content: input.content,
+          userId: input.userId,
+          ...(input.cardId ? { cardId: input.cardId } : {}),
+          ...(input.seriesId ? { seriesId: input.seriesId } : {}),
+          ...(input.parentId ? { parentId: input.parentId } : {}),
+        },
+        include: { user: { select: { id: true, username: true } } },
+      });
+      const replyUserId =
+        input.replyUserId && input.replyUserId !== input.userId ? input.replyUserId : null;
+      if (contentMayNotify(row.content, replyUserId, input.userId)) {
+        await prisma.$transaction((tx) =>
+          notifyContent(tx, {
+            actorId: input.userId,
+            body: row.content,
+            excerpt: notificationExcerpt(row.content),
+            targetType: 'COMMENT',
+            targetId: row.id,
+            href: commentHref(input.kind, input.slug, row.id, input.parentId ?? null),
+            reply: replyUserId ? { userId: replyUserId, type: 'COMMENT_REPLY' } : null,
+          }),
+        );
+      }
+      return row;
     }
 
     return t.router({
@@ -212,20 +251,20 @@ export class CommentsRouter {
         if (!card) {
           throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
         }
-        if (input.parentId) {
-          await requireTopLevel(input.parentId, { cardId: card.id });
-          await assertReplyContent(input.parentId, input.content);
-        }
+        const parent = input.parentId
+          ? await requireTopLevel(input.parentId, { cardId: card.id })
+          : null;
+        if (input.parentId) await assertReplyContent(input.parentId, input.content);
 
         try {
-          const created = await prisma.comment.create({
-            data: {
-              content: input.content,
-              cardId: card.id,
-              userId: ctx.user.sub,
-              ...(input.parentId ? { parentId: input.parentId } : {}),
-            },
-            include: { user: { select: { id: true, username: true } } },
+          const created = await insertComment({
+            content: input.content,
+            userId: ctx.user.sub,
+            cardId: card.id,
+            parentId: input.parentId,
+            replyUserId: parent && typeof parent.userId === 'string' ? parent.userId : null,
+            kind: 'card',
+            slug: input.cardSlug,
           });
           return mapComment(created);
         } catch (error) {
@@ -247,20 +286,20 @@ export class CommentsRouter {
           if (!series) {
             throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
           }
-          if (input.parentId) {
-            await requireTopLevel(input.parentId, { seriesId: series.id });
-            await assertReplyContent(input.parentId, input.content);
-          }
+          const parent = input.parentId
+            ? await requireTopLevel(input.parentId, { seriesId: series.id })
+            : null;
+          if (input.parentId) await assertReplyContent(input.parentId, input.content);
 
           try {
-            const created = await prisma.comment.create({
-              data: {
-                content: input.content,
-                seriesId: series.id,
-                userId: ctx.user.sub,
-                ...(input.parentId ? { parentId: input.parentId } : {}),
-              },
-              include: { user: { select: { id: true, username: true } } },
+            const created = await insertComment({
+              content: input.content,
+              userId: ctx.user.sub,
+              seriesId: series.id,
+              parentId: input.parentId,
+              replyUserId: parent && typeof parent.userId === 'string' ? parent.userId : null,
+              kind: 'series',
+              slug: input.seriesSlug,
             });
             return mapComment(created);
           } catch (error) {

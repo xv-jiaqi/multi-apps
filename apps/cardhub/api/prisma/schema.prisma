@@ -44,6 +44,8 @@ model User {
   auditLogsTargeted AuditLog[] @relation("AuditTargetUser")
   collectionItems   CollectionItem[]
   dailyActivities   UserDailyActivity[]
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsActed    Notification[] @relation("NotificationActor")
   bannedBy   User?  @relation("UserBannedBy", fields: [bannedById], references: [id], onDelete: SetNull)
   bannedUsers User[] @relation("UserBannedBy")
 
@@ -373,4 +375,53 @@ model UserDailyActivity {
   @@unique([userId, day])
   @@index([day])
   @@map("user_daily_activities")
+}
+
+enum NotificationType {
+  TOPIC_REPLY
+  COMMENT_REPLY
+  MENTION
+  CONTENT_RESOLVED
+}
+
+enum NotificationAction {
+  MARK_RESOLVED
+  REMOVE_TARGET
+}
+
+enum NotificationTargetType {
+  LISTING
+  TOPIC
+  REPLY
+  COMMENT
+}
+
+// In-app notification. Old servers ignore this table. Roll the app back to
+// the previous SHA and leave the table in place. Dropping notifications has
+// to be a later forward migration (docs/Cardhub/development-backlog.md §1.3).
+// This migration does not alter existing tables. userId cascades with the
+// recipient. actorId becomes null when that user is deleted.
+model Notification {
+  id         String                 @id @default(uuid())
+  userId     String
+  actorId    String?
+  type       NotificationType
+  // Set only for CONTENT_RESOLVED. List returns it and never returns the
+  // free-text report resolution.
+  action     NotificationAction?
+  targetType NotificationTargetType
+  targetId   String
+  // Captured at write time so a deleted target still has something to show.
+  excerpt    String
+  href       String?
+  readAt     DateTime?
+  createdAt  DateTime               @default(now())
+
+  user  User  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // unreadCount polls (userId, readAt). List pages on (userId, createdAt, id).
+  @@index([userId, readAt])
+  @@index([userId, createdAt, id])
+  @@map("notifications")
 }

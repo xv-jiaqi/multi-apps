@@ -151,6 +151,15 @@ export const cursorPaginationInput = z.object({
 });
 export type CursorPaginationInput = z.infer<typeof cursorPaginationInput>;
 
+/** Own notifications, newest first. `limit` stays on the shared 1–50 cursor cap. */
+export const notificationListInput = cursorPaginationInput;
+export type NotificationListInput = z.infer<typeof notificationListInput>;
+
+export const notificationMarkReadInput = z.object({
+  id: z.string().uuid(),
+});
+export type NotificationMarkReadInput = z.infer<typeof notificationMarkReadInput>;
+
 export const pageCursorPaginationInput = z.object({
   pageCursor: cursorSchema.optional(),
   cursor: cursorSchema.optional(),

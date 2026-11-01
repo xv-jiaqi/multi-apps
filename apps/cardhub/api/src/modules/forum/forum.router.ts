@@ -14,6 +14,9 @@ import {
   topicUpdateInput,
 } from '@repo/shared';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
+import { forumReplyHref, forumTopicHref } from '../notifications/href';
+import { notificationExcerpt } from '../notifications/plan';
+import { contentMayNotify, notifyContent } from '../notifications/notify';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -160,22 +163,37 @@ export class ForumRouter {
 
       create: t.activeUserProcedure.input(topicCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const actorId = ctx.user.sub;
         const created = await createTopicWithUniqueSlug(prisma, {
           title: input.title,
           body: input.body,
-          userId: ctx.user.sub,
+          userId: actorId,
         });
+        if (contentMayNotify(created.body, null, actorId)) {
+          await prisma.$transaction((tx) =>
+            notifyContent(tx, {
+              actorId,
+              body: created.body,
+              excerpt: notificationExcerpt(created.body),
+              targetType: 'TOPIC',
+              targetId: created.id,
+              href: forumTopicHref(created.slug),
+              reply: null,
+            }),
+          );
+        }
         return mapTopicSummary({ ...created, _count: { replies: 0 } });
       }),
 
       update: t.activeUserProcedure.input(topicUpdateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const actorId = ctx.user.sub;
         const existing = await prisma.topic.findUnique({
           where: { id: input.id },
           select: { id: true, userId: true, createdAt: true },
         });
         if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
-        if (existing.userId !== ctx.user.sub) {
+        if (existing.userId !== actorId) {
           throw new TRPCError({ code: 'FORBIDDEN', message: '只能编辑自己的话题' });
         }
         if (Date.now() - existing.createdAt.getTime() > EDIT_WINDOW_MS) {
@@ -184,13 +202,26 @@ export class ForumRouter {
             message: '话题发布超过 5 分钟后无法编辑，可考虑删除后重新发布',
           });
         }
-        const updated = await prisma.topic.update({
-          where: { id: input.id },
-          data: { title: input.title, body: input.body, editedAt: new Date() },
-          include: {
-            user: { select: { id: true, username: true } },
-            _count: { select: { replies: true } },
-          },
+        const updated = await prisma.$transaction(async (tx) => {
+          const row = await tx.topic.update({
+            where: { id: input.id },
+            data: { title: input.title, body: input.body, editedAt: new Date() },
+            include: {
+              user: { select: { id: true, username: true } },
+              _count: { select: { replies: true } },
+            },
+          });
+          await notifyContent(tx, {
+            actorId,
+            body: row.body,
+            excerpt: notificationExcerpt(row.body),
+            targetType: 'TOPIC',
+            targetId: row.id,
+            href: forumTopicHref(row.slug),
+            reply: null,
+            dedupeMentions: true,
+          });
+          return row;
         });
         return mapTopicSummary(updated);
       }),
@@ -291,12 +322,25 @@ export class ForumRouter {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const topic = await prisma.topic.findUnique({
           where: { id: input.topicId },
-          select: { id: true },
+          select: { id: true, slug: true, userId: true },
         });
         if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
-        const created = await prisma.reply.create({
-          data: { topicId: input.topicId, userId: ctx.user.sub, body: input.body },
-          include: { user: { select: { id: true, username: true } } },
+        const actorId = ctx.user.sub;
+        const created = await prisma.$transaction(async (tx) => {
+          const row = await tx.reply.create({
+            data: { topicId: topic.id, userId: actorId, body: input.body },
+            include: { user: { select: { id: true, username: true } } },
+          });
+          await notifyContent(tx, {
+            actorId,
+            body: row.body,
+            excerpt: notificationExcerpt(row.body),
+            targetType: 'REPLY',
+            targetId: row.id,
+            href: forumReplyHref(topic.slug, row.id),
+            reply: topic.userId === actorId ? null : { userId: topic.userId, type: 'TOPIC_REPLY' },
+          });
+          return row;
         });
         return {
           id: created.id,

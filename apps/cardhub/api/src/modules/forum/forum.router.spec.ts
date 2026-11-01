@@ -39,7 +39,11 @@ function makeRouter() {
       create: replyCreate,
       delete: replyDelete,
     },
-    user: { findUnique: userFindUnique },
+    user: { findUnique: userFindUnique, findMany: jest.fn().mockResolvedValue([]) },
+    notification: {
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     auditLog: { create: jest.fn() },
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
