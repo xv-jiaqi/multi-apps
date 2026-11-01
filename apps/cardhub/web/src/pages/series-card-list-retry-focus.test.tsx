@@ -108,4 +108,71 @@ describe('SeriesCardList retry focus', () => {
     expect(document.activeElement).toBe(retry);
     expect(document.activeElement).not.toBe(document.body);
   });
+
+  it('leaves focus on another control when the user moved it during the retry', async () => {
+    const user = userEvent.setup();
+    renderList();
+    await waitFor(() => expect(gates).toHaveLength(1));
+    const first = gates[0];
+    if (!first) throw new Error('missing first list request');
+
+    act(() => {
+      first.reject(listFailure());
+    });
+
+    const retry = await screen.findByRole('button', { name: '重试' });
+    retry.focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(gates).toHaveLength(2));
+    expect(screen.getByRole('button', { name: '重试中…' })).toBe(retry);
+
+    const search = screen.getByRole('searchbox', { name: '搜索本系列' });
+    search.focus();
+    expect(document.activeElement).toBe(search);
+
+    const second = gates[1];
+    if (!second) throw new Error('missing retry request');
+    act(() => {
+      second.reject(listFailure());
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '重试' })).toBe(retry);
+    });
+    expect(document.activeElement).toBe(search);
+    expect(document.activeElement).not.toBe(retry);
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('returns focus to the retry button when it fell to the document during the retry', async () => {
+    const user = userEvent.setup();
+    renderList();
+    await waitFor(() => expect(gates).toHaveLength(1));
+    const first = gates[0];
+    if (!first) throw new Error('missing first list request');
+
+    act(() => {
+      first.reject(listFailure());
+    });
+
+    const retry = await screen.findByRole('button', { name: '重试' });
+    retry.focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(gates).toHaveLength(2));
+
+    retry.blur();
+    expect(document.activeElement).toBe(document.body);
+
+    const second = gates[1];
+    if (!second) throw new Error('missing retry request');
+    act(() => {
+      second.reject(listFailure());
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '重试' })).toHaveFocus();
+    });
+    expect(document.activeElement).toBe(retry);
+    expect(document.activeElement).not.toBe(document.body);
+  });
 });

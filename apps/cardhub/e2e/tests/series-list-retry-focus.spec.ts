@@ -1,4 +1,5 @@
-import { expect, test, type Route } from '@playwright/test';
+import { expect, test, type Locator, type Route } from '@playwright/test';
+import { waitUntil } from '../../test-utils/wait-until.ts';
 
 const LIST_ERROR = {
   error: {
@@ -26,6 +27,16 @@ function isUnknownArray(value: unknown): value is readonly unknown[] {
 
 async function readJson(response: { text: () => Promise<string> }): Promise<unknown> {
   return JSON.parse(await response.text());
+}
+
+function createRelease(): { promise: Promise<void>; release: () => void } {
+  let release = () => undefined;
+  const promise = new Promise<void>((resolve) => {
+    release = () => {
+      resolve();
+    };
+  });
+  return { promise, release };
 }
 
 async function failListBySeries(route: Route): Promise<void> {
@@ -57,27 +68,72 @@ async function failListBySeries(route: Route): Promise<void> {
   });
 }
 
-test('series list retry keeps focus when listBySeries stays 500', async ({ page }) => {
-  await page.route('**/trpc/**', failListBySeries);
-  await page.goto('/series/celestial-dawn');
-  await expect(page.getByRole('heading', { level: 1, name: '天穹黎明' })).toBeVisible();
-
-  const retry = page
-    .getByRole('alert')
-    .filter({ has: page.getByRole('heading', { level: 2, name: '出了点问题，请稍后再试' }) })
-    .getByRole('button', { name: '重试', exact: true });
-  await expect(retry).toBeVisible();
-  await retry.focus();
-  await page.keyboard.press('Enter');
-
-  await expect(retry).toHaveAttribute('aria-busy', 'true');
-  await expect(retry).not.toHaveAttribute('aria-busy');
-  await expect(retry).toHaveText('重试');
-
-  const active = await retry.evaluate((node) => {
+async function activeLabel(button: Locator): Promise<string> {
+  return button.evaluate((node) => {
     const current = node.ownerDocument.activeElement;
     if (current === null || current === node.ownerDocument.body) return 'BODY';
     return `${current.tagName}:${current.textContent ?? ''}`;
   });
-  expect(active).toBe('BUTTON:重试');
+}
+
+test('series list retry keeps focus when listBySeries stays 500', async ({ page }) => {
+  const gate = createRelease();
+  let holdNextList = false;
+  let held = false;
+  let listRequests = 0;
+
+  await page.route('**/trpc/**', async (route) => {
+    const names = procedureNames(route.request().url());
+    const isList = names.includes('cards.listBySeries');
+    if (isList) listRequests += 1;
+    if (holdNextList && !held && isList) {
+      held = true;
+      await gate.promise;
+    }
+    await failListBySeries(route);
+  });
+
+  try {
+    await page.goto('/series/celestial-dawn');
+    await expect(page.getByRole('heading', { level: 1, name: '天穹黎明' })).toBeVisible();
+
+    const retry = page
+      .getByRole('alert')
+      .filter({ has: page.getByRole('heading', { level: 2, name: '出了点问题，请稍后再试' }) })
+      .getByRole('button');
+    await expect(retry).toHaveText('重试');
+    const requestsBeforeRetry = listRequests;
+    await retry.focus();
+    holdNextList = true;
+    await page.keyboard.press('Enter');
+
+    const busy = await waitUntil(
+      async () => ({
+        requests: listRequests,
+        text: await retry.textContent(),
+        ariaBusy: await retry.getAttribute('aria-busy'),
+      }),
+      (sample) =>
+        sample.requests > requestsBeforeRetry &&
+        sample.text === '重试中…' &&
+        sample.ariaBusy === 'true',
+      'list retry request in flight',
+    );
+    expect(busy.requests).toBeGreaterThan(requestsBeforeRetry);
+    expect(await activeLabel(retry)).toBe('BUTTON:重试中…');
+
+    gate.release();
+
+    await waitUntil(
+      async () => ({
+        text: await retry.textContent(),
+        ariaBusy: await retry.getAttribute('aria-busy'),
+      }),
+      (sample) => sample.text === '重试' && sample.ariaBusy !== 'true',
+      'list retry settled',
+    );
+    expect(await activeLabel(retry)).toBe('BUTTON:重试');
+  } finally {
+    gate.release();
+  }
 });

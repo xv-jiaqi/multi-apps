@@ -323,11 +323,11 @@ export const SeriesCardList = observer(function SeriesCardList({
     const busy = listView === 'error' && list.isFetching;
     const failedRetry = retryWasBusy.current && !busy && listView === 'error';
     retryWasBusy.current = busy;
-    const button = retryRef.current;
-    // The error view stays mounted, so a keyboard retry keeps its focus ring.
-    // focus() only runs when that node was replaced and focus fell to the body.
-    if (failedRetry && button && document.activeElement !== button) {
-      button.focus({ preventScroll: true });
+    const active = document.activeElement;
+    // The button stays mounted, so a keyboard retry keeps its ring. Only pull
+    // focus back when it fell to the document. Another control keeps focus.
+    if (failedRetry && (active === null || active === document.body)) {
+      retryRef.current?.focus({ preventScroll: true });
     }
   }, [list.isFetching, listView]);
 
