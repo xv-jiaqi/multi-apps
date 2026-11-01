@@ -322,9 +322,17 @@ digest and the hash already match; env changes do not need it. After
 or `.Image` when the image has no repo digest) must equal the digest that
 was pulled. A mismatch fails the deploy and the existing rollback starts
 the previous digests. If an api or web container is already running and
-either previous digest cannot be read, deploy exits before pull or
-`compose up` and leaves those containers alone. A first deploy, with
-neither container present, still starts them.
+either previous registry digest cannot be read, deploy exits before pull or
+`compose up` and leaves those containers alone. `Config.Image` `@sha256`
+and `RepoDigests` count. The local image id does not: rollback would pull
+`name@<image id>`, which is not the GHCR manifest. Restore it with
+`docker pull ghcr.io/xv-jiaqi/cardhub-api:sha-<40 hex>` and the same tag
+for web before deploying again. A first deploy, with neither container
+present, still starts them. A rollback `compose pull` that fails is printed
+as a GitHub `::error::`. When both previous images are already on the
+machine, rollback still runs `compose up -d --pull never`. If that up
+fails, it is printed as `::error::` as well. The deploy still exits
+non-zero.
 
 ### When deploy refuses before it replaces containers
 
@@ -392,10 +400,11 @@ Do not `docker compose down`, do not `down -v`, and do not
 container that is serving, or delete the database volume. `up -d --no-deps`
 on the one missing service is the exception in the digest steps below.
 
-Staging is `cardhub-staging` with `/opt/cardhub/staging/staging.env`.
-Production is `cardhub-prod` with `/opt/cardhub/production/production.env`.
-The commands below are staging. Swap the project name and the env file
-for production. The compose file is the one already on the server.
+Set `ENV_NAME` to `staging` or `prod` before the commands below. The
+project name, env file, and compose path follow from that value.
+`IMAGE_TAG` is `sha-` plus the same 40 hex used for the image tag, and
+`digest` is that service's own manifest. Later commands use those
+variables. They do not name an environment of their own.
 
 Only a service whose `ps -aq` count is greater than 1 is changed. A
 service with one container, including one `exited` container, is left
@@ -411,9 +420,24 @@ one is `healthy`, the loop does not delete; use the `/health` or
 other ids yourself.
 
 ```bash
-project=cardhub-staging
-env_file=/opt/cardhub/staging/staging.env
-compose=/opt/cardhub/staging/deploy/docker-compose.yml
+# staging or prod. production.env keeps ENV_NAME=prod.
+ENV_NAME=staging
+case "${ENV_NAME}" in
+  staging)
+    project=cardhub-staging
+    env_file=/opt/cardhub/staging/staging.env
+    compose=/opt/cardhub/staging/deploy/docker-compose.yml
+    ;;
+  prod)
+    project=cardhub-prod
+    env_file=/opt/cardhub/production/production.env
+    compose=/opt/cardhub/production/deploy/docker-compose.yml
+    ;;
+  *)
+    echo "ENV_NAME must be staging or prod" >&2
+    exit 1
+    ;;
+esac
 
 for svc in api web; do
   echo "---- ${svc} ----"
@@ -518,12 +542,13 @@ fi
 if [ -z "${sha}" ]; then
   sha="$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "${image_id}" | sed -n 's/^\([0-9a-f]\{40\}\)$/\1/p')"
 fi
-docker pull "ghcr.io/xv-jiaqi/cardhub-api:sha-${sha}"
+IMAGE_TAG="sha-${sha}"
+docker pull "ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}"
 docker image inspect -f '{{json .RepoDigests}}' "${image_id}"
 docker inspect -f '{{.Id}} {{.Image}}' "${id}"
 ```
 
-Repeat for web and `ghcr.io/xv-jiaqi/cardhub-web`. After the pull, `.Image`
+Repeat for web and `ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}`. After the pull, `.Image`
 on the same container id must be unchanged, and `RepoDigests` must list
 `@sha256:`. If `.Image` changed, the registry tag is a different image
 than the one the container is running; leave that container up and do not
@@ -539,34 +564,40 @@ that is already up.
 
 ```bash
 sha="<40 hex of the last deploy that stayed up>"
-IMAGE_TAG="sha-${sha}" ENV_NAME=staging \
-  WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web:sha-${sha}" \
+IMAGE_TAG="sha-${sha}"
+ENV_NAME="${ENV_NAME}" IMAGE_TAG="${IMAGE_TAG}" \
+  WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}" \
   docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" \
   up -d --no-deps web
 ```
 
-When api is the empty side, set `API_IMAGE=ghcr.io/xv-jiaqi/cardhub-api:sha-${sha}`
+When api is the empty side, set `API_IMAGE="ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}"`
 and change the service to `api`. Leave the running side's image variable
 unset. Do not pass `--force-recreate`.
 
 The tag is enough to start the missing container. To pin that same
-service by its own manifest, take the digest the Images run stored for
-it, or read the tag from GHCR. `image-digest-web` is the web artifact;
-`image-digest-api` is the api artifact. Each artifact is one file named
-`digest`.
+service by its own manifest, read the tag with `docker buildx imagetools
+inspect`. The server may not have `gh`. The `image-digest-web` and
+`image-digest-api` artifacts are kept for 90 days; after they expire,
+imagetools is the way to read that service's digest. Each artifact is
+one file named `digest`. `gh run download` is only for a machine that
+has `gh`, while the artifact is still there.
 
 ```bash
-run_id="$(gh run list --repo xv-jiaqi/multi-apps --workflow images.yml --commit "${sha}" --json databaseId,conclusion --jq '[.[] | select(.conclusion=="success")][0].databaseId')"
-gh run download --repo xv-jiaqi/multi-apps "${run_id}" --name image-digest-web --dir /tmp/image-digest-web
-digest="$(tr -d '[:space:]' < /tmp/image-digest-web/digest)"
-docker buildx imagetools inspect "ghcr.io/xv-jiaqi/cardhub-web:sha-${sha}"
+digest="$(docker buildx imagetools inspect "ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}" | awk '/^Digest:/ { print $2; exit }')"
+# Optional, before the 90 day expiry, where gh is installed:
+# run_id="$(gh run list --repo xv-jiaqi/multi-apps --workflow images.yml --commit "${sha}" --json databaseId,conclusion --jq '[.[] | select(.conclusion=="success")][0].databaseId')"
+# gh run download --repo xv-jiaqi/multi-apps "${run_id}" --name image-digest-web --dir /tmp/image-digest-web
+# digest="$(tr -d '[:space:]' < /tmp/image-digest-web/digest)"
 ```
 
-Use `image-digest-api` and `ghcr.io/xv-jiaqi/cardhub-api:sha-${sha}` when
-api is the empty side. The `up` then names only that service:
+Use `image-digest-api` and `ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}` when
+api is the empty side. The `up` then names only that service, with the
+same `ENV_NAME` and `IMAGE_TAG`:
 
 ```bash
-WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web@${digest}" \
+ENV_NAME="${ENV_NAME}" IMAGE_TAG="${IMAGE_TAG}" \
+  WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web@${digest}" \
   docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" \
   up -d --no-deps web
 ```

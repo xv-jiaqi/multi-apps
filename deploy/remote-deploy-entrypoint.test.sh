@@ -111,7 +111,37 @@ shift || true
 if [ "${cmd}" = "pull" ] && [ -n "${DOCKER_STUB_PULL_RC:-}" ]; then
   exit "${DOCKER_STUB_PULL_RC}"
 fi
-if [ "${cmd}" = "network" ] || [ "${cmd}" = "pull" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ] || [ "${cmd}" = "tag" ] || [ "${cmd}" = "image" ]; then
+if [ "${cmd}" = "image" ]; then
+  fmt=""
+  id=""
+  prev=""
+  for arg in "$@"; do
+    if [ "${prev}" = "-f" ]; then
+      fmt="${arg}"
+    fi
+    prev="${arg}"
+    id="${arg}"
+  done
+  if [ "${fmt#*RepoDigests}" != "${fmt}" ]; then
+    case "${id}" in
+      "${DOCKER_STUB_PREV_API_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-api@%s\n' "${DOCKER_STUB_PREV_API_DIGEST}"
+        ;;
+      "${DOCKER_STUB_PREV_WEB_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-web@%s\n' "${DOCKER_STUB_PREV_WEB_DIGEST}"
+        ;;
+      "${DOCKER_STUB_API_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-api@%s\n' "${DOCKER_STUB_API_DIGEST}"
+        ;;
+      "${DOCKER_STUB_WEB_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-web@%s\n' "${DOCKER_STUB_WEB_DIGEST}"
+        ;;
+    esac
+  fi
+  exit 0
+fi
+
+if [ "${cmd}" = "network" ] || [ "${cmd}" = "pull" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ] || [ "${cmd}" = "tag" ]; then
   exit 0
 fi
 
