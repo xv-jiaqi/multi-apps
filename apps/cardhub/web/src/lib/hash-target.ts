@@ -20,6 +20,12 @@ export function parseHashTarget(hash: string): HashTarget | null {
   return { kind, id };
 }
 
+/** `#reply-…` / `#comment-…` whose id is not a uuid. Other hashes are ignored. */
+export function illegalHashTarget(hash: string): boolean {
+  if (parseHashTarget(hash)) return false;
+  return /^#(reply|comment)-.+$/i.test(hash);
+}
+
 export function reducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }

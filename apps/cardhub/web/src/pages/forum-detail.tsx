@@ -25,7 +25,7 @@ import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { BannedNotice } from '../components/banned-notice';
 import { HashTargetNotice } from '../components/hash-target-notice';
-import { parseHashTarget, revealElement } from '../lib/hash-target';
+import { illegalHashTarget, parseHashTarget, revealElement } from '../lib/hash-target';
 import { trpc } from '../lib/trpc';
 
 interface TopicReply {
@@ -81,6 +81,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);
   const [anchoredReplies, setAnchoredReplies] = useState<TopicReply[]>([]);
   const [hashMissing, setHashMissing] = useState(false);
+  const [hashInComments, setHashInComments] = useState(false);
   const [hashRevealId, setHashRevealId] = useState<string | null>(null);
   const hashAttempt = useRef<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<ConfirmingDelete | null>(null);
@@ -408,10 +409,21 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   useEffect(() => {
     const target = parseHashTarget(location.hash);
+    const illegalReply =
+      illegalHashTarget(location.hash) && location.hash.toLowerCase().startsWith('#reply-');
     const topicIdForHash = topicQuery.data?.id;
-    if (!target || target.kind !== 'reply' || !topicIdForHash) return;
+    if ((!target || target.kind !== 'reply') && !illegalReply) return;
+    if (!topicIdForHash) return;
     if (hashAttempt.current === location.hash) return;
     hashAttempt.current = location.hash;
+    if (illegalReply || !target || target.kind !== 'reply') {
+      setHashMissing(false);
+      setHashInComments(true);
+      const title = document.getElementById('forum-replies-title');
+      if (title) revealElement(title);
+      return;
+    }
+    setHashInComments(false);
     if (visibleRepliesRef.current.some((reply) => reply.id === target.id)) {
       setHashMissing(false);
       setHashRevealId(target.id);
@@ -811,7 +823,13 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             {tt('forum.detail.repliesTitle', { count: topic.replyCount })}
           </h2>
           <HashTargetNotice
-            message={hashMissing ? tt('notifications.targetMissing') : ''}
+            message={
+              hashMissing
+                ? tt('notifications.targetMissing')
+                : hashInComments
+                  ? tt('notifications.targetInComments')
+                  : ''
+            }
             actionHref={hashMissing ? '#forum-replies-title' : undefined}
             actionLabel={hashMissing ? tt('notifications.targetMissingActionForum') : undefined}
           />

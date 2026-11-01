@@ -27,7 +27,13 @@ import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { DeleteReasonField } from './delete-reason-field';
 import { ReportButton } from './report-button';
 import { HashTargetNotice } from './hash-target-notice';
-import { parseHashTarget, readParentId, reducedMotion, revealElement } from '../lib/hash-target';
+import {
+  illegalHashTarget,
+  parseHashTarget,
+  readParentId,
+  reducedMotion,
+  revealElement,
+} from '../lib/hash-target';
 import { queryFallback, RetryButton, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
@@ -684,7 +690,8 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   useEffect(() => {
     const target = parseHashTarget(location.hash);
-    if (!target || commentsView !== 'ready' || !list.data) return;
+    const illegal = illegalHashTarget(location.hash);
+    if ((!target && !illegal) || commentsView !== 'ready' || !list.data) return;
     const attemptKey = `${location.search}${location.hash}`;
     if (hashAttempt.current === attemptKey) return;
     hashAttempt.current = attemptKey;
@@ -716,6 +723,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       focusTitle();
     };
 
+    if (!target) {
+      settled = true;
+      showInComments();
+      return;
+    }
     if (document.getElementById(`${target.kind}-${target.id}`)) {
       settled = true;
       showFound(target.id);

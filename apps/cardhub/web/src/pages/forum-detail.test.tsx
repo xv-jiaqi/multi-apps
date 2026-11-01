@@ -360,6 +360,15 @@ beforeEach(() => {
 });
 
 describe('ForumDetailPage hash target', () => {
+  it('degrades an illegal reply hash onto the replies title', async () => {
+    renderPage('/forum/test-topic#reply-garbage');
+
+    const hint = await screen.findByText('没能直接跳到这条回复，它在下面的评论里。');
+    expect(hint.closest('[role="status"]')).not.toBeNull();
+    expect(document.getElementById('forum-replies-title')).toHaveFocus();
+    expect(repliesListFetch).not.toHaveBeenCalled();
+  });
+
   it('keeps a mounted status and an all-comments link when the reply is gone', async () => {
     const replyId = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
     repliesListFetch.mockResolvedValue({ items: [], nextCursor: null });
