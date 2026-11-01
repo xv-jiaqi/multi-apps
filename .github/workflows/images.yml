@@ -23,9 +23,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      # Required. The workflow sets permissions: {} and upload-artifact
-      # writes the digest file through the Actions artifact API.
-      actions: write
     strategy:
       fail-fast: false
       matrix:
