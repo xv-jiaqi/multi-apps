@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { matchRoutes, MemoryRouter } from 'react-router';
 import { t } from '@repo/shared';
 import { rootStore } from '../stores/root-store';
 import { addCalendarDays, shanghaiToday } from '../lib/shanghai-date';
@@ -132,7 +132,26 @@ vi.mock('../lib/releases-list', () => ({
   },
 }));
 
+import { appRoutes } from '../app';
 import { HomePage } from './home';
+
+function expectNoDeadInternalLinks() {
+  const anchors = [...document.querySelectorAll('a')];
+  expect(anchors.some((anchor) => anchor.getAttribute('href') === '/calendar')).toBe(false);
+  expect(screen.queryByRole('link', { name: /发售日历|Release calendar/ })).not.toBeInTheDocument();
+
+  for (const anchor of anchors) {
+    const href = anchor.getAttribute('href');
+    if (!href || !href.startsWith('/') || href.startsWith('//')) continue;
+    const hashAt = href.indexOf('#');
+    const withoutHash = hashAt === -1 ? href : href.slice(0, hashAt);
+    const queryAt = withoutHash.indexOf('?');
+    const pathname = queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
+    const matched = matchRoutes(appRoutes, pathname)?.at(-1)?.route.path;
+    expect(matched).toBeDefined();
+    expect(matched).not.toBe('*');
+  }
+}
 
 function renderHome() {
   render(
@@ -333,7 +352,7 @@ describe('home sections', () => {
     expect(screen.queryByRole('heading', { name: '即将发售' })).not.toBeInTheDocument();
   });
 
-  it('shows three upcoming releases and the calendar link', () => {
+  it('shows three upcoming releases without a calendar link', () => {
     const releases: ReleaseFixture[] = Array.from({ length: 4 }, (_, index) => ({
       id: `rel-${index}`,
       title: `发售${index}`,
@@ -351,8 +370,18 @@ describe('home sections', () => {
       from: shanghaiToday(),
       to: addCalendarDays(shanghaiToday(), 365),
     });
-    expect(screen.getByRole('heading', { level: 2, name: '即将发售' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /发售日历/ })).toHaveAttribute('href', '/calendar');
+    const upcoming = screen.getByRole('heading', { level: 2, name: '即将发售' });
+    expect(upcoming.closest('a')).toBeNull();
+    const titleRow = upcoming.parentElement;
+    const section = upcoming.closest('section');
+    expect(titleRow?.querySelector(':scope > a')).toBeNull();
+    expect(titleRow?.className ?? '').not.toMatch(/invisible|opacity-0/);
+    if (titleRow && titleRow !== section) {
+      expect(titleRow.childElementCount).toBe(1);
+    }
+    expectNoDeadInternalLinks();
+    const footer = screen.getByRole('contentinfo');
+    expect(footer.querySelector('a[href="/calendar"]')).toBeNull();
     expect(screen.getByRole('heading', { level: 3, name: '发售0' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: '发售2' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '发售3' })).not.toBeInTheDocument();
