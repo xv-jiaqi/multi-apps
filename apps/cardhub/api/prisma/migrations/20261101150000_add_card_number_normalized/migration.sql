@@ -1,9 +1,13 @@
 -- Expand-only card-number key for /search c:.
--- Independent of add_release_calendar: this migration does not create or
--- alter the release calendar. Its timestamp is later so migrate deploy runs
--- it after that migration. Old servers ignore the new column.
--- The backfill matches normalizedCardNumber in @repo/shared. Later writes
--- set cardNumberNormalized in the same statement as cardNumber.
+-- Folder timestamp 20261101150000 sorts after
+-- 20261101143000_add_release_calendar and before
+-- 20261101160000_add_notifications. This file does not create or alter
+-- releases or notifications. Old servers ignore the new column.
+-- The backfill and the trigger both call cardhub_card_number_normalized,
+-- which matches normalizedCardNumber in @repo/shared. The trigger runs on
+-- every insert and update, so a server that does not write this column
+-- (including a rollback to the previous image) still leaves a current key.
+-- The application writes the same key in the same statement.
 
 CREATE OR REPLACE FUNCTION cardhub_card_number_normalized(input text)
 RETURNS text
@@ -53,3 +57,18 @@ SET "cardNumberNormalized" = cardhub_card_number_normalized("cardNumber")
 WHERE "cardNumber" IS NOT NULL;
 
 CREATE INDEX "cards_cardNumberNormalized_idx" ON "cards"("cardNumberNormalized");
+
+CREATE OR REPLACE FUNCTION cardhub_cards_sync_card_number_normalized()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW."cardNumberNormalized" := cardhub_card_number_normalized(NEW."cardNumber");
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER cards_sync_card_number_normalized
+BEFORE INSERT OR UPDATE ON "cards"
+FOR EACH ROW
+EXECUTE FUNCTION cardhub_cards_sync_card_number_normalized();

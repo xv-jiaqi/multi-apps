@@ -124,8 +124,9 @@ model Card {
   seriesId    String
   // Null means the card has no printed number. Old servers ignore the column.
   cardNumber  String?
-  // Exact-match key for /search c:. Written whenever cardNumber is written.
-  // Expand-only: old servers ignore the column. See add_card_number_normalized.
+  // Exact-match key for /search c:. The migration trigger recomputes it from
+  // cardNumber on every write, including writes from a server that does not
+  // know the column. The application sets the same value in that statement.
   cardNumberNormalized String?
   // Null means the card is not in a subset (ungrouped). Deleting a subset
   // sets this to null and leaves the card in place.
