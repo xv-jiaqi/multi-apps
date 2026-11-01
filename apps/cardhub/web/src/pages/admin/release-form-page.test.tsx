@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { rootStore } from '../../stores/root-store';
-import { NewReleasePage } from './release-form-page';
+import { EditReleasePage, NewReleasePage } from './release-form-page';
 
 const create = vi.fn();
 
@@ -33,17 +33,35 @@ vi.mock('../../lib/trpc', () => ({
     admin: {
       releases: {
         getById: {
-          useQuery: () => ({
-            data: undefined,
-            isLoading: false,
-            isPending: false,
-            isFetching: false,
-            isError: false,
-            error: null,
-            errorUpdateCount: 0,
-            dataUpdatedAt: 0,
-            refetch: vi.fn(),
-          }),
+          useQuery: (input?: { id?: string }) => {
+            const id = input?.id ?? '';
+            const uuid =
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+            if (id.length > 0 && !uuid) {
+              return {
+                data: undefined,
+                isLoading: false,
+                isPending: false,
+                isFetching: false,
+                isError: true,
+                error: { message: 'Bad request', data: { code: 'BAD_REQUEST' } },
+                errorUpdateCount: 1,
+                dataUpdatedAt: 0,
+                refetch: vi.fn(),
+              };
+            }
+            return {
+              data: undefined,
+              isLoading: false,
+              isPending: false,
+              isFetching: false,
+              isError: false,
+              error: null,
+              errorUpdateCount: 0,
+              dataUpdatedAt: 0,
+              refetch: vi.fn(),
+            };
+          },
         },
         create: { useMutation: () => ({ mutateAsync: create, isPending: false }) },
         update: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
@@ -82,6 +100,14 @@ vi.mock('@tanstack/react-query', async () => {
   };
 });
 
+function renderEdit(id: string) {
+  const router = createMemoryRouter(
+    [{ path: '/admin/releases/:id/edit', element: <EditReleasePage /> }],
+    { initialEntries: [`/admin/releases/${id}/edit`] },
+  );
+  return render(<RouterProvider router={router} />);
+}
+
 function renderNew() {
   const router = createMemoryRouter(
     [
@@ -98,6 +124,15 @@ beforeEach(() => {
   rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
   create.mockReset();
   create.mockResolvedValue({ id: 'new-id' });
+});
+
+describe('release edit load', () => {
+  it('shows the missing release state for a non-uuid id', () => {
+    renderEdit('not-a-uuid');
+    expect(screen.getByText('发售条目不存在')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });
 
 describe('release form validation', () => {

@@ -28,7 +28,7 @@ import { queryFallback, useFocusOnRecovery } from '../../components/retry-button
 import {
   normalizeReleaseDateInput,
   releaseFormErrors,
-  releaseNotFound,
+  releaseLookupMissing,
   releaseWriteFeedback,
   releaseWriteInput,
   type ReleaseFormValues,
@@ -134,7 +134,7 @@ const ReleaseFormBody = observer(function ReleaseFormBody({ mode }: { mode: 'cre
     { id },
     { enabled: mode === 'edit' && id.length > 0 },
   );
-  const missing = loaded.isError && releaseNotFound(loaded.error);
+  const missing = loaded.isError && releaseLookupMissing(loaded.error);
   const create = trpc.admin.releases.create.useMutation();
   const update = trpc.admin.releases.update.useMutation();
   const [values, setValues] = useState<ReleaseFormValues>(emptyValues);
