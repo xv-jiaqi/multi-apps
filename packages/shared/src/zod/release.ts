@@ -156,6 +156,11 @@ export const releaseCreateInput = z.object({
 });
 export type ReleaseCreateInput = z.infer<typeof releaseCreateInput>;
 
+export const releaseGetByIdInput = z.object({
+  id: z.string().uuid(),
+});
+export type ReleaseGetByIdInput = z.infer<typeof releaseGetByIdInput>;
+
 export const releaseUpdateInput = releaseCreateInput.extend({
   id: z.string().uuid(),
 });

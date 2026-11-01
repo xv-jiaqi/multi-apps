@@ -150,6 +150,8 @@ describe('release calendar', () => {
         () => post('admin.releases.create', validWrite, 'not-a-token'),
         () => post('admin.releases.update', { ...validWrite, id: EARLY_ID }),
         () => post('admin.releases.delete', { id: EARLY_ID }),
+        () => get('admin.releases.getById', { id: EARLY_ID }),
+        () => get('admin.releases.getById', { id: EARLY_ID }, 'not-a-token'),
       ];
       for (const call of calls) {
         const response = await call();
@@ -165,6 +167,7 @@ describe('release calendar', () => {
         () => post('admin.releases.create', validWrite, userToken),
         () => post('admin.releases.update', { ...validWrite, id: EARLY_ID }, userToken),
         () => post('admin.releases.delete', { id: EARLY_ID }, userToken),
+        () => get('admin.releases.getById', { id: EARLY_ID }, userToken),
       ];
       for (const call of forbidden) {
         const response = await call();
@@ -339,14 +342,56 @@ describe('release calendar', () => {
       expectNoLeak(tooLarge.body);
 
       const badJson = await request(app.getHttpServer())
-        .post('/trpc/admin.releases.create')
+        .post('/trpc/admin.releases.getById')
         .set('Content-Type', 'application/json')
-        .set('X-Forwarded-For', '203.0.113.43')
-        .send('{"title":"LEAK_MARKER"');
+        .set('X-Forwarded-For', '203.0.113.44')
+        .send('{"id":"LEAK_MARKER"');
       expect(badJson.status).toBe(400);
       expect(errorData(badJson.body).code).toBe('BAD_REQUEST');
       expect(errorData(badJson.body).appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
       expectNoLeak(badJson.body);
+
+      const tooLargeById = await request(app.getHttpServer())
+        .post('/trpc/admin.releases.getById')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', '203.0.113.45')
+        .send(Buffer.alloc(100 * 1024 + 1, 0x78));
+      expect(tooLargeById.status).toBe(413);
+      expect(errorData(tooLargeById.body).code).toBe('PAYLOAD_TOO_LARGE');
+      expect(errorData(tooLargeById.body).httpStatus).toBe(413);
+      expectNoLeak(tooLargeById.body);
+
+      const badCreate = await request(app.getHttpServer())
+        .post('/trpc/admin.releases.create')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', '203.0.113.43')
+        .send('{"title":"LEAK_MARKER"');
+      expect(badCreate.status).toBe(400);
+      expect(errorData(badCreate.body).code).toBe('BAD_REQUEST');
+      expect(errorData(badCreate.body).appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
+      expectNoLeak(badCreate.body);
+    } finally {
+      if (previous === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previous;
+    }
+  });
+
+  it('returns one release from getById and not found when the id is missing', async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      const created = await post('admin.releases.create', validWrite, adminToken);
+      expect(created.status).toBe(200);
+      const id = readString(resultData(created.body), 'id');
+      const found = await get('admin.releases.getById', { id }, adminToken);
+      expect(found.status).toBe(200);
+      expect(readString(resultData(found.body), 'title')).toBe(validWrite.title);
+      expect(readString(resultData(found.body), 'releaseDate')).toBe(validWrite.releaseDate);
+      const missing = await get('admin.releases.getById', { id: EARLY_ID }, adminToken);
+      expect(missing.status).toBe(404);
+      expect(errorData(missing.body).code).toBe('NOT_FOUND');
+      expect(errorData(missing.body).stack).toBeUndefined();
+      expectNoLeak(missing.body);
     } finally {
       if (previous === undefined) delete process.env.NODE_ENV;
       else process.env.NODE_ENV = previous;

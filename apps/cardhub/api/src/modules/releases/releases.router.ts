@@ -7,6 +7,7 @@ import {
   parseShanghaiCivilDate,
   releaseCreateInput,
   releaseDeleteInput,
+  releaseGetByIdInput,
   releaseUpdateInput,
   releasesListInput,
   storedReleaseDate,
@@ -191,6 +192,15 @@ export class ReleasesRouter {
     const prisma = this.prisma;
 
     return t.router({
+      getById: t.adminProcedure.input(releaseGetByIdInput).query(async ({ input }) => {
+        const row = await prisma.release.findUnique({
+          where: { id: input.id },
+          select: releaseItemSelect,
+        });
+        if (!row) throw notFound('发售条目不存在');
+        return formatRelease(row);
+      }),
+
       list: t.adminProcedure.input(adminListInput).query(async ({ input }) => {
         const limit = input?.limit ?? RELEASE_LIST_LIMIT_DEFAULT;
         const point = cursorPoint(input?.cursor);
