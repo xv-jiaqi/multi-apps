@@ -783,8 +783,10 @@ On `request>uri`, `input` is deleted and `token`, `code`, `access_token`,
 `REDACTED`. That is the query-key list in
 `apps/cardhub/api/src/bootstrap/http-logger.ts`. Matching is
 case-insensitive, and a once-encoded name such as `%54OKEN` is the same
-key as `TOKEN`. Caddy's built-in query filter compares the name exactly, so
-the edge uses a `(?i)` regexp instead. The path stays, so
+key as `TOKEN`. The name has to end at `=`, `&`, or the end of the query,
+so `tokenize`, `inputs`, and `code_challenge` are left as sent. Caddy's
+built-in query filter compares the name exactly, so the edge uses a `(?i)`
+regexp instead. The path stays, so
 `/trpc/auth.login,auth.login` is still visible. Other query keys, such as
 `batch`, stay. Caddy does not log request bodies.
 

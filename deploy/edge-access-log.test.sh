@@ -201,10 +201,12 @@ if uri_filter.get("filter") != "multi_regexp":
 if len(ops) < 7:
     problems.append(f"expected case-insensitive regexp ops, got {len(ops)}")
 joined = "\n".join(op.get("regexp", "") for op in ops)
-if "(?i)" not in joined or "%54" not in joined or "%69" not in joined:
-    problems.append("regexp ops are not case-insensitive percent-aware")
-if not any(op.get("value") == "$1$2=REDACTED" for op in ops):
+if "(?i)" not in joined or "%54" not in joined or "%69" not in joined or "(&|$)" not in joined:
+    problems.append("regexp ops are not case-insensitive, percent-aware, and bounded")
+if not any(op.get("value") == "$1$2=REDACTED$3" for op in ops):
     problems.append("missing REDACTED replacement")
+if not any(op.get("regexp") == "&" and op.get("value") == "&&" for op in ops):
+    problems.append("missing ampersand-doubling step")
 if "http.log.access" not in (access.get("include") or []):
     problems.append(f"include {access.get('include')}")
 if "http.log.access" not in (logs["default"].get("exclude") or []):
@@ -357,6 +359,32 @@ EOF
     "http://127.0.0.1:${caddy_port}/trpc/case/dup?batch=1&token=LEAKDUP1&TOKEN=LEAKDUP2&Token=LEAKDUP3"
   curl -g -sS -o /dev/null \
     "http://127.0.0.1:${caddy_port}/trpc/case/enc?batch=1&%69nput=LEAKENC&%54OKEN=LEAKENC"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/case/dup3?token=LEAKDUPA&token=LEAKDUPB&TOKEN=LEAKDUPC"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/case/full?%54%4F%4B%45%4E=LEAKFULL&%74oken=LEAK74"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/keep?tokenize=abc&token_type=bearer&inputs=keep&input_mode=dark&code_challenge=CH&mytoken=abc&q=token&codex=1&tokens=1&tokenx=plain"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/keep2?access_token=LEAKAT2&tokens=k"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/pos/start?token=LEAKPOS1&x=1"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/pos/end?x=1&token=LEAKPOS2"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/pos/empty?token="
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/pos/bare?token"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/pos/bare2?x=1&token"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/in/only?input=S"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/in/tail?x=1&input=S"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/in/both?input=S&input=S2"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/frag?q=a&token=LEAKFRAG#frag"
   sleep 0.3
   if [ ! -s "${work}/access.log" ]; then
     bad "live access log was not written"
@@ -396,6 +424,15 @@ needles = [
     "LEAKDUP2",
     "LEAKDUP3",
     "LEAKENC",
+    "LEAKDUPA",
+    "LEAKDUPB",
+    "LEAKDUPC",
+    "LEAKFULL",
+    "LEAK74",
+    "LEAKAT2",
+    "LEAKPOS1",
+    "LEAKPOS2",
+    "LEAKFRAG",
 ]
 for needle in needles:
     if needle in blob:
@@ -419,12 +456,12 @@ else:
         problems.append(f"input query remained: {uri}")
     else:
         print("PROOF line=" + json.dumps(email[-1], separators=(",", ":")))
-def one(prefix):
-    hits = [
-        line
-        for line in lines
-        if ((line.get("request") or {}).get("uri") or "").startswith(prefix)
-    ]
+def one(path):
+    hits = []
+    for line in lines:
+        uri = (line.get("request") or {}).get("uri") or ""
+        if uri == path or uri.startswith(path + "?"):
+            hits.append(line)
     return hits[-1] if hits else None
 
 auth_line = one("/trpc/auth.me")
@@ -494,6 +531,66 @@ expect_case(
     ["batch=1", "%54OKEN=REDACTED"],
     ["input", "%69nput", "%69NPUT"],
 )
+expect_case(
+    "/trpc/case/dup3",
+    ["token=REDACTED", "TOKEN=REDACTED"],
+    ["input"],
+)
+dup3 = one("/trpc/case/dup3")
+if dup3 is not None and (dup3.get("request") or {}).get("uri", "").count("REDACTED") < 3:
+    problems.append(f"duplicate tokens were not all redacted: {(dup3.get('request') or {}).get('uri')}")
+expect_case(
+    "/trpc/case/full",
+    ["%54%4F%4B%45%4E=REDACTED", "%74oken=REDACTED"],
+    ["input"],
+)
+expect_case(
+    "/trpc/pos/start",
+    ["token=REDACTED", "x=1"],
+    ["input"],
+)
+expect_case(
+    "/trpc/pos/end",
+    ["x=1", "token=REDACTED"],
+    ["input"],
+)
+expect_case("/trpc/pos/empty", ["token=REDACTED"], ["input"])
+expect_case("/trpc/pos/bare", ["token=REDACTED"], ["input"])
+expect_case("/trpc/pos/bare2", ["x=1", "token=REDACTED"], ["input"])
+expect_case(
+    "/trpc/keep2",
+    ["access_token=REDACTED", "tokens=k"],
+    ["input"],
+)
+
+def expect_exact(path, query):
+    line = one(path)
+    want = path if query == "" else f"{path}?{query}"
+    if line is None:
+        problems.append(f"missing {path}")
+        return
+    uri = (line.get("request") or {}).get("uri") or ""
+    if uri != want:
+        problems.append(f"changed {path}: got {uri} want {want}")
+    else:
+        print(f"PROOF unchanged uri={uri}")
+
+expect_exact(
+    "/trpc/keep",
+    "tokenize=abc&token_type=bearer&inputs=keep&input_mode=dark&code_challenge=CH&mytoken=abc&q=token&codex=1&tokens=1&tokenx=plain",
+)
+expect_exact("/trpc/in/only", "")
+expect_exact("/trpc/in/tail", "x=1")
+expect_exact("/trpc/in/both", "")
+frag = one("/trpc/frag")
+if frag is None:
+    problems.append("missing fragment request")
+else:
+    uri = (frag.get("request") or {}).get("uri") or ""
+    if uri != "/trpc/frag?q=a&token=REDACTED" or "#frag" in json.dumps(frag):
+        problems.append(f"fragment request logged as {uri}")
+    else:
+        print("PROOF line=" + json.dumps(frag, separators=(",", ":")))
 hit = [line for line in lines if "/trpc/auth.login,auth.login" in json.dumps(line)]
 if not hit:
     problems.append("uri was not logged")
