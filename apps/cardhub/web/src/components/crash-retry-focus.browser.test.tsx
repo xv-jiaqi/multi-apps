@@ -15,7 +15,7 @@ declare module 'vitest/browser' {
     pressEnterInFrame: (name: string) => Promise<void>;
   }
 }
-import { waitUntil } from '../../../test-utils/wait-until';
+import { waitUntil } from '@cardhub/test-utils';
 import { ErrorBoundary } from './error-boundary';
 import { RouteErrorFallback } from './route-error';
 
@@ -98,7 +98,7 @@ async function pressEnterOnRetry(times: number) {
     await commands.pressEnterInFrame('重试');
     const next = await waitUntil(
       readRetryButton,
-      (node) => node !== current,
+      (node: HTMLButtonElement) => node !== current,
       `retry button remount ${attempt + 1}`,
     );
     expect(next, `attempt ${attempt + 1}`).not.toBe(current);
@@ -129,7 +129,7 @@ describe('crash page retry focus', () => {
     await commands.clickInFrame('重试');
     const next = await waitUntil(
       readRetryButton,
-      (node) => node !== previous,
+      (node: HTMLButtonElement) => node !== previous,
       'retry button remount after click',
     );
     expect(next).not.toBe(previous);

@@ -1,0 +1,9 @@
+{
+  "extends": "@repo/config-ts/base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "types": [],
+    "noEmit": true
+  },
+  "include": ["wait-until.ts"]
+}
