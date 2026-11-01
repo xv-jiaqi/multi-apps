@@ -14,6 +14,7 @@ import { UsersModule } from '../modules/users/users.module';
 import { SearchModule } from '../modules/search/search.module';
 import { AdminModule } from '../modules/admin/admin.module';
 import { CollectionModule } from '../modules/collection/collection.module';
+import { ReleasesModule } from '../modules/releases/releases.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CollectionModule } from '../modules/collection/collection.module';
     SearchModule,
     AdminModule,
     CollectionModule,
+    ReleasesModule,
   ],
   providers: [TrpcService],
   exports: [TrpcService],

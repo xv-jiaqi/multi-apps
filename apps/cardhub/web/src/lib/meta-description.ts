@@ -19,6 +19,7 @@ const ELLIPSIS = '…';
 const PLAIN_TEXT_SCAN_LIMIT = 10_000;
 
 const SENTENCE_ENDERS = new Set(['。', '！', '？', '!', '?', '…']);
+const SENTENCE_PUNCTUATION = new Set(['。', '！', '？', '!', '?', '.']);
 const CLOSING_MARKS = new Set(['"', "'", '”', '’', '」', '』', '）', ')', ']', '】', '》', '〉']);
 
 const graphemeSegmenters = new Map<Locale, Intl.Segmenter>();
@@ -55,13 +56,25 @@ function isSentenceBoundary(units: readonly string[], index: number): boolean {
   const previous = units[index - 1];
   const next = units[index + 1];
   if (previous && /\d/u.test(previous) && next && /\d/u.test(next)) return false;
-  if (next && !/\s/u.test(next)) return false;
 
   let after = index + 1;
+  while (after < units.length && units[after] && CLOSING_MARKS.has(units[after]!)) after += 1;
+  const followingMark = units[after];
+  if (followingMark && !/\s/u.test(followingMark)) return false;
   while (after < units.length && units[after] && /\s/u.test(units[after]!)) after += 1;
   const following = units[after];
   if (!following) return true;
   return /[\p{Lu}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(following);
+}
+
+function dropTrailingSentencePunctuation(units: readonly string[]): string[] {
+  let end = units.length;
+  while (end > 0) {
+    const last = units[end - 1];
+    if (!last || !SENTENCE_PUNCTUATION.has(last)) break;
+    end -= 1;
+  }
+  return units.slice(0, end);
 }
 
 function sentenceCut(units: readonly string[], budget: number): string {
@@ -69,7 +82,9 @@ function sentenceCut(units: readonly string[], budget: number): string {
     if (!isSentenceBoundary(units, index)) continue;
     let end = index + 1;
     while (end < budget && units[end] && CLOSING_MARKS.has(units[end]!)) end += 1;
-    const cut = units.slice(0, end).join('').trimEnd();
+    const body = dropTrailingSentencePunctuation(units.slice(0, index));
+    const closers = units.slice(index + 1, end);
+    const cut = `${body.join('')}${closers.join('')}`.trimEnd();
     if (cut) return cut;
   }
   return '';
@@ -90,12 +105,19 @@ function wordCut(text: string, locale: Locale, budget: number): string {
 
 function stripTrailingPunctuation(text: string, locale: Locale): string {
   const units = graphemes(text, locale);
+  const closers: string[] = [];
   while (units.length > 0) {
     const last = units[units.length - 1];
-    if (!last || !isPunctuationOrSymbol(last)) break;
+    if (!last) break;
+    if (CLOSING_MARKS.has(last)) {
+      closers.unshift(last);
+      units.pop();
+      continue;
+    }
+    if (!isPunctuationOrSymbol(last)) break;
     units.pop();
   }
-  return units.join('').trimEnd();
+  return `${units.join('')}${closers.join('')}`.trimEnd();
 }
 
 function truncateToRoom(text: string, locale: Locale, room: number): string {
@@ -137,6 +159,48 @@ function withDescription(
   return `${template} ${excerpt}`;
 }
 
+function graphemeCount(text: string, locale: Locale): number {
+  return graphemes(text, locale).length;
+}
+
+function withinLimit(text: string, locale: Locale): boolean {
+  return graphemeCount(text, locale) <= META_CONTENT_GRAPHEME_LIMIT[locale];
+}
+
+/**
+ * When the template itself is over the cap, shorten `name` by graphemes and
+ * add "…". Sentence-ending punctuation at the cut is dropped first. The rest
+ * of the template, including a card number, stays whole.
+ */
+function fitName(
+  locale: Locale,
+  name: string,
+  render: (nextName: string) => string,
+): { name: string; text: string; truncated: boolean } {
+  const full = render(name);
+  if (withinLimit(full, locale)) return { name, text: full, truncated: false };
+
+  const units = graphemes(name, locale);
+  let bestName = ELLIPSIS;
+  let bestText = render(ELLIPSIS);
+  let lo = 0;
+  let hi = units.length;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const prefix = dropTrailingSentencePunctuation(units.slice(0, mid)).join('');
+    const candidate = `${prefix}${ELLIPSIS}`;
+    const rendered = render(candidate);
+    if (withinLimit(rendered, locale)) {
+      bestName = candidate;
+      bestText = rendered;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return { name: bestName, text: bestText, truncated: true };
+}
+
 function hasCardCount(cardCount: number | null | undefined): cardCount is number {
   return typeof cardCount === 'number' && Number.isInteger(cardCount) && cardCount >= 0;
 }
@@ -153,10 +217,13 @@ export function seriesMetaDescription(input: {
   cardCount: number | null | undefined;
   description?: string | null;
 }): string {
-  const template = hasCardCount(input.cardCount)
-    ? t(input.locale, 'meta.series', { title: input.title, count: input.cardCount })
-    : t(input.locale, 'meta.seriesNoCount', { title: input.title });
-  return withDescription(template, input.description, input.locale);
+  const render = (title: string) =>
+    hasCardCount(input.cardCount)
+      ? t(input.locale, 'meta.series', { title, count: input.cardCount })
+      : t(input.locale, 'meta.seriesNoCount', { title });
+  const fitted = fitName(input.locale, input.title, render);
+  if (fitted.truncated) return fitted.text;
+  return withDescription(fitted.text, input.description, input.locale);
 }
 
 export function cardMetaDescription(input: {
@@ -166,10 +233,25 @@ export function cardMetaDescription(input: {
   cardNumber?: string | null;
   description?: string | null;
 }): string {
-  const template = t(input.locale, 'meta.card', {
-    name: input.name,
-    series: input.seriesTitle,
-    number: numberSuffix(input.locale, input.cardNumber),
-  });
-  return withDescription(template, input.description, input.locale);
+  const number = numberSuffix(input.locale, input.cardNumber);
+  const render = (name: string, series: string) =>
+    t(input.locale, 'meta.card', { name, series, number });
+  const full = render(input.name, input.seriesTitle);
+  if (withinLimit(full, input.locale)) {
+    return withDescription(full, input.description, input.locale);
+  }
+
+  const nameIsLonger =
+    graphemeCount(input.name, input.locale) >= graphemeCount(input.seriesTitle, input.locale);
+  if (nameIsLonger) {
+    const nameFit = fitName(input.locale, input.name, (name) => render(name, input.seriesTitle));
+    if (withinLimit(nameFit.text, input.locale)) return nameFit.text;
+    return fitName(input.locale, input.seriesTitle, (series) => render(nameFit.name, series)).text;
+  }
+
+  const seriesFit = fitName(input.locale, input.seriesTitle, (series) =>
+    render(input.name, series),
+  );
+  if (withinLimit(seriesFit.text, input.locale)) return seriesFit.text;
+  return fitName(input.locale, input.name, (name) => render(name, seriesFit.name)).text;
 }

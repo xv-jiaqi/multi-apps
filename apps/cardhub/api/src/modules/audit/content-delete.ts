@@ -6,7 +6,14 @@ export const USER_UNBAN_ACTION = 'USER_UNBAN';
 export const REPORT_RESOLVE_ACTION = 'REPORT_RESOLVE';
 const TARGET_LABEL_MAX = 80;
 
-export type ContentDeleteTargetType = 'TOPIC' | 'REPLY' | 'COMMENT' | 'LISTING' | 'CARD' | 'SERIES';
+export type ContentDeleteTargetType =
+  | 'TOPIC'
+  | 'REPLY'
+  | 'COMMENT'
+  | 'LISTING'
+  | 'CARD'
+  | 'SERIES'
+  | 'RELEASE';
 
 /** Empty or whitespace-only reasons are stored as null so the audit UI can show 「未填写」. */
 export function normalizeDeleteReason(reason: string | undefined): string | null {

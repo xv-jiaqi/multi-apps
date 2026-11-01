@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { appErrorMessage, t, type Locale } from '@repo/shared';
 import { collectionQuantityMessage } from '../lib/collection-quantity-message';
@@ -66,6 +66,8 @@ export function CollectionSection() {
   const progressRetryRef = useRef<HTMLButtonElement>(null);
   const listRetryRef = useRef<HTMLButtonElement>(null);
   const loadMoreLocked = useRef(false);
+  const itemRefs = useRef(new Map<string, HTMLLIElement>());
+  const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
 
   const progress = trpc.collection.progress.useQuery(undefined, {
     enabled: session.isAuthenticated,
@@ -117,12 +119,34 @@ export function CollectionSection() {
   useFocusOnPersistentError(Boolean(listError && listError.id > 1), listRetryRef);
   useFocusOnPersistentError(Boolean(moreError && moreError.id > 1), listRetryRef);
 
+  useLayoutEffect(() => {
+    if (!pendingFocusId) return;
+    const node = itemRefs.current.get(pendingFocusId);
+    if (!node) return;
+    // Scroll the new row into view. preventScroll would leave it under the
+    // sticky header or below the fold (WCAG 2.4.11). focusVisible paints the
+    // same ring keyboard users see.
+    node.focus({ focusVisible: true });
+    setPendingFocusId(null);
+  }, [pendingFocusId, listItems.length]);
+
   const requestNextPage = () => {
     if (loadMoreLocked.current || list.isFetchingNextPage) return;
     loadMoreLocked.current = true;
-    void Promise.resolve(list.fetchNextPage()).finally(() => {
-      loadMoreLocked.current = false;
-    });
+    const retrying = moreError !== null;
+    const knownIds = new Set(listItems.map((item) => item.id));
+    void Promise.resolve(list.fetchNextPage())
+      .then((result) => {
+        if (!retrying || result.isError) return;
+        const firstNew = (result.data?.pages ?? [])
+          .flatMap((page) => page.items)
+          .find((item) => !knownIds.has(item.id));
+        if (firstNew) setPendingFocusId(firstNew.id);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        loadMoreLocked.current = false;
+      });
   };
 
   return (
@@ -210,7 +234,14 @@ export function CollectionSection() {
               <h3 className="text-sm font-semibold text-neutral-900">
                 {tt('collection.sectionList')}
               </h3>
-              <FilterBar filter={filter} onFilter={setFilter} label={tt} />
+              <FilterBar
+                filter={filter}
+                onFilter={(next) => {
+                  setPendingFocusId(null);
+                  setFilter(next);
+                }}
+                label={tt}
+              />
               {nothingCollected ? (
                 <p className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-600">
                   {tt('collection.empty')}
@@ -237,7 +268,15 @@ export function CollectionSection() {
               {!nothingCollected && listState === 'ready' && listItems.length > 0 ? (
                 <ul className="divide-y divide-neutral-200/70">
                   {listItems.map((item) => (
-                    <li key={item.id} className="flex min-w-0 gap-3 py-3 first:pt-0 last:pb-0">
+                    <li
+                      key={item.id}
+                      tabIndex={-1}
+                      ref={(node) => {
+                        if (node) itemRefs.current.set(item.id, node);
+                        else itemRefs.current.delete(item.id);
+                      }}
+                      className="flex min-w-0 scroll-mt-20 gap-3 py-3 first:pt-0 last:pb-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                    >
                       <CardThumb width="w-10" src={item.imageUrl} slug={item.cardSlug} />
                       <div className="min-w-0 space-y-1">
                         <Link

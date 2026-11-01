@@ -382,6 +382,8 @@ export const seriesListInput = paginationSchema.extend({
   categorySlug: slugSchema.optional(),
   year: z.number().int().min(1).max(9999).optional(),
   sort: z.enum(SERIES_LIST_SORT_VALUES).optional(),
+  /** Inclusive `YYYY-MM-DD` upper bound on `releaseDate`. Null dates do not match. */
+  releasedOnOrBefore: releaseDateSchema.optional(),
 });
 export type SeriesListInput = z.infer<typeof seriesListInput>;
 
@@ -584,3 +586,32 @@ export {
   utcCalendarDateFromInstant,
 } from './metrics';
 export type { AdminMetricsInput } from './metrics';
+
+export {
+  RELEASE_CURSOR_MAX,
+  RELEASE_LIST_LIMIT_DEFAULT,
+  RELEASE_LIST_LIMIT_MAX,
+  RELEASE_NOTE_MAX,
+  RELEASE_RANGE_MAX_DAYS,
+  RELEASE_SOURCE_URL_MAX,
+  RELEASE_TITLE_MAX,
+  adminReleasesListInput,
+  parseShanghaiCivilDate,
+  releaseCreateInput,
+  releaseDeleteInput,
+  releaseUpdateInput,
+  releasesListInput,
+  shanghaiCivilDate,
+  shanghaiMonthBounds,
+  shanghaiYearMonth,
+  storedReleaseDate,
+} from './release';
+export type {
+  AdminReleasesListInput,
+  ReleaseCreateInput,
+  ReleaseDatePrecisionValue,
+  ReleaseDeleteInput,
+  ReleaseRegionValue,
+  ReleaseUpdateInput,
+  ReleasesListInput,
+} from './release';

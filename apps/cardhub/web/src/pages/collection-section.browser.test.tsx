@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
@@ -122,6 +122,63 @@ describe('CollectionSection load more focus', () => {
     const again = screen.getByRole('button', { name: '加载更多' });
     expect(again).toHaveFocus();
     expect(document.activeElement).toBe(again);
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('moves focus to the first newly loaded card after load-more retry succeeds', async () => {
+    const user = userEvent.setup();
+    const first = mock.list.data.pages[0]?.items[0];
+    if (!first) throw new Error('missing first collection card');
+    const second: NonNullable<(typeof mock.list.data.pages)[number]['items'][number]> = {
+      id: '2',
+      cardSlug: 'beta',
+      cardName: '贝塔',
+      imageUrl: null,
+      seriesSlug: 'dawn',
+      seriesTitle: '黎明',
+      state: 'owned',
+      ownedCount: 1,
+      wanted: false,
+    };
+    const view = renderSection();
+    await user.click(screen.getByRole('button', { name: '加载更多' }));
+
+    mock.list.isFetchingNextPage = false;
+    mock.list.isError = true;
+    mock.list.error = { data: { appCode: 'INTERNAL_SERVER_ERROR' }, message: 'down' };
+    mock.list.errorUpdateCount = 1;
+    view.rerender(
+      <MemoryRouter>
+        <CollectionSection />
+      </MemoryRouter>,
+    );
+
+    mock.list.fetchNextPage.mockImplementation(async () => {
+      const data = {
+        pages: [
+          { items: [first], nextCursor: 'next' },
+          { items: [second], nextCursor: 'next' },
+        ],
+      };
+      mock.list.data = data;
+      mock.list.isError = false;
+      mock.list.error = null;
+      mock.list.hasNextPage = false;
+      mock.list.isFetchingNextPage = false;
+      return { isError: false, data };
+    });
+
+    await user.click(screen.getByRole('button', { name: '重试' }));
+
+    const loaded = await screen.findByRole('link', { name: '贝塔' });
+    await waitFor(() => {
+      expect(loaded.closest('li')).toHaveFocus();
+    });
+    const item = loaded.closest('li');
+    expect(item).toHaveClass('focus-visible:ring-2');
+    expect(item).toHaveClass('focus-visible:ring-brand-500');
+    expect(item).toHaveClass('focus-visible:ring-offset-2');
+    expect(item).not.toHaveClass('focus:outline-none');
     expect(document.activeElement).not.toBe(document.body);
   });
 });

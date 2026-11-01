@@ -44,6 +44,12 @@ describe('catalog cache keys', () => {
         pageSize: 60,
       }),
     ).not.toBe(seriesListCacheKey(undefined));
+    expect(seriesListCacheKey({ releasedOnOrBefore: '2024-06-01' })).not.toBe(
+      seriesListCacheKey({ releasedOnOrBefore: '2024-06-02' }),
+    );
+    expect(seriesListCacheKey(undefined)).toBe(
+      seriesListCacheKey({ releasedOnOrBefore: undefined }),
+    );
   });
 
   it('names the keys an admin write must drop', () => {
