@@ -401,9 +401,13 @@ Only a service whose `ps -aq` count is greater than 1 is changed. A
 service with one container, including one `exited` container, is left
 alone. When the count is greater than 1, one container is kept and the
 others are removed. The one kept is the only `healthy` container. If none
-is `healthy`, the one kept is the one with the latest `StartedAt`. If
-more than one is `healthy`, the loop does not delete; use the `/health`
-or `/healthz` commands to choose the one that is serving, then remove the
+is `healthy`, the one kept is the `running` container with the latest
+`StartedAt`. A stopped container is not a candidate while any container
+is `running`: a newer replica that already `exited` must not replace the
+older container that is still up. If none is `running`, the one kept is
+the container with the latest `StartedAt` among all of them. If more than
+one is `healthy`, the loop does not delete; use the `/health` or
+`/healthz` commands to choose the one that is serving, then remove the
 other ids yourself.
 
 ```bash
@@ -420,14 +424,18 @@ for svc in api web; do
     continue
   fi
   healthy=()
+  running=()
   for id in "${ids[@]}"; do
     [ -n "${id}" ] || continue
     state="$(docker inspect -f '{{.State.Status}}' "${id}")"
     health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${id}")"
     started="$(docker inspect -f '{{.State.StartedAt}}' "${id}")"
     echo "${id:0:12} status=${state} health=${health} started=${started}"
-    if [ "${state}" = "running" ] && [ "${health}" = "healthy" ]; then
-      healthy+=("${id}")
+    if [ "${state}" = "running" ]; then
+      running+=("${id}")
+      if [ "${health}" = "healthy" ]; then
+        healthy+=("${id}")
+      fi
     fi
   done
   keep=""
@@ -435,8 +443,15 @@ for svc in api web; do
     keep="${healthy[0]}"
     echo "keeping the only healthy ${svc} ${keep:0:12}"
   elif [ "${#healthy[@]}" -eq 0 ]; then
-    keep="$(docker inspect -f '{{.State.StartedAt}} {{.Id}}' "${ids[@]}" | sort | tail -n 1 | awk '{ print $2 }')"
-    echo "no healthy ${svc}; keeping the most recently started ${keep:0:12}"
+    pool=("${ids[@]}")
+    if [ "${#running[@]}" -ge 1 ]; then
+      pool=("${running[@]}")
+      echo "no healthy ${svc}; choosing among ${#running[@]} running"
+    else
+      echo "no healthy ${svc} and none running; choosing among all ${#ids[@]}"
+    fi
+    keep="$(docker inspect -f '{{.State.StartedAt}} {{.Id}}' "${pool[@]}" | sort | tail -n 1 | awk '{ print $2 }')"
+    echo "keeping the most recently started ${keep:0:12}"
   else
     echo "more than one healthy ${svc}; not deleting. Pick the serving id with the probe below, then docker rm -f the others."
     continue
@@ -515,27 +530,50 @@ than the one the container is running; leave that container up and do not
 recreate it here.
 
 When one of api or web has no container, that empty side is what makes
-the next deploy print the digest refusal again. Start only that service
-from the image the other side is already running. `--no-deps` does not
-start postgres, redis, or the service that is already up. If the running
-side's `RepoDigests` is empty, pull its `sha-<40 hex>` tag first, then
-read the digest that pull recorded. A known tag can also be passed
-directly as `ghcr.io/xv-jiaqi/cardhub-web:sha-<40 hex>`.
+the next deploy print the digest refusal again. Start only that service.
+`--no-deps` does not start postgres, redis, or the service that is already
+up. Use that service's own `:sha-<40 hex>` tag. The 40 hex is the git SHA
+of the last deploy that stayed up. Api and web share that commit and do
+not share a manifest digest. Do not copy `RepoDigests` from the service
+that is already up.
 
 ```bash
-sha="<40 hex from the running service>"
-digest="<sha256 from that service RepoDigests>"
+sha="<40 hex of the last deploy that stayed up>"
 IMAGE_TAG="sha-${sha}" ENV_NAME=staging \
-  API_IMAGE="ghcr.io/xv-jiaqi/cardhub-api@${digest}" \
-  WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web@${digest}" \
+  WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web:sha-${sha}" \
   docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" \
   up -d --no-deps web
 ```
 
-Use `api` instead of `web` when api is the empty side, and use that
-service's own digest when the two images differ. Do not pass `--force-recreate`.
-Both `ps -aq` commands must then print one id, and each id must have a
-`sha256:` digest from `RepoDigests` or from `.Image`.
+When api is the empty side, set `API_IMAGE=ghcr.io/xv-jiaqi/cardhub-api:sha-${sha}`
+and change the service to `api`. Leave the running side's image variable
+unset. Do not pass `--force-recreate`.
+
+The tag is enough to start the missing container. To pin that same
+service by its own manifest, take the digest the Images run stored for
+it, or read the tag from GHCR. `image-digest-web` is the web artifact;
+`image-digest-api` is the api artifact. Each artifact is one file named
+`digest`.
+
+```bash
+run_id="$(gh run list --repo xv-jiaqi/multi-apps --workflow images.yml --commit "${sha}" --json databaseId,conclusion --jq '[.[] | select(.conclusion=="success")][0].databaseId')"
+gh run download --repo xv-jiaqi/multi-apps "${run_id}" --name image-digest-web --dir /tmp/image-digest-web
+digest="$(tr -d '[:space:]' < /tmp/image-digest-web/digest)"
+docker buildx imagetools inspect "ghcr.io/xv-jiaqi/cardhub-web:sha-${sha}"
+```
+
+Use `image-digest-api` and `ghcr.io/xv-jiaqi/cardhub-api:sha-${sha}` when
+api is the empty side. The `up` then names only that service:
+
+```bash
+WEB_IMAGE="ghcr.io/xv-jiaqi/cardhub-web@${digest}" \
+  docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" \
+  up -d --no-deps web
+```
+
+Both `ps -aq` commands must then print one id. Run the `docker pull` and
+`RepoDigests` checks above on each id. Each id must show that service's
+own `@sha256:` manifest.
 
 Then run Cardhub Deploy again (Actions → Cardhub Deploy → Run workflow)
 for that environment and SHA.
