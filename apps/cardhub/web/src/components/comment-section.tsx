@@ -7,7 +7,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Button } from '@repo/ui-web';
 import {
   APP_ERROR_CODES,
@@ -17,6 +17,7 @@ import {
   seriesCommentInput,
   t,
 } from '@repo/shared';
+import { splitPlainMentions } from '../lib/mentions';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { trpc } from '../lib/trpc';
@@ -24,6 +25,7 @@ import { BannedNotice } from './banned-notice';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { DeleteReasonField } from './delete-reason-field';
 import { ReportButton } from './report-button';
+import { parseHashTarget, revealElement } from '../lib/hash-target';
 import { queryFallback, RetryButton, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
@@ -59,8 +61,6 @@ interface ThreadOverlay {
 
 const replyActionClassName =
   'inline-flex min-h-6 scroll-mt-20 items-center rounded px-1 text-xs font-medium text-brand-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
-
-const MENTION = /^@([A-Za-z0-9_-]+) /;
 
 function emptyOverlay(): ThreadOverlay {
   return { appended: [], removed: [], countDelta: 0, cursor: undefined };
@@ -120,14 +120,16 @@ function resolveCursor(
 }
 
 function CommentText({ content }: { content: string }) {
-  const match = MENTION.exec(content);
-  if (!match) return content;
-  const mention = `@${match[1]}`;
-  return (
-    <>
-      <span className="font-medium text-brand-700">{mention}</span>
-      {content.slice(mention.length)}
-    </>
+  const parts = splitPlainMentions(content);
+  if (parts.every((part) => part.kind === 'text')) return content;
+  return parts.map((part, index) =>
+    part.kind === 'mention' ? (
+      <span key={`${part.value}-${index}`} className="font-medium text-brand-700">
+        {part.value}
+      </span>
+    ) : (
+      part.value
+    ),
   );
 }
 
@@ -206,6 +208,13 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const [replyFocusId, setReplyFocusId] = useState<string | null>(null);
   const threadsRef = useRef(threads);
   threadsRef.current = threads;
+  const location = useLocation();
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [hashMissing, setHashMissing] = useState(false);
+  const hashAttempt = useRef<string | null>(null);
+  const revealedHash = useRef<string | null>(null);
+  const utilsRef = useRef(utils);
+  utilsRef.current = utils;
   const canReply = session.isAuthenticated && !session.isBanned;
 
   function invalidateList() {
@@ -658,10 +667,97 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   const commentsView = queryFallback(list);
   useFocusOnRecovery(commentsView, commentsRef);
 
+  useEffect(() => {
+    if (!highlightedId) return;
+    const timer = window.setTimeout(() => setHighlightedId(null), 1000);
+    return () => window.clearTimeout(timer);
+  }, [highlightedId]);
+
+  useEffect(() => {
+    const target = parseHashTarget(location.hash);
+    if (!target || commentsView !== 'ready' || !list.data) return;
+    if (hashAttempt.current === location.hash) return;
+    hashAttempt.current = location.hash;
+    const elementId = `${target.kind}-${target.id}`;
+    if (document.getElementById(elementId)) {
+      setHashMissing(false);
+      setHighlightedId(target.id);
+      return;
+    }
+    if (target.kind === 'comment') {
+      setHashMissing(true);
+      const title = document.getElementById('comment-section-title');
+      if (title) revealElement(title);
+      return;
+    }
+    let cancelled = false;
+    const threadsToProbe = list.data.flatMap((item) => {
+      if (typeof item !== 'object' || item === null || !('id' in item)) return [];
+      if (typeof item.id !== 'string') return [];
+      const replyCount =
+        'replyCount' in item && typeof item.replyCount === 'number' ? item.replyCount : 0;
+      const replies = 'replies' in item && Array.isArray(item.replies) ? item.replies : [];
+      const shownIds = replies.flatMap((reply) =>
+        reply && typeof reply === 'object' && 'id' in reply && typeof reply.id === 'string'
+          ? [reply.id]
+          : [],
+      );
+      return [{ id: item.id, replyCount, shownIds }];
+    });
+    void (async () => {
+      for (const thread of threadsToProbe) {
+        if (cancelled || thread.replyCount <= thread.shownIds.length) continue;
+        try {
+          const page = await utilsRef.current.comments.listReplies.fetch({
+            parentId: thread.id,
+            aroundId: target.id,
+            limit: 20,
+          });
+          if (cancelled || !page.items.some((reply) => reply.id === target.id)) continue;
+          setThreads((current) => {
+            const prev = current[thread.id] ?? emptyOverlay();
+            const appended = [...prev.appended];
+            for (const reply of page.items) {
+              if (!appended.some((item) => item.id === reply.id)) appended.push(reply);
+            }
+            return { ...current, [thread.id]: { ...prev, appended } };
+          });
+          setHashMissing(false);
+          setHighlightedId(target.id);
+          return;
+        } catch {
+          // Another thread may contain the reply.
+        }
+      }
+      if (cancelled) return;
+      setHashMissing(true);
+      const title = document.getElementById('comment-section-title');
+      if (title) revealElement(title);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [commentsView, list.data, location.hash]);
+
+  useLayoutEffect(() => {
+    if (!highlightedId || revealedHash.current === highlightedId) return;
+    const node =
+      document.getElementById(`reply-${highlightedId}`) ??
+      document.getElementById(`comment-${highlightedId}`);
+    if (!node) return;
+    revealedHash.current = highlightedId;
+    revealElement(node);
+  }, [highlightedId, list.data, threads]);
+
   const commentsLoading = commentsView === 'loading';
 
   return (
     <div className="space-y-4" aria-busy={commentsLoading ? true : undefined}>
+      {hashMissing ? (
+        <p role="status" className="text-sm text-neutral-600">
+          {tt('notifications.targetMissing')}
+        </p>
+      ) : null}
       {session.isAuthenticated && session.isBanned ? (
         <BannedNotice>{tt('ban.cannotComment')}</BannedNotice>
       ) : session.isAuthenticated ? (
@@ -698,8 +794,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
               {error}
             </p>
           ) : null}
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-neutral-600">{content.length} / 500</span>
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs text-neutral-600">{content.length} / 500</p>
+              <p className="text-xs text-neutral-600">{tt('comments.mentionHint')}</p>
+            </div>
             <Button type="submit" disabled={isCreating || !content.trim()}>
               {isCreating ? tt('card.detail.commentSubmitting') : tt('card.detail.commentSubmit')}
             </Button>
@@ -798,8 +897,14 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             return (
               <li
                 key={comment.id}
+                id={`comment-${comment.id}`}
+                tabIndex={-1}
                 aria-busy={isDeleting ? true : undefined}
-                className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
+                className={`scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
+                  highlightedId === comment.id
+                    ? 'border-brand-200 bg-brand-50 duration-0'
+                    : 'border-white/60 bg-white/80 duration-1000'
+                }`}
               >
                 <div className="flex min-h-6 items-center justify-between gap-x-3 text-xs text-neutral-600">
                   <span
@@ -813,7 +918,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                   </time>
                 </div>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-800 wrap-anywhere">
-                  {comment.content}
+                  <CommentText content={comment.content} />
                 </p>
                 <ReportButton targetType="COMMENT" targetId={comment.id}>
                   {({ trigger, form }) => (
@@ -947,7 +1052,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           id={`reply-${reply.id}`}
                           tabIndex={-1}
                           aria-busy={replyDeleting ? true : undefined}
-                          className="scroll-mt-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                          className={`scroll-mt-20 rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
+                            highlightedId === reply.id
+                              ? 'border-brand-200 bg-brand-50 duration-0'
+                              : 'border-transparent duration-1000'
+                          }`}
                         >
                           <ReportButton targetType="COMMENT" targetId={reply.id}>
                             {({ trigger, form }) => (
@@ -1154,10 +1263,13 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                         {replyError}
                       </p>
                     ) : null}
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-neutral-600" aria-live="off">
-                        {replyDraft.length} / 500
-                      </span>
+                    <div className="flex items-end justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="text-xs text-neutral-600" aria-live="off">
+                          {replyDraft.length} / 500
+                        </span>
+                        <p className="text-xs text-neutral-600">{tt('comments.mentionHint')}</p>
+                      </div>
                       <div className="flex gap-3">
                         <Button
                           type="button"

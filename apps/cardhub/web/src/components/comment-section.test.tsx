@@ -308,6 +308,23 @@ describe('CommentSection (unauthenticated)', () => {
     expect(screen.getByText('great card')).toBeInTheDocument();
     expect(screen.getByText('@alice')).toBeInTheDocument();
   });
+
+  it('styles an @name in the middle and leaves an email alone', () => {
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'hello @Ada_1 and a@b.com',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    renderShell();
+    const mention = screen.getByText('@Ada_1');
+    expect(mention).toHaveClass('font-medium', 'text-brand-700');
+    expect(mention.tagName).toBe('SPAN');
+    expect(mention.closest('a')).toBeNull();
+    expect(mention.parentElement?.textContent).toBe('hello @Ada_1 and a@b.com');
+  });
 });
 
 describe('CommentSection (authenticated)', () => {

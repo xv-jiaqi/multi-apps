@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createTRPCReact, httpBatchLink } from '@trpc/react-query';
 import type { AppRouter } from '@repo/trpc-contract';
+import { bindNotificationQueryClient } from './notification-cache';
 import { noteTrpcFailure } from './session-expiry';
 import { cardhubTrpcUrl } from './trpc-url';
 import { rootStore } from '../stores/root-store';
@@ -34,6 +35,7 @@ export function TrpcProvider({ children }: PropsWithChildren) {
       },
     });
     activeQueryClient = client;
+    bindNotificationQueryClient(client);
     return client;
   });
 

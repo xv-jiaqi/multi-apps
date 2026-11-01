@@ -3,6 +3,15 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
+
+const unreadQuery = vi.hoisted(() => vi.fn());
+const clearNotificationCache = vi.hoisted(() => vi.fn());
+const unreadState = vi.hoisted(() => ({ data: undefined as { count: number } | undefined }));
+
+vi.mock('../lib/notification-cache', () => ({
+  clearNotificationCache: () => clearNotificationCache(),
+}));
+
 vi.mock('../lib/trpc', () => ({
   trpc: {
     search: {
@@ -15,6 +24,14 @@ vi.mock('../lib/trpc', () => ({
         }),
       },
     },
+    notifications: {
+      unreadCount: {
+        useQuery: (...args: unknown[]) => {
+          unreadQuery(...args);
+          return { data: unreadState.data, isError: false, isLoading: false };
+        },
+      },
+    },
   },
 }));
 
@@ -23,6 +40,9 @@ import { SiteHeader } from './site-header';
 beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signOut();
+  unreadState.data = undefined;
+  unreadQuery.mockClear();
+  clearNotificationCache.mockClear();
 });
 
 describe('SiteHeader admin navigation', () => {
@@ -99,6 +119,71 @@ describe('SiteHeader admin navigation', () => {
     const audit = screen.getByRole('link', { name: '操作审计' });
     expect(audit).toHaveAttribute('href', '/admin/audit');
     expect(audit).toHaveClass('pl-6');
+  });
+
+  it('keeps the bell off the header until someone is signed in', () => {
+    render(
+      <MemoryRouter>
+        <SiteHeader />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('link', { name: '通知' })).not.toBeInTheDocument();
+    expect(unreadQuery).not.toHaveBeenCalled();
+  });
+
+  it('places the bell before the username and shows the unread count without a live region', async () => {
+    const user = userEvent.setup();
+    unreadState.data = { count: 3 };
+    rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
+    render(
+      <MemoryRouter>
+        <SiteHeader />
+      </MemoryRouter>,
+    );
+
+    const bells = screen.getAllByRole('link', { name: '通知，3 条未读' });
+    expect(bells.length).toBeGreaterThan(0);
+    const desktop = bells.find((bell) => bell.parentElement?.className.includes('md:flex'));
+    expect(desktop?.nextElementSibling).toHaveTextContent('@ada');
+    expect(desktop).toHaveAttribute('href', '/notifications');
+    expect(desktop?.querySelector('[aria-hidden="true"] + [aria-hidden="true"]')).toHaveTextContent(
+      '3',
+    );
+    expect(desktop?.closest('[aria-live]')).toBeNull();
+    expect(unreadQuery).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        refetchInterval: 60_000,
+        refetchIntervalInBackground: false,
+        refetchOnWindowFocus: true,
+      }),
+    );
+
+    await user.click(screen.getByRole('button', { name: '打开导航菜单' }));
+    const drawer = document.getElementById('mobile-nav');
+    if (!(drawer instanceof HTMLElement)) throw new Error('抽屉没有打开');
+    const links = within(drawer).getAllByRole('link');
+    const meIndex = links.findIndex((link) => link.textContent?.includes('个人中心'));
+    expect(links[meIndex + 1]).toHaveTextContent('通知 3');
+    expect(links[meIndex + 1]).toHaveAttribute('href', '/notifications');
+  });
+
+  it('shows 99+ and clears cached notifications on sign out', async () => {
+    const user = userEvent.setup();
+    unreadState.data = { count: 100 };
+    rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
+    render(
+      <MemoryRouter>
+        <SiteHeader />
+      </MemoryRouter>,
+    );
+    const bell = screen.getAllByRole('link', { name: '通知，99 条以上未读' })[0];
+    expect(bell).toBeDefined();
+    expect(bell?.textContent).toContain('99+');
+
+    await user.click(screen.getByRole('button', { name: '退出登录' }));
+    expect(clearNotificationCache).toHaveBeenCalled();
+    expect(screen.queryByRole('link', { name: /通知/ })).not.toBeInTheDocument();
   });
 
   it('hides the admin entry from non-admins', () => {

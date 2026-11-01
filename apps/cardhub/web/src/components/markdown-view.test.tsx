@@ -32,4 +32,29 @@ describe('MarkdownView', () => {
     expect(table?.parentElement).toHaveClass('max-w-full', 'overflow-x-auto');
     expect(table?.parentElement?.tagName).toBe('DIV');
   });
+
+  it('styles an @name in prose and leaves code and link text alone', () => {
+    const { container } = render(
+      <MarkdownView
+        body={[
+          'Hello @Ada.',
+          '',
+          '`@Ada`',
+          '',
+          '```',
+          '@Ada',
+          '```',
+          '',
+          '[@Ada](https://example.com)',
+        ].join('\n')}
+      />,
+    );
+    const mentions = [...container.querySelectorAll('span.text-brand-700')].map(
+      (node) => node.textContent,
+    );
+    expect(mentions).toEqual(['@Ada']);
+    expect(container.querySelector('code')?.textContent).toContain('@Ada');
+    expect(container.querySelector('a')?.textContent).toBe('@Ada');
+    expect(container.querySelector('a span.text-brand-700')).toBeNull();
+  });
 });

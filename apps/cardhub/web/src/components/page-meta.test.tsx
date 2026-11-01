@@ -29,6 +29,13 @@ describe('PageMeta', () => {
     );
   });
 
+  it('can mark the page noindex', () => {
+    render(<PageMeta title="通知" noindex />);
+
+    expect(document.title).toBe('通知 · Cardhub');
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+  });
+
   it('omits a blank description', () => {
     render(<PageMeta title="系列" description="   " />);
 
