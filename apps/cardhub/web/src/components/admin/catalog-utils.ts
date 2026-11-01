@@ -37,6 +37,10 @@ export interface AdminCardItem {
   seriesTitle: string;
   cardNumber?: string | null;
   subsetSlug?: string | null;
+  parallelOfSlug?: string | null;
+  parallelName?: string | null;
+  printRun?: number | null;
+  parallelChildrenCount?: number;
   commentCount: number;
   createdAt: string;
   updatedAt: string;
@@ -143,6 +147,9 @@ const KNOWN_FIELDS = new Set([
   'attributes',
   'cardNumber',
   'subsetSlug',
+  'parallelOfSlug',
+  'parallelName',
+  'printRun',
   'sortOrder',
   'categorySlug',
   'releaseDate',

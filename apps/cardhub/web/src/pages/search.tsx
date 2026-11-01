@@ -27,6 +27,7 @@ import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
+import { CardVariantBadgeRow } from '../components/card-variant-badge';
 import { CardThumb } from '../components/card-thumb';
 import { SeriesMark } from '../components/series-mark';
 import { SearchParseHint, SyntaxExamples } from '../components/search-syntax';
@@ -429,6 +430,13 @@ function ResultLists({
                       <span className="block truncate text-sm font-semibold text-neutral-900">
                         {card.name}
                       </span>
+                      <CardVariantBadgeRow
+                        locale={locale}
+                        parallelName={card.parallelName}
+                        printRun={card.printRun}
+                        isParallel={Boolean(card.parallelName)}
+                        className="mt-1 flex min-w-0 flex-wrap gap-1"
+                      />
                       <span className="block truncate text-xs text-neutral-600">
                         {card.seriesTitle}
                       </span>

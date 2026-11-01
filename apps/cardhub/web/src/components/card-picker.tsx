@@ -13,6 +13,7 @@ export interface CardPickerItem {
   imageUrl: string | null;
   seriesSlug: string;
   seriesTitle: string;
+  parallelName?: string | null;
 }
 
 function isKnownRarity(rarity: string | null): rarity is 'common' | 'rare' | 'epic' | 'legendary' {
@@ -69,6 +70,7 @@ export function CardPicker({
         imageUrl: card.imageUrl,
         seriesSlug: card.seriesSlug,
         seriesTitle: card.seriesTitle,
+        parallelName: card.parallelName,
       })) ?? [],
     [query.data],
   );
@@ -76,10 +78,10 @@ export function CardPicker({
   const status =
     debouncedQuery.trim().length === 0
       ? 'idle'
-      : query.isLoading || query.isFetching
-        ? 'loading'
-        : query.isError
-          ? 'error'
+      : query.isError
+        ? 'error'
+        : query.isLoading || query.isFetching
+          ? 'loading'
           : 'success';
 
   return (
@@ -91,12 +93,16 @@ export function CardPicker({
       onInputValueChange={setInputValue}
       groups={[{ key: 'cards', items }]}
       getKey={(item) => item.slug}
-      getItemText={(item) => item.name}
+      getItemText={(item) =>
+        item.parallelName ? `${item.name} · ${item.parallelName}` : item.name
+      }
       renderItem={(item) => (
         <div className="flex min-w-0 items-center gap-2">
           <CardThumb src={item.imageUrl} slug={item.slug} width="w-8" />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">{item.name}</span>
+            <span className="block truncate text-sm font-medium">
+              {item.parallelName ? `${item.name} · ${item.parallelName}` : item.name}
+            </span>
             <span className="block truncate text-xs text-neutral-600">{item.seriesTitle}</span>
           </span>
           {isKnownRarity(item.rarity) ? (

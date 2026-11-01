@@ -7,6 +7,18 @@ import { SeriesCardList } from './series-card-list';
 
 const harness = vi.hoisted(() => ({
   calls: [] as Array<Record<string, unknown>>,
+  whenParallels: undefined as
+    | {
+        items: Array<Record<string, unknown>>;
+        page: number;
+        pageSize: number;
+        total: number;
+        seriesTotal?: number;
+        parallelCount?: number;
+        sort: 'number';
+        attributeLabels: Record<string, { 'zh-CN': string; 'en-US': string }>;
+      }
+    | undefined,
   state: {
     data: undefined as
       | {
@@ -24,6 +36,7 @@ const harness = vi.hoisted(() => ({
           pageSize: number;
           total: number;
           seriesTotal?: number;
+          parallelCount?: number;
           sort: 'number';
           attributeLabels: Record<string, { 'zh-CN': string; 'en-US': string }>;
         }
@@ -43,6 +56,9 @@ vi.mock('../lib/trpc', () => ({
       listBySeries: {
         useQuery: (input: Record<string, unknown>) => {
           harness.calls.push(input);
+          if (input.includeParallels === true && harness.whenParallels) {
+            return { ...harness.state, data: harness.whenParallels };
+          }
           return harness.state;
         },
       },
@@ -113,6 +129,7 @@ function renderList(search = '', options?: { entries?: string[]; index?: number;
 
 beforeEach(() => {
   harness.calls.length = 0;
+  harness.whenParallels = undefined;
   harness.state.data = {
     items: [card('极光', '007', { attack: 2, cost: 1 })],
     page: 1,
@@ -139,6 +156,9 @@ describe('SeriesCardList', () => {
     expect(screen.getByText('#007')).toBeInTheDocument();
     expect(harness.calls[0]).toMatchObject({ seriesSlug: 'dawn', page: 1, pageSize: 60 });
     expect(harness.calls[0]).not.toHaveProperty('q');
+    expect(harness.calls[0]).not.toHaveProperty('includeParallels');
+    expect(screen.queryByRole('checkbox', { name: '显示平行版本' })).not.toBeInTheDocument();
+    expect(screen.queryByText('不编号')).not.toBeInTheDocument();
   });
 
   it('uses the found count when a filter is active', () => {
@@ -257,5 +277,91 @@ describe('SeriesCardList', () => {
     harness.state.isFetching = true;
     const { container } = renderList();
     expect(container.querySelectorAll('.h-64')).toHaveLength(6);
+  });
+
+  it('shows parallels only after the switch is turned on, and keeps the full name in the title', async () => {
+    const user = userEvent.setup();
+    const longName = '金箔超长平行名称金箔超长平行名称金箔超长';
+    harness.state.data = {
+      items: [card('极光', '007')],
+      page: 2,
+      pageSize: 60,
+      total: 120,
+      seriesTotal: 60,
+      parallelCount: 1,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    harness.whenParallels = {
+      items: [
+        card('极光', '007'),
+        {
+          ...card('极光', '007'),
+          id: 'foil',
+          slug: 'aurora-foil',
+          parallelName: longName,
+          printRun: 99,
+          isParallel: true,
+        },
+        {
+          ...card('素版', '008'),
+          printRun: null,
+          isParallel: true,
+          parallelName: '素银',
+        },
+      ],
+      page: 1,
+      pageSize: 60,
+      total: 3,
+      seriesTotal: 1,
+      parallelCount: 2,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    renderList('?page=2');
+    expect(screen.queryByText(`平行 · ${longName}`)).not.toBeInTheDocument();
+    expect(screen.queryByText('不编号')).not.toBeInTheDocument();
+    const toggle = screen.getByRole('checkbox', { name: '显示平行版本' });
+    expect(toggle).not.toBeChecked();
+    await user.click(toggle);
+    expect(toggle).toBeChecked();
+    expect(toggle).toHaveFocus();
+    expect(harness.calls.at(-1)).toMatchObject({ includeParallels: true, page: 1 });
+    const badge = screen.getByTitle(longName);
+    expect(badge).toHaveTextContent(`平行 · ${longName}`);
+    expect(badge.className).toContain('truncate');
+    expect(screen.getByText('/99')).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText('/99').parentElement).toHaveTextContent('限量 /99');
+    expect(screen.getByText('平行 · 素银')).toBeInTheDocument();
+    expect(screen.queryByText('不编号')).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('status').some((node) => node.textContent === '共 3 张（含平行版本）'),
+    ).toBe(true);
+    expect(screen.getByRole('button', { name: '筛选（1）' })).toBeInTheDocument();
+  });
+
+  it('tells you to turn parallels on when a filtered list is empty, and clear leaves the switch', async () => {
+    const user = userEvent.setup();
+    harness.state.data = {
+      items: [],
+      page: 1,
+      pageSize: 60,
+      total: 0,
+      seriesTotal: 4,
+      parallelCount: 3,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    renderList('?q=missing&sort=name');
+    expect(screen.getByText('打开「显示平行版本」可查看 3 张平行卡')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '清除筛选' }));
+    expect(
+      harness.calls.some(
+        (call) =>
+          call.q === undefined && call.sort === 'name' && call.includeParallels === undefined,
+      ),
+    ).toBe(true);
+    expect(screen.getByRole('searchbox', { name: '搜索本系列' })).toHaveFocus();
+    expect(screen.getByRole('checkbox', { name: '显示平行版本' })).not.toBeChecked();
   });
 });

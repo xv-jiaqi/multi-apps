@@ -34,6 +34,7 @@ import {
 import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
 import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
+import { CardVariantBadgeRow } from '../components/card-variant-badge';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
 import { displayCardNumber } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
@@ -122,6 +123,9 @@ export function SeriesCardLink({
     rarity: string | null;
     imageUrl: string | null;
     cardNumber?: string | null;
+    parallelName?: string | null;
+    printRun?: number | null;
+    isParallel?: boolean;
   };
   locale: Locale;
   attributeLine: string | null;
@@ -147,6 +151,13 @@ export function SeriesCardLink({
           </span>
           <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale} />
         </div>
+        <CardVariantBadgeRow
+          locale={locale}
+          parallelName={card.parallelName}
+          printRun={card.printRun}
+          isParallel={card.isParallel}
+          className="mt-2 flex min-w-0 flex-wrap gap-1"
+        />
         {attributeLine ? (
           <p className="mt-1 truncate text-xs tabular-nums text-neutral-600">{attributeLine}</p>
         ) : null}
@@ -272,6 +283,7 @@ export const SeriesCardList = observer(function SeriesCardList({
       ...(state.subset ? { subsetSlug: state.subset } : {}),
       ...(state.rarity ? { rarity: state.rarity } : {}),
       ...(state.sort !== 'number' ? { sort: state.sort } : {}),
+      ...(state.parallels ? { includeParallels: true } : {}),
     },
     { placeholderData: keepPreviousData },
   );
@@ -284,9 +296,13 @@ export const SeriesCardList = observer(function SeriesCardList({
       : fallbackCardCount;
   const filtered = state.q.length > 0 || state.subset !== null || state.rarity !== null;
   const total = list.data?.total ?? 0;
-  const announcement = tt(filtered ? 'series.list.found' : 'series.list.total', {
-    count: filtered ? total : seriesTotal,
-  });
+  const parallelCount = list.data?.parallelCount ?? 0;
+  const announcement =
+    !filtered && state.parallels
+      ? tt('series.count.withParallels', { count: total, n: total })
+      : tt(filtered ? 'series.list.found' : 'series.list.total', {
+          count: filtered ? total : seriesTotal,
+        });
   const emptySeries =
     listView !== 'error' &&
     seriesTotal === 0 &&
@@ -334,7 +350,8 @@ export const SeriesCardList = observer(function SeriesCardList({
 
   if (list.error) failureKey.current = seriesFailureKey(list.error);
 
-  const activeFilters = (state.q ? 1 : 0) + (state.subset ? 1 : 0) + (state.rarity ? 1 : 0);
+  const activeFilters =
+    (state.q ? 1 : 0) + (state.subset ? 1 : 0) + (state.rarity ? 1 : 0) + (state.parallels ? 1 : 0);
   const showSkeleton = !emptySeries && listView === 'loading' && !list.data;
   const showError = !emptySeries && listView === 'error';
   const showNoMatch =
@@ -488,6 +505,23 @@ export const SeriesCardList = observer(function SeriesCardList({
                 </SelectContent>
               </Select>
             </Field>
+            {parallelCount > 0 ? (
+              <label
+                htmlFor="series-parallels"
+                className="inline-flex min-h-6 items-center gap-2 self-center text-sm text-neutral-900 sm:order-3"
+              >
+                <input
+                  id="series-parallels"
+                  type="checkbox"
+                  className="h-4 w-4 accent-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  checked={state.parallels}
+                  onChange={(event) =>
+                    commit({ ...state, parallels: event.target.checked, page: 1 }, false)
+                  }
+                />
+                {tt('series.filters.parallels')}
+              </label>
+            ) : null}
           </div>
         </search>
       )}
@@ -539,6 +573,11 @@ export const SeriesCardList = observer(function SeriesCardList({
       {showNoMatch ? (
         <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
           <p>{tt('series.list.noMatch')}</p>
+          {!state.parallels && parallelCount > 0 ? (
+            <p className="mt-2 text-sm text-neutral-600">
+              {tt('series.parallels.hint', { n: parallelCount })}
+            </p>
+          ) : null}
           <Button
             type="button"
             variant="outline"

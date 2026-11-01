@@ -1,7 +1,14 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { t, type Rarity } from '@repo/shared';
+import {
+  CARD_SERIES_LIST_PAGE_SIZE_MAX,
+  fieldErrorMessage,
+  PARALLEL_NAME_MAX,
+  PRINT_RUN_MAX,
+  t,
+  type Rarity,
+} from '@repo/shared';
 import { Button, Card, Input } from '@repo/ui-web';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui-web';
 import { Breadcrumbs } from '../../components/breadcrumbs';
@@ -38,6 +45,16 @@ import { useStores } from '../../stores/root-store';
 
 const RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
 
+function parsePrintRun(text: string): { value: number | null; error?: string } {
+  const trimmed = text.trim();
+  if (!trimmed) return { value: null };
+  if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid_type' };
+  const value = Number(trimmed);
+  if (value < 1) return { value: null, error: 'too_small' };
+  if (value > PRINT_RUN_MAX) return { value: null, error: 'too_big' };
+  return { value };
+}
+
 export const NewCardPage = observer(function NewCardPage() {
   return <CardForm mode="create" />;
 });
@@ -73,6 +90,9 @@ interface CardBaseline {
   attributes: AttributeSnapshot[];
   subsetSlug: string;
   cardNumber: string;
+  parallelOfSlug: string;
+  parallelName: string;
+  printRunText: string;
 }
 
 const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' | 'edit' }) {
@@ -100,10 +120,107 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const [imageUrl, setImageUrl] = useState('');
   const [subsetSlug, setSubsetSlug] = useState('');
   const [cardNumber, setCardNumber] = useState('');
+  const [parallelOfSlug, setParallelOfSlug] = useState('');
+  const [parallelName, setParallelName] = useState('');
+  const [printRunText, setPrintRunText] = useState('');
+  const [parallelCleared, setParallelCleared] = useState(false);
   const subsetsQuery = trpc.admin.subsets.list.useQuery(
     { seriesSlug },
     { enabled: Boolean(seriesSlug) },
   );
+  const baseCardsQuery = trpc.cards.listBySeries.useQuery(
+    {
+      seriesSlug,
+      includeParallels: false,
+      page: 1,
+      pageSize: CARD_SERIES_LIST_PAGE_SIZE_MAX,
+      sort: 'number',
+    },
+    { enabled: Boolean(seriesSlug) },
+  );
+  const [extraBaseCards, setExtraBaseCards] = useState<
+    Array<{ slug: string; name: string; cardNumber: string | null; isParallel: boolean }>
+  >([]);
+  const [extraBaseError, setExtraBaseError] = useState(false);
+  const [extraBaseLoading, setExtraBaseLoading] = useState(false);
+  const [baseOpen, setBaseOpen] = useState(false);
+  const listBaseCards = useRef<
+    | {
+        fetch: (input: {
+          seriesSlug: string;
+          includeParallels: false;
+          page: number;
+          pageSize: number;
+          sort: 'number';
+        }) => Promise<{
+          items: Array<{
+            slug: string;
+            name: string;
+            cardNumber: string | null;
+            isParallel: boolean;
+          }>;
+        }>;
+      }
+    | undefined
+  >(undefined);
+  listBaseCards.current = utils.cards?.listBySeries as typeof listBaseCards.current;
+  const listedPages =
+    baseCardsQuery.data == null
+      ? 0
+      : Math.ceil(
+          baseCardsQuery.data.total /
+            (baseCardsQuery.data.pageSize > 0
+              ? baseCardsQuery.data.pageSize
+              : CARD_SERIES_LIST_PAGE_SIZE_MAX),
+        );
+  useEffect(() => {
+    setBaseOpen(false);
+  }, [seriesSlug]);
+  useEffect(() => {
+    if (!seriesSlug || listedPages <= 1) {
+      setExtraBaseCards((current) => (current.length === 0 ? current : []));
+      setExtraBaseError(false);
+      setExtraBaseLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setExtraBaseLoading(true);
+    setExtraBaseError(false);
+    const pageSize = CARD_SERIES_LIST_PAGE_SIZE_MAX;
+    void (async () => {
+      try {
+        const fetchPage = listBaseCards.current?.fetch;
+        if (!fetchPage) throw new Error('missing list');
+        const rest: Array<{
+          slug: string;
+          name: string;
+          cardNumber: string | null;
+          isParallel: boolean;
+        }> = [];
+        for (let page = 2; page <= listedPages; page += 1) {
+          const next = await fetchPage({
+            seriesSlug,
+            includeParallels: false,
+            page,
+            pageSize,
+            sort: 'number',
+          });
+          rest.push(...next.items);
+        }
+        if (!cancelled) setExtraBaseCards(rest);
+      } catch {
+        if (!cancelled) {
+          setExtraBaseCards([]);
+          setExtraBaseError(true);
+        }
+      } finally {
+        if (!cancelled) setExtraBaseLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [listedPages, seriesSlug]);
   const [rows, setRows] = useState<AttributeRow[]>([]);
   const [attrErrors, setAttrErrors] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -121,6 +238,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           attributes: [],
           subsetSlug: '',
           cardNumber: '',
+          parallelOfSlug: '',
+          parallelName: '',
+          printRunText: '',
         }
       : null,
   );
@@ -151,6 +271,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       attributes: attributeSnapshots(nextRows),
       subsetSlug: card.subsetSlug ?? '',
       cardNumber: card.cardNumber ?? '',
+      parallelOfSlug: card.parallelOfSlug ?? '',
+      parallelName: card.parallelName ?? '',
+      printRunText: card.printRun == null ? '' : String(card.printRun),
     };
     setSeriesSlug(next.seriesSlug);
     setSlugValue(next.slug);
@@ -160,6 +283,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     setImageUrl(next.imageUrl);
     setSubsetSlug(next.subsetSlug);
     setCardNumber(next.cardNumber);
+    setParallelOfSlug(next.parallelOfSlug);
+    setParallelName(next.parallelName);
+    setPrintRunText(next.printRunText);
     setRows(nextRows);
     setBaseline(next);
     setHydrated(true);
@@ -175,10 +301,24 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       imageUrl !== baseline.imageUrl ||
       subsetSlug !== baseline.subsetSlug ||
       cardNumber !== baseline.cardNumber ||
+      parallelOfSlug !== baseline.parallelOfSlug ||
+      parallelName !== baseline.parallelName ||
+      printRunText !== baseline.printRunText ||
       !sameAttributeRows(attributeSnapshots(rows), baseline.attributes));
   const unsaved = useUnsavedChanges(dirty);
 
   const pageTitle = mode === 'create' ? tt('admin.cards.new') : tt('admin.cards.edit');
+  const selfSlug = mode === 'edit' ? routeSlug : slugValue.trim();
+  const baseLocked = (card?.parallelChildrenCount ?? 0) > 0;
+  const baseError = baseCardsQuery.isError || extraBaseError;
+  const baseLoading =
+    !baseError &&
+    (baseCardsQuery.isLoading ||
+      extraBaseLoading ||
+      (baseCardsQuery.isFetching && !baseCardsQuery.data));
+  const baseOptions = [...(baseCardsQuery.data?.items ?? []), ...extraBaseCards].filter(
+    (item) => !item.isParallel && item.slug !== selfSlug,
+  );
   const seriesForCrumb =
     seriesItems.find((item) => item.slug === (mode === 'edit' ? card?.seriesSlug : routeSlug)) ??
     null;
@@ -193,6 +333,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     if (key === 'description') descriptionRef.current?.focus();
     if (key === 'imageUrl') imageRef.current?.focus();
     if (key === 'cardNumber') document.getElementById('card-number')?.focus();
+    if (key === 'parallelOfSlug') document.getElementById('card-parallel-of')?.focus();
+    if (key === 'parallelName') document.getElementById('card-parallel-name')?.focus();
+    if (key === 'printRun') document.getElementById('card-print-run')?.focus();
     if (key === 'subsetSlug') document.getElementById('card-subset')?.focus();
     if (key === 'series') {
       document.getElementById('card-series')?.focus();
@@ -221,6 +364,17 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     const imageError = imageUrlError(imageUrl, locale.locale);
     if (imageError) next.imageUrl = imageError;
     if (cardNumber.trim().length > 20) next.cardNumber = tt('error.field.too_big');
+    const currentSlug = mode === 'create' ? slugValue.trim() : routeSlug;
+    if (parallelOfSlug && parallelOfSlug === currentSlug) {
+      next.parallelOfSlug = fieldErrorMessage(locale.locale, 'parallel_self');
+    }
+    if (parallelOfSlug && parallelName.trim().length === 0) {
+      next.parallelName = fieldErrorMessage(locale.locale, 'parallel_name_required');
+    } else if (parallelOfSlug && parallelName.trim().length > PARALLEL_NAME_MAX) {
+      next.parallelName = fieldErrorMessage(locale.locale, 'too_big');
+    }
+    const printRun = parsePrintRun(printRunText);
+    if (printRun.error) next.printRun = fieldErrorMessage(locale.locale, printRun.error);
     const attributes = validateAttributeRows(rows, locale.locale);
     setErrors(next);
     setAttrErrors(attributes.ok ? {} : attributes.errors);
@@ -230,6 +384,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         'slug',
         'subsetSlug',
         'cardNumber',
+        'parallelOfSlug',
+        'parallelName',
+        'printRun',
         'name',
         'description',
         'imageUrl',
@@ -254,6 +411,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       seriesSlug,
       subsetSlug,
       cardNumber: cardNumber.trim(),
+      parallelOfSlug,
+      parallelName: parallelOfSlug ? parallelName.trim() : '',
+      printRun: printRun.value,
     };
     try {
       if (mode === 'create') {
@@ -300,6 +460,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         'slug',
         'subsetSlug',
         'cardNumber',
+        'parallelOfSlug',
+        'parallelName',
+        'printRun',
         'name',
         'description',
         'imageUrl',
@@ -319,6 +482,9 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           'slug',
           'subsetSlug',
           'cardNumber',
+          'parallelOfSlug',
+          'parallelName',
+          'printRun',
           'name',
           'description',
           'imageUrl',
@@ -386,7 +552,17 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
               <label htmlFor="card-series" className="text-sm font-medium text-neutral-800">
                 {tt('admin.field.series')}
               </label>
-              <Select value={seriesSlug} onValueChange={setSeriesSlug}>
+              <Select
+                value={seriesSlug}
+                onValueChange={(value) => {
+                  if (value !== seriesSlug && parallelOfSlug) {
+                    setParallelOfSlug('');
+                    setParallelName('');
+                    setParallelCleared(true);
+                  }
+                  setSeriesSlug(value);
+                }}
+              >
                 <SelectTrigger id="card-series" aria-invalid={errors.series ? true : undefined}>
                   <SelectValue />
                 </SelectTrigger>
@@ -474,6 +650,115 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 onChange={(event) => setCardNumber(event.target.value)}
               />
             </AdminField>
+            <fieldset className="space-y-3 rounded-lg border border-neutral-200 p-3">
+              <legend className="px-1 text-sm font-medium text-neutral-800">
+                {tt('admin.field.parallelGroup')}
+              </legend>
+              <div className="space-y-1">
+                <label htmlFor="card-parallel-of" className="text-sm font-medium text-neutral-800">
+                  {tt('admin.field.parallelOf')}
+                </label>
+                {baseError ? (
+                  <p className="text-xs text-red-700" role="alert">
+                    {tt('state.error')}
+                  </p>
+                ) : baseLoading ? (
+                  <p className="text-xs text-neutral-600" role="status">
+                    {tt('state.loading')}
+                  </p>
+                ) : (
+                  <Select
+                    value={parallelOfSlug || 'none'}
+                    open={baseLocked ? false : baseOpen}
+                    onOpenChange={(next) => {
+                      if (baseLocked) return;
+                      setBaseOpen(next);
+                    }}
+                    onValueChange={(value) => {
+                      if (baseLocked) return;
+                      setParallelCleared(false);
+                      setParallelOfSlug(value === 'none' ? '' : value);
+                    }}
+                  >
+                    <SelectTrigger
+                      id="card-parallel-of"
+                      size="sm"
+                      className="w-full"
+                      aria-disabled={baseLocked || undefined}
+                      aria-invalid={errors.parallelOfSlug ? true : undefined}
+                      aria-describedby={
+                        [
+                          baseLocked ? 'card-parallel-of-lock' : null,
+                          parallelCleared ? 'card-parallel-of-cleared' : null,
+                          errors.parallelOfSlug ? 'card-parallel-of-error' : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' ') || undefined
+                      }
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{tt('admin.field.parallelNone')}</SelectItem>
+                      {baseOptions.map((item) => (
+                        <SelectItem key={item.slug} value={item.slug}>
+                          {`${item.cardNumber ? `${item.cardNumber} ` : ''}${item.name}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {baseLocked ? (
+                  <p id="card-parallel-of-lock" className="text-xs text-neutral-600">
+                    {tt('admin.parallel.hasChildren', {
+                      n: card?.parallelChildrenCount ?? 0,
+                    })}
+                  </p>
+                ) : null}
+                {parallelCleared ? (
+                  <p
+                    id="card-parallel-of-cleared"
+                    role="status"
+                    className="text-xs text-neutral-600"
+                  >
+                    {tt('admin.parallel.cleared')}
+                  </p>
+                ) : null}
+                {errors.parallelOfSlug ? (
+                  <p id="card-parallel-of-error" className="text-xs text-red-700">
+                    {errors.parallelOfSlug}
+                  </p>
+                ) : null}
+              </div>
+              {parallelOfSlug ? (
+                <AdminField
+                  id="card-parallel-name"
+                  label={tt('admin.field.parallelName')}
+                  hint={tt('admin.field.parallelNameHint')}
+                  error={errors.parallelName}
+                >
+                  <Input
+                    value={parallelName}
+                    maxLength={PARALLEL_NAME_MAX}
+                    autoComplete="off"
+                    onChange={(event) => setParallelName(event.target.value)}
+                  />
+                </AdminField>
+              ) : null}
+              <AdminField
+                id="card-print-run"
+                label={tt('admin.field.printRun')}
+                hint={tt('admin.field.printRunHint')}
+                error={errors.printRun}
+              >
+                <Input
+                  value={printRunText}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  onChange={(event) => setPrintRunText(event.target.value)}
+                />
+              </AdminField>
+            </fieldset>
             <AdminField
               id="card-name"
               label={tt('admin.field.name')}

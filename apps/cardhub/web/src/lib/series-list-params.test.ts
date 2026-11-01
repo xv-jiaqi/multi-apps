@@ -14,7 +14,14 @@ describe('parseSeriesListParams', () => {
       new URLSearchParams('q=%20%20&subset=missing&rarity=mythic&sort=number&page=1'),
       subsets,
     );
-    expect(parsed.state).toEqual({ q: '', subset: null, rarity: null, sort: 'number', page: 1 });
+    expect(parsed.state).toEqual({
+      q: '',
+      subset: null,
+      rarity: null,
+      sort: 'number',
+      page: 1,
+      parallels: false,
+    });
     expect(parsed.search).toBe('');
     expect(parsed.replace).toBe(true);
   });
@@ -31,6 +38,7 @@ describe('parseSeriesListParams', () => {
       rarity: 'rare',
       sort: 'name',
       page: 2,
+      parallels: false,
     });
     expect(seriesListSearch(parsed.state)).toBe(
       'q=%E9%BE%99&subset=base&rarity=rare&sort=name&page=2',
@@ -47,6 +55,21 @@ describe('parseSeriesListParams', () => {
     expect(parseSeriesListParams(new URLSearchParams('page=0'), subsets).state.page).toBe(1);
     expect(parseSeriesListParams(new URLSearchParams('page=1.5'), subsets).state.page).toBe(1);
     expect(parseSeriesListParams(new URLSearchParams('page=01'), subsets).replace).toBe(true);
+  });
+
+  it('keeps parallels=1 and deletes every other value', () => {
+    const on = parseSeriesListParams(new URLSearchParams('parallels=1&page=3'), subsets);
+    expect(on.state.parallels).toBe(true);
+    expect(on.state.page).toBe(3);
+    expect(on.replace).toBe(false);
+    expect(seriesListSearch(on.state)).toBe('page=3&parallels=1');
+    for (const raw of ['0', 'true', 'yes']) {
+      const parsed = parseSeriesListParams(new URLSearchParams(`parallels=${raw}`), subsets);
+      expect(parsed.state.parallels).toBe(false);
+      expect(parsed.search).toBe('');
+      expect(parsed.replace).toBe(true);
+    }
+    expect(seriesListSearch({ ...on.state, parallels: false, page: 1 })).toBe('');
   });
 
   it('caps page=10001 at 10000 so the list request stays valid', () => {
