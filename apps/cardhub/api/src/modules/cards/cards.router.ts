@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
 import {
   cardsListBySeriesInput,
   hasCardSearchConditions,
@@ -18,6 +17,7 @@ import {
 } from '../redis/catalog-cache';
 import { cardBySlugSchema, cardsListBySeriesSchema } from '../redis/public-cache.schema';
 import { assertParsedSearch, buildCardSearchWhere } from '../search/search-query';
+import { loadCardBySlug } from './card-by-slug';
 import { loadCardsBySeries } from './list-by-series';
 
 type CardSearchRow = Prisma.CardGetPayload<{
@@ -39,44 +39,9 @@ export class CardsRouter {
 
     return t.router({
       bySlug: t.procedure.input(z.object({ slug: slugSchema })).query(({ input }) => {
-        return cache.read(cardBySlugKey(input.slug), cardBySlugSchema, async () => {
-          const card = await prisma.card.findUnique({
-            where: { slug: input.slug },
-            include: {
-              series: { select: { slug: true, title: true } },
-              subset: { select: { slug: true, name: true, kind: true } },
-            },
-          });
-          if (!card) {
-            throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
-          }
-          // Prisma's JsonValue is recursive and blows up TS instantiation
-          // depth on the client. Surface attributes as a flat dictionary so
-          // tRPC's inferred output stays cheap to type-check.
-          const attributes =
-            card.attributes &&
-            typeof card.attributes === 'object' &&
-            !Array.isArray(card.attributes)
-              ? (card.attributes as Record<string, string | number | boolean | null>)
-              : null;
-          return {
-            id: card.id,
-            slug: card.slug,
-            name: card.name,
-            description: card.description,
-            imageUrl: card.imageUrl,
-            rarity: card.rarity,
-            attributes,
-            seriesSlug: card.series.slug,
-            seriesTitle: card.series.title,
-            cardNumber: card.cardNumber ?? null,
-            subset: card.subset
-              ? { slug: card.subset.slug, name: card.subset.name, kind: card.subset.kind }
-              : null,
-            createdAt: card.createdAt.toISOString(),
-            updatedAt: card.updatedAt.toISOString(),
-          };
-        });
+        return cache.read(cardBySlugKey(input.slug), cardBySlugSchema, () =>
+          loadCardBySlug(prisma, input.slug),
+        );
       }),
 
       search: t.procedure
@@ -115,6 +80,8 @@ export class CardsRouter {
               imageUrl: c.imageUrl,
               seriesSlug: c.series.slug,
               seriesTitle: c.series.title,
+              parallelName: c.parallelName ?? null,
+              printRun: c.printRun ?? null,
             })),
           };
         }),

@@ -526,9 +526,20 @@ describe('AdminRouter.cards.create/update/delete', () => {
   });
 
   it('updates a card and can move it to another series', async () => {
-    const { caller, userFindUnique, seriesFindUnique, cardUpdate } = makeRouter();
+    const { caller, userFindUnique, seriesFindUnique, cardFindUnique, cardUpdate } = makeRouter();
     userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
     seriesFindUnique.mockResolvedValueOnce({ id: 's2' });
+    cardFindUnique.mockResolvedValue({
+      id: 'c1',
+      slug: 'existing-card',
+      seriesId: 's1',
+      subsetId: null,
+      parallelOfId: null,
+      parallelName: null,
+      parallelOf: null,
+      parallels: [],
+      series: { slug: 'old-series' },
+    });
     cardUpdate.mockResolvedValueOnce({
       id: 'c1',
       slug: 'existing-card',
@@ -585,7 +596,12 @@ describe('AdminRouter.cards.create/update/delete', () => {
     const { caller, userFindUnique, cardFindUnique, cardDelete } = makeRouter();
     userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
     cardFindUnique.mockResolvedValueOnce({
+      id: 'c1',
       slug: 'existing-card',
+      name: 'Existing Card',
+      series: { slug: 'existing-series' },
+      parallelOf: null,
+      parallels: [],
       _count: { comments: 2 },
     });
     cardDelete.mockResolvedValueOnce({});

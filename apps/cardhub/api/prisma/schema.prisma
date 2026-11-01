@@ -133,16 +133,32 @@ model Card {
   // Null means the card is not in a subset (ungrouped). Deleting a subset
   // sets this to null and leaves the card in place.
   subsetId    String?
+  // Null means a base card. A parallel points at one base card. Only one
+  // layer: the application rejects a base that is itself a parallel.
+  // Old servers ignore the column. Deleting the base sets this null.
+  // parallelName is kept. The migration trigger also clears a link when
+  // seriesId changes and the base is no longer in that series, so a server
+  // that does not know these columns still leaves a same-series graph.
+  parallelOfId String?
+  // Required by the application when parallelOfId is set. At most 40
+  // characters after trim. Kept when the link is cleared.
+  parallelName String?
+  // Null means unnumbered. A value is the print-run total, an integer >= 1.
+  // There is no per-copy serial. Old servers ignore the column.
+  printRun     Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   series          Series           @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   subset          Subset?          @relation(fields: [subsetId], references: [id], onDelete: SetNull)
+  parallelOf      Card?            @relation("CardParallels", fields: [parallelOfId], references: [id], onDelete: SetNull)
+  parallels       Card[]           @relation("CardParallels")
   comments        Comment[]
   collectionItems CollectionItem[]
 
   @@index([seriesId])
   @@index([subsetId])
+  @@index([parallelOfId])
   @@index([name])
   @@index([cardNumberNormalized])
   @@index([name(ops: raw("gin_trgm_ops"))], map: "cards_name_trgm_idx", type: Gin)

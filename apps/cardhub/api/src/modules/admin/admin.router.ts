@@ -15,6 +15,7 @@ import {
   t as translate,
 } from '@repo/shared';
 import { z } from 'zod';
+import { resolveParallelWrite } from '../catalog/card-parallel-write';
 import { categoryIdForSlug, subsetIdForSlug } from '../catalog/catalog-links';
 import { cardNumberColumns } from '../catalog/card-number-column';
 import {
@@ -88,7 +89,8 @@ const seriesAdminInclude = {
 const cardAdminInclude = {
   series: { select: { slug: true, title: true } },
   subset: { select: { slug: true, name: true } },
-  _count: { select: { comments: true } },
+  parallelOf: { select: { slug: true } },
+  _count: { select: { comments: true, parallels: true } },
 } as const;
 
 type SeriesListRow = Prisma.SeriesGetPayload<{
@@ -121,6 +123,19 @@ function relationSlug(value: unknown): string | undefined {
 function cardSeriesSlugs(nextSlug: string, previousSlug: string | undefined): string[] {
   if (previousSlug && previousSlug !== nextSlug) return [nextSlug, previousSlug];
   return [nextSlug];
+}
+
+async function invalidateCardFamily(
+  cache: CatalogCache,
+  slugs: readonly string[],
+  seriesSlugs: readonly string[],
+): Promise<void> {
+  const seen = new Set<string>();
+  for (const cardSlug of slugs) {
+    if (cardSlug.length === 0 || seen.has(cardSlug)) continue;
+    seen.add(cardSlug);
+    await cache.invalidate({ kind: 'card', cardSlug, seriesSlugs });
+  }
 }
 
 function isSlug(value: unknown): value is string {
@@ -193,6 +208,10 @@ function formatCard(card: CardAdminRow) {
     cardNumber: card.cardNumber ?? null,
     subsetSlug: card.subset?.slug ?? null,
     subsetName: card.subset?.name ?? null,
+    parallelOfSlug: card.parallelOf?.slug ?? null,
+    parallelName: card.parallelName ?? null,
+    printRun: card.printRun ?? null,
+    parallelChildrenCount: card._count.parallels,
     commentCount: card._count.comments,
     createdAt: card.createdAt.toISOString(),
     updatedAt: card.updatedAt.toISOString(),
@@ -716,26 +735,40 @@ export class AdminRouter {
           const cardNumber = cardNumberForInput(input.cardNumber);
           const numbered = cardNumber === undefined ? null : cardNumberColumns(cardNumber);
           try {
-            const card = await prisma.card.create({
-              data: {
-                slug: input.slug,
-                name: input.name,
-                description: normalizeOptionalText(input.description),
-                rarity: input.rarity,
-                imageUrl: normalizeImageUrl(input.imageUrl),
-                attributes: input.attributes,
+            const written = await prisma.$transaction(async (tx) => {
+              const parallel = await resolveParallelWrite(tx, {
+                mode: 'create',
+                cardSlug: input.slug,
                 seriesId: series.id,
-                ...(subsetId !== undefined ? { subsetId } : {}),
-                ...(numbered ?? {}),
-              },
-              include: cardAdminInclude,
+                parallelOfSlug: input.parallelOfSlug,
+                parallelName: input.parallelName,
+                printRun: input.printRun,
+              });
+              const card = await tx.card.create({
+                data: {
+                  slug: input.slug,
+                  name: input.name,
+                  description: normalizeOptionalText(input.description),
+                  rarity: input.rarity,
+                  imageUrl: normalizeImageUrl(input.imageUrl),
+                  attributes: input.attributes,
+                  seriesId: series.id,
+                  ...(subsetId !== undefined ? { subsetId } : {}),
+                  ...(numbered ?? {}),
+                  parallelOfId: parallel.parallelOfId ?? null,
+                  parallelName: parallel.parallelName ?? null,
+                  printRun: parallel.printRun ?? null,
+                },
+                include: cardAdminInclude,
+              });
+              return { card, invalidateSlugs: parallel.invalidateSlugs };
             });
-            await cache.invalidate({
-              kind: 'card',
-              cardSlug: card.slug,
-              seriesSlugs: [input.seriesSlug],
-            });
-            return formatCard(card);
+            await invalidateCardFamily(
+              cache,
+              [written.card.slug, ...written.invalidateSlugs],
+              [input.seriesSlug],
+            );
+            return formatCard(written.card);
           } catch (error) {
             if (isPrismaUniqueError(error)) {
               throw new TRPCError({
@@ -775,27 +808,46 @@ export class AdminRouter {
           const previousSeriesSlug = relationSlug(existing?.series);
           const cardNumber = cardNumberForInput(input.cardNumber);
           const numbered = cardNumber === undefined ? null : cardNumberColumns(cardNumber);
+          const seriesSlugs = cardSeriesSlugs(input.seriesSlug, previousSeriesSlug);
           try {
-            const card = await prisma.card.update({
-              where: { slug: input.slug },
-              data: {
-                name: input.name,
-                description: normalizeOptionalText(input.description),
-                rarity: input.rarity,
-                imageUrl: normalizeImageUrl(input.imageUrl),
-                attributes: input.attributes,
+            const written = await prisma.$transaction(async (tx) => {
+              const parallel = await resolveParallelWrite(tx, {
+                mode: 'update',
+                cardSlug: input.slug,
                 seriesId: series.id,
-                ...(subsetId !== undefined ? { subsetId } : {}),
-                ...(numbered ?? {}),
-              },
-              include: cardAdminInclude,
+                parallelOfSlug: input.parallelOfSlug,
+                parallelName: input.parallelName,
+                printRun: input.printRun,
+              });
+              const card = await tx.card.update({
+                where: { slug: input.slug },
+                data: {
+                  name: input.name,
+                  description: normalizeOptionalText(input.description),
+                  rarity: input.rarity,
+                  imageUrl: normalizeImageUrl(input.imageUrl),
+                  attributes: input.attributes,
+                  seriesId: series.id,
+                  ...(subsetId !== undefined ? { subsetId } : {}),
+                  ...(numbered ?? {}),
+                  ...(parallel.parallelOfId !== undefined
+                    ? { parallelOfId: parallel.parallelOfId }
+                    : {}),
+                  ...(parallel.parallelName !== undefined
+                    ? { parallelName: parallel.parallelName }
+                    : {}),
+                  ...(parallel.printRun !== undefined ? { printRun: parallel.printRun } : {}),
+                },
+                include: cardAdminInclude,
+              });
+              return { card, invalidateSlugs: parallel.invalidateSlugs };
             });
-            await cache.invalidate({
-              kind: 'card',
-              cardSlug: card.slug,
-              seriesSlugs: cardSeriesSlugs(input.seriesSlug, previousSeriesSlug),
-            });
-            return formatCard(card);
+            await invalidateCardFamily(
+              cache,
+              [written.card.slug, ...written.invalidateSlugs],
+              seriesSlugs,
+            );
+            return formatCard(written.card);
           } catch (error) {
             if (isPlainObject(error) && error.code === 'P2025') {
               throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
@@ -811,9 +863,16 @@ export class AdminRouter {
             include: {
               _count: { select: { comments: true } },
               series: { select: { slug: true } },
+              parallelOf: { select: { slug: true } },
+              parallels: { select: { slug: true } },
             },
           });
           if (!card) throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
+          const relatedSlugs = [
+            input.slug,
+            ...(card.parallelOf ? [card.parallelOf.slug] : []),
+            ...card.parallels.map((row) => row.slug),
+          ];
           await prisma.$transaction(async (tx) => {
             await tx.card.delete({ where: { slug: input.slug } });
             await writeContentDelete(tx, {
@@ -827,11 +886,11 @@ export class AdminRouter {
             });
           });
           const deletedSeriesSlug = relationSlug(card.series);
-          await cache.invalidate({
-            kind: 'card',
-            cardSlug: input.slug,
-            seriesSlugs: deletedSeriesSlug ? [deletedSeriesSlug] : [],
-          });
+          await invalidateCardFamily(
+            cache,
+            relatedSlugs,
+            deletedSeriesSlug ? [deletedSeriesSlug] : [],
+          );
           return { ok: true, slug: input.slug, commentCount: card._count.comments };
         }),
       }),

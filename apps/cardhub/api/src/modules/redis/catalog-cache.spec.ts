@@ -100,7 +100,15 @@ describe('catalog cache keys', () => {
     );
     expect(defaults.startsWith('cardhub:cache:v1:')).toBe(true);
     expect(defaults).toContain('cards.listBySeries:series=celestial-dawn&');
-    expect(defaults).toContain('q=&rarity=&subset=&sort=number&page=1&pageSize=60');
+    expect(defaults).toContain(
+      'q=&rarity=&subset=&sort=number&page=1&pageSize=60&includeParallels=0',
+    );
+    expect(
+      cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', includeParallels: false }),
+    ).toBe(defaults);
+    expect(
+      cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', includeParallels: true }),
+    ).not.toBe(defaults);
 
     const varied = [
       { q: '龙' },

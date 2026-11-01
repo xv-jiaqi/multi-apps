@@ -73,12 +73,16 @@ export const cardsListBySeriesSchema = z.object({
       cardNumber: z.string().nullable(),
       subsetSlug: z.string().nullable(),
       attributes: z.record(z.string(), attributeValueSchema).nullable(),
+      parallelName: z.string().nullable(),
+      printRun: z.number().int().nullable(),
+      isParallel: z.boolean(),
     }),
   ),
   page: z.number(),
   pageSize: z.number(),
   total: z.number(),
   seriesTotal: z.number().int().nonnegative().optional(),
+  parallelCount: z.number().int().nonnegative(),
   sort: z.enum(CARD_SERIES_LIST_SORT_VALUES),
   attributeLabels: z.record(z.string(), attributeLabelSchema),
 });
@@ -103,6 +107,19 @@ export const cardBySlugSchema = z.object({
     .nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  printRun: z.number().int().nullable(),
+  parallelName: z.string().nullable(),
+  base: z.object({ slug: z.string(), name: z.string() }).nullable(),
+  variants: z.array(
+    z.object({
+      slug: z.string(),
+      name: z.string(),
+      parallelName: z.string().nullable(),
+      printRun: z.number().int().nullable(),
+      imageUrl: z.string().nullable(),
+      isCurrent: z.boolean(),
+    }),
+  ),
 });
 
 export const categoriesListSchema = z.object({

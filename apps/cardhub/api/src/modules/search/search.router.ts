@@ -69,6 +69,8 @@ export class SearchRouter {
             imageUrl: card.imageUrl,
             seriesSlug: card.series.slug,
             seriesTitle: card.series.title,
+            parallelName: card.parallelName ?? null,
+            printRun: card.printRun ?? null,
           })),
           series: series.map((item: GlobalSeriesRow) => ({
             id: item.id,

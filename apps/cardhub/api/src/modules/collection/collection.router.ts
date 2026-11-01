@@ -68,6 +68,7 @@ type ProgressSource = {
   seriesSlug: string;
   seriesTitle: string;
   ownedCount: number;
+  countsTowardOwned: boolean;
 };
 
 function cardNotFound(): TRPCError {
@@ -180,7 +181,7 @@ function progressItems(input: {
       seriesTitle: row.seriesTitle,
       owned: 0,
     };
-    if (row.ownedCount > 0) current.owned += 1;
+    if (row.countsTowardOwned) current.owned += 1;
     buckets.set(row.seriesId, current);
   }
 
@@ -214,8 +215,7 @@ export class CollectionRouter {
 
     return t.router({
       // Private inventory, not a public post. A banned account can still
-      // record what it owns. CH-213 has not landed, so progress counts every
-      // card in the series and there is no includeParallels input.
+      // record what it owns. Progress counts base cards only.
       upsert: t.authedProcedure.input(collectionUpsertInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const userId = ctx.user.sub;
@@ -297,6 +297,7 @@ export class CollectionRouter {
             card: {
               select: {
                 seriesId: true,
+                parallelOfId: true,
                 series: { select: { slug: true, title: true } },
               },
             },
@@ -307,13 +308,14 @@ export class CollectionRouter {
           seriesSlug: row.card.series.slug,
           seriesTitle: row.card.series.title,
           ownedCount: row.ownedCount,
+          countsTowardOwned: row.card.parallelOfId === null && row.ownedCount > 0,
         }));
         const seriesIds = [...new Set(rows.map((row) => row.seriesId))];
         const totals = new Map<string, number>();
         if (seriesIds.length > 0) {
           const counts = await prisma.card.groupBy({
             by: ['seriesId'],
-            where: { seriesId: { in: seriesIds } },
+            where: { seriesId: { in: seriesIds }, parallelOfId: null },
             _count: { _all: true },
           });
           for (const count of counts) {

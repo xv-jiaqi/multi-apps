@@ -8,7 +8,7 @@ import type { PrismaService } from '../prisma/prisma.service';
  * docs/Cardhub/handoff-context.md §6.7).
  */
 function makeRouter() {
-  const findMany = jest.fn();
+  const findMany = jest.fn().mockResolvedValue([]);
   const findUnique = jest.fn();
   const prisma = {
     card: { findMany, findUnique },
@@ -107,6 +107,8 @@ describe('CardsRouter.search', () => {
       imageUrl: 'gradient:from-sky-200',
       seriesSlug: 'celestial-dawn',
       seriesTitle: '天穹黎明',
+      parallelName: null,
+      printRun: null,
     });
   });
 });
@@ -165,7 +167,11 @@ describe('CardsRouter.bySlug', () => {
 describe('CardsRouter.listBySeries', () => {
   function makeListRouter() {
     const findUnique = jest.fn();
-    const prisma = { series: { findUnique } } as unknown as PrismaService;
+    const count = jest.fn().mockResolvedValue(0);
+    const prisma = {
+      series: { findUnique },
+      card: { count },
+    } as unknown as PrismaService;
     const caller = new CardsRouter(new TrpcBase(), prisma).build().createCaller({
       req: {} as never,
       res: {} as never,
@@ -246,6 +252,7 @@ describe('CardsRouter.listBySeries', () => {
     expect(findUnique).toHaveBeenCalledTimes(1);
     expect(findUnique.mock.calls[0]?.[0].where).toEqual({ slug: 'dawn-set' });
     expect(findUnique.mock.calls[0]?.[0].select.cards.where).toEqual({
+      parallelOfId: null,
       rarity: 'rare',
       subset: { slug: 'base' },
     });
