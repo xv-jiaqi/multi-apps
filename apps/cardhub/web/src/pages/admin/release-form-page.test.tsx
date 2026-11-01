@@ -127,6 +127,14 @@ beforeEach(() => {
 });
 
 describe('release edit load', () => {
+  it('puts the breadcrumb before the only heading for an admin', () => {
+    renderNew();
+    const crumb = screen.getByRole('navigation', { name: '面包屑导航' });
+    const heading = screen.getByRole('heading', { level: 1, name: '新建条目' });
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(crumb.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('shows the existing admin-only notice to a non-admin', () => {
     rootStore.session.signIn('token', { id: 'u1', username: 'ada', role: 'user' });
     renderEdit('11111111-1111-4111-8111-111111111111');

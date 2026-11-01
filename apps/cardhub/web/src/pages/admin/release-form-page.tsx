@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useNavigate, useParams } from 'react-router';
 import { t } from '@repo/shared';
@@ -105,38 +105,33 @@ export const EditReleasePage = observer(function EditReleasePage() {
 });
 
 const ReleaseForm = observer(function ReleaseForm({ mode }: { mode: 'create' | 'edit' }) {
-  const { locale } = useStores();
+  const { locale, session } = useStores();
   const tt = (key: string) => t(locale.locale, key);
   const title = mode === 'create' ? tt('admin.releases.new') : tt('admin.releases.edit');
-  const headingRef = useRef<HTMLHeadingElement>(null);
   useRedirectOnSessionExpiry();
+  const outsideTitle = session.isAuthenticated && !session.isAdmin;
 
   return (
     <PageShell>
       <PageMeta title={title} />
       <div className="space-y-6">
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-3xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-        >
-          {title}
-        </h1>
+        {outsideTitle ? (
+          <h1
+            tabIndex={-1}
+            className="text-3xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {title}
+          </h1>
+        ) : null}
         <AdminGate>
-          <ReleaseFormBody mode={mode} headingRef={headingRef} />
+          <ReleaseFormBody mode={mode} />
         </AdminGate>
       </div>
     </PageShell>
   );
 });
 
-const ReleaseFormBody = observer(function ReleaseFormBody({
-  mode,
-  headingRef,
-}: {
-  mode: 'create' | 'edit';
-  headingRef: RefObject<HTMLHeadingElement | null>;
-}) {
+const ReleaseFormBody = observer(function ReleaseFormBody({ mode }: { mode: 'create' | 'edit' }) {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const { locale } = useStores();
@@ -159,6 +154,7 @@ const ReleaseFormBody = observer(function ReleaseFormBody({
   const [seriesQuery, setSeriesQuery] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const seriesRef = useRef<HTMLInputElement>(null);
@@ -493,6 +489,13 @@ const ReleaseFormBody = observer(function ReleaseFormBody({
           { label: pageTitle },
         ]}
       />
+      <h1
+        ref={headingRef}
+        tabIndex={-1}
+        className="text-3xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      >
+        {pageTitle}
+      </h1>
       {mode === 'edit' && editView === 'error' ? (
         revoked ? null : (
           <AdminErrorBox
