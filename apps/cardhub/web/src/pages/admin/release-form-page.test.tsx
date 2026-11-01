@@ -127,6 +127,14 @@ beforeEach(() => {
 });
 
 describe('release edit load', () => {
+  it('shows the existing admin-only notice to a non-admin', () => {
+    rootStore.session.signIn('token', { id: 'u1', username: 'ada', role: 'user' });
+    renderEdit('11111111-1111-4111-8111-111111111111');
+    expect(screen.getByRole('heading', { name: '编辑条目' })).toBeInTheDocument();
+    expect(screen.getByText('仅管理员可以管理内容')).toBeInTheDocument();
+    expect(screen.queryByLabelText('标题')).not.toBeInTheDocument();
+  });
+
   it('shows the missing release state for a non-uuid id', () => {
     renderEdit('not-a-uuid');
     expect(screen.getByText('发售条目不存在')).toBeInTheDocument();
