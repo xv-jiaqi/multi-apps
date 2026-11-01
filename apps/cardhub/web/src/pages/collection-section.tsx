@@ -123,7 +123,10 @@ export function CollectionSection() {
     if (!pendingFocusId) return;
     const node = itemRefs.current.get(pendingFocusId);
     if (!node) return;
-    node.focus({ preventScroll: true });
+    // Scroll the new row into view. preventScroll would leave it under the
+    // sticky header or below the fold (WCAG 2.4.11). focusVisible paints the
+    // same ring keyboard users see.
+    node.focus({ focusVisible: true });
     setPendingFocusId(null);
   }, [pendingFocusId, listItems.length]);
 
@@ -272,7 +275,7 @@ export function CollectionSection() {
                         if (node) itemRefs.current.set(item.id, node);
                         else itemRefs.current.delete(item.id);
                       }}
-                      className="flex min-w-0 gap-3 py-3 first:pt-0 last:pb-0 focus:outline-none"
+                      className="flex min-w-0 scroll-mt-20 gap-3 py-3 first:pt-0 last:pb-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                     >
                       <CardThumb width="w-10" src={item.imageUrl} slug={item.cardSlug} />
                       <div className="min-w-0 space-y-1">

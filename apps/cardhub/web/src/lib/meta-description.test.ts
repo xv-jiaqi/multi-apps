@@ -328,6 +328,27 @@ describe('series and card meta descriptions', () => {
       }),
     ).toBe(`${EN_SERIES} Short sentence…`);
 
+    const quoted = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: '基础系列',
+      cardCount: 2,
+      description: `「这是一个完整的第一句。」${'后面还有很多'.repeat(20)}`,
+    });
+    expect(quoted).toBe(`${ZH_SERIES} 「这是一个完整的第一句」…`);
+    const quotedExcerpt = excerptAfter(quoted, ZH_SERIES);
+    expect(quotedExcerpt.split('「').length - 1).toBe(quotedExcerpt.split('」').length - 1);
+
+    const englishQuoted = `She said "Stop." ${'Word '.repeat(80)}`;
+    const englishQuotedContent = seriesMetaDescription({
+      locale: 'en-US',
+      title: 'Base Set',
+      cardCount: 2,
+      description: englishQuoted,
+    });
+    expect(englishQuotedContent).toBe(`${EN_SERIES} She said "Stop"…`);
+    const englishExcerpt = excerptAfter(englishQuotedContent, EN_SERIES);
+    expect(englishExcerpt.split('"').length - 1).toBe(2);
+
     const commas = Array.from({ length: 40 }, () => 'hello').join(', ');
     const commaContent = cardMetaDescription({
       locale: 'en-US',

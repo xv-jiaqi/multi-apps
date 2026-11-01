@@ -174,6 +174,11 @@ describe('CollectionSection load more focus', () => {
     await waitFor(() => {
       expect(loaded.closest('li')).toHaveFocus();
     });
+    const item = loaded.closest('li');
+    expect(item).toHaveClass('focus-visible:ring-2');
+    expect(item).toHaveClass('focus-visible:ring-brand-500');
+    expect(item).toHaveClass('focus-visible:ring-offset-2');
+    expect(item).not.toHaveClass('focus:outline-none');
     expect(document.activeElement).not.toBe(document.body);
   });
 });

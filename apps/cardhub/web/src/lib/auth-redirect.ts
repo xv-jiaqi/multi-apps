@@ -50,16 +50,42 @@ function pathnameOf(path: string): string {
   const hashAt = path.indexOf('#');
   const withoutHash = hashAt === -1 ? path : path.slice(0, hashAt);
   const queryAt = withoutHash.indexOf('?');
-  const pathname = queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
-  if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1);
-  return pathname;
+  return queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
+}
+
+/**
+ * Router paths are case-insensitive and collapse "." / "..". Compare this
+ * form; keep the original string when it is a real return target.
+ */
+export function normalizeAppPathname(pathname: string): string {
+  let decoded = pathname;
+  for (let i = 0; i < 5; i += 1) {
+    try {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    } catch {
+      break;
+    }
+  }
+  const segments: string[] = [];
+  for (const raw of decoded.split('/')) {
+    if (raw === '' || raw === '.') continue;
+    if (raw === '..') {
+      segments.pop();
+      continue;
+    }
+    segments.push(raw);
+  }
+  if (segments.length === 0) return '/';
+  return `/${segments.join('/')}`.toLowerCase();
 }
 
 /** `/login` and `/register` are not places to send someone after they sign in. */
 function isAuthEntryPath(path: string): boolean {
   let current = path;
   for (let i = 0; i < 5; i += 1) {
-    const pathname = pathnameOf(current);
+    const pathname = normalizeAppPathname(pathnameOf(current));
     if (pathname === '/login' || pathname === '/register') return true;
     let decoded: string;
     try {

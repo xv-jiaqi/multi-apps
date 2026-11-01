@@ -68,6 +68,25 @@ describe('applySessionExpiry', () => {
     expect(clearActiveQueryClient).toHaveBeenCalledTimes(1);
   });
 
+  it('treats a case-insensitive or dot-segment protected path as login-required', () => {
+    rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
+    const navigate = vi.fn();
+
+    applySessionExpiry({
+      pathname: '/Me',
+      search: '',
+      hash: '',
+      navigate,
+      error: unauthorized('auth.me'),
+    });
+
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith('/login', {
+      replace: true,
+      state: { from: '/Me', notice: 'sessionExpired' },
+    });
+  });
+
   it('sends a login or register return path home', () => {
     rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
     const navigate = vi.fn();
@@ -81,6 +100,21 @@ describe('applySessionExpiry', () => {
     });
 
     expect(navigate).toHaveBeenCalledWith('/login', {
+      replace: true,
+      state: { from: '/', notice: 'sessionExpired' },
+    });
+
+    resetSessionExpiryRedirectForTests();
+    rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
+    const dotted = vi.fn();
+    applySessionExpiry({
+      pathname: '/me/../login',
+      search: '',
+      hash: '',
+      navigate: dotted,
+      error: unauthorized('comments.create'),
+    });
+    expect(dotted).toHaveBeenCalledWith('/login', {
       replace: true,
       state: { from: '/', notice: 'sessionExpired' },
     });

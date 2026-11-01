@@ -20,6 +20,7 @@ const PLAIN_TEXT_SCAN_LIMIT = 10_000;
 
 const SENTENCE_ENDERS = new Set(['。', '！', '？', '!', '?', '…']);
 const SENTENCE_PUNCTUATION = new Set(['。', '！', '？', '!', '?', '.']);
+const CLOSING_MARKS = new Set(['"', "'", '”', '’', '」', '』', '）', ')', ']', '】', '》', '〉']);
 
 const graphemeSegmenters = new Map<Locale, Intl.Segmenter>();
 const wordSegmenters = new Map<Locale, Intl.Segmenter>();
@@ -55,9 +56,11 @@ function isSentenceBoundary(units: readonly string[], index: number): boolean {
   const previous = units[index - 1];
   const next = units[index + 1];
   if (previous && /\d/u.test(previous) && next && /\d/u.test(next)) return false;
-  if (next && !/\s/u.test(next)) return false;
 
   let after = index + 1;
+  while (after < units.length && units[after] && CLOSING_MARKS.has(units[after]!)) after += 1;
+  const followingMark = units[after];
+  if (followingMark && !/\s/u.test(followingMark)) return false;
   while (after < units.length && units[after] && /\s/u.test(units[after]!)) after += 1;
   const following = units[after];
   if (!following) return true;
@@ -77,7 +80,11 @@ function dropTrailingSentencePunctuation(units: readonly string[]): string[] {
 function sentenceCut(units: readonly string[], budget: number): string {
   for (let index = budget - 1; index >= 0; index -= 1) {
     if (!isSentenceBoundary(units, index)) continue;
-    const cut = dropTrailingSentencePunctuation(units.slice(0, index)).join('').trimEnd();
+    let end = index + 1;
+    while (end < budget && units[end] && CLOSING_MARKS.has(units[end]!)) end += 1;
+    const body = dropTrailingSentencePunctuation(units.slice(0, index));
+    const closers = units.slice(index + 1, end);
+    const cut = `${body.join('')}${closers.join('')}`.trimEnd();
     if (cut) return cut;
   }
   return '';
@@ -98,12 +105,19 @@ function wordCut(text: string, locale: Locale, budget: number): string {
 
 function stripTrailingPunctuation(text: string, locale: Locale): string {
   const units = graphemes(text, locale);
+  const closers: string[] = [];
   while (units.length > 0) {
     const last = units[units.length - 1];
-    if (!last || !isPunctuationOrSymbol(last)) break;
+    if (!last) break;
+    if (CLOSING_MARKS.has(last)) {
+      closers.unshift(last);
+      units.pop();
+      continue;
+    }
+    if (!isPunctuationOrSymbol(last)) break;
     units.pop();
   }
-  return units.join('').trimEnd();
+  return `${units.join('')}${closers.join('')}`.trimEnd();
 }
 
 function truncateToRoom(text: string, locale: Locale, room: number): string {

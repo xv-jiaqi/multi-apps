@@ -375,7 +375,12 @@ describe('CollectionSection', () => {
     await waitFor(() => {
       expect(loaded.closest('li')).toHaveFocus();
     });
-    expect(loaded.closest('li')).toHaveAttribute('tabindex', '-1');
+    const item = loaded.closest('li');
+    expect(item).toHaveAttribute('tabindex', '-1');
+    expect(item).toHaveClass('focus-visible:ring-2');
+    expect(item).toHaveClass('focus-visible:ring-brand-500');
+    expect(item).toHaveClass('focus-visible:ring-offset-2');
+    expect(item).not.toHaveClass('focus:outline-none');
     expect(document.activeElement).not.toBe(document.body);
   });
 
