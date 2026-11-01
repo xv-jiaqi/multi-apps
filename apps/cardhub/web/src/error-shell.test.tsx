@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react';
 import {
@@ -60,7 +60,9 @@ describe('route error shell', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('页面出错了');
     expect(screen.getByRole('link', { name: '跳到主内容' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '系列' })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('banner')).getByRole('link', { name: '系列' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('alert').parentElement).toHaveAttribute('id', 'main');
   });
 
