@@ -313,7 +313,7 @@ run_case "502 is not a successful probe" 1 \
 assert_grep "502 is a failed status" "${CASE_ERR}" "last status 502"
 assert_grep "502 still recreated" "${CASE_DOCKER}" "force-recreate"
 assert_absent "502 does not count as responded" "${CASE_OUT}" "four domains responded"
-proof_status="$(grep 'card-hub.app failed probe' "${CASE_ERR}" | head -n 1)"
+proof_status="$(grep 'card-hub.app failed probe' "${CASE_ERR}")"
 echo "PROOF 502: exit 1; ${proof_status}; force-recreate=yes; success_line=no"
 
 sed 's/^ROOT_WEB_DOMAINS=.*/ROOT_WEB_DOMAINS=/' "${work}/edge.env" > "${work}/edge-empty.env"
