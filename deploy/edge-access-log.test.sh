@@ -393,6 +393,10 @@ EOF
     "http://127.0.0.1:${caddy_port}/trpc/br/enc?input%5Ba%5D=LEAKBRINENC&token%5b0%5d=LEAKBRLOW"
   curl -g -sS -o /dev/null \
     "http://127.0.0.1:${caddy_port}/trpc/br/keep?tokens[]=1&filter[token]=x"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/br/gap?token[=LEAKGAP1&token]=LEAKGAP2&token%5B=LEAKGAP3&token[a]b=LEAKGAP4&input[=LEAKGAP5&INPUT]=LEAKGAP6&code[x]=LEAKGAP7&code_challenge[x]=keep&tokens[]=1&filter[token]=x&tokenize=abc"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/br/bad?token%5B%E0%A4%A%5D=LEAKBADENC&%E0%A4%A=1&token=LEAKBADVAL"
   sleep 0.3
   if [ ! -s "${work}/access.log" ]; then
     bad "live access log was not written"
@@ -449,6 +453,15 @@ needles = [
     "LEAKBRIN2",
     "LEAKBRINENC",
     "LEAKBRLOW",
+    "LEAKGAP1",
+    "LEAKGAP2",
+    "LEAKGAP3",
+    "LEAKGAP4",
+    "LEAKGAP5",
+    "LEAKGAP6",
+    "LEAKGAP7",
+    "LEAKBADENC",
+    "LEAKBADVAL",
 ]
 for needle in needles:
     if needle in blob:
@@ -610,6 +623,14 @@ expect_case(
     ["input", "%5ba", "%5Ba"],
 )
 expect_exact("/trpc/br/keep", "tokens[]=1&filter[token]=x")
+expect_exact(
+    "/trpc/br/gap",
+    "token[=REDACTED&token]=REDACTED&token%5B=REDACTED&token[a]b=REDACTED&code[x]=REDACTED&code_challenge[x]=keep&tokens[]=1&filter[token]=x&tokenize=abc",
+)
+expect_exact(
+    "/trpc/br/bad",
+    "token%5B%E0%A4%A%5D=REDACTED&%E0%A4%A=1&token=REDACTED",
+)
 frag = one("/trpc/frag")
 if frag is None:
     problems.append("missing fragment request")

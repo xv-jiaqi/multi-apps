@@ -44,25 +44,50 @@ function loggedRequestIdHeader(value: unknown): string {
   return parsed.success ? parsed.data : '[Redacted]';
 }
 
+const HEX_BYTE = /^[0-9a-fA-F]{2}$/;
+
+/**
+ * One percent-decode. A broken sequence such as `%E0%A4%A` does not throw:
+ * each complete `%XX` becomes one byte and a trailing `%` stays put.
+ */
 function decodeQueryKey(rawKey: string): string {
+  const plus = rawKey.replace(/\+/g, ' ');
   try {
-    return decodeURIComponent(rawKey.replace(/\+/g, ' '));
+    return decodeURIComponent(plus);
   } catch {
-    return rawKey;
+    return decodeQueryKeyLoose(plus);
   }
 }
 
+function decodeQueryKeyLoose(value: string): string {
+  let out = '';
+  for (let i = 0; i < value.length; i += 1) {
+    if (value[i] === '%' && i + 2 < value.length && HEX_BYTE.test(value.slice(i + 1, i + 3))) {
+      out += String.fromCharCode(Number.parseInt(value.slice(i + 1, i + 3), 16));
+      i += 2;
+      continue;
+    }
+    out += value[i];
+  }
+  return out;
+}
+
 /**
- * True when the decoded key is a secret name, or that name plus a `[...]`
- * suffix (`token[]`, `TOKEN[0]`, `input%5Ba%5D`). `tokens[]` and
- * `filter[token]` stay: the name before `[` is not a secret key.
+ * True when the decoded name is a secret key, or that key immediately
+ * followed by `[` or `]` (`token[]`, `token[`, `token]`, `token%5B`).
+ * `tokens[]`, `tokenize`, and `filter[token]` stay: the name is not the
+ * secret key.
  */
 function isRedactedQueryKey(key: string): boolean {
-  const decoded = decodeQueryKey(key).toLowerCase();
-  if (REDACTED_QUERY_KEYS.has(decoded)) return true;
-  const bracket = decoded.indexOf('[');
-  if (bracket <= 0) return false;
-  return REDACTED_QUERY_KEYS.has(decoded.slice(0, bracket));
+  const name = decodeQueryKey(key).toLowerCase();
+  for (const secret of REDACTED_QUERY_KEYS) {
+    if (name === secret) return true;
+    if (name.length > secret.length && name.startsWith(secret)) {
+      const next = name[secret.length];
+      if (next === '[' || next === ']') return true;
+    }
+  }
+  return false;
 }
 
 function redactQuery(query: unknown): unknown {
