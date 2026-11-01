@@ -1,0 +1,114 @@
+[
+  {
+    "file": "parent-found-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "name": "parent-found",
+    "violations": []
+  },
+  {
+    "file": "target-missing-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "name": "target-missing",
+    "violations": []
+  },
+  {
+    "file": "target-in-comments-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "name": "target-in-comments",
+    "violations": []
+  },
+  {
+    "file": "forum-missing-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "name": "forum-missing",
+    "violations": []
+  },
+  {
+    "file": "parent-found-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "name": "parent-found",
+    "violations": []
+  },
+  {
+    "file": "target-missing-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "name": "target-missing",
+    "violations": []
+  },
+  {
+    "file": "target-in-comments-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "name": "target-in-comments",
+    "violations": []
+  },
+  {
+    "file": "forum-missing-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "name": "forum-missing",
+    "violations": []
+  },
+  {
+    "file": "parent-found-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "name": "parent-found",
+    "violations": []
+  },
+  {
+    "file": "target-missing-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "name": "target-missing",
+    "violations": []
+  },
+  {
+    "file": "target-in-comments-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "name": "target-in-comments",
+    "violations": []
+  },
+  {
+    "file": "forum-missing-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "name": "forum-missing",
+    "violations": []
+  },
+  {
+    "file": "parent-found-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "name": "parent-found",
+    "violations": []
+  },
+  {
+    "file": "target-missing-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "name": "target-missing",
+    "violations": []
+  },
+  {
+    "file": "target-in-comments-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "name": "target-in-comments",
+    "violations": []
+  },
+  {
+    "file": "forum-missing-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "name": "forum-missing",
+    "violations": []
+  }
+]
