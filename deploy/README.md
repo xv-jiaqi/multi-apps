@@ -207,15 +207,16 @@ A healthy admin endpoint with `502` on the public names means Caddy is up
 and an upstream name or the external `edge` network is wrong. Do not run
 `docker compose down -v`; that deletes certificates in `caddy_data`.
 
-To serve the last deployed edge config again, restore `deploy/edge` from that SHA, sync it, recreate, then put the working tree back:
+To serve the last deployed edge config again, archive that SHA into a temp directory (the working tree stays as it is), sync that tree, and recreate. On the operator machine:
 
 ```bash
-git checkout <prev_sha> -- deploy/edge
-rsync -a --delete deploy/edge/ <host>:/opt/cardhub/edge/deploy/edge/
-git checkout HEAD -- deploy/edge
+tmp=$(mktemp -d)
+git archive <prev_sha> deploy/edge | tar -x -C "$tmp"
+rsync -a --delete "$tmp/deploy/edge/" <host>:/opt/cardhub/edge/deploy/edge/
+rm -rf "$tmp"
 ```
 
-`git restore --source=HEAD deploy/edge` restores the same files. On the VPS:
+On the VPS:
 
 ```bash
 cd /opt/cardhub/edge/deploy/edge
