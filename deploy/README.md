@@ -326,6 +326,103 @@ either previous digest cannot be read, deploy exits before pull or
 `compose up` and leaves those containers alone. A first deploy, with
 neither container present, still starts them.
 
+### When deploy refuses before it replaces containers
+
+Two refusals happen before `docker pull` and before `compose up`. The
+containers that are already running are left as they are. Fix the count,
+then run Cardhub Deploy again. Do not `docker compose down`, do not
+`down -v`, and do not `up -d --force-recreate`. Those stop the container
+that is serving, or delete the database volume.
+
+`remote-deploy.sh` counts api and web with `docker compose ps -aq`. Stopped
+containers count. More than one id for a service prints
+`<service> already has N containers; refusing to add another replica`.
+The same count, if it is seen while reading the previous image, prints
+`Refusing deploy: <service> has N containers; cannot choose a rollback image. The running API was not replaced.`
+
+`Refusing deploy: an api or web container is already running, but both previous image digests are required before any container is replaced.`
+means at least one of api and web still has a container, and the script
+could not read a `sha256:` digest for both. A service with no container
+has no digest, so this also fires when one side is empty and the other is
+not. The check that rejects more than one container runs first, so this
+digest line is the one you see when every service that exists has a single
+container and a digest is still missing. Do not delete the container that
+is serving to make both sides empty.
+
+Each of api and web has to be exactly one container before the next deploy,
+and that container has to be the one that is serving. Staging is
+`cardhub-staging` with `/opt/cardhub/staging/staging.env`. Production is
+`cardhub-prod` with `/opt/cardhub/production/production.env`. The commands
+below are staging. Swap the project name and the env file for production.
+The compose file is the one already on the server.
+
+```bash
+project=cardhub-staging
+env_file=/opt/cardhub/staging/staging.env
+compose=/opt/cardhub/staging/deploy/docker-compose.yml
+
+for svc in api web; do
+  echo "---- ${svc} ----"
+  docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -a "${svc}"
+  mapfile -t ids < <(docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -aq "${svc}" | awk 'NF' | sort -u)
+  running=()
+  for id in "${ids[@]}"; do
+    [ -n "${id}" ] || continue
+    state="$(docker inspect -f '{{.State.Status}}' "${id}")"
+    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${id}")"
+    name="$(docker inspect -f '{{.Name}}' "${id}")"
+    echo "${id:0:12} status=${state} health=${health} name=${name}"
+    if [ "${state}" != "running" ]; then
+      docker rm "${id}"
+    else
+      running+=("${id}")
+    fi
+  done
+  if [ "${#running[@]}" -le 1 ]; then
+    continue
+  fi
+  echo "More than one ${svc} is running. Only a container that is not healthy is removed."
+  for id in "${running[@]}"; do
+    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${id}")"
+    if [ "${health}" != "healthy" ]; then
+      docker rm -f "${id}"
+    fi
+  done
+done
+```
+
+`docker rm` without `-f` does not remove a running container. The loop
+removes stopped extras, then removes a running container only when its
+health is not `healthy`. The healthy container stays up.
+
+If two containers for the same service are still running and both are
+healthy, stop here. Do not pick one by name. For api, the one that is
+serving is the one whose in-container `/health` git SHA matches the live
+site. Read it, then remove only the other id:
+
+```bash
+docker exec <serving-id> node -e 'fetch("http://127.0.0.1:4000/health").then(async (r) => process.stdout.write(await r.text()))'
+docker rm -f <extra-id>
+```
+
+For web, the serving container is the one that answers `/healthz`:
+
+```bash
+docker exec <serving-id> wget -qO- http://127.0.0.1:8080/healthz
+docker rm -f <extra-id>
+```
+
+Check the count the script uses. Each command must print one id:
+
+```bash
+docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -aq api
+docker compose -p "${project}" --env-file "${env_file}" -f "${compose}" ps -aq web
+```
+
+Then run Cardhub Deploy again (Actions → Cardhub Deploy → Run workflow)
+for that environment and SHA. A service that still has no container has no
+digest, so the digest refusal remains while the other service is up.
+
 `remote-deploy.sh` writes `PASSWORD_PREHASH_WRITE` into that environment's
 env file after `ENV_NAME` matches and before it replaces containers. The
 value comes from the GitHub Environment variable of the same name. `true`
