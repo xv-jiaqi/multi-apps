@@ -14,6 +14,7 @@ vi.mock('../../lib/trpc', () => ({
       admin: {
         releases: {
           list: { invalidate: vi.fn(), fetch: vi.fn() },
+          getById: { invalidate: vi.fn() },
         },
       },
       releases: { list: { invalidate: vi.fn() } },
@@ -31,6 +32,19 @@ vi.mock('../../lib/trpc', () => ({
     },
     admin: {
       releases: {
+        getById: {
+          useQuery: () => ({
+            data: undefined,
+            isLoading: false,
+            isPending: false,
+            isFetching: false,
+            isError: false,
+            error: null,
+            errorUpdateCount: 0,
+            dataUpdatedAt: 0,
+            refetch: vi.fn(),
+          }),
+        },
         create: { useMutation: () => ({ mutateAsync: create, isPending: false }) },
         update: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       },

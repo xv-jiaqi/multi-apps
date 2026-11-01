@@ -1,6 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
-import { rootStore } from '../stores/root-store';
-import { cardhubTrpcUrl } from './trpc-url';
+import { trpc } from './trpc';
 
 export type ReleaseRegion = 'CN' | 'JP' | 'GLOBAL';
 
@@ -124,42 +122,53 @@ export function interpretReleasesResponse(status: number, body: unknown): Releas
   return { absent: false, items };
 }
 
-function releasesUrl(input: { from: string; to: string }): string {
-  const params = new URLSearchParams();
-  params.set('input', JSON.stringify(input));
-  return `${cardhubTrpcUrl()}/releases.list?${params.toString()}`;
+function procedureNotFound(error: unknown): boolean {
+  if (!isRecord(error) || !isRecord(error.data)) return false;
+  return error.data.code === 'NOT_FOUND';
 }
 
-function releaseHeaders(): Record<string, string> {
-  const headers: Record<string, string> = { accept: 'application/json' };
-  const token = rootStore.session.token;
-  if (token) headers.authorization = `Bearer ${token}`;
-  return headers;
+function toListItem(item: {
+  id: string;
+  title: string;
+  releaseDate: string;
+  region: ReleaseListItem['region'];
+  note: string | null;
+  sourceUrl: string | null;
+  series: ReleaseListItem['series'];
+  category: ReleaseListItem['category'];
+}): ReleaseListItem {
+  return {
+    id: item.id,
+    title: item.title,
+    releaseDate: item.releaseDate,
+    region: item.region,
+    note: item.note,
+    sourceUrl: item.sourceUrl,
+    series: item.series,
+    category: item.category,
+  };
 }
 
-export async function loadReleasesList(input: { from: string; to: string }): Promise<ReleasesLoad> {
-  let response: Response;
-  try {
-    response = await fetch(releasesUrl(input), { headers: releaseHeaders() });
-  } catch {
-    throw new ReleasesRequestError('network');
-  }
-  if (response.status === 404) return { absent: true, items: [] };
-  const text = await response.text();
-  let body: unknown = null;
-  if (text.length > 0) {
-    try {
-      body = JSON.parse(text);
-    } catch {
-      throw new ReleasesRequestError('parse');
-    }
-  }
-  return interpretReleasesResponse(response.status, body);
-}
-
+/** Home upcoming list. Uses the existing `releases.list` procedure. */
 export function useReleasesList(input: { from: string; to: string }) {
-  return useQuery({
-    queryKey: ['releases.list', input.from, input.to],
-    queryFn: () => loadReleasesList(input),
-  });
+  const query = trpc.releases.list.useQuery({ from: input.from, to: input.to });
+  const absent = query.isError && procedureNotFound(query.error);
+  const items = query.data ? query.data.items.map(toListItem) : [];
+  return {
+    isLoading: absent ? false : query.isLoading,
+    isPending: absent ? false : query.isPending,
+    isFetching: query.isFetching,
+    isError: query.isError && !absent,
+    error: absent ? null : query.error,
+    errorUpdateCount: query.errorUpdateCount,
+    dataUpdatedAt: query.dataUpdatedAt,
+    refetch: () => {
+      void query.refetch();
+    },
+    data: query.data
+      ? { absent: false as const, items }
+      : absent
+        ? { absent: true as const, items: [] as ReleaseListItem[] }
+        : undefined,
+  };
 }

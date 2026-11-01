@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useNavigate, useParams } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
 import { t } from '@repo/shared';
 import {
   Button,
@@ -29,6 +28,7 @@ import { queryFallback, useFocusOnRecovery } from '../../components/retry-button
 import {
   normalizeReleaseDateInput,
   releaseFormErrors,
+  releaseNotFound,
   releaseWriteFeedback,
   releaseWriteInput,
   type ReleaseFormValues,
@@ -130,24 +130,11 @@ const ReleaseFormBody = observer(function ReleaseFormBody({ mode }: { mode: 'cre
   const reportForbidden = useReportForbidden();
   const utils = trpc.useUtils();
   const categories = trpc.categories.list.useQuery();
-  const loaded = useQuery({
-    queryKey: ['admin', 'releases', 'one', id],
-    enabled: mode === 'edit' && id.length > 0,
-    queryFn: async () => {
-      let cursor: string | undefined;
-      for (let page = 0; page < 50; page += 1) {
-        const result = await utils.admin.releases.list.fetch({
-          limit: 100,
-          ...(cursor ? { cursor } : {}),
-        });
-        const found = result.items.find((item) => item.id === id);
-        if (found) return found;
-        if (!result.nextCursor) return null;
-        cursor = result.nextCursor;
-      }
-      return null;
-    },
-  });
+  const loaded = trpc.admin.releases.getById.useQuery(
+    { id },
+    { enabled: mode === 'edit' && id.length > 0 },
+  );
+  const missing = loaded.isError && releaseNotFound(loaded.error);
   const create = trpc.admin.releases.create.useMutation();
   const update = trpc.admin.releases.update.useMutation();
   const [values, setValues] = useState<ReleaseFormValues>(emptyValues);
@@ -171,7 +158,7 @@ const ReleaseFormBody = observer(function ReleaseFormBody({ mode }: { mode: 'cre
     { enabled: debouncedSeries.length > 0 },
   );
   const saving = create.isPending || update.isPending;
-  const editView = queryFallback(loaded);
+  const editView = missing ? 'ready' : queryFallback(loaded);
   const revoked = loaded.isError && isAccessRevoked(loaded.error);
   useFocusOnRecovery(mode === 'edit' ? editView : 'ready', headingRef);
 
@@ -250,6 +237,7 @@ const ReleaseFormBody = observer(function ReleaseFormBody({ mode }: { mode: 'cre
     try {
       if (mode === 'create') await create.mutateAsync(input);
       else await update.mutateAsync({ ...input, id });
+      void utils.admin.releases.getById.invalidate();
       void utils.admin.releases.list.invalidate();
       void utils.releases.list.invalidate();
       unsaved.allowLeave();
@@ -513,7 +501,7 @@ const ReleaseFormBody = observer(function ReleaseFormBody({ mode }: { mode: 'cre
         <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
           <div className="h-4 w-40 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
         </div>
-      ) : mode === 'edit' && loaded.data === null ? (
+      ) : mode === 'edit' && missing ? (
         <AdminEmpty>{tt('admin.releases.missing')}</AdminEmpty>
       ) : (
         form
