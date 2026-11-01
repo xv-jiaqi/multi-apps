@@ -397,6 +397,9 @@ EOF
     "http://127.0.0.1:${caddy_port}/trpc/br/gap?token[=LEAKGAP1&token]=LEAKGAP2&token%5B=LEAKGAP3&token[a]b=LEAKGAP4&input[=LEAKGAP5&INPUT]=LEAKGAP6&code[x]=LEAKGAP7&code_challenge[x]=keep&tokens[]=1&filter[token]=x&tokenize=abc"
   curl -g -sS -o /dev/null \
     "http://127.0.0.1:${caddy_port}/trpc/br/bad?token%5B%E0%A4%A%5D=LEAKBADENC&%E0%A4%A=1&token=LEAKBADVAL"
+  # `&` splits the query before `]` closes, so the value on `b]` stays.
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/gap/amp?token[a&b]=GAPAMP&keep=1"
   sleep 0.3
   if [ ! -s "${work}/access.log" ]; then
     bad "live access log was not written"
@@ -631,6 +634,7 @@ expect_exact(
     "/trpc/br/bad",
     "token%5B%E0%A4%A%5D=REDACTED&%E0%A4%A=1&token=REDACTED",
 )
+expect_exact("/trpc/gap/amp", "token[a=REDACTED&b]=GAPAMP&keep=1")
 frag = one("/trpc/frag")
 if frag is None:
     problems.append("missing fragment request")
