@@ -62,6 +62,10 @@ function resolveTrpcUrl(): string {
 
 const TRPC_URL = resolveTrpcUrl();
 
+export function cardhubTrpcUrl(): string {
+  return TRPC_URL;
+}
+
 let activeQueryClient: QueryClient | null = null;
 
 export function clearActiveQueryClient(): void {

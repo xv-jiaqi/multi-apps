@@ -2,6 +2,7 @@ import type { PropsWithChildren } from 'react';
 import { observer } from 'mobx-react-lite';
 import { t } from '@repo/shared';
 import { LegacyPasswordNotice } from './legacy-password-notice';
+import { SiteFooter } from './site-footer';
 import { SiteHeader } from './site-header';
 import { useStores } from '../stores/root-store';
 
@@ -49,6 +50,7 @@ export const PageShell = observer(function PageShell({ children }: PropsWithChil
         <LegacyPasswordNotice />
         {children}
       </main>
+      <SiteFooter />
     </div>
   );
 });
