@@ -1,0 +1,170 @@
+[
+  {
+    "file": "notifications-data-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "mode": "data",
+    "violations": [],
+    "bell": {
+      "x": 1085.078125,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-empty-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "mode": "empty",
+    "violations": [],
+    "bell": {
+      "x": 1085.078125,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-error-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "mode": "error",
+    "violations": [],
+    "bell": {
+      "x": 1085.078125,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-loading-zh-1440.png",
+    "locale": "zh-CN",
+    "width": 1440,
+    "mode": "loading",
+    "violations": [],
+    "bell": {
+      "x": 1085.078125,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-data-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "mode": "data",
+    "violations": [],
+    "bell": null
+  },
+  {
+    "file": "notifications-empty-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "mode": "empty",
+    "violations": [],
+    "bell": null
+  },
+  {
+    "file": "notifications-error-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "mode": "error",
+    "violations": [],
+    "bell": null
+  },
+  {
+    "file": "notifications-loading-zh-375.png",
+    "locale": "zh-CN",
+    "width": 375,
+    "mode": "loading",
+    "violations": [],
+    "bell": null
+  },
+  {
+    "file": "notifications-data-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "mode": "data",
+    "violations": [],
+    "bell": {
+      "x": 1086.46875,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-empty-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "mode": "empty",
+    "violations": [],
+    "bell": {
+      "x": 1086.46875,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-error-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "mode": "error",
+    "violations": [],
+    "bell": {
+      "x": 1086.46875,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-loading-en-1440.png",
+    "locale": "en-US",
+    "width": 1440,
+    "mode": "loading",
+    "violations": [],
+    "bell": {
+      "x": 1086.46875,
+      "y": 14,
+      "width": 36,
+      "height": 36
+    }
+  },
+  {
+    "file": "notifications-data-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "mode": "data",
+    "violations": [],
+    "bell": null
+  },
+  {
+    "file": "notifications-empty-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "mode": "empty",
+    "violations": [],
+    "bell": null
+  },
+  {
+    "file": "notifications-error-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "mode": "error",
+    "violations": [],
+    "bell": null
+  },
+  {
+    "file": "notifications-loading-en-375.png",
+    "locale": "en-US",
+    "width": 375,
+    "mode": "loading",
+    "violations": [],
+    "bell": null
+  }
+]
