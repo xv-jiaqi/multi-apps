@@ -13,6 +13,7 @@ interface TopicFormProps {
   bodyLabel: string;
   bodyPlaceholder: string;
   markdownHint: string;
+  mentionHint: string;
   showPreviewLabel: string;
   hidePreviewLabel: string;
   previewEmptyLabel: string;
@@ -35,6 +36,7 @@ export function TopicForm({
   bodyLabel,
   bodyPlaceholder,
   markdownHint,
+  mentionHint,
   showPreviewLabel,
   hidePreviewLabel,
   previewEmptyLabel,
@@ -128,6 +130,7 @@ export function TopicForm({
           />
         )}
         <p className="text-xs text-neutral-500">{markdownHint}</p>
+        <p className="text-xs text-neutral-600">{mentionHint}</p>
       </div>
 
       {error ? (

@@ -36,6 +36,7 @@ function readProcedurePath(error: unknown): string | undefined {
 function pageRequiresLogin(pathname: string): boolean {
   const path = normalizeAppPathname(pathname);
   if (path === '/me' || path.startsWith('/me/')) return true;
+  if (path === '/notifications') return true;
   if (path === '/forum/new') return true;
   if (/^\/forum\/[^/]+\/edit$/.test(path)) return true;
   if (path === '/trade/new') return true;

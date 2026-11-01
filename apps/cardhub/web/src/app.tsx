@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, useLocation, type RouteObject } from 'react-router';
 import { AuthBootstrap } from './components/auth-bootstrap';
+import { NotificationCacheReset } from './components/notification-unread';
 import { SessionExpiryWatcher } from './components/session-expiry-watcher';
 import {
   ClearChunkRetryOnSuccess,
@@ -107,6 +108,9 @@ const EditReleasePage = lazy(() =>
   import('./pages/admin/release-form-page').then((m) => ({ default: m.EditReleasePage })),
 );
 const MePage = lazy(() => import('./pages/me').then((m) => ({ default: m.MePage })));
+const NotificationsPage = lazy(() =>
+  import('./pages/notifications').then((m) => ({ default: m.NotificationsPage })),
+);
 const ChangePasswordPage = lazy(() =>
   import('./pages/me-password').then((m) => ({ default: m.ChangePasswordPage })),
 );
@@ -158,6 +162,7 @@ export function AppLayout() {
     <>
       <AuthBootstrap />
       <SessionExpiryWatcher />
+      <NotificationCacheReset />
       <Outlet />
     </>
   );
@@ -261,6 +266,7 @@ export const appRoutes: RouteObject[] = [
       },
       { path: '/me/password', element: lazyPage('/me/password', <ChangePasswordPage />) },
       { path: '/me', element: lazyPage('/me', <MePage />) },
+      { path: '/notifications', element: lazyPage('/notifications', <NotificationsPage />) },
       { path: '*', element: lazyPage('*', <NotFoundPage />) },
     ],
   },

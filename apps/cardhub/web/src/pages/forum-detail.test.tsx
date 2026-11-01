@@ -362,6 +362,7 @@ describe('ForumDetailPage replies pagination', () => {
     renderPage();
 
     expect(screen.getByText('Reply 1')).toBeInTheDocument();
+    expect(replyRow('Reply 1')).toHaveAttribute('id', 'reply-reply-01');
     expect(screen.getByText('Reply 20')).toBeInTheDocument();
     expect(screen.queryByText('Reply 21')).not.toBeInTheDocument();
 

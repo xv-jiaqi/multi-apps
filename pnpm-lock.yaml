@@ -291,6 +291,9 @@ importers:
 
   apps/cardhub/e2e:
     devDependencies:
+      '@cardhub/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@playwright/test':
         specifier: 1.64.1
         version: 1.64.1
@@ -426,6 +429,15 @@ importers:
         specifier: ^2.11.0
         version: 2.11.0
 
+  apps/cardhub/test-utils:
+    devDependencies:
+      '@repo/config-ts':
+        specifier: workspace:*
+        version: link:../../../packages/config-ts
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   apps/cardhub/web:
     dependencies:
       '@repo/design-tokens':
@@ -492,6 +504,9 @@ importers:
       '@axe-core/react':
         specifier: ^4.11.3
         version: 4.11.3
+      '@cardhub/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@repo/config-ts':
         specifier: workspace:*
         version: link:../../../packages/config-ts
