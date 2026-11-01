@@ -382,6 +382,8 @@ export const seriesListInput = paginationSchema.extend({
   categorySlug: slugSchema.optional(),
   year: z.number().int().min(1).max(9999).optional(),
   sort: z.enum(SERIES_LIST_SORT_VALUES).optional(),
+  /** Inclusive `YYYY-MM-DD` upper bound on `releaseDate`. Null dates do not match. */
+  releasedOnOrBefore: releaseDateSchema.optional(),
 });
 export type SeriesListInput = z.infer<typeof seriesListInput>;
 

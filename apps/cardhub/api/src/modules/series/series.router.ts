@@ -43,6 +43,7 @@ export class SeriesRouter {
           const where = seriesListWhere({
             categorySlug: input?.categorySlug,
             year: input?.year,
+            releasedOnOrBefore: input?.releasedOnOrBefore,
           });
           const [[items, total], years] = await Promise.all([
             prisma.$transaction([

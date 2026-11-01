@@ -105,6 +105,7 @@ export function seriesListCacheKey(
         categorySlug?: string;
         year?: number;
         sort?: string;
+        releasedOnOrBefore?: string;
       }
     | undefined,
 ): string {
@@ -113,7 +114,8 @@ export function seriesListCacheKey(
   const category = input?.categorySlug ?? '';
   const year = input?.year === undefined ? '' : String(input.year);
   const sort = input?.sort ?? '';
-  return `${seriesListPrefix()}page=${page}&pageSize=${pageSize}&category=${category}&year=${year}&sort=${sort}`;
+  const releasedOnOrBefore = input?.releasedOnOrBefore ?? '';
+  return `${seriesListPrefix()}page=${page}&pageSize=${pageSize}&category=${category}&year=${year}&sort=${sort}&releasedOnOrBefore=${releasedOnOrBefore}`;
 }
 
 export type CatalogChange =
