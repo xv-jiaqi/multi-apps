@@ -584,3 +584,32 @@ export {
   utcCalendarDateFromInstant,
 } from './metrics';
 export type { AdminMetricsInput } from './metrics';
+
+export {
+  RELEASE_CURSOR_MAX,
+  RELEASE_LIST_LIMIT_DEFAULT,
+  RELEASE_LIST_LIMIT_MAX,
+  RELEASE_NOTE_MAX,
+  RELEASE_RANGE_MAX_DAYS,
+  RELEASE_SOURCE_URL_MAX,
+  RELEASE_TITLE_MAX,
+  adminReleasesListInput,
+  parseShanghaiCivilDate,
+  releaseCreateInput,
+  releaseDeleteInput,
+  releaseUpdateInput,
+  releasesListInput,
+  shanghaiCivilDate,
+  shanghaiMonthBounds,
+  shanghaiYearMonth,
+  storedReleaseDate,
+} from './release';
+export type {
+  AdminReleasesListInput,
+  ReleaseCreateInput,
+  ReleaseDatePrecisionValue,
+  ReleaseDeleteInput,
+  ReleaseRegionValue,
+  ReleaseUpdateInput,
+  ReleasesListInput,
+} from './release';

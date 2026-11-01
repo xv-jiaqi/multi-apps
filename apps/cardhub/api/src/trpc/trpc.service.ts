@@ -13,6 +13,7 @@ import { UsersRouter } from '../modules/users/users.router';
 import { SearchRouter } from '../modules/search/search.router';
 import { AdminRouter } from '../modules/admin/admin.router';
 import { CollectionRouter } from '../modules/collection/collection.router';
+import { ReleasesRouter } from '../modules/releases/releases.router';
 
 @Injectable()
 export class TrpcService {
@@ -33,6 +34,7 @@ export class TrpcService {
     private readonly search: SearchRouter,
     private readonly admin: AdminRouter,
     private readonly collection: CollectionRouter,
+    private readonly releases: ReleasesRouter,
   ) {
     this.appRouter = this.t.router({
       health: this.health.build(),
@@ -46,8 +48,12 @@ export class TrpcService {
       listings: this.listings.build(),
       reports: this.reports.build(),
       users: this.users.build(),
-      admin: this.admin.build(),
+      admin: this.t.mergeRouters(
+        this.admin.build(),
+        this.t.router({ releases: this.releases.buildAdmin() }),
+      ),
       collection: this.collection.build(),
+      releases: this.releases.build(),
     });
   }
 }
