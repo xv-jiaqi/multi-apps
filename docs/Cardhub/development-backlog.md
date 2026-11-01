@@ -671,7 +671,7 @@ D3 已确认走服务端统计。不接 Umami 或其他第三方分析，不加�
 
 #### CH-311 站内通知与 @提及
 
-- **API（#203，界面未做）**。迁移 `20261101143000_add_notifications` 只建 `notifications`。回滚到上一 SHA 时旧进程不读这张表。字段：`id`、`userId`（Cascade）、`actorId?`（SetNull）、`type`、`action?`（仅 `CONTENT_RESOLVED`）、`targetType`、`targetId`、`excerpt`、`href?`、`readAt?`、`createdAt`。索引 `[userId, readAt]`、`[userId, createdAt, id]`。
+- **API（#203，界面未做）**。迁移 `20261201160000_add_notifications` 只建 `notifications`。目录顺序在 `20261101143000_add_release_calendar` 和 `20261201090000_add_card_number_normalized` 之后。回滚到上一 SHA 时旧进程不读这张表。字段：`id`、`userId`（Cascade）、`actorId?`（SetNull）、`type`、`action?`（仅 `CONTENT_RESOLVED`）、`targetType`、`targetId`、`excerpt`、`href?`、`readAt?`、`createdAt`。索引 `[userId, readAt]`、`[userId, createdAt, id]`。
 - 触发：话题回复 `TOPIC_REPLY`、评论回复 `COMMENT_REPLY`、正文 `@用户名` `MENTION`、举报处理 `CONTENT_RESOLVED`（通知作者，`actor` 为 null，不下发 `resolution`）。不通知自己。同一条既回复又 @ 只留回复类型。代码块和行内代码里的 @ 不发。用户名不存在不报错。
 - 查询：`notifications.list`、`notifications.unreadCount`、`notifications.markRead`、`notifications.markAllRead`。只读写当前用户。`href` 按目标现况计算，目标已删除则为 null。`forum.replies.list` 与 `comments.listReplies` 增加可选 `aroundId`，返回包含该回复的那一页；找不到则空列表。旧调用不传 `aroundId` 时行为不变。
 - **上限**：后端 `limit` 1–50、默认 20（`notificationListInput`、`forumRepliesListInput`、`commentRepliesListInput`）；`excerpt` 写入时截到 80 字，库检查 `char_length <= 80`；`MENTION` 每条内容最多前 10 个不同用户名。前端本 PR 无实现（铃铛与 `/notifications` 未做）。规格预定列表每页 20。
