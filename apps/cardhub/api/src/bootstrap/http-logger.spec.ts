@@ -246,4 +246,22 @@ describe('http logger', () => {
     expect(valueLine).toBeDefined();
     expect(valueLine).not.toContain('%E0%A4%A');
   });
+
+  it('splits token[a&b] on the ampersand and leaves the second value', async () => {
+    const stream = new PassThrough();
+    const lines = listen(stream);
+    const middleware = pinoHttp(createHttpLoggerOptions(), stream);
+    const app = express();
+    app.use(middleware);
+    app.get('/ok', (_req, res) => {
+      res.status(204).end();
+    });
+
+    const response = await request(app).get('/ok?token[a&b]=GAPAMP&keep=1');
+    expect(response.status).toBe(204);
+    const serialized = lines.join('\n');
+    expect(serialized).toContain('token[a=%5BRedacted%5D');
+    expect(serialized).toContain('"b]":"GAPAMP"');
+    expect(serialized).toContain('keep=1');
+  });
 });

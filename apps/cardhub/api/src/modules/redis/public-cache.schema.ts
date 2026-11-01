@@ -78,6 +78,7 @@ export const cardsListBySeriesSchema = z.object({
   page: z.number(),
   pageSize: z.number(),
   total: z.number(),
+  seriesTotal: z.number().int().nonnegative().optional(),
   sort: z.enum(CARD_SERIES_LIST_SORT_VALUES),
   attributeLabels: z.record(z.string(), attributeLabelSchema),
 });

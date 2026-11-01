@@ -124,6 +124,10 @@ model Card {
   seriesId    String
   // Null means the card has no printed number. Old servers ignore the column.
   cardNumber  String?
+  // Exact-match key for /search c:. The migration trigger recomputes it from
+  // cardNumber on every write, including writes from a server that does not
+  // know the column. The application sets the same value in that statement.
+  cardNumberNormalized String?
   // Null means the card is not in a subset (ungrouped). Deleting a subset
   // sets this to null and leaves the card in place.
   subsetId    String?
@@ -138,6 +142,7 @@ model Card {
   @@index([seriesId])
   @@index([subsetId])
   @@index([name])
+  @@index([cardNumberNormalized])
   @@index([name(ops: raw("gin_trgm_ops"))], map: "cards_name_trgm_idx", type: Gin)
   @@map("cards")
 }
