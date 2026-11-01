@@ -15,20 +15,60 @@ function hasControlCharacter(path: string): boolean {
   return false;
 }
 
-/** Same-site path: exactly one leading slash, no backslash, no ASCII controls. */
+const SAME_SITE_ORIGIN = 'https://cardhub.local';
+
+function hasWhitespace(path: string): boolean {
+  return /\s/u.test(path);
+}
+
+function pathnameOf(path: string): string {
+  const hashAt = path.indexOf('#');
+  const withoutHash = hashAt === -1 ? path : path.slice(0, hashAt);
+  const queryAt = withoutHash.indexOf('?');
+  return queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
+}
+
+function hasDotDotSegment(path: string): boolean {
+  return pathnameOf(path).split('/').includes('..');
+}
+
+/**
+ * WHATWG canonical form. A different origin, a protocol-relative pathname, or
+ * a parser failure is not a same-site return path. `..` is judged on the
+ * decoded text, because the URL parser already removes those segments.
+ */
+function unsafeBrowserPath(path: string): boolean {
+  try {
+    const url = new URL(path, SAME_SITE_ORIGIN);
+    if (url.origin !== SAME_SITE_ORIGIN) return true;
+    return url.pathname.includes('//') || url.pathname.split('/').includes('..');
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * One check for every decoded layer. NFC is only for the check; callers
+ * still return the original string.
+ */
 function isSameSiteRelativePath(path: string): boolean {
+  const canonical = path.normalize('NFC');
+  const startsWithSingleSlash = canonical.startsWith('/') && !canonical.startsWith('//');
   return (
-    path.startsWith('/') &&
-    !path.startsWith('//') &&
-    !path.includes('\\') &&
-    !hasControlCharacter(path)
+    startsWithSingleSlash &&
+    !canonical.includes('//') &&
+    !canonical.includes('\\') &&
+    !hasWhitespace(canonical) &&
+    !hasControlCharacter(canonical) &&
+    !hasDotDotSegment(canonical) &&
+    !unsafeBrowserPath(canonical)
   );
 }
 
 /**
- * Check every decoded layer, then return the original string. Only a decode
- * failure on the raw input falls back. A later layer that cannot be decoded
- * (for example "100%" after "100%25") keeps the original value.
+ * Decode, then judge each layer. A decode throw is illegal. A later layer
+ * that cannot be decoded (for example "100%" after "100%25") keeps the
+ * original only when every layer that did decode is a same-site path.
  */
 function acceptPath(path: string, fallback: string): string {
   let current = path;
@@ -44,13 +84,6 @@ function acceptPath(path: string, fallback: string): string {
     current = decoded;
   }
   return fallback;
-}
-
-function pathnameOf(path: string): string {
-  const hashAt = path.indexOf('#');
-  const withoutHash = hashAt === -1 ? path : path.slice(0, hashAt);
-  const queryAt = withoutHash.indexOf('?');
-  return queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
 }
 
 /**
