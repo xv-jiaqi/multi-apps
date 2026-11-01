@@ -79,6 +79,11 @@ function AdminNav({ tt, onAdminRoute }: { tt: (key: string) => string; onAdminRo
             </NavLink>
           </li>
           <li>
+            <NavLink to="/admin/releases" className={adminLinkClass}>
+              {tt('nav.releases')}
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/admin/users" className={adminLinkClass}>
               {tt('nav.users')}
             </NavLink>
@@ -143,6 +148,9 @@ export const SiteHeader = observer(function SiteHeader() {
           </NavLink>
           <NavLink to="/series" className={navItemClass}>
             {tt('nav.series')}
+          </NavLink>
+          <NavLink to="/calendar" className={navItemClass}>
+            {tt('nav.calendar')}
           </NavLink>
           <NavLink to="/search" className={(state) => `${navItemClass(state)} lg:hidden`}>
             {tt('nav.search')}
@@ -267,6 +275,9 @@ export const SiteHeader = observer(function SiteHeader() {
             <NavLink to="/series" className={mobileNavItemClass} onClick={closeMenu}>
               {tt('nav.series')}
             </NavLink>
+            <NavLink to="/calendar" className={mobileNavItemClass} onClick={closeMenu}>
+              {tt('nav.calendar')}
+            </NavLink>
             <NavLink to="/search" className={mobileNavItemClass} onClick={closeMenu}>
               {tt('nav.search')}
             </NavLink>
@@ -285,6 +296,13 @@ export const SiteHeader = observer(function SiteHeader() {
                   onClick={closeMenu}
                 >
                   {tt('nav.catalog')}
+                </NavLink>
+                <NavLink
+                  to="/admin/releases"
+                  className={mobileAdminNavItemClass}
+                  onClick={closeMenu}
+                >
+                  {tt('nav.releases')}
                 </NavLink>
                 <NavLink to="/admin/users" className={mobileAdminNavItemClass} onClick={closeMenu}>
                   {tt('nav.users')}
