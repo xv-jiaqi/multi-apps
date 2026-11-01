@@ -702,9 +702,17 @@ Only 5xx and tRPC `INTERNAL_SERVER_ERROR` are reported. `LOG_LEVEL` selects the
 pino level (`info` when unset or invalid). `authorization`, `cookie`,
 `set-cookie`, and request bodies are not written. `x-forwarded-for` is kept:
 rate limiting reads `req.ip` from the live request, and behind Caddy
-`remoteAddress` is only the proxy. Query keys `input`, `token`, `code`,
-`access_token`, `refresh_token`, `id_token`, and `reset_token` are replaced
-with `[Redacted]` in both `url` and `query`.
+`remoteAddress` is only the proxy. Query names `input`, `token`, `code`,
+`access_token`, `refresh_token`, `id_token`, and `reset_token` are redacted
+in both `url` and `query`. Matching is case-insensitive and decodes the
+name once. A name matches when it equals one of those keys, or when that
+key is immediately followed by `[` or `]` (`token[]`, `token[`, `token]`,
+`TOKEN[0]`, `token%5B`, `token%5B%5D`). A broken percent-encoding such as
+`%E0%A4%A` does not throw and does not skip the check: each complete `%XX`
+is one byte. The logged value is `[Redacted]` (`%5BRedacted%5D` inside
+`url`). The key keeps the spelling from the request. The edge log uses a
+different placeholder; the names, the bracket rule, and the gaps are the
+same and are listed in the edge section below.
 
 ```bash
 docker compose -p cardhub-prod --env-file /opt/cardhub/production/production.env logs -f api
@@ -778,20 +786,38 @@ active file plus nine rolled files is at most about 500 MiB before gzip.
 The log filter deletes request `Authorization`, `Proxy-Authorization`,
 `Cookie`, `Set-Cookie`, `X-Api-Key`, and `Referer`, and response
 `Set-Cookie`. `Referer` is removed so a copied query cannot keep a token.
-On `request>uri`, `input` is deleted and `token`, `code`, `access_token`,
-`refresh_token`, `id_token`, and `reset_token` are replaced with
-`REDACTED`. That is the query-key list in
-`apps/cardhub/api/src/bootstrap/http-logger.ts`. Matching is
-case-insensitive, and a once-encoded name such as `%54OKEN` is the same
-key as `TOKEN`. The name has to end at `=`, `&`, or the end of the query,
-or continue only as `[]` groups (`token[]`, `TOKEN[0]`, `token%5B%5D`).
-`input[a]` is removed with `input`. `tokenize`, `inputs`,
-`code_challenge`, `tokens[]`, and `filter[token]` are left as sent: the
-name before `[` is not one of the secret keys. Caddy's
-built-in query filter compares the name exactly, so the edge uses a `(?i)`
-regexp instead. The path stays, so
+On `request>uri`, the names are the same list as
+`apps/cardhub/api/src/bootstrap/http-logger.ts`: `input`, `token`, `code`,
+`access_token`, `refresh_token`, `id_token`, and `reset_token`. Matching
+is case-insensitive. A once-encoded name such as `%54OKEN` is the same key
+as `TOKEN`. The name matches when it equals one of those keys, or when
+that key is immediately followed by `[`, `]`, `%5B`, or `%5D`, and the
+rest of the name runs up to `=` or `&`. Paired and unpaired forms both
+match: `token[]`, `TOKEN[0]`, `token%5B%5D`, `token[`, `token]`,
+`token%5B`, and `token[a]b`. `input` and `input` plus that suffix are
+deleted (`input[a]`, `input[`, `INPUT]`). The other keys keep the spelling
+from the request and the value becomes the literal `REDACTED`. The API
+keeps every matching key, including `input`, and writes `[Redacted]`.
+
+These are left as sent. The name is not one of the secret keys, and the
+character after a shorter key is not a bracket: `tokenize`, `token_type`,
+`inputs`, `input_mode`, `code_challenge`, `mytoken`, `codex`, `tokens`,
+`tokenx`, `tokens[]`, `filter[token]`, and `q=token`. `code[x]` is
+redacted and `code_challenge[x]` is not.
+
+Caddy's built-in query filter compares the name exactly, so the edge uses
+a `(?i)` regexp instead. The path stays, so
 `/trpc/auth.login,auth.login` is still visible. Other query keys, such as
 `batch`, stay. Caddy does not log request bodies.
+
+Known gaps, for both the API log and this edge log:
+
+- A name is decoded once. `%2574oken` and `%255B` stay literal. They are
+  not treated as `token` or `[`.
+- The bracket has to be the next character. `token_type` and `to[ken` stay.
+- Request bodies are not logged, so a token in a JSON body is absent from
+  the line rather than rewritten in place.
+- Browsers do not send the URL fragment, so it is not in the edge line.
 
 `apply-edge-config.sh` creates `/data/logs` in the running container and
 chmods it to 755. If that fails, the apply still reloads; Caddy creates the
