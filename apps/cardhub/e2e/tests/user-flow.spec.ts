@@ -59,7 +59,7 @@ test('browse, comment, forum, trade, and report handling', async ({ page }) => {
   });
 
   await test.step('发帖并回帖', async () => {
-    await page.getByRole('link', { name: '论坛', exact: true }).click();
+    await page.getByRole('banner').getByRole('link', { name: '论坛', exact: true }).click();
     await expect(page).toHaveURL(/\/forum$/);
     await page.getByRole('link', { name: '发布新话题' }).click();
     await expect(page).toHaveURL(/\/forum\/new$/);

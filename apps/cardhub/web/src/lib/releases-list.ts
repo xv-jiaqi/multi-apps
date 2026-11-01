@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { rootStore } from '../stores/root-store';
-import { cardhubTrpcUrl } from './trpc';
+import { cardhubTrpcUrl } from './trpc-url';
 
 export type ReleaseRegion = 'CN' | 'JP' | 'GLOBAL';
 
