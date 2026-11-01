@@ -277,7 +277,7 @@ describe('series and card meta descriptions', () => {
       cardCount: 2,
       description: `这是一个完整的第一句。${'后面还有很多'.repeat(20)}`,
     });
-    expect(kept).toBe(`${ZH_SERIES} 这是一个完整的第一句。…`);
+    expect(kept).toBe(`${ZH_SERIES} 这是一个完整的第一句…`);
     expect(graphemeLength(excerptAfter(kept, ZH_SERIES), 'zh-CN')).toBeGreaterThanOrEqual(10);
     expect(graphemeLength(kept, 'zh-CN')).toBeLessThanOrEqual(120);
   });
@@ -326,7 +326,7 @@ describe('series and card meta descriptions', () => {
         cardCount: 2,
         description: english,
       }),
-    ).toBe(`${EN_SERIES} Short sentence.…`);
+    ).toBe(`${EN_SERIES} Short sentence…`);
 
     const commas = Array.from({ length: 40 }, () => 'hello').join(', ');
     const commaContent = cardMetaDescription({
@@ -355,5 +355,107 @@ describe('series and card meta descriptions', () => {
     expect(emojiExcerpt.endsWith('…')).toBe(true);
     expect(emojiExcerpt.slice(0, -1).split(family).join('')).toBe('');
     expect(graphemeLength(`${ZH_SERIES} ${emojiExcerpt}`, 'zh-CN')).toBeLessThanOrEqual(120);
+  });
+
+  it('uses the no-count sentence when the card count is not a non-negative integer', () => {
+    for (const cardCount of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(
+        seriesMetaDescription({
+          locale: 'zh-CN',
+          title: '基础系列',
+          cardCount,
+          description: null,
+        }),
+      ).toBe(ZH_SERIES_NO_COUNT);
+      expect(
+        seriesMetaDescription({
+          locale: 'en-US',
+          title: 'Base Set',
+          cardCount,
+          description: null,
+        }),
+      ).toBe(EN_SERIES_NO_COUNT);
+    }
+  });
+
+  it('truncates an over-long CJK series name to the cap and drops a cut sentence mark', () => {
+    const fixed = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: '',
+      cardCount: 2,
+      description: null,
+    });
+    const room = 120 - graphemeLength(fixed, 'zh-CN');
+    const exact = '字'.repeat(room);
+    const exactContent = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: exact,
+      cardCount: 2,
+      description: '不要出现',
+    });
+    expect(exactContent).toBe(`${exact}${fixed}`);
+    expect(exactContent.endsWith('…')).toBe(false);
+    expect(graphemeLength(exactContent, 'zh-CN')).toBe(120);
+
+    const over = `${'字'.repeat(room - 2)}。多余`;
+    const overContent = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: over,
+      cardCount: 2,
+      description: '不要出现',
+    });
+    expect(overContent.endsWith(fixed)).toBe(true);
+    expect(overContent).not.toContain('不要出现');
+    expect(overContent).not.toContain('多余');
+    const head = overContent.slice(0, overContent.length - fixed.length);
+    expect(head.endsWith('…')).toBe(true);
+    expect(head).not.toContain('。');
+    expect(graphemeLength(overContent, 'zh-CN')).toBeLessThanOrEqual(120);
+    expect(graphemeLength(overContent, 'zh-CN')).toBe(120 - 1);
+  });
+
+  it('counts a family emoji as one grapheme when the series name is over the cap', () => {
+    const fixed = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: '',
+      cardCount: 2,
+      description: null,
+    });
+    const family = '👨‍👩‍👧‍👦';
+    const content = seriesMetaDescription({
+      locale: 'zh-CN',
+      title: family.repeat(200),
+      cardCount: 2,
+      description: '不要出现',
+    });
+    expect(content.endsWith(fixed)).toBe(true);
+    expect(content).not.toContain('不要出现');
+    expect(graphemeLength(content, 'zh-CN')).toBe(120);
+    const head = content.slice(0, content.length - fixed.length);
+    expect(head.endsWith('…')).toBe(true);
+    expect(head.slice(0, -1).split(family).join('')).toBe('');
+  });
+
+  it('truncates a long card name and leaves the number and series title whole', () => {
+    const fixed = cardMetaDescription({
+      locale: 'zh-CN',
+      name: '',
+      seriesTitle: '基础系列',
+      cardNumber: '58',
+      description: null,
+    });
+    const content = cardMetaDescription({
+      locale: 'zh-CN',
+      name: '名'.repeat(200),
+      seriesTitle: '基础系列',
+      cardNumber: '58',
+      description: '不要出现',
+    });
+    expect(content.endsWith(fixed)).toBe(true);
+    expect(content).toContain('基础系列');
+    expect(content).toContain(' No.58');
+    expect(content).not.toContain('不要出现');
+    expect(graphemeLength(content, 'zh-CN')).toBe(120);
+    expect(content.startsWith('名')).toBe(true);
   });
 });
