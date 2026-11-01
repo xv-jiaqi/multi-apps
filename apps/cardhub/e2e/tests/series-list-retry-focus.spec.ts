@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
-import { waitUntil } from '../../test-utils/wait-until.ts';
+import { waitUntil } from '@cardhub/test-utils';
 
 const LIST_OK = {
   items: [

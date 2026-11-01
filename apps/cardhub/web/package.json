@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@axe-core/react": "^4.11.3",
+    "@cardhub/test-utils": "workspace:*",
     "@repo/config-ts": "workspace:*",
     "@tailwindcss/vite": "^4.2.3",
     "@testing-library/jest-dom": "^6.9.1",
