@@ -170,20 +170,50 @@ running.
 
 `recreate_edge` always force-recreates `cardhub-edge-caddy-1`, including
 when that container already sees the synced files. `apply-edge-config.sh`
-runs `caddy validate` first and does not recreate when validation fails.
-After `docker compose up -d --no-deps --force-recreate caddy` it waits until
-Docker reports the container healthy, then requires an HTTPS response from
-the four site hostnames in `edge.env`: `ROOT_WEB_DOMAINS`, `API_DOMAIN`,
-`STAGING_WEB_DOMAIN`, and `STAGING_API_DOMAIN` (`card-hub.app`,
-`api.card-hub.app`, `staging.card-hub.app`, `api-staging.card-hub.app`).
-`www` is a redirect of the apex and is not probed separately. A failed
-health check or a hostname that does not respond fails the workflow. Running
-the checkbox again recreates again. Named volumes stay, so certificates and
-`/data/logs` survive. Do this when a few seconds of downtime for every
-domain is acceptable:
+reads the probe names before it recreates: `ROOT_WEB_DOMAINS`, `API_DOMAIN`,
+`STAGING_WEB_DOMAIN`, `STAGING_API_DOMAIN`, `ROOT_WEB_REDIRECT_DOMAINS`, and
+`ROOT_WEB_REDIRECT_TARGET`. An empty `ROOT_WEB_DOMAINS` fails there, and the
+running container is not recreated. It then runs `caddy validate` and does
+not recreate when validation fails.
+After `docker compose up -d --no-deps --force-recreate caddy` the script
+waits until Docker reports the container healthy. It then requires an HTTPS
+status from 1 to 499 on `card-hub.app`, `api.card-hub.app`,
+`staging.card-hub.app`, and `api-staging.card-hub.app`. `000` and `5xx`
+fail, including `502` while the admin healthcheck on port 2019 is healthy.
+`www.card-hub.app` must return `308` to `https://card-hub.app/`. A failed
+health check or probe fails the workflow. Running the checkbox again
+recreates again. Named volumes stay, so certificates and `/data/logs`
+survive. Do this when a few seconds of downtime for every domain is
+acceptable:
 
 Actions → Cardhub Deploy → Run workflow → environment `staging`, image tag
 `sha-<full git sha>` (staging also accepts `main`), `recreate_edge` checked.
+
+If the container is recreated and a probe then fails, the previous process
+is already gone. The workflow stops on the edge job and does not roll out
+the app. Named volumes are not removed. The workflow log names the hostname
+and the last status. On the VPS:
+
+```bash
+docker logs --tail 80 cardhub-edge-caddy-1
+docker inspect --format '{{.State.Health.Status}} {{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' cardhub-edge-caddy-1
+```
+
+A healthy admin endpoint with `502` on the public names means Caddy is up
+and an upstream name or the external `edge` network is wrong. Do not run
+`docker compose down -v`; that deletes certificates in `caddy_data`.
+
+To serve the last known proxy config again, copy the previous `deploy/edge`
+tree back to `/opt/cardhub/edge/deploy/edge` and recreate once more:
+
+```bash
+cd /opt/cardhub/edge/deploy/edge
+docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d --no-deps --force-recreate caddy
+```
+
+Then repeat the four hostname checks and the www `308` from the host
+(`curl --resolve <name>:443:127.0.0.1`). Certificates in `caddy_data` are
+still there.
 
 For GitHub Actions deploys, configure environment-scoped secrets:
 

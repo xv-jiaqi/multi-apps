@@ -15,6 +15,8 @@ printf 'services: {}\n' > "${work}/edge/docker-compose.yml"
 cat > "${work}/edge.env" <<'EOF'
 ENV_NAME=prod
 ROOT_WEB_DOMAINS=card-hub.app
+ROOT_WEB_REDIRECT_DOMAINS=www.card-hub.app
+ROOT_WEB_REDIRECT_TARGET=card-hub.app
 API_DOMAIN=api.card-hub.app
 STAGING_WEB_DOMAIN=staging.card-hub.app
 STAGING_API_DOMAIN=api-staging.card-hub.app
@@ -130,7 +132,17 @@ if [ "${CURL_STUB_FAIL:-}" = "1" ]; then
   echo "curl failed" >&2
   exit 7
 fi
-printf '%s' '200'
+url=""
+for arg in "$@"; do
+  case "$arg" in
+    https://*) url="$arg" ;;
+  esac
+done
+if [[ "$url" == https://www.card-hub.app/* ]]; then
+  printf '%s %s' "${CURL_STUB_WWW_CODE:-308}" "${CURL_STUB_WWW_LOCATION:-https://card-hub.app/}"
+  exit 0
+fi
+printf '%s' "${CURL_STUB_CODE:-200}"
 EOF
 chmod 755 "${work}/bin/docker" "${work}/bin/curl"
 
@@ -231,6 +243,7 @@ assert_grep "apex probed" "${CASE_CURL}" "card-hub.app"
 assert_grep "api probed" "${CASE_CURL}" "api.card-hub.app"
 assert_grep "staging web probed" "${CASE_CURL}" "staging.card-hub.app"
 assert_grep "staging api probed" "${CASE_CURL}" "api-staging.card-hub.app"
+assert_grep "www 308" "${CASE_OUT}" "www.card-hub.app redirected 308 to https://card-hub.app/"
 assert_absent "old skip message is gone" "${CASE_OUT}" "Not recreating"
 
 shared="${work}/case/twice"
@@ -292,8 +305,23 @@ assert_absent "unhealthy does not probe" "${CASE_CURL}" "card-hub.app"
 
 run_case "domain probe failure fails the run" 1 \
   CURL_STUB_FAIL=1 -- --recreate
-assert_grep "probe failure" "${CASE_ERR}" "did not respond"
+assert_grep "probe failure" "${CASE_ERR}" "failed probe"
 assert_grep "probe failure is after recreate" "${CASE_DOCKER}" "force-recreate"
+
+run_case "502 is not a successful probe" 1 \
+  CURL_STUB_CODE=502 -- --recreate
+assert_grep "502 is a failed status" "${CASE_ERR}" "last status 502"
+assert_grep "502 still recreated" "${CASE_DOCKER}" "force-recreate"
+assert_absent "502 does not count as responded" "${CASE_OUT}" "four domains responded"
+proof_status="$(grep 'card-hub.app failed probe' "${CASE_ERR}" | head -n 1)"
+echo "PROOF 502: exit 1; ${proof_status}; force-recreate=yes; success_line=no"
+
+sed 's/^ROOT_WEB_DOMAINS=.*/ROOT_WEB_DOMAINS=/' "${work}/edge.env" > "${work}/edge-empty.env"
+run_case "empty apex fails before recreate" 1 \
+  EDGE_ENV_FILE="${work}/edge-empty.env" -- --recreate
+assert_grep "empty apex names the key" "${CASE_ERR}" "ROOT_WEB_DOMAINS"
+assert_grep "empty apex refuses recreate" "${CASE_ERR}" "Not recreating"
+assert_absent "empty apex does not compose up" "${CASE_DOCKER}" "force-recreate"
 
 printf '%s\n' '1' > "${work}/ps-empty"
 run_case "no container with the flag starts one" 0 \

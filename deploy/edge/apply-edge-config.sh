@@ -9,9 +9,11 @@
 # --recreate is the manual recreate_edge checkbox. It always force-recreates
 # cardhub-edge-caddy-1, including when the container already sees the synced
 # files. caddy validate runs first; a failed validate leaves the running
-# container in place. After recreate, this script waits until Docker reports
-# healthy, then requires a response from the four site hostnames. A second
-# run with the same flag recreates again; named volumes are kept.
+# container in place. Probe hostnames are checked before that recreate.
+# After recreate, this script waits until Docker reports healthy, then
+# requires status 1-499 from the four site hostnames and a 308 from www to
+# the apex. 000 and 5xx fail the run. A second run with the same flag
+# recreates again; named volumes are kept.
 # Without --recreate, a container that cannot see the synced files fails
 # this script before the app rollout. The running container is not reloaded
 # and not recreated. Automatic deploys do not pass --recreate.
@@ -174,38 +176,89 @@ read_edge_env() {
     | tr -d '\r' | sed 's/^"//; s/"$//'
 }
 
-# Apex, production API, staging web, staging API. www is a redirect of the
-# apex and is not one of these four.
+edge_hostname() {
+  local key="$1"
+  local value
+  value="$(read_edge_env "$key")"
+  if [[ ! "$value" =~ ^[A-Za-z0-9.-]+$ ]]; then
+    echo "edge env ${key} is not a single hostname: ${value:-<empty>}. Not recreating." >&2
+    return 1
+  fi
+  printf '%s\n' "$value"
+}
+
+# Apex, production API, staging web, staging API, plus the www redirect.
+# Checked before compose up so a missing name does not recreate first.
+require_recreate_probes() {
+  local key
+  for key in ROOT_WEB_DOMAINS API_DOMAIN STAGING_WEB_DOMAIN STAGING_API_DOMAIN ROOT_WEB_REDIRECT_DOMAINS ROOT_WEB_REDIRECT_TARGET; do
+    edge_hostname "$key" >/dev/null || return 1
+  done
+}
+
+# 1-499 includes 404 from an API that has no page at /. 000 and 5xx do not.
+edge_status_ok() {
+  local code="$1"
+  [[ "$code" =~ ^[0-9]+$ ]] || return 1
+  [ "$code" -ge 1 ] && [ "$code" -le 499 ]
+}
+
 probe_edge_domains() {
-  local key value domain attempt code
+  local key domain attempt code last ok
   local attempts="${EDGE_PROBE_ATTEMPTS:-10}"
   local pause="${EDGE_PROBE_SLEEP_SECONDS:-1}"
   local -a domains=()
   for key in ROOT_WEB_DOMAINS API_DOMAIN STAGING_WEB_DOMAIN STAGING_API_DOMAIN; do
-    value="$(read_edge_env "$key")"
-    if [[ ! "$value" =~ ^[A-Za-z0-9.-]+$ ]]; then
-      echo "edge env ${key} is not a single hostname: ${value:-<empty>}" >&2
-      return 1
-    fi
-    domains+=("$value")
+    domain="$(edge_hostname "$key")" || return 1
+    domains+=("$domain")
   done
   for domain in "${domains[@]}"; do
-    code=""
+    ok=0
+    last=""
     for attempt in $(seq 1 "$attempts"); do
+      code=""
       if code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 --resolve "${domain}:443:127.0.0.1" "https://${domain}/" 2>/dev/null)"; then
-        if [ -n "$code" ] && [ "$code" != "000" ]; then
+        last="$code"
+        if edge_status_ok "$code"; then
           echo "Edge domain ${domain} responded ${code}"
+          ok=1
           break
         fi
       fi
-      code=""
       sleep "$pause"
     done
-    if [ -z "$code" ]; then
-      echo "Edge domain ${domain} did not respond" >&2
+    if [ "$ok" -ne 1 ]; then
+      echo "Edge domain ${domain} failed probe (last status ${last:-none}; need 1-499)" >&2
       return 1
     fi
   done
+  probe_www_redirect
+}
+
+probe_www_redirect() {
+  local www target attempt line code location
+  local attempts="${EDGE_PROBE_ATTEMPTS:-10}"
+  local pause="${EDGE_PROBE_SLEEP_SECONDS:-1}"
+  www="$(edge_hostname ROOT_WEB_REDIRECT_DOMAINS)" || return 1
+  target="$(edge_hostname ROOT_WEB_REDIRECT_TARGET)" || return 1
+  for attempt in $(seq 1 "$attempts"); do
+    line=""
+    if line="$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' --max-redirs 0 --max-time 15 --resolve "${www}:443:127.0.0.1" "https://${www}/" 2>/dev/null)"; then
+      code="${line%% *}"
+      location="${line#* }"
+      case "$location" in
+        "https://${target}"|"https://${target}/"*)
+          if [ "$code" = "308" ]; then
+            echo "Edge www ${www} redirected 308 to ${location}"
+            return 0
+          fi
+          ;;
+      esac
+    fi
+    sleep "$pause"
+  done
+  echo "Edge www ${www} did not redirect 308 to https://${target}/ (last: ${line:-none})" >&2
+  return 1
 }
 
 reload_running() {
@@ -280,6 +333,12 @@ refuse_stale() {
 main() {
   local id
   require_files
+  if [ "$recreate" -eq 1 ]; then
+    if ! require_recreate_probes; then
+      echo "Refusing to recreate edge Caddy until the probe hostnames are set." >&2
+      exit 1
+    fi
+  fi
   id="$(compose ps -q caddy)"
   if [ -n "${id}" ]; then
     ensure_edge_access_log_dir "${id}"

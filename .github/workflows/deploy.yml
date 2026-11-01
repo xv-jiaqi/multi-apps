@@ -16,7 +16,7 @@ on:
         required: true
         default: main
       recreate_edge:
-        description: Force-recreate cardhub-edge-caddy-1 even when it already sees the synced files. caddy validate runs first; a bad Caddyfile does not recreate. Then wait until the container is healthy and the four site hostnames respond. Briefly interrupts every domain. Leave this off unless you mean to restart the proxy.
+        description: Force-recreate cardhub-edge-caddy-1 even when it already sees the synced files. caddy validate runs first; a bad Caddyfile does not recreate. Then wait until the container is healthy, the four site hostnames return status 1-499, and www returns 308 to the apex. Briefly interrupts every domain. Leave this off unless you mean to restart the proxy.
         required: false
         type: boolean
         default: false
