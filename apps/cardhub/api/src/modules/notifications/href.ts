@@ -22,6 +22,9 @@ export function commentHref(
 ): string | null {
   if (!SLUG.test(slug) || !ID.test(id)) return null;
   const base = kind === 'card' ? `/cards/${slug}` : `/series/${slug}`;
+  if (parentId !== null && ID.test(parentId)) {
+    return `${base}?parentId=${parentId}#reply-${id}`;
+  }
   const anchor = parentId === null ? `comment-${id}` : `reply-${id}`;
   return `${base}#${anchor}`;
 }
@@ -32,6 +35,15 @@ export function listingHref(cardSlug: string): string | null {
 }
 
 type HrefRow = { targetType: NotificationTarget; targetId: string };
+
+type LiveTarget = {
+  href: string;
+  parentId?: string;
+};
+
+function commentParentId(parentId: string | null): string | undefined {
+  return parentId !== null && ID.test(parentId) ? parentId : undefined;
+}
 
 function idsFor(rows: readonly HrefRow[], targetType: NotificationTarget): string[] {
   const ids: string[] = [];
@@ -55,7 +67,7 @@ function hrefKey(targetType: NotificationTarget, targetId: string): string {
 export async function liveHrefMap(
   prisma: PrismaService,
   rows: readonly HrefRow[],
-): Promise<Map<string, string>> {
+): Promise<Map<string, LiveTarget>> {
   const replyIds = idsFor(rows, 'REPLY');
   const commentIds = idsFor(rows, 'COMMENT');
   const topicIds = idsFor(rows, 'TOPIC');
@@ -92,10 +104,10 @@ export async function liveHrefMap(
         }),
   ]);
 
-  const map = new Map<string, string>();
+  const map = new Map<string, LiveTarget>();
   for (const reply of replies) {
     const href = forumReplyHref(reply.topic.slug, reply.id);
-    if (href) map.set(hrefKey('REPLY', reply.id), href);
+    if (href) map.set(hrefKey('REPLY', reply.id), { href });
   }
   for (const comment of comments) {
     const href = comment.card
@@ -103,19 +115,28 @@ export async function liveHrefMap(
       : comment.series
         ? commentHref('series', comment.series.slug, comment.id, comment.parentId)
         : null;
-    if (href) map.set(hrefKey('COMMENT', comment.id), href);
+    if (!href) continue;
+    const parentId = commentParentId(comment.parentId);
+    map.set(hrefKey('COMMENT', comment.id), parentId ? { href, parentId } : { href });
   }
   for (const topic of topics) {
     const href = forumTopicHref(topic.slug);
-    if (href) map.set(hrefKey('TOPIC', topic.id), href);
+    if (href) map.set(hrefKey('TOPIC', topic.id), { href });
   }
   for (const listing of listings) {
     const href = listingHref(listing.cardSlug);
-    if (href) map.set(hrefKey('LISTING', listing.id), href);
+    if (href) map.set(hrefKey('LISTING', listing.id), { href });
   }
   return map;
 }
 
-export function hrefFor(map: ReadonlyMap<string, string>, row: HrefRow): string | null {
-  return map.get(hrefKey(row.targetType, row.targetId)) ?? null;
+export function hrefFor(map: ReadonlyMap<string, LiveTarget>, row: HrefRow): string | null {
+  return map.get(hrefKey(row.targetType, row.targetId))?.href ?? null;
+}
+
+export function parentIdFor(
+  map: ReadonlyMap<string, LiveTarget>,
+  row: HrefRow,
+): string | undefined {
+  return map.get(hrefKey(row.targetType, row.targetId))?.parentId;
 }
