@@ -174,4 +174,32 @@ describe('http logger', () => {
     expect(serialized).toContain('[Redacted]');
     expect(serialized).toContain('page');
   });
+
+  it('redacts bracket forms of secret query keys and leaves neighboring names', async () => {
+    const stream = new PassThrough();
+    const lines = listen(stream);
+    const middleware = pinoHttp(createHttpLoggerOptions(), stream);
+    const app = express();
+    app.use(middleware);
+    app.get('/ok', (_req, res) => {
+      res.status(204).end();
+    });
+
+    const response = await request(app).get(
+      '/ok?token[]=LEAK_BRACKET_TOKEN&input[a]=LEAK_BRACKET_INPUT&TOKEN[0]=LEAK_BRACKET_UPPER&input%5Ba%5D=LEAK_BRACKET_ENC&tokens[]=KEEP_TOKENS_BRACKET&filter[token]=KEEP_FILTER_TOKEN&q=token',
+    );
+    expect(response.status).toBe(204);
+
+    const serialized = lines.join('\n');
+    expect(serialized).not.toContain('LEAK_BRACKET_TOKEN');
+    expect(serialized).not.toContain('LEAK_BRACKET_INPUT');
+    expect(serialized).not.toContain('LEAK_BRACKET_UPPER');
+    expect(serialized).not.toContain('LEAK_BRACKET_ENC');
+    expect(serialized).toContain('KEEP_TOKENS_BRACKET');
+    expect(serialized).toContain('KEEP_FILTER_TOKEN');
+    expect(serialized).toContain('token[]');
+    expect(serialized).toContain('tokens[]');
+    expect(serialized).toContain('filter[token]');
+    expect(serialized).toContain('[Redacted]');
+  });
 });
