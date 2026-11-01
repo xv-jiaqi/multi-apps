@@ -36,9 +36,33 @@ function maskCode(source: string): string {
       return ' '.repeat(line.length);
     }
     if (/^(?: {4}|\t)/.test(line)) return ' '.repeat(line.length);
-    return maskInlineCode(line);
+    return maskLinkLabels(maskInlineCode(line));
   });
   return masked.join('\n');
+}
+
+/** Blank `[label](url)` and `[label][id]` text. Image alt (`![alt]`) stays. */
+function maskLinkLabels(line: string): string {
+  const chars = Array.from(line);
+  const masked = chars.slice();
+  let index = 0;
+  while (index < chars.length) {
+    if (
+      chars[index] !== '[' ||
+      (index > 0 && (chars[index - 1] === '!' || chars[index - 1] === '\\'))
+    ) {
+      index += 1;
+      continue;
+    }
+    const close = chars.indexOf(']', index + 1);
+    if (close === -1) break;
+    const next = chars[close + 1];
+    if (next === '(' || next === '[') {
+      for (let cursor = index; cursor <= close; cursor += 1) masked[cursor] = ' ';
+    }
+    index = close + 1;
+  }
+  return masked.join('');
 }
 
 function maskInlineCode(line: string): string {

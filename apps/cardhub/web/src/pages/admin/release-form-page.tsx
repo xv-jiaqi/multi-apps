@@ -28,7 +28,7 @@ import { queryFallback, useFocusOnRecovery } from '../../components/retry-button
 import {
   normalizeReleaseDateInput,
   releaseFormErrors,
-  releaseNotFound,
+  releaseLookupMissing,
   releaseWriteFeedback,
   releaseWriteInput,
   type ReleaseFormValues,
@@ -105,15 +105,24 @@ export const EditReleasePage = observer(function EditReleasePage() {
 });
 
 const ReleaseForm = observer(function ReleaseForm({ mode }: { mode: 'create' | 'edit' }) {
-  const { locale } = useStores();
+  const { locale, session } = useStores();
   const tt = (key: string) => t(locale.locale, key);
   const title = mode === 'create' ? tt('admin.releases.new') : tt('admin.releases.edit');
   useRedirectOnSessionExpiry();
+  const outsideTitle = session.isAuthenticated && !session.isAdmin;
 
   return (
     <PageShell>
       <PageMeta title={title} />
       <div className="space-y-6">
+        {outsideTitle ? (
+          <h1
+            tabIndex={-1}
+            className="text-3xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {title}
+          </h1>
+        ) : null}
         <AdminGate>
           <ReleaseFormBody mode={mode} />
         </AdminGate>
@@ -134,7 +143,7 @@ const ReleaseFormBody = observer(function ReleaseFormBody({ mode }: { mode: 'cre
     { id },
     { enabled: mode === 'edit' && id.length > 0 },
   );
-  const missing = loaded.isError && releaseNotFound(loaded.error);
+  const missing = loaded.isError && releaseLookupMissing(loaded.error);
   const create = trpc.admin.releases.create.useMutation();
   const update = trpc.admin.releases.update.useMutation();
   const [values, setValues] = useState<ReleaseFormValues>(emptyValues);

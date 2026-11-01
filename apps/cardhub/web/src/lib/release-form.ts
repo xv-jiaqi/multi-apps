@@ -237,3 +237,12 @@ export function releaseNotFound(error: unknown): boolean {
   const data = readError(error);
   return data.code === 'NOT_FOUND' || data.appCode === APP_ERROR_CODES.NOT_FOUND;
 }
+
+/**
+ * Edit-page load failed because the row is gone, or the id was rejected.
+ * `getById` only accepts a uuid, so a hand-edited id comes back as `BAD_REQUEST`.
+ */
+export function releaseLookupMissing(error: unknown): boolean {
+  const data = readError(error);
+  return releaseNotFound(error) || data.code === 'BAD_REQUEST';
+}

@@ -317,6 +317,32 @@ describe('CommentSection (unauthenticated)', () => {
     expect(screen.getByText('@alice')).toBeInTheDocument();
   });
 
+  it('degrades an illegal reply hash to the in-comments hint and focuses the title', async () => {
+    const parentId = '11111111-1111-4111-8111-111111111111';
+    queryState.data = [
+      {
+        id: parentId,
+        content: 'top comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+        replies: [],
+      },
+    ];
+    render(
+      <MemoryRouter initialEntries={[`/cards/aurora-knight?parentId=${parentId}#reply-garbage`]}>
+        <h2 id="comment-section-title" tabIndex={-1}>
+          评论区
+        </h2>
+        <CommentSection target={{ kind: 'card', slug: 'aurora-knight' }} />
+      </MemoryRouter>,
+    );
+
+    const hint = await screen.findByText('没能直接跳到这条回复，它在下面的评论里。');
+    expect(hint.closest('[role="status"]')).not.toBeNull();
+    expect(document.getElementById('comment-section-title')).toHaveFocus();
+    expect(listRepliesFetch).not.toHaveBeenCalled();
+  });
+
   it('shows a persistent hint for a reply hash and does not probe other threads', async () => {
     queryState.data = [
       {

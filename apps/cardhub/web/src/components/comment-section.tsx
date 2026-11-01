@@ -11,6 +11,7 @@ import { Link, useLocation } from 'react-router';
 import { Button } from '@repo/ui-web';
 import {
   APP_ERROR_CODES,
+  CURSOR_PAGE_LIMIT_DEFAULT,
   commentInput,
   fieldErrorMessage,
   isBlankReplyContent,
@@ -26,7 +27,13 @@ import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { DeleteReasonField } from './delete-reason-field';
 import { ReportButton } from './report-button';
 import { HashTargetNotice } from './hash-target-notice';
-import { parseHashTarget, readParentId, reducedMotion, revealElement } from '../lib/hash-target';
+import {
+  illegalHashTarget,
+  parseHashTarget,
+  readParentId,
+  reducedMotion,
+  revealElement,
+} from '../lib/hash-target';
 import { queryFallback, RetryButton, useFocusOnRecovery } from './retry-button';
 
 type CommentTarget = { kind: 'card'; slug: string } | { kind: 'series'; slug: string };
@@ -640,7 +647,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     const restoreRetryFocus = active === showMore || active === replyRetryRef.current;
     setLoadingParentId(parentId);
     try {
-      const page = await utils.comments.listReplies.fetch({ parentId, cursor, limit: 20 });
+      const page = await utils.comments.listReplies.fetch({
+        parentId,
+        cursor,
+        limit: CURSOR_PAGE_LIMIT_DEFAULT,
+      });
       const known = new Set(visible.map((reply) => reply.id));
       const fresh = page.items.filter((item) => !known.has(item.id));
       setThreads((current) => {
@@ -679,7 +690,8 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
 
   useEffect(() => {
     const target = parseHashTarget(location.hash);
-    if (!target || commentsView !== 'ready' || !list.data) return;
+    const illegal = illegalHashTarget(location.hash);
+    if ((!target && !illegal) || commentsView !== 'ready' || !list.data) return;
     const attemptKey = `${location.search}${location.hash}`;
     if (hashAttempt.current === attemptKey) return;
     hashAttempt.current = attemptKey;
@@ -711,6 +723,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       focusTitle();
     };
 
+    if (!target) {
+      settled = true;
+      showInComments();
+      return;
+    }
     if (document.getElementById(`${target.kind}-${target.id}`)) {
       settled = true;
       showFound(target.id);
@@ -737,7 +754,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         const page = await utilsRef.current.comments.listReplies.fetch({
           parentId,
           aroundId: replyId,
-          limit: 20,
+          limit: CURSOR_PAGE_LIMIT_DEFAULT,
         });
         if (cancelled) return;
         settled = true;

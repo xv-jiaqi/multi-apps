@@ -28,6 +28,9 @@ describe('mentionUsernames', () => {
     expect(mentionUsernames('`` code ` @hidden `` end @shown')).toEqual(['shown']);
     expect(mentionUsernames('    @hidden\n\t@also\n @shown')).toEqual(['shown']);
     expect(mentionUsernames('unclosed ` @shown')).toEqual(['shown']);
+    expect(mentionUsernames('hi [@hidden](https://example.com) and @shown')).toEqual(['shown']);
+    expect(mentionUsernames('see [@hidden][ref] plus @shown')).toEqual(['shown']);
+    expect(mentionUsernames('![@shown](pic.png)')).toEqual(['shown']);
   });
 
   it('keeps the first 10 distinct names and drops the rest', () => {
