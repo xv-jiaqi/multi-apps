@@ -86,7 +86,7 @@ export function NotificationBell({ className }: { className?: string }) {
       {badge ? (
         <span
           aria-hidden
-          className="absolute -top-0.5 -right-0.5 min-w-5 h-5 rounded-full bg-brand-600 px-1 text-center text-xs font-semibold leading-5 text-white tabular-nums ring-2 ring-white"
+          className="absolute -top-1 -right-1 h-4 min-w-4 rounded-full bg-brand-600 px-1 text-center text-xs font-semibold leading-4 text-white tabular-nums ring-2 ring-white"
         >
           {badge}
         </span>
