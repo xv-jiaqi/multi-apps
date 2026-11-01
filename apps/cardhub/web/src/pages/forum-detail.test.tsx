@@ -7,6 +7,7 @@ import { rootStore } from '../stores/root-store';
 const topicInvalidate = vi.fn();
 const topicsListInvalidate = vi.fn();
 const repliesInvalidate = vi.fn();
+const repliesListFetch = vi.fn();
 const createReplyMutate = vi.fn();
 const deleteReplyMutate = vi.fn();
 const deleteTopicMutate = vi.fn();
@@ -215,6 +216,7 @@ vi.mock('../lib/trpc', () => ({
             invalidate: repliesInvalidate,
             reset: repliesReset,
             setInfiniteData: repliesSetInfiniteData,
+            fetch: (...args: unknown[]) => repliesListFetch(...args),
           },
         },
       },
@@ -257,9 +259,9 @@ function postReplyButton(): HTMLElement {
   return within(form).getByRole('button', { name: '发布回帖' });
 }
 
-function renderPage() {
+function renderPage(path = '/forum/test-topic') {
   return render(
-    <MemoryRouter initialEntries={['/forum/test-topic']}>
+    <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/forum/:slug" element={<ForumDetailPage />} />
         <Route path="/forum" element={<ForumLanding />} />
@@ -273,6 +275,7 @@ beforeEach(() => {
   topicInvalidate.mockClear();
   topicsListInvalidate.mockReset();
   topicsListInvalidate.mockResolvedValue(undefined);
+  repliesListFetch.mockReset();
   repliesInvalidate.mockReset();
   repliesInvalidate.mockImplementation(async () => {
     refetchLoadedReplyPages();
@@ -355,6 +358,34 @@ beforeEach(() => {
   repliesQueryState.isSuccess = true;
   repliesQueryState.isFetchNextPageError = false;
 });
+
+describe('ForumDetailPage hash target', () => {
+  it('keeps a mounted status and an all-comments link when the reply is gone', async () => {
+    const replyId = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
+    repliesListFetch.mockResolvedValue({ items: [], nextCursor: null });
+    renderPage(`/forum/test-topic#reply-${replyId}`);
+
+    const statuses = screen.getAllByRole('status');
+    expect(statuses.some((node) => node.textContent === '')).toBe(true);
+    const link = await screen.findByRole('link', { name: '查看全部评论' });
+    expect(link).toHaveAttribute('href', '#forum-replies-title');
+    expect(statusByForum()).toHaveTextContent('这条回复可能已被删除或折叠。');
+    expect(document.getElementById('forum-replies-title')).toHaveFocus();
+    expect(repliesListFetch).toHaveBeenCalledWith({
+      topicId: topicState.data?.id,
+      aroundId: replyId,
+      limit: 20,
+    });
+  });
+});
+
+function statusByForum() {
+  const status = screen
+    .getAllByRole('status')
+    .find((node) => (node.textContent ?? '').includes('这条回复可能已被删除或折叠。'));
+  if (!status) throw new Error('没有论坛退化提示');
+  return status;
+}
 
 describe('ForumDetailPage replies pagination', () => {
   it('renders the first 20 replies and loads 41 replies across two clicks', async () => {

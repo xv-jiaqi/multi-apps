@@ -1,6 +1,6 @@
 import { appErrorMessage } from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -20,8 +20,12 @@ const unreadOptions: unknown[] = [];
 const listOptions: unknown[] = [];
 const markReadMock = vi.fn();
 const markAllMock = vi.fn();
+const listCancel = vi.fn();
+const countCancel = vi.fn();
+const pendingMarkErrors: Array<() => void> = [];
 let failMarkAll = false;
 let failNextPage = false;
+let deferMarkRead = false;
 
 const unreadState: {
   data: { count: number } | undefined;
@@ -112,6 +116,10 @@ vi.mock('../lib/trpc', () => ({
         useMutation: () => ({
           mutate: (input: { id: string }, opts?: { onError?: () => void }) => {
             markReadMock(input);
+            if (deferMarkRead) {
+              pendingMarkErrors.push(() => opts?.onError?.());
+              return;
+            }
             if (input.id === 'fail') opts?.onError?.();
           },
           isPending: false,
@@ -130,6 +138,7 @@ vi.mock('../lib/trpc', () => ({
     useUtils: () => ({
       notifications: {
         list: {
+          cancel: listCancel,
           getInfiniteData: () => listState.data,
           setInfiniteData: (
             _input: unknown,
@@ -139,6 +148,7 @@ vi.mock('../lib/trpc', () => ({
           },
         },
         unreadCount: {
+          cancel: countCancel,
           getData: () => unreadState.data,
           setData: (
             _input: unknown,
@@ -182,8 +192,12 @@ beforeEach(() => {
   listOptions.length = 0;
   markReadMock.mockReset();
   markAllMock.mockReset();
+  listCancel.mockReset();
+  countCancel.mockReset();
+  pendingMarkErrors.length = 0;
   failMarkAll = false;
   failNextPage = false;
+  deferMarkRead = false;
   unreadState.data = undefined;
   unreadState.isError = false;
   unreadState.isLoading = false;
@@ -402,6 +416,49 @@ describe('NotificationsPage', () => {
     expect(bell?.closest('[aria-live]')).toBeNull();
     await user.click(screen.getByRole('button', { name: '有 2 条新通知' }));
     expect(screen.getByRole('status')).toHaveTextContent('3 条未读');
+  });
+
+  it('does not undo mark-all when an earlier single mark fails later', async () => {
+    const user = userEvent.setup();
+    deferMarkRead = true;
+    rootStore.session.signIn('token', { id: 'u1', username: 'ada', role: 'user' });
+    unreadState.data = { count: 2 };
+    listState.data = {
+      pages: [
+        {
+          items: [
+            row({ id: 'slow', href: null, actor: { username: 'oneuser' } }),
+            row({ id: 'n2', href: null, actor: { username: 'twouser' } }),
+          ],
+          nextCursor: null,
+        },
+      ],
+    };
+    listState.dataUpdatedAt = 1;
+    renderPage();
+
+    const marks = screen.getAllByRole('button', { name: '标为已读' });
+    const firstMark = marks[0];
+    if (!firstMark) throw new Error('没有单条已读按钮');
+    const one = firstMark.closest('li');
+    if (!(one instanceof HTMLElement)) throw new Error('第一条不存在');
+    await user.click(firstMark);
+    expect(within(one).queryByText('未读：')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '全部标记为已读' }));
+    expect(screen.getByRole('status')).toHaveTextContent('没有未读通知');
+    expect(screen.queryByText('未读：')).not.toBeInTheDocument();
+
+    const fail = pendingMarkErrors[0];
+    if (!fail) throw new Error('单条请求没有挂起');
+    act(() => {
+      fail();
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('没有未读通知');
+    expect(screen.queryByText('未读：')).not.toBeInTheDocument();
+    expect(listCancel).toHaveBeenCalled();
+    expect(countCancel).toHaveBeenCalled();
   });
 
   it('rolls a deleted-target mark back and repeats the alert', async () => {

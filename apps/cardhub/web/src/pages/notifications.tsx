@@ -116,6 +116,7 @@ export const NotificationsPage = observer(function NotificationsPage() {
   const syncedCount = useRef<number | null>(null);
   const noticeSeq = useRef(0);
   const loadMoreLocked = useRef(false);
+  const readEpoch = useRef(0);
   const didInitialFocus = useRef(false);
   const [restoreId] = useState(consumeFocus);
   const [announced, setAnnounced] = useState<number | null>(null);
@@ -213,10 +214,8 @@ export const NotificationsPage = observer(function NotificationsPage() {
   const markOne = (id: string) => {
     const current = items.find((item) => item.id === id);
     if (!current || current.readAt) return;
-    const previousList = utils.notifications.list.getInfiniteData(LIST_INPUT);
-    const previousCount = utils.notifications.unreadCount.getData();
-    const previousAnnounced = announced;
-    const previousSynced = syncedCount.current;
+    const epoch = readEpoch.current;
+    const previousReadAt = current.readAt;
     const readAt = new Date().toISOString();
     utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
       if (!pageSet) return pageSet;
@@ -238,10 +237,25 @@ export const NotificationsPage = observer(function NotificationsPage() {
       { id },
       {
         onError: () => {
-          utils.notifications.list.setInfiniteData(LIST_INPUT, previousList);
-          utils.notifications.unreadCount.setData(undefined, previousCount);
-          syncedCount.current = previousSynced;
-          setAnnounced(previousAnnounced);
+          // A later mark-all owns the cache. Restoring this snapshot would undo it.
+          if (readEpoch.current !== epoch) return;
+          utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
+            if (!pageSet) return pageSet;
+            return {
+              ...pageSet,
+              pages: pageSet.pages.map((page) => ({
+                ...page,
+                items: page.items.map((item) =>
+                  item.id === id ? { ...item, readAt: previousReadAt } : item,
+                ),
+              })),
+            };
+          });
+          utils.notifications.unreadCount.setData(undefined, (count) =>
+            count ? { count: count.count + 1 } : count,
+          );
+          if (syncedCount.current !== null) syncedCount.current += 1;
+          setAnnounced((value) => (value == null ? value : value + 1));
           showNotice(id, tt('notifications.actionFailed'));
         },
       },
@@ -250,6 +264,9 @@ export const NotificationsPage = observer(function NotificationsPage() {
 
   const markAll = () => {
     if (markAllLocked || markAllRead.isPending) return;
+    readEpoch.current += 1;
+    void utils.notifications.list.cancel();
+    void utils.notifications.unreadCount.cancel();
     const previousList = utils.notifications.list.getInfiniteData(LIST_INPUT);
     const previousCount = utils.notifications.unreadCount.getData();
     const previousAnnounced = announced;

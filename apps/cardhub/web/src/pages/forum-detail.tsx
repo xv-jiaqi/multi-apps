@@ -24,6 +24,7 @@ import { PageMeta } from '../components/page-meta';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { BannedNotice } from '../components/banned-notice';
+import { HashTargetNotice } from '../components/hash-target-notice';
 import { parseHashTarget, revealElement } from '../lib/hash-target';
 import { trpc } from '../lib/trpc';
 
@@ -806,11 +807,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           >
             {tt('forum.detail.repliesTitle', { count: topic.replyCount })}
           </h2>
-          {hashMissing ? (
-            <p role="status" className="text-sm text-neutral-600">
-              {tt('notifications.targetMissing')}
-            </p>
-          ) : null}
+          <HashTargetNotice
+            message={hashMissing ? tt('notifications.targetMissing') : ''}
+            actionHref={hashMissing ? '#forum-replies-title' : undefined}
+            actionLabel={hashMissing ? tt('notifications.targetMissingAction') : undefined}
+          />
           <p
             ref={replyStatusRef}
             role="status"
