@@ -48,6 +48,20 @@ describe('parseSeriesListParams', () => {
     expect(parseSeriesListParams(new URLSearchParams('page=1.5'), subsets).state.page).toBe(1);
     expect(parseSeriesListParams(new URLSearchParams('page=01'), subsets).replace).toBe(true);
   });
+
+  it('caps page=10001 at 10000 so the list request stays valid', () => {
+    const parsed = parseSeriesListParams(new URLSearchParams('q=龙&page=10001'), subsets);
+    expect(parsed.state.page).toBe(10_000);
+    expect(parsed.search).toBe('q=%E9%BE%99&page=10000');
+    expect(parsed.replace).toBe(true);
+    const atMax = parseSeriesListParams(new URLSearchParams('page=10000'), subsets);
+    expect(atMax.state.page).toBe(10_000);
+    expect(atMax.search).toBe('page=10000');
+    expect(atMax.replace).toBe(false);
+    expect(parseSeriesListParams(new URLSearchParams('page=100000'), subsets).state.page).toBe(
+      10_000,
+    );
+  });
 });
 
 describe('pageTokens', () => {

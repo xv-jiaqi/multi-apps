@@ -1,5 +1,6 @@
 import {
   CARD_RARITY_VALUES,
+  CARD_SERIES_LIST_PAGE_MAX,
   CARD_SERIES_LIST_QUERY_MAX,
   CARD_SERIES_LIST_SORT_VALUES,
   cardAttributeLabel,
@@ -28,6 +29,17 @@ function isRarity(value: string): value is CardRarity {
 
 function isSort(value: string): value is CardSeriesListSort {
   return CARD_SERIES_LIST_SORT_VALUES.some((item) => item === value);
+}
+
+/** Digits only. Values above the API max stay on that max so the list request is accepted. */
+function pageWithinLimit(raw: string): number {
+  const maxDigits = String(CARD_SERIES_LIST_PAGE_MAX).length;
+  if (raw.length > maxDigits) return CARD_SERIES_LIST_PAGE_MAX;
+  const parsed = Number(raw);
+  if (!Number.isSafeInteger(parsed) || parsed > CARD_SERIES_LIST_PAGE_MAX) {
+    return CARD_SERIES_LIST_PAGE_MAX;
+  }
+  return parsed;
 }
 
 export function parseSeriesListParams(
@@ -72,9 +84,12 @@ export function parseSeriesListParams(
     if (!/^[1-9][0-9]*$/.test(rawPage)) {
       next.delete('page');
     } else {
-      const parsed = Number(rawPage);
+      const parsed = pageWithinLimit(rawPage);
       if (parsed === 1) next.delete('page');
-      else page = parsed;
+      else {
+        page = parsed;
+        if (String(parsed) !== rawPage) next.set('page', String(parsed));
+      }
     }
   }
 

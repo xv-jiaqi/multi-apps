@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -218,6 +218,25 @@ describe('SeriesCardList', () => {
     expect(harness.calls.filter((call) => call.q === '龙')).toHaveLength(0);
     await new Promise((resolve) => setTimeout(resolve, 350));
     expect(harness.calls.some((call) => call.q === '龙' && call.page === 1)).toBe(true);
+  });
+
+  it('caps page=10001 and replaces a page past the end with the last page', async () => {
+    harness.state.data = {
+      items: [],
+      page: 10_000,
+      pageSize: 60,
+      total: 61,
+      seriesTotal: 61,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    renderList('?page=10001');
+    expect(harness.calls[0]).toMatchObject({ page: 10_000 });
+    expect(harness.calls.some((call) => call.page === 10_001)).toBe(false);
+    await waitFor(() => {
+      expect(harness.calls.at(-1)).toMatchObject({ page: 2 });
+      expect(screen.getByText('第 2 / 2 页')).toBeInTheDocument();
+    });
   });
 
   it('shows an alert for a list error and skeletons while the first request is pending', () => {
