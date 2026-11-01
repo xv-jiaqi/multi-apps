@@ -15,6 +15,7 @@ import {
   type ReleaseRegionValue,
 } from '@repo/shared';
 import type { ZodType } from 'zod';
+import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { formatReleaseDate } from '../catalog/release-date';
 import { PrismaService } from '../prisma/prisma.service';
 import { TrpcBase } from '../../trpc/trpc-base';
@@ -152,12 +153,6 @@ function pageReleases(rows: ReleaseRow[], limit: number | undefined) {
   };
 }
 
-function publicPageSize(input: { cursor?: string; limit?: number }): number | undefined {
-  if (input.limit !== undefined) return input.limit;
-  if (input.cursor !== undefined) return RELEASE_LIST_LIMIT_DEFAULT;
-  return undefined;
-}
-
 @Injectable()
 export class ReleasesRouter {
   constructor(
@@ -174,7 +169,7 @@ export class ReleasesRouter {
         const from = parseShanghaiCivilDate(input.from);
         const to = parseShanghaiCivilDate(input.to);
         if (!from || !to) throw badRequest('invalid_date');
-        const limit = publicPageSize(input);
+        const limit = input.limit;
         const rows = await prisma.release.findMany({
           where: publicReleaseWhere({
             from,
@@ -184,7 +179,7 @@ export class ReleasesRouter {
           }),
           orderBy: releaseOrderBy('asc'),
           select: releaseItemSelect,
-          ...(limit === undefined ? {} : { take: limit + 1 }),
+          take: limit + 1,
         });
         return pageReleases(rows, limit);
       }),
@@ -231,14 +226,27 @@ export class ReleasesRouter {
         }
       }),
 
-      delete: t.adminProcedure.input(releaseDeleteInput).mutation(async ({ input }) => {
-        try {
-          await prisma.release.delete({ where: { id: input.id } });
-        } catch (error) {
-          if (prismaCode(error) === 'P2025') throw notFound('发售条目不存在');
-          throw error;
-        }
-        return { id: input.id };
+      delete: t.adminProcedure.input(releaseDeleteInput).mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const actor = ctx.user;
+        const existing = await prisma.release.findUnique({
+          where: { id: input.id },
+          select: { id: true, title: true },
+        });
+        if (!existing) throw notFound('发售条目不存在');
+        await prisma.$transaction(async (tx) => {
+          await tx.release.delete({ where: { id: existing.id } });
+          await writeContentDelete(tx, {
+            actorId: actor.sub,
+            actorUsername: actor.username,
+            targetType: 'RELEASE',
+            targetId: existing.id,
+            targetLabel: existing.title,
+            targetUserId: null,
+            reason: normalizeDeleteReason(input.reason),
+          });
+        });
+        return { id: existing.id };
       }),
     });
   }

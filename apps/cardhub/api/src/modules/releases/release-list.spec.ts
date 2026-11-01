@@ -5,6 +5,7 @@ import {
   releaseItemSelect,
   releaseKeysetWhere,
   releaseOrderBy,
+  shanghaiMonthStart,
 } from './release-list';
 
 function day(isoDate: string): Date {
@@ -24,16 +25,30 @@ describe('release list query', () => {
   it('keeps the public range closed and pages forward inside it', () => {
     expect(
       publicReleaseWhere({
-        from: day('2026-11-01'),
+        from: day('2026-11-15'),
         to: day('2026-11-30'),
         categorySlug: 'deck-builder',
         cursor: point,
       }),
     ).toEqual({
-      releaseDate: { gte: day('2026-11-01'), lte: day('2026-11-30') },
-      category: { slug: 'deck-builder' },
-      ...releaseKeysetWhere(point, 'asc'),
+      AND: [
+        {
+          OR: [
+            {
+              datePrecision: 'DAY',
+              releaseDate: { gte: day('2026-11-15'), lte: day('2026-11-30') },
+            },
+            {
+              datePrecision: 'MONTH',
+              releaseDate: { gte: day('2026-11-01'), lte: day('2026-11-30') },
+            },
+          ],
+        },
+        { category: { slug: 'deck-builder' } },
+        releaseKeysetWhere(point, 'asc'),
+      ],
     });
+    expect(shanghaiMonthStart(day('2026-11-15'))).toEqual(day('2026-11-01'));
     expect(releaseKeysetWhere(point, 'asc')).toEqual({
       OR: [
         { releaseDate: { gt: point.releaseDate } },

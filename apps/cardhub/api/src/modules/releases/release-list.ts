@@ -57,17 +57,39 @@ export function releaseKeysetWhere(
   };
 }
 
+/** First civil day of the Shanghai month that contains `day`. */
+export function shanghaiMonthStart(day: Date): Date {
+  return new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1));
+}
+
+/**
+ * DAY rows must sit inside the closed interval. MONTH rows are stored on the
+ * 1st but stand for the whole month, so they match when that month overlaps
+ * the interval. Ordering and keyset cursors still use the stored date.
+ */
 export function publicReleaseWhere(input: {
   from: Date;
   to: Date;
   categorySlug?: string;
   cursor?: ReleaseCursorPoint;
 }): Prisma.ReleaseWhereInput {
-  return {
-    releaseDate: { gte: input.from, lte: input.to },
-    ...(input.categorySlug ? { category: { slug: input.categorySlug } } : {}),
-    ...(input.cursor ? releaseKeysetWhere(input.cursor, 'asc') : {}),
-  };
+  const filters: Prisma.ReleaseWhereInput[] = [
+    {
+      OR: [
+        {
+          datePrecision: 'DAY',
+          releaseDate: { gte: input.from, lte: input.to },
+        },
+        {
+          datePrecision: 'MONTH',
+          releaseDate: { gte: shanghaiMonthStart(input.from), lte: input.to },
+        },
+      ],
+    },
+  ];
+  if (input.categorySlug) filters.push({ category: { slug: input.categorySlug } });
+  if (input.cursor) filters.push(releaseKeysetWhere(input.cursor, 'asc'));
+  return { AND: filters };
 }
 
 export function adminReleaseWhere(cursor?: ReleaseCursorPoint): Prisma.ReleaseWhereInput {

@@ -238,6 +238,11 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 | `admin.cards.delete`       | mutation | admin                   | `{ slug }`                                                                                                            | 删除卡牌并级联评论                                                                                                       |
 | `admin.catalog.import`     | mutation | admin                   | `{ data, dryRun }`                                                                                                    | dryRun 逐行返回 `created/updated/unchanged/error`；正式导入在单个 `$transaction` 内执行                                  |
 | `admin.metrics`            | query    | admin                   | `{ from, to }` UTC 日期，含首尾，最长 366 天                                                                          | MAU、每日注册、次日留存、7 日留存、日均评论。只返回聚合数字。定义见 §5.1                                                 |
+| `releases.list`            | query    | 公开                    | `{ from, to, categorySlug?, cursor?, limit?=50(1–100) }`。`from`/`to` 必填，Asia/Shanghai 闭区间，含首尾，最长 366 天 | `{ items[], nextCursor }`。库存日期升序。DAY 必须落在区间内；MONTH 存当月 1 日，该月与区间重叠即返回。省略 limit 仍是 50 |
+| `admin.releases.list`      | query    | admin                   | `{ cursor?, limit?=50(1–100) }`                                                                                       | `{ items[], nextCursor }`。库存日期降序，含过去。游标是不透明 keyset；超出 1–100 为 400，不钳制                          |
+| `admin.releases.create`     | mutation | admin                   | `{ title(1–120), releaseDate, datePrecision?=DAY, region?, seriesId?, categoryId?, note?(≤500), sourceUrl? }`        | `YYYY-MM-DD`。MONTH 存当月 1 日。码 `title_required`/`title_too_long`/`release_note_too_long`/`release_region`/`source_url` |
+| `admin.releases.update`    | mutation | admin                   | create 的字段再加 `{ id }`                                                                                            | 同 create                                                                                                                |
+| `admin.releases.delete`    | mutation | admin                   | `{ id, reason? }`                                                                                                     | `{ id }`。`audit_logs`：`CONTENT_DELETE` / `targetType=RELEASE`                                                          |
 
 另有 NestJS REST 端点 `GET /health`（不经过 tRPC，跳过全局 Throttler）。
 
@@ -457,6 +462,11 @@ erDiagram
 | 货币                 | `^[A-Z]{3}$`（ISO 4217）                               |
 | cursor 分页 `limit`  | 1–50，默认 20                                          |
 | `admin.metrics` 日期 | `from` / `to` 为 UTC `YYYY-MM-DD`，含首尾，最多 366 天 |
+| 发售标题             | 前后端同一份 `releaseCreateInput`：trim 后 1–120。空为 `title_required`，超出为 `title_too_long`。无发售表单 |
+| 发售备注             | 前后端同一份 schema：≤500，码 `release_note_too_long`（「备注最多 500 个字符」 / “Use at most 500 characters for the note.”）。交易备注仍是 `note_too_long`（「说明最多 500 个字符」） |
+| 发售区间             | 前后端同一份 `releasesListInput`：`from`、`to` 必填，Asia/Shanghai 闭区间，含首尾，最多 366 天。码 `invalid_type` / `invalid_date` / `release_range_order` / `release_range_too_long` |
+| 发售 `limit`         | 公开列表和后台列表相同：整数 1–100，默认 50，不钳制。码 `too_small` / `too_big` / `invalid_type` |
+| 发售地区             | `null` 或省略合法。空字符串返回 `release_region` |
 
 限流（`apps/cardhub/api/src/bootstrap/rate-limiters.ts`，按 IP，超限返回 tRPC `TOO_MANY_REQUESTS`）。计数存在 Redis，键前缀 `cardhub:rl:v1:<名称>:`；Redis 不可用时放行，不返回 5xx：
 

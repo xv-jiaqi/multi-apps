@@ -137,7 +137,7 @@ const releaseSourceUrlInput = z
   });
 
 const releaseNoteInput = z
-  .union([z.string().trim().max(RELEASE_NOTE_MAX, 'note_too_long'), z.null()])
+  .union([z.string().trim().max(RELEASE_NOTE_MAX, 'release_note_too_long'), z.null()])
   .optional()
   .transform((value): string | null | undefined => {
     if (value === undefined || value === null) return value;
@@ -161,8 +161,15 @@ export const releaseUpdateInput = releaseCreateInput.extend({
 });
 export type ReleaseUpdateInput = z.infer<typeof releaseUpdateInput>;
 
+const releaseDeleteReason = z
+  .string()
+  .trim()
+  .max(500, { message: 'delete_reason_too_long' })
+  .optional();
+
 export const releaseDeleteInput = z.object({
   id: z.string().uuid(),
+  reason: releaseDeleteReason,
 });
 export type ReleaseDeleteInput = z.infer<typeof releaseDeleteInput>;
 
@@ -173,7 +180,7 @@ const releaseCursorInput = z.string().min(1).max(RELEASE_CURSOR_MAX);
 /**
  * Public range. `from` and `to` are required Asia/Shanghai civil dates.
  * The interval is closed. A span of 366 days is allowed; 367 is not.
- * `cursor` and `limit` page inside that interval. Omit both to return every row.
+ * `limit` defaults to 50 so an omitted page size cannot scan the whole table.
  */
 export const releasesListInput = z
   .object({
@@ -181,7 +188,7 @@ export const releasesListInput = z
     to: z.string().trim(),
     categorySlug: categorySlugInput.optional(),
     cursor: releaseCursorInput.optional(),
-    limit: releaseListLimit.optional(),
+    limit: releaseListLimit.default(RELEASE_LIST_LIMIT_DEFAULT),
   })
   .superRefine((value, ctx) => {
     const from = parseShanghaiCivilDate(value.from);

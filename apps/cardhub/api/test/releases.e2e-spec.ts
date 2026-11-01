@@ -216,7 +216,7 @@ describe('release calendar', () => {
           path: 'admin.releases.create',
           input: { ...validWrite, note: '注'.repeat(501) },
           field: 'note',
-          message: 'note_too_long',
+          message: 'release_note_too_long',
         },
         {
           method: 'post',
@@ -245,6 +245,20 @@ describe('release calendar', () => {
           input: { from: '2024-01-01', to: '2025-01-01' },
           field: 'to',
           message: 'release_range_too_long',
+        },
+        {
+          method: 'get',
+          path: 'releases.list',
+          input: { from: '2031-04-01', to: '2031-04-30', limit: 0 },
+          field: 'limit',
+          message: 'too_small',
+        },
+        {
+          method: 'get',
+          path: 'releases.list',
+          input: { from: '2031-04-01', to: '2031-04-30', limit: 101 },
+          field: 'limit',
+          message: 'too_big',
         },
         {
           method: 'get',
@@ -459,8 +473,59 @@ describe('release calendar', () => {
     });
     const onFirst = await get('releases.list', { from: '2032-02-01', to: '2032-02-01' });
     expect(readItems(resultData(onFirst.body))).toHaveLength(1);
-    const onOriginal = await get('releases.list', { from: '2032-02-15', to: '2032-02-15' });
-    expect(readItems(resultData(onOriginal.body))).toEqual([]);
+
+    await post(
+      'admin.releases.create',
+      { title: `${MARK}-feb1`, releaseDate: '2032-02-01', datePrecision: 'DAY' },
+      adminToken,
+    );
+    await post(
+      'admin.releases.create',
+      { title: `${MARK}-feb15`, releaseDate: '2032-02-15', datePrecision: 'DAY' },
+      adminToken,
+    );
+    const overlapped = await get('releases.list', {
+      from: '2032-02-15',
+      to: '2032-02-20',
+      limit: 10,
+    });
+    const rows = readItems(resultData(overlapped.body));
+    expect(rows.map((row) => readString(row, 'title'))).toEqual([`${MARK}-month`, `${MARK}-feb15`]);
+    expect(rows.map((row) => readString(row, 'releaseDate'))).toEqual(['2032-02-01', '2032-02-15']);
+    const monthCursor = encodeReleaseCursor('2032-02-01', readString(rows[0] ?? {}, 'id'));
+    const afterMonth = await get('releases.list', {
+      from: '2032-02-15',
+      to: '2032-02-20',
+      cursor: monthCursor,
+      limit: 10,
+    });
+    expect(readItems(resultData(afterMonth.body)).map((row) => readString(row, 'title'))).toEqual([
+      `${MARK}-feb15`,
+    ]);
+  });
+
+  it('writes a content-delete audit row when an admin deletes a release', async () => {
+    const created = await post(
+      'admin.releases.create',
+      { title: `${MARK}-audit`, releaseDate: '2034-01-04' },
+      adminToken,
+    );
+    const id = readString(resultData(created.body), 'id');
+    const removed = await post('admin.releases.delete', { id, reason: '  重复条目  ' }, adminToken);
+    expect(removed.status).toBe(200);
+    const entry = await prisma.auditLog.findFirst({
+      where: { targetId: id, action: 'CONTENT_DELETE' },
+    });
+    expect(entry).toMatchObject({
+      targetType: 'RELEASE',
+      targetId: id,
+      targetLabel: `${MARK}-audit`,
+      targetUserId: null,
+      reason: '重复条目',
+    });
+    const missing = await post('admin.releases.delete', { id }, adminToken);
+    expect(missing.status).toBe(404);
+    expect(await prisma.auditLog.count({ where: { targetId: id } })).toBe(1);
   });
 
   it('orders each list in its own direction and continues a keyset after a missing row', async () => {
@@ -507,10 +572,19 @@ describe('release calendar', () => {
     });
     const everyone = await get('releases.list', { from: '2020-01-01', to: '2020-12-31' });
     const publicItems = readItems(resultData(everyone.body));
-    expect(publicItems).toHaveLength(51);
+    expect(publicItems).toHaveLength(50);
     expect(readString(publicItems[0] ?? {}, 'releaseDate')).toBe(isoDay(0));
-    expect(readString(publicItems[50] ?? {}, 'releaseDate')).toBe(isoDay(50));
-    expect(resultData(everyone.body).nextCursor).toBeNull();
+    expect(readString(publicItems[49] ?? {}, 'releaseDate')).toBe(isoDay(49));
+    const publicCursor = resultData(everyone.body).nextCursor;
+    expect(typeof publicCursor).toBe('string');
+    const publicRest = await get('releases.list', {
+      from: '2020-01-01',
+      to: '2020-12-31',
+      cursor: publicCursor,
+    });
+    expect(
+      readItems(resultData(publicRest.body)).map((row) => readString(row, 'releaseDate')),
+    ).toEqual([isoDay(50)]);
 
     const adminPage = await get('admin.releases.list', {}, adminToken);
     expect(adminPage.status).toBe(200);

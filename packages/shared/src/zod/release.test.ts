@@ -123,7 +123,7 @@ describe('release input validation', () => {
       { path: 'title', message: 'title_too_long' },
     ]);
     expect(messages({ ...valid, note: '注'.repeat(501) }, releaseCreateInput)).toEqual([
-      { path: 'note', message: 'note_too_long' },
+      { path: 'note', message: 'release_note_too_long' },
     ]);
     expect(messages({ ...valid, sourceUrl: 'http://example.com/a' }, releaseCreateInput)).toEqual([
       { path: 'sourceUrl', message: 'source_url' },
@@ -150,7 +150,14 @@ describe('release input validation', () => {
     expect(releasesListInput.parse({ from: november?.from, to: november?.to })).toMatchObject({
       from: '2026-11-01',
       to: '2026-11-30',
+      limit: RELEASE_LIST_LIMIT_DEFAULT,
     });
+    expect(messages({ from: '2026-11-01', to: '2026-11-30', limit: 0 }, releasesListInput)).toEqual(
+      [{ path: 'limit', message: 'too_small' }],
+    );
+    expect(
+      messages({ from: '2026-11-01', to: '2026-11-30', limit: 101 }, releasesListInput),
+    ).toEqual([{ path: 'limit', message: 'too_big' }]);
     expect(releasesListInput.safeParse({ from: '2024-01-01', to: '2024-12-31' }).success).toBe(
       true,
     );
@@ -215,7 +222,8 @@ describe('release input validation', () => {
     expect(fieldErrorMessage('en-US', 'source_url')).toBe('Start the source link with https://.');
     expect(fieldErrorMessage('zh-CN', 'invalid_date')).toBe('日期必须是有效的 YYYY-MM-DD');
     expect(fieldErrorMessage('zh-CN', 'note_too_long')).toBe('说明最多 500 个字符');
-    expect(fieldErrorMessage('en-US', 'note_too_long')).toBe(
+    expect(fieldErrorMessage('zh-CN', 'release_note_too_long')).toBe('备注最多 500 个字符');
+    expect(fieldErrorMessage('en-US', 'release_note_too_long')).toBe(
       'Use at most 500 characters for the note.',
     );
   });
