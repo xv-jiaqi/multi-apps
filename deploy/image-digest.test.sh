@@ -67,7 +67,37 @@ fi
 cmd="$1"
 shift || true
 
-if [ "${cmd}" = "pull" ] || [ "${cmd}" = "network" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ] || [ "${cmd}" = "tag" ] || [ "${cmd}" = "image" ]; then
+if [ "${cmd}" = "image" ]; then
+  fmt=""
+  id=""
+  prev=""
+  for arg in "$@"; do
+    if [ "${prev}" = "-f" ]; then
+      fmt="${arg}"
+    fi
+    prev="${arg}"
+    id="${arg}"
+  done
+  if [ "${DOCKER_STUB_NO_REPO_DIGEST:-}" != "1" ] && [ "${fmt#*RepoDigests}" != "${fmt}" ]; then
+    case "${id}" in
+      "${DOCKER_STUB_OLD_API_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-api@%s\n' "${DOCKER_STUB_OLD_API_DIGEST}"
+        ;;
+      "${DOCKER_STUB_OLD_WEB_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-web@%s\n' "${DOCKER_STUB_OLD_WEB_DIGEST}"
+        ;;
+      "${DOCKER_STUB_NEW_API_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-api@%s\n' "${DOCKER_STUB_NEW_API_DIGEST}"
+        ;;
+      "${DOCKER_STUB_NEW_WEB_DIGEST}")
+        printf 'ghcr.io/xv-jiaqi/cardhub-web@%s\n' "${DOCKER_STUB_NEW_WEB_DIGEST}"
+        ;;
+    esac
+  fi
+  exit 0
+fi
+
+if [ "${cmd}" = "pull" ] || [ "${cmd}" = "network" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ] || [ "${cmd}" = "tag" ]; then
   exit 0
 fi
 
@@ -176,7 +206,18 @@ if [ "${cmd}" = "compose" ]; then
         esac
       done
       ;;
-    pull|run|exec)
+    pull)
+      pulls=0
+      if [ -f "${state}/compose-pulls" ]; then
+        pulls="$(cat "${state}/compose-pulls")"
+      fi
+      pulls=$((pulls + 1))
+      printf '%s\n' "${pulls}" > "${state}/compose-pulls"
+      if [ -n "${DOCKER_STUB_COMPOSE_PULL_FAIL_FROM:-}" ] && [ "${pulls}" -ge "${DOCKER_STUB_COMPOSE_PULL_FAIL_FROM}" ]; then
+        exit 1
+      fi
+      ;;
+    run|exec)
       ;;
     *)
       echo "stub docker: unexpected compose ${sub}" >&2
@@ -223,6 +264,8 @@ EOF
   local prehash=""
   local config_hash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   local running_hash="${config_hash}"
+  local no_repo=""
+  local pull_fail_from=""
   case "${mode}" in
     unset)
       api_value=""
@@ -254,6 +297,14 @@ EOF
     halfprev)
       old_web="sha256:abc"
       ;;
+    norepo)
+      no_repo=1
+      ;;
+    rollbackpull)
+      new_api="${wrong_digest}"
+      new_web="${wrong_digest}"
+      pull_fail_from=2
+      ;;
     fresh)
       previous="absent"
       ;;
@@ -283,6 +334,8 @@ EOF
     DOCKER_STUB_OLD_WEB_DIGEST="${old_web}" \
     DOCKER_STUB_NEW_API_DIGEST="${new_api}" \
     DOCKER_STUB_NEW_WEB_DIGEST="${new_web}" \
+    ${no_repo:+DOCKER_STUB_NO_REPO_DIGEST=1} \
+    ${pull_fail_from:+DOCKER_STUB_COMPOSE_PULL_FAIL_FROM=${pull_fail_from}} \
     DOCKER_STUB_CONFIG_HASH="${config_hash}" \
     DOCKER_STUB_RUNNING_HASH="${running_hash}" \
     DOCKER_STUB_ENTRYPOINT_RC=10 \
@@ -333,6 +386,17 @@ run_case halfprev
 assert "missing previous digest exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
 assert "missing previous digest names both digests" "$(grep -F -q 'both previous image digests are required' "${CASE_LOG}" && echo 0 || echo 1)"
 assert "missing previous digest does not change containers" "$(mutating "${CASE_DOCKER}" && echo 1 || echo 0)"
+
+run_case norepo
+assert "image id without repo digest exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
+assert "image id without repo digest names the pull" "$(grep -F -q 'api has no registry digest' "${CASE_LOG}" && grep -F -q "docker pull ghcr.io/xv-jiaqi/cardhub-api:${prev_tag}" "${CASE_LOG}" && echo 0 || echo 1)"
+assert "image id without repo digest leaves containers unchanged" "$(grep -F -q 'Containers were not changed.' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "image id without repo digest does not change containers" "$(mutating "${CASE_DOCKER}" && echo 1 || echo 0)"
+
+run_case rollbackpull
+assert "rollback pull failure exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "rollback pull failure is an error annotation" "$(grep -F -q "::error::Rollback pull failed for ghcr.io/xv-jiaqi/cardhub-api@${prev_api_digest} and ghcr.io/xv-jiaqi/cardhub-web@${prev_web_digest}" "${CASE_LOG}" && echo 0 || echo 1)"
+assert "rollback pull failure still announces the rollback" "$(grep -F -q "Rolling back staging to ${prev_tag}" "${CASE_LOG}" && echo 0 || echo 1)"
 
 run_case fresh
 assert "first deploy with no old containers exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"

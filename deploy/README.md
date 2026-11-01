@@ -322,9 +322,14 @@ digest and the hash already match; env changes do not need it. After
 or `.Image` when the image has no repo digest) must equal the digest that
 was pulled. A mismatch fails the deploy and the existing rollback starts
 the previous digests. If an api or web container is already running and
-either previous digest cannot be read, deploy exits before pull or
-`compose up` and leaves those containers alone. A first deploy, with
-neither container present, still starts them.
+either previous registry digest cannot be read, deploy exits before pull or
+`compose up` and leaves those containers alone. `Config.Image` `@sha256`
+and `RepoDigests` count. The local image id does not: rollback would pull
+`name@<image id>`, which is not the GHCR manifest. Restore it with
+`docker pull ghcr.io/xv-jiaqi/cardhub-api:sha-<40 hex>` and the same tag
+for web before deploying again. A first deploy, with neither container
+present, still starts them. A rollback `compose pull` that fails is printed
+as a GitHub `::error::` and does not replace containers.
 
 `remote-deploy.sh` writes `PASSWORD_PREHASH_WRITE` into that environment's
 env file after `ENV_NAME` matches and before it replaces containers. The

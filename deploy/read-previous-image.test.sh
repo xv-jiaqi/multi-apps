@@ -228,6 +228,21 @@ if [ "${cmd}" = "inspect" ]; then
   esac
 fi
 
+if [ "${cmd}" = "image" ] && [ "${mode}" = "exists" ]; then
+  fmt=""
+  prev=""
+  for arg in "$@"; do
+    if [ "${prev}" = "-f" ]; then
+      fmt="${arg}"
+    fi
+    prev="${arg}"
+  done
+  if [ "${fmt#*RepoDigests}" != "${fmt}" ]; then
+    printf 'ghcr.io/xv-jiaqi/cardhub-api@sha256:9999999999999999999999999999999999999999999999999999999999999999\n'
+  fi
+  exit 0
+fi
+
 echo "stub docker: unexpected ${cmd}" >&2
 exit 99
 EOF
