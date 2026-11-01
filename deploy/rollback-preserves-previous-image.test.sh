@@ -14,9 +14,15 @@
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
-real_docker="$(command -v docker)"
-if ! "${real_docker}" info >/dev/null 2>&1; then
+# `command -v` exits 1 when docker is absent. Under `set -e` that aborts
+# the script before the message below, with empty output.
+real_docker="$(command -v docker || true)"
+if [ -z "${real_docker}" ] || ! "${real_docker}" info >/dev/null 2>&1; then
   echo "docker is not available" >&2
+  exit 1
+fi
+if ! "${real_docker}" compose version >/dev/null 2>&1; then
+  echo "docker compose is not available" >&2
   exit 1
 fi
 
