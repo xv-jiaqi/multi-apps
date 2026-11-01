@@ -416,13 +416,14 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     if (!topicIdForHash) return;
     if (hashAttempt.current === location.hash) return;
     hashAttempt.current = location.hash;
-    if (illegalReply || !target || target.kind !== 'reply') {
+    if (illegalReply) {
       setHashMissing(false);
       setHashInComments(true);
       const title = document.getElementById('forum-replies-title');
       if (title) revealElement(title);
       return;
     }
+    if (!target || target.kind !== 'reply') return;
     setHashInComments(false);
     if (visibleRepliesRef.current.some((reply) => reply.id === target.id)) {
       setHashMissing(false);

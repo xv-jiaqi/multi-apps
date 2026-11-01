@@ -17,6 +17,7 @@ import {
   unreadSummary,
 } from '../lib/notification-copy';
 import { formatNotificationTime, formatNotificationTitle } from '../lib/relative-time';
+import { MarkReadBatch } from '../lib/mark-read-batch';
 import { trpc } from '../lib/trpc';
 import { useStores } from '../stores/root-store';
 
@@ -124,10 +125,7 @@ export const NotificationsPage = observer(function NotificationsPage() {
   const noticeSeq = useRef(0);
   const loadMoreLocked = useRef(false);
   const readEpoch = useRef(0);
-  const inflightMarks = useRef(new Set<string>());
-  const failedMarks = useRef(new Set<string>());
-  const succeededMarks = useRef(new Set<string>());
-  const batchSnap = useRef<ReadSnapshot | null>(null);
+  const markBatch = useRef(new MarkReadBatch<ReadSnapshot>());
   const didInitialFocus = useRef(false);
   const [restoreId] = useState(consumeFocus);
   const [announced, setAnnounced] = useState<number | null>(null);
@@ -278,7 +276,7 @@ export const NotificationsPage = observer(function NotificationsPage() {
     ]);
 
   const finishSingleBatch = async (epoch: number) => {
-    const snap = batchSnap.current;
+    const snap = markBatch.current.snapshot();
     try {
       await refetchReadState();
       if (readEpoch.current !== epoch) return;
@@ -287,19 +285,16 @@ export const NotificationsPage = observer(function NotificationsPage() {
         syncedCount.current = next.count;
         setAnnounced(next.count);
       }
-      paintUnreadAsRead(inflightMarks.current);
+      paintUnreadAsRead(markBatch.current.paintIds().inflight);
     } catch {
       // Offline or 5xx: the refetch keeps the optimistic cache. Put the click back.
       if (readEpoch.current !== epoch || !snap) return;
       restoreReadState(snap);
-      paintUnreadAsRead(succeededMarks.current);
-      paintUnreadAsRead(inflightMarks.current);
+      const paint = markBatch.current.paintIds();
+      paintUnreadAsRead(paint.succeeded);
+      paintUnreadAsRead(paint.inflight);
     }
-    if (inflightMarks.current.size === 0) {
-      batchSnap.current = null;
-      failedMarks.current.clear();
-      succeededMarks.current.clear();
-    }
+    markBatch.current.finish();
   };
 
   const revertOne = (id: string, readAt: string | null) => {
@@ -326,11 +321,7 @@ export const NotificationsPage = observer(function NotificationsPage() {
     if (!current || current.readAt) return;
     const epoch = readEpoch.current;
     const previousReadAt = current.readAt;
-    if (inflightMarks.current.size === 0 && failedMarks.current.size === 0) {
-      batchSnap.current = captureReadState();
-      succeededMarks.current.clear();
-    }
-    inflightMarks.current.add(id);
+    markBatch.current.begin(id, captureReadState());
     const readAt = new Date().toISOString();
     utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
       if (!pageSet) return pageSet;
@@ -349,27 +340,15 @@ export const NotificationsPage = observer(function NotificationsPage() {
     setAnnounced((value) => (value == null ? value : Math.max(0, value - 1)));
     setNotice((value) => (value?.itemId === id ? null : value));
     const settle = (failed: boolean) => {
-      inflightMarks.current.delete(id);
       // A later mark-all owns the cache. This failure must not rewrite it.
-      if (readEpoch.current !== epoch) return;
-      if (failed) failedMarks.current.add(id);
-      else succeededMarks.current.add(id);
+      const action = markBatch.current.settle(id, failed, readEpoch.current !== epoch);
+      if (action === 'ignore') return;
       if (failed) {
         showNotice(id, tt('notifications.actionFailed'));
         itemRefs.current.get(id)?.focus({ preventScroll: true });
-        // Another mark is still in flight. Undo only this row and let that request finish.
-        if (inflightMarks.current.size > 0) {
-          revertOne(id, previousReadAt);
-          return;
-        }
       }
-      if (inflightMarks.current.size > 0) return;
-      if (failedMarks.current.size === 0) {
-        batchSnap.current = null;
-        succeededMarks.current.clear();
-        return;
-      }
-      void finishSingleBatch(epoch);
+      if (action === 'revert') revertOne(id, previousReadAt);
+      if (action === 'refetch') void finishSingleBatch(epoch);
     };
     markRead.mutate(
       { id },
@@ -385,10 +364,7 @@ export const NotificationsPage = observer(function NotificationsPage() {
     const snap = captureReadState();
     readEpoch.current += 1;
     const epoch = readEpoch.current;
-    inflightMarks.current.clear();
-    failedMarks.current.clear();
-    succeededMarks.current.clear();
-    batchSnap.current = null;
+    markBatch.current.clear();
     void utils.notifications.list.cancel();
     void utils.notifications.unreadCount.cancel();
     const readAt = new Date().toISOString();
