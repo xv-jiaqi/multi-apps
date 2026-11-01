@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { illegalHashTarget, parseHashTarget, readParentId } from './hash-target';
+import { illegalHashTarget, illegalParentId, parseHashTarget, readParentId } from './hash-target';
 
 const ID = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
 
@@ -21,5 +21,9 @@ describe('readParentId', () => {
     expect(readParentId(`?parentId=${ID}`)).toBe(ID);
     expect(readParentId('?parentId=parent')).toBeNull();
     expect(readParentId('')).toBeNull();
+    expect(illegalParentId('?parentId=not-a-uuid')).toBe(true);
+    expect(illegalParentId('?parentId=')).toBe(true);
+    expect(illegalParentId(`?parentId=${ID}`)).toBe(false);
+    expect(illegalParentId('')).toBe(false);
   });
 });

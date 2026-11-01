@@ -317,6 +317,60 @@ describe('CommentSection (unauthenticated)', () => {
     expect(screen.getByText('@alice')).toBeInTheDocument();
   });
 
+  const inCommentsHint = '没能直接跳到这条回复，它在下面的评论里。';
+  const legalParent = '11111111-1111-4111-8111-111111111111';
+
+  function renderCommentPage(kind: 'card' | 'series', search: string) {
+    const slug = kind === 'card' ? 'aurora-knight' : 'celestial-dawn';
+    const path = kind === 'card' ? `/cards/${slug}` : `/series/${slug}`;
+    queryState.data = [
+      {
+        id: legalParent,
+        content: 'top comment',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+        replies: [],
+      },
+    ];
+    render(
+      <MemoryRouter initialEntries={[`${path}${search}`]}>
+        <h2 id="comment-section-title" tabIndex={-1}>
+          评论区
+        </h2>
+        <CommentSection target={{ kind, slug }} />
+      </MemoryRouter>,
+    );
+  }
+
+  it.each([
+    ['card', 'not-a-uuid'],
+    ['card', ''],
+    ['series', 'not-a-uuid'],
+    ['series', ''],
+  ] as const)(
+    'shows the in-comments hint on the %s page when parentId is %j',
+    async (kind, value) => {
+      renderCommentPage(kind, `?parentId=${value}`);
+      const hint = await screen.findByText(inCommentsHint);
+      expect(hint.closest('[role="status"]')).not.toBeNull();
+      expect(document.getElementById('comment-section-title')).toHaveFocus();
+      expect(listRepliesFetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ['card', ''],
+    ['card', `?parentId=${legalParent}`],
+    ['series', ''],
+    ['series', `?parentId=${legalParent}`],
+  ] as const)(
+    'does not hint on the %s page when parentId is absent or a uuid (%j)',
+    (kind, search) => {
+      renderCommentPage(kind, search);
+      expect(screen.queryByText(inCommentsHint)).not.toBeInTheDocument();
+    },
+  );
+
   it('degrades an illegal reply hash to the in-comments hint and focuses the title', async () => {
     const parentId = '11111111-1111-4111-8111-111111111111';
     queryState.data = [

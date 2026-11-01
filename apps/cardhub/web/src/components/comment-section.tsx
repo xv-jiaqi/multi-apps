@@ -29,6 +29,7 @@ import { ReportButton } from './report-button';
 import { HashTargetNotice } from './hash-target-notice';
 import {
   illegalHashTarget,
+  illegalParentId,
   parseHashTarget,
   readParentId,
   reducedMotion,
@@ -691,7 +692,8 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
   useEffect(() => {
     const target = parseHashTarget(location.hash);
     const illegal = illegalHashTarget(location.hash);
-    if ((!target && !illegal) || commentsView !== 'ready' || !list.data) return;
+    const illegalParent = illegalParentId(location.search);
+    if ((!target && !illegal && !illegalParent) || commentsView !== 'ready' || !list.data) return;
     const attemptKey = `${location.search}${location.hash}`;
     if (hashAttempt.current === attemptKey) return;
     hashAttempt.current = attemptKey;
@@ -723,7 +725,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       focusTitle();
     };
 
-    if (!target) {
+    if (illegalParent || !target) {
       settled = true;
       showInComments();
       return;
