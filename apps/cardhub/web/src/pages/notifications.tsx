@@ -40,6 +40,13 @@ interface RepeatNotice {
   itemId: string | null;
 }
 
+interface ReadSnapshot {
+  list: Parameters<ReturnType<typeof trpc.useUtils>['notifications']['list']['setInfiniteData']>[1];
+  count: { count: number } | undefined;
+  announced: number | null;
+  synced: number | null;
+}
+
 function readAppCode(error: unknown): unknown {
   if (typeof error !== 'object' || error === null || !('data' in error)) return undefined;
   const data = error.data;
@@ -117,6 +124,10 @@ export const NotificationsPage = observer(function NotificationsPage() {
   const noticeSeq = useRef(0);
   const loadMoreLocked = useRef(false);
   const readEpoch = useRef(0);
+  const inflightMarks = useRef(new Set<string>());
+  const failedMarks = useRef(new Set<string>());
+  const succeededMarks = useRef(new Set<string>());
+  const batchSnap = useRef<ReadSnapshot | null>(null);
   const didInitialFocus = useRef(false);
   const [restoreId] = useState(consumeFocus);
   const [announced, setAnnounced] = useState<number | null>(null);
@@ -211,21 +222,115 @@ export const NotificationsPage = observer(function NotificationsPage() {
     setNotice({ id: noticeSeq.current, text, itemId });
   };
 
-  const reloadReadState = () =>
-    Promise.all([
-      utils.notifications.list.invalidate(LIST_INPUT),
-      utils.notifications.unreadCount.invalidate(),
-    ]).then(() => {
-      const next = utils.notifications.unreadCount.getData();
-      if (!next) return;
-      syncedCount.current = next.count;
-      setAnnounced(next.count);
+  const captureReadState = (): ReadSnapshot => {
+    const list = utils.notifications.list.getInfiniteData(LIST_INPUT);
+    const count = utils.notifications.unreadCount.getData();
+    return {
+      list: list === undefined ? undefined : structuredClone(list),
+      count: count === undefined ? undefined : structuredClone(count),
+      announced,
+      synced: syncedCount.current,
+    };
+  };
+
+  const restoreReadState = (snap: ReadSnapshot) => {
+    utils.notifications.list.setInfiniteData(LIST_INPUT, snap.list);
+    utils.notifications.unreadCount.setData(undefined, snap.count);
+    syncedCount.current = snap.synced;
+    setAnnounced(snap.announced);
+  };
+
+  const paintUnreadAsRead = (ids: ReadonlySet<string>) => {
+    if (ids.size === 0) return;
+    const readAt = new Date().toISOString();
+    const current = utils.notifications.list.getInfiniteData(LIST_INPUT);
+    const pending: string[] = [];
+    for (const page of current?.pages ?? []) {
+      for (const item of page.items) {
+        if (ids.has(item.id) && item.readAt == null) pending.push(item.id);
+      }
+    }
+    if (pending.length === 0) return;
+    const chosen = new Set(pending);
+    utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
+      if (!pageSet) return pageSet;
+      return {
+        ...pageSet,
+        pages: pageSet.pages.map((page) => ({
+          ...page,
+          items: page.items.map((item) => (chosen.has(item.id) ? { ...item, readAt } : item)),
+        })),
+      };
     });
+    utils.notifications.unreadCount.setData(undefined, (count) =>
+      count ? { count: Math.max(0, count.count - chosen.size) } : count,
+    );
+    if (syncedCount.current !== null) {
+      syncedCount.current = Math.max(0, syncedCount.current - chosen.size);
+    }
+    setAnnounced((value) => (value == null ? value : Math.max(0, value - chosen.size)));
+  };
+
+  const refetchReadState = () =>
+    Promise.all([
+      utils.notifications.list.refetch(LIST_INPUT, undefined, { throwOnError: true }),
+      utils.notifications.unreadCount.refetch(undefined, undefined, { throwOnError: true }),
+    ]);
+
+  const finishSingleBatch = async (epoch: number) => {
+    const snap = batchSnap.current;
+    try {
+      await refetchReadState();
+      if (readEpoch.current !== epoch) return;
+      const next = utils.notifications.unreadCount.getData();
+      if (next) {
+        syncedCount.current = next.count;
+        setAnnounced(next.count);
+      }
+      paintUnreadAsRead(inflightMarks.current);
+    } catch {
+      // Offline or 5xx: the refetch keeps the optimistic cache. Put the click back.
+      if (readEpoch.current !== epoch || !snap) return;
+      restoreReadState(snap);
+      paintUnreadAsRead(succeededMarks.current);
+      paintUnreadAsRead(inflightMarks.current);
+    }
+    if (inflightMarks.current.size === 0) {
+      batchSnap.current = null;
+      failedMarks.current.clear();
+      succeededMarks.current.clear();
+    }
+  };
+
+  const revertOne = (id: string, readAt: string | null) => {
+    utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
+      if (!pageSet) return pageSet;
+      return {
+        ...pageSet,
+        pages: pageSet.pages.map((page) => ({
+          ...page,
+          items: page.items.map((item) => (item.id === id ? { ...item, readAt } : item)),
+        })),
+      };
+    });
+    if (readAt != null) return;
+    utils.notifications.unreadCount.setData(undefined, (count) =>
+      count ? { count: count.count + 1 } : count,
+    );
+    if (syncedCount.current !== null) syncedCount.current += 1;
+    setAnnounced((value) => (value == null ? value : value + 1));
+  };
 
   const markOne = (id: string) => {
     const current = items.find((item) => item.id === id);
     if (!current || current.readAt) return;
     const epoch = readEpoch.current;
+    const previousReadAt = current.readAt;
+    if (inflightMarks.current.size === 0 && failedMarks.current.size === 0) {
+      batchSnap.current = captureReadState();
+      succeededMarks.current.clear();
+    }
+    inflightMarks.current.add(id);
     const readAt = new Date().toISOString();
     utils.notifications.list.setInfiniteData(LIST_INPUT, (pageSet) => {
       if (!pageSet) return pageSet;
@@ -243,24 +348,47 @@ export const NotificationsPage = observer(function NotificationsPage() {
     if (syncedCount.current !== null) syncedCount.current = Math.max(0, syncedCount.current - 1);
     setAnnounced((value) => (value == null ? value : Math.max(0, value - 1)));
     setNotice((value) => (value?.itemId === id ? null : value));
+    const settle = (failed: boolean) => {
+      inflightMarks.current.delete(id);
+      // A later mark-all owns the cache. This failure must not rewrite it.
+      if (readEpoch.current !== epoch) return;
+      if (failed) failedMarks.current.add(id);
+      else succeededMarks.current.add(id);
+      if (failed) {
+        showNotice(id, tt('notifications.actionFailed'));
+        itemRefs.current.get(id)?.focus({ preventScroll: true });
+        // Another mark is still in flight. Undo only this row and let that request finish.
+        if (inflightMarks.current.size > 0) {
+          revertOne(id, previousReadAt);
+          return;
+        }
+      }
+      if (inflightMarks.current.size > 0) return;
+      if (failedMarks.current.size === 0) {
+        batchSnap.current = null;
+        succeededMarks.current.clear();
+        return;
+      }
+      void finishSingleBatch(epoch);
+    };
     markRead.mutate(
       { id },
       {
-        onError: () => {
-          // A later mark-all owns the cache. This failure must not rewrite it.
-          if (readEpoch.current !== epoch) return;
-          void reloadReadState().then(() => {
-            if (readEpoch.current !== epoch) return;
-            showNotice(id, tt('notifications.actionFailed'));
-          });
-        },
+        onSuccess: () => settle(false),
+        onError: () => settle(true),
       },
     );
   };
 
   const markAll = () => {
     if (markAllLocked || markAllRead.isPending) return;
+    const snap = captureReadState();
     readEpoch.current += 1;
+    const epoch = readEpoch.current;
+    inflightMarks.current.clear();
+    failedMarks.current.clear();
+    succeededMarks.current.clear();
+    batchSnap.current = null;
     void utils.notifications.list.cancel();
     void utils.notifications.unreadCount.cancel();
     const readAt = new Date().toISOString();
@@ -281,10 +409,20 @@ export const NotificationsPage = observer(function NotificationsPage() {
     markAllRef.current?.focus({ preventScroll: true });
     markAllRead.mutate(undefined, {
       onError: () => {
-        void reloadReadState().then(() => {
-          showNotice(null, tt('notifications.actionFailed'));
-          markAllRef.current?.focus({ preventScroll: true });
-        });
+        showNotice(null, tt('notifications.actionFailed'));
+        markAllRef.current?.focus({ preventScroll: true });
+        void refetchReadState()
+          .then(() => {
+            if (readEpoch.current !== epoch) return;
+            const next = utils.notifications.unreadCount.getData();
+            if (!next) return;
+            syncedCount.current = next.count;
+            setAnnounced(next.count);
+          })
+          .catch(() => {
+            if (readEpoch.current !== epoch) return;
+            restoreReadState(snap);
+          });
       },
     });
   };
