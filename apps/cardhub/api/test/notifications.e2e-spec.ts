@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { APP_ERROR_CODES, t } from '@repo/shared';
 import { createApp } from '../src/bootstrap/create-app';
+import { subscribeLogLines } from '../src/bootstrap/http-logger';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 
 let sequence = 0;
@@ -818,6 +819,111 @@ describe('notifications', () => {
     } finally {
       if (previous === undefined) delete process.env.NODE_ENV;
       else process.env.NODE_ENV = previous;
+    }
+  });
+
+  it('returns the saved comment and topic when the notification insert throws', async () => {
+    const lines: string[] = [];
+    const unsubscribe = subscribeLogLines((line) => {
+      if (line.includes('notification_write_failed')) lines.push(line);
+    });
+    const alice = nextIdentity('failalice');
+    const bob = nextIdentity('failbob');
+    const admin = nextIdentity('failadmin');
+    const aliceUser = await register(alice);
+    const bobUser = await register(bob);
+    const adminUser = await register(admin);
+    await prisma.user.update({ where: { id: adminUser.id }, data: { role: 'admin' } });
+
+    const suffix = `${Date.now().toString(36)}${sequence.toString(36)}`;
+    const series = await prisma.series.create({
+      data: { slug: `fail-series-${suffix}`.slice(0, 64), title: '失败系列' },
+    });
+    const cardSlug = `fail-card-${suffix}`.slice(0, 64);
+    await prisma.card.create({ data: { slug: cardSlug, name: '失败卡', seriesId: series.id } });
+    const plain = await post('forum.topics.create', { title: '先发一条', body: '没有提及' }, aliceUser.token);
+    expect(plain.status).toBe(200);
+    const plainId = expectString(resultData(plain.body).id);
+
+    const commentContent = `通知失败 @${bob.username}`;
+    const topicBody = `话题通知失败 @${bob.username}`;
+    const replyBody = '回复通知失败';
+    const editedBody = `编辑后 @${bob.username}`;
+    const boom = new Error('NOTIFY_WRITE_DOWN');
+    const createMany = jest.spyOn(prisma.notification, 'createMany').mockRejectedValue(boom);
+    try {
+      const comment = await post('comments.create', { cardSlug, content: commentContent }, aliceUser.token);
+      expect(comment.status).toBe(200);
+      const commentId = expectString(resultData(comment.body).id);
+      expect(JSON.stringify(comment.body)).not.toContain('NOTIFY_WRITE_DOWN');
+      expect(await prisma.comment.count({ where: { userId: aliceUser.id, content: commentContent } })).toBe(1);
+      expect(await prisma.notification.count({ where: { targetId: commentId } })).toBe(0);
+
+      const topic = await post('forum.topics.create', { title: '通知失败话题', body: topicBody }, aliceUser.token);
+      expect(topic.status).toBe(200);
+      const topicId = expectString(resultData(topic.body).id);
+      expect(JSON.stringify(topic.body)).not.toContain('NOTIFY_WRITE_DOWN');
+      expect(await prisma.topic.count({ where: { userId: aliceUser.id, body: topicBody } })).toBe(1);
+      expect(await prisma.notification.count({ where: { targetId: topicId } })).toBe(0);
+
+      const reply = await post(
+        'forum.replies.create',
+        { topicId: plainId, body: replyBody },
+        bobUser.token,
+      );
+      expect(reply.status).toBe(200);
+      const replyId = expectString(resultData(reply.body).id);
+      expect(JSON.stringify(reply.body)).not.toContain('NOTIFY_WRITE_DOWN');
+      expect(await prisma.reply.count({ where: { id: replyId, body: replyBody } })).toBe(1);
+      expect(await prisma.notification.count({ where: { targetId: replyId } })).toBe(0);
+
+      const edited = await post(
+        'forum.topics.update',
+        { id: plainId, title: '先发一条', body: editedBody },
+        aliceUser.token,
+      );
+      expect(edited.status).toBe(200);
+      expect(JSON.stringify(edited.body)).not.toContain('NOTIFY_WRITE_DOWN');
+      expect(await prisma.topic.count({ where: { id: plainId, body: editedBody } })).toBe(1);
+
+      const report = await post(
+        'reports.create',
+        { targetType: 'COMMENT', targetId: commentId, reason: '通知失败时仍要处理' },
+        bobUser.token,
+      );
+      expect(report.status).toBe(200);
+      const resolved = await post(
+        'reports.resolve',
+        { id: expectString(resultData(report.body).id), action: 'MARK_RESOLVED', resolution: 'SECRET' },
+        adminUser.token,
+      );
+      expect(resolved.status).toBe(200);
+      expect(resultData(resolved.body)).toEqual({ ok: true });
+      expect(JSON.stringify(resolved.body)).not.toContain('NOTIFY_WRITE_DOWN');
+      expect(JSON.stringify(resolved.body)).not.toContain('SECRET');
+      expect(
+        await prisma.report.count({
+          where: { id: expectString(resultData(report.body).id), status: 'RESOLVED' },
+        }),
+      ).toBe(1);
+      expect(await prisma.comment.count({ where: { id: commentId } })).toBe(1);
+      expect(await prisma.notification.count({ where: { targetId: commentId } })).toBe(0);
+    } finally {
+      createMany.mockRestore();
+      unsubscribe();
+    }
+
+    expect(lines.length).toBeGreaterThanOrEqual(5);
+    for (const line of lines) {
+      const parsed: unknown = JSON.parse(line);
+      if (!isRecord(parsed) || !isRecord(parsed.message)) {
+        throw new Error('expected a structured notification failure log');
+      }
+      expect(parsed.level).toBe('error');
+      expect(parsed.context).toBe('Notifications');
+      expect(parsed.message.event).toBe('notification_write_failed');
+      expect(parsed.message.code).toBe('unknown');
+      expect(line).not.toContain('NOTIFY_WRITE_DOWN');
     }
   });
 });

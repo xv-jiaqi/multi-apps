@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { Logger } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import { mentionUsernames } from './mentions';
 import {
   planContentNotifications,
@@ -51,6 +53,33 @@ export interface NotificationDb {
 }
 
 type NotifyDb = NotificationDb;
+
+const notificationLogger = new Logger('Notifications');
+
+function errorCode(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const code = error.code;
+    if (typeof code === 'string' && code.length > 0) return code;
+  }
+  return 'unknown';
+}
+
+/**
+ * Notification rows are written after the content transaction commits.
+ * A failed insert is logged and reported; it must not change the caller's response.
+ */
+export async function notifyAfterCommit(work: () => Promise<void>): Promise<void> {
+  try {
+    await work();
+  } catch (error) {
+    const reported = error instanceof Error ? error : new Error('notification write failed');
+    notificationLogger.error({
+      event: 'notification_write_failed',
+      code: errorCode(error),
+    });
+    Sentry.captureException(reported);
+  }
+}
 
 export function contentMayNotify(
   body: string,

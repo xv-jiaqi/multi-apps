@@ -10,7 +10,7 @@ import {
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { writeReportResolve } from '../audit/content-delete';
-import { notifyModeration } from '../notifications/notify';
+import { notifyAfterCommit, notifyModeration } from '../notifications/notify';
 import { readTargetSnapshot } from '../notifications/target-snapshot';
 
 type ReportWithReporter = Prisma.ReportGetPayload<{
@@ -310,7 +310,7 @@ export class ReportsRouter {
         const resolution = input.resolution?.trim() || null;
         const actor = ctx.user;
 
-        await prisma.$transaction(async (tx) => {
+        const notice = await prisma.$transaction(async (tx) => {
           const report = await tx.report.findUnique({
             where: { id: input.id },
             select: {
@@ -325,7 +325,7 @@ export class ReportsRouter {
           }
 
           if (report.status === 'RESOLVED') {
-            return;
+            return null;
           }
 
           const snapshot = await readTargetSnapshot(tx, report.targetType, report.targetId);
@@ -368,7 +368,7 @@ export class ReportsRouter {
             targetUserId: snapshot.userId,
             reason: resolution,
           });
-          await notifyModeration(tx, {
+          return {
             authorId: snapshot.userId,
             moderatorId: actor.sub,
             action: input.action,
@@ -376,8 +376,11 @@ export class ReportsRouter {
             targetId: report.targetId,
             excerpt: snapshot.excerpt,
             href: snapshot.href,
-          });
+          };
         });
+        if (notice) {
+          await notifyAfterCommit(() => notifyModeration(prisma, notice));
+        }
 
         return { ok: true };
       }),

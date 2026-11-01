@@ -1,4 +1,17 @@
-import { notifyContent, type NotificationDb } from './notify';
+jest.mock('@sentry/node', () => {
+  const actual = jest.requireActual('@sentry/node');
+  if (typeof actual !== 'object' || actual === null || Array.isArray(actual)) {
+    throw new Error('@sentry/node mock expected an object');
+  }
+  return {
+    ...actual,
+    captureException: jest.fn(() => 'event-id'),
+  };
+});
+
+import { Logger } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
+import { notifyAfterCommit, notifyContent, type NotificationDb } from './notify';
 
 function dbOf(users: Array<{ id: string; username: string }>): {
   db: NotificationDb;
@@ -84,5 +97,36 @@ describe('notifyContent', () => {
     expect(Array.isArray(data) ? data.map((row: { userId: string }) => row.userId) : []).toEqual([
       'u-dana',
     ]);
+  });
+});
+
+describe('notifyAfterCommit', () => {
+  it('logs a structured failure and does not throw when the insert fails', async () => {
+    const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const capture = jest.mocked(Sentry.captureException);
+    capture.mockClear();
+    const failed = Object.assign(new Error('NOTIFY_WRITE_DOWN'), { code: 'P2021' });
+    const { db, createMany } = dbOf([{ id: 'u-alice', username: 'alice' }]);
+    createMany.mockRejectedValueOnce(failed);
+    await expect(
+      notifyAfterCommit(() =>
+        notifyContent(db, {
+          actorId: 'u-bob',
+          body: 'hi @alice',
+          excerpt: 'hi',
+          targetType: 'TOPIC',
+          targetId: 'topic-1',
+          href: '/forum/topic',
+          reply: null,
+        }),
+      ),
+    ).resolves.toBeUndefined();
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith({
+      event: 'notification_write_failed',
+      code: 'P2021',
+    });
+    expect(capture).toHaveBeenCalledWith(failed);
+    errorSpy.mockRestore();
   });
 });

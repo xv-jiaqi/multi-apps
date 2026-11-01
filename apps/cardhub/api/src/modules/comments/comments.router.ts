@@ -16,7 +16,7 @@ import { aroundPageSkip } from '../../common/around-page';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { commentHref } from '../notifications/href';
 import { notificationExcerpt } from '../notifications/plan';
-import { contentMayNotify, notifyContent } from '../notifications/notify';
+import { contentMayNotify, notifyAfterCommit, notifyContent } from '../notifications/notify';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { loadReplyPreviews, type ReplyPreview } from './reply-preview';
@@ -158,8 +158,8 @@ export class CommentsRouter {
       const replyUserId =
         input.replyUserId && input.replyUserId !== input.userId ? input.replyUserId : null;
       if (contentMayNotify(row.content, replyUserId, input.userId)) {
-        await prisma.$transaction((tx) =>
-          notifyContent(tx, {
+        await notifyAfterCommit(() =>
+          notifyContent(prisma, {
             actorId: input.userId,
             body: row.content,
             excerpt: notificationExcerpt(row.content),

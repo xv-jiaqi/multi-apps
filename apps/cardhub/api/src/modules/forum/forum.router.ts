@@ -18,7 +18,7 @@ import { aroundPageSkip } from '../../common/around-page';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { forumReplyHref, forumTopicHref } from '../notifications/href';
 import { notificationExcerpt } from '../notifications/plan';
-import { contentMayNotify, notifyContent } from '../notifications/notify';
+import { contentMayNotify, notifyAfterCommit, notifyContent } from '../notifications/notify';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -172,8 +172,8 @@ export class ForumRouter {
           userId: actorId,
         });
         if (contentMayNotify(created.body, null, actorId)) {
-          await prisma.$transaction((tx) =>
-            notifyContent(tx, {
+          await notifyAfterCommit(() =>
+            notifyContent(prisma, {
               actorId,
               body: created.body,
               excerpt: notificationExcerpt(created.body),
@@ -204,27 +204,26 @@ export class ForumRouter {
             message: '话题发布超过 5 分钟后无法编辑，可考虑删除后重新发布',
           });
         }
-        const updated = await prisma.$transaction(async (tx) => {
-          const row = await tx.topic.update({
-            where: { id: input.id },
-            data: { title: input.title, body: input.body, editedAt: new Date() },
-            include: {
-              user: { select: { id: true, username: true } },
-              _count: { select: { replies: true } },
-            },
-          });
-          await notifyContent(tx, {
+        const updated = await prisma.topic.update({
+          where: { id: input.id },
+          data: { title: input.title, body: input.body, editedAt: new Date() },
+          include: {
+            user: { select: { id: true, username: true } },
+            _count: { select: { replies: true } },
+          },
+        });
+        await notifyAfterCommit(() =>
+          notifyContent(prisma, {
             actorId,
-            body: row.body,
-            excerpt: notificationExcerpt(row.body),
+            body: updated.body,
+            excerpt: notificationExcerpt(updated.body),
             targetType: 'TOPIC',
-            targetId: row.id,
-            href: forumTopicHref(row.slug),
+            targetId: updated.id,
+            href: forumTopicHref(updated.slug),
             reply: null,
             dedupeMentions: true,
-          });
-          return row;
-        });
+          }),
+        );
         return mapTopicSummary(updated);
       }),
 
@@ -356,22 +355,21 @@ export class ForumRouter {
         });
         if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
         const actorId = ctx.user.sub;
-        const created = await prisma.$transaction(async (tx) => {
-          const row = await tx.reply.create({
-            data: { topicId: topic.id, userId: actorId, body: input.body },
-            include: { user: { select: { id: true, username: true } } },
-          });
-          await notifyContent(tx, {
-            actorId,
-            body: row.body,
-            excerpt: notificationExcerpt(row.body),
-            targetType: 'REPLY',
-            targetId: row.id,
-            href: forumReplyHref(topic.slug, row.id),
-            reply: topic.userId === actorId ? null : { userId: topic.userId, type: 'TOPIC_REPLY' },
-          });
-          return row;
+        const created = await prisma.reply.create({
+          data: { topicId: topic.id, userId: actorId, body: input.body },
+          include: { user: { select: { id: true, username: true } } },
         });
+        await notifyAfterCommit(() =>
+          notifyContent(prisma, {
+            actorId,
+            body: created.body,
+            excerpt: notificationExcerpt(created.body),
+            targetType: 'REPLY',
+            targetId: created.id,
+            href: forumReplyHref(topic.slug, created.id),
+            reply: topic.userId === actorId ? null : { userId: topic.userId, type: 'TOPIC_REPLY' },
+          }),
+        );
         return {
           id: created.id,
           body: created.body,
