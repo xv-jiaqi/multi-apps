@@ -240,7 +240,7 @@ describe('card parallels', () => {
     expect(hidden.status).toBe(200);
     const hiddenBody = resultData(hidden.body);
     expect(whole(hiddenBody, 'total')).toBe(2);
-    expect(whole(hiddenBody, 'seriesTotal')).toBe(7);
+    expect(whole(hiddenBody, 'seriesTotal')).toBe(2);
     expect(whole(hiddenBody, 'parallelCount')).toBe(5);
     expect(listedSlugs(hidden.body)).toEqual([slug('base'), slug('loose')]);
     const baseItem = rowsOf(hidden.body, 'items').find((row) => row.slug === slug('base'));
@@ -261,6 +261,7 @@ describe('card parallels', () => {
       slug('loose'),
     ]);
     expect(whole(resultData(shown.body), 'total')).toBe(7);
+    expect(whole(resultData(shown.body), 'seriesTotal')).toBe(2);
     expect(whole(resultData(shown.body), 'parallelCount')).toBe(5);
 
     const explicit = await get('cards.listBySeries', { seriesSlug, includeParallels: false });
@@ -268,7 +269,7 @@ describe('card parallels', () => {
 
     const filtered = await get('cards.listBySeries', { seriesSlug, q: '早号' });
     expect(whole(resultData(filtered.body), 'total')).toBe(0);
-    expect(whole(resultData(filtered.body), 'seriesTotal')).toBe(7);
+    expect(whole(resultData(filtered.body), 'seriesTotal')).toBe(2);
     expect(whole(resultData(filtered.body), 'parallelCount')).toBe(5);
 
     const byParallelName = await get('cards.listBySeries', {
@@ -688,5 +689,82 @@ describe('card parallels', () => {
     expect(nullableText(resultData(moved.body), 'parallelName')).toBe('原名');
     expect(text(resultData(moved.body), 'seriesSlug')).toBe(otherSlug);
     expect(text(movedParallel, 'name')).toBe('跟着改系列');
+  });
+
+  it('keeps a parallel link only when one update moves both cards into the same series', async () => {
+    const seriesA = await prisma.series.create({
+      data: { slug: slug('move-a'), title: '甲系列' },
+    });
+    const seriesB = await prisma.series.create({
+      data: { slug: slug('move-b'), title: '乙系列' },
+    });
+    const togetherBase = await prisma.card.create({
+      data: { slug: slug('tog-base'), name: '一起基础', seriesId: seriesA.id },
+    });
+    const togetherChild = await prisma.card.create({
+      data: {
+        slug: slug('tog-child'),
+        name: '一起平行',
+        seriesId: seriesA.id,
+        parallelOfId: togetherBase.id,
+        parallelName: '金箔',
+      },
+    });
+    const baseOnly = await prisma.card.create({
+      data: { slug: slug('base-only'), name: '只搬基础', seriesId: seriesA.id },
+    });
+    const childStays = await prisma.card.create({
+      data: {
+        slug: slug('child-stays'),
+        name: '留下的平行',
+        seriesId: seriesA.id,
+        parallelOfId: baseOnly.id,
+        parallelName: '银折',
+      },
+    });
+    const baseStays = await prisma.card.create({
+      data: { slug: slug('base-stays'), name: '不动的基础', seriesId: seriesA.id },
+    });
+    const childOnly = await prisma.card.create({
+      data: {
+        slug: slug('child-only'),
+        name: '只搬平行',
+        seriesId: seriesA.id,
+        parallelOfId: baseStays.id,
+        parallelName: '原名',
+      },
+    });
+
+    await prisma.$executeRaw`
+      UPDATE "cards"
+      SET "seriesId" = ${seriesB.id}
+      WHERE "id" = ${togetherChild.id} OR "id" = ${togetherBase.id}
+    `;
+    const kept = await prisma.card.findUnique({ where: { id: togetherChild.id } });
+    const keptBase = await prisma.card.findUnique({ where: { id: togetherBase.id } });
+    expect(keptBase?.seriesId).toBe(seriesB.id);
+    expect(kept?.seriesId).toBe(seriesB.id);
+    expect(kept?.parallelOfId).toBe(togetherBase.id);
+    expect(kept?.parallelName).toBe('金箔');
+
+    await prisma.$executeRaw`
+      UPDATE "cards" SET "seriesId" = ${seriesB.id} WHERE "id" = ${baseOnly.id}
+    `;
+    const leftBehind = await prisma.card.findUnique({ where: { id: childStays.id } });
+    expect(leftBehind?.seriesId).toBe(seriesA.id);
+    expect(leftBehind?.parallelOfId).toBeNull();
+    expect(leftBehind?.parallelName).toBe('银折');
+
+    await prisma.$executeRaw`
+      UPDATE "cards" SET "seriesId" = ${seriesB.id} WHERE "id" = ${childOnly.id}
+    `;
+    const movedChild = await prisma.card.findUnique({ where: { id: childOnly.id } });
+    const unmovedBase = await prisma.card.findUnique({ where: { id: baseStays.id } });
+    expect(unmovedBase?.seriesId).toBe(seriesA.id);
+    expect(movedChild?.seriesId).toBe(seriesB.id);
+    expect(movedChild?.parallelOfId).toBeNull();
+    expect(movedChild?.parallelName).toBe('原名');
+
+    await prisma.series.deleteMany({ where: { id: { in: [seriesA.id, seriesB.id] } } });
   });
 });

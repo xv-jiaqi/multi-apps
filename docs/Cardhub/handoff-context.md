@@ -255,7 +255,7 @@ iOS Tauri / iOS Safari 的"刘海屏"通过 `env(safe-area-inset-*)` 暴露内�
 
 ### 6.18 系列清单的卡号顺序
 
-`cards.listBySeries` 的 `sort=number` 只取卡号里第一段连续 ASCII 数字做数值比较（去掉前导 0 后按位数再按字典序，所以超过安全整数也稳定），然后比较去掉这段数字后剩下的前缀和后缀原文。空卡号在最后。没有数字的非空卡号（如 `PROMO`）排在有数字的卡号之后。相同卡号时，基础卡在平行卡前面；平行卡先放不编号的，再按 `printRun` 从大到小，然后 `parallelName` 用 `zh-CN` 的 `localeCompare`，再按 slug。都相同才按 `id` 升序。因此 `2` 在 `10` 前、`A2` 在 `A10` 前，但 `B2` 也在 `A10` 前，因为整数优先于字母。这是 CH-202 字面要求的读法，不是按前缀分组。`includeParallels` 默认 `false`，省略和 `false` 共用一个缓存键；`true` 才把平行卡算进 `items` 和 `total`。`seriesTotal` 仍是系列里的全部卡。`parallelCount` 是系列里的平行卡数，不跟 q、稀有度、子集走。系列页关键词仍只匹配卡名和卡号，不匹配 `parallelName`，`%` 和 `_` 是字面量，不要改回 SQL `LIKE`。`/search` 的自由文字同时匹配卡名和 `parallelName`（大小写不敏感子串），卡号仍走 `c:`。`parallelName` 上有和卡名一样的 `pg_trgm` GIN 索引。
+`cards.listBySeries` 的 `sort=number` 只取卡号里第一段连续 ASCII 数字做数值比较（去掉前导 0 后按位数再按字典序，所以超过安全整数也稳定），然后比较去掉这段数字后剩下的前缀和后缀原文。空卡号在最后。没有数字的非空卡号（如 `PROMO`）排在有数字的卡号之后。相同卡号时，基础卡在平行卡前面；平行卡先放不编号的，再按 `printRun` 从大到小，然后 `parallelName` 用 `zh-CN` 的 `localeCompare`，再按 slug。都相同才按 `id` 升序。因此 `2` 在 `10` 前、`A2` 在 `A10` 前，但 `B2` 也在 `A10` 前，因为整数优先于字母。这是 CH-202 字面要求的读法，不是按前缀分组。`includeParallels` 默认 `false`，省略和 `false` 共用一个缓存键；`true` 才把平行卡算进 `items` 和 `total`。`seriesTotal` 只计基础卡（`parallelOfId` 为空），和默认清单的「共 N 张」、收藏进度分母同一口径。`parallelCount` 是系列里的平行卡数，不跟 q、稀有度、子集走。系列页关键词仍只匹配卡名和卡号，不匹配 `parallelName`，`%` 和 `_` 是字面量，不要改回 SQL `LIKE`。`/search` 的自由文字同时匹配卡名和 `parallelName`（大小写不敏感子串），卡号仍走 `c:`。`parallelName` 上有和卡名一样的 `pg_trgm` GIN 索引。
 
 ### 6.19 API 日志是 JSON，request id 有格式
 

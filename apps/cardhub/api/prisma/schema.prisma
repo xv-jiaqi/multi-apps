@@ -136,9 +136,10 @@ model Card {
   // Null means a base card. A parallel points at one base card. Only one
   // layer: the application rejects a base that is itself a parallel.
   // Old servers ignore the column. Deleting the base sets this null.
-  // parallelName is kept. The migration trigger also clears a link when
-  // seriesId changes and the base is no longer in that series, so a server
-  // that does not know these columns still leaves a same-series graph.
+  // parallelName is kept. The migration triggers clear a link when a series
+  // change leaves the base and the parallel in different series. One UPDATE
+  // that moves both into the same series keeps the link. Old servers ignore
+  // the columns; the triggers still run.
   parallelOfId String?
   // Required by the application when parallelOfId is set. At most 40
   // characters after trim. Kept when the link is cleared.
