@@ -723,11 +723,11 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
     }
 
     const parentId = readParentId(location.search);
-    // Old comment-reply links have no parentId. Do not probe other threads.
+    // No parentId, or that parent is not on the loaded page: do not page
+    // through other threads. The reply may still exist further down.
     if (!parentId || !list.data.some((comment) => comment.id === parentId)) {
       settled = true;
-      if (parentId) showMissing();
-      else showInComments();
+      showInComments();
       return;
     }
 
@@ -758,7 +758,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       } catch {
         if (cancelled) return;
         settled = true;
-        showMissing();
+        showInComments();
       }
     })();
 

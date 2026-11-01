@@ -50,6 +50,7 @@ const zhCN: Dictionary = {
   'notifications.emptyHint': '有人回复你、@你，或你的内容被处理时，会在这里提醒。',
   'notifications.targetMissing': '这条回复可能已被删除或折叠。',
   'notifications.targetMissingAction': '查看全部评论',
+  'notifications.targetMissingActionForum': '查看全部回帖',
   'notifications.targetInComments': '没能直接跳到这条回复，它在下面的评论里。',
   'notifications.actionFailed': '操作失败，请重试。',
   'breadcrumb.home': '首页',
@@ -1012,6 +1013,7 @@ const enUS: Dictionary = {
   'notifications.emptyHint': "You'll see replies, mentions, and moderation updates here.",
   'notifications.targetMissing': 'This reply may have been deleted or collapsed.',
   'notifications.targetMissingAction': 'See all comments',
+  'notifications.targetMissingActionForum': 'See all replies',
   'notifications.targetInComments':
     "Couldn't jump straight to this reply. It's in the comments below.",
   'notifications.actionFailed': "That didn't work. Try again.",

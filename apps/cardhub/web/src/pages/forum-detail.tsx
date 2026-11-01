@@ -810,7 +810,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           <HashTargetNotice
             message={hashMissing ? tt('notifications.targetMissing') : ''}
             actionHref={hashMissing ? '#forum-replies-title' : undefined}
-            actionLabel={hashMissing ? tt('notifications.targetMissingAction') : undefined}
+            actionLabel={hashMissing ? tt('notifications.targetMissingActionForum') : undefined}
           />
           <p
             ref={replyStatusRef}

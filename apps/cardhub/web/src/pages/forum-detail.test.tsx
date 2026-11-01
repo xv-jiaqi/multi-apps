@@ -367,10 +367,15 @@ describe('ForumDetailPage hash target', () => {
 
     const statuses = screen.getAllByRole('status');
     expect(statuses.some((node) => node.textContent === '')).toBe(true);
-    const link = await screen.findByRole('link', { name: '查看全部评论' });
+    const link = await screen.findByRole('link', { name: '查看全部回帖' });
     expect(link).toHaveAttribute('href', '#forum-replies-title');
     expect(statusByForum()).toHaveTextContent('这条回复可能已被删除或折叠。');
-    expect(document.getElementById('forum-replies-title')).toHaveFocus();
+    const title = document.getElementById('forum-replies-title');
+    if (!(title instanceof HTMLElement)) throw new Error('回帖标题不存在');
+    expect(title).toHaveFocus();
+    title.blur();
+    await userEvent.setup().click(link);
+    expect(title).toHaveFocus();
     expect(repliesListFetch).toHaveBeenCalledWith({
       topicId: topicState.data?.id,
       aroundId: replyId,
