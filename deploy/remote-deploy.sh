@@ -1161,7 +1161,9 @@ main() {
           if docker image inspect "${api_repo}@${previous_api_digest}" >/dev/null 2>&1 \
             && docker image inspect "${web_repo}@${previous_web_digest}" >/dev/null 2>&1; then
             echo "::error::Previous api and web images are on this machine; recreating them without pulling." >&2
-            compose up -d --pull never postgres redis api web || true
+            if ! compose up -d --pull never postgres redis api web; then
+              echo "::error::Rollback compose up --pull never failed for ${api_repo}@${previous_api_digest} and ${web_repo}@${previous_web_digest}." >&2
+            fi
           else
             echo "::error::Previous api or web image is not on this machine, so rollback did not run compose up. Running containers were left as they are." >&2
           fi

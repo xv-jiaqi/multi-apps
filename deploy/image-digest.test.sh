@@ -230,6 +230,10 @@ if [ "${cmd}" = "compose" ]; then
       if [ "${pull_never}" -eq 1 ]; then
         printf '%s\n' "${API_IMAGE##*@}" > "${state}/api-running-digest"
         printf '%s\n' "${WEB_IMAGE##*@}" > "${state}/web-running-digest"
+        if [ "${DOCKER_STUB_UP_NEVER_FAIL:-}" = "1" ]; then
+          echo "stub: compose up --pull never failed" >&2
+          exit 1
+        fi
       fi
       ;;
     pull)
@@ -293,6 +297,7 @@ EOF
   local no_repo=""
   local pull_fail_from=""
   local miss_local=""
+  local up_never_fail=""
   case "${mode}" in
     unset)
       api_value=""
@@ -341,6 +346,11 @@ EOF
       pull_fail_from=2
       miss_local=1
       ;;
+    halfroll-up-fail)
+      new_web="${wrong_digest}"
+      pull_fail_from=2
+      up_never_fail=1
+      ;;
     fresh)
       previous="absent"
       ;;
@@ -373,6 +383,7 @@ EOF
     ${no_repo:+DOCKER_STUB_NO_REPO_DIGEST=1} \
     ${pull_fail_from:+DOCKER_STUB_COMPOSE_PULL_FAIL_FROM=${pull_fail_from}} \
     ${miss_local:+DOCKER_STUB_MISSING_LOCAL_PREV=1} \
+    ${up_never_fail:+DOCKER_STUB_UP_NEVER_FAIL=1} \
     DOCKER_STUB_CONFIG_HASH="${config_hash}" \
     DOCKER_STUB_RUNNING_HASH="${running_hash}" \
     DOCKER_STUB_ENTRYPOINT_RC=10 \
@@ -449,6 +460,11 @@ assert "missing local rollback image exits non-zero" "$([ "${CASE_RC}" -ne 0 ] &
 assert "missing local rollback image is an error annotation" "$(grep -F -q '::error::Previous api or web image is not on this machine' "${CASE_LOG}" && echo 0 || echo 1)"
 assert "missing local rollback image does not compose up" "$([ ! -f "${CASE_STATE}/rollback-up-never" ] && echo 0 || echo 1)"
 assert "missing local rollback does not record previous digests" "$([ ! -f "${CASE_STATE}/api-running-digest" ] && [ ! -f "${CASE_STATE}/web-running-digest" ] && echo 0 || echo 1)"
+
+run_case halfroll-up-fail
+assert "rollback up failure exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+assert "rollback up failure is an error annotation" "$(grep -F -q "::error::Rollback compose up --pull never failed for ghcr.io/xv-jiaqi/cardhub-api@${prev_api_digest} and ghcr.io/xv-jiaqi/cardhub-web@${prev_web_digest}" "${CASE_LOG}" && echo 0 || echo 1)"
+assert "rollback up failure still attempted compose up" "$(grep -F -q -- '--pull never postgres redis api web' "${CASE_DOCKER}" && echo 0 || echo 1)"
 
 run_case fresh
 assert "first deploy with no old containers exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
