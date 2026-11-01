@@ -285,12 +285,16 @@ Cardhub Images run for that exact commit has succeeded, then reads the
 going, or pushed again later; the artifact is the manifest that run actually
 pushed.
 
-If that Images run is still in progress, failed, or missing, resolution
-exits and the VPS is not contacted. An artifact that is not `sha256:` plus
-64 hex is the same failure. A successful run that has no artifact (a build
-from before this change, or one whose artifact aged out) is the only case
-that resolves `sha-<commit>` to a digest, and only after that run has
-already succeeded. A missing manifest fails the same way.
+The newest Images run for that SHA is the one that counts. If it is still
+in progress, failed, or missing, resolution exits and the VPS is not
+contacted. A later failure wins over an older success for the same SHA:
+deploy refuses, and does not ship the earlier digest. An artifact that is
+not `sha256:` plus 64 hex is the same failure. If the artifact is listed
+but cannot be downloaded, deploy refuses and does not resolve the tag. A
+successful run that genuinely has no artifact (a build from before this
+change, or one whose artifact aged out) is the only case that resolves
+`sha-<commit>` to a digest, and only after that run has already succeeded.
+A missing manifest fails the same way.
 
 Use `staging` with `/opt/cardhub/staging/staging.env` for staging. If both run
 on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
@@ -304,14 +308,23 @@ cannot replace the shared Caddyfile or the rolling deploy script with the
 copies stored in that older commit. Manual rollback is the same workflow
 with the older `sha-<full-git-sha>`: resolution loads that commit's digests.
 
-Re-running a deploy whose api and web containers already have those digests
-does not pull, migrate, or recreate them. It checks the running digests and
-the public `/health` git SHA, then exits. Set `CARDHUB_FORCE_ROLLOUT=1` when
-the same digest must be recreated so a changed env file is applied (the
-database role cutover does this). After `compose up`, each new api and web
-container's image digest (`RepoDigests`, or `.Image` when the image has no
-repo digest) must equal the digest that was pulled. A mismatch fails the
-deploy and the existing rollback starts the previous digests.
+Re-running a deploy for the same SHA recreates api and web when the
+rendered compose config changed. Each service is left in place only when
+its running image digest matches and `docker compose config --hash <service>`
+equals that container's `com.docker.compose.config-hash` label. Writing
+`PASSWORD_PREHASH_WRITE`, `WEB_SENTRY_DSN`, or `CATALOG_CACHE_HEADER` from
+GitHub, or editing `DATABASE_URL` on the server, changes the hash, so the
+next deploy of that same SHA rolls the containers and the new env is what
+they start with. The run then checks the digests and the public `/health`
+git SHA. `CARDHUB_FORCE_ROLLOUT=1` still forces that recreate when the
+digest and the hash already match; env changes do not need it. After
+`compose up`, each new api and web container's image digest (`RepoDigests`,
+or `.Image` when the image has no repo digest) must equal the digest that
+was pulled. A mismatch fails the deploy and the existing rollback starts
+the previous digests. If an api or web container is already running and
+either previous digest cannot be read, deploy exits before pull or
+`compose up` and leaves those containers alone. A first deploy, with
+neither container present, still starts them.
 
 `remote-deploy.sh` writes `PASSWORD_PREHASH_WRITE` into that environment's
 env file after `ENV_NAME` matches and before it replaces containers. The

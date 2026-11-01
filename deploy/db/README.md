@@ -182,10 +182,10 @@ deletes it and leaves the old one.
 
 ```bash
 # sha and the 40-hex git SHA are the image that is already running.
-# FORCE recreates it so the new DATABASE_URL is applied. Without that flag
-# a container already on this digest is only verified.
+# The new DATABASE_URL is already in the env file, so the api compose
+# config hash no longer matches the running container and this redeploy
+# recreates api and web.
 API_IMAGE_DIGEST=sha256:<api> WEB_IMAGE_DIGEST=sha256:<web> \
-  CARDHUB_FORCE_ROLLOUT=1 \
   /opt/cardhub/staging/deploy/remote-deploy.sh staging sha-<40hex> <40hex>
 ```
 
@@ -193,9 +193,10 @@ The digests are the ones the running api and web containers already use
 (`docker image inspect` `RepoDigests`, or `.Image` when that list is empty).
 The same rollout from GitHub: Actions → Cardhub Deploy → Run workflow →
 environment `staging`, image tag `sha-<40hex>` (that same tag). The workflow
-resolves the digests. It does not set `CARDHUB_FORCE_ROLLOUT`, so a container
-already on that digest is not recreated. Use the command above on the VPS
-for this cutover.
+resolves the digests. Because the server env file already has the new URLs,
+the compose config hash changed and the containers are recreated.
+`CARDHUB_FORCE_ROLLOUT=1` is only for a recreate when that hash already
+matches.
 
 `prisma migrate deploy` runs as `cardhub_migrator` (advisory lock included)
 and the container exits. Before Prisma runs, the migrate container logs
@@ -465,7 +466,6 @@ the SHA that is running now (or dispatch Cardhub Deploy with that same
 
 ```bash
 API_IMAGE_DIGEST=sha256:<api> WEB_IMAGE_DIGEST=sha256:<web> \
-  CARDHUB_FORCE_ROLLOUT=1 \
   /opt/cardhub/staging/deploy/remote-deploy.sh staging sha-<40hex> <40hex>
 ```
 

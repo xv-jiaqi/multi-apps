@@ -1044,6 +1044,16 @@ main() {
     previous_tag="${previous_api_tag}"
   fi
 
+  # An existing api or web container without both pre-switch digests cannot
+  # be rolled back. Stop before pull or compose up. A first deploy, where
+  # neither service has a container, continues.
+  if [ "$(count_lines "${api_prev_id}")" -ge 1 ] || [ "$(count_lines "${web_prev_id}")" -ge 1 ]; then
+    if ! valid_image_digest "${previous_api_digest}" || ! valid_image_digest "${previous_web_digest}"; then
+      echo "Refusing deploy: an api or web container is already running, but both previous image digests are required before any container is replaced. The running containers were not changed." >&2
+      exit 1
+    fi
+  fi
+
   record_previous_images() {
     local state_dir state_file tmp_state wrote
     state_dir="${base_dir}/.deploy-state"
@@ -1348,15 +1358,34 @@ main() {
     return 1
   }
 
-  # Same SHA, same digests: do not pull, migrate, or recreate. Verification
-  # still runs. CARDHUB_FORCE_ROLLOUT=1 is the on-box path that must recreate
-  # so a changed env file is picked up.
+  # Skip the rollout only when each service already runs the expected
+  # digest and its rendered compose config hash. An env-file change (a
+  # GitHub variable or secret written above, or a DATABASE_URL edit) changes
+  # that hash and recreates. CARDHUB_FORCE_ROLLOUT=1 recreates even when
+  # both the digest and the hash already match.
+  service_unchanged() {
+    local svc="$1"
+    local id="$2"
+    local want line expected_hash running_hash
+    case "${svc}" in
+      api) want="${api_digest}" ;;
+      web) want="${web_digest}" ;;
+      *) return 1 ;;
+    esac
+    container_has_digest "${id}" "${want}" || return 1
+    line="$(compose config --hash "${svc}" 2>/dev/null || true)"
+    expected_hash="${line##* }"
+    expected_hash="${expected_hash//$'\r'/}"
+    running_hash="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.config-hash"}}' "${id}" 2>/dev/null || true)"
+    running_hash="${running_hash//$'\r'/}"
+    [ -n "${expected_hash}" ] && [ "${expected_hash}" != "${svc}" ] && [ "${expected_hash}" = "${running_hash}" ]
+  }
   if [ "${CARDHUB_FORCE_ROLLOUT:-}" != "1" ] \
     && [ "$(count_lines "${api_prev_id}")" -eq 1 ] \
     && [ "$(count_lines "${web_prev_id}")" -eq 1 ] \
-    && container_has_digest "${api_prev_id}" "${api_digest}" \
-    && container_has_digest "${web_prev_id}" "${web_digest}"; then
-    echo "api and web already run the expected digests; verifying without recreating"
+    && service_unchanged api "${api_prev_id}" \
+    && service_unchanged web "${web_prev_id}"; then
+    echo "api and web already run the expected digests and compose config; verifying without recreating"
     if ! wait_for_container_healthy "${api_prev_id}" api \
       || ! confirm_new_container api "${api_prev_id}" \
       || ! wait_for_container_healthy "${web_prev_id}" web \

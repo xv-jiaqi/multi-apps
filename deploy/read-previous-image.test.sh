@@ -211,6 +211,9 @@ if [ "${cmd}" = "inspect" ]; then
               ;;
           esac
           ;;
+        '{{.Image}}')
+          echo "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          ;;
         *)
           echo "stub docker: unexpected inspect format" >&2
           exit 99

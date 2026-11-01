@@ -111,6 +111,9 @@ if [ "${cmd}" = "inspect" ]; then
         *) echo "${DOCKER_STUB_NEW_API_DIGEST:?}" ;;
       esac
       ;;
+    *config-hash*)
+      echo "${DOCKER_STUB_RUNNING_HASH:?}"
+      ;;
     *)
       echo running
       ;;
@@ -127,10 +130,22 @@ if [ "${cmd}" = "compose" ]; then
   sub=""
   for arg in "$@"; do
     case "${arg}" in
-      ps|pull|up|run|exec) sub="${arg}" ;;
+      ps|pull|up|run|exec|config) sub="${arg}" ;;
     esac
   done
   printf 'compose %s %s\n' "${sub}" "$*" >> "${log}"
+  if [ "${sub}" = "config" ]; then
+    hash_svc=""
+    prev_arg=""
+    for arg in "$@"; do
+      if [ "${prev_arg}" = "--hash" ]; then
+        hash_svc="${arg}"
+      fi
+      prev_arg="${arg}"
+    done
+    printf '%s %s\n' "${hash_svc}" "${DOCKER_STUB_CONFIG_HASH:?}"
+    exit 0
+  fi
   case "${sub}" in
     ps)
       svc="${*: -1}"
@@ -205,6 +220,9 @@ EOF
   local new_web="${web_digest}"
   local previous="present"
   local force=""
+  local prehash=""
+  local config_hash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  local running_hash="${config_hash}"
   case "${mode}" in
     unset)
       api_value=""
@@ -227,6 +245,18 @@ EOF
       new_api="${wrong_digest}"
       new_web="${wrong_digest}"
       ;;
+    envchange)
+      old_api="${api_digest}"
+      old_web="${web_digest}"
+      prehash=true
+      running_hash="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ;;
+    halfprev)
+      old_web="sha256:abc"
+      ;;
+    fresh)
+      previous="absent"
+      ;;
     *)
       echo "unknown mode ${mode}" >&2
       exit 99
@@ -238,6 +268,7 @@ EOF
     -u PASSWORD_PREHASH_WRITE \
     -u WEB_SENTRY_DSN \
     ${force:+CARDHUB_FORCE_ROLLOUT=1} \
+    ${prehash:+PASSWORD_PREHASH_WRITE=true} \
     PATH="${work}/bin:${PATH}" \
     CARDHUB_ROOT="${work}/root" \
     CARDHUB_HEALTH_TIMEOUT_SECONDS=5 \
@@ -252,6 +283,8 @@ EOF
     DOCKER_STUB_OLD_WEB_DIGEST="${old_web}" \
     DOCKER_STUB_NEW_API_DIGEST="${new_api}" \
     DOCKER_STUB_NEW_WEB_DIGEST="${new_web}" \
+    DOCKER_STUB_CONFIG_HASH="${config_hash}" \
+    DOCKER_STUB_RUNNING_HASH="${running_hash}" \
     DOCKER_STUB_ENTRYPOINT_RC=10 \
     API_IMAGE_DIGEST="${api_value}" \
     WEB_IMAGE_DIGEST="${web_value}" \
@@ -289,6 +322,22 @@ assert "same digest does not compose up" "$([ "$(count_sub "${CASE_DOCKER}" up)"
 assert "same digest does not pull" "$(awk '$1 == "pull" || ($1 == "compose" && $2 == "pull") { found = 1 } END { exit found ? 0 : 1 }' "${CASE_DOCKER}" && echo 1 || echo 0)"
 assert "same digest does not stop a container" "$(awk '$1 == "stop" { found = 1 } END { exit found ? 0 : 1 }' "${CASE_DOCKER}" && echo 1 || echo 0)"
 assert "same digest still checks public health" "$(grep -F -q "Verified api-staging.example.test gitSha=${sha}" "${CASE_LOG}" && echo 0 || echo 1)"
+
+run_case envchange
+assert "same digest with changed env exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
+assert "same digest with changed env recreates" "$([ "$(count_sub "${CASE_DOCKER}" up)" -gt 0 ] && echo 0 || echo 1)"
+assert "same digest with changed env is not a verify-only run" "$(grep -F -q 'verifying without recreating' "${CASE_LOG}" && echo 1 || echo 0)"
+assert "same digest with changed env writes the flag" "$(grep -qx 'PASSWORD_PREHASH_WRITE=true' "$(dirname "${CASE_LOG}")/root/staging/staging.env" && echo 0 || echo 1)"
+
+run_case halfprev
+assert "missing previous digest exits 1" "$([ "${CASE_RC}" -eq 1 ] && echo 0 || echo 1)"
+assert "missing previous digest names both digests" "$(grep -F -q 'both previous image digests are required' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "missing previous digest does not change containers" "$(mutating "${CASE_DOCKER}" && echo 1 || echo 0)"
+
+run_case fresh
+assert "first deploy with no old containers exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
+assert "first deploy with no old containers starts api" "$(grep -F -q 'Starting api' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "first deploy with no old containers composes up" "$([ "$(count_sub "${CASE_DOCKER}" up)" -gt 0 ] && echo 0 || echo 1)"
 
 run_case force
 assert "force rollout of the same digest exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
