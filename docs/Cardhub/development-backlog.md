@@ -100,7 +100,7 @@
 | CH-308 | 产品指标统计                                    | P3     | M    | —                     | ✅ PR #185                                              |
 | CH-309 | Web 安全响应头 + Tauri CSP                      | P3     | S    | CH-005                | ✅ PR #161、#163                                        |
 | CH-310 | 邮箱验证与找回密码                              | P3     | M    | CH-212                | 待领取                                                  |
-| CH-311 | 站内通知与 @提及                                | P3     | L    | CH-204                | 待领取                                                  |
+| CH-311 | 站内通知与 @提及                                | P3     | L    | CH-204                | 进行中（#203，仅 API；界面未做）                        |
 | CH-312 | 内容多语言                                      | P3     | L    | CH-107                | 待领取                                                  |
 | CH-313 | 用户自报价格记录与走势                          | P3     | L    | CH-102；D8 确认前不做 | 待领取                                                  |
 | CH-314 | 赛事与卡组数据库                                | P3     | L    | CH-107；D9 确认前不做 | 待领取                                                  |
@@ -671,7 +671,10 @@ D3 已确认走服务端统计。不接 Umami 或其他第三方分析，不加�
 
 #### CH-311 站内通知与 @提及
 
-- `Notification` 模型；触发场景：我的话题被回复、我的评论被回复（CH-204）、我的内容被管理员处理；Header 铃铛显示未读数（每 60 秒轮询）；Markdown 正文中解析 `@用户名` 并生成通知。
+- **API（#203，界面未做）**。迁移 `20261101160000_add_notifications` 只建 `notifications`。目录顺序在 `20261101143000_add_release_calendar` 和 `20261101150000_add_card_number_normalized` 之后。回滚到上一 SHA 时旧进程不读这张表。字段：`id`、`userId`（Cascade）、`actorId?`（SetNull）、`type`、`action?`（仅 `CONTENT_RESOLVED`）、`targetType`、`targetId`、`excerpt`、`href?`、`readAt?`、`createdAt`。索引 `[userId, readAt]`、`[userId, createdAt, id]`。
+- 触发：话题回复 `TOPIC_REPLY`、评论回复 `COMMENT_REPLY`、正文 `@用户名` `MENTION`、举报处理 `CONTENT_RESOLVED`（通知作者，`actor` 为 null，不下发 `resolution`）。不通知自己。同一条既回复又 @ 只留回复类型。代码块和行内代码里的 @ 不发。用户名不存在不报错。通知在主操作提交之后写入。写入失败只记一条 `notification_write_failed` 日志并上报 Sentry，不回滚评论、话题、回复或举报处理，接口仍返回成功。
+- 查询：`notifications.list`、`notifications.unreadCount`、`notifications.markRead`、`notifications.markAllRead`。只读写当前用户。`href` 按目标现况计算，目标已删除则为 null。`forum.replies.list` 与 `comments.listReplies` 增加可选 `aroundId`，返回包含该回复的那一页；找不到则空列表。旧调用不传 `aroundId` 时行为不变。
+- **上限**：后端 `limit` 1–50、默认 20（`notificationListInput`、`forumRepliesListInput`、`commentRepliesListInput`）；`excerpt` 写入时截到 80 字，库检查 `char_length <= 80`；`MENTION` 每条内容最多前 10 个不同用户名。前端本 PR 无实现（铃铛与 `/notifications` 未做）。规格预定列表每页 20。
 - **依赖**：CH-204。
 
 #### CH-312 内容多语言

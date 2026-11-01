@@ -25,6 +25,7 @@ function makeRouter() {
   const commentFindMany = jest.fn();
   const commentDelete = jest.fn();
   const cardFindMany = jest.fn();
+  const notificationCreateMany = jest.fn().mockResolvedValue({ count: 0 });
 
   const prisma = {
     report: {
@@ -42,6 +43,7 @@ function makeRouter() {
     comment: { findUnique: commentFindUnique, findMany: commentFindMany, delete: commentDelete },
     card: { findMany: cardFindMany },
     auditLog: { create: jest.fn().mockResolvedValue({ id: 'audit-1' }) },
+    notification: { createMany: notificationCreateMany },
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
@@ -78,6 +80,7 @@ function makeRouter() {
     commentFindMany,
     commentDelete,
     cardFindMany,
+    notificationCreateMany,
   };
 }
 
@@ -405,6 +408,129 @@ describe('ReportsRouter.resolve', () => {
     ).resolves.toEqual({ ok: true });
     expect(reportUpdate).not.toHaveBeenCalled();
     expect(reportUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it('notifies the author once, hides the moderator, and drops href when the target is removed', async () => {
+    const targetId = '2a9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
+    const reportId = '3b9b89a4-c6f5-4a1c-9e1f-12bb89a4c6f5';
+    const marked = makeRouter();
+    marked.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    marked.reportFindUnique.mockResolvedValueOnce({
+      id: reportId,
+      status: 'PENDING',
+      targetType: 'COMMENT',
+      targetId,
+    });
+    marked.commentFindUnique.mockResolvedValueOnce({
+      userId: 'author-1',
+      content: '被处理的评论',
+      parentId: null,
+      card: { slug: 'aurora-knight' },
+      series: null,
+    });
+    marked.reportUpdate.mockResolvedValueOnce({});
+
+    await expect(
+      marked
+        .caller({
+          sub: 'u-admin',
+          username: 'moderator',
+          role: 'admin',
+          tokenVersion: 0,
+          bannedAt: null,
+        })
+        .resolve({
+          id: reportId,
+          action: 'MARK_RESOLVED',
+          resolution: 'secret-resolution',
+        }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(marked.notificationCreateMany).toHaveBeenCalledTimes(1);
+    const markedRows = marked.notificationCreateMany.mock.calls[0]?.[0]?.data;
+    expect(markedRows).toEqual([
+      expect.objectContaining({
+        userId: 'author-1',
+        actorId: null,
+        type: 'CONTENT_RESOLVED',
+        action: 'MARK_RESOLVED',
+        targetType: 'COMMENT',
+        targetId,
+        href: `/cards/aurora-knight#comment-${targetId}`,
+      }),
+    ]);
+    expect(JSON.stringify(markedRows)).not.toContain('secret-resolution');
+    expect(JSON.stringify(markedRows)).not.toContain('moderator');
+
+    const self = makeRouter();
+    self.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    self.reportFindUnique.mockResolvedValueOnce({
+      id: reportId,
+      status: 'PENDING',
+      targetType: 'COMMENT',
+      targetId,
+    });
+    self.commentFindUnique.mockResolvedValueOnce({
+      userId: 'u-admin',
+      content: '自己的评论',
+      parentId: 'parent-1',
+      card: { slug: 'aurora-knight' },
+      series: null,
+    });
+    self.commentDelete.mockResolvedValueOnce({});
+    self.reportUpdateMany.mockResolvedValueOnce({ count: 1 });
+    await expect(
+      self
+        .caller({
+          sub: 'u-admin',
+          username: 'moderator',
+          role: 'admin',
+          tokenVersion: 0,
+          bannedAt: null,
+        })
+        .resolve({ id: reportId, action: 'REMOVE_TARGET' }),
+    ).resolves.toEqual({ ok: true });
+    expect(self.notificationCreateMany).not.toHaveBeenCalled();
+
+    const removed = makeRouter();
+    removed.userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
+    removed.reportFindUnique.mockResolvedValueOnce({
+      id: reportId,
+      status: 'PENDING',
+      targetType: 'COMMENT',
+      targetId,
+    });
+    removed.commentFindUnique.mockResolvedValueOnce({
+      userId: 'author-1',
+      content: '要删掉的评论',
+      parentId: 'parent-1',
+      card: { slug: 'aurora-knight' },
+      series: null,
+    });
+    removed.commentDelete.mockResolvedValueOnce({});
+    removed.reportUpdateMany.mockResolvedValueOnce({ count: 1 });
+    await expect(
+      removed
+        .caller({
+          sub: 'u-admin',
+          username: 'moderator',
+          role: 'admin',
+          tokenVersion: 0,
+          bannedAt: null,
+        })
+        .resolve({ id: reportId, action: 'REMOVE_TARGET', resolution: 'secret-resolution' }),
+    ).resolves.toEqual({ ok: true });
+    const removedRows = removed.notificationCreateMany.mock.calls[0]?.[0]?.data;
+    expect(removedRows).toEqual([
+      expect.objectContaining({
+        userId: 'author-1',
+        actorId: null,
+        type: 'CONTENT_RESOLVED',
+        action: 'REMOVE_TARGET',
+        href: null,
+      }),
+    ]);
+    expect(JSON.stringify(removedRows)).not.toContain('secret-resolution');
   });
 });
 

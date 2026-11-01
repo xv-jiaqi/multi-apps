@@ -5,6 +5,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
   cursorPaginationInput,
+  forumRepliesListInput,
   markdownToPlainText,
   optionalDeleteReason,
   replyCreateInput,
@@ -13,7 +14,11 @@ import {
   topicSetPinnedInput,
   topicUpdateInput,
 } from '@repo/shared';
+import { aroundPageSkip } from '../../common/around-page';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
+import { forumReplyHref, forumTopicHref } from '../notifications/href';
+import { notificationExcerpt } from '../notifications/plan';
+import { contentMayNotify, notifyAfterCommit, notifyContent } from '../notifications/notify';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -160,22 +165,37 @@ export class ForumRouter {
 
       create: t.activeUserProcedure.input(topicCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const actorId = ctx.user.sub;
         const created = await createTopicWithUniqueSlug(prisma, {
           title: input.title,
           body: input.body,
-          userId: ctx.user.sub,
+          userId: actorId,
         });
+        if (contentMayNotify(created.body, null, actorId)) {
+          await notifyAfterCommit(() =>
+            notifyContent(prisma, {
+              actorId,
+              body: created.body,
+              excerpt: notificationExcerpt(created.body),
+              targetType: 'TOPIC',
+              targetId: created.id,
+              href: forumTopicHref(created.slug),
+              reply: null,
+            }),
+          );
+        }
         return mapTopicSummary({ ...created, _count: { replies: 0 } });
       }),
 
       update: t.activeUserProcedure.input(topicUpdateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const actorId = ctx.user.sub;
         const existing = await prisma.topic.findUnique({
           where: { id: input.id },
           select: { id: true, userId: true, createdAt: true },
         });
         if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
-        if (existing.userId !== ctx.user.sub) {
+        if (existing.userId !== actorId) {
           throw new TRPCError({ code: 'FORBIDDEN', message: '只能编辑自己的话题' });
         }
         if (Date.now() - existing.createdAt.getTime() > EDIT_WINDOW_MS) {
@@ -192,6 +212,18 @@ export class ForumRouter {
             _count: { select: { replies: true } },
           },
         });
+        await notifyAfterCommit(() =>
+          notifyContent(prisma, {
+            actorId,
+            body: updated.body,
+            excerpt: notificationExcerpt(updated.body),
+            targetType: 'TOPIC',
+            targetId: updated.id,
+            href: forumTopicHref(updated.slug),
+            reply: null,
+            dedupeMentions: true,
+          }),
+        );
         return mapTopicSummary(updated);
       }),
 
@@ -264,18 +296,11 @@ export class ForumRouter {
     });
 
     const replies = t.router({
-      list: t.procedure
-        .input(cursorPaginationInput.extend({ topicId: z.string().uuid() }))
-        .query(async ({ input }) => {
-          const items = await prisma.reply.findMany({
-            where: { topicId: input.topicId },
-            take: input.limit + 1,
-            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-            ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
-            include: { user: { select: { id: true, username: true } } },
-          });
-          const hasMore = items.length > input.limit;
-          const sliced = hasMore ? items.slice(0, input.limit) : items;
+      list: t.procedure.input(forumRepliesListInput).query(async ({ input }) => {
+        const include = { user: { select: { id: true, username: true } } };
+        const mapPage = (rows: ReplyWithAuthor[]) => {
+          const hasMore = rows.length > input.limit;
+          const sliced = hasMore ? rows.slice(0, input.limit) : rows;
           return {
             items: sliced.map((r: ReplyWithAuthor) => ({
               id: r.id,
@@ -283,21 +308,68 @@ export class ForumRouter {
               createdAt: r.createdAt.toISOString(),
               author: r.user,
             })),
-            nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
+            nextCursor: hasMore ? (sliced.at(-1)?.id ?? null) : null,
           };
-        }),
+        };
+
+        if (input.aroundId) {
+          const target = await prisma.reply.findFirst({
+            where: { id: input.aroundId, topicId: input.topicId },
+            select: { id: true, createdAt: true },
+          });
+          if (!target) return { items: [], nextCursor: null };
+          const before = await prisma.reply.count({
+            where: {
+              topicId: input.topicId,
+              OR: [
+                { createdAt: { lt: target.createdAt } },
+                { AND: [{ createdAt: target.createdAt }, { id: { lt: target.id } }] },
+              ],
+            },
+          });
+          const rows = await prisma.reply.findMany({
+            where: { topicId: input.topicId },
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+            skip: aroundPageSkip(before, input.limit),
+            take: input.limit + 1,
+            include,
+          });
+          return mapPage(rows);
+        }
+
+        const items = await prisma.reply.findMany({
+          where: { topicId: input.topicId },
+          take: input.limit + 1,
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
+          include,
+        });
+        return mapPage(items);
+      }),
 
       create: t.activeUserProcedure.input(replyCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const topic = await prisma.topic.findUnique({
           where: { id: input.topicId },
-          select: { id: true },
+          select: { id: true, slug: true, userId: true },
         });
         if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
+        const actorId = ctx.user.sub;
         const created = await prisma.reply.create({
-          data: { topicId: input.topicId, userId: ctx.user.sub, body: input.body },
+          data: { topicId: topic.id, userId: actorId, body: input.body },
           include: { user: { select: { id: true, username: true } } },
         });
+        await notifyAfterCommit(() =>
+          notifyContent(prisma, {
+            actorId,
+            body: created.body,
+            excerpt: notificationExcerpt(created.body),
+            targetType: 'REPLY',
+            targetId: created.id,
+            href: forumReplyHref(topic.slug, created.id),
+            reply: topic.userId === actorId ? null : { userId: topic.userId, type: 'TOPIC_REPLY' },
+          }),
+        );
         return {
           id: created.id,
           body: created.body,
