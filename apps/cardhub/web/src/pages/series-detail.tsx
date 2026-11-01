@@ -238,7 +238,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
 
         <SeriesCardList
           seriesSlug={series.slug}
-          subsets={series.subsets}
+          subsets={series.subsets ?? []}
           fallbackCardCount={series.cards.length}
         />
 

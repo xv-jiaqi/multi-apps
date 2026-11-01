@@ -82,6 +82,27 @@ vi.mock('../lib/trpc', () => ({
         useQuery: () => useSeriesQuery(),
       },
     },
+    cards: {
+      listBySeries: {
+        useQuery: () => ({
+          data: {
+            items: [],
+            page: 1,
+            pageSize: 60,
+            total: 0,
+            seriesTotal: 1,
+            sort: 'number',
+            attributeLabels: {},
+          },
+          isLoading: false,
+          isPending: false,
+          isFetching: false,
+          isError: false,
+          error: null,
+          refetch: vi.fn(),
+        }),
+      },
+    },
     comments: {
       listForCard: { useQuery: () => idleQuery },
       listForSeries: { useQuery: () => idleQuery },

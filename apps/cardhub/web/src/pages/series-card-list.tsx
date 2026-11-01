@@ -189,14 +189,18 @@ export const SeriesCardList = observer(function SeriesCardList({
   fallbackCardCount,
 }: {
   seriesSlug: string;
-  subsets: SubsetOption[];
+  subsets?: SubsetOption[];
   fallbackCardCount: number;
 }) {
   const { locale: localeStore } = useStores();
   const locale = localeStore.locale;
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale, key, vars);
   const [searchParams, setSearchParams] = useSearchParams();
-  const subsetSlugs = useMemo(() => new Set(subsets.map((item) => item.slug)), [subsets]);
+  const subsetOptions = subsets ?? [];
+  const subsetSlugs = useMemo(
+    () => new Set(subsetOptions.map((item) => item.slug)),
+    [subsetOptions],
+  );
   const parsed = useMemo(
     () => parseSeriesListParams(searchParams, subsetSlugs),
     [searchParams, subsetSlugs],
@@ -385,7 +389,7 @@ export const SeriesCardList = observer(function SeriesCardList({
               'sm:contents',
             )}
           >
-            {subsets.length > 0 ? (
+            {subsetOptions.length > 0 ? (
               <Field
                 id={subsetId}
                 label={tt('series.list.subset')}
@@ -406,7 +410,7 @@ export const SeriesCardList = observer(function SeriesCardList({
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value={SERIES_LIST_ANY}>{tt('series.list.any')}</SelectItem>
-                      {subsets.map((subset) => (
+                      {subsetOptions.map((subset) => (
                         <SelectItem
                           key={subset.slug}
                           value={subset.slug}
