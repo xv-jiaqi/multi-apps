@@ -310,6 +310,75 @@ describe('CollectionSection', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: '加载更多' }));
   });
 
+  it('moves focus to the first newly loaded card after load-more retry succeeds', async () => {
+    const user = userEvent.setup();
+    const first: ItemFixture = {
+      id: '1',
+      cardSlug: 'alpha',
+      cardName: '阿尔法',
+      imageUrl: null,
+      seriesSlug: 'dawn',
+      seriesTitle: '黎明',
+      state: 'owned',
+      ownedCount: 1,
+      wanted: false,
+    };
+    const second: ItemFixture = {
+      id: '2',
+      cardSlug: 'beta',
+      cardName: '贝塔',
+      imageUrl: null,
+      seriesSlug: 'dawn',
+      seriesTitle: '黎明',
+      state: 'owned',
+      ownedCount: 1,
+      wanted: false,
+    };
+    mock.progress.data = {
+      items: [{ seriesSlug: 'dawn', seriesTitle: '黎明', owned: 1, total: 2 }],
+    };
+    mock.list.data = { pages: [{ items: [first], nextCursor: 'next' }] };
+    mock.list.hasNextPage = true;
+
+    const view = renderSection();
+    await user.click(screen.getByRole('button', { name: '加载更多' }));
+
+    mock.list.isFetchingNextPage = false;
+    mock.list.isError = true;
+    mock.list.error = { data: { appCode: 'INTERNAL_SERVER_ERROR' }, message: 'down' };
+    mock.list.errorUpdateCount = 1;
+    view.rerender(
+      <MemoryRouter>
+        <CollectionSection />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+
+    mock.list.fetchNextPage.mockImplementation(async () => {
+      const data = {
+        pages: [
+          { items: [first], nextCursor: 'next' },
+          { items: [second], nextCursor: null },
+        ],
+      };
+      mock.list.data = data;
+      mock.list.isError = false;
+      mock.list.error = null;
+      mock.list.hasNextPage = false;
+      mock.list.isFetchingNextPage = false;
+      return { isError: false, data };
+    });
+
+    await user.click(screen.getByRole('button', { name: '重试' }));
+
+    const loaded = await screen.findByRole('link', { name: '贝塔' });
+    await waitFor(() => {
+      expect(loaded.closest('li')).toHaveFocus();
+    });
+    expect(loaded.closest('li')).toHaveAttribute('tabindex', '-1');
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
   it('omits the progress heading when there is no progress data', async () => {
     const user = userEvent.setup();
     renderSection();
@@ -383,7 +452,9 @@ describe('CollectionSection', () => {
         code: 'BAD_REQUEST',
         zodError: {
           fieldErrors: { [field]: [code === 'collection_quantity' ? code : generic] },
-          issues: [{ path: [field], message: code === 'collection_quantity' ? code : generic, code }],
+          issues: [
+            { path: [field], message: code === 'collection_quantity' ? code : generic, code },
+          ],
         },
       },
     };
