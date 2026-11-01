@@ -32,6 +32,10 @@ Caddy publishes host ports.
    sudo chown -R deploy:deploy /opt/cardhub
    sudo chmod 750 /opt/cardhub /opt/cardhub/production /opt/cardhub/staging /opt/cardhub/edge /opt/cardhub/backups
    ```
+   Nothing in this repo creates or writes `/opt/cardhub/migration-backups`.
+   That directory is not part of the layout. A dump taken before a migration
+   goes in the project backup directory the deploy user already owns:
+   `/opt/cardhub/backups/cardhub-staging` or `/opt/cardhub/backups/cardhub-prod`.
 3. Copy `deploy/docker-compose.yml`, `deploy/remote-deploy.sh`,
    `deploy/backup.sh`, and `deploy/check-backup-log.sh` into each app env's
    `deploy/` directory. Copy `deploy/edge/` into `/opt/cardhub/edge/deploy/edge/`.
@@ -203,11 +207,16 @@ A healthy admin endpoint with `502` on the public names means Caddy is up
 and an upstream name or the external `edge` network is wrong. Do not run
 `docker compose down -v`; that deletes certificates in `caddy_data`.
 
-To serve the last deployed edge config again, restore that tree from its SHA (`git checkout <prev_sha> -- deploy/edge`), sync it to `/opt/cardhub/edge/deploy/edge`, and recreate:
+To serve the last deployed edge config again, from a checkout of this repo: archive that SHA into a temp directory (the working tree stays as it is), ship it with tar over ssh the way Sync edge files does, replace the remote directory only after that extract succeeds so files added later are not left behind, remove the temp directory, then run `apply-edge-config.sh --recreate`. That validates first and does not recreate when validation fails. After recreate it waits until the container is healthy and probes the four hostnames and the www 308.
 
 ```bash
-cd /opt/cardhub/edge/deploy/edge
-docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d --no-deps --force-recreate caddy
+tmp=$(mktemp -d)
+git archive <prev_sha> deploy/edge | tar -x -C "$tmp"
+ssh <user>@<host> 'rm -rf /opt/cardhub/edge/deploy/edge.new && mkdir -p /opt/cardhub/edge/deploy/edge.new'
+tar -C "$tmp/deploy/edge" -czf - . \
+  | ssh <user>@<host> 'tar -xzf - -C /opt/cardhub/edge/deploy/edge.new && rm -rf /opt/cardhub/edge/deploy/edge && mv /opt/cardhub/edge/deploy/edge.new /opt/cardhub/edge/deploy/edge'
+rm -rf "$tmp"
+ssh <user>@<host> 'EDGE_ENVIRONMENT=<staging|production> EDGE_IMAGE_TAG=sha-<prev_sha> bash /opt/cardhub/edge/deploy/edge/apply-edge-config.sh --recreate'
 ```
 
 Then repeat the four hostname checks and the www `308` from the host
