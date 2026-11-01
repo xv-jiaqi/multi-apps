@@ -389,7 +389,9 @@ describe('SearchPage', () => {
     await user.type(input, 'usd<1');
 
     expect(
-      screen.getByText('不支持「usd<1」。可用的前缀：r:（稀有度）、s:（系列）'),
+      screen.getByText(
+        '不支持「usd<1」。可用的前缀：r:（稀有度）、s:（系列）、c:（卡号）、y:（发售年）',
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByText('unknownPrefix')).not.toBeInTheDocument();
     expect(input).toHaveAttribute('aria-describedby', 'search-syntax search-hint');
@@ -554,7 +556,9 @@ describe('SearchPage', () => {
 
     const input = screen.getByRole('searchbox', { name: '全站搜索' });
     expect(input).toHaveAttribute('aria-describedby', 'search-syntax');
-    expect(document.getElementById('search-syntax')).toHaveTextContent('r: 按稀有度');
+    expect(document.getElementById('search-syntax')).toHaveTextContent(
+      'r: 稀有度，s: 系列，c: 卡号，y: 发售年',
+    );
 
     input.focus();
     await user.tab();

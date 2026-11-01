@@ -23,7 +23,7 @@ export function ErrorBox({
   retryingLabel?: string;
   retrying?: boolean;
   retry?: () => void;
-  headingAs?: 'p' | 'h1';
+  headingAs?: 'p' | 'h1' | 'h2';
   retryClassName?: string;
   retryRef?: Ref<HTMLButtonElement>;
 }) {

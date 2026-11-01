@@ -335,6 +335,7 @@ describe('cards.listBySeries', () => {
     expect(body.page).toBe(1);
     expect(body.pageSize).toBe(60);
     expect(body.total).toBe(FIXTURE.length);
+    expect(body.seriesTotal).toBe(FIXTURE.length);
     expect(body.sort).toBe('number');
     const items = listedCards(listed.body);
     expect(keysOf(items)).toEqual(NUMBER_ORDER);
@@ -379,6 +380,7 @@ describe('cards.listBySeries', () => {
       page: 11,
       pageSize: 2,
     });
+    expect(pastEnd.status).toBe(200);
     expect(listedCards(pastEnd.body)).toEqual([]);
     expect(resultData(pastEnd.body).total).toBe(FIXTURE.length);
     const wide = await getProcedure('cards.listBySeries', {
@@ -422,6 +424,13 @@ describe('cards.listBySeries', () => {
         .body,
     );
     expect(rareOnly.map((card) => card.slug)).toEqual([slugOf('n10')]);
+    const rareBody = await getProcedure('cards.listBySeries', {
+      seriesSlug,
+      rarity: 'legendary',
+      pageSize: 100,
+    });
+    expect(resultData(rareBody.body).seriesTotal).toBe(FIXTURE.length);
+    expect(resultData(rareBody.body).total).toBe(1);
     const combined = listedCards(
       (
         await getProcedure('cards.listBySeries', {
@@ -593,5 +602,36 @@ describe('cards.listBySeries', () => {
       expect(serialized).not.toContain('Too big');
       expect(serialized).not.toContain('Too small');
     }
+  });
+
+  it('rejects an oversize body with 413 and bad JSON with 400 without leaking internals', async () => {
+    const tooLarge = await request(app.getHttpServer())
+      .post('/trpc/cards.listBySeries')
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', '203.0.113.93')
+      .send(Buffer.alloc(100 * 1024 + 1, 0x78));
+    expect(tooLarge.status).toBe(413);
+    expect(tooLarge.body.error.data.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(tooLarge.body.error.data.appCode).toBe(APP_ERROR_CODES.PAYLOAD_TOO_LARGE);
+    expect(tooLarge.body.error.data.httpStatus).toBe(413);
+    const largeSerialized = JSON.stringify(tooLarge.body);
+    expect(largeSerialized).not.toContain('entity.too.large');
+    expect(largeSerialized).not.toContain('request entity too large');
+    expect(largeSerialized).not.toContain('PayloadTooLarge');
+
+    const badJson = await request(app.getHttpServer())
+      .post('/trpc/cards.listBySeries')
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', '203.0.113.94')
+      .send('{"seriesSlug":"PARSER_LEAK_MARKER"');
+    expect(badJson.status).toBe(400);
+    expect(badJson.body.error.data.code).toBe('BAD_REQUEST');
+    expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
+    const badSerialized = JSON.stringify(badJson.body);
+    expect(badSerialized).not.toContain('PARSER_LEAK_MARKER');
+    expect(badSerialized).not.toContain('Unexpected token');
+    expect(badSerialized).not.toContain('is not valid JSON');
+    expect(badSerialized).not.toContain('SyntaxError');
+    expect(badSerialized).not.toContain('prisma');
   });
 });

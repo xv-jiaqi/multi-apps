@@ -110,6 +110,20 @@ vi.mock('../lib/trpc', () => ({
     },
     cards: {
       bySlug: { useQuery: () => ({ ...ready, data: card }) },
+      listBySeries: {
+        useQuery: () => ({
+          ...ready,
+          data: {
+            items: [],
+            page: 1,
+            pageSize: 60,
+            total: 0,
+            seriesTotal: 1,
+            sort: 'number',
+            attributeLabels: {},
+          },
+        }),
+      },
     },
     listings: {
       byCard: { useQuery: () => ({ ...ready, data: [] }) },

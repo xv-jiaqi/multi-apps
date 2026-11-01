@@ -36,6 +36,11 @@ export type CardsListBySeriesResult = {
   page: number;
   pageSize: number;
   total: number;
+  /**
+   * Cards in the series, ignoring q / rarity / subset. Optional in the
+   * contract so an older payload still parses; this loader always sets it.
+   */
+  seriesTotal?: number;
   sort: CardsListBySeriesInput['sort'];
   attributeLabels: ReturnType<typeof cardAttributeLabels>;
 };
@@ -75,9 +80,11 @@ function toListItem(card: ListedCardRow): CardsListBySeriesItem {
 }
 
 /**
- * One series read joins its cards. Sorting and paging happen in memory so the
- * printed-number order does not need a stored key. `cards_seriesId_idx` already
- * bounds the read; subset, rarity, and keyword are filters on that set.
+ * One series read joins its cards and the unfiltered card count. Sorting and
+ * paging happen in memory so the printed-number order does not need a stored
+ * key. `cards_seriesId_idx` already bounds the read; subset, rarity, and
+ * keyword are filters on that set. `seriesTotal` reuses that count and does
+ * not follow filters.
  */
 export async function loadCardsBySeries(
   prisma: PrismaService,
@@ -90,6 +97,7 @@ export async function loadCardsBySeries(
   const series = await prisma.series.findUnique({
     where: { slug: input.seriesSlug },
     select: {
+      _count: { select: { cards: true } },
       cards: { where, select: cardSelect },
     },
   });
@@ -116,6 +124,7 @@ export async function loadCardsBySeries(
     page: input.page,
     pageSize: input.pageSize,
     total: sorted.length,
+    seriesTotal: series._count.cards,
     sort: input.sort,
     attributeLabels: cardAttributeLabels(
       sorted.flatMap((card) => Object.keys(flatCardAttributes(card.attributes) ?? {})),

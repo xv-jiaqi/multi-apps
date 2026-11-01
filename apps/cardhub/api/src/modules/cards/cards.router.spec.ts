@@ -232,7 +232,7 @@ describe('CardsRouter.listBySeries', () => {
 
   it('filters in one query, pages after numeric order, and returns labels', async () => {
     const { caller, findUnique } = makeListRouter();
-    findUnique.mockResolvedValue({ cards: rows });
+    findUnique.mockResolvedValue({ cards: rows, _count: { cards: rows.length } });
 
     const page = await caller.listBySeries({
       seriesSlug: 'dawn-set',
@@ -250,6 +250,7 @@ describe('CardsRouter.listBySeries', () => {
       subset: { slug: 'base' },
     });
     expect(page.total).toBe(1);
+    expect(page.seriesTotal).toBe(3);
     expect(page.pageSize).toBe(2);
     expect(page.sort).toBe('number');
     expect(page.items.map((item) => item.slug)).toEqual(['n-10']);
@@ -269,6 +270,7 @@ describe('CardsRouter.listBySeries', () => {
     expect(second.items.map((item) => item.slug)).toEqual(['n-10']);
     expect(second.items[0]?.attributes).toEqual({ attack: 1, lore: 'x' });
     expect(second.total).toBe(3);
+    expect(second.seriesTotal).toBe(3);
 
     const defaults = await caller.listBySeries({ seriesSlug: 'dawn-set' });
     expect(defaults.page).toBe(1);
