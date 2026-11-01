@@ -73,6 +73,7 @@ export function cardsListBySeriesCacheKey(input: {
   sort?: string;
   page?: number;
   pageSize?: number;
+  includeParallels?: boolean;
 }): string {
   const q = input.q ?? '';
   const rarity = input.rarity ?? '';
@@ -80,6 +81,7 @@ export function cardsListBySeriesCacheKey(input: {
   const sort = input.sort ?? 'number';
   const page = input.page ?? 1;
   const pageSize = input.pageSize ?? CARD_SERIES_LIST_PAGE_SIZE_DEFAULT;
+  const includeParallels = input.includeParallels ? '1' : '0';
   return (
     `${cardsListBySeriesSeriesPrefix(input.seriesSlug)}` +
     `q=${encodeURIComponent(q)}` +
@@ -87,7 +89,8 @@ export function cardsListBySeriesCacheKey(input: {
     `&subset=${encodeURIComponent(subset)}` +
     `&sort=${encodeURIComponent(sort)}` +
     `&page=${page}` +
-    `&pageSize=${pageSize}`
+    `&pageSize=${pageSize}` +
+    `&includeParallels=${includeParallels}`
   );
 }
 

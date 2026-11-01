@@ -15,6 +15,9 @@ const cardSelect = {
   cardNumber: true,
   attributes: true,
   createdAt: true,
+  parallelOfId: true,
+  parallelName: true,
+  printRun: true,
   subset: { select: { slug: true } },
 } as const;
 
@@ -29,6 +32,9 @@ export type CardsListBySeriesItem = {
   cardNumber: string | null;
   subsetSlug: string | null;
   attributes: Record<string, AttributeValue> | null;
+  parallelName: string | null;
+  printRun: number | null;
+  isParallel: boolean;
 };
 
 export type CardsListBySeriesResult = {
@@ -41,6 +47,8 @@ export type CardsListBySeriesResult = {
    * contract so an older payload still parses; this loader always sets it.
    */
   seriesTotal?: number;
+  /** Parallels in the series. Filters do not change this count. */
+  parallelCount: number;
   sort: CardsListBySeriesInput['sort'];
   attributeLabels: ReturnType<typeof cardAttributeLabels>;
 };
@@ -76,6 +84,9 @@ function toListItem(card: ListedCardRow): CardsListBySeriesItem {
     cardNumber: card.cardNumber,
     subsetSlug: card.subset?.slug ?? null,
     attributes: flatCardAttributes(card.attributes),
+    parallelName: card.parallelName ?? null,
+    printRun: card.printRun ?? null,
+    isParallel: card.parallelOfId != null,
   };
 }
 
@@ -83,24 +94,33 @@ function toListItem(card: ListedCardRow): CardsListBySeriesItem {
  * One series read joins its cards and the unfiltered card count. Sorting and
  * paging happen in memory so the printed-number order does not need a stored
  * key. `cards_seriesId_idx` already bounds the read; subset, rarity, and
- * keyword are filters on that set. `seriesTotal` reuses that count and does
- * not follow filters.
+ * keyword are filters on that set. `seriesTotal` counts base cards only
+ * (`parallelOfId` null) and does not follow filters. `includeParallels`
+ * defaults to false and drops rows with `parallelOfId` before the keyword
+ * filter. `parallelCount` is a separate count of those rows and does not
+ * follow filters.
  */
 export async function loadCardsBySeries(
   prisma: PrismaService,
   input: CardsListBySeriesInput,
 ): Promise<CardsListBySeriesResult> {
   const where: Prisma.CardWhereInput = {};
+  if (!input.includeParallels) where.parallelOfId = null;
   if (input.rarity) where.rarity = input.rarity;
   if (input.subsetSlug) where.subset = { slug: input.subsetSlug };
 
-  const series = await prisma.series.findUnique({
-    where: { slug: input.seriesSlug },
-    select: {
-      _count: { select: { cards: true } },
-      cards: { where, select: cardSelect },
-    },
-  });
+  const [series, parallelCount] = await Promise.all([
+    prisma.series.findUnique({
+      where: { slug: input.seriesSlug },
+      select: {
+        _count: { select: { cards: { where: { parallelOfId: null } } } },
+        cards: { where, select: cardSelect },
+      },
+    }),
+    prisma.card.count({
+      where: { series: { slug: input.seriesSlug }, parallelOfId: { not: null } },
+    }),
+  ]);
   if (!series) {
     throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
   }
@@ -125,6 +145,7 @@ export async function loadCardsBySeries(
     pageSize: input.pageSize,
     total: sorted.length,
     seriesTotal: series._count.cards,
+    parallelCount,
     sort: input.sort,
     attributeLabels: cardAttributeLabels(
       sorted.flatMap((card) => Object.keys(flatCardAttributes(card.attributes) ?? {})),

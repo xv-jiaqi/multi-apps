@@ -8,3 +8,4 @@ export * from './catalog-import';
 export * from './card-number-order';
 export * from './card-number-normalize';
 export * from './card-attribute-label';
+export * from './print-run';

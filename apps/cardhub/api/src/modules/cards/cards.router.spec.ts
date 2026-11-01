@@ -8,7 +8,7 @@ import type { PrismaService } from '../prisma/prisma.service';
  * docs/Cardhub/handoff-context.md §6.7).
  */
 function makeRouter() {
-  const findMany = jest.fn();
+  const findMany = jest.fn().mockResolvedValue([]);
   const findUnique = jest.fn();
   const prisma = {
     card: { findMany, findUnique },
@@ -38,7 +38,14 @@ describe('CardsRouter.search', () => {
         {
           OR: [
             {
-              AND: [{ name: { contains: '极光', mode: 'insensitive' } }],
+              AND: [
+                {
+                  OR: [
+                    { name: { contains: '极光', mode: 'insensitive' } },
+                    { parallelName: { contains: '极光', mode: 'insensitive' } },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -46,6 +53,29 @@ describe('CardsRouter.search', () => {
     });
     expect(args.take).toBe(5);
     expect(args.orderBy).toEqual({ name: 'asc' });
+  });
+
+  it('keeps null parallel names when an exclude term misses the printed name', async () => {
+    const { caller, findMany } = makeRouter();
+    findMany.mockResolvedValueOnce([]);
+
+    await caller.search({ q: '-火', limit: 5 });
+
+    expect(findMany.mock.calls[0]?.[0].where).toEqual({
+      AND: [
+        {
+          AND: [
+            { NOT: { name: { contains: '火', mode: 'insensitive' } } },
+            {
+              OR: [
+                { parallelName: null },
+                { NOT: { parallelName: { contains: '火', mode: 'insensitive' } } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
   });
 
   it('accepts explicit rarity and series filters without changing result shape', async () => {
@@ -66,7 +96,14 @@ describe('CardsRouter.search', () => {
         {
           OR: [
             {
-              AND: [{ name: { contains: '龙', mode: 'insensitive' } }],
+              AND: [
+                {
+                  OR: [
+                    { name: { contains: '龙', mode: 'insensitive' } },
+                    { parallelName: { contains: '龙', mode: 'insensitive' } },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -107,6 +144,8 @@ describe('CardsRouter.search', () => {
       imageUrl: 'gradient:from-sky-200',
       seriesSlug: 'celestial-dawn',
       seriesTitle: '天穹黎明',
+      parallelName: null,
+      printRun: null,
     });
   });
 });
@@ -165,7 +204,11 @@ describe('CardsRouter.bySlug', () => {
 describe('CardsRouter.listBySeries', () => {
   function makeListRouter() {
     const findUnique = jest.fn();
-    const prisma = { series: { findUnique } } as unknown as PrismaService;
+    const count = jest.fn().mockResolvedValue(0);
+    const prisma = {
+      series: { findUnique },
+      card: { count },
+    } as unknown as PrismaService;
     const caller = new CardsRouter(new TrpcBase(), prisma).build().createCaller({
       req: {} as never,
       res: {} as never,
@@ -246,6 +289,7 @@ describe('CardsRouter.listBySeries', () => {
     expect(findUnique).toHaveBeenCalledTimes(1);
     expect(findUnique.mock.calls[0]?.[0].where).toEqual({ slug: 'dawn-set' });
     expect(findUnique.mock.calls[0]?.[0].select.cards.where).toEqual({
+      parallelOfId: null,
       rarity: 'rare',
       subset: { slug: 'base' },
     });

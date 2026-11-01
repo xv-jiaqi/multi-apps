@@ -9,7 +9,12 @@ describe('cardsListBySeriesInput', () => {
       sort: 'number',
       page: 1,
       pageSize: CARD_SERIES_LIST_PAGE_SIZE_DEFAULT,
+      includeParallels: false,
     });
+    expect(
+      cardsListBySeriesInput.parse({ seriesSlug: 'celestial-dawn', includeParallels: true })
+        .includeParallels,
+    ).toBe(true);
   });
 
   it('treats a blank keyword as omitted and trims the rest', () => {

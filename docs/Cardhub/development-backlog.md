@@ -86,7 +86,7 @@
 | CH-210 | Redis 缓存 + 限流 Redis 存储                    | P2     | M    | CH-107                | ✅ PR #181                                              |
 | CH-211 | API 错误信息国际化                              | P2     | M    | —                     | ✅ PR #119、#177                                        |
 | CH-212 | 会话安全：token 吊销、修改密码、`auth.me` 改造  | P2     | M    | CH-102                | ✅ PR #117、#120                                        |
-| CH-213 | 平行版本与限量编号                              | P2     | L    | CH-201                | 待领取                                                  |
+| CH-213 | 平行版本与限量编号                              | P2     | L    | CH-201                | 后端已做，界面未做                                      |
 | CH-214 | 资讯文章与分类                                  | P2     | L    | CH-107                | 待领取                                                  |
 | CH-215 | 发售日历                                        | P2     | M    | CH-201                | 进行中（cursor/release-calendar-api-93be，仅 API）      |
 | CH-216 | 元数据文字对比度                                | P2     | S    | —                     | 已由 #159 完成                                          |
@@ -537,6 +537,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-213 平行版本与限量编号
 
+- **进度**（2026-11-02）：后端按规格 v1 的 §1、§2、§8、§11 落地。迁移 `20261102003000_add_card_parallels` 只加可空列 `parallelOfId`、`parallelName`、`printRun`、索引和 `ON DELETE SET NULL`。改 `seriesId` 后若基础卡和平行卡不在同一系列，触发器清空 `parallelOfId` 并保留 `parallelName`；同一次 UPDATE 把两者改到同一系列则保留关联。`seriesTotal` 只计基础卡。`cards.listBySeries` 增加可选 `includeParallels`（默认 false）和 `parallelCount`。`cards.bySlug` 返回同组 `variants`。`cards.search` 和 `search.global` 的卡牌结果增加 `parallelName`、`printRun`。`/search` 的自由文字同时匹配卡名和 `parallelName`；系列页 `q` 仍只匹配卡名和卡号。`parallelName` 另有 `pg_trgm` 索引（`20261102013000_add_parallel_name_trgm`）。后台写入用 §8 的字段码。`collection.progress` 分子分母只计基础卡。系列页开关、磁贴、详情同组和后台表单还没做。
 - **背景 / 来源**：球星卡和部分集换式卡牌的同一卡号会有银折、金标、限量分母不同的版本。TCDB 用“另开一份清单再改备注”表达这件事，备注一覆盖，子集信息就丢了。Cardhub 把平行版本做成指向基础卡的一层关系。见 [industry-benchmark.md](industry-benchmark.md) 第 5 节。
 - **改动范围**
   - Prisma：`Card` 增加 `parallelOfId String?`（自关联，`onDelete: SetNull`）、`parallelName String?`、`printRun Int?`。迁移名 `add_card_parallels`。应用层校验：`parallelOfId` 指向的卡必须属于同一系列，且自己的 `parallelOfId` 为空；不能指向自己。`parallelOfId` 有值时 `parallelName` 必填，最长 40 字。`printRun` 要么为空（表示不编号），要么是大于 0 的整数。

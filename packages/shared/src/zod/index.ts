@@ -438,6 +438,8 @@ export const cardsListBySeriesInput = z.object({
     .min(1)
     .max(CARD_SERIES_LIST_PAGE_SIZE_MAX)
     .default(CARD_SERIES_LIST_PAGE_SIZE_DEFAULT),
+  /** Default false hides parallels. Omitted and false share one cache key. */
+  includeParallels: z.boolean().default(false),
 });
 export type CardsListBySeriesInput = z.infer<typeof cardsListBySeriesInput>;
 
@@ -451,6 +453,34 @@ export const adminSeriesUpsertInput = z.object({
 });
 export type AdminSeriesUpsertInput = z.infer<typeof adminSeriesUpsertInput>;
 
+/** Parallel name after trim. Matches the admin form maxLength. */
+export const PARALLEL_NAME_MAX = 40;
+
+/** Stored print-run total. Null means unnumbered. PostgreSQL INTEGER upper bound. */
+export const PRINT_RUN_MIN = 1;
+export const PRINT_RUN_MAX = 2_147_483_647;
+
+/**
+ * Empty string clears the link. Omitted leaves the stored link alone.
+ * A non-empty value is a card slug.
+ */
+export const parallelOfSlugInput = z.union([slugSchema, z.literal('')]).optional();
+
+/** Trimmed. Empty is allowed here; the write path rejects it when a base is set. */
+export const parallelNameInput = z.string().trim().max(PARALLEL_NAME_MAX).optional();
+
+/**
+ * JSON number or null. Strings are not coerced. Null clears the total.
+ * Omitted leaves the stored value alone.
+ */
+export const printRunInput = z
+  .number()
+  .int()
+  .min(PRINT_RUN_MIN)
+  .max(PRINT_RUN_MAX)
+  .nullable()
+  .optional();
+
 export const adminCardUpsertInput = z.object({
   slug: slugSchema,
   name: z.string().trim().min(1).max(120),
@@ -461,6 +491,9 @@ export const adminCardUpsertInput = z.object({
   seriesSlug: slugSchema,
   cardNumber: z.string().trim().max(CARD_NUMBER_MAX).optional(),
   subsetSlug: optionalSlugOrEmpty,
+  parallelOfSlug: parallelOfSlugInput,
+  parallelName: parallelNameInput,
+  printRun: printRunInput,
 });
 export type AdminCardUpsertInput = z.infer<typeof adminCardUpsertInput>;
 

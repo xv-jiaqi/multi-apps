@@ -9,6 +9,10 @@ function card(
     cardNumber: overrides.cardNumber === undefined ? null : overrides.cardNumber,
     createdAt: overrides.createdAt ?? new Date('2020-01-01T00:00:00.000Z'),
     id: overrides.id,
+    slug: overrides.slug ?? overrides.id,
+    parallelOfId: overrides.parallelOfId ?? null,
+    parallelName: overrides.parallelName ?? null,
+    printRun: overrides.printRun === undefined ? null : overrides.printRun,
   };
 }
 
@@ -18,6 +22,68 @@ describe('compareSeriesListCards', () => {
     const earlier = card({ id: 'a', cardNumber: '4' });
     expect(compareSeriesListCards('number', later, earlier)).toBeGreaterThan(0);
     expect(compareSeriesListCards('number', earlier, later)).toBeLessThan(0);
+  });
+
+  it('keeps two base cards on id when their print runs differ', () => {
+    const later = card({ id: 'b', cardNumber: '4', printRun: 1 });
+    const earlier = card({ id: 'a', cardNumber: '4', printRun: 99 });
+    expect(compareSeriesListCards('number', earlier, later)).toBeLessThan(0);
+  });
+
+  it('orders a parallel after the base of the same number, unnumbered then larger print runs', () => {
+    const rows = [
+      card({
+        id: 'low',
+        slug: 'low',
+        cardNumber: '4',
+        parallelOfId: 'base',
+        printRun: 2,
+        parallelName: 'two',
+      }),
+      card({ id: 'base', slug: 'base', cardNumber: '4' }),
+      card({
+        id: 'high-b',
+        slug: 'high-b',
+        cardNumber: '4',
+        parallelOfId: 'base',
+        printRun: 10,
+        parallelName: 'beta',
+      }),
+      card({
+        id: 'plain',
+        slug: 'plain',
+        cardNumber: '4',
+        parallelOfId: 'base',
+        printRun: null,
+        parallelName: 'plain',
+      }),
+      card({
+        id: 'high-a',
+        slug: 'high-a',
+        cardNumber: '4',
+        parallelOfId: 'base',
+        printRun: 10,
+        parallelName: 'alpha',
+      }),
+      card({ id: 'later-number', slug: 'later-number', cardNumber: '5' }),
+      card({
+        id: 'earlier-number',
+        slug: 'earlier-number',
+        cardNumber: '1',
+        parallelOfId: 'other',
+        printRun: 99,
+        parallelName: 'early',
+      }),
+    ].sort((left, right) => compareSeriesListCards('number', left, right));
+    expect(rows.map((row) => row.id)).toEqual([
+      'earlier-number',
+      'base',
+      'plain',
+      'high-a',
+      'high-b',
+      'low',
+      'later-number',
+    ]);
   });
 
   it('orders rarity from common to legendary, then unknown text, then blanks', () => {
