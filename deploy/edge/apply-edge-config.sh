@@ -6,12 +6,15 @@
 # is invisible to Caddy while a directory mount of optional/ is not. Reloading
 # then parses the old Caddyfile against the new optional file.
 #
-# Recreating the container is the way off that mount, and it drops every
-# domain for a few seconds. That happens only with --recreate, which the
-# deploy workflow passes solely for a manual run with recreate_edge=true.
-# Without it, a container that cannot see the synced files fails this script
-# before the app rollout. The running container is not reloaded and not
-# recreated.
+# --recreate is the manual recreate_edge checkbox. It always force-recreates
+# cardhub-edge-caddy-1, including when the container already sees the synced
+# files. caddy validate runs first; a failed validate leaves the running
+# container in place. After recreate, this script waits until Docker reports
+# healthy, then requires a response from the four site hostnames. A second
+# run with the same flag recreates again; named volumes are kept.
+# Without --recreate, a container that cannot see the synced files fails
+# this script before the app rollout. The running container is not reloaded
+# and not recreated. Automatic deploys do not pass --recreate.
 set -euo pipefail
 
 edge_dir="${EDGE_DIR:-/opt/cardhub/edge/deploy/edge}"
@@ -146,21 +149,63 @@ validate_disk() {
     validate --config /etc/caddy/Caddyfile --adapter caddyfile
 }
 
-wait_ready() {
+wait_healthy() {
   local id="$1"
-  local i status
-  for i in $(seq 1 30); do
+  local i status health
+  local attempts="${EDGE_HEALTH_ATTEMPTS:-90}"
+  local pause="${EDGE_HEALTH_SLEEP_SECONDS:-1}"
+  for i in $(seq 1 "$attempts"); do
     status="$(docker inspect -f '{{.State.Status}}' "$id" 2>/dev/null || echo missing)"
-    if [ "$status" = "running" ]; then
-      if docker exec "$id" wget -qO- http://127.0.0.1:2019/config/ >/dev/null 2>&1; then
-        return 0
-      fi
-    elif [ "$status" = "exited" ] || [ "$status" = "dead" ] || [ "$status" = "missing" ]; then
+    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$id" 2>/dev/null || echo missing)"
+    if [ "$status" = "running" ] && [ "$health" = "healthy" ]; then
+      return 0
+    fi
+    if [ "$status" = "exited" ] || [ "$status" = "dead" ] || [ "$status" = "missing" ]; then
       return 1
     fi
-    sleep 1
+    sleep "$pause"
   done
   return 1
+}
+
+read_edge_env() {
+  local key="$1"
+  awk -F= -v key="$key" 'BEGIN { value = "" } $1 == key { value = substr($0, index($0, "=") + 1) } END { printf "%s", value }' "$env_file" \
+    | tr -d '\r' | sed 's/^"//; s/"$//'
+}
+
+# Apex, production API, staging web, staging API. www is a redirect of the
+# apex and is not one of these four.
+probe_edge_domains() {
+  local key value domain attempt code
+  local attempts="${EDGE_PROBE_ATTEMPTS:-10}"
+  local pause="${EDGE_PROBE_SLEEP_SECONDS:-1}"
+  local -a domains=()
+  for key in ROOT_WEB_DOMAINS API_DOMAIN STAGING_WEB_DOMAIN STAGING_API_DOMAIN; do
+    value="$(read_edge_env "$key")"
+    if [[ ! "$value" =~ ^[A-Za-z0-9.-]+$ ]]; then
+      echo "edge env ${key} is not a single hostname: ${value:-<empty>}" >&2
+      return 1
+    fi
+    domains+=("$value")
+  done
+  for domain in "${domains[@]}"; do
+    code=""
+    for attempt in $(seq 1 "$attempts"); do
+      if code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 --resolve "${domain}:443:127.0.0.1" "https://${domain}/" 2>/dev/null)"; then
+        if [ -n "$code" ] && [ "$code" != "000" ]; then
+          echo "Edge domain ${domain} responded ${code}"
+          break
+        fi
+      fi
+      code=""
+      sleep "$pause"
+    done
+    if [ -z "$code" ]; then
+      echo "Edge domain ${domain} did not respond" >&2
+      return 1
+    fi
+  done
 }
 
 reload_running() {
@@ -176,28 +221,33 @@ reload_running() {
   echo "Reloaded edge Caddy without recreating it."
 }
 
-recreate_running() {
-  local id="$1"
-  local image started
-  image="$(docker inspect -f '{{.Config.Image}}' "$id")"
-  started="$(docker inspect -f '{{.State.StartedAt}}' "$id")"
+validate_before_recreate() {
+  local image="$1"
+  local id="$2"
+  local started
   echo "Validating synced edge files with ${image} before recreate"
   if ! validate_disk "$image"; then
     echo "Synced Caddyfile failed validation. The running container was not recreated." >&2
-    echo "Container ${id} is still the one started at ${started}." >&2
+    if [ -n "$id" ]; then
+      started="$(docker inspect -f '{{.State.StartedAt}}' "$id" 2>/dev/null || echo unknown)"
+      echo "Container ${id} is still the one started at ${started}." >&2
+    fi
     exit 1
   fi
-  echo "Recreating edge Caddy so it bind-mounts ${edge_dir} at /etc/caddy"
-  if ! compose up -d --no-deps caddy; then
-    echo "docker compose up failed. If the previous container is still running, leave it running." >&2
-    echo "Recovery once the new files are in place: docker compose -p ${project} --env-file ${env_file} -f ${edge_dir}/docker-compose.yml up -d caddy" >&2
+}
+
+finish_recreate() {
+  local id
+  echo "Force-recreating edge Caddy (${project}-caddy-1)"
+  if ! compose up -d --no-deps --force-recreate caddy; then
+    echo "docker compose up --force-recreate failed. If the previous container is still running, leave it running." >&2
+    echo "Recovery once the new files are in place: docker compose -p ${project} --env-file ${env_file} -f ${edge_dir}/docker-compose.yml up -d --force-recreate caddy" >&2
     exit 1
   fi
   id="$(compose ps -q caddy)"
-  if [ -z "$id" ] || ! wait_ready "$id"; then
-    echo "Recreated Caddy did not become ready." >&2
-    docker logs --tail 40 "$id" >&2 || true
-    echo "The on-disk config validated. Retry: docker compose -p ${project} --env-file ${env_file} -f ${edge_dir}/docker-compose.yml up -d caddy" >&2
+  if [ -z "$id" ] || ! wait_healthy "$id"; then
+    echo "Recreated Caddy did not become healthy." >&2
+    docker logs --tail 40 "${id}" >&2 || true
     exit 1
   fi
   ensure_edge_access_log_dir "${id}"
@@ -207,7 +257,11 @@ recreate_running() {
     exit 1
   fi
   print_inodes "$id"
-  echo "Recreated edge Caddy. Container ${id} is serving the synced files."
+  if ! probe_edge_domains; then
+    echo "Recreated Caddy is healthy, but a site hostname did not respond. The workflow fails." >&2
+    exit 1
+  fi
+  echo "Force-recreated edge Caddy. Container ${id} is healthy and the four domains responded."
 }
 
 refuse_stale() {
@@ -233,13 +287,8 @@ main() {
   if [ -z "$id" ]; then
     if [ "$recreate" -eq 1 ]; then
       echo "No edge Caddy container is running. Validating, then starting one."
-      validate_disk "caddy:2-alpine"
-      compose up -d --no-deps caddy
-      id="$(compose ps -q caddy)"
-      wait_ready "$id"
-      ensure_edge_access_log_dir "${id}"
-      print_inodes "$id"
-      echo "Started edge Caddy. Container ${id} is serving the synced files."
+      validate_before_recreate "caddy:2-alpine" ""
+      finish_recreate
       exit 0
     fi
     echo "No edge Caddy container is running. Skipping edge reload."
@@ -247,12 +296,15 @@ main() {
   fi
 
   if sees_synced_files "$id"; then
+    if [ "$recreate" -eq 1 ]; then
+      echo "recreate_edge is set. The running container already sees the synced files; force-recreating anyway."
+      validate_before_recreate "$(docker inspect -f '{{.Config.Image}}' "$id")" "$id"
+      finish_recreate
+      exit 0
+    fi
     if single_file_mount "$id"; then
       echo "WARNING: Caddyfile is still a single-file bind. The bytes match, so a reload can see them, but the next tar extract can desync the inode."
       manual_hint
-    fi
-    if [ "$recreate" -eq 1 ]; then
-      echo "recreate_edge is set, but the running container already sees the synced files. Not recreating."
     fi
     if [ "$changed" -eq 1 ]; then
       reload_running "$id"
@@ -263,7 +315,8 @@ main() {
   fi
 
   if [ "$recreate" -eq 1 ]; then
-    recreate_running "$id"
+    validate_before_recreate "$(docker inspect -f '{{.Config.Image}}' "$id")" "$id"
+    finish_recreate
     exit 0
   fi
   refuse_stale "$id"

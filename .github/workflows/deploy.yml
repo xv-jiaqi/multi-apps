@@ -16,7 +16,7 @@ on:
         required: true
         default: main
       recreate_edge:
-        description: Recreate the shared edge Caddy container so it picks up the directory mount. Briefly interrupts every domain. Leave this off unless you mean to do that switch.
+        description: Force-recreate cardhub-edge-caddy-1 even when it already sees the synced files. caddy validate runs first; a bad Caddyfile does not recreate. Then wait until the container is healthy and the four site hostnames respond. Briefly interrupts every domain. Leave this off unless you mean to restart the proxy.
         required: false
         type: boolean
         default: false
@@ -110,7 +110,7 @@ jobs:
       - name: Sync edge files
         shell: bash
         env:
-          # workflow_run has no inputs. Only an explicit manual true may recreate.
+          # workflow_run has no inputs. Only an explicit manual true may force-recreate.
           RECREATE_EDGE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.recreate_edge == 'true' }}
           DEPLOY_ENVIRONMENT: ${{ steps.deploy-inputs.outputs.environment }}
           DEPLOY_IMAGE_TAG: ${{ steps.deploy-inputs.outputs.image_tag }}

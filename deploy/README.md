@@ -161,19 +161,29 @@ docker compose -p cardhub-edge --env-file /opt/cardhub/edge/edge.env up -d caddy
 
 Compose bind-mounts this directory at `/etc/caddy`. A push to `main` syncs
 those files and reloads Caddy only when the running container already sees
-them. It does not recreate the container. A manual run with an older
-`image_tag` still syncs this directory from the workflow ref, not from the
-image commit. The container still running from
-the old single-file `Caddyfile` mount cannot see a replaced file; the deploy
-stops there, before the app rollout, and leaves that container running.
-Switch it once, when a few seconds of downtime for every domain is acceptable:
+them. An automatic deploy does not recreate the container. A manual run with
+an older `image_tag` still syncs this directory from the workflow ref, not
+from the image commit. The container still running from the old single-file
+`Caddyfile` mount cannot see a replaced file; without `recreate_edge` the
+deploy stops there, before the app rollout, and leaves that container
+running.
+
+`recreate_edge` always force-recreates `cardhub-edge-caddy-1`, including
+when that container already sees the synced files. `apply-edge-config.sh`
+runs `caddy validate` first and does not recreate when validation fails.
+After `docker compose up -d --no-deps --force-recreate caddy` it waits until
+Docker reports the container healthy, then requires an HTTPS response from
+the four site hostnames in `edge.env`: `ROOT_WEB_DOMAINS`, `API_DOMAIN`,
+`STAGING_WEB_DOMAIN`, and `STAGING_API_DOMAIN` (`card-hub.app`,
+`api.card-hub.app`, `staging.card-hub.app`, `api-staging.card-hub.app`).
+`www` is a redirect of the apex and is not probed separately. A failed
+health check or a hostname that does not respond fails the workflow. Running
+the checkbox again recreates again. Named volumes stay, so certificates and
+`/data/logs` survive. Do this when a few seconds of downtime for every
+domain is acceptable:
 
 Actions → Cardhub Deploy → Run workflow → environment `staging`, image tag
 `sha-<full git sha>` (staging also accepts `main`), `recreate_edge` checked.
-
-Until that run finishes, do not restart the current Caddy container. A
-restart would read the stale `Caddyfile` inode and the proxy would not come
-back.
 
 For GitHub Actions deploys, configure environment-scoped secrets:
 
@@ -818,6 +828,13 @@ Known gaps, for both the API log and this edge log:
 - Request bodies are not logged, so a token in a JSON body is absent from
   the line rather than rewritten in place.
 - Browsers do not send the URL fragment, so it is not in the edge line.
+- `token[a&b]=SECRET` is split on `&` before the closing bracket. On Caddy
+  2.11.7 the edge log is `token[a=REDACTED&b]=SECRET` (a neighboring `keep=1`
+  stays). The API `url` is `token[a=%5BRedacted%5D&b]=SECRET`, and `query`
+  is `{"token[a":"[Redacted]","b]":"SECRET"}`. The value remains on the
+  second parameter. `token[a%26b]=SECRET` is one parameter and is fully
+  redacted (`token[a%26b]=REDACTED` on the edge,
+  `token[a%26b]=%5BRedacted%5D` in the API `url`).
 
 `apply-edge-config.sh` creates `/data/logs` in the running container and
 chmods it to 755. If that fails, the apply still reloads; Caddy creates the
