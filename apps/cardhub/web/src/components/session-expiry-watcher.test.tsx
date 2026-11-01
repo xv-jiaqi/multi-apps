@@ -13,6 +13,7 @@ vi.mock('../lib/trpc', () => ({
 
 import { SessionExpiryWatcher } from './session-expiry-watcher';
 import { noteTrpcFailure } from '../lib/session-expiry';
+import { resetSessionExpiryRedirectForTests } from '../lib/session-expiry-redirect';
 
 function Probe() {
   const location = useLocation();
@@ -41,6 +42,7 @@ function renderAt(path: string) {
 }
 
 beforeEach(() => {
+  resetSessionExpiryRedirectForTests();
   rootStore.session.signOut();
   rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
   clearActiveQueryClient.mockReset();

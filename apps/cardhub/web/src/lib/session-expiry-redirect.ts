@@ -1,5 +1,5 @@
 import { clearActiveQueryClient } from './trpc';
-import { resolvePostAuthRedirect } from './auth-redirect';
+import { normalizeAppPathname, resolvePostAuthRedirect } from './auth-redirect';
 import { rootStore } from '../stores/root-store';
 
 /**
@@ -9,6 +9,11 @@ import { rootStore } from '../stores/root-store';
  * this function; a second call in the same turn does not navigate again.
  */
 let returnedToLogin = false;
+
+/** The redirect guard is process-wide. Unit tests reset it before each case. */
+export function resetSessionExpiryRedirectForTests(): void {
+  returnedToLogin = false;
+}
 
 type ExpireNavigation = {
   pathname: string;
@@ -29,12 +34,13 @@ function readProcedurePath(error: unknown): string | undefined {
 }
 
 function pageRequiresLogin(pathname: string): boolean {
-  if (pathname === '/me' || pathname.startsWith('/me/')) return true;
-  if (pathname === '/forum/new') return true;
-  if (/^\/forum\/[^/]+\/edit$/.test(pathname)) return true;
-  if (pathname === '/trade/new') return true;
-  if (pathname === '/reports' || pathname.startsWith('/reports/')) return true;
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) return true;
+  const path = normalizeAppPathname(pathname);
+  if (path === '/me' || path.startsWith('/me/')) return true;
+  if (path === '/forum/new') return true;
+  if (/^\/forum\/[^/]+\/edit$/.test(path)) return true;
+  if (path === '/trade/new') return true;
+  if (path === '/reports' || path.startsWith('/reports/')) return true;
+  if (path === '/admin' || path.startsWith('/admin/')) return true;
   return false;
 }
 
@@ -45,10 +51,11 @@ function pageRequiresLogin(pathname: string): boolean {
  * user action (comment, report, collection write) and returns to login.
  */
 function sessionExpiryReturnsToLogin(pathname: string, error?: unknown): boolean {
-  if (pageRequiresLogin(pathname)) return true;
-  if (/^\/cards\/[^/]+$/.test(pathname)) return true;
-  const path = readProcedurePath(error);
-  if (!path || path === 'auth.me') return false;
+  const path = normalizeAppPathname(pathname);
+  if (pageRequiresLogin(path)) return true;
+  if (/^\/cards\/[^/]+$/.test(path)) return true;
+  const procedure = readProcedurePath(error);
+  if (!procedure || procedure === 'auth.me') return false;
   return true;
 }
 
