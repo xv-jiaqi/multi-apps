@@ -1,6 +1,7 @@
 import axe from 'axe-core';
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { commands } from 'vitest/browser';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -90,6 +91,31 @@ vi.mock('../lib/trpc', () => ({
     series: {
       bySlug: {
         useQuery: () => ({ ...readyQuery, data: series }),
+      },
+    },
+    cards: {
+      listBySeries: {
+        useQuery: () => ({
+          ...readyQuery,
+          data: {
+            items: series.cards.map((card) => ({
+              id: card.slug,
+              ...card,
+              attributes: card.slug === 'card-long' ? { attack: 2, cost: 1, health: 4 } : null,
+            })),
+            page: 1,
+            pageSize: 60,
+            total: series.cards.length,
+            seriesTotal: series.cards.length,
+            sort: 'number',
+            attributeLabels: {
+              cost: { 'zh-CN': '费用', 'en-US': 'Cost' },
+              attack: { 'zh-CN': '攻击', 'en-US': 'Attack' },
+              health: { 'zh-CN': '生命', 'en-US': 'Health' },
+              type: { 'zh-CN': '类型', 'en-US': 'Type' },
+            },
+          },
+        }),
       },
     },
     comments: {
@@ -230,26 +256,21 @@ afterEach(() => {
 });
 
 describe('series detail at 375px', () => {
-  it('wraps a long subset jump link inside the viewport', async () => {
+  it('keeps the filter row inside the viewport', async () => {
+    const user = userEvent.setup();
     renderSeries();
-    const link = await screen.findByRole('link', { name: LONG });
-    expect(link).toHaveClass('wrap-anywhere', 'min-w-0', 'max-w-full');
     expect(window.innerWidth).toBe(375);
-    expect(link.scrollWidth).toBeLessThanOrEqual(link.clientWidth + 1);
-    const linkBox = link.getBoundingClientRect();
-    expect(linkBox.right).toBeLessThanOrEqual(376);
-    console.info(
-      JSON.stringify({
-        linkRight: Number(linkBox.right.toFixed(1)),
-        linkWidth: Number(linkBox.width.toFixed(1)),
-        linkScrollWidth: link.scrollWidth,
-        linkClientWidth: link.clientWidth,
-      }),
-    );
-    expect(linkBox.height).toBeGreaterThan(24);
-    expect(link.textContent).toBe(LONG);
+    const filters = await screen.findByRole('button', { name: '筛选' });
+    await user.click(filters);
+    const subset = screen.getByRole('combobox', { name: '子集' });
+    expect(subset.getBoundingClientRect().right).toBeLessThanOrEqual(376);
+    await user.click(subset);
+    const option = await screen.findByRole('option', { name: LONG });
+    expect(option).toHaveClass('wrap-anywhere', 'min-w-0');
     const scrolling = document.scrollingElement;
-    expect(scrolling!.scrollWidth).toBeLessThanOrEqual(scrolling!.clientWidth + 1);
+    expect(scrolling).toBeTruthy();
+    if (!scrolling) return;
+    expect(scrolling.scrollWidth).toBeLessThanOrEqual(scrolling.clientWidth + 1);
   });
 
   it('keeps white hero text and the category focus ring above the contrast floors without a cover', async () => {

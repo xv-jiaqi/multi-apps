@@ -16,6 +16,7 @@ import {
 } from '@repo/shared';
 import { z } from 'zod';
 import { categoryIdForSlug, subsetIdForSlug } from '../catalog/catalog-links';
+import { cardNumberColumns } from '../catalog/card-number-column';
 import {
   cardNumberForInput,
   formatReleaseDate,
@@ -713,6 +714,7 @@ export class AdminRouter {
           }
           const subsetId = await subsetIdForSlug(prisma, series.id, input.subsetSlug);
           const cardNumber = cardNumberForInput(input.cardNumber);
+          const numbered = cardNumber === undefined ? null : cardNumberColumns(cardNumber);
           try {
             const card = await prisma.card.create({
               data: {
@@ -724,7 +726,7 @@ export class AdminRouter {
                 attributes: input.attributes,
                 seriesId: series.id,
                 ...(subsetId !== undefined ? { subsetId } : {}),
-                ...(cardNumber !== undefined ? { cardNumber } : {}),
+                ...(numbered ?? {}),
               },
               include: cardAdminInclude,
             });
@@ -772,6 +774,7 @@ export class AdminRouter {
           }
           const previousSeriesSlug = relationSlug(existing?.series);
           const cardNumber = cardNumberForInput(input.cardNumber);
+          const numbered = cardNumber === undefined ? null : cardNumberColumns(cardNumber);
           try {
             const card = await prisma.card.update({
               where: { slug: input.slug },
@@ -783,7 +786,7 @@ export class AdminRouter {
                 attributes: input.attributes,
                 seriesId: series.id,
                 ...(subsetId !== undefined ? { subsetId } : {}),
-                ...(cardNumber !== undefined ? { cardNumber } : {}),
+                ...(numbered ?? {}),
               },
               include: cardAdminInclude,
             });

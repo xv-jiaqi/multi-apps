@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { ScrollView, View, Text, Input } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, Link, RarityBadge, Skeleton, type Rarity } from '@repo/ui-mini';
-import { hasCardSearchConditions, parseCardSearchQuery, t } from '@repo/shared';
+import { cardSearchHint, hasCardSearchConditions, parseCardSearchQuery, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { gradientFor } from '../../../lib/gradients';
@@ -45,27 +45,34 @@ export default observer(function SearchPage() {
       return;
     }
     const parsed = parseCardSearchQuery(debounced);
+    const hint = cardSearchHint(parsed);
+    const hintText = hint
+      ? hint.reason === 'unknownPrefix'
+        ? tt('search.unsupportedPrefix', { token: hint.token })
+        : hint.reason === 'invalidYear'
+          ? tt('search.ignoredYear', { token: hint.token })
+          : hint.reason === 'cardNumberTooLong'
+            ? tt('search.ignoredCardNumber', { token: hint.token })
+            : tt('search.invalidRarity', {
+                value: hint.token.includes(':')
+                  ? hint.token.slice(hint.token.indexOf(':') + 1)
+                  : hint.token,
+              })
+      : null;
     if (!parsed.ok) {
-      const colon = parsed.token.indexOf(':');
-      setError(
-        parsed.reason === 'unknownPrefix'
-          ? tt('search.unsupportedPrefix', { token: parsed.token })
-          : tt('search.invalidRarity', {
-              value: colon >= 0 ? parsed.token.slice(colon + 1) : parsed.token,
-            }),
-      );
+      setError(hintText);
       setLoading(false);
       return;
     }
     if (!hasCardSearchConditions(parsed)) {
       setResults(null);
-      setError(null);
+      setError(hintText);
       setLoading(false);
       return;
     }
     let cancelled = false;
     setLoading(true);
-    setError(null);
+    setError(hintText);
     trpc.cards.search
       .query({ q: debounced, limit: 30 })
       .then((res) => {

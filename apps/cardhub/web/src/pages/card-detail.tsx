@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { t } from '@repo/shared';
+import { cardAttributeLabel, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -171,7 +171,9 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 <dl className="grid grid-cols-2 gap-y-3 text-sm sm:grid-cols-4">
                   {Object.entries(attributes).map(([key, value]) => (
                     <div key={key} className="space-y-1">
-                      <dt className="text-xs uppercase tracking-widest text-neutral-500">{key}</dt>
+                      <dt className="text-xs tracking-widest text-neutral-600">
+                        {cardAttributeLabel(locale.locale, key)}
+                      </dt>
                       <dd className="font-mono text-base text-neutral-900">{String(value)}</dd>
                     </div>
                   ))}

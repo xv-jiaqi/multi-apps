@@ -62,16 +62,18 @@ function SectionTitle({
   title: string;
   action?: { to: string; label: string };
 }) {
+  const heading = (
+    <h2 id={id} className="text-2xl font-semibold tracking-tight text-neutral-900">
+      {title}
+    </h2>
+  );
+  if (!action) return heading;
   return (
     <div className="flex items-center justify-between gap-4">
-      <h2 id={id} className="text-2xl font-semibold tracking-tight text-neutral-900">
-        {title}
-      </h2>
-      {action ? (
-        <Link to={action.to} className={sectionLinkClass}>
-          {action.label} →
-        </Link>
-      ) : null}
+      {heading}
+      <Link to={action.to} className={sectionLinkClass}>
+        {action.label} →
+      </Link>
     </div>
   );
 }
@@ -415,11 +417,8 @@ function HomeUpcoming({ tt, query }: { tt: Translate; query: ReleasesQuery }) {
 
   return (
     <section aria-labelledby="home-upcoming-title" className="space-y-4">
-      <SectionTitle
-        id="home-upcoming-title"
-        title={tt('home.upcoming.title')}
-        action={{ to: '/calendar', label: tt('home.upcoming.all') }}
-      />
+      {/* Homepage and footer stay without a calendar link. The header is the entry. */}
+      <SectionTitle id="home-upcoming-title" title={tt('home.upcoming.title')} />
       <div id="home-upcoming-panel" ref={panelRef} tabIndex={-1} className={recoveryClass}>
         {view === 'error' ? (
           <BlockError

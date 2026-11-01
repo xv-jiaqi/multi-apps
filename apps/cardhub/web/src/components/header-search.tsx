@@ -3,12 +3,17 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { keepPreviousData } from '@tanstack/react-query';
 import { Combobox } from '@repo/ui-web';
-import { parseCardSearchQuery, shouldRequestCardSearchQuery, t } from '@repo/shared';
+import {
+  cardSearchHint,
+  parseCardSearchQuery,
+  shouldRequestCardSearchQuery,
+  t,
+} from '@repo/shared';
 import { trpc } from '../lib/trpc';
 import { useDebounced } from '../lib/use-debounced';
 import { useStores } from '../stores/root-store';
 import { CardThumb } from './card-thumb';
-import { SyntaxExamples, UnsupportedHint } from './search-syntax';
+import { SearchParseHint, SyntaxExamples } from './search-syntax';
 import { SeriesMark } from './series-mark';
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -170,7 +175,7 @@ export const HeaderSearch = observer(function HeaderSearch({
         finish(`/search?q=${encodeURIComponent(raw.trim())}`);
       }}
       emptyQueryContent={<SyntaxExamples compact onExample={setQuery} />}
-      hint={liveParsed.ok ? undefined : <UnsupportedHint error={liveParsed} />}
+      hint={cardSearchHint(liveParsed) ? <SearchParseHint parsed={liveParsed} /> : undefined}
       footer={
         trimmed && liveParsed.ok ? (
           <Link

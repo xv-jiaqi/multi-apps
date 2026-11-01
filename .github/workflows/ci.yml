@@ -216,6 +216,7 @@ jobs:
           CADDY_BIN: /usr/local/bin/caddy
         run: |
           bash deploy/plan-edge-apply.test.sh
+          bash deploy/edge-force-recreate.test.sh
           bash deploy/deploy-tree-guard.test.sh
           bash deploy/recheck-before-sync.test.sh
           bash deploy/remote-deploy-entrypoint.test.sh

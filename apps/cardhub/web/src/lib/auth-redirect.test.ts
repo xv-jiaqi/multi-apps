@@ -120,6 +120,27 @@ describe('resolvePostAuthRedirect', () => {
     expect(resolvePostAuthRedirect('/cards/./1')).toBe('/cards/./1');
   });
 
+  it('rejects open-redirect variants and keeps a normal card path', () => {
+    expect(resolvePostAuthRedirect({ from: '/ /evil.com' })).toBe('/');
+    expect(resolvePostAuthRedirect('/%2e%2e//evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect({ from: '/%2e%2e//evil.com' })).toBe('/');
+    expect(
+      resolvePostAuthRedirect({
+        from: { pathname: '/%2e%2e//evil.com', search: '', hash: '' },
+      }),
+    ).toBe('/');
+    expect(resolvePostAuthRedirect('//evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/\\evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('%2F%2Fevil.com')).toBe('/');
+    expect(resolvePostAuthRedirect(`/${'\t'}/evil.com`)).toBe('/');
+    expect(resolvePostAuthRedirect(`/${'\n'}/evil.com`)).toBe('/');
+    expect(resolvePostAuthRedirect('/cards/x\t')).toBe('/');
+    expect(resolvePostAuthRedirect('/cards/x\ny=1')).toBe('/');
+    expect(resolvePostAuthRedirect('https://evil.com')).toBe('/');
+    expect(resolvePostAuthRedirect('/cards/x?y=1#z')).toBe('/cards/x?y=1#z');
+    expect(resolvePostAuthRedirect({ from: '/cards/x?y=1#z' })).toBe('/cards/x?y=1#z');
+  });
+
   it('returns encoded query values unchanged when every decoded layer is same-site', () => {
     expect(resolvePostAuthRedirect('/trade?card=a%26b&kind=sell')).toBe(
       '/trade?card=a%26b&kind=sell',
