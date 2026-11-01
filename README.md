@@ -156,7 +156,7 @@ pnpm dev
 3. `pnpm lint` / `pnpm typecheck` / `pnpm build` / `pnpm test`
 4. 并行：`pnpm audit --prod --audit-level high`
 5. 独立 job `e2e-smoke`：Playwright 用户流程冒烟（浏览 → 卡牌 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报）。自带 Postgres 与 Redis，不进 `pnpm test`。
-6. 独立 job `Web image build`：用与 Cardhub Images 相同的 context（`.`）、`Dockerfile.web`、`GIT_SHA` 和 `BUILD_TIME` 构建 Web 生产镜像。不登录镜像仓库，也不推送。和 `API image build` 一样读 Buildx 的 GitHub Actions cache（scope `web`）。
+6. 独立 job `Web image build`：用与 Cardhub Images 相同的 context（`.`）、`Dockerfile.web`、`GIT_SHA` 和 `BUILD_TIME` 构建 Web 生产镜像。不登录镜像仓库，也不推送。和 `API image build` 一样读 Buildx 的 GitHub Actions cache（scope `web`）。Web 构建失败会让 main 上的整次 CI 变红；Cardhub Images 只在 CI 成功后发布，所以 API 镜像也不会推送，staging 自动部署同样停住。
 
 [`.github/dependabot.yml`](.github/dependabot.yml) 每周一开 minor/patch 升级 PR（npm 与 GitHub Actions 各一组）。
 
