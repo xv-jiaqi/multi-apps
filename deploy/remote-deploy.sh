@@ -1153,8 +1153,18 @@ main() {
         active_image_tag="${previous_tag}"
         active_api_image="${api_repo}@${previous_api_digest}"
         active_web_image="${web_repo}@${previous_web_digest}"
+        # Same services as a pull that succeeded. --pull never uses the
+        # local image when GHCR cannot be reached after api has already
+        # cut over and web has not.
         if ! compose pull api web; then
-          echo "::error::Rollback pull failed for ${api_repo}@${previous_api_digest} and ${web_repo}@${previous_web_digest}. Running containers were left as they are." >&2
+          echo "::error::Rollback pull failed for ${api_repo}@${previous_api_digest} and ${web_repo}@${previous_web_digest}." >&2
+          if docker image inspect "${api_repo}@${previous_api_digest}" >/dev/null 2>&1 \
+            && docker image inspect "${web_repo}@${previous_web_digest}" >/dev/null 2>&1; then
+            echo "::error::Previous api and web images are on this machine; recreating them without pulling." >&2
+            compose up -d --pull never postgres redis api web || true
+          else
+            echo "::error::Previous api or web image is not on this machine, so rollback did not run compose up. Running containers were left as they are." >&2
+          fi
         else
           # Keeps a replica already running the previous digest and drops a
           # mismatched extra one. Recreates only a service that has already

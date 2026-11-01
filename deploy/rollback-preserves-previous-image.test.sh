@@ -94,10 +94,11 @@ rewrite() {
 if [ "\${1:-}" = "pull" ] || [ "\${1:-}" = "tag" ]; then
   exit 0
 fi
-# GitHub's docker driver leaves a locally built image with RepoDigests=[].
-# This lab still pins by image id. Report name@<image id> from the digest
-# map so remote-deploy records a registry digest and rollback can rewrite it
-# back to the local tag. A daemon that already stored a RepoDigest is unchanged.
+# Fabricated RepoDigest. A locally built image on GitHub's docker driver has
+# RepoDigests=[]. This branch invents name@<image id> so the lab can pin by
+# that id; it is not a digest the build actually stored. Images pulled from
+# GHCR already have real RepoDigests and skip this. A daemon that already
+# stored a RepoDigest is unchanged.
 if [ "\${1:-}" = "image" ] && [ "\${2:-}" = "inspect" ]; then
   fmt=""
   prev=""
