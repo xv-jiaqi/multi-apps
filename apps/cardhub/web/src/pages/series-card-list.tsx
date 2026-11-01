@@ -33,7 +33,7 @@ import {
 } from '@repo/ui-web';
 import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
-import { queryFallback } from '../components/retry-button';
+import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
 import { displayCardNumber } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
@@ -276,6 +276,7 @@ export const SeriesCardList = observer(function SeriesCardList({
     { placeholderData: keepPreviousData },
   );
   const listView = queryFallback(list);
+  useFocusOnRecovery(listView, titleRef);
 
   const seriesTotal =
     list.data && typeof list.data.seriesTotal === 'number'

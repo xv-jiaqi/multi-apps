@@ -1,5 +1,31 @@
-import { expect, test, type Locator, type Route } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
 import { waitUntil } from '../../test-utils/wait-until.ts';
+
+const LIST_OK = {
+  items: [
+    {
+      id: '22222222-2222-4222-8222-222222222222',
+      slug: 'aurora-knight',
+      name: '极光骑士',
+      rarity: 'rare',
+      imageUrl: null,
+      cardNumber: '007',
+      subsetSlug: null,
+      attributes: { cost: 1, attack: 2 },
+    },
+  ],
+  page: 1,
+  pageSize: 60,
+  total: 1,
+  seriesTotal: 4,
+  sort: 'number',
+  attributeLabels: {
+    cost: { 'zh-CN': '费用', 'en-US': 'Cost' },
+    attack: { 'zh-CN': '攻击', 'en-US': 'Attack' },
+    health: { 'zh-CN': '生命', 'en-US': 'Health' },
+    type: { 'zh-CN': '类型', 'en-US': 'Type' },
+  },
+};
 
 const LIST_ERROR = {
   error: {
@@ -76,7 +102,15 @@ async function activeLabel(button: Locator): Promise<string> {
   });
 }
 
-test('series list retry keeps focus when listBySeries stays 500', async ({ page }) => {
+async function fulfillSuccess(route: Route): Promise<void> {
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify([{ result: { data: LIST_OK } }]),
+  });
+}
+
+async function startHeldRetry(page: Page, settle: 'fail' | 'ok'): Promise<Locator> {
   const gate = createRelease();
   let holdNextList = false;
   let held = false;
@@ -86,9 +120,13 @@ test('series list retry keeps focus when listBySeries stays 500', async ({ page 
     const names = procedureNames(route.request().url());
     const isList = names.includes('cards.listBySeries');
     if (isList) listRequests += 1;
-    if (holdNextList && !held && isList) {
+    if (holdNextList && !held && isList && names.length === 1) {
       held = true;
       await gate.promise;
+      if (settle === 'ok') {
+        await fulfillSuccess(route);
+        return;
+      }
     }
     await failListBySeries(route);
   });
@@ -112,28 +150,47 @@ test('series list retry keeps focus when listBySeries stays 500', async ({ page 
         requests: listRequests,
         text: await retry.textContent(),
         ariaBusy: await retry.getAttribute('aria-busy'),
+        ariaDisabled: await retry.getAttribute('aria-disabled'),
       }),
       (sample) =>
         sample.requests > requestsBeforeRetry &&
         sample.text === '重试中…' &&
-        sample.ariaBusy === 'true',
+        sample.ariaBusy === 'true' &&
+        sample.ariaDisabled === 'true',
       'list retry request in flight',
     );
     expect(busy.requests).toBeGreaterThan(requestsBeforeRetry);
     expect(await activeLabel(retry)).toBe('BUTTON:重试中…');
-
     gate.release();
-
-    await waitUntil(
-      async () => ({
-        text: await retry.textContent(),
-        ariaBusy: await retry.getAttribute('aria-busy'),
-      }),
-      (sample) => sample.text === '重试' && sample.ariaBusy !== 'true',
-      'list retry settled',
-    );
-    expect(await activeLabel(retry)).toBe('BUTTON:重试');
-  } finally {
+    return retry;
+  } catch (error) {
     gate.release();
+    throw error;
   }
+}
+
+test('a failed list retry keeps focus on the retry button', async ({ page }) => {
+  const retry = await startHeldRetry(page, 'fail');
+  await waitUntil(
+    async () => ({
+      text: await retry.textContent(),
+      ariaBusy: await retry.getAttribute('aria-busy'),
+    }),
+    (sample) => sample.text === '重试' && sample.ariaBusy !== 'true',
+    'list retry settled',
+  );
+  expect(await activeLabel(retry)).toBe('BUTTON:重试');
+});
+
+test('a successful list retry moves focus to the cards title', async ({ page }) => {
+  await startHeldRetry(page, 'ok');
+  const title = page.locator('#cards-title');
+  await waitUntil(
+    () => title.evaluate((node) => node.ownerDocument.activeElement === node),
+    (focused) => focused,
+    'cards title focused',
+  );
+  await expect(title).toBeFocused();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /极光骑士/ })).toBeVisible();
 });
