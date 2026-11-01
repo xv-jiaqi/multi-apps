@@ -4,7 +4,7 @@ import { appRoutes } from '../app';
 import { FOOTER_LINKS } from './site-footer';
 
 describe('footer links', () => {
-  it('points at pages that exist and leaves the calendar route off until CH-215', () => {
+  it('points at pages that exist and keeps the calendar link off', () => {
     expect(FOOTER_LINKS.map((link) => link.href)).toEqual([
       '/categories',
       '/series',

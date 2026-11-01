@@ -4,8 +4,9 @@ import { t } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 
 /**
- * CH-205 §7 lists `/calendar` only after the CH-215 page exists.
- * That route is not registered, so the link is omitted (a missing page 404s).
+ * The calendar page is registered, but this footer stays without that link.
+ * A separate change hides the homepage and footer entry points before they
+ * are turned on.
  */
 export const FOOTER_LINKS: ReadonlyArray<{ href: string; labelKey: string }> = [
   { href: '/categories', labelKey: 'nav.categories' },

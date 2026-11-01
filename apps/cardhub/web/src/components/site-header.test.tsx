@@ -51,7 +51,7 @@ describe('SiteHeader admin navigation', () => {
       within(menu as HTMLElement)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['内容管理', '用户管理', '举报队列', '操作审计']);
+    ).toEqual(['内容管理', '发售条目', '用户管理', '举报队列', '操作审计']);
     expect(screen.getByRole('link', { name: '操作审计' })).toHaveAttribute('href', '/admin/audit');
 
     await user.keyboard('{Escape}');

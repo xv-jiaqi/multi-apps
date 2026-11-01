@@ -351,8 +351,12 @@ describe('home sections', () => {
       from: shanghaiToday(),
       to: addCalendarDays(shanghaiToday(), 365),
     });
-    expect(screen.getByRole('heading', { level: 2, name: '即将发售' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /发售日历/ })).toHaveAttribute('href', '/calendar');
+    const upcoming = screen.getByRole('heading', { level: 2, name: '即将发售' }).closest('section');
+    expect(upcoming).not.toBeNull();
+    expect(within(upcoming as HTMLElement).getByRole('link', { name: /发售日历/ })).toHaveAttribute(
+      'href',
+      '/calendar',
+    );
     expect(screen.getByRole('heading', { level: 3, name: '发售0' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: '发售2' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '发售3' })).not.toBeInTheDocument();
