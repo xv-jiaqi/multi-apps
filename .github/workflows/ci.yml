@@ -66,7 +66,7 @@ jobs:
           bash deploy/catalog-cache-header-compose.test.sh
           bash deploy/ci-redis-install.test.sh
           rm -f "${tmp}"
-          bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh scripts/check-api-image.sh
+          bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/resolve-image-digests.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh scripts/check-api-image.sh
           sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
 
       - name: Install pnpm
@@ -219,6 +219,8 @@ jobs:
           bash deploy/edge-force-recreate.test.sh
           bash deploy/deploy-tree-guard.test.sh
           bash deploy/recheck-before-sync.test.sh
+          bash deploy/resolve-image-digests.test.sh
+          bash deploy/image-digest.test.sh
           bash deploy/remote-deploy-entrypoint.test.sh
           bash deploy/password-prehash-env.test.sh
           bash deploy/catalog-cache-header-env.test.sh

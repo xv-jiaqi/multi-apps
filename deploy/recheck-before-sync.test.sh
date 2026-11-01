@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# The deploy job's first --assert is followed by a GHCR wait of up to ~10
-# minutes. A commit that changes deploy/ can land on main during that wait.
+# The deploy job's first --assert is followed by digest resolution, which
+# waits up to ~10 minutes for the Images run. A commit that changes deploy/
+# can land on main during that wait.
 # The job must fetch origin/main and run resolve-deploy-inputs.sh --assert
 # again as the step immediately before it syncs, and that second assert must
 # exit 1 before any file is uploaded. The edge job has the same adjacent
@@ -71,7 +72,7 @@ if step_before edge "Sync edge files"; then
   edge_rechecks=1
 fi
 
-# The image wait must stay before the deploy re-check, never between the
+# Digest resolution must stay before the deploy re-check, never between the
 # re-check and the upload.
 if [ "${deploy_rechecks}" -eq 1 ]; then
   if ! awk '
@@ -84,13 +85,13 @@ if [ "${deploy_rechecks}" -eq 1 ]; then
       wait_at = 0
       sync_at = 0
       for (i = 1; i <= n; i++) {
-        if (names[i] == "Wait for GHCR images") wait_at = i
+        if (names[i] == "Resolve image digests") wait_at = i
         if (names[i] == "Sync deploy files") sync_at = i
       }
       if (wait_at == 0 || sync_at == 0 || wait_at >= sync_at - 1) exit 1
     }
   '; then
-    echo "FAIL deploy: Wait for GHCR images is not strictly before the re-check that precedes sync" >&2
+    echo "FAIL deploy: Resolve image digests is not strictly before the re-check that precedes sync" >&2
     deploy_rechecks=0
   fi
 fi

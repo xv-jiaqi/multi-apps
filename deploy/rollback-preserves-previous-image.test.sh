@@ -70,9 +70,28 @@ fi
 
 cat > "${bin}/docker" <<EOF
 #!/bin/bash
-# The lab images are already built locally. A bare \`docker pull\` of the
-# ghcr.io tag must not reach GHCR.
-if [ "\${1:-}" = "pull" ]; then
+# Lab images are local tags. remote-deploy.sh pulls and runs
+# name@sha256:<image id>. Rewrite that ref to the local tag. A bare pull
+# or tag must not reach GHCR.
+map="${lab}/digest-map"
+rewrite() {
+  local arg="\$1"
+  case "\${arg}" in
+    *@sha256:*)
+      local digest="\${arg##*@}"
+      local mapped=""
+      if [ -f "\${map}" ]; then
+        mapped="\$(awk -v d="\${digest}" '\$1 == d { print \$2; exit }' "\${map}")"
+      fi
+      if [ -n "\${mapped}" ]; then
+        printf '%s' "\${mapped}"
+        return 0
+      fi
+      ;;
+  esac
+  printf '%s' "\${arg}"
+}
+if [ "\${1:-}" = "pull" ] || [ "\${1:-}" = "tag" ]; then
   exit 0
 fi
 if [ "\${1:-}" = "compose" ]; then
@@ -81,8 +100,20 @@ if [ "\${1:-}" = "compose" ]; then
       exit 0
     fi
   done
+  if [ -n "\${API_IMAGE:-}" ]; then
+    API_IMAGE="\$(rewrite "\${API_IMAGE}")"
+    export API_IMAGE
+  fi
+  if [ -n "\${WEB_IMAGE:-}" ]; then
+    WEB_IMAGE="\$(rewrite "\${WEB_IMAGE}")"
+    export WEB_IMAGE
+  fi
 fi
-exec ${real_docker} "\$@"
+args=()
+for arg in "\$@"; do
+  args+=("\$(rewrite "\${arg}")")
+done
+exec ${real_docker} "\${args[@]}"
 EOF
 chmod +x "${bin}/docker"
 
@@ -214,6 +245,22 @@ echo "building lab images"
 "${real_docker}" tag alpine:3.20 "ghcr.io/xv-jiaqi/cardhub-api:sha-${TRUE_PREV}"
 "${real_docker}" tag alpine:3.20 "ghcr.io/xv-jiaqi/cardhub-web:sha-${TRUE_PREV}"
 
+digest_map="${lab}/digest-map"
+: > "${digest_map}"
+record_digest() {
+  local ref="$1"
+  local id
+  id="$("${real_docker}" inspect -f '{{.Id}}' "${ref}")"
+  printf '%s %s\n' "${id}" "${ref}" >> "${digest_map}"
+}
+record_digest "ghcr.io/xv-jiaqi/cardhub-api:sha-${GOOD}"
+record_digest "ghcr.io/xv-jiaqi/cardhub-web:sha-${GOOD}"
+record_digest "ghcr.io/xv-jiaqi/cardhub-api:sha-${BAD}"
+record_digest "ghcr.io/xv-jiaqi/cardhub-web:sha-${BAD}"
+digest_for() {
+  awk -v ref="$1" '$2 == ref { print $1; exit }' "${digest_map}"
+}
+
 cat > "${state}/previous-images.env" <<EOF
 # Seeded true previous from the last successful switch.
 PREVIOUS_API_TAG=sha-${TRUE_PREV}
@@ -230,7 +277,9 @@ export CURL_BIN="${bin}/curl"
 
 echo "deploying healthy release ${GOOD}"
 good_log="${lab}/good.log"
-if ! bash "${repo}/deploy/remote-deploy.sh" staging "sha-${GOOD}" "${GOOD}" >"${good_log}" 2>&1; then
+if ! API_IMAGE_DIGEST="$(digest_for "ghcr.io/xv-jiaqi/cardhub-api:sha-${GOOD}")" \
+  WEB_IMAGE_DIGEST="$(digest_for "ghcr.io/xv-jiaqi/cardhub-web:sha-${GOOD}")" \
+  bash "${repo}/deploy/remote-deploy.sh" staging "sha-${GOOD}" "${GOOD}" >"${good_log}" 2>&1; then
   echo "FAIL healthy deploy exited non-zero" >&2
   cat "${good_log}" >&2
   exit 1
@@ -250,7 +299,9 @@ echo "OK healthy deploy left the seeded previous image in place"
 echo "deploying crashing release ${BAD}"
 bad_log="${lab}/bad.log"
 set +e
-bash "${repo}/deploy/remote-deploy.sh" staging "sha-${BAD}" "${BAD}" >"${bad_log}" 2>&1
+API_IMAGE_DIGEST="$(digest_for "ghcr.io/xv-jiaqi/cardhub-api:sha-${BAD}")" \
+  WEB_IMAGE_DIGEST="$(digest_for "ghcr.io/xv-jiaqi/cardhub-web:sha-${BAD}")" \
+  bash "${repo}/deploy/remote-deploy.sh" staging "sha-${BAD}" "${BAD}" >"${bad_log}" 2>&1
 bad_rc=$?
 set -e
 if [ "${bad_rc}" -eq 0 ]; then

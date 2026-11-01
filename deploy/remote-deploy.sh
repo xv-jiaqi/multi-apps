@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 usage() {
-  echo "Usage: $0 <production|staging> <sha-40hex-image-tag> <40hex-expected-sha>" >&2
+  echo "Usage: API_IMAGE_DIGEST=sha256:<64 hex> WEB_IMAGE_DIGEST=sha256:<64 hex> $0 <production|staging> <sha-40hex-image-tag> <40hex-expected-sha>" >&2
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
@@ -14,6 +14,9 @@ fi
 
 # CARDHUB_ROOT is /opt/cardhub in production. Tests point it at a temp tree.
 cardhub_root="${CARDHUB_ROOT:-/opt/cardhub}"
+# Pulls use these names with @sha256:<digest>, never the floating tag.
+api_repo="${CARDHUB_API_REPO:-ghcr.io/xv-jiaqi/cardhub-api}"
+web_repo="${CARDHUB_WEB_REPO:-ghcr.io/xv-jiaqi/cardhub-web}"
 # Seconds `docker stop -t` waits after SIGTERM while in-flight requests finish.
 # Compose stop_grace_period is the same 30s ceiling.
 stop_grace_seconds="${CARDHUB_STOP_GRACE_SECONDS:-30}"
@@ -129,8 +132,86 @@ prepare_container_log_dir() {
 }
 
 compose() {
-  : "${env_name:?}" "${active_image_tag:?}" "${project:?}" "${env_file:?}" "${compose_file:?}"
-  ENV_NAME="${env_name}" IMAGE_TAG="${active_image_tag}" docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" "$@"
+  : "${env_name:?}" "${active_image_tag:?}" "${active_api_image:?}" "${active_web_image:?}" "${project:?}" "${env_file:?}" "${compose_file:?}"
+  ENV_NAME="${env_name}" \
+    IMAGE_TAG="${active_image_tag}" \
+    API_IMAGE="${active_api_image}" \
+    WEB_IMAGE="${active_web_image}" \
+    docker compose -p "${project}" --env-file "${env_file}" -f "${compose_file}" "$@"
+}
+
+valid_image_digest() {
+  [[ "$1" =~ ^sha256:[0-9a-f]{64}$ ]]
+}
+
+# sha-<40 hex> embedded in a reference, with or without @sha256:<digest>.
+immutable_tag_from_ref() {
+  local ref="$1"
+  if [[ "${ref}" =~ :(sha-[0-9a-f]{40})(@sha256:[0-9a-f]{64})?$ ]]; then
+    printf '%s\n' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  return 1
+}
+
+# RepoTags, then the OCI revision label. Used when Config.Image is only
+# name@sha256:<digest> and does not carry the git sha tag.
+sha_tag_from_container() {
+  local id="$1"
+  local image_id tags tag rev
+  image_id="$(docker inspect -f '{{.Image}}' "${id}" 2>/dev/null || true)"
+  if [ -z "${image_id}" ]; then
+    return 1
+  fi
+  tags="$(docker image inspect -f '{{range .RepoTags}}{{.}}{{"\n"}}{{end}}' "${image_id}" 2>/dev/null || true)"
+  while IFS= read -r tag; do
+    if [[ "${tag}" =~ :(sha-[0-9a-f]{40})$ ]]; then
+      printf '%s\n' "${BASH_REMATCH[1]}"
+      return 0
+    fi
+  done <<< "${tags}"
+  rev="$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "${image_id}" 2>/dev/null || true)"
+  if [[ "${rev}" =~ ^[0-9a-f]{40}$ ]]; then
+    printf 'sha-%s\n' "${rev}"
+    return 0
+  fi
+  return 1
+}
+
+# Prefer the digest the container was started with, then a registry
+# RepoDigest, then the local image id. The image id is not a manifest
+# digest; it matches only when the caller pinned that id.
+digest_of_container() {
+  local id="$1"
+  local config image_id line
+  config="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>/dev/null || true)"
+  if [[ "${config}" =~ @(sha256:[0-9a-f]{64})$ ]]; then
+    printf '%s\n' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  image_id="$(docker inspect -f '{{.Image}}' "${id}" 2>/dev/null || true)"
+  if [ -n "${image_id}" ]; then
+    while IFS= read -r line; do
+      [ -n "${line}" ] || continue
+      if [[ "${line}" =~ @(sha256:[0-9a-f]{64})$ ]]; then
+        printf '%s\n' "${BASH_REMATCH[1]}"
+        return 0
+      fi
+    done < <(docker image inspect -f '{{range .RepoDigests}}{{.}}{{"\n"}}{{end}}' "${image_id}" 2>/dev/null || true)
+  fi
+  if valid_image_digest "${image_id}"; then
+    printf '%s\n' "${image_id}"
+    return 0
+  fi
+  return 1
+}
+
+container_has_digest() {
+  local id="$1"
+  local expected="$2"
+  local got
+  got="$(digest_of_container "${id}" || true)"
+  [ -n "${got}" ] && [ "${got}" = "${expected}" ]
 }
 
 count_lines() {
@@ -568,7 +649,7 @@ archive_removed_container_logs() {
     local image short stamp dir dest tmp partial
     image="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>/dev/null)" || image=""
     short=""
-    if [[ "${image}" =~ :sha-([0-9a-f]{40})$ ]]; then
+    if [[ "${image}" =~ :sha-([0-9a-f]{40})(@sha256:[0-9a-f]{64})?$ ]]; then
       short="${BASH_REMATCH[1]:0:12}"
     fi
     if [ -z "${short}" ]; then
@@ -779,11 +860,16 @@ main() {
     exit 64
   fi
 
-  local app_dir compose_file env_file active_image_tag
+  local app_dir compose_file env_file active_image_tag active_api_image active_web_image
+  local api_digest web_digest
   app_dir="${base_dir}/deploy"
   compose_file="${app_dir}/docker-compose.yml"
   env_file="${base_dir}/${environment}.env"
   active_image_tag="${image_tag}"
+  active_api_image=""
+  active_web_image=""
+  api_digest="${API_IMAGE_DIGEST:-}"
+  web_digest="${WEB_IMAGE_DIGEST:-}"
 
   if ! docker network inspect edge >/dev/null 2>&1; then
     echo "Docker network 'edge' does not exist. Start deploy/edge first." >&2
@@ -819,6 +905,15 @@ main() {
   # Runs after the checks above so a rejected prehash or DSN does not
   # rewrite this file. ENV_NAME is already staging or prod.
   apply_catalog_cache_header "${env_file}" || exit $?
+
+  # No digest means the Images run is unfinished, failed, missing, or the
+  # manifest was not there. Stop before compose, pull, or rollback.
+  if ! valid_image_digest "${api_digest}" || ! valid_image_digest "${web_digest}"; then
+    echo "Refusing deploy: image digest for ${expected_sha} is unavailable. The running containers were not changed." >&2
+    exit 1
+  fi
+  active_api_image="${api_repo}@${api_digest}"
+  active_web_image="${web_repo}@${web_digest}"
 
   cd "${app_dir}"
 
@@ -911,24 +1006,52 @@ main() {
     fi
   done
 
+  local api_prev_id web_prev_id
+  api_prev_id="$(service_ids api)"
+  web_prev_id="$(service_ids web)"
   previous_api_image="$(read_previous_image api)"
   previous_web_image="$(read_previous_image web)"
   previous_tag=""
   previous_api_tag=""
   previous_web_tag=""
-  if [[ "${previous_api_image}" =~ :sha-[0-9a-f]{40}$ ]] && [[ "${previous_web_image}" =~ :sha-[0-9a-f]{40}$ ]]; then
-    previous_api_tag="${previous_api_image##*:}"
-    previous_web_tag="${previous_web_image##*:}"
+  previous_api_digest=""
+  previous_web_digest=""
+  if ! previous_api_tag="$(immutable_tag_from_ref "${previous_api_image}")"; then
+    previous_api_tag=""
+    if [ "$(count_lines "${api_prev_id}")" -eq 1 ]; then
+      previous_api_tag="$(sha_tag_from_container "${api_prev_id}" || true)"
+    fi
+  fi
+  if ! previous_web_tag="$(immutable_tag_from_ref "${previous_web_image}")"; then
+    previous_web_tag=""
+    if [ "$(count_lines "${web_prev_id}")" -eq 1 ]; then
+      previous_web_tag="$(sha_tag_from_container "${web_prev_id}" || true)"
+    fi
+  fi
+  if [ "$(count_lines "${api_prev_id}")" -eq 1 ]; then
+    previous_api_digest="$(digest_of_container "${api_prev_id}" || true)"
+  fi
+  if [ "$(count_lines "${web_prev_id}")" -eq 1 ]; then
+    previous_web_digest="$(digest_of_container "${web_prev_id}" || true)"
+  fi
+  if [[ "${previous_api_tag}" =~ ^sha-[0-9a-f]{40}$ ]] && [[ "${previous_web_tag}" =~ ^sha-[0-9a-f]{40}$ ]]; then
     if [ "${previous_api_tag}" = "${previous_web_tag}" ]; then
       previous_tag="${previous_api_tag}"
     else
       echo "Previous api/web tags differ (${previous_api_tag} vs ${previous_web_tag}); automatic rollback requires matching immutable tags" >&2
     fi
-  elif [[ "${previous_api_image}" =~ :sha-[0-9a-f]{40}$ ]]; then
-    previous_api_tag="${previous_api_image##*:}"
+  elif [[ "${previous_api_tag}" =~ ^sha-[0-9a-f]{40}$ ]]; then
     previous_tag="${previous_api_tag}"
-  elif [[ "${previous_web_image}" =~ :sha-[0-9a-f]{40}$ ]]; then
-    previous_web_tag="${previous_web_image##*:}"
+  fi
+
+  # An existing api or web container without both pre-switch digests cannot
+  # be rolled back. Stop before pull or compose up. A first deploy, where
+  # neither service has a container, continues.
+  if [ "$(count_lines "${api_prev_id}")" -ge 1 ] || [ "$(count_lines "${web_prev_id}")" -ge 1 ]; then
+    if ! valid_image_digest "${previous_api_digest}" || ! valid_image_digest "${previous_web_digest}"; then
+      echo "Refusing deploy: an api or web container is already running, but both previous image digests are required before any container is replaced. The running containers were not changed." >&2
+      exit 1
+    fi
   fi
 
   record_previous_images() {
@@ -982,12 +1105,19 @@ main() {
     rollback_in_progress=1
     trap - ERR
     if [[ "${previous_tag}" =~ ^sha-[0-9a-f]{40}$ ]] && [ "${previous_tag}" != "${image_tag}" ]; then
-      echo "Rolling back ${environment} to ${previous_tag}" >&2
-      active_image_tag="${previous_tag}"
-      compose pull api web || true
-      # Keeps a replica already running previous_tag and drops a mismatched
-      # extra one. Recreates only a service that has already cut over.
-      compose up -d postgres redis api web || true
+      if valid_image_digest "${previous_api_digest}" && valid_image_digest "${previous_web_digest}"; then
+        echo "Rolling back ${environment} to ${previous_tag}" >&2
+        active_image_tag="${previous_tag}"
+        active_api_image="${api_repo}@${previous_api_digest}"
+        active_web_image="${web_repo}@${previous_web_digest}"
+        compose pull api web || true
+        # Keeps a replica already running the previous digest and drops a
+        # mismatched extra one. Recreates only a service that has already
+        # cut over.
+        compose up -d postgres redis api web || true
+      else
+        echo "No previous image digest available for automatic rollback to ${previous_tag}. Running containers were left as they are." >&2
+      fi
     else
       echo "No previous immutable sha tag available for automatic rollback" >&2
     fi
@@ -1080,22 +1210,22 @@ main() {
   confirm_new_container() {
     local svc="$1"
     local id="$2"
-    local image
-    image="$(docker inspect -f '{{.Config.Image}}' "${id}")"
-    case "${image}" in
-      *:"${image_tag}") ;;
-      *)
-        echo "new ${svc} container image is ${image}, expected tag ${image_tag}" >&2
-        return 1
-        ;;
-    esac
+    local expected
     case "${svc}" in
-      api) confirm_api "${id}" ;;
-      web) confirm_web "${id}" ;;
+      api) expected="${api_digest}" ;;
+      web) expected="${web_digest}" ;;
       *)
         echo "unknown service ${svc}" >&2
         return 1
         ;;
+    esac
+    if ! container_has_digest "${id}" "${expected}"; then
+      echo "new ${svc} container image digest does not match ${expected}" >&2
+      return 1
+    fi
+    case "${svc}" in
+      api) confirm_api "${id}" ;;
+      web) confirm_web "${id}" ;;
     esac
   }
 
@@ -1228,16 +1358,80 @@ main() {
     return 1
   }
 
+  # Skip the rollout only when each service already runs the expected
+  # digest and its rendered compose config hash. An env-file change (a
+  # GitHub variable or secret written above, or a DATABASE_URL edit) changes
+  # that hash and recreates. CARDHUB_FORCE_ROLLOUT=1 recreates even when
+  # both the digest and the hash already match.
+  service_unchanged() {
+    local svc="$1"
+    local id="$2"
+    local want line expected_hash running_hash
+    case "${svc}" in
+      api) want="${api_digest}" ;;
+      web) want="${web_digest}" ;;
+      *) return 1 ;;
+    esac
+    container_has_digest "${id}" "${want}" || return 1
+    line="$(compose config --hash "${svc}" 2>/dev/null || true)"
+    expected_hash="${line##* }"
+    expected_hash="${expected_hash//$'\r'/}"
+    running_hash="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.config-hash"}}' "${id}" 2>/dev/null || true)"
+    running_hash="${running_hash//$'\r'/}"
+    [ -n "${expected_hash}" ] && [ "${expected_hash}" != "${svc}" ] && [ "${expected_hash}" = "${running_hash}" ]
+  }
+  if [ "${CARDHUB_FORCE_ROLLOUT:-}" != "1" ] \
+    && [ "$(count_lines "${api_prev_id}")" -eq 1 ] \
+    && [ "$(count_lines "${web_prev_id}")" -eq 1 ] \
+    && service_unchanged api "${api_prev_id}" \
+    && service_unchanged web "${web_prev_id}"; then
+    echo "api and web already run the expected digests and compose config; verifying without recreating"
+    if ! wait_for_container_healthy "${api_prev_id}" api \
+      || ! confirm_new_container api "${api_prev_id}" \
+      || ! wait_for_container_healthy "${web_prev_id}" web \
+      || ! confirm_new_container web "${web_prev_id}"; then
+      echo "Existing containers failed verification. They were not recreated." >&2
+      return 1
+    fi
+    local same_api_domain
+    same_api_domain="$(awk -F= '$1 == "API_DOMAIN" { print $2 }' "${env_file}" | tail -n 1 | tr -d '\r' | sed 's/^"//; s/"$//')"
+    if [ -z "${same_api_domain}" ]; then
+      echo "API_DOMAIN is missing from ${env_file}" >&2
+      return 1
+    fi
+    tmp="$(mktemp)"
+    if ! verify_api_health "${same_api_domain}" "${expected_sha}" "${tmp}"; then
+      echo "Public health check failed. Running containers were not recreated." >&2
+      return 1
+    fi
+    echo "Verified running api and web digests without recreating containers"
+    return 0
+  fi
+
   # Classify the image before rollback is armed and before compose pull
   # or compose up. Old means both split entrypoint files are absent.
   # An incomplete pair is not an old image, even when MIGRATE_DATABASE_URL
   # is empty. A daemon error must not skip migrations and roll the API forward.
+  # Both digests are pulled here. A missing manifest exits before rollback
+  # is armed and before any container is replaced.
   local migrate_database_url api_image entrypoint_rc
   migrate_database_url="$(read_env_file_var "${env_file}" MIGRATE_DATABASE_URL)"
-  api_image="ghcr.io/xv-jiaqi/cardhub-api:${image_tag}"
+  api_image="${active_api_image}"
   if ! docker pull "${api_image}"; then
     echo "Failed to pull ${api_image}; the running API was not replaced" >&2
     exit 1
+  fi
+  if ! docker pull "${active_web_image}"; then
+    echo "Failed to pull ${active_web_image}; the running API was not replaced" >&2
+    exit 1
+  fi
+  # Local sha- tags keep image-cleanup and the next rollback's tag lookup
+  # working. The container itself is still started from the digest ref.
+  if ! docker tag "${active_api_image}" "${api_repo}:${image_tag}"; then
+    echo "Warning: could not tag ${api_repo}:${image_tag} for cleanup" >&2
+  fi
+  if ! docker tag "${active_web_image}" "${web_repo}:${image_tag}"; then
+    echo "Warning: could not tag ${web_repo}:${image_tag} for cleanup" >&2
   fi
   entrypoint_rc=0
   probe_split_entrypoint || entrypoint_rc=$?

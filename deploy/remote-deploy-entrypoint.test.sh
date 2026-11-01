@@ -17,6 +17,10 @@ sha="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 tag="sha-${sha}"
 prev_sha="$(printf 'a%.0s' {1..40})"
 prev_tag="sha-${prev_sha}"
+api_digest="sha256:$(printf '1%.0s' {1..64})"
+web_digest="sha256:$(printf '2%.0s' {1..64})"
+prev_api_digest="sha256:$(printf '3%.0s' {1..64})"
+prev_web_digest="sha256:$(printf '4%.0s' {1..64})"
 failed=0
 
 assert() {
@@ -107,7 +111,7 @@ shift || true
 if [ "${cmd}" = "pull" ] && [ -n "${DOCKER_STUB_PULL_RC:-}" ]; then
   exit "${DOCKER_STUB_PULL_RC}"
 fi
-if [ "${cmd}" = "network" ] || [ "${cmd}" = "pull" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ]; then
+if [ "${cmd}" = "network" ] || [ "${cmd}" = "pull" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ] || [ "${cmd}" = "tag" ] || [ "${cmd}" = "image" ]; then
   exit 0
 fi
 
@@ -165,6 +169,17 @@ if [ "${cmd}" = "inspect" ]; then
         echo "ghcr.io/xv-jiaqi/cardhub-web:${DOCKER_STUB_TAG:?}"
       else
         echo "ghcr.io/xv-jiaqi/cardhub-api:${DOCKER_STUB_TAG:?}"
+      fi
+      ;;
+    '{{.Image}}')
+      if [ "${id}" = "oldapi" ]; then
+        echo "${DOCKER_STUB_PREV_API_DIGEST:?}"
+      elif [ "${id}" = "oldweb" ]; then
+        echo "${DOCKER_STUB_PREV_WEB_DIGEST:?}"
+      elif [ "${id}" = "newweb" ] || [ "${id}" = "webcontainer" ]; then
+        echo "${DOCKER_STUB_WEB_DIGEST:?}"
+      else
+        echo "${DOCKER_STUB_API_DIGEST:?}"
       fi
       ;;
     *)
@@ -271,6 +286,12 @@ EOF
     DOCKER_STUB_SHA="${sha}" \
     DOCKER_STUB_PREVIOUS="${previous}" \
     DOCKER_STUB_PREV_TAG="${prev_tag}" \
+    DOCKER_STUB_API_DIGEST="${api_digest}" \
+    DOCKER_STUB_WEB_DIGEST="${web_digest}" \
+    DOCKER_STUB_PREV_API_DIGEST="${prev_api_digest}" \
+    DOCKER_STUB_PREV_WEB_DIGEST="${prev_web_digest}" \
+    API_IMAGE_DIGEST="${api_digest}" \
+    WEB_IMAGE_DIGEST="${web_digest}" \
     ${forced_rc:+DOCKER_STUB_ENTRYPOINT_RC="${forced_rc}"} \
     ${pull_rc:+DOCKER_STUB_PULL_RC="${pull_rc}"} \
     bash "${deploy_script}" staging "${tag}" "${sha}" > "${script_log}" 2>&1 || script_rc=$?

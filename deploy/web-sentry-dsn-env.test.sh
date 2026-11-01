@@ -14,6 +14,8 @@ old_dsn="https://old.example/1"
 new_dsn="https://public@example.ingest.sentry.io/123"
 sha="$(printf 'c%.0s' {1..40})"
 tag="sha-${sha}"
+api_digest="sha256:$(printf 'a%.0s' {1..64})"
+web_digest="sha256:$(printf 'b%.0s' {1..64})"
 failed=0
 
 unset WEB_SENTRY_DSN || true
@@ -402,6 +404,8 @@ run_workflow() {
         DEPLOY_ENVIRONMENT=staging \
         DEPLOY_IMAGE_TAG="${tag}" \
         DEPLOY_EXPECTED_SHA="${sha}" \
+        API_IMAGE_DIGEST="${api_digest}" \
+        WEB_IMAGE_DIGEST="${web_digest}" \
         SSH_LOG="${work}/ssh.log" \
         bash "${extracted}"
     ) >"${log}" 2>"${err}" || rc=$?
@@ -415,6 +419,8 @@ run_workflow() {
         DEPLOY_ENVIRONMENT=staging \
         DEPLOY_IMAGE_TAG="${tag}" \
         DEPLOY_EXPECTED_SHA="${sha}" \
+        API_IMAGE_DIGEST="${api_digest}" \
+        WEB_IMAGE_DIGEST="${web_digest}" \
         SSH_LOG="${work}/ssh.log" \
         WEB_SENTRY_DSN="${value}" \
         bash "${extracted}"

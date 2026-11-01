@@ -13,6 +13,8 @@ secret="db-password-should-not-appear"
 rejected="rejected-value-should-not-appear"
 sha="$(printf 'c%.0s' {1..40})"
 tag="sha-${sha}"
+api_digest="sha256:$(printf 'a%.0s' {1..64})"
+web_digest="sha256:$(printf 'b%.0s' {1..64})"
 failed=0
 
 assert() {
@@ -405,6 +407,8 @@ run_workflow() {
         DEPLOY_ENVIRONMENT=staging \
         DEPLOY_IMAGE_TAG="${tag}" \
         DEPLOY_EXPECTED_SHA="${sha}" \
+        API_IMAGE_DIGEST="${api_digest}" \
+        WEB_IMAGE_DIGEST="${web_digest}" \
         SSH_LOG="${work}/ssh.log" \
         bash "${extracted}"
     ) >"${log}" 2>"${err}" || rc=$?
@@ -418,6 +422,8 @@ run_workflow() {
         DEPLOY_ENVIRONMENT=staging \
         DEPLOY_IMAGE_TAG="${tag}" \
         DEPLOY_EXPECTED_SHA="${sha}" \
+        API_IMAGE_DIGEST="${api_digest}" \
+        WEB_IMAGE_DIGEST="${web_digest}" \
         SSH_LOG="${work}/ssh.log" \
         PASSWORD_PREHASH_WRITE="${value}" \
         bash "${extracted}"

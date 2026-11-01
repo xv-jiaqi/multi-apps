@@ -6,7 +6,7 @@ x-logging: &json-file-logs
 
 services:
   api:
-    image: ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}
+    image: ${API_IMAGE:-ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}}
     restart: unless-stopped
     logging: *json-file-logs
     # tini forwards SIGTERM to node. The process stops accepting connections
@@ -72,7 +72,7 @@ services:
   # This is the only service that receives MIGRATE_DATABASE_URL. An empty
   # value makes migrate-entrypoint.sh fall back to DATABASE_URL.
   migrate:
-    image: ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}
+    image: ${API_IMAGE:-ghcr.io/xv-jiaqi/cardhub-api:${IMAGE_TAG}}
     profiles: ['migrate']
     restart: 'no'
     logging: *json-file-logs
@@ -87,7 +87,7 @@ services:
       default:
 
   web:
-    image: ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}
+    image: ${WEB_IMAGE:-ghcr.io/xv-jiaqi/cardhub-web:${IMAGE_TAG}}
     restart: unless-stopped
     logging: *json-file-logs
     stop_grace_period: 30s
