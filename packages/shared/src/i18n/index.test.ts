@@ -124,6 +124,14 @@ describe('search result plurals', () => {
 
 describe('other count copy', () => {
   it('pluralizes English nouns that agree with {count}', () => {
+    expect(t('en-US', 'series.list.total', { count: 1 })).toBe('1 card');
+    expect(t('en-US', 'series.list.total', { count: 0 })).toBe('0 cards');
+    expect(t('en-US', 'series.list.total', { count: 2 })).toBe('2 cards');
+    expect(t('en-US', 'series.list.found', { count: 1 })).toBe('1 card found');
+    expect(t('en-US', 'series.list.found', { count: 2 })).toBe('2 cards found');
+    expect(t('zh-CN', 'series.list.total', { count: 1 })).toBe('共 1 张');
+    expect(t('zh-CN', 'series.list.found', { count: 1 })).toBe('找到 1 张');
+
     expect(t('en-US', 'series.cardCount', { count: 1 })).toBe('1 card inside');
     expect(t('en-US', 'series.cardCount', { count: 0 })).toBe('0 cards inside');
     expect(t('en-US', 'series.cardCount', { count: 2 })).toBe('2 cards inside');

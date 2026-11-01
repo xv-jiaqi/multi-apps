@@ -2,29 +2,21 @@ import { useLayoutEffect, useRef, type Ref } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { isAppErrorCode, t, type Locale } from '@repo/shared';
+import { isAppErrorCode, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { seriesMetaDescription } from '../lib/meta-description';
-import { RarityBadge } from '../components/rarity-badge';
 import { CommentSection } from '../components/comment-section';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
 import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
-import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
+import { useArtImage } from '../components/artwork';
 import { cn } from '@repo/ui-web';
-import { displayCardNumber, formatCatalogDate, groupSeriesCards } from '../lib/catalog-taxonomy';
+import { formatCatalogDate } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
-
-const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'] as const;
-function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
-  if (rarity && (RARITY_ORDER as readonly string[]).includes(rarity)) {
-    return rarity as (typeof RARITY_ORDER)[number];
-  }
-  return 'common';
-}
+import { SeriesCardList } from './series-card-list';
 
 type SeriesHeroProps = {
   series: { slug: string; title: string; description: string | null; coverUrl: string | null };
@@ -100,166 +92,6 @@ function seriesFailureKey(error: SeriesQueryError): string {
   if (appCode === 'UNKNOWN' || code === 'UNKNOWN') return 'error.app.UNKNOWN';
   if (isAppErrorCode(appCode) || isAppErrorCode(code)) return 'error.app.INTERNAL_SERVER_ERROR';
   return 'error.app.UNKNOWN';
-}
-
-type SeriesCardArtProps = {
-  card: { slug: string; name: string; imageUrl: string | null };
-};
-
-function SeriesCardArt({ card }: SeriesCardArtProps) {
-  const art = useArtImage({
-    src: card.imageUrl,
-    alt: '',
-    fit: 'cover',
-    className: 'absolute inset-0',
-  });
-  const hasImage = art.mode === 'image';
-
-  return (
-    <div
-      className={cn(
-        'relative flex h-44 items-center justify-center bg-gradient-to-br',
-        gradientFor(card.slug),
-        hasImage && 'py-3',
-      )}
-      aria-hidden
-    >
-      {hasImage ? (
-        <div
-          className={cn(
-            'relative h-full overflow-hidden rounded-md shadow-md',
-            ART_ASPECT.card,
-            ART_SURFACE,
-            'ring-1 ring-black/10',
-          )}
-        >
-          <img key={card.imageUrl ?? card.slug} {...art.imgProps} />
-        </div>
-      ) : (
-        <span className="text-3xl font-black uppercase tracking-widest text-white/70">
-          {card.name.slice(0, 1)}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function SeriesCardLink({
-  card,
-  locale,
-}: {
-  card: {
-    slug: string;
-    name: string;
-    rarity: string | null;
-    imageUrl: string | null;
-    cardNumber?: string | null;
-  };
-  locale: Locale;
-}) {
-  const number = card.cardNumber?.trim();
-  return (
-    <Link
-      to={`/cards/${card.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-    >
-      <SeriesCardArt card={card} />
-      <div className="flex min-w-0 items-center justify-between gap-3 p-4">
-        <span className="min-w-0">
-          {number ? (
-            <span className="mr-2 font-mono text-xs tabular-nums text-neutral-600 wrap-anywhere">
-              {displayCardNumber(number)}
-            </span>
-          ) : null}
-          <span className="text-base font-semibold text-neutral-900 wrap-anywhere">
-            {card.name}
-          </span>
-        </span>
-        <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale} />
-      </div>
-    </Link>
-  );
-}
-
-function SeriesCardGroups({
-  cards,
-  subsets,
-  title,
-  locale,
-  tt,
-}: {
-  cards: Array<{
-    slug: string;
-    name: string;
-    rarity: string | null;
-    imageUrl: string | null;
-    cardNumber?: string | null;
-    subsetSlug?: string | null;
-  }>;
-  subsets?: Array<{ slug: string; name: string; kind: 'BASE' | 'INSERT'; sortOrder: number }>;
-  title: string;
-  locale: Locale;
-  tt: (key: string, vars?: Record<string, string | number>) => string;
-}) {
-  const grouped = groupSeriesCards(subsets, cards);
-  const jumpTargets = grouped.groups.filter((group) => group.kind !== 'UNGROUPED');
-
-  const grid = (items: typeof cards) => (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((card) => (
-        <li key={card.slug} className="min-w-0">
-          <SeriesCardLink card={card} locale={locale} />
-        </li>
-      ))}
-    </ul>
-  );
-
-  return (
-    <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
-      {!grouped.flat && jumpTargets.length >= 2 ? (
-        <nav aria-label={tt('series.detail.subsetNav')} className="flex flex-wrap gap-2">
-          {jumpTargets.map((group) => (
-            <a
-              key={group.id}
-              href={`#subset-${group.id}`}
-              className="inline-flex min-h-6 min-w-0 max-w-full items-center rounded px-1 text-sm text-brand-700 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-              onClick={(event) => {
-                event.preventDefault();
-                document.getElementById(`subset-${group.id}`)?.focus();
-              }}
-            >
-              {group.name}
-            </a>
-          ))}
-        </nav>
-      ) : null}
-      {grouped.flat
-        ? grid(cards)
-        : grouped.groups.map((group) => (
-            <section key={group.id} aria-labelledby={`subset-${group.id}`} className="space-y-3">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <h3
-                  id={`subset-${group.id}`}
-                  tabIndex={-1}
-                  className="text-base font-semibold text-neutral-900 wrap-anywhere focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                >
-                  {group.kind === 'UNGROUPED' ? tt('series.detail.ungrouped') : group.name}
-                </h3>
-                <span className="text-xs text-neutral-600">
-                  {tt('series.detail.subsetCount', { count: group.cards.length })}
-                </span>
-                {group.kind === 'INSERT' ? (
-                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
-                    {tt('series.detail.insert')}
-                  </span>
-                ) : null}
-              </div>
-              {grid(group.cards)}
-            </section>
-          ))}
-    </section>
-  );
 }
 
 export const SeriesDetailPage = observer(function SeriesDetailPage() {
@@ -404,12 +236,10 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           }
         />
 
-        <SeriesCardGroups
-          cards={series.cards}
+        <SeriesCardList
+          seriesSlug={series.slug}
           subsets={series.subsets}
-          title={tt('series.detail.cardsTitle')}
-          locale={locale.locale}
-          tt={tt}
+          fallbackCardCount={series.cards.length}
         />
 
         <Card className="border-white/60 bg-white/70 backdrop-blur">

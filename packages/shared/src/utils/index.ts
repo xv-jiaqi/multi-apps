@@ -1,3 +1,6 @@
+import { normalizedCardNumber } from '../card-number-normalize';
+import { CARD_NUMBER_MAX } from '../zod';
+
 // Cross-platform timer: reference `globalThis.setTimeout` through a narrow
 // declaration so this file compiles in environments that don't bundle DOM or
 // Node type libraries (e.g. miniapp builds).
@@ -79,11 +82,26 @@ export const CARD_RARITY_VALUES = ['common', 'rare', 'epic', 'legendary'] as con
 export type CardRarity = (typeof CARD_RARITY_VALUES)[number];
 
 export type CardSearchParseErrorReason = 'unknownPrefix' | 'invalidRarity';
+export type CardSearchIgnoredReason = 'invalidYear' | 'cardNumberTooLong';
+export type CardSearchIgnored = {
+  reason: CardSearchIgnoredReason;
+  token: string;
+};
+export type CardSearchHint = {
+  reason: CardSearchParseErrorReason | CardSearchIgnoredReason;
+  token: string;
+};
 export type CardSearchParseResult =
   | {
       ok: true;
       rarity?: CardRarity;
       seriesSlug?: string;
+      /** Normalized card number (`c:`). Absent when the prefix was not used. */
+      cardNumber?: string;
+      /** Series release year (`y:`), including 0 from `y:0000`. */
+      releaseYear?: number;
+      /** First ignored `c:` / `y:` token. The rest of the query still matches. */
+      ignored?: CardSearchIgnored;
       includeGroups: string[][];
       excludeTerms: string[];
     }
@@ -93,9 +111,16 @@ export type CardSearchParseResult =
       token: string;
     };
 
-const RESERVED_PREFIXES = new Set(['r', 's']);
-const RESERVED_FUTURE_PREFIXES = new Set(['c', 'y']);
+const SILENT_INCOMPLETE_PREFIXES = new Set(['r', 's', 'c', 'y']);
+const RELEASE_YEAR = /^[0-9]{4}$/;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function rememberIgnored(
+  ignored: CardSearchIgnored | undefined,
+  next: CardSearchIgnored,
+): CardSearchIgnored {
+  return ignored ?? next;
+}
 
 function appendNameToken(groups: string[][], token: string): void {
   if (groups.length === 0) groups.push([]);
@@ -110,6 +135,11 @@ export function parseCardSearchQuery(query: string): CardSearchParseResult {
 
   let rarity: CardRarity | undefined;
   let seriesSlug: string | undefined;
+  let cardNumber: string | undefined;
+  let releaseYear: number | undefined;
+  let ignored: CardSearchIgnored | undefined;
+  let sawCardNumber = false;
+  let sawReleaseYear = false;
   const includeGroups: string[][] = [[]];
   const excludeTerms: string[] = [];
 
@@ -127,7 +157,7 @@ export function parseCardSearchQuery(query: string): CardSearchParseResult {
 
     if (incompletePrefixMatch) {
       const prefix = incompletePrefixMatch[1]!.toLowerCase();
-      if (RESERVED_PREFIXES.has(prefix)) continue;
+      if (SILENT_INCOMPLETE_PREFIXES.has(prefix)) continue;
       return { ok: false, reason: 'unknownPrefix', token };
     }
 
@@ -135,10 +165,13 @@ export function parseCardSearchQuery(query: string): CardSearchParseResult {
       const prefix = prefixMatch[1]!.toLowerCase();
       const value = prefixMatch[2]!;
       if (prefix === 'r') {
-        if (!(CARD_RARITY_VALUES as readonly string[]).includes(value)) {
+        if (!CARD_RARITY_VALUES.some((item) => item === value)) {
           return { ok: false, reason: 'invalidRarity', token };
         }
-        if (!rarity) rarity = value as CardRarity;
+        if (!rarity) {
+          const matched = CARD_RARITY_VALUES.find((item) => item === value);
+          if (matched) rarity = matched;
+        }
         continue;
       }
       if (prefix === 's') {
@@ -147,7 +180,32 @@ export function parseCardSearchQuery(query: string): CardSearchParseResult {
         }
         continue;
       }
-      if (RESERVED_FUTURE_PREFIXES.has(prefix) || /^[A-Za-z]+$/.test(prefix)) {
+      if (prefix === 'c') {
+        if (sawCardNumber) continue;
+        const trimmed = value.trim();
+        if (trimmed.length === 0) continue;
+        sawCardNumber = true;
+        if (trimmed.length > CARD_NUMBER_MAX) {
+          ignored = rememberIgnored(ignored, { reason: 'cardNumberTooLong', token: rawToken });
+          continue;
+        }
+        const normalized = normalizedCardNumber(trimmed);
+        if (normalized) cardNumber = normalized;
+        continue;
+      }
+      if (prefix === 'y') {
+        if (sawReleaseYear) continue;
+        const trimmed = value.trim();
+        if (trimmed.length === 0) continue;
+        sawReleaseYear = true;
+        if (RELEASE_YEAR.test(trimmed)) {
+          releaseYear = Number(trimmed);
+        } else {
+          ignored = rememberIgnored(ignored, { reason: 'invalidYear', token: rawToken });
+        }
+        continue;
+      }
+      if (/^[A-Za-z]+$/.test(prefix)) {
         return { ok: false, reason: 'unknownPrefix', token };
       }
     }
@@ -168,9 +226,19 @@ export function parseCardSearchQuery(query: string): CardSearchParseResult {
     ok: true,
     ...(rarity ? { rarity } : {}),
     ...(seriesSlug ? { seriesSlug } : {}),
+    ...(cardNumber ? { cardNumber } : {}),
+    ...(releaseYear !== undefined ? { releaseYear } : {}),
+    ...(ignored ? { ignored } : {}),
     includeGroups: includeGroups.filter((group) => group.length > 0),
     excludeTerms,
   };
+}
+
+/** Hint for the search box. Invalid `c:` / `y:` stay on an otherwise ok parse. */
+export function cardSearchHint(parsed: CardSearchParseResult): CardSearchHint | null {
+  if (!parsed.ok) return { reason: parsed.reason, token: parsed.token };
+  if (parsed.ignored) return parsed.ignored;
+  return null;
 }
 
 export function hasCardSearchConditions(
@@ -179,6 +247,8 @@ export function hasCardSearchConditions(
   return (
     Boolean(parsed.rarity) ||
     Boolean(parsed.seriesSlug) ||
+    Boolean(parsed.cardNumber) ||
+    parsed.releaseYear !== undefined ||
     parsed.includeGroups.length > 0 ||
     parsed.excludeTerms.length > 0
   );

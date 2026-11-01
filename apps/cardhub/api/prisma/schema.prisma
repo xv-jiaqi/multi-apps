@@ -122,6 +122,9 @@ model Card {
   seriesId    String
   // Null means the card has no printed number. Old servers ignore the column.
   cardNumber  String?
+  // Exact-match key for /search c:. Written whenever cardNumber is written.
+  // Expand-only: old servers ignore the column. See add_card_number_normalized.
+  cardNumberNormalized String?
   // Null means the card is not in a subset (ungrouped). Deleting a subset
   // sets this to null and leaves the card in place.
   subsetId    String?
@@ -136,6 +139,7 @@ model Card {
   @@index([seriesId])
   @@index([subsetId])
   @@index([name])
+  @@index([cardNumberNormalized])
   @@index([name(ops: raw("gin_trgm_ops"))], map: "cards_name_trgm_idx", type: Gin)
   @@map("cards")
 }

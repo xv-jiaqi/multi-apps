@@ -32,7 +32,7 @@ const card = {
   seriesSlug: 'celestial-dawn',
   seriesTitle: '天穹黎明',
   cardNumber: null as string | null,
-  attributes: { Cost: '3' },
+  attributes: { Cost: '3', attack: 2 },
 };
 
 const cardQuery: {
@@ -295,6 +295,26 @@ describe('card detail meta description', () => {
       'content',
       '极光骑士 · 天穹黎明 No.001。在 Cardhub 查看卡牌资料、交易和讨论。 辉光足够。',
     );
+  });
+
+  it('localizes attack and keeps the label at neutral-600', () => {
+    showCard();
+    renderCard();
+    const attack = screen.getByText('攻击');
+    expect(attack.tagName).toBe('DT');
+    expect(attack).toHaveClass('text-neutral-600');
+    expect(attack.className).not.toContain('uppercase');
+    expect(attack.className).not.toContain('neutral-500');
+    expect(screen.getByText('Cost')).toBeInTheDocument();
+  });
+
+  it('uses the English attribute label', () => {
+    rootStore.locale.setLocale('en-US');
+    showCard();
+    renderCard();
+    const attack = screen.getByText('Attack');
+    expect(attack.tagName).toBe('DT');
+    expect(attack).toHaveClass('text-neutral-600');
   });
 
   it('places the collection bar after the title and before attributes', () => {

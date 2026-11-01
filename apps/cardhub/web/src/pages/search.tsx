@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 import type { AppRouter } from '@repo/trpc-contract';
 import {
   CARD_RARITY_VALUES,
+  cardSearchHint,
   parseCardSearchQuery,
   shouldRequestCardSearchQuery,
   t,
@@ -28,7 +29,7 @@ import { PageMeta } from '../components/page-meta';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
 import { CardThumb } from '../components/card-thumb';
 import { SeriesMark } from '../components/series-mark';
-import { SyntaxExamples, UnsupportedHint } from '../components/search-syntax';
+import { SearchParseHint, SyntaxExamples } from '../components/search-syntax';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { useDebounced } from '../lib/use-debounced';
@@ -131,6 +132,7 @@ export const SearchPage = observer(function SearchPage() {
 
   const requested = (visibleQuery.trim() === urlQuery ? visibleQuery : debounced).trim();
   const liveParsed = parseCardSearchQuery(visibleQuery);
+  const liveHint = cardSearchHint(liveParsed) !== null;
   const liveCanRequest = shouldRequestCardSearchQuery(visibleQuery);
   const canRequest = shouldRequestCardSearchQuery(requested);
   const results = trpc.search.global.useQuery(
@@ -188,13 +190,13 @@ export const SearchPage = observer(function SearchPage() {
               value={visibleQuery}
               onChange={(event) => setQuery(event.target.value)}
               aria-label={tt('search.headerLabel')}
-              aria-describedby={liveParsed.ok ? 'search-syntax' : 'search-syntax search-hint'}
+              aria-describedby={liveHint ? 'search-syntax search-hint' : 'search-syntax'}
               placeholder={tt('search.placeholder')}
               className="pl-9"
             />
           </div>
           <SyntaxExamples id="search-syntax" onExample={setQuery} />
-          {!liveParsed.ok ? <UnsupportedHint id="search-hint" error={liveParsed} /> : null}
+          <SearchParseHint id="search-hint" parsed={liveParsed} />
         </div>
 
         <div className="flex flex-wrap items-end gap-3">

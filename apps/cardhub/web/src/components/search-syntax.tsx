@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { Info } from 'lucide-react';
-import { t, type CardSearchParseErrorReason } from '@repo/shared';
+import { cardSearchHint, t, type CardSearchParseResult } from '@repo/shared';
 import { useStores } from '../stores/root-store';
 
 function valueAfterColon(token: string): string {
@@ -13,6 +13,7 @@ export const SEARCH_SYNTAX_EXAMPLES = [
   's:celestial-dawn',
   '极光 OR 冰川',
   '守 -冰川',
+  'y:2024',
 ] as const;
 
 export const SyntaxExamples = observer(function SyntaxExamples({
@@ -51,19 +52,29 @@ export const SyntaxExamples = observer(function SyntaxExamples({
   );
 });
 
+export function SearchParseHint({ id, parsed }: { id?: string; parsed: CardSearchParseResult }) {
+  const hint = cardSearchHint(parsed);
+  if (!hint) return null;
+  return <UnsupportedHint id={id} error={hint} />;
+}
+
 export const UnsupportedHint = observer(function UnsupportedHint({
   id,
   error,
 }: {
   id?: string;
-  error: { reason: CardSearchParseErrorReason; token: string };
+  error: { reason: string; token: string };
 }) {
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const message =
     error.reason === 'unknownPrefix'
       ? tt('search.unsupportedPrefix', { token: error.token })
-      : tt('search.invalidRarity', { value: valueAfterColon(error.token) });
+      : error.reason === 'invalidYear'
+        ? tt('search.ignoredYear', { token: error.token })
+        : error.reason === 'cardNumberTooLong'
+          ? tt('search.ignoredCardNumber', { token: error.token })
+          : tt('search.invalidRarity', { value: valueAfterColon(error.token) });
 
   return (
     <p id={id} role="status" className="flex items-start gap-1.5 text-xs text-neutral-700">

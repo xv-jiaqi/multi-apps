@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { normalizedCardNumber } from '@repo/shared';
 import { PrismaClient } from '@prisma/client';
 
 import { CATALOG_CATEGORY, CATALOG_SERIES } from './seed-data';
@@ -61,6 +62,7 @@ export async function seedCatalog(prisma: PrismaClient) {
           attributes: card.attributes,
           seriesId: upsertedSeries.id,
           cardNumber: card.cardNumber ?? null,
+          cardNumberNormalized: normalizedCardNumber(card.cardNumber ?? null),
           ...(subsetId ? { subsetId } : {}),
         },
       });
