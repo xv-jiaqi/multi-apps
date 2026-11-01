@@ -94,6 +94,34 @@ rewrite() {
 if [ "\${1:-}" = "pull" ] || [ "\${1:-}" = "tag" ]; then
   exit 0
 fi
+# GitHub's docker driver leaves a locally built image with RepoDigests=[].
+# This lab still pins by image id. Report name@<image id> from the digest
+# map so remote-deploy records a registry digest and rollback can rewrite it
+# back to the local tag. A daemon that already stored a RepoDigest is unchanged.
+if [ "\${1:-}" = "image" ] && [ "\${2:-}" = "inspect" ]; then
+  fmt=""
+  prev=""
+  for arg in "\$@"; do
+    if [ "\${prev}" = "-f" ]; then
+      fmt="\${arg}"
+    fi
+    prev="\${arg}"
+  done
+  out="\$("${real_docker}" "\$@" 2>/dev/null)" || {
+    "${real_docker}" "\$@"
+    exit \$?
+  }
+  if [ -z "\${out}" ] && [ "\${fmt#*RepoDigests}" != "\${fmt}" ] && [ -f "\${map}" ]; then
+    id="\${@: -1}"
+    ref="\$(awk -v d="\${id}" '\$1 == d { print \$2; exit }' "\${map}")"
+    if [ -n "\${ref}" ]; then
+      printf '%s@%s\n' "\${ref%%:*}" "\${id}"
+      exit 0
+    fi
+  fi
+  printf '%s\n' "\${out}"
+  exit 0
+fi
 if [ "\${1:-}" = "compose" ]; then
   for arg in "\$@"; do
     if [ "\${arg}" = "pull" ]; then
