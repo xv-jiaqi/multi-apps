@@ -251,7 +251,7 @@ fi
 
 source="artifact"
 if [ "${api_rc}" -ne 0 ] || [ "${web_rc}" -ne 0 ]; then
-  echo "Images run ${run_id} has no digest artifact; resolving sha-${expected_sha} because that run succeeded" >&2
+  echo "::warning::Images run ${run_id} has no digest artifact; resolving sha-${expected_sha} because that run succeeded" >&2
   source="tag"
   api_digest="$(resolve_tag_digest "${api_repo}" "sha-${expected_sha}")" || {
     echo "Refusing deploy: manifest for ${api_repo}:sha-${expected_sha} is missing. Running containers were not changed." >&2
