@@ -15,6 +15,7 @@ declare module 'vitest/browser' {
     pressEnterInFrame: (name: string) => Promise<void>;
   }
 }
+import { waitUntil } from '../../../test-utils/wait-until';
 import { ErrorBoundary } from './error-boundary';
 import { RouteErrorFallback } from './route-error';
 
@@ -80,14 +81,26 @@ function renderRouter(initial: string) {
   return router;
 }
 
+function readRetryButton(): HTMLButtonElement {
+  const button = screen.getByRole('button', { name: '重试' });
+  if (!(button instanceof HTMLButtonElement)) {
+    throw new Error('retry control is not a button');
+  }
+  return button;
+}
+
 async function pressEnterOnRetry(times: number) {
-  let current = screen.getByRole('button', { name: '重试' });
+  let current = readRetryButton();
   current.focus();
   expect(document.activeElement).toBe(current);
 
   for (let attempt = 0; attempt < times; attempt += 1) {
     await commands.pressEnterInFrame('重试');
-    const next = screen.getByRole('button', { name: '重试' });
+    const next = await waitUntil(
+      readRetryButton,
+      (node) => node !== current,
+      `retry button remount ${attempt + 1}`,
+    );
     expect(next, `attempt ${attempt + 1}`).not.toBe(current);
     expect(document.activeElement, `attempt ${attempt + 1}`).toBe(next);
     expect(next.matches(':focus-visible'), `attempt ${attempt + 1}`).toBe(true);
@@ -112,9 +125,13 @@ describe('crash page retry focus', () => {
         <PermanentFault />
       </ErrorBoundary>,
     );
-    const previous = screen.getByRole('button', { name: '重试' });
+    const previous = readRetryButton();
     await commands.clickInFrame('重试');
-    const next = screen.getByRole('button', { name: '重试' });
+    const next = await waitUntil(
+      readRetryButton,
+      (node) => node !== previous,
+      'retry button remount after click',
+    );
     expect(next).not.toBe(previous);
     expect(document.activeElement).toBe(next);
     expect(next.matches(':focus-visible')).toBe(false);
