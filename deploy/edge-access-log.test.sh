@@ -93,14 +93,6 @@ for line in \
   $'			request>headers>X-Api-Key delete' \
   $'			request>headers>Referer delete' \
   $'			resp_headers>Set-Cookie delete' \
-  $'			request>uri query {' \
-  $'				delete input' \
-  $'				replace token REDACTED' \
-  $'				replace code REDACTED' \
-  $'				replace access_token REDACTED' \
-  $'				replace refresh_token REDACTED' \
-  $'				replace id_token REDACTED' \
-  $'				replace reset_token REDACTED' \
   $'			wrap json'
 do
   if ! grep -qxF "${line}" <<< "${global}"; then
@@ -109,6 +101,17 @@ do
     ok "global ${line}"
   fi
 done
+
+if grep -q 'request>uri query' "${caddyfile}"; then
+  bad "Caddyfile still uses the case-sensitive query filter"
+else
+  ok "query filter is not the case-sensitive matcher"
+fi
+if ! grep -q '(?i)' "${caddyfile}" || ! grep -q '%54' "${caddyfile}" || ! grep -q '%69' "${caddyfile}"; then
+  bad "Caddyfile regexp is missing case-insensitive or percent-encoded key bytes"
+else
+  ok "regexp matches any case and a once-encoded key"
+fi
 
 if grep -q 'request>body\|request>headers>.*body' "${caddyfile}"; then
   bad "Caddyfile logs a request body field"
@@ -178,19 +181,9 @@ expected = {
     "request>headers>X-Api-Key": {"filter": "delete"},
     "request>headers>Referer": {"filter": "delete"},
     "resp_headers>Set-Cookie": {"filter": "delete"},
-    "request>uri": {
-        "filter": "query",
-        "actions": [
-            {"parameter": "input", "type": "delete"},
-            {"parameter": "token", "type": "replace", "value": "REDACTED"},
-            {"parameter": "code", "type": "replace", "value": "REDACTED"},
-            {"parameter": "access_token", "type": "replace", "value": "REDACTED"},
-            {"parameter": "refresh_token", "type": "replace", "value": "REDACTED"},
-            {"parameter": "id_token", "type": "replace", "value": "REDACTED"},
-            {"parameter": "reset_token", "type": "replace", "value": "REDACTED"},
-        ],
-    },
 }
+uri_filter = fields.get("request>uri") or {}
+ops = uri_filter.get("operations") or []
 problems = []
 if writer.get("filename") != "/data/logs/access.log":
     problems.append(f"filename {writer.get('filename')}")
@@ -200,8 +193,18 @@ if writer.get("mode") != "0644":
     problems.append(f"mode {writer.get('mode')}")
 if access["encoder"].get("wrap", {}).get("format") != "json":
     problems.append("encoder is not json")
-if fields != expected:
-    problems.append(f"fields {fields}")
+header_fields = {key: value for key, value in fields.items() if key != "request>uri"}
+if header_fields != expected:
+    problems.append(f"header fields {header_fields}")
+if uri_filter.get("filter") != "multi_regexp":
+    problems.append(f"uri filter {uri_filter.get('filter')}")
+if len(ops) < 7:
+    problems.append(f"expected case-insensitive regexp ops, got {len(ops)}")
+joined = "\n".join(op.get("regexp", "") for op in ops)
+if "(?i)" not in joined or "%54" not in joined or "%69" not in joined:
+    problems.append("regexp ops are not case-insensitive percent-aware")
+if not any(op.get("value") == "$1$2=REDACTED" for op in ops):
+    problems.append("missing REDACTED replacement")
 if "http.log.access" not in (access.get("include") or []):
     problems.append(f"include {access.get('include')}")
 if "http.log.access" not in (logs["default"].get("exclude") or []):
@@ -345,6 +348,15 @@ EOF
     -H 'X-Api-Key: super-api-key-value' \
     -H 'Proxy-Authorization: Basic c2VjcmV0' \
     "http://127.0.0.1:${caddy_port}/trpc/auth.me?input={\"token\":\"${jwt}\"}&token=${jwt}&access_token=${jwt}"
+  curl -g -sS -o /dev/null \
+    -H "Referer: http://example.test/trpc/auth.me?TOKEN=${jwt}" \
+    "http://127.0.0.1:${caddy_port}/trpc/case/upper?BATCH=1&INPUT={\"email\":\"upper@leak.test\"}&TOKEN=LEAKUPPER&CODE=LEAKCODE&ACCESS_TOKEN=LEAKAT&REFRESH_TOKEN=LEAKRT&ID_TOKEN=LEAKID&RESET_TOKEN=LEAKRESET"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/case/mixed?Batch=1&Input=LEAKMIXED&Token=LEAKMIXED&Access_Token=LEAKMIXED"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/case/dup?batch=1&token=LEAKDUP1&TOKEN=LEAKDUP2&Token=LEAKDUP3"
+  curl -g -sS -o /dev/null \
+    "http://127.0.0.1:${caddy_port}/trpc/case/enc?batch=1&%69nput=LEAKENC&%54OKEN=LEAKENC"
   sleep 0.3
   if [ ! -s "${work}/access.log" ]; then
     bad "live access log was not written"
@@ -372,6 +384,18 @@ needles = [
     "eyJ",
     "super-api-key-value",
     "c2VjcmV0",
+    "upper@leak.test",
+    "LEAKUPPER",
+    "LEAKCODE",
+    "LEAKAT",
+    "LEAKRT",
+    "LEAKID",
+    "LEAKRESET",
+    "LEAKMIXED",
+    "LEAKDUP1",
+    "LEAKDUP2",
+    "LEAKDUP3",
+    "LEAKENC",
 ]
 for needle in needles:
     if needle in blob:
@@ -395,25 +419,81 @@ else:
         problems.append(f"input query remained: {uri}")
     else:
         print("PROOF line=" + json.dumps(email[-1], separators=(",", ":")))
-auth = [line for line in lines if "/trpc/auth.me" in json.dumps(line)]
-if not auth:
+def one(prefix):
+    hits = [
+        line
+        for line in lines
+        if ((line.get("request") or {}).get("uri") or "").startswith(prefix)
+    ]
+    return hits[-1] if hits else None
+
+auth_line = one("/trpc/auth.me")
+if auth_line is None:
     problems.append("GET /trpc/auth.me was not logged")
 else:
-    raw = json.dumps(auth[-1])
-    req_headers = (auth[-1].get("request") or {}).get("headers") or {}
+    raw = json.dumps(auth_line)
+    req_headers = (auth_line.get("request") or {}).get("headers") or {}
     if "Referer" in req_headers or "referer" in req_headers:
         problems.append(f"Referer kept: {req_headers}")
     if "X-Api-Key" in req_headers or "Proxy-Authorization" in req_headers:
         problems.append(f"credential header kept: {req_headers}")
-    uri = (auth[-1].get("request") or {}).get("uri") or ""
+    uri = (auth_line.get("request") or {}).get("uri") or ""
     if not uri.startswith("/trpc/auth.me"):
         problems.append(f"path lost on /trpc/auth.me: {uri}")
     if "token=REDACTED" not in uri or "access_token=REDACTED" not in uri:
         problems.append(f"token query was not redacted: {uri}")
-    if "input" in uri or "eyJ" in raw:
+    if "input" in uri.lower() or "eyJ" in raw:
         problems.append(f"jwt still in auth.me line: {raw}")
     else:
-        print("PROOF line=" + json.dumps(auth[-1], separators=(",", ":")))
+        print("PROOF line=" + json.dumps(auth_line, separators=(",", ":")))
+
+def expect_case(prefix, required, banned_keys):
+    line = one(prefix)
+    if line is None:
+        problems.append(f"missing {prefix}")
+        return
+    uri = (line.get("request") or {}).get("uri") or ""
+    raw = json.dumps(line)
+    req_headers = (line.get("request") or {}).get("headers") or {}
+    if "Referer" in req_headers or "referer" in req_headers:
+        problems.append(f"Referer kept on {prefix}")
+    for piece in required:
+        if piece not in uri:
+            problems.append(f"{prefix} missing {piece}: {uri}")
+    lowered = uri.lower()
+    for key in banned_keys:
+        if key.lower() in lowered:
+            problems.append(f"{prefix} still has {key}: {uri}")
+    print("PROOF line=" + json.dumps(line, separators=(",", ":")))
+
+expect_case(
+    "/trpc/case/upper",
+    [
+        "BATCH=1",
+        "TOKEN=REDACTED",
+        "CODE=REDACTED",
+        "ACCESS_TOKEN=REDACTED",
+        "REFRESH_TOKEN=REDACTED",
+        "ID_TOKEN=REDACTED",
+        "RESET_TOKEN=REDACTED",
+    ],
+    ["input"],
+)
+expect_case(
+    "/trpc/case/mixed",
+    ["Batch=1", "Token=REDACTED", "Access_Token=REDACTED"],
+    ["input"],
+)
+expect_case(
+    "/trpc/case/dup",
+    ["batch=1", "token=REDACTED", "TOKEN=REDACTED", "Token=REDACTED"],
+    ["input"],
+)
+expect_case(
+    "/trpc/case/enc",
+    ["batch=1", "%54OKEN=REDACTED"],
+    ["input", "%69nput", "%69NPUT"],
+)
 hit = [line for line in lines if "/trpc/auth.login,auth.login" in json.dumps(line)]
 if not hit:
     problems.append("uri was not logged")
