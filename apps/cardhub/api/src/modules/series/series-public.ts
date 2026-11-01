@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import type { SeriesListSort } from '@repo/shared';
-import { formatReleaseDate } from '../catalog/release-date';
+import { formatReleaseDate, parseReleaseDate } from '../catalog/release-date';
 import type { PrismaService } from '../prisma/prisma.service';
 
 type SeriesTimes = { createdAt: string; updatedAt: string };
@@ -184,14 +184,18 @@ export function seriesListOrder(
 export function seriesListWhere(input: {
   categorySlug?: string;
   year?: number;
+  releasedOnOrBefore?: string;
 }): Prisma.SeriesWhereInput {
   const where: Prisma.SeriesWhereInput = {};
   if (input.categorySlug) where.category = { slug: input.categorySlug };
+  const releaseDate: Prisma.DateTimeNullableFilter = {};
   if (input.year) {
-    where.releaseDate = {
-      gte: new Date(Date.UTC(input.year, 0, 1)),
-      lt: new Date(Date.UTC(input.year + 1, 0, 1)),
-    };
+    releaseDate.gte = new Date(Date.UTC(input.year, 0, 1));
+    releaseDate.lt = new Date(Date.UTC(input.year + 1, 0, 1));
   }
+  if (input.releasedOnOrBefore) {
+    releaseDate.lte = parseReleaseDate(input.releasedOnOrBefore);
+  }
+  if (input.year || input.releasedOnOrBefore) where.releaseDate = releaseDate;
   return where;
 }

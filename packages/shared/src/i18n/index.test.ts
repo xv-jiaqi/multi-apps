@@ -122,6 +122,29 @@ describe('search result plurals', () => {
   });
 });
 
+describe('homepage copy', () => {
+  it('uses the fixed CH-207 homepage description in each language', () => {
+    const zh =
+      'Cardhub 是卡牌百科和社区：按系列查卡牌资料、搜索卡牌，在论坛讨论，在交易板发布买卖。';
+    const en =
+      'Cardhub is a trading card encyclopedia and community: browse series and card pages, search cards, talk in the forum, and post on the trading board.';
+    expect(t('zh-CN', 'meta.home')).toBe(zh);
+    expect(t('en-US', 'meta.home')).toBe(en);
+    expect(t('zh-CN', 'welcome.cta.search')).toBe('搜索卡牌');
+    expect(t('en-US', 'welcome.cta.search')).toBe('Search cards');
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+    expect([...segmenter.segment(zh)].length).toBe(46);
+    expect([...segmenter.segment(en)].length).toBe(147);
+  });
+
+  it('pluralizes the homepage card count in English', () => {
+    expect(t('en-US', 'home.hero.cardCount', { count: 1 })).toBe('1 card');
+    expect(t('en-US', 'home.hero.cardCount', { count: 0 })).toBe('0 cards');
+    expect(t('en-US', 'home.hero.cardCount', { count: 2 })).toBe('2 cards');
+    expect(t('zh-CN', 'home.hero.cardCount', { count: 1 })).toBe('1 张卡牌');
+  });
+});
+
 describe('other count copy', () => {
   it('pluralizes English nouns that agree with {count}', () => {
     expect(t('en-US', 'series.cardCount', { count: 1 })).toBe('1 card inside');

@@ -96,6 +96,41 @@ describe('SeriesRouter.list taxonomy filters', () => {
     expect(count).toHaveBeenCalledWith({ where: args.where });
   });
 
+  it('keeps release dates on or before the cutoff in the same query', async () => {
+    const { caller, findMany, count } = makeRouter();
+    findMany.mockResolvedValueOnce([]);
+    count.mockResolvedValueOnce(0);
+
+    await caller.list({
+      year: 2024,
+      sort: 'releaseDateDesc',
+      releasedOnOrBefore: '2024-06-01',
+      pageSize: 1,
+    });
+
+    expect(findMany).toHaveBeenCalledTimes(1);
+    expect(count).toHaveBeenCalledTimes(1);
+    expect(findMany.mock.calls[0]?.[0].where).toEqual({
+      releaseDate: {
+        gte: new Date(Date.UTC(2024, 0, 1)),
+        lt: new Date(Date.UTC(2025, 0, 1)),
+        lte: new Date(Date.UTC(2024, 5, 1)),
+      },
+    });
+  });
+
+  it('rejects an impossible releasedOnOrBefore before querying', async () => {
+    const { caller, findMany } = makeRouter();
+
+    await expect(caller.list({ releasedOnOrBefore: '2024-02-31' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    await expect(caller.list({ releasedOnOrBefore: '03/15/2024' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    expect(findMany).not.toHaveBeenCalled();
+  });
+
   it('rejects a year outside 1–9999 before querying', async () => {
     const { caller, findMany } = makeRouter();
 
