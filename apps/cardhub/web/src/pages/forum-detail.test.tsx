@@ -1011,13 +1011,14 @@ describe('ForumDetailPage CH-221 topic h1', () => {
     expect(h1s[0]).toHaveAccessibleName('Test topic');
     expect(h1s[0]).toHaveAttribute('tabindex', '-1');
     expect(h1s[0]).toHaveClass(
-      'text-2xl',
       'font-semibold',
-      'leading-none',
       'tracking-tight',
       'min-w-0',
       'wrap-anywhere',
+      'text-2xl',
     );
+    // CH-221 v1.3: ef69d16's merged CardTitle has no leading-none (text-2xl wins the line height).
+    expect(h1s[0]).not.toHaveClass('leading-none');
     expect(document.querySelectorAll('h1')).toHaveLength(1);
     expect(document.querySelector('h1')?.textContent).toBe('Test topic');
     expect(screen.getByRole('heading', { level: 2, name: '回帖（45）' })).toBeInTheDocument();

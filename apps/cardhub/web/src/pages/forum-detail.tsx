@@ -701,7 +701,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                       <h1
                         ref={titleRef}
                         tabIndex={-1}
-                        className="text-2xl font-semibold leading-none tracking-tight min-w-0 wrap-anywhere"
+                        className="font-semibold tracking-tight min-w-0 wrap-anywhere text-2xl"
                       >
                         {topic.title}
                       </h1>
