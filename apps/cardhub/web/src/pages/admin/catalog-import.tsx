@@ -19,6 +19,7 @@ import {
   adminErrorText,
   displayImportNames,
   importParallelFieldLabel,
+  orderImportErrors,
   focusRing,
   isAccessRevoked,
   jsonErrorLine,
@@ -309,7 +310,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
         >
           <p>{actionError}</p>
           {actionRows?.flatMap((row) =>
-            row.errors.map((error) => (
+            orderImportErrors(row.errors).map((error) => (
               <p
                 key={`${row.row.row}-${error.path}-${error.code}`}
                 className="mt-1 text-xs text-red-700"
@@ -382,7 +383,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                       </span>
                     </td>
                     <td className="px-3 py-2 align-middle text-xs text-red-700">
-                      {row.errors.map((error) => (
+                      {orderImportErrors(row.errors).map((error) => (
                         <p key={`${error.path}-${error.code}`}>
                           <ImportProblem
                             path={error.path}

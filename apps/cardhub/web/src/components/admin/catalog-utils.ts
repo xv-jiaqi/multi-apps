@@ -135,6 +135,22 @@ const PARALLEL_FIELD_LABEL: Record<string, string> = {
   printRun: 'admin.field.printRun',
 };
 
+const PARALLEL_FIELD_RANK: Record<string, number> = {
+  parallelOf: 0,
+  parallelOfSlug: 0,
+  parallelName: 1,
+  printRun: 2,
+};
+
+/** CH-213 §16: a row's parallel errors read parallelOf, then parallelName, then printRun. Others keep their order first. */
+export function orderImportErrors<T extends { path: string }>(errors: readonly T[]): T[] {
+  const rank = (path: string) => PARALLEL_FIELD_RANK[path.split('.').pop() ?? ''] ?? -1;
+  return errors
+    .map((error, index) => ({ error, index }))
+    .sort((a, b) => rank(a.error.path) - rank(b.error.path) || a.index - b.index)
+    .map((item) => item.error);
+}
+
 /** Parallel import columns share the card form's field names. Other columns do not. */
 export function importParallelFieldLabel(locale: Locale, path: string): string | null {
   const field = path.split('.').pop() ?? '';
