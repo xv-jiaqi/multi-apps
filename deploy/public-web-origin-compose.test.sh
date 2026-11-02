@@ -73,8 +73,9 @@ rc="$(render "${work}/empty.env" "${work}/empty.yml" "${work}/empty.err")"
 assert "empty WEB_DOMAIN fails" "$( [ "${rc}" -ne 0 ] && echo 0 || echo 1 )"
 assert "empty WEB_DOMAIN names the variable" "$( grep -q 'WEB_DOMAIN is required' "${work}/empty.err" && echo 0 || echo 1 )"
 
-# Compose evaluates the nested WEB_DOMAIN requirement even when
-# PUBLIC_WEB_ORIGIN is set, so a lone override cannot skip the check.
+# WEB_DOMAIN stays required even when PUBLIC_WEB_ORIGIN is set. Compose 5
+# no longer evaluates the nested :? in that case, so the compose file checks
+# WEB_DOMAIN on its own as well.
 sed -E '/^(WEB_DOMAIN|PUBLIC_WEB_ORIGIN)=/d' "${work}/set.env" > "${work}/explicit.env"
 printf '\nPUBLIC_WEB_ORIGIN=https://staging.card-hub.app\n' >> "${work}/explicit.env"
 rc="$(render "${work}/explicit.env" "${work}/explicit.yml" "${work}/explicit.err")"

@@ -31,9 +31,12 @@ services:
       # false, and leaves this line unchanged when that variable is unset.
       PASSWORD_PREHASH_WRITE: ${PASSWORD_PREHASH_WRITE:-false}
       CORS_ORIGIN: ${CORS_ORIGIN}
+      # WEB_DOMAIN is always required. Keep this as its own top-level :? so
+      # every Compose version checks it; newer Compose skips the nested :?
+      # below when PUBLIC_WEB_ORIGIN is set.
+      WEB_DOMAIN: ${WEB_DOMAIN:?WEB_DOMAIN is required}
       # Absolute web origin for sitemap <loc>. An empty PUBLIC_WEB_ORIGIN uses
-      # https://WEB_DOMAIN. WEB_DOMAIN must be set in that case; compose stops
-      # instead of publishing https://.
+      # https://WEB_DOMAIN, so compose never publishes https://.
       PUBLIC_WEB_ORIGIN: ${PUBLIC_WEB_ORIGIN:-https://${WEB_DOMAIN:?WEB_DOMAIN is required}}
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-${ENV_NAME:-}}
@@ -93,9 +96,10 @@ services:
     stop_grace_period: 30s
     environment:
       TRPC_URL: ${TRPC_URL}
+      # Same top-level WEB_DOMAIN check as api; see the comment there.
+      WEB_DOMAIN: ${WEB_DOMAIN:?WEB_DOMAIN is required}
       # Rewrites robots.txt Sitemap. An empty PUBLIC_WEB_ORIGIN uses
-      # https://WEB_DOMAIN. WEB_DOMAIN must be set in that case; compose stops
-      # instead of publishing https://.
+      # https://WEB_DOMAIN, so compose never publishes https://.
       PUBLIC_WEB_ORIGIN: ${PUBLIC_WEB_ORIGIN:-https://${WEB_DOMAIN:?WEB_DOMAIN is required}}
       SENTRY_DSN: ${WEB_SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-${ENV_NAME:-}}
