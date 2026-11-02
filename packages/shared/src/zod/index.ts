@@ -487,7 +487,7 @@ export const parallelNameInput = z.string().trim().max(PARALLEL_NAME_MAX).option
 export const printRunInput = z
   .number()
   .int()
-  .min(PRINT_RUN_MIN)
+  .min(PRINT_RUN_MIN, 'print_run_min')
   .max(PRINT_RUN_MAX)
   .nullable()
   .optional();

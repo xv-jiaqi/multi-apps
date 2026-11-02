@@ -168,6 +168,7 @@ const zhCN: Dictionary = {
   'admin.parallel.cleared': '已清空基础卡：系列已更改',
   'admin.parallel.locked_one': '这张卡已有 {n} 个平行版本，不能再挂到其他卡下',
   'admin.parallel.locked_other': '这张卡已有 {n} 个平行版本，不能再挂到其他卡下',
+  'admin.parallel.printRunMin': '限量数量至少为 1，不限量请留空',
   'card.detail.rarity': '稀有度',
   'card.detail.series': '所属系列',
   'card.detail.seriesLabel': '所属系列：',
@@ -1170,6 +1171,7 @@ const enUS: Dictionary = {
     "This card has 1 parallel, so it can't be a parallel of another card.",
   'admin.parallel.locked_other':
     "This card has {n} parallels, so it can't be a parallel of another card.",
+  'admin.parallel.printRunMin': 'Print run must be at least 1. Leave it blank if unlimited.',
   'card.detail.rarity': 'Rarity',
   'card.detail.series': 'Series',
   'card.detail.seriesLabel': 'Series: ',

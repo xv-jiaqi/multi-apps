@@ -112,6 +112,7 @@ export const cardBySlugSchema = z.object({
   updatedAt: z.string(),
   printRun: z.number().int().nullable(),
   parallelName: z.string().nullable(),
+  isParallel: z.boolean(),
   base: z.object({ slug: z.string(), name: z.string() }).nullable(),
   variants: z.array(
     z.object({

@@ -30,6 +30,7 @@ export type CardBySlugResult = {
   updatedAt: string;
   printRun: number | null;
   parallelName: string | null;
+  isParallel: boolean;
   base: { slug: string; name: string } | null;
   variants: CardVariant[];
 };
@@ -146,6 +147,7 @@ export async function loadCardBySlug(
     updatedAt: card.updatedAt.toISOString(),
     printRun: card.printRun ?? null,
     parallelName: card.parallelName ?? null,
+    isParallel: card.parallelOfId != null,
     base: card.parallelOf ? { slug: card.parallelOf.slug, name: card.parallelOf.name } : null,
     variants,
   };

@@ -393,6 +393,8 @@ describe('card parallels', () => {
     if (!foilHit) throw new Error('expected parallel name hit');
     expect(text(foilHit, 'name')).toBe('素卡');
     expect(nullableText(foilHit, 'parallelName')).toBe('金箔');
+    expect(foilHit.isParallel).toBe(true);
+    expect(foilHit.base).toEqual({ slug: slug('base'), name: '基础' });
 
     const byFoilSearch = await get('cards.search', { q: '金箔', seriesSlug, limit: 5 });
     expect(byFoilSearch.status).toBe(200);
@@ -401,6 +403,8 @@ describe('card parallels', () => {
     );
     if (!foilSearchHit) throw new Error('expected cards.search parallel name hit');
     expect(nullableText(foilSearchHit, 'parallelName')).toBe('金箔');
+    expect(foilSearchHit.isParallel).toBe(true);
+    expect(foilSearchHit.base).toEqual({ slug: slug('base'), name: '基础' });
 
     const seriesSkipsParallelName = await get('cards.listBySeries', {
       seriesSlug,
@@ -609,7 +613,12 @@ describe('card parallels', () => {
       {
         body: { slug: slug('zero'), name: '零', seriesSlug, printRun: 0 },
         field: 'printRun',
-        code: 'too_small',
+        code: 'print_run_min',
+      },
+      {
+        body: { slug: slug('minus'), name: '负', seriesSlug, printRun: -3 },
+        field: 'printRun',
+        code: 'print_run_min',
       },
       {
         body: { slug: slug('fraction'), name: '小数', seriesSlug, printRun: 1.5 },
@@ -682,6 +691,51 @@ describe('card parallels', () => {
     expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
     expect(JSON.stringify(badJson.body)).not.toContain('PARSER_LEAK_MARKER');
     assertNoInternalText(badJson.body);
+  });
+
+  it('treats a deleted base card child as a base card in search and detail', async () => {
+    await createCard({
+      slug: slug('z-base'),
+      name: '基础Z',
+      seriesSlug,
+      cardNumber: '70',
+    });
+    await createCard({
+      slug: slug('y-orphan'),
+      name: '平行Y',
+      seriesSlug,
+      cardNumber: '70',
+      parallelOfSlug: slug('z-base'),
+      parallelName: '孤儿X',
+      printRun: 7,
+    });
+    const removed = await post('admin.cards.delete', { slug: slug('z-base') }, adminToken);
+    expect(removed.status).toBe(200);
+
+    const detail = await get('cards.bySlug', { slug: slug('y-orphan') });
+    expect(detail.status).toBe(200);
+    const detailBody = resultData(detail.body);
+    expect(detailBody.base).toBeNull();
+    expect(detailBody.isParallel).toBe(false);
+    expect(nullableText(detailBody, 'parallelName')).toBe('孤儿X');
+    expect(nullableNumber(detailBody, 'printRun')).toBe(7);
+
+    const global = await get('search.global', { q: '孤儿X', limit: 5 });
+    expect(global.status).toBe(200);
+    const hit = rowsOf(global.body, 'cards').find((row) => row.slug === slug('y-orphan'));
+    if (!hit) throw new Error('expected orphan search hit');
+    expect(hit.isParallel).toBe(false);
+    expect(hit.base).toBeNull();
+    expect(nullableText(hit, 'parallelName')).toBe('孤儿X');
+    expect(nullableNumber(hit, 'printRun')).toBe(7);
+
+    const searched = await get('cards.search', { q: '孤儿X', seriesSlug, limit: 5 });
+    const found = rowsOf(searched.body, 'results').find((row) => row.slug === slug('y-orphan'));
+    if (!found) throw new Error('expected cards.search orphan');
+    expect(found.isParallel).toBe(false);
+    expect(found.base).toBeNull();
+    expect(nullableText(found, 'parallelName')).toBe('孤儿X');
+    expect(nullableNumber(found, 'printRun')).toBe(7);
   });
 
   it('turns parallels into base cards when the base is deleted or moves series', async () => {

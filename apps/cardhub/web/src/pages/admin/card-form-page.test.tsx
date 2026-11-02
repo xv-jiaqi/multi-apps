@@ -610,7 +610,9 @@ describe('card form parallels', () => {
     expect(printRun).toHaveAttribute('autocomplete', 'off');
     await user.type(printRun, '0');
     await user.click(screen.getByRole('button', { name: '创建' }));
-    expect(document.getElementById('card-print-run-error')).toHaveTextContent('内容长度不够');
+    expect(document.getElementById('card-print-run-error')).toHaveTextContent(
+      '限量数量至少为 1，不限量请留空',
+    );
     expect(printRun).toHaveAttribute('aria-invalid', 'true');
     expect(printRun).toHaveFocus();
   });

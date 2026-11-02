@@ -18,6 +18,10 @@ import { formatCatalogDate } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
 import { SeriesCardList } from './series-card-list';
 
+function baseCardCount(cards: Array<{ parallelOfId?: string | null }>): number {
+  return cards.filter((card) => card.parallelOfId == null).length;
+}
+
 type SeriesHeroProps = {
   series: { slug: string; title: string; description: string | null; coverUrl: string | null };
   alt: string;
@@ -193,7 +197,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
         description={seriesMetaDescription({
           locale: locale.locale,
           title: series.title,
-          cardCount: series.cards.length,
+          cardCount: baseCardCount(series.cards),
           description: series.description,
         })}
       />
@@ -221,7 +225,9 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
         <SeriesHero
           series={series}
           alt={tt('artwork.seriesAlt', { title: series.title })}
-          cardCountLabel={tt('series.cardCount', { count: series.cards.length })}
+          cardCountLabel={tt('series.cardCount', {
+            count: baseCardCount(series.cards),
+          })}
           headingRef={headingRef}
           category={series.category}
           releaseDate={
@@ -239,7 +245,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
         <SeriesCardList
           seriesSlug={series.slug}
           subsets={series.subsets ?? []}
-          fallbackCardCount={series.cards.length}
+          fallbackCardCount={baseCardCount(series.cards)}
         />
 
         <Card className="border-white/60 bg-white/70 backdrop-blur">

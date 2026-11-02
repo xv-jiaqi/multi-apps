@@ -237,6 +237,7 @@ function localizeAdminIssue(locale: Locale, issue: ZodIssueLike, path: string[])
   if (code === 'custom' && (head === 'imageUrl' || head === 'coverUrl') && path.length === 1) {
     return t(locale, 'admin.error.imageUrl');
   }
+  if (message === 'print_run_min') return t(locale, 'admin.parallel.printRunMin');
   if (!message) return t(locale, 'admin.error.invalidType');
   return fieldErrorMessage(locale, message);
 }

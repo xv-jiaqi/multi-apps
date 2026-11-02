@@ -52,7 +52,7 @@ function parsePrintRun(text: string): { value: number | null; error?: string } {
   if (!trimmed) return { value: null };
   if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid_type' };
   const value = Number(trimmed);
-  if (value < 1) return { value: null, error: 'too_small' };
+  if (value < 1) return { value: null, error: 'print_run_min' };
   if (value > PRINT_RUN_MAX) return { value: null, error: 'too_big' };
   return { value };
 }
@@ -389,7 +389,11 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       next.parallelName = fieldErrorMessage(locale.locale, 'too_big');
     }
     const printRun = parsePrintRun(printRunText);
-    if (printRun.error) next.printRun = fieldErrorMessage(locale.locale, printRun.error);
+    if (printRun.error === 'print_run_min') {
+      next.printRun = tt('admin.parallel.printRunMin');
+    } else if (printRun.error) {
+      next.printRun = fieldErrorMessage(locale.locale, printRun.error);
+    }
     const attributes = validateAttributeRows(rows, locale.locale);
     setErrors(next);
     setAttrErrors(attributes.ok ? {} : attributes.errors);
