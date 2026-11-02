@@ -1,0 +1,242 @@
+[
+ {
+  "file": "empty_1440_zh.png",
+  "active": "BODY 跳到主内容CCardhub首页分类系列发售日历搜索论坛交易管",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "empty_1440_en.png",
+  "active": "BODY Skip to main contentCCardhubHo",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "empty_375_zh.png",
+  "active": "BODY 跳到主内容CCardhub首页分类系列发售日历搜索论坛交易管",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "empty_375_en.png",
+  "active": "BODY Skip to main contentCCardhubHo",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "loading_1440_zh.png",
+  "active": "BODY 跳到主内容CCardhub首页分类系列发售日历搜索论坛交易管",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "loading_1440_en.png",
+  "active": "BODY Skip to main contentCCardhubHo",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "loading_375_zh.png",
+  "active": "BODY 跳到主内容CCardhub首页分类系列发售日历搜索论坛交易管",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "loading_375_en.png",
+  "active": "BODY Skip to main contentCCardhubHo",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "parse-error_1440_zh.png",
+  "active": "TEXTAREA#import-json { \"bad\":",
+  "overflow": true,
+  "ta": [
+   "true",
+   "import-json-error"
+  ],
+  "axe": []
+ },
+ {
+  "file": "parse-error_1440_en.png",
+  "active": "TEXTAREA#import-json { \"bad\":",
+  "overflow": true,
+  "ta": [
+   "true",
+   "import-json-error"
+  ],
+  "axe": []
+ },
+ {
+  "file": "parse-error_375_zh.png",
+  "active": "TEXTAREA#import-json { \"bad\":",
+  "overflow": true,
+  "ta": [
+   "true",
+   "import-json-error"
+  ],
+  "axe": []
+ },
+ {
+  "file": "parse-error_375_en.png",
+  "active": "TEXTAREA#import-json { \"bad\":",
+  "overflow": true,
+  "ta": [
+   "true",
+   "import-json-error"
+  ],
+  "axe": []
+ },
+ {
+  "file": "error_1440_zh.png",
+  "active": "DIV 出了点问题，请稍后再试",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "error_1440_en.png",
+  "active": "DIV Something went wrong. Try agai",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "error_375_zh.png",
+  "active": "DIV 出了点问题，请稍后再试",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "error_375_en.png",
+  "active": "DIV Something went wrong. Try agai",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "success_1440_zh.png",
+  "active": "H2#import-preview-title 预览结果",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "success_1440_en.png",
+  "active": "H2#import-preview-title Preview results",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "success_375_zh.png",
+  "active": "H2#import-preview-title 预览结果",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "success_375_en.png",
+  "active": "H2#import-preview-title Preview results",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "errors_1440_zh.png",
+  "active": "P 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "errors_1440_en.png",
+  "active": "P 0 new series, 1 new card; 1 se",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "errors_375_zh.png",
+  "active": "P 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ },
+ {
+  "file": "errors_375_en.png",
+  "active": "P 0 new series, 1 new card; 1 se",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "axe": []
+ }
+]
