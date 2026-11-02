@@ -28,7 +28,15 @@ const series = {
   title: '天穹黎明',
   description: '黎明。',
   coverUrl: null,
-  cards: [{ slug: 'aurora-knight', name: '极光骑士', rarity: 'rare', imageUrl: null }],
+  cards: [
+    {
+      slug: 'aurora-knight',
+      name: '极光骑士',
+      rarity: 'rare',
+      imageUrl: null,
+      parallelOfId: null as string | null,
+    },
+  ],
 };
 
 const seriesQuery: {
