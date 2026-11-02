@@ -149,6 +149,10 @@ model Card {
   // Null means unnumbered. A value is the print-run total, an integer >= 1.
   // There is no per-copy serial. Old servers ignore the column.
   printRun     Int?
+  // Null means no long description. Markdown, at most 20000 characters
+  // after trim. Old servers ignore the column. An update that omits body
+  // leaves the stored value. Empty string and null store null.
+  body         String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

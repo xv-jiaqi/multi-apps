@@ -19,6 +19,8 @@ export type CardBySlugResult = {
   slug: string;
   name: string;
   description: string | null;
+  /** Markdown long description. Null when the card has none. */
+  body: string | null;
   imageUrl: string | null;
   rarity: string | null;
   attributes: Record<string, AttributeValue> | null;
@@ -136,6 +138,7 @@ export async function loadCardBySlug(
     slug: card.slug,
     name: card.name,
     description: card.description,
+    body: card.body ?? null,
     imageUrl: card.imageUrl,
     rarity: card.rarity,
     attributes: flatCardAttributes(card.attributes),

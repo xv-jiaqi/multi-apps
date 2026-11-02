@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { assertParsedSearch, buildCardSearchWhere, buildSeriesSearchWhere } from './search-query';
 
 type GlobalCardRow = Prisma.CardGetPayload<{
+  omit: { body: true };
   include: {
     series: { select: { slug: true; title: true } };
     parallelOf: { select: { slug: true; name: true } };
@@ -48,6 +49,7 @@ export class SearchRouter {
         const [cards, series] = await Promise.all([
           prisma.card.findMany({
             where: buildCardSearchWhere(parsed),
+            omit: { body: true },
             include: {
               series: { select: { slug: true, title: true } },
               parallelOf: { select: { slug: true, name: true } },

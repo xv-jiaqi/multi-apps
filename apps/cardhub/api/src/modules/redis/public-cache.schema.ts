@@ -95,6 +95,7 @@ export const cardBySlugSchema = z.object({
   slug: z.string(),
   name: z.string(),
   description: z.string().nullable(),
+  body: z.string().nullable(),
   imageUrl: z.string().nullable(),
   rarity: z.string().nullable(),
   attributes: z.record(z.string(), attributeValueSchema).nullable(),
