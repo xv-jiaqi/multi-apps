@@ -6,6 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { t } from '@repo/shared';
 import { ScrollRegion } from '@repo/ui-web';
 import { rehypeMentions } from '../lib/rehype-mentions';
+import { rehypeScrollTables } from '../lib/rehype-scroll-tables';
 import { useStores } from '../stores/root-store';
 
 interface MarkdownViewProps {
@@ -44,16 +45,31 @@ const MarkdownPre = observer(function MarkdownPre({
 });
 
 // Markdown tables have no visible heading, so the region falls back to
-// a11y.scrollTable (CH-220 §2-2).
+// a11y.scrollTable (CH-220 §2-2). With 2+ tables, rehypeScrollTables numbers
+// them and records the nearest heading (§2-4); those props stay off the DOM.
 const MarkdownTable = observer(function MarkdownTable({
-  node: _node,
+  node,
   ...props
 }: ComponentProps<'table'> & ExtraProps) {
   const { locale } = useStores();
-  const name = t(locale.locale, 'a11y.table');
+  const {
+    'data-scroll-n': _n,
+    'data-scroll-heading': _h,
+    ...rest
+  } = props as typeof props & { 'data-scroll-n'?: unknown; 'data-scroll-heading'?: unknown };
+  const n = node?.properties?.dataScrollN;
+  const heading = node?.properties?.dataScrollHeading;
+  let label: string;
+  if (typeof n === 'number' && typeof heading === 'string') {
+    label = t(locale.locale, 'a11y.scrollTableHeadingN', { heading, n });
+  } else if (typeof n === 'number') {
+    label = t(locale.locale, 'a11y.scrollTableN', { n });
+  } else {
+    label = t(locale.locale, 'a11y.scrollTable', { name: t(locale.locale, 'a11y.table') });
+  }
   return (
-    <ScrollRegion label={t(locale.locale, 'a11y.scrollTable', { name })} className="max-w-full">
-      <table {...props} />
+    <ScrollRegion label={label} className="max-w-full">
+      <table {...rest} />
     </ScrollRegion>
   );
 });
@@ -166,7 +182,11 @@ export const MarkdownView = memo(function MarkdownView({
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={card ? [rehypeSanitize] : [rehypeSanitize, rehypeMentions]}
+        rehypePlugins={
+          card
+            ? [rehypeSanitize, rehypeScrollTables]
+            : [rehypeSanitize, rehypeMentions, rehypeScrollTables]
+        }
         components={card ? cardComponents(newTabLabel) : { pre: MarkdownPre, table: MarkdownTable }}
       >
         {body}
