@@ -88,6 +88,8 @@ function toPickerItem(card: {
   imageUrl: string | null;
   seriesSlug: string;
   seriesTitle: string;
+  parallelName?: string | null;
+  isParallel?: boolean;
 }): CardPickerItem {
   return {
     slug: card.slug,
@@ -96,6 +98,8 @@ function toPickerItem(card: {
     imageUrl: card.imageUrl,
     seriesSlug: card.seriesSlug,
     seriesTitle: card.seriesTitle,
+    parallelName: card.parallelName,
+    isParallel: card.isParallel,
   };
 }
 
