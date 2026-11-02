@@ -2,12 +2,12 @@ import type { ReactNode } from 'react';
 import { printRunLabel, t, type Locale } from '@repo/shared';
 
 const badgeClass =
-  'inline-flex max-w-full min-w-0 truncate rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600';
+  'inline-flex max-w-full min-w-0 items-center truncate rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600';
 
 export function CardVariantBadge({ children, title }: { children: ReactNode; title?: string }) {
   return (
     <span title={title} className={badgeClass}>
-      {children}
+      <span className="min-w-0 truncate">{children}</span>
     </span>
   );
 }

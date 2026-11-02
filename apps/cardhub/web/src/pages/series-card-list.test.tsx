@@ -330,9 +330,14 @@ describe('SeriesCardList', () => {
     expect(harness.calls.at(-1)).toMatchObject({ includeParallels: true, page: 1 });
     const badge = screen.getByTitle(longName);
     expect(badge).toHaveTextContent(`平行 · ${longName}`);
-    expect(badge.className).toContain('truncate');
-    expect(screen.getByText('/99')).toHaveClass('font-mono', 'tabular-nums');
-    expect(screen.getByText('/99').parentElement).toHaveTextContent('限量 /99');
+    expect(badge).toHaveClass('max-w-full');
+    expect(badge.querySelector('span')).toHaveClass('min-w-0', 'truncate');
+    const limitedNumber = screen.getByText('/99');
+    expect(limitedNumber).toHaveClass('font-mono', 'tabular-nums');
+    expect(limitedNumber.previousSibling?.textContent?.endsWith(' ')).toBe(true);
+    expect(`${limitedNumber.previousSibling?.textContent ?? ''}${limitedNumber.textContent}`).toBe(
+      '限量 /99',
+    );
     expect(screen.getByText('平行 · 素银')).toBeInTheDocument();
     expect(screen.queryByText('不编号')).not.toBeInTheDocument();
     expect(

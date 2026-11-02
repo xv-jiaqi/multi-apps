@@ -191,8 +191,17 @@ describe('parallel badges', () => {
     expect(base).not.toHaveTextContent('平行');
     expect(base).not.toHaveTextContent('不编号');
     expect(foil).toHaveTextContent(`平行 · ${longName}`);
-    expect(foil).toHaveTextContent('限量 /99');
-    expect(foil?.querySelector('[title]')?.getAttribute('title')).toBe(longName);
+    expect(foil).toHaveClass('max-w-full', 'max-sm:max-w-3xs', 'min-w-0');
+    const nameBadge = foil?.querySelector('[title]');
+    expect(nameBadge).toHaveClass('max-w-full');
+    expect(nameBadge?.querySelector('span')).toHaveClass('min-w-0', 'truncate');
+    expect(nameBadge?.getAttribute('title')).toBe(longName);
+    const limitedNumber = foil?.querySelector('.tabular-nums');
+    expect(limitedNumber?.textContent).toBe('/99');
+    expect(limitedNumber?.previousSibling?.textContent?.endsWith(' ')).toBe(true);
+    expect(
+      `${limitedNumber?.previousSibling?.textContent ?? ''}${limitedNumber?.textContent ?? ''}`,
+    ).toBe('限量 /99');
     expect(plain).toHaveTextContent('平行 · 素银');
     expect(plain).not.toHaveTextContent('不编号');
     expect(screen.getByRole('columnheader', { name: '名称' })).toBeInTheDocument();

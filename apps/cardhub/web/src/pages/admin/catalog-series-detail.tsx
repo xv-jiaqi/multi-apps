@@ -263,7 +263,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                         </td>
                         <th
                           scope="row"
-                          className="px-3 py-2 text-left align-middle font-medium text-neutral-900"
+                          className="max-w-full max-sm:max-w-3xs min-w-0 px-3 py-2 text-left align-middle font-medium text-neutral-900"
                         >
                           <Link
                             to={`/admin/catalog/cards/${card.slug}/edit`}
@@ -276,7 +276,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                             parallelName={card.parallelName}
                             printRun={card.printRun}
                             isParallel={card.parallelOfId != null}
-                            className="mt-2 flex flex-wrap gap-1"
+                            className="mt-2 flex max-w-full min-w-0 flex-wrap gap-1"
                           />
                         </th>
                         <td className="px-3 py-2 align-middle font-mono text-xs text-neutral-600">
