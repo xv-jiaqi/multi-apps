@@ -402,6 +402,29 @@ describe('SeriesCardList', () => {
     plainEn.unmount();
   });
 
+  it('does not count a parallels query as a filter when the series has no parallel cards', () => {
+    harness.state.data = {
+      items: [card('极光', '007')],
+      page: 1,
+      pageSize: 60,
+      total: 2,
+      seriesTotal: 2,
+      parallelCount: 0,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    const plain = renderList('?parallels=1');
+    expect(screen.getByRole('button', { name: '筛选' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '筛选（1）' })).not.toBeInTheDocument();
+    plain.unmount();
+
+    rootStore.locale.setLocale('en-US');
+    const plainEn = renderList('?parallels=1');
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Filters (1)' })).not.toBeInTheDocument();
+    plainEn.unmount();
+  });
+
   it('shows the parallel hint instead of an empty series when the series has only parallels', () => {
     harness.state.data = {
       items: [],
