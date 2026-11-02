@@ -432,3 +432,94 @@ describe('catalog import', () => {
     expect(calls.filter((call) => !call.dryRun)).toHaveLength(1);
   });
 });
+
+describe('catalog import focus and error wiring (CH-213 §17)', () => {
+  async function previewWith(text: string) {
+    const user = userEvent.setup();
+    renderPage();
+    const box = screen.getByRole('textbox', { name: 'JSON 内容' });
+    await user.click(box);
+    await user.paste(text);
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    return { user, box };
+  }
+
+  it('moves focus to the preview title when the preview has no errors', async () => {
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    await previewWith('[]');
+    const title = await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    await waitFor(() => expect(title).toHaveFocus());
+  });
+
+  it('names the preview title in English', async () => {
+    rootStore.locale.setLocale('en-US');
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON' }));
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    const title = await screen.findByRole('heading', { level: 2, name: 'Preview results' });
+    await waitFor(() => expect(title).toHaveFocus());
+  });
+
+  it('moves focus to the summary, not the first error row, when the preview has errors', async () => {
+    importImpl.current = async () => [
+      row({ status: 'created' }, 1),
+      row({ status: 'error', errors: [{ path: 'series[0].slug', code: 'SLUG_FORMAT' }] }, 2),
+    ];
+    await previewWith('[]');
+    const summary = await screen.findByRole('status');
+    await waitFor(() => expect(summary).toHaveFocus());
+    expect(summary).toHaveTextContent('1 处错误');
+  });
+
+  it('marks the textarea invalid, links the parse error, focuses it, and clears both on edit', async () => {
+    const { user, box } = await previewWith('{');
+    const alert = screen.getByRole('alert');
+    expect(box).toHaveAttribute('aria-invalid', 'true');
+    expect(box).toHaveAccessibleDescription(alert.textContent ?? '');
+    await waitFor(() => expect(box).toHaveFocus());
+    await user.type(box, '}');
+    expect(box).not.toHaveAttribute('aria-invalid');
+    expect(box).not.toHaveAttribute('aria-describedby');
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows a preview 500 in the failure box, not under the textarea, and focuses the box', async () => {
+    importImpl.current = async () => {
+      throw { message: 'Internal server error', data: { code: 'INTERNAL_SERVER_ERROR' } };
+    };
+    const { box } = await previewWith('[]');
+    const alert = await screen.findByRole('alert');
+    expect(alert.tagName).toBe('DIV');
+    expect(alert).not.toHaveTextContent('Internal server error');
+    expect(box).not.toHaveAttribute('aria-invalid');
+    expect(box).not.toHaveAccessibleDescription();
+    await waitFor(() => expect(alert).toHaveFocus());
+  });
+
+  it('focuses the failure box when the import is rejected at commit time', async () => {
+    importImpl.current = async (input) => {
+      if (!input.dryRun) throw { message: 'x', data: { code: 'BAD_REQUEST' } };
+      return [row({ status: 'created' }, 1)];
+    };
+    const { user } = await previewWith('[]');
+    await user.click(screen.getByRole('button', { name: '导入' }));
+    await user.click(screen.getByRole('button', { name: '确认导入' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('导入失败，没有任何记录被修改');
+    await waitFor(() => expect(alert).toHaveFocus());
+  });
+
+  it('does not move focus while the user edits after a preview', async () => {
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const { user, box } = await previewWith('[]');
+    const title = await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    await waitFor(() => expect(title).toHaveFocus());
+    await user.click(box);
+    await user.type(box, ' ');
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(box).toHaveFocus();
+  });
+});

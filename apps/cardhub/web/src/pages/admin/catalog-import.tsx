@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
 import { CATALOG_IMPORT_MAX_ROWS, appErrorMessage, catalogImportLimit, t } from '@repo/shared';
 import { Button, SegmentedControl } from '@repo/ui-web';
@@ -38,6 +38,11 @@ const RESULT_CLASS: Record<ImportStatus, string> = {
   unchanged: 'bg-neutral-100 text-neutral-600',
   error: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200',
 };
+
+// §17：程序聚焦不触发 focus-visible，用 focus: 让环可见；scroll-mt-24 避开 h-16 吸顶头。
+const FOCUS_TARGET_CLASS = 'scroll-mt-24 focus:outline-none focus:ring-2 focus:ring-brand-500';
+
+type FocusTarget = 'title' | 'summary' | 'input' | 'failure';
 
 const RESULT_KEY: Record<ImportStatus, string> = {
   created: 'admin.import.create',
@@ -104,6 +109,25 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   const [confirming, setConfirming] = useState(false);
   const [importedText, setImportedText] = useState<string | null>(null);
   const [phase, setPhase] = useState<'preview' | 'execute' | null>(null);
+  // 每个结果一个新对象：只在点「预览」/「确认导入」得到结果后移一次焦点，输入不触发。
+  const [focusRequest, setFocusRequest] = useState<{ target: FocusTarget } | null>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const summaryRef = useRef<HTMLParagraphElement>(null);
+  const failureRef = useRef<HTMLDivElement>(null);
+  const requestFocus = (target: FocusTarget) => setFocusRequest({ target });
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const refs = { title: titleRef, summary: summaryRef, input: textRef, failure: failureRef };
+    // 结果渲染到聚焦之间用户已经自己移走焦点（如点了「导入」），就不再抢。
+    const before = document.activeElement;
+    const frame = requestAnimationFrame(() => {
+      if (document.activeElement !== before) return;
+      refs[focusRequest.target].current?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusRequest]);
   const importCatalog = trpc.admin.catalog.import.useMutation();
   const pending = importCatalog.isPending;
   const stale = preview !== null && preview.text !== text;
@@ -145,6 +169,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message) }));
+      requestFocus('input');
       return;
     }
     const previewInput = { data, dryRun: true as const };
@@ -158,6 +183,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
             })
           : tt('admin.import.tooLarge'),
       );
+      requestFocus('input');
       return;
     }
     setPhase('preview');
@@ -165,18 +191,23 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       const rows = await importCatalog.mutateAsync(previewInput);
       const nextRows = rows as ImportRowResult[];
       setPreview({ text, data, rows: nextRows });
-      setFilter(nextRows.some((row) => row.status === 'error') ? 'errors' : 'all');
+      const hasErrors = nextRows.some((row) => row.status === 'error');
+      setFilter(hasErrors ? 'errors' : 'all');
+      requestFocus(hasErrors ? 'summary' : 'title');
     } catch (error) {
       if (isAccessRevoked(error)) {
         reportForbidden();
         return;
       }
       const failure = readTrpcFailure(error);
-      setParseError(
-        failure.admin?.code
-          ? adminErrorText(locale.locale, failure.admin.code, failure.message)
-          : appErrorMessage(locale.locale, failure.appCode),
-      );
+      if (failure.admin?.code) {
+        setParseError(adminErrorText(locale.locale, failure.admin.code, failure.message));
+        requestFocus('input');
+      } else {
+        // §17-4：预览请求本身失败（如 500）不是输入问题，走失败框。
+        setActionError(appErrorMessage(locale.locale, failure.appCode));
+        requestFocus('failure');
+      }
     } finally {
       setPhase(null);
     }
@@ -197,6 +228,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       );
       setActionRows(null);
       setConfirming(false);
+      requestFocus('failure');
       return;
     }
     setActionError(null);
@@ -218,6 +250,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       setActionError(tt('admin.import.failed'));
       setActionRows(failure.admin?.rows ?? null);
       setConfirming(false);
+      requestFocus('failure');
     } finally {
       setPhase(null);
     }
@@ -265,16 +298,19 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           {tt('admin.import.paste')}
         </label>
         <textarea
+          ref={textRef}
           id="import-json"
+          aria-invalid={parseError ? true : undefined}
+          aria-describedby={parseError ? 'import-json-error' : undefined}
           rows={14}
           spellCheck={false}
           value={text}
           readOnly={phase === 'execute' && pending}
           onChange={(event) => onText(event.target.value)}
-          className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className="flex w-full scroll-mt-24 rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
         />
         {parseError ? (
-          <p role="alert" className="text-xs text-red-700">
+          <p id="import-json-error" role="alert" className="text-xs text-red-700">
             {parseError}
           </p>
         ) : null}
@@ -305,8 +341,10 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       </div>
       {actionError ? (
         <div
+          ref={failureRef}
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          tabIndex={-1}
+          className={`${FOCUS_TARGET_CLASS} rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700`}
         >
           <p>{actionError}</p>
           {actionRows?.flatMap((row) =>
@@ -323,8 +361,16 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       ) : null}
       {preview && summary ? (
         <div className={stale ? 'space-y-3 opacity-60' : 'space-y-3'}>
+          <h2
+            ref={titleRef}
+            id="import-preview-title"
+            tabIndex={-1}
+            className={`${FOCUS_TARGET_CLASS} text-base font-semibold`}
+          >
+            {tt('admin.import.previewTitle')}
+          </h2>
           {stale ? <p className="text-sm text-neutral-700">{tt('admin.import.stale')}</p> : null}
-          <p role="status">
+          <p ref={summaryRef} role="status" tabIndex={-1} className={FOCUS_TARGET_CLASS}>
             {tt('admin.import.summary', {
               newSeries: tt('admin.import.summary.series', { count: summary.newSeries }),
               newCards: tt('admin.import.summary.cards', { count: summary.newCards }),
