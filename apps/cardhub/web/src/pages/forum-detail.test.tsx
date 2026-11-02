@@ -1002,3 +1002,70 @@ describe('ForumDetailPage CH-103 topic controls', () => {
     expect(field).toHaveValue('keep the reply');
   });
 });
+
+describe('ForumDetailPage CH-221 topic h1', () => {
+  it('renders the topic title as the only h1 and keeps the replies h2 (21-2/21-3)', () => {
+    renderPage();
+    const h1s = screen.getAllByRole('heading', { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0]).toHaveAccessibleName('Test topic');
+    expect(h1s[0]).toHaveAttribute('tabindex', '-1');
+    expect(h1s[0]).toHaveClass(
+      'text-2xl',
+      'font-semibold',
+      'leading-none',
+      'tracking-tight',
+      'min-w-0',
+      'wrap-anywhere',
+    );
+    expect(document.querySelectorAll('h1')).toHaveLength(1);
+    expect(document.querySelector('h1')?.textContent).toBe('Test topic');
+    expect(screen.getByRole('heading', { level: 2, name: '回帖（45）' })).toBeInTheDocument();
+  });
+
+  it('demotes a source "# x" in the topic body and replies to h2 (21-6)', () => {
+    const reply = { ...makeReply(1), body: '# x' };
+    availableReplies = [reply];
+    topicState.data = {
+      ...topicState.data!,
+      body: '# x',
+      replies: [reply],
+      replyCount: 1,
+      replyNextCursor: null,
+    };
+    renderPage();
+    expect(document.querySelectorAll('h1')).toHaveLength(1);
+    expect(document.querySelector('h1')?.textContent).toBe('Test topic');
+    expect(screen.getAllByRole('heading', { level: 2, name: 'x' })).toHaveLength(2);
+  });
+
+  it('moves focus to the h1 when the edit link disappears at the deadline (21-2)', async () => {
+    rootStore.session.signIn('jwt.token', { id: 'author-1', username: 'author' });
+    const now = Date.now();
+    topicState.data = {
+      ...topicState.data!,
+      editableUntil: new Date(now + 400).toISOString(),
+      serverNow: new Date(now).toISOString(),
+    };
+    renderPage();
+    screen.getByRole('link', { name: '编辑这个话题' }).focus();
+    await waitFor(
+      () => expect(screen.getByRole('heading', { level: 1, name: 'Test topic' })).toHaveFocus(),
+      { timeout: 3000 },
+    );
+  });
+
+  it('keeps focus on the edited notice after a successful edit (21-2)', async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: '/forum/test-topic', state: { notice: 'topicEdited' } }]}
+      >
+        <Routes>
+          <Route path="/forum/:slug" element={<ForumDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(document.activeElement?.getAttribute('role')).toBe('status'));
+    expect(screen.getByRole('heading', { level: 1, name: 'Test topic' })).not.toHaveFocus();
+  });
+});
