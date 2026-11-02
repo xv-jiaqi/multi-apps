@@ -35,6 +35,7 @@ const card = {
   attributes: { Cost: '3', attack: 2 },
   printRun: null as number | null,
   parallelName: null as string | null,
+  isParallel: false,
   base: null as { slug: string; name: string } | null,
   subset: null as { slug: string; name: string } | null,
   variants: [] as Array<{
@@ -162,6 +163,7 @@ beforeEach(() => {
   card.cardNumber = null;
   card.printRun = null;
   card.parallelName = null;
+  card.isParallel = false;
   card.base = null;
   card.subset = null;
   card.variants = [];
@@ -387,6 +389,7 @@ describe('card detail variants', () => {
   it('lists the group in server order, marks the current card, and shows a limited total', () => {
     card.printRun = 99;
     card.parallelName = '金箔';
+    card.isParallel = true;
     card.cardNumber = '001';
     card.subset = { slug: 'base', name: '主卡' };
     card.base = { slug: 'aurora-base', name: '极光骑士' };
@@ -441,6 +444,32 @@ describe('card detail variants', () => {
     expect(within(items[1]!).queryByRole('link')).not.toBeInTheDocument();
     expect(within(items[2]!).getByRole('link')).toHaveAttribute('href', '/cards/aurora-plain');
     expect(screen.queryByRole('button', { name: /显示全部/ })).not.toBeInTheDocument();
+  });
+
+  it('shows an orphan parallel as a base card with only the print run', () => {
+    card.name = '孤儿卡';
+    card.parallelName = '孤儿X';
+    card.printRun = 7;
+    card.isParallel = false;
+    card.base = null;
+    card.cardNumber = '002';
+    card.variants = [
+      {
+        slug: 'orphan-y',
+        name: '孤儿卡',
+        parallelName: '孤儿X',
+        printRun: 7,
+        imageUrl: null,
+        isCurrent: true,
+      },
+    ];
+    showCard();
+    renderCard('orphan-y');
+
+    expect(screen.queryByText(/平行/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /基础卡/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '同组版本' })).not.toBeInTheDocument();
+    expect(screen.getByText(/限量/)).toHaveTextContent('限量 /7');
   });
 
   it('shows the first six versions on a narrow screen and focuses the seventh', async () => {

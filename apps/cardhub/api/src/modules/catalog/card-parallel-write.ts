@@ -68,6 +68,28 @@ function emptyToNull(value: string | undefined): string | null {
   return value;
 }
 
+/**
+ * A card with no base stores a parallel name only when it already has one.
+ * That is the orphan left by deleting its base. A new card, and a base card
+ * whose stored name is empty, always persist null so a request cannot create
+ * a named base card. An existing orphan name is kept when the request omits
+ * it, and replaced when the request sends another non-empty name.
+ */
+function nameForUnlinkedCard(
+  existing: ExistingCard,
+  provided: string | undefined,
+): string | null | undefined {
+  const stored = existing.parallelName;
+  if (stored === null || stored.length === 0) return null;
+  if (provided === undefined || provided.length === 0) return undefined;
+  return provided;
+}
+
+/** Test seam. Production leaves this unset. */
+export const parallelWriteTestHooks: { afterBaseLocked: (() => Promise<void>) | null } = {
+  afterBaseLocked: null,
+};
+
 function requiredName(provided: string | undefined, existing: string | null): string {
   const name = provided !== undefined ? provided : (existing ?? '');
   if (name.length === 0) {
@@ -115,12 +137,51 @@ function relatedSlugs(existing: ExistingCard | null): string[] {
 }
 
 /**
+ * Clear parallels that would be left in the old series.
+ * Lock the base row first so a new child cannot attach, then read and lock
+ * the children. The returned slugs are the rows actually cleared, for cache
+ * invalidation. The series trigger only nulls parallelOfId.
+ */
+async function clearParallelsLeftBehind(
+  tx: Tx,
+  existing: ExistingCard,
+  seriesId: string,
+): Promise<string[]> {
+  if (existing.seriesId === seriesId) return [];
+  await lockCards(tx, [existing.id]);
+  await parallelWriteTestHooks.afterBaseLocked?.();
+  const located = await tx.card.findMany({
+    where: { parallelOfId: existing.id, NOT: { seriesId } },
+    select: { id: true },
+  });
+  if (located.length === 0) return [];
+  await lockCards(
+    tx,
+    located.map((row) => row.id),
+  );
+  const children = await tx.card.findMany({
+    where: {
+      id: { in: located.map((row) => row.id) },
+      parallelOfId: existing.id,
+      NOT: { seriesId },
+    },
+    select: { id: true, slug: true },
+  });
+  if (children.length === 0) return [];
+  await tx.card.updateMany({
+    where: { id: { in: children.map((row) => row.id) } },
+    data: { parallelOfId: null, parallelName: null },
+  });
+  return children.map((row) => row.slug);
+}
+
+/**
  * Decide the parallel columns for one admin create or update.
- * Omitted inputs leave stored values in place. An empty parallelOfSlug clears
- * the link and keeps parallelName unless a new name was sent.
- * Moving the card to another series without a new base clears the link.
- * The series-change trigger clears children; this returns their slugs so the
- * cache can drop them.
+ * Omitted inputs leave a live link in place. An empty parallelOfSlug, or a
+ * series change without a new base, clears a live link and its parallelName
+ * no matter what name the request sent. A card that already has no base keeps
+ * a stored orphan name and otherwise persists null. Moving a base card locks
+ * that row, then clears parallels left behind.
  */
 export async function resolveParallelWrite(
   tx: Tx,
@@ -180,23 +241,31 @@ export async function resolveParallelWrite(
   if (args.mode === 'create') {
     return {
       parallelOfId: null,
-      parallelName: emptyToNull(args.parallelName),
+      parallelName: null,
       printRun: args.printRun ?? null,
       invalidateSlugs: [],
     };
   }
 
-  if (clearing) {
+  if (clearing && existing) {
+    if (seriesChanged) {
+      for (const childSlug of await clearParallelsLeftBehind(tx, existing, args.seriesId)) {
+        invalidate.add(childSlug);
+      }
+    }
     return {
       parallelOfId: null,
-      parallelName: args.parallelName === undefined ? undefined : emptyToNull(args.parallelName),
+      parallelName:
+        existing.parallelOfId === null ? nameForUnlinkedCard(existing, args.parallelName) : null,
       printRun: args.printRun,
       invalidateSlugs: [...invalidate],
     };
   }
 
   let parallelName: string | null | undefined;
-  if (args.parallelName === undefined) {
+  if (existing && existing.parallelOfId === null) {
+    parallelName = nameForUnlinkedCard(existing, args.parallelName);
+  } else if (args.parallelName === undefined) {
     parallelName = undefined;
   } else if (args.parallelName.length === 0 && existing?.parallelOfId) {
     throw parallelFieldError('parallelName', 'parallel_name_required');

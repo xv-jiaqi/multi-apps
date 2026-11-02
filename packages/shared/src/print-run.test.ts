@@ -63,8 +63,8 @@ describe('parallel admin input', () => {
         path: 'parallelName',
         message: 'too_big',
       },
-      { input: { ...card, printRun: 0 }, path: 'printRun', message: 'too_small' },
-      { input: { ...card, printRun: -1 }, path: 'printRun', message: 'too_small' },
+      { input: { ...card, printRun: 0 }, path: 'printRun', message: 'print_run_min' },
+      { input: { ...card, printRun: -1 }, path: 'printRun', message: 'print_run_min' },
       { input: { ...card, printRun: 1.5 }, path: 'printRun', message: 'invalid_type' },
       { input: { ...card, printRun: '99' }, path: 'printRun', message: 'invalid_type' },
       {

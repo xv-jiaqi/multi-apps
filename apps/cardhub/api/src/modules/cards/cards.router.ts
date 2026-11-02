@@ -21,7 +21,10 @@ import { loadCardBySlug } from './card-by-slug';
 import { loadCardsBySeries } from './list-by-series';
 
 type CardSearchRow = Prisma.CardGetPayload<{
-  include: { series: { select: { slug: true; title: true } } };
+  include: {
+    series: { select: { slug: true; title: true } };
+    parallelOf: { select: { slug: true; name: true } };
+  };
 }>;
 
 @Injectable()
@@ -66,7 +69,10 @@ export class CardsRouter {
           const where = buildCardSearchWhere(effectiveParsed);
           const cards = await prisma.card.findMany({
             where,
-            include: { series: { select: { slug: true, title: true } } },
+            include: {
+              series: { select: { slug: true, title: true } },
+              parallelOf: { select: { slug: true, name: true } },
+            },
             take: input.limit,
             orderBy: { name: 'asc' },
           });
@@ -82,6 +88,8 @@ export class CardsRouter {
               seriesTitle: c.series.title,
               parallelName: c.parallelName ?? null,
               printRun: c.printRun ?? null,
+              isParallel: c.parallelOfId != null,
+              base: c.parallelOf ? { slug: c.parallelOf.slug, name: c.parallelOf.name } : null,
             })),
           };
         }),

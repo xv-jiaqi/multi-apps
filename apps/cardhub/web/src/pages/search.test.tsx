@@ -77,6 +77,27 @@ const sampleSeries = [
 ];
 
 function currentResult(query: string) {
+  if (query.includes('孤儿')) {
+    return {
+      query,
+      cards: [
+        {
+          id: 'c-orphan',
+          slug: 'orphan-y',
+          name: '孤儿卡',
+          rarity: 'rare',
+          imageUrl: null,
+          seriesSlug: 'celestial-dawn',
+          seriesTitle: '天穹黎明',
+          parallelName: '孤儿X',
+          printRun: 7,
+          isParallel: false,
+          base: null,
+        },
+      ],
+      series: [],
+    };
+  }
   if (query.includes('金箔')) {
     return {
       query,
@@ -91,6 +112,8 @@ function currentResult(query: string) {
           seriesTitle: '天穹黎明',
           parallelName: '金箔超长平行名称金箔超长平行名称金箔超长',
           printRun: 99,
+          isParallel: true,
+          base: { slug: 'aurora-base', name: '极光骑士' },
         },
         {
           id: 'c-plain',
@@ -102,6 +125,8 @@ function currentResult(query: string) {
           seriesTitle: '天穹黎明',
           parallelName: null,
           printRun: null,
+          isParallel: false,
+          base: null,
         },
       ],
       series: [],
@@ -627,6 +652,13 @@ describe('SearchPage result links', () => {
       '限量 /99',
     );
     expect(screen.queryByText('不编号')).not.toBeInTheDocument();
+  });
+
+  it('shows an orphan parallel as a base card with only the print run', async () => {
+    renderSearch('?q=孤儿X');
+    expect(await screen.findByRole('link', { name: /孤儿卡/ })).toBeInTheDocument();
+    expect(screen.queryByText(/平行/)).not.toBeInTheDocument();
+    expect(screen.getByText(/限量/)).toHaveTextContent('限量 /7');
   });
 
   it('keeps the series list inside its labelled section', async () => {

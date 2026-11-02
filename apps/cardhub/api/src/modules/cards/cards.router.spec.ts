@@ -172,6 +172,8 @@ describe('CardsRouter.search', () => {
       seriesTitle: '天穹黎明',
       parallelName: null,
       printRun: null,
+      isParallel: false,
+      base: null,
     });
   });
 });

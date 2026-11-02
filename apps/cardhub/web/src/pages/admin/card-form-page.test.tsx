@@ -30,6 +30,9 @@ const createImpl: { current: (input: unknown) => Promise<unknown> } = {
   current: async (input) => input,
 };
 const invalidateSeriesBySlug = vi.hoisted(() => vi.fn());
+const updateImpl = vi.hoisted(() => ({
+  current: async (input: unknown) => input,
+}));
 const fetchBasePage = vi.hoisted(() =>
   vi.fn(async (_input: unknown) => ({ items: [] as Array<Record<string, unknown>> })),
 );
@@ -76,7 +79,10 @@ vi.mock('../../lib/trpc', () => ({
           }),
         },
         update: {
-          useMutation: () => ({ isPending: false, mutateAsync: async (input: unknown) => input }),
+          useMutation: () => ({
+            isPending: false,
+            mutateAsync: (input: unknown) => updateImpl.current(input),
+          }),
         },
       },
       subsets: {
@@ -166,6 +172,7 @@ beforeEach(() => {
     },
   ];
   createImpl.current = async (input) => input;
+  updateImpl.current = async (input) => input;
   invalidateSeriesBySlug.mockClear();
   fetchBasePage.mockReset();
   fetchBasePage.mockResolvedValue({ items: [] });
@@ -610,7 +617,9 @@ describe('card form parallels', () => {
     expect(printRun).toHaveAttribute('autocomplete', 'off');
     await user.type(printRun, '0');
     await user.click(screen.getByRole('button', { name: '创建' }));
-    expect(document.getElementById('card-print-run-error')).toHaveTextContent('内容长度不够');
+    expect(document.getElementById('card-print-run-error')).toHaveTextContent(
+      '限量数量至少为 1，不限量请留空',
+    );
     expect(printRun).toHaveAttribute('aria-invalid', 'true');
     expect(printRun).toHaveFocus();
   });
@@ -790,5 +799,91 @@ describe('card form unsaved changes', () => {
       expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn');
     });
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the stored parallel name when saving an orphan', async () => {
+    const user = userEvent.setup();
+    const calls: Array<Record<string, unknown>> = [];
+    updateImpl.current = async (input) => {
+      calls.push(input as Record<string, unknown>);
+      return input;
+    };
+    cardState.data = {
+      ...savedCard,
+      parallelOfSlug: null,
+      parallelName: '孤儿X',
+      printRun: 7,
+    };
+    const { router } = renderCard('/admin/catalog/cards/aurora-knight/edit');
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn');
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.parallelOfSlug).toBe('');
+    expect(calls[0]?.parallelName).toBe('孤儿X');
+  });
+
+  it('clears the parallel name when an existing parallel moves to another series', async () => {
+    const user = userEvent.setup();
+    const calls: Array<Record<string, unknown>> = [];
+    updateImpl.current = async (input) => {
+      calls.push(input as Record<string, unknown>);
+      return input;
+    };
+    seriesState.items = [
+      ...seriesState.items,
+      {
+        id: 's2',
+        slug: 'forge-of-titans',
+        title: '泰坦熔炉',
+        description: null,
+        coverUrl: null,
+        cardCount: 0,
+        commentCount: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+    cardState.data = {
+      ...savedCard,
+      parallelOfSlug: 'base-card',
+      parallelName: '金箔',
+      printRun: 7,
+    };
+    renderCard('/admin/catalog/cards/aurora-knight/edit');
+    await user.click(screen.getByRole('combobox', { name: '所属系列' }));
+    await user.click(screen.getByRole('option', { name: '泰坦熔炉' }));
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+    await waitFor(() => {
+      expect(calls).toHaveLength(1);
+    });
+    expect(calls[0]?.seriesSlug).toBe('forge-of-titans');
+    expect(calls[0]?.parallelOfSlug).toBe('');
+    expect(calls[0]?.parallelName).toBe('');
+  });
+
+  it('clears the parallel name when the base card is set to none', async () => {
+    const user = userEvent.setup();
+    const calls: Array<Record<string, unknown>> = [];
+    updateImpl.current = async (input) => {
+      calls.push(input as Record<string, unknown>);
+      return input;
+    };
+    cardState.data = {
+      ...savedCard,
+      parallelOfSlug: 'base-card',
+      parallelName: '金箔',
+      printRun: 7,
+    };
+    renderCard('/admin/catalog/cards/aurora-knight/edit');
+    await user.click(screen.getByRole('combobox', { name: '基础卡' }));
+    await user.click(screen.getByRole('option', { name: '无（这是基础卡）' }));
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+    await waitFor(() => {
+      expect(calls).toHaveLength(1);
+    });
+    expect(calls[0]?.parallelOfSlug).toBe('');
+    expect(calls[0]?.parallelName).toBe('');
   });
 });

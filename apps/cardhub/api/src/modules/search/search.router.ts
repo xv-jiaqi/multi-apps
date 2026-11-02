@@ -7,7 +7,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { assertParsedSearch, buildCardSearchWhere, buildSeriesSearchWhere } from './search-query';
 
 type GlobalCardRow = Prisma.CardGetPayload<{
-  include: { series: { select: { slug: true; title: true } } };
+  include: {
+    series: { select: { slug: true; title: true } };
+    parallelOf: { select: { slug: true; name: true } };
+  };
 }>;
 
 type GlobalSeriesRow = Prisma.SeriesGetPayload<{
@@ -45,7 +48,10 @@ export class SearchRouter {
         const [cards, series] = await Promise.all([
           prisma.card.findMany({
             where: buildCardSearchWhere(parsed),
-            include: { series: { select: { slug: true, title: true } } },
+            include: {
+              series: { select: { slug: true, title: true } },
+              parallelOf: { select: { slug: true, name: true } },
+            },
             take: cardLimit,
             orderBy: { name: 'asc' },
           }),
@@ -71,6 +77,10 @@ export class SearchRouter {
             seriesTitle: card.series.title,
             parallelName: card.parallelName ?? null,
             printRun: card.printRun ?? null,
+            isParallel: card.parallelOfId != null,
+            base: card.parallelOf
+              ? { slug: card.parallelOf.slug, name: card.parallelOf.name }
+              : null,
           })),
           series: series.map((item: GlobalSeriesRow) => ({
             id: item.id,

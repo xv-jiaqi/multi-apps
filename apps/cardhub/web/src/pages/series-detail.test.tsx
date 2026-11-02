@@ -28,7 +28,15 @@ const series = {
   title: '天穹黎明',
   description: '黎明。',
   coverUrl: null,
-  cards: [{ slug: 'aurora-knight', name: '极光骑士', rarity: 'rare', imageUrl: null }],
+  cards: [
+    {
+      slug: 'aurora-knight',
+      name: '极光骑士',
+      rarity: 'rare',
+      imageUrl: null,
+      parallelOfId: null as string | null,
+    },
+  ],
 };
 
 const seriesQuery: {
@@ -346,6 +354,30 @@ describe('series detail meta description', () => {
     seriesQuery.error = null;
     seriesQuery.dataUpdatedAt = 1;
   }
+
+  it('counts only base cards in the hero and the description', () => {
+    const previous = series.cards;
+    series.cards = [
+      { slug: 'base-a', name: '基础甲', rarity: 'rare', imageUrl: null, parallelOfId: null },
+      { slug: 'base-b', name: '基础乙', rarity: 'common', imageUrl: null, parallelOfId: null },
+      ...Array.from({ length: 6 }, (_, index) => ({
+        slug: `parallel-${index}`,
+        name: '平行',
+        rarity: 'rare',
+        imageUrl: null,
+        parallelOfId: 'base-a',
+      })),
+    ];
+    showSeries();
+    renderSeries();
+    expect(screen.getByText('收录 2 张卡牌')).toBeInTheDocument();
+    expect(screen.queryByText('收录 8 张卡牌')).not.toBeInTheDocument();
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      expect.stringContaining('共 2 张卡牌'),
+    );
+    series.cards = previous;
+  });
 
   it('describes the loaded series in Chinese and English', () => {
     showSeries();

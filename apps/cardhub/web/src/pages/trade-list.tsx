@@ -164,6 +164,8 @@ export const TradeListPage = observer(function TradeListPage() {
         imageUrl: selectedCardQuery.data.imageUrl,
         seriesSlug: selectedCardQuery.data.seriesSlug,
         seriesTitle: selectedCardQuery.data.seriesTitle,
+        parallelName: selectedCardQuery.data.parallelName,
+        isParallel: selectedCardQuery.data.isParallel,
       }
     : null;
 

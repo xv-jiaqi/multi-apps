@@ -3,6 +3,10 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { APP_ERROR_CODES, appErrorMessage } from '@repo/shared';
 import { createApp } from '../src/bootstrap/create-app';
+import {
+  parallelWriteTestHooks,
+  resolveParallelWrite,
+} from '../src/modules/catalog/card-parallel-write';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 
 const VALIDATION = appErrorMessage('zh-CN', APP_ERROR_CODES.VALIDATION);
@@ -393,6 +397,8 @@ describe('card parallels', () => {
     if (!foilHit) throw new Error('expected parallel name hit');
     expect(text(foilHit, 'name')).toBe('素卡');
     expect(nullableText(foilHit, 'parallelName')).toBe('金箔');
+    expect(foilHit.isParallel).toBe(true);
+    expect(foilHit.base).toEqual({ slug: slug('base'), name: '基础' });
 
     const byFoilSearch = await get('cards.search', { q: '金箔', seriesSlug, limit: 5 });
     expect(byFoilSearch.status).toBe(200);
@@ -401,6 +407,8 @@ describe('card parallels', () => {
     );
     if (!foilSearchHit) throw new Error('expected cards.search parallel name hit');
     expect(nullableText(foilSearchHit, 'parallelName')).toBe('金箔');
+    expect(foilSearchHit.isParallel).toBe(true);
+    expect(foilSearchHit.base).toEqual({ slug: slug('base'), name: '基础' });
 
     const seriesSkipsParallelName = await get('cards.listBySeries', {
       seriesSlug,
@@ -491,7 +499,7 @@ describe('card parallels', () => {
     expect(whole(parallelRow, 'total')).toBe(2);
   });
 
-  it('keeps an omitted parallel on update and clears the link without erasing the name', async () => {
+  it('keeps an omitted parallel on update and clears the name when the base is removed', async () => {
     const created = await createCard({
       slug: slug('keep'),
       name: '保留',
@@ -534,7 +542,7 @@ describe('card parallels', () => {
     );
     expect(cleared.status).toBe(200);
     expect(nullableText(resultData(cleared.body), 'parallelOfSlug')).toBeNull();
-    expect(nullableText(resultData(cleared.body), 'parallelName')).toBe('银折');
+    expect(nullableText(resultData(cleared.body), 'parallelName')).toBeNull();
     expect(nullableNumber(resultData(cleared.body), 'printRun')).toBeNull();
   });
 
@@ -609,7 +617,12 @@ describe('card parallels', () => {
       {
         body: { slug: slug('zero'), name: '零', seriesSlug, printRun: 0 },
         field: 'printRun',
-        code: 'too_small',
+        code: 'print_run_min',
+      },
+      {
+        body: { slug: slug('minus'), name: '负', seriesSlug, printRun: -3 },
+        field: 'printRun',
+        code: 'print_run_min',
       },
       {
         body: { slug: slug('fraction'), name: '小数', seriesSlug, printRun: 1.5 },
@@ -682,6 +695,51 @@ describe('card parallels', () => {
     expect(badJson.body.error.data.appCode).toBe(APP_ERROR_CODES.PARSE_ERROR);
     expect(JSON.stringify(badJson.body)).not.toContain('PARSER_LEAK_MARKER');
     assertNoInternalText(badJson.body);
+  });
+
+  it('treats a deleted base card child as a base card in search and detail', async () => {
+    await createCard({
+      slug: slug('z-base'),
+      name: '基础Z',
+      seriesSlug,
+      cardNumber: '70',
+    });
+    await createCard({
+      slug: slug('y-orphan'),
+      name: '平行Y',
+      seriesSlug,
+      cardNumber: '70',
+      parallelOfSlug: slug('z-base'),
+      parallelName: '孤儿X',
+      printRun: 7,
+    });
+    const removed = await post('admin.cards.delete', { slug: slug('z-base') }, adminToken);
+    expect(removed.status).toBe(200);
+
+    const detail = await get('cards.bySlug', { slug: slug('y-orphan') });
+    expect(detail.status).toBe(200);
+    const detailBody = resultData(detail.body);
+    expect(detailBody.base).toBeNull();
+    expect(detailBody.isParallel).toBe(false);
+    expect(nullableText(detailBody, 'parallelName')).toBe('孤儿X');
+    expect(nullableNumber(detailBody, 'printRun')).toBe(7);
+
+    const global = await get('search.global', { q: '孤儿X', limit: 5 });
+    expect(global.status).toBe(200);
+    const hit = rowsOf(global.body, 'cards').find((row) => row.slug === slug('y-orphan'));
+    if (!hit) throw new Error('expected orphan search hit');
+    expect(hit.isParallel).toBe(false);
+    expect(hit.base).toBeNull();
+    expect(nullableText(hit, 'parallelName')).toBe('孤儿X');
+    expect(nullableNumber(hit, 'printRun')).toBe(7);
+
+    const searched = await get('cards.search', { q: '孤儿X', seriesSlug, limit: 5 });
+    const found = rowsOf(searched.body, 'results').find((row) => row.slug === slug('y-orphan'));
+    if (!found) throw new Error('expected cards.search orphan');
+    expect(found.isParallel).toBe(false);
+    expect(found.base).toBeNull();
+    expect(nullableText(found, 'parallelName')).toBe('孤儿X');
+    expect(nullableNumber(found, 'printRun')).toBe(7);
   });
 
   it('turns parallels into base cards when the base is deleted or moves series', async () => {
@@ -761,7 +819,7 @@ describe('card parallels', () => {
     );
     expect(moved.status).toBe(200);
     expect(nullableText(resultData(moved.body), 'parallelOfSlug')).toBeNull();
-    expect(nullableText(resultData(moved.body), 'parallelName')).toBe('原名');
+    expect(nullableText(resultData(moved.body), 'parallelName')).toBeNull();
     expect(text(resultData(moved.body), 'seriesSlug')).toBe(otherSlug);
     expect(text(movedParallel, 'name')).toBe('跟着改系列');
   });
@@ -866,5 +924,289 @@ describe('card parallels', () => {
     expect(cleared?.parallelName).toBe('留名');
 
     await prisma.series.deleteMany({ where: { id: { in: [seriesA.id, seriesB.id] } } });
+  });
+
+  it('stores null when a new card has no base but sends a parallel name', async () => {
+    const created = await post(
+      'admin.cards.create',
+      {
+        slug: slug('plain-named'),
+        name: '不该有平行名',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug,
+        parallelName: '金箔',
+      },
+      adminToken,
+    );
+    expect(created.status).toBe(200);
+    const row = await prisma.card.findUnique({ where: { slug: slug('plain-named') } });
+    expect(row?.parallelOfId).toBeNull();
+    expect(row?.parallelName).toBeNull();
+  });
+
+  it('stores null when an edit adds a parallel name to a base card', async () => {
+    const updated = await post(
+      'admin.cards.update',
+      {
+        slug: slug('loose'),
+        name: '旧卡',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug,
+        parallelName: '金箔',
+      },
+      adminToken,
+    );
+    expect(updated.status).toBe(200);
+    const row = await prisma.card.findUnique({ where: { slug: slug('loose') } });
+    expect(row?.parallelOfId).toBeNull();
+    expect(row?.parallelName).toBeNull();
+  });
+
+  it('clears the parallel name when a parallel changes series with the old name', async () => {
+    await createCard({
+      slug: slug('srv-base'),
+      name: '服务端基础',
+      seriesSlug,
+      cardNumber: '90',
+    });
+    await createCard({
+      slug: slug('srv-child'),
+      name: '服务端平行',
+      seriesSlug,
+      cardNumber: '90',
+      parallelOfSlug: slug('srv-base'),
+      parallelName: '旧名',
+      printRun: 3,
+    });
+    const moved = await post(
+      'admin.cards.update',
+      {
+        slug: slug('srv-child'),
+        name: '服务端平行',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug: otherSlug,
+        parallelName: '旧名',
+      },
+      adminToken,
+    );
+    expect(moved.status).toBe(200);
+    const movedRow = await prisma.card.findUnique({ where: { slug: slug('srv-child') } });
+    expect(movedRow?.seriesId).not.toBeNull();
+    expect(movedRow?.parallelOfId).toBeNull();
+    expect(movedRow?.parallelName).toBeNull();
+    expect(movedRow?.printRun).toBe(3);
+    expect(nullableText(resultData(moved.body), 'parallelOfSlug')).toBeNull();
+    expect(nullableText(resultData(moved.body), 'parallelName')).toBeNull();
+  });
+
+  it('clears the parallel name when the base card is set to none', async () => {
+    await createCard({
+      slug: slug('unlink-base'),
+      name: '解绑基础',
+      seriesSlug,
+      cardNumber: '93',
+    });
+    await createCard({
+      slug: slug('unlink-child'),
+      name: '解绑平行',
+      seriesSlug,
+      cardNumber: '93',
+      parallelOfSlug: slug('unlink-base'),
+      parallelName: '旧名',
+    });
+    const unlinked = await post(
+      'admin.cards.update',
+      {
+        slug: slug('unlink-child'),
+        name: '解绑平行',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug,
+        parallelOfSlug: '',
+        parallelName: '旧名',
+      },
+      adminToken,
+    );
+    expect(unlinked.status).toBe(200);
+    const unlinkedRow = await prisma.card.findUnique({ where: { slug: slug('unlink-child') } });
+    expect(unlinkedRow?.parallelOfId).toBeNull();
+    expect(unlinkedRow?.parallelName).toBeNull();
+  });
+
+  it('clears parallels left behind when the base card changes series', async () => {
+    await createCard({
+      slug: slug('move-base'),
+      name: '搬走的基础',
+      seriesSlug,
+      cardNumber: '91',
+    });
+    await createCard({
+      slug: slug('move-child'),
+      name: '被留下的平行',
+      seriesSlug,
+      cardNumber: '91',
+      parallelOfSlug: slug('move-base'),
+      parallelName: '银折',
+      printRun: 5,
+    });
+    const other = await prisma.series.findUnique({ where: { slug: otherSlug } });
+    if (!other) throw new Error('expected other series');
+    const written = await prisma.$transaction(async (tx) => {
+      const parallel = await resolveParallelWrite(tx, {
+        mode: 'update',
+        cardSlug: slug('move-base'),
+        seriesId: other.id,
+        parallelOfSlug: undefined,
+        parallelName: undefined,
+        printRun: undefined,
+      });
+      await tx.card.update({
+        where: { slug: slug('move-base') },
+        data: { seriesId: other.id },
+      });
+      return parallel;
+    });
+    expect(written.invalidateSlugs).toContain(slug('move-child'));
+    const leftChild = await prisma.card.findUnique({ where: { slug: slug('move-child') } });
+    const originalSeries = await prisma.series.findUnique({ where: { slug: seriesSlug } });
+    expect(leftChild?.seriesId).toBe(originalSeries?.id);
+    expect(leftChild?.parallelOfId).toBeNull();
+    expect(leftChild?.parallelName).toBeNull();
+    expect(leftChild?.printRun).toBe(5);
+  });
+
+  it('keeps the orphan parallel name when the deleted base card is edited later', async () => {
+    await createCard({
+      slug: slug('gone-base'),
+      name: '被删基础',
+      seriesSlug,
+      cardNumber: '92',
+    });
+    await createCard({
+      slug: slug('gone-child'),
+      name: '删除后的孤儿',
+      seriesSlug,
+      cardNumber: '92',
+      parallelOfSlug: slug('gone-base'),
+      parallelName: '留名',
+      printRun: 7,
+    });
+    const removed = await post('admin.cards.delete', { slug: slug('gone-base') }, adminToken);
+    expect(removed.status).toBe(200);
+    const saved = await post(
+      'admin.cards.update',
+      {
+        slug: slug('gone-child'),
+        name: '删除后的孤儿',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug,
+        parallelOfSlug: '',
+        parallelName: '留名',
+      },
+      adminToken,
+    );
+    expect(saved.status).toBe(200);
+    const afterEmpty = await prisma.card.findUnique({ where: { slug: slug('gone-child') } });
+    expect(afterEmpty?.parallelOfId).toBeNull();
+    expect(afterEmpty?.parallelName).toBe('留名');
+    expect(afterEmpty?.printRun).toBe(7);
+
+    const moved = await post(
+      'admin.cards.update',
+      {
+        slug: slug('gone-child'),
+        name: '删除后的孤儿',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug: otherSlug,
+        parallelOfSlug: '',
+        parallelName: '留名',
+      },
+      adminToken,
+    );
+    expect(moved.status).toBe(200);
+    const afterMove = await prisma.card.findUnique({ where: { slug: slug('gone-child') } });
+    const other = await prisma.series.findUnique({ where: { slug: otherSlug } });
+    expect(afterMove?.seriesId).toBe(other?.id);
+    expect(afterMove?.parallelOfId).toBeNull();
+    expect(afterMove?.parallelName).toBe('留名');
+    expect(afterMove?.printRun).toBe(7);
+  });
+
+  it('blocks a new parallel while the base series move holds the base lock', async () => {
+    const base = await createCard({
+      slug: slug('race-base'),
+      name: '竞态基础',
+      seriesSlug,
+      cardNumber: '94',
+    });
+    const home = await prisma.series.findUnique({ where: { slug: seriesSlug } });
+    const other = await prisma.series.findUnique({ where: { slug: otherSlug } });
+    if (!home || !other) throw new Error('expected series');
+    let sawLock = false;
+    parallelWriteTestHooks.afterBaseLocked = async () => {
+      sawLock = true;
+      await expect(
+        prisma.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT set_config('lock_timeout', '500ms', true)`;
+          await tx.card.create({
+            data: {
+              slug: slug('race-child'),
+              name: '竞态平行',
+              seriesId: home.id,
+              parallelOfId: text(base, 'id'),
+              parallelName: '金箔',
+            },
+          });
+        }),
+      ).rejects.toThrow(/lock timeout|55P03/i);
+    };
+    try {
+      await prisma.$transaction(async (tx) => {
+        const parallel = await resolveParallelWrite(tx, {
+          mode: 'update',
+          cardSlug: slug('race-base'),
+          seriesId: other.id,
+          parallelOfSlug: undefined,
+          parallelName: undefined,
+          printRun: undefined,
+        });
+        expect(parallel.invalidateSlugs).not.toContain(slug('race-child'));
+        await tx.card.update({
+          where: { slug: slug('race-base') },
+          data: { seriesId: other.id },
+        });
+      });
+    } finally {
+      parallelWriteTestHooks.afterBaseLocked = null;
+    }
+    expect(sawLock).toBe(true);
+    const child = await prisma.card.findUnique({ where: { slug: slug('race-child') } });
+    expect(child).toBeNull();
+    const movedBase = await prisma.card.findUnique({ where: { slug: slug('race-base') } });
+    expect(movedBase?.seriesId).toBe(other.id);
+    expect(movedBase?.parallelName).toBeNull();
+  });
+
+  it('rejects a non-admin card update with FORBIDDEN', async () => {
+    const response = await post(
+      'admin.cards.update',
+      {
+        slug: slug('loose'),
+        name: '旧卡',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug,
+      },
+      userToken,
+      '203.0.113.160',
+    );
+    expect(response.status).toBe(403);
+    expect(response.body.error.data.code).toBe('FORBIDDEN');
+    expect(response.body.error.data.appCode).toBe(APP_ERROR_CODES.FORBIDDEN);
   });
 });

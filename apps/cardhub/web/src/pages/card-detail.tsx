@@ -151,14 +151,14 @@ export const CardDetailPage = observer(function CardDetailPage() {
                   ) : null}
                   {card.cardNumber && card.subset ? <span aria-hidden> · </span> : null}
                   {card.subset ? <span className="wrap-anywhere">{card.subset.name}</span> : null}
-                  {card.parallelName ? (
+                  {card.isParallel && card.parallelName ? (
                     <span>
                       {(card.cardNumber || card.subset ? ' · ' : '') +
                         tt('card.variant.parallel', { name: card.parallelName })}
                     </span>
                   ) : null}
                 </p>
-              ) : card.parallelName ? (
+              ) : card.isParallel && card.parallelName ? (
                 <p className="wrap-anywhere text-sm text-neutral-600">
                   {tt('card.variant.parallel', { name: card.parallelName })}
                 </p>
