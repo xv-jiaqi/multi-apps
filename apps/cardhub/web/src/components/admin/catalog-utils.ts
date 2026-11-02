@@ -30,6 +30,8 @@ export interface AdminCardItem {
   slug: string;
   name: string;
   description: string | null;
+  /** CH-206 Markdown long description. */
+  body?: string | null;
   imageUrl: string | null;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   attributes: Record<string, string | number | boolean>;

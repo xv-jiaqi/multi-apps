@@ -223,6 +223,25 @@ describe('length copy', () => {
   });
 });
 
+describe('long description (CH-206 §11-2)', () => {
+  it('rejects more than 20000 characters on the field with card_body_too_long and focuses it', async () => {
+    const user = userEvent.setup();
+    renderNew();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), 'aurora-knight');
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '极光骑士');
+    const body = document.getElementById('card-body') as HTMLTextAreaElement;
+    fireEvent.change(body, { target: { value: '长'.repeat(20001) } });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(await screen.findByText('长描述最多 20000 个字符')).toBeInTheDocument();
+    expect(body).toHaveFocus();
+    expect(body).toHaveAttribute('aria-invalid', 'true');
+
+    fireEvent.change(body, { target: { value: '长'.repeat(20000) } });
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(screen.queryByText('长描述最多 20000 个字符')).not.toBeInTheDocument();
+  });
+});
+
 describe('attributes editor', () => {
   it('infers text, number and boolean types from the saved card', () => {
     cardState.data = {

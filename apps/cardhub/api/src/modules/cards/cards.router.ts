@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import {
@@ -17,6 +17,7 @@ import {
 } from '../redis/catalog-cache';
 import { cardBySlugSchema, cardsListBySeriesSchema } from '../redis/public-cache.schema';
 import { assertParsedSearch, buildCardSearchWhere } from '../search/search-query';
+import { loadCardAdjacent } from './card-adjacent';
 import { loadCardBySlug } from './card-by-slug';
 import { loadCardsBySeries } from './list-by-series';
 
@@ -27,6 +28,8 @@ type CardSearchRow = Prisma.CardGetPayload<{
     parallelOf: { select: { slug: true; name: true } };
   };
 }>;
+
+const cardsLogger = new Logger('CardsRouter');
 
 @Injectable()
 export class CardsRouter {
@@ -42,11 +45,21 @@ export class CardsRouter {
     const cache = this.cache;
 
     return t.router({
-      bySlug: t.procedure.input(z.object({ slug: slugSchema })).query(({ input }) => {
-        return cache.read(cardBySlugKey(input.slug), cardBySlugSchema, () =>
-          loadCardBySlug(prisma, input.slug),
-        );
-      }),
+      bySlug: t.procedure
+        .input(z.object({ slug: slugSchema, via: z.literal('adjacent').optional() }))
+        .query(async ({ input }) => {
+          if (input.via) {
+            // CH-206 §5 metric: structured log only, the result is the same.
+            cardsLogger.log({ event: 'card.view', slug: input.slug, via: input.via });
+          }
+          const [card, adjacent] = await Promise.all([
+            cache.read(cardBySlugKey(input.slug), cardBySlugSchema, () =>
+              loadCardBySlug(prisma, input.slug),
+            ),
+            loadCardAdjacent(prisma, input.slug),
+          ]);
+          return { ...card, adjacent };
+        }),
 
       search: t.procedure
         .input(

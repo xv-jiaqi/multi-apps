@@ -1,3 +1,4 @@
+import { loadSeriesReleases } from './series-releases';
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
@@ -74,73 +75,82 @@ export class SeriesRouter {
         });
       }),
 
-      bySlug: t.procedure.input(z.object({ slug: slugSchema })).query(({ input }) => {
-        return cache.read(seriesBySlugKey(input.slug), seriesBySlugSchema, async () => {
-          const series = await prisma.series.findUnique({
-            where: { slug: input.slug },
-            select: {
-              id: true,
-              slug: true,
-              title: true,
-              description: true,
-              coverUrl: true,
-              releaseDate: true,
-              category: { select: { slug: true, name: true } },
-              subsets: {
-                orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }, { slug: 'asc' }],
-                select: { slug: true, name: true, kind: true, sortOrder: true },
-              },
-              // Pending removal. The miniapp and the current web series page
-              // still read this full list in createdAt order. Checklist
-              // search, numeric order, and paging live on cards.listBySeries.
-              cards: {
-                orderBy: { createdAt: 'asc' },
-                select: {
-                  id: true,
-                  slug: true,
-                  name: true,
-                  rarity: true,
-                  imageUrl: true,
-                  cardNumber: true,
-                  parallelName: true,
-                  printRun: true,
-                  parallelOfId: true,
-                  subset: { select: { slug: true } },
+      bySlug: t.procedure.input(z.object({ slug: slugSchema })).query(async ({ input }) => {
+        const detail = await cache.read(
+          seriesBySlugKey(input.slug),
+          seriesBySlugSchema,
+          async () => {
+            const series = await prisma.series.findUnique({
+              where: { slug: input.slug },
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                description: true,
+                coverUrl: true,
+                releaseDate: true,
+                category: { select: { slug: true, name: true } },
+                subsets: {
+                  orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }, { slug: 'asc' }],
+                  select: { slug: true, name: true, kind: true, sortOrder: true },
+                },
+                // Pending removal. The miniapp and the current web series page
+                // still read this full list in createdAt order. Checklist
+                // search, numeric order, and paging live on cards.listBySeries.
+                cards: {
+                  orderBy: { createdAt: 'asc' },
+                  select: {
+                    id: true,
+                    slug: true,
+                    name: true,
+                    rarity: true,
+                    imageUrl: true,
+                    cardNumber: true,
+                    parallelName: true,
+                    printRun: true,
+                    parallelOfId: true,
+                    subset: { select: { slug: true } },
+                  },
                 },
               },
-            },
-          });
-          if (!series) {
-            throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
-          }
-          const stamped = requireSeriesTimes(await readSeriesTimes(prisma, [series.id]), series.id);
-          return {
-            id: series.id,
-            slug: series.slug,
-            title: series.title,
-            description: series.description,
-            coverUrl: series.coverUrl,
-            createdAt: stamped.createdAt,
-            updatedAt: stamped.updatedAt,
-            releaseDate: formatReleaseDate(series.releaseDate),
-            category: series.category
-              ? { slug: series.category.slug, name: series.category.name }
-              : null,
-            subsets: series.subsets,
-            cards: series.cards.map((card) => ({
-              id: card.id,
-              slug: card.slug,
-              name: card.name,
-              rarity: card.rarity,
-              imageUrl: card.imageUrl,
-              cardNumber: card.cardNumber,
-              subsetSlug: card.subset?.slug ?? null,
-              parallelName: card.parallelName,
-              printRun: card.printRun,
-              parallelOfId: card.parallelOfId,
-            })),
-          };
-        });
+            });
+            if (!series) {
+              throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
+            }
+            const stamped = requireSeriesTimes(
+              await readSeriesTimes(prisma, [series.id]),
+              series.id,
+            );
+            return {
+              id: series.id,
+              slug: series.slug,
+              title: series.title,
+              description: series.description,
+              coverUrl: series.coverUrl,
+              createdAt: stamped.createdAt,
+              updatedAt: stamped.updatedAt,
+              releaseDate: formatReleaseDate(series.releaseDate),
+              category: series.category
+                ? { slug: series.category.slug, name: series.category.name }
+                : null,
+              subsets: series.subsets,
+              cards: series.cards.map((card) => ({
+                id: card.id,
+                slug: card.slug,
+                name: card.name,
+                rarity: card.rarity,
+                imageUrl: card.imageUrl,
+                cardNumber: card.cardNumber,
+                subsetSlug: card.subset?.slug ?? null,
+                parallelName: card.parallelName,
+                printRun: card.printRun,
+                parallelOfId: card.parallelOfId,
+              })),
+            };
+          },
+        );
+        const releases = await loadSeriesReleases(prisma, detail.id);
+        return { ...detail, releases };
       }),
     });
   }

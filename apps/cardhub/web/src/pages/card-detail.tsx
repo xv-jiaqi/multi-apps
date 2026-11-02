@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Link, useParams } from 'react-router';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
+import { Link, useLocation, useParams } from 'react-router';
+import { Card, CardContent, CardHeader } from '@repo/ui-web';
 import { cardAttributeLabel, printRunLabel, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -14,7 +14,9 @@ import { CardCollectionBar } from '../components/card-collection-bar';
 import { CardVariants } from '../components/card-variants';
 import { CommentSection } from '../components/comment-section';
 import { ListingsForCard } from '../components/listings-for-card';
-import { Artwork } from '../components/artwork';
+import { CardArtLightbox } from '../components/card-art-lightbox';
+import { CardBody } from '../components/card-body';
+import { CardAdjacentNav, cameFromAdjacent } from '../components/card-adjacent-nav';
 import { CardDetailSkeleton } from '../components/card-detail-skeleton';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
 import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
@@ -31,7 +33,12 @@ export const CardDetailPage = observer(function CardDetailPage() {
   const { cardSlug = '' } = useParams<{ cardSlug: string }>();
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
-  const query = trpc.cards.bySlug.useQuery({ slug: cardSlug }, { enabled: !!cardSlug });
+  const location = useLocation();
+  // CH-206 §5: the adjacent links pass route state, never a URL parameter.
+  const via = cameFromAdjacent(location.state) ? ('adjacent' as const) : undefined;
+  const query = trpc.cards.bySlug.useQuery(via ? { slug: cardSlug, via } : { slug: cardSlug }, {
+    enabled: !!cardSlug,
+  });
   const view = queryFallback(query);
   const headingRef = useRef<HTMLHeadingElement>(null);
   useFocusOnRecovery(view, headingRef);
@@ -116,29 +123,37 @@ export const CardDetailPage = observer(function CardDetailPage() {
             { label: tt('breadcrumb.home'), to: '/' },
             { label: tt('breadcrumb.series'), to: '/series' },
             { label: card.seriesTitle, to: `/series/${card.seriesSlug}` },
+            ...(card.subset
+              ? [
+                  {
+                    label: card.subset.name,
+                    to: `/series/${card.seriesSlug}?subset=${encodeURIComponent(card.subset.slug)}`,
+                  },
+                ]
+              : []),
             { label: card.name },
           ]}
         />
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-          <Artwork
-            kind="card"
-            src={card.imageUrl}
-            slug={card.slug}
-            name={card.name}
-            fit="contain"
-            priority
-            placeholderInitial="bottom-left"
-            className="rounded-3xl border border-white/60 shadow-xl"
-          />
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
+          <div className="mx-auto w-full max-w-sm md:max-w-none lg:sticky lg:top-24 lg:col-span-2 lg:self-start">
+            <CardArtLightbox
+              src={card.imageUrl}
+              slug={card.slug}
+              name={card.name}
+              openLabel={tt('card.lightbox.open', { name: card.name })}
+              closeLabel={tt('state.close')}
+              failedLabel={tt('card.lightbox.failed')}
+            />
+          </div>
 
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-6 lg:col-span-3">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <h1
                   ref={headingRef}
                   tabIndex={-1}
-                  className="text-3xl font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="text-2xl font-bold tracking-tight wrap-anywhere focus:outline-none sm:text-3xl focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   {card.name}
                 </h1>
@@ -180,24 +195,37 @@ export const CardDetailPage = observer(function CardDetailPage() {
                   </Link>
                 </p>
               ) : null}
-              {card.description ? (
-                <p className="min-w-0 text-neutral-600 wrap-anywhere">{card.description}</p>
-              ) : null}
               <p className="text-sm text-neutral-600">
                 {tt('card.detail.seriesLabel')}
-                <Link to={`/series/${card.seriesSlug}`} className="text-brand-600 hover:underline">
+                <Link
+                  to={`/series/${card.seriesSlug}`}
+                  className="text-brand-600 underline underline-offset-2"
+                >
                   {card.seriesTitle}
                 </Link>
               </p>
             </div>
 
-            <CardCollectionBar cardSlug={card.slug} cardName={card.name} />
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <CardCollectionBar cardSlug={card.slug} cardName={card.name} />
+            </div>
+
+            <CardBody
+              body={card.body}
+              description={card.description}
+              title={tt('card.detail.bodyTitle')}
+              expandLabel={tt('card.detail.bodyExpand')}
+              collapseLabel={tt('card.detail.bodyCollapse')}
+              newTabLabel={tt('a11y.newTab')}
+            />
 
             <CardVariants locale={locale.locale} variants={card.variants ?? []} />
 
-            <Card className="border-white/60 bg-white/70 backdrop-blur">
+            <Card className="border-neutral-200 bg-white">
               <CardHeader>
-                <CardTitle className="text-base">{tt('card.detail.attributes')}</CardTitle>
+                <h2 className="scroll-mt-24 text-base font-semibold">
+                  {tt('card.detail.attributes')}
+                </h2>
               </CardHeader>
               <CardContent>
                 <dl className="grid grid-cols-2 gap-y-3 text-sm sm:grid-cols-4">
@@ -212,32 +240,36 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 </dl>
               </CardContent>
             </Card>
-
-            <Card className="border-white/60 bg-white/70 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-base">{tt('trade.detail.byCardTitle')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ListingsForCard cardSlug={card.slug} />
-              </CardContent>
-            </Card>
-
-            <Card className="border-white/60 bg-white/70 backdrop-blur">
-              <CardHeader>
-                <h2
-                  id="comment-section-title"
-                  tabIndex={-1}
-                  className="scroll-mt-20 text-base font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                >
-                  {tt('card.detail.commentsTitle')}
-                </h2>
-              </CardHeader>
-              <CardContent>
-                <CommentSection target={{ kind: 'card', slug: card.slug }} />
-              </CardContent>
-            </Card>
           </div>
         </div>
+
+        <CardAdjacentNav locale={locale.locale} adjacent={card.adjacent} />
+
+        <Card className="border-neutral-200 bg-white">
+          <CardHeader>
+            <h2 className="scroll-mt-24 text-base font-semibold">
+              {tt('trade.detail.byCardTitle')}
+            </h2>
+          </CardHeader>
+          <CardContent>
+            <ListingsForCard cardSlug={card.slug} />
+          </CardContent>
+        </Card>
+
+        <Card className="border-neutral-200 bg-white">
+          <CardHeader>
+            <h2
+              id="comment-section-title"
+              tabIndex={-1}
+              className="scroll-mt-24 text-base font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              {tt('card.detail.commentsTitle')}
+            </h2>
+          </CardHeader>
+          <CardContent>
+            <CommentSection target={{ kind: 'card', slug: card.slug }} />
+          </CardContent>
+        </Card>
       </div>
     </PageShell>
   );

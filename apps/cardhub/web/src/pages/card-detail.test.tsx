@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { rootStore } from '../stores/root-store';
 
+const bySlugInputs = vi.hoisted(() => [] as unknown[]);
 const INJECTED = 'QA-INJECTED-xyz';
 
 const bus = vi.hoisted(() => {
@@ -38,6 +39,11 @@ const card = {
   isParallel: false,
   base: null as { slug: string; name: string } | null,
   subset: null as { slug: string; name: string } | null,
+  body: null as string | null,
+  adjacent: { prev: null, next: null } as {
+    prev: { slug: string; name: string; imageUrl: string | null } | null;
+    next: { slug: string; name: string; imageUrl: string | null } | null;
+  },
   variants: [] as Array<{
     slug: string;
     name: string;
@@ -102,7 +108,10 @@ vi.mock('../lib/trpc', () => ({
     },
     cards: {
       bySlug: {
-        useQuery: () => useCardQuery(),
+        useQuery: (input: unknown) => {
+          bySlugInputs.push(input);
+          return useCardQuery();
+        },
       },
     },
     listings: {
@@ -166,7 +175,10 @@ beforeEach(() => {
   card.isParallel = false;
   card.base = null;
   card.subset = null;
+  card.body = null;
+  card.adjacent = { prev: null, next: null };
   card.variants = [];
+  bySlugInputs.length = 0;
   resetCard();
 });
 
@@ -283,6 +295,39 @@ describe('card detail meta description', () => {
     cardQuery.error = null;
     cardQuery.dataUpdatedAt = 1;
   }
+
+  it('adds the subset to the breadcrumb, renders the body and the neighbour links (CH-206)', () => {
+    card.subset = { slug: 'foil', name: '闪卡' };
+    card.body = '## 背景\n\n长描述正文';
+    card.adjacent = { prev: { slug: 'p', name: '上张', imageUrl: null }, next: null };
+    showCard();
+    renderCard();
+    const crumbs = screen.getByRole('navigation', { name: /面包屑|breadcrumb/i });
+    expect(within(crumbs).getByRole('link', { name: '闪卡' })).toHaveAttribute(
+      'href',
+      '/series/celestial-dawn?subset=foil',
+    );
+    expect(screen.getByRole('heading', { level: 2, name: '介绍' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 4, name: '背景' })).toBeInTheDocument();
+    expect(screen.getByText('长描述正文')).toBeInTheDocument();
+    const adjacent = screen.getByRole('navigation', { name: '上一张和下一张' });
+    expect(within(adjacent).getByRole('link')).toHaveAttribute('href', '/cards/p');
+    expect(bySlugInputs.at(-1)).toEqual({ slug: 'aurora-knight' });
+  });
+
+  it('sends via=adjacent only when the route state says so', () => {
+    showCard();
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: '/cards/aurora-knight', state: { via: 'adjacent' } }]}
+      >
+        <Routes>
+          <Route path="/cards/:cardSlug" element={<CardDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(bySlugInputs.at(-1)).toEqual({ slug: 'aurora-knight', via: 'adjacent' });
+  });
 
   it('omits a missing number and includes one when the card has it', () => {
     showCard();

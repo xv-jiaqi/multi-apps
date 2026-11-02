@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { CardsRouter } from './cards.router';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -179,6 +180,20 @@ describe('CardsRouter.search', () => {
 });
 
 describe('CardsRouter.bySlug', () => {
+  it('logs a card view with via=adjacent only when the client says so (CH-206 §5)', async () => {
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const { caller, findUnique } = makeRouter();
+    findUnique.mockResolvedValue(null);
+    await expect(caller.bySlug({ slug: 'a', via: 'adjacent' })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(log).toHaveBeenCalledWith({ event: 'card.view', slug: 'a', via: 'adjacent' });
+    await expect(caller.bySlug({ slug: 'a', via: 'other' as never })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    log.mockRestore();
+  });
+
   it('returns NOT_FOUND when the card is missing', async () => {
     const { caller, findUnique } = makeRouter();
     findUnique.mockResolvedValueOnce(null);
