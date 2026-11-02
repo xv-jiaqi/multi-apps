@@ -115,12 +115,34 @@ function relatedSlugs(existing: ExistingCard | null): string[] {
 }
 
 /**
+ * Clear parallels that would be left in the old series.
+ * The series trigger only nulls parallelOfId. This also nulls parallelName,
+ * in the same transaction, before the base row itself moves.
+ */
+async function clearParallelsLeftBehind(
+  tx: Tx,
+  existing: ExistingCard,
+  seriesId: string,
+): Promise<void> {
+  if (existing.parallels.length === 0 || existing.seriesId === seriesId) return;
+  const children = await tx.card.findMany({
+    where: { parallelOfId: existing.id, NOT: { seriesId } },
+    select: { id: true },
+  });
+  if (children.length === 0) return;
+  await lockCards(tx, [existing.id, ...children.map((row) => row.id)]);
+  await tx.card.updateMany({
+    where: { id: { in: children.map((row) => row.id) } },
+    data: { parallelOfId: null, parallelName: null },
+  });
+}
+
+/**
  * Decide the parallel columns for one admin create or update.
- * Omitted inputs leave stored values in place. An empty parallelOfSlug clears
- * the link and keeps parallelName unless a new name was sent.
- * Moving the card to another series without a new base clears the link.
- * The series-change trigger clears children; this returns their slugs so the
- * cache can drop them.
+ * Omitted inputs leave stored values in place. An empty parallelOfSlug, or a
+ * series change without a new base, clears a live link and its parallelName
+ * no matter what name the request sent. A card that is already unlinked keeps
+ * its parallelName. Moving a base card also clears parallels left behind.
  */
 export async function resolveParallelWrite(
   tx: Tx,
@@ -186,10 +208,11 @@ export async function resolveParallelWrite(
     };
   }
 
-  if (clearing) {
+  if (clearing && existing) {
+    if (seriesChanged) await clearParallelsLeftBehind(tx, existing, args.seriesId);
     return {
       parallelOfId: null,
-      parallelName: args.parallelName === undefined ? undefined : emptyToNull(args.parallelName),
+      parallelName: existing.parallelOfId === null ? undefined : null,
       printRun: args.printRun,
       invalidateSlugs: [...invalidate],
     };

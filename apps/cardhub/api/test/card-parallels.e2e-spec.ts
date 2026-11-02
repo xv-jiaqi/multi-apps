@@ -495,7 +495,7 @@ describe('card parallels', () => {
     expect(whole(parallelRow, 'total')).toBe(2);
   });
 
-  it('keeps an omitted parallel on update and clears the link without erasing the name', async () => {
+  it('keeps an omitted parallel on update and clears the name when the base is removed', async () => {
     const created = await createCard({
       slug: slug('keep'),
       name: '保留',
@@ -538,7 +538,7 @@ describe('card parallels', () => {
     );
     expect(cleared.status).toBe(200);
     expect(nullableText(resultData(cleared.body), 'parallelOfSlug')).toBeNull();
-    expect(nullableText(resultData(cleared.body), 'parallelName')).toBe('银折');
+    expect(nullableText(resultData(cleared.body), 'parallelName')).toBeNull();
     expect(nullableNumber(resultData(cleared.body), 'printRun')).toBeNull();
   });
 
@@ -815,7 +815,7 @@ describe('card parallels', () => {
     );
     expect(moved.status).toBe(200);
     expect(nullableText(resultData(moved.body), 'parallelOfSlug')).toBeNull();
-    expect(nullableText(resultData(moved.body), 'parallelName')).toBe('原名');
+    expect(nullableText(resultData(moved.body), 'parallelName')).toBeNull();
     expect(text(resultData(moved.body), 'seriesSlug')).toBe(otherSlug);
     expect(text(movedParallel, 'name')).toBe('跟着改系列');
   });
@@ -920,5 +920,132 @@ describe('card parallels', () => {
     expect(cleared?.parallelName).toBe('留名');
 
     await prisma.series.deleteMany({ where: { id: { in: [seriesA.id, seriesB.id] } } });
+  });
+
+  it('clears a live parallel name on the server when the link breaks', async () => {
+    await createCard({
+      slug: slug('srv-base'),
+      name: '服务端基础',
+      seriesSlug,
+      cardNumber: '90',
+    });
+    await createCard({
+      slug: slug('srv-child'),
+      name: '服务端平行',
+      seriesSlug,
+      cardNumber: '90',
+      parallelOfSlug: slug('srv-base'),
+      parallelName: '旧名',
+      printRun: 3,
+    });
+    const moved = await post(
+      'admin.cards.update',
+      {
+        slug: slug('srv-child'),
+        name: '服务端平行',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug: otherSlug,
+        parallelName: '旧名',
+      },
+      adminToken,
+    );
+    expect(moved.status).toBe(200);
+    const movedRow = await prisma.card.findUnique({ where: { slug: slug('srv-child') } });
+    expect(movedRow?.seriesId).not.toBeNull();
+    expect(movedRow?.parallelOfId).toBeNull();
+    expect(movedRow?.parallelName).toBeNull();
+    expect(movedRow?.printRun).toBe(3);
+    expect(nullableText(resultData(moved.body), 'parallelOfSlug')).toBeNull();
+    expect(nullableText(resultData(moved.body), 'parallelName')).toBeNull();
+
+    await createCard({
+      slug: slug('unlink-base'),
+      name: '解绑基础',
+      seriesSlug,
+      cardNumber: '93',
+    });
+    await createCard({
+      slug: slug('unlink-child'),
+      name: '解绑平行',
+      seriesSlug,
+      cardNumber: '93',
+      parallelOfSlug: slug('unlink-base'),
+      parallelName: '旧名',
+    });
+    const unlinked = await post(
+      'admin.cards.update',
+      {
+        slug: slug('unlink-child'),
+        name: '解绑平行',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug,
+        parallelOfSlug: '',
+        parallelName: '旧名',
+      },
+      adminToken,
+    );
+    expect(unlinked.status).toBe(200);
+    const unlinkedRow = await prisma.card.findUnique({ where: { slug: slug('unlink-child') } });
+    expect(unlinkedRow?.parallelOfId).toBeNull();
+    expect(unlinkedRow?.parallelName).toBeNull();
+
+    await createCard({
+      slug: slug('move-base'),
+      name: '搬走的基础',
+      seriesSlug,
+      cardNumber: '91',
+    });
+    await createCard({
+      slug: slug('move-child'),
+      name: '被留下的平行',
+      seriesSlug,
+      cardNumber: '91',
+      parallelOfSlug: slug('move-base'),
+      parallelName: '银折',
+      printRun: 5,
+    });
+    const baseMoved = await post(
+      'admin.cards.update',
+      {
+        slug: slug('move-base'),
+        name: '搬走的基础',
+        rarity: 'common',
+        attributes: {},
+        seriesSlug: otherSlug,
+      },
+      adminToken,
+    );
+    expect(baseMoved.status).toBe(200);
+    expect(text(resultData(baseMoved.body), 'seriesSlug')).toBe(otherSlug);
+    const leftChild = await prisma.card.findUnique({ where: { slug: slug('move-child') } });
+    const originalSeries = await prisma.series.findUnique({ where: { slug: seriesSlug } });
+    expect(leftChild?.seriesId).toBe(originalSeries?.id);
+    expect(leftChild?.parallelOfId).toBeNull();
+    expect(leftChild?.parallelName).toBeNull();
+    expect(leftChild?.printRun).toBe(5);
+
+    await createCard({
+      slug: slug('gone-base'),
+      name: '被删基础',
+      seriesSlug,
+      cardNumber: '92',
+    });
+    await createCard({
+      slug: slug('gone-child'),
+      name: '删除后的孤儿',
+      seriesSlug,
+      cardNumber: '92',
+      parallelOfSlug: slug('gone-base'),
+      parallelName: '留名',
+      printRun: 7,
+    });
+    const removed = await post('admin.cards.delete', { slug: slug('gone-base') }, adminToken);
+    expect(removed.status).toBe(200);
+    const orphan = await prisma.card.findUnique({ where: { slug: slug('gone-child') } });
+    expect(orphan?.parallelOfId).toBeNull();
+    expect(orphan?.parallelName).toBe('留名');
+    expect(orphan?.printRun).toBe(7);
   });
 });
