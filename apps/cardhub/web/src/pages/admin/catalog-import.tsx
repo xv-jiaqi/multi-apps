@@ -18,6 +18,8 @@ import {
   IMPORT_EXAMPLE,
   adminErrorText,
   displayImportNames,
+  importParallelFieldLabel,
+  orderImportErrors,
   focusRing,
   isAccessRevoked,
   jsonErrorLine,
@@ -43,6 +45,29 @@ const RESULT_KEY: Record<ImportStatus, string> = {
   unchanged: 'admin.import.unchanged',
   error: 'admin.import.error',
 };
+
+function ImportProblem({ path, code, message }: { path: string; code: string; message?: string }) {
+  const { locale } = useStores();
+  const label = importParallelFieldLabel(locale.locale, path);
+  const copy = adminErrorText(locale.locale, code, message ?? '');
+  const sep = locale.locale === 'zh-CN' ? '：' : ': ';
+  if (!label) {
+    return (
+      <>
+        <span className="font-mono wrap-anywhere">{path}</span>
+        {sep}
+        {copy}
+      </>
+    );
+  }
+  return (
+    <>
+      {label}
+      {sep}
+      {copy} <span className="font-mono wrap-anywhere text-neutral-600">{path}</span>
+    </>
+  );
+}
 
 export const CatalogImportPage = observer(function CatalogImportPage() {
   const { locale } = useStores();
@@ -285,11 +310,12 @@ const CatalogImportBody = observer(function CatalogImportBody() {
         >
           <p>{actionError}</p>
           {actionRows?.flatMap((row) =>
-            row.errors.map((error) => (
-              <p key={`${row.row.row}-${error.path}-${error.code}`} className="mt-1 text-xs">
-                <span className="font-mono wrap-anywhere">{error.path}</span>
-                {locale.locale === 'zh-CN' ? '：' : ': '}
-                {adminErrorText(locale.locale, error.code, error.message ?? '')}
+            orderImportErrors(row.errors).map((error) => (
+              <p
+                key={`${row.row.row}-${error.path}-${error.code}`}
+                className="mt-1 text-xs text-red-700"
+              >
+                <ImportProblem path={error.path} code={error.code} message={error.message} />
               </p>
             )),
           )}
@@ -320,7 +346,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
               ]}
             />
           ) : null}
-          <AdminTable caption={tt('admin.import.caption')}>
+          <AdminTable caption={tt('admin.import.caption')} regionLabel={tt('admin.import.caption')}>
             <AdminTableHead>
               <AdminTh>{tt('admin.import.colKind')}</AdminTh>
               <AdminTh>{tt('admin.col.slug')}</AdminTh>
@@ -357,11 +383,13 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                       </span>
                     </td>
                     <td className="px-3 py-2 align-middle text-xs text-red-700">
-                      {row.errors.map((error) => (
+                      {orderImportErrors(row.errors).map((error) => (
                         <p key={`${error.path}-${error.code}`}>
-                          <span className="font-mono wrap-anywhere">{error.path}</span>
-                          {locale.locale === 'zh-CN' ? '：' : ': '}
-                          {adminErrorText(locale.locale, error.code, error.message ?? '')}
+                          <ImportProblem
+                            path={error.path}
+                            code={error.code}
+                            message={error.message}
+                          />
                         </p>
                       ))}
                     </td>
