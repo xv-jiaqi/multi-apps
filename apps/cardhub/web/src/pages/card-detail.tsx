@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
-import { cardAttributeLabel, t } from '@repo/shared';
+import { cardAttributeLabel, printRunLabel, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -11,6 +11,7 @@ import { RarityBadge } from '../components/rarity-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { CardCollectionBar } from '../components/card-collection-bar';
+import { CardVariants } from '../components/card-variants';
 import { CommentSection } from '../components/comment-section';
 import { ListingsForCard } from '../components/listings-for-card';
 import { Artwork } from '../components/artwork';
@@ -35,15 +36,6 @@ export const CardDetailPage = observer(function CardDetailPage() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useFocusOnRecovery(view, headingRef);
 
-  if (view === 'loading') {
-    return (
-      <>
-        <PageMeta title={tt('state.loading')} />
-        <CardDetailSkeleton />
-      </>
-    );
-  }
-
   if (view === 'error' && query.error?.data?.code === 'NOT_FOUND') {
     return (
       <PageShell>
@@ -64,33 +56,44 @@ export const CardDetailPage = observer(function CardDetailPage() {
     );
   }
 
-  if (view === 'error' || !query.data) {
+  const loadFailed = (
+    <PageShell>
+      <PageMeta title={tt('card.detail.loadFailed')} />
+      <div className="space-y-4">
+        <Breadcrumbs
+          items={[
+            { label: tt('breadcrumb.home'), to: '/' },
+            { label: tt('breadcrumb.cards'), to: '/series' },
+            { label: cardSlug },
+          ]}
+        />
+        <ErrorBox
+          headingAs="h1"
+          title={tt('card.detail.loadFailed')}
+          retryLabel={tt('state.retry')}
+          retryingLabel={tt('state.retrying')}
+          retrying={query.isFetching}
+          retry={() => {
+            void query.refetch();
+          }}
+          retryClassName={dataErrorRetryClassName}
+        />
+      </div>
+    </PageShell>
+  );
+
+  if (view === 'error') return loadFailed;
+
+  if (view === 'loading') {
     return (
-      <PageShell>
-        <PageMeta title={tt('card.detail.loadFailed')} />
-        <div className="space-y-4">
-          <Breadcrumbs
-            items={[
-              { label: tt('breadcrumb.home'), to: '/' },
-              { label: tt('breadcrumb.cards'), to: '/series' },
-              { label: cardSlug },
-            ]}
-          />
-          <ErrorBox
-            headingAs="h1"
-            title={tt('card.detail.loadFailed')}
-            retryLabel={tt('state.retry')}
-            retryingLabel={tt('state.retrying')}
-            retrying={query.isFetching}
-            retry={() => {
-              void query.refetch();
-            }}
-            retryClassName={dataErrorRetryClassName}
-          />
-        </div>
-      </PageShell>
+      <>
+        <PageMeta title={tt('state.loading')} />
+        <CardDetailSkeleton />
+      </>
     );
   }
+
+  if (!query.data) return loadFailed;
 
   const card = query.data;
   const attributes = card.attributes ?? {};
@@ -148,6 +151,33 @@ export const CardDetailPage = observer(function CardDetailPage() {
                   ) : null}
                   {card.cardNumber && card.subset ? <span aria-hidden> · </span> : null}
                   {card.subset ? <span className="wrap-anywhere">{card.subset.name}</span> : null}
+                  {card.parallelName ? (
+                    <span>
+                      {(card.cardNumber || card.subset ? ' · ' : '') +
+                        tt('card.variant.parallel', { name: card.parallelName })}
+                    </span>
+                  ) : null}
+                </p>
+              ) : card.parallelName ? (
+                <p className="wrap-anywhere text-sm text-neutral-600">
+                  {tt('card.variant.parallel', { name: card.parallelName })}
+                </p>
+              ) : null}
+              <p className="text-sm text-neutral-600">
+                {card.printRun == null ? (
+                  printRunLabel(locale.locale, null)
+                ) : (
+                  <>
+                    {printRunLabel(locale.locale, card.printRun).replace(`/${card.printRun}`, '')}
+                    <span className="font-mono tabular-nums">/{card.printRun}</span>
+                  </>
+                )}
+              </p>
+              {card.base ? (
+                <p className="text-sm">
+                  <Link to={`/cards/${card.base.slug}`} className="text-brand-600 hover:underline">
+                    {tt('card.variants.baseLink', { name: card.base.name })}
+                  </Link>
                 </p>
               ) : null}
               {card.description ? (
@@ -162,6 +192,8 @@ export const CardDetailPage = observer(function CardDetailPage() {
             </div>
 
             <CardCollectionBar cardSlug={card.slug} cardName={card.name} />
+
+            <CardVariants locale={locale.locale} variants={card.variants ?? []} />
 
             <Card className="border-white/60 bg-white/70 backdrop-blur">
               <CardHeader>

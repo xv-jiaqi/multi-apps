@@ -7,6 +7,7 @@ import { Button, Input } from '@repo/ui-web';
 import { ART_ASPECT } from '../../components/artwork';
 import { Breadcrumbs } from '../../components/breadcrumbs';
 import { CardThumb } from '../../components/card-thumb';
+import { CardVariantBadgeRow } from '../../components/card-variant-badge';
 import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
 import { RarityBadge } from '../../components/rarity-badge';
@@ -40,6 +41,9 @@ interface PublicCard {
   name: string;
   rarity: string;
   imageUrl: string | null;
+  parallelName?: string | null;
+  printRun?: number | null;
+  parallelOfId?: string | null;
 }
 
 export const CatalogSeriesDetailPage = observer(function CatalogSeriesDetailPage() {
@@ -185,7 +189,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
           />
         )
       ) : detailView === 'loading' ? (
-        <AdminTable caption={tt('admin.cards.caption', { series: series?.title ?? slug })} busy>
+        <AdminTable caption={title} busy contained>
           <CardHead tt={tt} />
           <tbody>
             {Array.from({ length: 5 }, (_, index) => (
@@ -234,7 +238,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
               className="w-full pl-8"
             />
           </div>
-          <AdminTable caption={tt('admin.cards.caption', { series: series?.title ?? slug })}>
+          <AdminTable caption={title} regionLabel={title}>
             <CardHead tt={tt} />
             <tbody className="divide-y divide-neutral-200">
               {visible.length === 0 ? (
@@ -259,7 +263,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                         </td>
                         <th
                           scope="row"
-                          className="px-3 py-2 text-left align-middle font-medium text-neutral-900"
+                          className="max-w-full max-sm:max-w-3xs min-w-0 px-3 py-2 text-left align-middle font-medium text-neutral-900"
                         >
                           <Link
                             to={`/admin/catalog/cards/${card.slug}/edit`}
@@ -267,6 +271,13 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                           >
                             {card.name}
                           </Link>
+                          <CardVariantBadgeRow
+                            locale={locale.locale}
+                            parallelName={card.parallelName}
+                            printRun={card.printRun}
+                            isParallel={card.parallelOfId != null}
+                            className="mt-2 flex max-w-full min-w-0 flex-wrap gap-1"
+                          />
                         </th>
                         <td className="px-3 py-2 align-middle font-mono text-xs text-neutral-600">
                           {card.slug}

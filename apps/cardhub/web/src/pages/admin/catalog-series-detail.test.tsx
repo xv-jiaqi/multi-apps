@@ -141,6 +141,84 @@ describe('catalog series detail title', () => {
   });
 });
 
+describe('parallel badges', () => {
+  const longName = '金箔超长平行名称金箔超长平行名称金箔超长';
+
+  beforeEach(() => {
+    cardsState.data = {
+      cards: [
+        {
+          id: 'c1',
+          slug: 'aurora-base',
+          name: '极光骑士',
+          rarity: 'rare',
+          imageUrl: null,
+          parallelName: null,
+          printRun: null,
+          parallelOfId: null,
+        },
+        {
+          id: 'c2',
+          slug: 'aurora-foil',
+          name: '极光骑士',
+          rarity: 'rare',
+          imageUrl: null,
+          parallelName: longName,
+          printRun: 99,
+          parallelOfId: 'c1',
+        },
+        {
+          id: 'c3',
+          slug: 'aurora-plain',
+          name: '素银骑士',
+          rarity: 'common',
+          imageUrl: null,
+          parallelName: '素银',
+          printRun: null,
+          parallelOfId: 'c1',
+        },
+      ],
+    };
+  });
+
+  it('shows parallel and limited badges after the name and keeps the columns', () => {
+    renderPage();
+    const headers = screen.getAllByRole('rowheader');
+    const base = headers.find((header) => header.textContent === '极光骑士');
+    const foil = headers.find((header) => header.textContent?.includes(longName));
+    const plain = screen.getByRole('rowheader', { name: /素银骑士/ });
+    expect(base).toBeTruthy();
+    expect(base).not.toHaveTextContent('平行');
+    expect(base).not.toHaveTextContent('不编号');
+    expect(foil).toHaveTextContent(`平行 · ${longName}`);
+    expect(foil).toHaveClass('max-w-full', 'max-sm:max-w-3xs', 'min-w-0');
+    const nameBadge = foil?.querySelector('[title]');
+    expect(nameBadge).toHaveClass('max-w-full');
+    expect(nameBadge?.querySelector('span')).toHaveClass('min-w-0', 'truncate');
+    expect(nameBadge?.getAttribute('title')).toBe(longName);
+    const limitedNumber = foil?.querySelector('.tabular-nums');
+    expect(limitedNumber?.textContent).toBe('/99');
+    expect(limitedNumber?.previousSibling?.textContent?.endsWith(' ')).toBe(true);
+    expect(
+      `${limitedNumber?.previousSibling?.textContent ?? ''}${limitedNumber?.textContent ?? ''}`,
+    ).toBe('限量 /99');
+    expect(plain).toHaveTextContent('平行 · 素银');
+    expect(plain).not.toHaveTextContent('不编号');
+    expect(screen.getByRole('columnheader', { name: '名称' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: '稀有度' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '泰坦熔炉 的卡牌' })).toBeInTheDocument();
+  });
+
+  it('keeps the loading skeleton from scrolling sideways', () => {
+    cardsState.isLoading = true;
+    cardsState.data = undefined;
+    renderPage();
+    const table = screen.getByRole('table', { name: '泰坦熔炉 的卡牌' });
+    expect(table.parentElement).toHaveClass('max-w-full');
+    expect(table.parentElement).not.toHaveClass('overflow-x-auto');
+  });
+});
+
 describe('subset form server validation', () => {
   it('shows a server sort order error under the sort field', async () => {
     const user = userEvent.setup();

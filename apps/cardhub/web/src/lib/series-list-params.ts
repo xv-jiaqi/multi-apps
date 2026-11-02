@@ -19,6 +19,8 @@ export type SeriesListState = {
   rarity: CardRarity | null;
   sort: CardSeriesListSort;
   page: number;
+  /** `parallels=1` only. Any other value is removed from the URL. */
+  parallels: boolean;
 };
 
 const NUMERIC_ATTRIBUTE_KEYS = ['cost', 'attack', 'health'];
@@ -93,9 +95,16 @@ export function parseSeriesListParams(
     }
   }
 
+  const rawParallels = next.get('parallels');
+  let parallels = false;
+  if (rawParallels !== null) {
+    if (rawParallels === '1') parallels = true;
+    else next.delete('parallels');
+  }
+
   const cleaned = next.toString();
   return {
-    state: { q, subset, rarity, sort, page },
+    state: { q, subset, rarity, sort, page, parallels },
     search: cleaned,
     replace: cleaned !== original,
   };
@@ -108,11 +117,13 @@ export function seriesListSearch(state: SeriesListState, current?: URLSearchPara
   next.delete('rarity');
   next.delete('sort');
   next.delete('page');
+  next.delete('parallels');
   if (state.q) next.set('q', state.q);
   if (state.subset) next.set('subset', state.subset);
   if (state.rarity) next.set('rarity', state.rarity);
   if (state.sort !== 'number') next.set('sort', state.sort);
   if (state.page > 1) next.set('page', String(state.page));
+  if (state.parallels) next.set('parallels', '1');
   return next.toString();
 }
 

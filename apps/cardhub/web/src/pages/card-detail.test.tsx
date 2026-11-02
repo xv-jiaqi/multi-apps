@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -33,6 +33,18 @@ const card = {
   seriesTitle: '天穹黎明',
   cardNumber: null as string | null,
   attributes: { Cost: '3', attack: 2 },
+  printRun: null as number | null,
+  parallelName: null as string | null,
+  base: null as { slug: string; name: string } | null,
+  subset: null as { slug: string; name: string } | null,
+  variants: [] as Array<{
+    slug: string;
+    name: string;
+    parallelName: string | null;
+    printRun: number | null;
+    imageUrl: string | null;
+    isCurrent: boolean;
+  }>,
 };
 
 const cardQuery: {
@@ -148,6 +160,11 @@ beforeEach(() => {
   rootStore.session.signOut();
   card.description = '黎明降临。';
   card.cardNumber = null;
+  card.printRun = null;
+  card.parallelName = null;
+  card.base = null;
+  card.subset = null;
+  card.variants = [];
   resetCard();
 });
 
@@ -330,5 +347,120 @@ describe('card detail meta description', () => {
     ).toBeTruthy();
     expect(screen.getByRole('button', { name: '我有' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByRole('textbox', { name: '数量' })).not.toBeInTheDocument();
+    expect(screen.getByText('不编号')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '同组版本' })).not.toBeInTheDocument();
+  });
+});
+
+describe('card detail variants', () => {
+  function showCard() {
+    cardQuery.data = card;
+    cardQuery.isLoading = false;
+    cardQuery.isPending = false;
+    cardQuery.isFetching = false;
+    cardQuery.isError = false;
+    cardQuery.error = null;
+    cardQuery.dataUpdatedAt = 1;
+  }
+
+  function installMatchMedia(narrow: boolean) {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: (query: string) => ({
+        matches: narrow && query.includes('max-width'),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    });
+  }
+
+  beforeEach(() => {
+    installMatchMedia(false);
+  });
+
+  it('lists the group in server order, marks the current card, and shows a limited total', () => {
+    card.printRun = 99;
+    card.parallelName = '金箔';
+    card.cardNumber = '001';
+    card.subset = { slug: 'base', name: '主卡' };
+    card.base = { slug: 'aurora-base', name: '极光骑士' };
+    card.variants = [
+      {
+        slug: 'aurora-base',
+        name: '极光骑士',
+        parallelName: null,
+        printRun: null,
+        imageUrl: null,
+        isCurrent: false,
+      },
+      {
+        slug: 'aurora-knight',
+        name: '极光骑士',
+        parallelName: '金箔',
+        printRun: 99,
+        imageUrl: null,
+        isCurrent: true,
+      },
+      {
+        slug: 'aurora-plain',
+        name: '极光骑士',
+        parallelName: '素银',
+        printRun: null,
+        imageUrl: null,
+        isCurrent: false,
+      },
+    ];
+    showCard();
+    renderCard();
+
+    expect(screen.getByText(/平行 · 金箔/)).toBeInTheDocument();
+    expect(screen.getAllByText('/99').some((node) => node.className.includes('font-mono'))).toBe(
+      true,
+    );
+    expect(screen.getByRole('link', { name: '基础卡：极光骑士' })).toHaveAttribute(
+      'href',
+      '/cards/aurora-base',
+    );
+    const region = screen.getByRole('region', { name: '同组版本' });
+    const items = within(region).getAllByRole('listitem');
+    expect(items.map((item) => item.textContent)).toEqual([
+      expect.stringContaining('基础版'),
+      expect.stringContaining('金箔'),
+      expect.stringContaining('素银'),
+    ]);
+    expect(items[0]).toHaveTextContent('不编号');
+    expect(items[1]).toHaveTextContent('限量 /99');
+    expect(items[1]).toHaveTextContent('（当前）');
+    expect(within(items[1]!).getByText('（当前）').closest('[aria-current="page"]')).toBeTruthy();
+    expect(within(items[1]!).queryByRole('link')).not.toBeInTheDocument();
+    expect(within(items[2]!).getByRole('link')).toHaveAttribute('href', '/cards/aurora-plain');
+    expect(screen.queryByRole('button', { name: /显示全部/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the first six versions on a narrow screen and focuses the seventh', async () => {
+    const user = userEvent.setup();
+    installMatchMedia(true);
+    card.variants = Array.from({ length: 7 }, (_, index) => ({
+      slug: `v-${index}`,
+      name: '极光骑士',
+      parallelName: index === 0 ? null : `版本${index}`,
+      printRun: null,
+      imageUrl: null,
+      isCurrent: false,
+    }));
+    showCard();
+    renderCard();
+
+    const region = screen.getByRole('region', { name: '同组版本' });
+    expect(within(region).getAllByRole('listitem')).toHaveLength(6);
+    await user.click(screen.getByRole('button', { name: '显示全部 7 个版本' }));
+    expect(within(region).getAllByRole('listitem')).toHaveLength(7);
+    expect(document.activeElement).toHaveTextContent('版本6');
   });
 });

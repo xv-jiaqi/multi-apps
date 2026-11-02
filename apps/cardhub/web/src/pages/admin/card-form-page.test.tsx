@@ -30,6 +30,18 @@ const createImpl: { current: (input: unknown) => Promise<unknown> } = {
   current: async (input) => input,
 };
 const invalidateSeriesBySlug = vi.hoisted(() => vi.fn());
+const fetchBasePage = vi.hoisted(() =>
+  vi.fn(async (_input: unknown) => ({ items: [] as Array<Record<string, unknown>> })),
+);
+const baseList = {
+  total: 3,
+  pageSize: 100,
+  items: [
+    { slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false },
+    { slug: 'foil', name: '金箔卡', cardNumber: '002', isParallel: true },
+    { slug: 'other-series-card', name: '别的系列', cardNumber: '009', isParallel: false },
+  ] as Array<Record<string, unknown>>,
+};
 
 const cardState = {
   data: null as unknown,
@@ -80,6 +92,25 @@ vi.mock('../../lib/trpc', () => ({
         },
       },
     },
+    cards: {
+      listBySeries: {
+        useQuery: () => ({
+          data: {
+            items: baseList.items,
+            total: baseList.total,
+            page: 1,
+            pageSize: baseList.pageSize,
+            parallelCount: 1,
+            seriesTotal: 2,
+          },
+          isLoading: false,
+          isFetching: false,
+          isError: false,
+          error: null,
+          refetch: vi.fn(),
+        }),
+      },
+    },
     search: {
       global: {
         useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
@@ -91,6 +122,7 @@ vi.mock('../../lib/trpc', () => ({
         cards: { get: { invalidate: vi.fn() } },
       },
       series: { bySlug: { invalidate: invalidateSeriesBySlug } },
+      cards: { listBySeries: { fetch: (input: unknown) => fetchBasePage(input) } },
     }),
   },
 }));
@@ -135,6 +167,15 @@ beforeEach(() => {
   ];
   createImpl.current = async (input) => input;
   invalidateSeriesBySlug.mockClear();
+  fetchBasePage.mockReset();
+  fetchBasePage.mockResolvedValue({ items: [] });
+  baseList.total = 3;
+  baseList.pageSize = 100;
+  baseList.items = [
+    { slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false },
+    { slug: 'foil', name: '金箔卡', cardNumber: '002', isParallel: true },
+    { slug: 'other-series-card', name: '别的系列', cardNumber: '009', isParallel: false },
+  ];
 });
 
 describe('length copy', () => {
@@ -546,6 +587,147 @@ describe('card form server validation', () => {
 
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'forge-of-titans' });
     expect(invalidateSeriesBySlug).toHaveBeenCalledWith({ slug: 'celestial-dawn' });
+  });
+});
+
+describe('card form parallels', () => {
+  async function fillBase(user: ReturnType<typeof userEvent.setup>, slug = 'aurora-knight') {
+    renderNew();
+    await user.type(screen.getByRole('textbox', { name: 'slug' }), slug);
+    await user.type(screen.getByRole('textbox', { name: '名称' }), '极光骑士');
+  }
+
+  it('rejects printRun 0 on the field and does not offer a parallel as a base', async () => {
+    const user = userEvent.setup();
+    await fillBase(user);
+    expect(screen.queryByRole('textbox', { name: '平行名称' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: '基础卡' }));
+    expect(screen.getByRole('option', { name: '001 基础卡' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /金箔/ })).not.toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    const printRun = screen.getByRole('textbox', { name: '限量总数' });
+    expect(printRun).toHaveAttribute('inputMode', 'numeric');
+    expect(printRun).toHaveAttribute('autocomplete', 'off');
+    await user.type(printRun, '0');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(document.getElementById('card-print-run-error')).toHaveTextContent('内容长度不够');
+    expect(printRun).toHaveAttribute('aria-invalid', 'true');
+    expect(printRun).toHaveFocus();
+  });
+
+  it('shows parallel_self when the new card slug is the selected base', async () => {
+    const user = userEvent.setup();
+    await fillBase(user);
+    await user.click(screen.getByRole('combobox', { name: '基础卡' }));
+    await user.click(screen.getByRole('option', { name: '001 基础卡' }));
+    const slug = screen.getByRole('textbox', { name: 'slug' });
+    await user.clear(slug);
+    await user.type(slug, 'base-card');
+    await user.type(screen.getByRole('textbox', { name: '平行名称' }), '金箔');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(document.getElementById('card-parallel-of-error')).toHaveTextContent(
+      '不能把卡设为自己的平行版本',
+    );
+    expect(document.getElementById('card-parallel-of')).toHaveFocus();
+  });
+
+  it('shows parallel_chain and parallel_cross_series from the server on the base field', async () => {
+    const user = userEvent.setup();
+    createImpl.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          zodError: {
+            issues: [{ code: 'custom', path: ['parallelOfSlug'], message: 'parallel_chain' }],
+          },
+        },
+      };
+    };
+    await fillBase(user);
+    await user.click(screen.getByRole('combobox', { name: '基础卡' }));
+    await user.click(screen.getByRole('option', { name: '001 基础卡' }));
+    await user.type(screen.getByRole('textbox', { name: '平行名称' }), '金箔');
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(await screen.findByText('只能挂到基础卡，不能挂到平行版本')).toBeInTheDocument();
+    expect(document.getElementById('card-parallel-of')).toHaveAttribute('aria-invalid', 'true');
+    expect(document.getElementById('card-parallel-of')).toHaveFocus();
+
+    createImpl.current = async () => {
+      throw {
+        message: '填写的内容不符合要求，请修改后再试',
+        data: {
+          code: 'BAD_REQUEST',
+          zodError: {
+            issues: [
+              { code: 'custom', path: ['parallelOfSlug'], message: 'parallel_cross_series' },
+            ],
+          },
+        },
+      };
+    };
+    await user.click(screen.getByRole('button', { name: '创建' }));
+    expect(await screen.findByText('基础卡必须属于同一系列')).toBeInTheDocument();
+    expect(screen.queryByText('只能挂到基础卡，不能挂到平行版本')).not.toBeInTheDocument();
+    expect(document.getElementById('card-parallel-of')).toHaveFocus();
+  });
+
+  it('clears the base card when the series changes', async () => {
+    const user = userEvent.setup();
+    seriesState.items = [
+      ...seriesState.items,
+      {
+        id: 's2',
+        slug: 'forge-of-titans',
+        title: '泰坦熔炉',
+        description: null,
+        coverUrl: null,
+        cardCount: 0,
+        commentCount: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+    await fillBase(user);
+    await user.click(screen.getByRole('combobox', { name: '基础卡' }));
+    await user.click(screen.getByRole('option', { name: '001 基础卡' }));
+    await user.type(screen.getByRole('textbox', { name: '平行名称' }), '金箔');
+    await user.click(screen.getByRole('combobox', { name: '所属系列' }));
+    await user.click(screen.getByRole('option', { name: '泰坦熔炉' }));
+    expect(screen.getByRole('status')).toHaveTextContent('已清空基础卡：系列已更改');
+    expect(screen.queryByRole('textbox', { name: '平行名称' })).not.toBeInTheDocument();
+  });
+});
+
+describe('card form base card pages', () => {
+  it('includes base cards from later pages', async () => {
+    const user = userEvent.setup();
+    baseList.total = 101;
+    baseList.pageSize = 100;
+    baseList.items = [{ slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false }];
+    fetchBasePage.mockResolvedValue({
+      items: [{ slug: 'later-base', name: '后页卡', cardNumber: '101', isParallel: false }],
+    });
+    renderNew();
+    const baseSelect = await screen.findByRole('combobox', { name: '基础卡' });
+    await user.click(baseSelect);
+    expect(await screen.findByRole('option', { name: '101 后页卡' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: '001 基础卡' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /金箔/ })).not.toBeInTheDocument();
+    expect(fetchBasePage).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 2, pageSize: 100, includeParallels: false }),
+    );
+  });
+
+  it('shows an error when a later base-card page fails', async () => {
+    baseList.total = 101;
+    baseList.pageSize = 100;
+    baseList.items = [{ slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false }];
+    fetchBasePage.mockRejectedValue(new Error('later page failed'));
+    renderNew();
+    expect(await screen.findByRole('alert')).toHaveTextContent('加载失败');
+    expect(screen.queryByRole('combobox', { name: '基础卡' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: '001 基础卡' })).not.toBeInTheDocument();
   });
 });
 

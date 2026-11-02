@@ -77,6 +77,36 @@ const sampleSeries = [
 ];
 
 function currentResult(query: string) {
+  if (query.includes('金箔')) {
+    return {
+      query,
+      cards: [
+        {
+          id: 'c-foil',
+          slug: 'aurora-foil',
+          name: '极光骑士',
+          rarity: 'rare',
+          imageUrl: null,
+          seriesSlug: 'celestial-dawn',
+          seriesTitle: '天穹黎明',
+          parallelName: '金箔超长平行名称金箔超长平行名称金箔超长',
+          printRun: 99,
+        },
+        {
+          id: 'c-plain',
+          slug: 'aurora-plain',
+          name: '极光骑士',
+          rarity: 'rare',
+          imageUrl: null,
+          seriesSlug: 'celestial-dawn',
+          seriesTitle: '天穹黎明',
+          parallelName: null,
+          printRun: null,
+        },
+      ],
+      series: [],
+    };
+  }
   if (query.includes('冰川')) {
     return {
       query,
@@ -580,6 +610,23 @@ describe('SearchPage result links', () => {
     harness.mode = 'success';
     harness.lastData = undefined;
     rootStore.locale.setLocale('zh-CN');
+  });
+
+  it('shows a parallel badge and a limited total, and skips unnumbered on the tile', async () => {
+    const longName = '金箔超长平行名称金箔超长平行名称金箔超长';
+    renderSearch('?q=金箔');
+    const badge = await screen.findByTitle(longName);
+    expect(badge).toHaveTextContent(`平行 · ${longName}`);
+    expect(badge.className).toContain('truncate');
+    expect(badge).toHaveClass('max-w-full');
+    expect(badge.querySelector('span')).toHaveClass('min-w-0', 'truncate');
+    const limitedNumber = screen.getByText('/99');
+    expect(limitedNumber).toHaveClass('font-mono', 'tabular-nums');
+    expect(limitedNumber.previousSibling?.textContent?.endsWith(' ')).toBe(true);
+    expect(`${limitedNumber.previousSibling?.textContent ?? ''}${limitedNumber.textContent}`).toBe(
+      '限量 /99',
+    );
+    expect(screen.queryByText('不编号')).not.toBeInTheDocument();
   });
 
   it('keeps the series list inside its labelled section', async () => {
