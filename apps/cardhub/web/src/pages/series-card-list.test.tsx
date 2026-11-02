@@ -346,6 +346,85 @@ describe('SeriesCardList', () => {
     expect(screen.getByRole('button', { name: '筛选（1）' })).toBeInTheDocument();
   });
 
+  it('mentions included parallels in Chinese and English when the series has them', () => {
+    harness.state.data = {
+      items: [card('极光', '007')],
+      page: 1,
+      pageSize: 60,
+      total: 4,
+      seriesTotal: 2,
+      parallelCount: 2,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    const withParallels = renderList('?parallels=1');
+    expect(screen.getAllByRole('status').map((node) => node.textContent)).toEqual([
+      '共 4 张（含平行版本）',
+      '共 4 张（含平行版本）',
+    ]);
+    withParallels.unmount();
+
+    rootStore.locale.setLocale('en-US');
+    const withParallelsEn = renderList('?parallels=1');
+    expect(screen.getAllByRole('status').map((node) => node.textContent)).toEqual([
+      '4 cards (incl. parallels)',
+      '4 cards (incl. parallels)',
+    ]);
+    withParallelsEn.unmount();
+  });
+
+  it('does not mention parallels in either language when the series has none', () => {
+    harness.state.data = {
+      items: [card('极光', '007'), card('素版', '008')],
+      page: 1,
+      pageSize: 60,
+      total: 2,
+      seriesTotal: 2,
+      parallelCount: 0,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    const plain = renderList('?parallels=1');
+    expect(screen.getAllByRole('status').map((node) => node.textContent)).toEqual([
+      '共 2 张',
+      '共 2 张',
+    ]);
+    expect(screen.queryByText(/含平行版本/)).not.toBeInTheDocument();
+    plain.unmount();
+
+    rootStore.locale.setLocale('en-US');
+    const plainEn = renderList('?parallels=1');
+    expect(screen.getAllByRole('status').map((node) => node.textContent)).toEqual([
+      '2 cards',
+      '2 cards',
+    ]);
+    expect(screen.queryByText(/incl\. parallels/)).not.toBeInTheDocument();
+    plainEn.unmount();
+  });
+
+  it('does not count a parallels query as a filter when the series has no parallel cards', () => {
+    harness.state.data = {
+      items: [card('极光', '007')],
+      page: 1,
+      pageSize: 60,
+      total: 2,
+      seriesTotal: 2,
+      parallelCount: 0,
+      sort: 'number',
+      attributeLabels: labels,
+    };
+    const plain = renderList('?parallels=1');
+    expect(screen.getByRole('button', { name: '筛选' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '筛选（1）' })).not.toBeInTheDocument();
+    plain.unmount();
+
+    rootStore.locale.setLocale('en-US');
+    const plainEn = renderList('?parallels=1');
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Filters (1)' })).not.toBeInTheDocument();
+    plainEn.unmount();
+  });
+
   it('shows the parallel hint instead of an empty series when the series has only parallels', () => {
     harness.state.data = {
       items: [],
