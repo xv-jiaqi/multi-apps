@@ -127,6 +127,20 @@ describe('release calendar page', () => {
     expect(screen.getByRole('heading', { level: 2, name: '2027年1月' })).toBeInTheDocument();
   });
 
+  it('keeps other URL params when it corrects or changes the month (CH-215 v1.4 §13)', async () => {
+    const user = userEvent.setup();
+    list.pages = [{ items: [], nextCursor: null }];
+    const { router } = renderCalendar('/calendar?month=2026-13&category=pokemon');
+
+    expect(await screen.findByRole('heading', { level: 1, name: '发售日历' })).toBeInTheDocument();
+    expect(new URLSearchParams(router.state.location.search).get('month')).toBe('2026-12');
+    expect(new URLSearchParams(router.state.location.search).get('category')).toBe('pokemon');
+
+    await user.click(screen.getByRole('button', { name: '下个月' }));
+    expect(new URLSearchParams(router.state.location.search).get('month')).toBe('2027-01');
+    expect(new URLSearchParams(router.state.location.search).get('category')).toBe('pokemon');
+  });
+
   it('groups the month, links series cards, and leaves a series-less card as text', () => {
     list.pages = [
       {
