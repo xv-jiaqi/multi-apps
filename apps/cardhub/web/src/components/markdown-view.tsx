@@ -18,10 +18,12 @@ interface MarkdownViewProps {
 }
 
 const codeBlockClass =
-  'max-w-full overflow-x-auto whitespace-pre rounded-md bg-neutral-50 p-3 font-mono text-xs';
+  'max-w-full overflow-x-auto whitespace-pre rounded-md bg-neutral-50 p-3 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2';
 
+// tabIndex=0: the block scrolls horizontally, so keyboard users must be able
+// to focus it to scroll (WCAG 2.1.1, axe scrollable-region-focusable).
 function MarkdownPre({ node: _node, ...props }: ComponentProps<'pre'> & ExtraProps) {
-  return <pre {...props} className={codeBlockClass} />;
+  return <pre {...props} tabIndex={0} className={codeBlockClass} />;
 }
 
 function MarkdownTable({ node: _node, ...props }: ComponentProps<'table'> & ExtraProps) {

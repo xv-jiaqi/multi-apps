@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { MarkdownView } from './markdown-view';
 
@@ -57,4 +58,17 @@ describe('MarkdownView', () => {
     expect(container.querySelector('a')?.textContent).toBe('@Ada');
     expect(container.querySelector('a [class~="text-brand-700"]')).toBeNull();
   });
+  it.each(['forum', 'card'] as const)(
+    'lets keyboard users focus a scrollable code block (%s, WCAG 2.1.1)',
+    async (variant) => {
+      const user = userEvent.setup();
+      const { container } = render(<MarkdownView body={body} variant={variant} />);
+      const pre = container.querySelector('pre');
+      expect(pre).toHaveAttribute('tabindex', '0');
+      await user.tab(); // autolink
+      await user.tab();
+      expect(pre).toHaveFocus();
+      expect(pre).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-brand-500');
+    },
+  );
 });
