@@ -1,0 +1,1614 @@
+[
+ {
+  "file": "before_detail-codefocus_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-codefocus_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-codefocus_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-codefocus_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-comments_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-comments_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-comments_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-comments_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [
+   "scrollable-region-focusable x1"
+  ],
+  "scrollable_region_focusable": [
+   1
+  ]
+ },
+ {
+  "file": "before_detail-notfound_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": null,
+  "breadcrumb": [
+   "首页/",
+   "卡牌/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_detail-notfound_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": null,
+  "breadcrumb": [
+   "Home/",
+   "Cards/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_detail-notfound_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": null,
+  "breadcrumb": [
+   "首页/",
+   "卡牌/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_detail-notfound_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": null,
+  "breadcrumb": [
+   "Home/",
+   "Cards/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_detail-loadfailed_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "卡牌加载失败",
+   "fontSize": "14px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "卡牌/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_detail-loadfailed_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "Couldn't load this card",
+   "fontSize": "14px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Cards/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_detail-loadfailed_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "卡牌加载失败",
+   "fontSize": "14px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "卡牌/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_detail-loadfailed_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "Couldn't load this card",
+   "fontSize": "14px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Cards/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300",
+   "LI.scroll-mt-20.rounded-xl.border.p-4",
+   "LI.scroll-mt-20.rounded-xl.border.p-4"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   },
+   {
+    "tag": "LI",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.8)",
+    "bf": "blur(8px)",
+    "cls": "scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments-empty_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-600 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments-empty_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-600 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments-empty_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-600 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "before_series-comments-empty_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm",
+   "P.rounded-2xl.border.border-dashed.border-neutral-300"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "blur(8px)",
+    "cls": "rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur"
+   },
+   {
+    "tag": "P",
+    "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-600 foc"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ }
+]

@@ -1,0 +1,2410 @@
+[
+ {
+  "file": "after_detail-normal_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-normal_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-normal_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-normal_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-codefocus_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=0 ring=rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-codefocus_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=0 ring=rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-codefocus_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=0 ring=rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-codefocus_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "PRE tabindex=0 ring=rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments-loading_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments-loading_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments-loading_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-comments-loading_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgba(0, 0, 0, 0)",
+    "bf": "none",
+    "cls": "mt-3 min-w-0 text-sm text-neutral-600 wrap-anywhere"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "极光骑士",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明/",
+   "极光骑士"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-notfound_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "内容不存在",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-notfound_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "Not found",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-notfound_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "内容不存在",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-notfound_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "Not found",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "qa-not-exist-xz"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-loadfailed_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "卡牌加载失败",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-loadfailed_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "Couldn't load this card",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-loadfailed_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "卡牌加载失败",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_detail-loadfailed_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30"
+  ],
+  "comment_surfaces": [],
+  "h1": {
+   "text": "Couldn't load this card",
+   "fontSize": "24px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "aurora-knight"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   },
+   {
+    "tag": "LI",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:rin"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments-empty_1440_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm text-neutral-600 focus:outline-none f"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments-empty_1440_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm text-neutral-600 focus:outline-none f"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "36px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments-empty_375_zh.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm text-neutral-600 focus:outline-none f"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "首页/",
+   "系列/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ },
+ {
+  "file": "after_series-comments-empty_375_en.png",
+  "blur": [
+   "HEADER.app-safe-top.sticky.top-0.z-30",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "A.group.block.overflow-hidden.rounded-2xl",
+   "DIV.rounded-lg.border.text-neutral-900.shadow-sm"
+  ],
+  "comment_surfaces": [
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600"
+   },
+   {
+    "tag": "P",
+    "bg": "rgb(255, 255, 255)",
+    "bf": "none",
+    "cls": "scroll-mt-20 rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm text-neutral-600 focus:outline-none f"
+   }
+  ],
+  "h1": {
+   "text": "天穹黎明",
+   "fontSize": "30px"
+  },
+  "breadcrumb": [
+   "Home/",
+   "Series/",
+   "天穹黎明"
+  ],
+  "breadcrumb2_href": "/series",
+  "active": "BODY tabindex=null ring=none",
+  "page_ok": true,
+  "axe": [],
+  "scrollable_region_focusable": []
+ }
+]
