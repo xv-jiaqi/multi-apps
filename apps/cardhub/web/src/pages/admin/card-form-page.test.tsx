@@ -30,6 +30,18 @@ const createImpl: { current: (input: unknown) => Promise<unknown> } = {
   current: async (input) => input,
 };
 const invalidateSeriesBySlug = vi.hoisted(() => vi.fn());
+const fetchBasePage = vi.hoisted(() =>
+  vi.fn(async () => ({ items: [] as Array<Record<string, unknown>> })),
+);
+const baseList = {
+  total: 3,
+  pageSize: 100,
+  items: [
+    { slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false },
+    { slug: 'foil', name: '金箔卡', cardNumber: '002', isParallel: true },
+    { slug: 'other-series-card', name: '别的系列', cardNumber: '009', isParallel: false },
+  ] as Array<Record<string, unknown>>,
+};
 
 const cardState = {
   data: null as unknown,
@@ -84,14 +96,10 @@ vi.mock('../../lib/trpc', () => ({
       listBySeries: {
         useQuery: () => ({
           data: {
-            items: [
-              { slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false },
-              { slug: 'foil', name: '金箔卡', cardNumber: '002', isParallel: true },
-              { slug: 'other-series-card', name: '别的系列', cardNumber: '009', isParallel: false },
-            ],
-            total: 3,
+            items: baseList.items,
+            total: baseList.total,
             page: 1,
-            pageSize: 100,
+            pageSize: baseList.pageSize,
             parallelCount: 1,
             seriesTotal: 2,
           },
@@ -114,6 +122,7 @@ vi.mock('../../lib/trpc', () => ({
         cards: { get: { invalidate: vi.fn() } },
       },
       series: { bySlug: { invalidate: invalidateSeriesBySlug } },
+      cards: { listBySeries: { fetch: (input: unknown) => fetchBasePage(input) } },
     }),
   },
 }));
@@ -158,6 +167,15 @@ beforeEach(() => {
   ];
   createImpl.current = async (input) => input;
   invalidateSeriesBySlug.mockClear();
+  fetchBasePage.mockReset();
+  fetchBasePage.mockResolvedValue({ items: [] });
+  baseList.total = 3;
+  baseList.pageSize = 100;
+  baseList.items = [
+    { slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false },
+    { slug: 'foil', name: '金箔卡', cardNumber: '002', isParallel: true },
+    { slug: 'other-series-card', name: '别的系列', cardNumber: '009', isParallel: false },
+  ];
 });
 
 describe('length copy', () => {
@@ -678,6 +696,27 @@ describe('card form parallels', () => {
     await user.click(screen.getByRole('option', { name: '泰坦熔炉' }));
     expect(screen.getByRole('status')).toHaveTextContent('已清空基础卡：系列已更改');
     expect(screen.queryByRole('textbox', { name: '平行名称' })).not.toBeInTheDocument();
+  });
+});
+
+describe('card form base card pages', () => {
+  it('includes base cards from later pages', async () => {
+    const user = userEvent.setup();
+    baseList.total = 101;
+    baseList.pageSize = 100;
+    baseList.items = [{ slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false }];
+    fetchBasePage.mockResolvedValue({
+      items: [{ slug: 'later-base', name: '后页卡', cardNumber: '101', isParallel: false }],
+    });
+    renderNew();
+    const baseSelect = await screen.findByRole('combobox', { name: '基础卡' });
+    await user.click(baseSelect);
+    expect(await screen.findByRole('option', { name: '101 后页卡' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: '001 基础卡' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /金箔/ })).not.toBeInTheDocument();
+    expect(fetchBasePage).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 2, pageSize: 100, includeParallels: false }),
+    );
   });
 });
 
