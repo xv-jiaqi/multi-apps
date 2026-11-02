@@ -40,7 +40,9 @@ export type SelectContentProps = React.ComponentPropsWithoutRef<typeof SelectPri
 
 // Radix Select's hideOthers() sets aria-hidden on the portal's siblings (#root) but
 // leaves their links and buttons focusable (axe aria-hidden-focus). Make those
-// siblings inert while the list is open so they leave the tab order too.
+// siblings inert while the list is open so they leave the tab order too. Like
+// hideOthers, skip [aria-live] regions so toasts and status updates still announce,
+// and never touch elements that were already inert.
 // Radix moves focus back to the trigger (inside #root) in onCloseAutoFocus, which runs
 // before this effect cleans up, so the returned restore() must run there first.
 function useInertOutside(node: HTMLElement | null) {
@@ -53,6 +55,7 @@ function useInertOutside(node: HTMLElement | null) {
     for (const el of Array.from(document.body.children)) {
       if (el === top || !(el instanceof HTMLElement) || el.hasAttribute('inert')) continue;
       if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
+      if (el.matches('[aria-live]') || el.querySelector('[aria-live]')) continue;
       el.setAttribute('inert', '');
       changed.push(el);
     }
