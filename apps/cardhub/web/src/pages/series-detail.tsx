@@ -126,12 +126,12 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
         <PageMeta title={tt('state.loading')} />
         <div className="space-y-6">
           <div className="h-4 w-40 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
-          <div className="h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200/60" />
+          <div className="h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={idx}
-                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white"
               />
             ))}
           </div>
@@ -251,7 +251,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           fallbackCardCount={baseCardCount(series.cards)}
         />
 
-        <Card className="border-white/60 bg-white/70 backdrop-blur">
+        <Card className="border-neutral-200 bg-white">
           <CardHeader>
             <h2
               id="comment-section-title"

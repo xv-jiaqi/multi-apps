@@ -54,39 +54,42 @@ async function expectHeaderHasNoAxeViolations(link: HTMLElement) {
   expect(results.violations).toEqual([]);
 }
 
-describe('account link accessible name', () => {
-  it('english 1440 starts with the visible @username and has no axe violations', async () => {
+describe('avatar button accessible name', () => {
+  it('english 1440 starts with @username and has no axe violations', async () => {
     renderHeader();
 
-    const link = screen.getByRole('link', { name: `@${username}, my account` });
-    expect(link).toHaveTextContent(`@${username}`);
-    expect(link).toHaveAccessibleName(`@${username}, my account`);
-    expect(link.getAttribute('aria-label') ?? '').toMatch(new RegExp(`^@${username}`));
-    await expectHeaderHasNoAxeViolations(link);
+    const avatar = screen.getByRole('button', { name: `@${username}, my account` });
+    expect(avatar.getAttribute('aria-label') ?? '').toMatch(new RegExp(`^@${username}`));
+    expect(screen.queryByText(`@${username}`)).toBeNull();
+    const box = avatar.getBoundingClientRect();
+    expect([box.width, box.height]).toEqual([44, 44]);
+    await expectHeaderHasNoAxeViolations(avatar);
   });
 
   it('chinese 1440 keeps @username 的个人中心 and has no axe violations', async () => {
     rootStore.locale.setLocale('zh-CN');
     renderHeader();
 
-    const link = screen.getByRole('link', { name: `@${username} 的个人中心` });
-    expect(link).toHaveTextContent(`@${username}`);
-    expect(link).toHaveAccessibleName(`@${username} 的个人中心`);
-    await expectHeaderHasNoAxeViolations(link);
+    const avatar = screen.getByRole('button', { name: `@${username} 的个人中心` });
+    await userEvent.click(avatar);
+    expect(screen.getByRole('link', { name: '个人中心' })).toHaveAttribute('href', '/me');
+    await expectHeaderHasNoAxeViolations(avatar);
   });
 
-  it('375 menu name matches the visible text and has no axe violations', async () => {
+  it('375 keeps brand, search, bell, avatar and hamburger on one row without overflow', async () => {
     rootStore.locale.setLocale('zh-CN');
     await commands.setViewport(375, 812);
     renderHeader();
 
-    await userEvent.click(screen.getByRole('button', { name: '打开导航菜单' }));
-
-    const link = screen.getByRole('link', { name: `个人中心 @${username}` });
-    expect(link).toHaveAttribute('href', '/me');
-    expect(link).not.toHaveAttribute('aria-label');
-    expect(link).toHaveTextContent(`个人中心 @${username}`);
-    expect(link).toHaveAccessibleName(`个人中心 @${username}`);
-    await expectHeaderHasNoAxeViolations(link);
+    const toggle = screen.getByRole('button', { name: '打开导航菜单' });
+    const avatar = screen.getByRole('button', { name: `@${username} 的个人中心` });
+    for (const el of [toggle, avatar, screen.getByRole('link', { name: '搜索' })]) {
+      const box = el.getBoundingClientRect();
+      expect([box.width, box.height]).toEqual([44, 44]);
+    }
+    expect(document.documentElement.scrollWidth).toBe(375);
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expectHeaderHasNoAxeViolations(toggle);
   });
 });

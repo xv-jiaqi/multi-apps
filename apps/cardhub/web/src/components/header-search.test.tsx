@@ -340,40 +340,26 @@ describe('SiteHeader search entry points', () => {
     setLg(false);
   });
 
-  it('hides the desktop search link at lg and places search at the top of the drawer', async () => {
+  it('keeps an inline w-56 search from lg, a 44px icon below lg, and no search in the drawer (CH-218 §4)', async () => {
     const user = userEvent.setup();
     const { container } = render(
       <MemoryRouter initialEntries={['/']}>
         <SiteHeader />
-        <Routes>
-          <Route path="/" element={<LocationProbe />} />
-          <Route path="/series/:seriesSlug" element={<LocationProbe />} />
-        </Routes>
       </MemoryRouter>,
     );
 
     const inline = container.querySelector('div.w-56');
-    expect(inline).toHaveClass('ml-auto', 'hidden', 'lg:block', 'xl:w-72');
-    const searchLink = screen.getByRole('link', { name: '搜索' });
-    expect(searchLink.className).toContain('lg:hidden');
-    expect(screen.getByRole('button', { name: /EN/ }).parentElement).toHaveClass('lg:ml-0');
+    expect(inline).toHaveClass('ml-auto', 'hidden', 'lg:block', 'shrink-0');
+    expect(inline).not.toHaveClass('xl:w-72');
+    const icon = screen.getByRole('link', { name: '搜索' });
+    expect(icon).toHaveAttribute('href', '/search');
+    expect(icon).toHaveClass('size-11', 'lg:hidden');
+    expect(icon.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
 
     await user.click(screen.getByRole('button', { name: '打开导航菜单' }));
     const drawer = document.getElementById('mobile-nav');
     if (!drawer) throw new Error('drawer missing');
-    const drawerInput = within(drawer).getByRole('combobox', { name: '全站搜索' });
-    expect(drawerInput).not.toHaveFocus();
-    expect(drawerInput.className).toContain('h-10');
-    expect(drawer.querySelector('.pb-2')).toBeTruthy();
-    expect(within(drawer).getByRole('link', { name: '搜索' })).toBeInTheDocument();
-
-    await user.click(drawerInput);
-    await user.type(drawerInput, '极光');
-    const option = await screen.findByRole('option', { name: /收录 12/ });
-    await user.click(option);
-    expect(document.getElementById('mobile-nav')).toBeNull();
-    expect(decodeURIComponent(screen.getByLabelText('location').textContent ?? '')).toContain(
-      '/series/celestial-dawn',
-    );
+    expect(within(drawer).queryByRole('combobox')).not.toBeInTheDocument();
+    expect(within(drawer).queryByRole('link', { name: '搜索' })).not.toBeInTheDocument();
   });
 });
