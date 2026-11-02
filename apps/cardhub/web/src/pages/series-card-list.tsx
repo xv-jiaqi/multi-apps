@@ -297,12 +297,12 @@ export const SeriesCardList = observer(function SeriesCardList({
   const filtered = state.q.length > 0 || state.subset !== null || state.rarity !== null;
   const total = list.data?.total ?? 0;
   const parallelCount = list.data?.parallelCount ?? 0;
-  const announcement =
-    !filtered && state.parallels
-      ? tt('series.count.withParallels', { count: total, n: total })
-      : tt(filtered ? 'series.list.found' : 'series.list.total', {
-          count: filtered ? total : seriesTotal,
-        });
+  const mentionParallels = !filtered && state.parallels && parallelCount > 0;
+  const announcement = mentionParallels
+    ? tt('series.count.withParallels', { count: total, n: total })
+    : tt(filtered ? 'series.list.found' : 'series.list.total', {
+        count: filtered ? total : seriesTotal,
+      });
   const onlyParallels =
     listView !== 'error' &&
     list.data !== undefined &&
