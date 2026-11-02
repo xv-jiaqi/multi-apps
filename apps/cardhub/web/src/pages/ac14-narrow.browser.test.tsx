@@ -140,7 +140,7 @@ describe('D-AC14-1 topic title at 375px', () => {
       </MemoryRouter>,
     );
 
-    const title = await screen.findByRole('heading', { level: 3, name: LONG });
+    const title = await screen.findByRole('heading', { level: 1, name: LONG });
     expect(title).toHaveClass('min-w-0', 'wrap-anywhere');
     expect(title.className).not.toMatch(/\btruncate\b|\bbreak-all\b|\bline-clamp-/);
 

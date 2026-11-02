@@ -13,7 +13,7 @@ import {
 } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { Pin } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
+import { Button, Card, CardContent, CardHeader } from '@repo/ui-web';
 import { appErrorMessage, fieldErrorMessage, replyBodySchema, t } from '@repo/shared';
 import { DeleteReasonField } from '../components/delete-reason-field';
 import { PageShell } from '../components/page-shell';
@@ -696,13 +696,15 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                           {tt('forum.badge.pinned')}
                         </span>
                       ) : null}
-                      <CardTitle
+                      {/* CH-221: the page's only h1. Classes are CardTitle's merged output so
+                          it looks the same; CardTitle itself stays h3 for other pages. */}
+                      <h1
                         ref={titleRef}
                         tabIndex={-1}
-                        className="min-w-0 wrap-anywhere text-2xl"
+                        className="text-2xl font-semibold leading-none tracking-tight min-w-0 wrap-anywhere"
                       >
                         {topic.title}
-                      </CardTitle>
+                      </h1>
                     </div>
                     {confirmingDelete?.kind !== 'topic' ? (
                       <div className="flex items-center gap-2">
