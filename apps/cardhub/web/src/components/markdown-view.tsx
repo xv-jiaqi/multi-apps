@@ -43,14 +43,40 @@ function cardComponents(newTabLabel: string | undefined): Components {
       <Tag {...props} className={className} />
     );
   return {
-    pre: MarkdownPre,
-    table: MarkdownTable,
+    pre: (props: ComponentProps<'pre'> & ExtraProps) => (
+      <div className="mt-3">
+        <MarkdownPre {...props} />
+      </div>
+    ),
+    table: (props: ComponentProps<'table'> & ExtraProps) => (
+      <div className="mt-3 text-sm">
+        <MarkdownTable {...props} />
+      </div>
+    ),
     h1: heading('h3', 'mt-6 text-lg font-semibold text-neutral-900'),
     h2: heading('h4', 'mt-5 text-base font-semibold text-neutral-900'),
     h3: heading('h5', 'mt-4 text-base font-medium text-neutral-900'),
     h4: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
     h5: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
     h6: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
+    p: ({ node: _node, ...props }: ComponentProps<'p'> & ExtraProps) => (
+      <p {...props} className="mt-3 first:mt-0" />
+    ),
+    ul: ({ node: _node, ...props }: ComponentProps<'ul'> & ExtraProps) => (
+      <ul {...props} className="mt-3 list-disc space-y-1 pl-6" />
+    ),
+    ol: ({ node: _node, ...props }: ComponentProps<'ol'> & ExtraProps) => (
+      <ol {...props} className="mt-3 list-decimal space-y-1 pl-6" />
+    ),
+    blockquote: ({ node: _node, ...props }: ComponentProps<'blockquote'> & ExtraProps) => (
+      <blockquote {...props} className="mt-3 border-l-4 border-neutral-200 pl-4 text-neutral-600" />
+    ),
+    th: ({ node: _node, ...props }: ComponentProps<'th'> & ExtraProps) => (
+      <th {...props} className="border-b border-neutral-200 px-3 py-2 text-left font-semibold" />
+    ),
+    td: ({ node: _node, ...props }: ComponentProps<'td'> & ExtraProps) => (
+      <td {...props} className="border-b border-neutral-200 px-3 py-2" />
+    ),
     a: ({ node: _node, href, children, ...props }: ComponentProps<'a'> & ExtraProps) => {
       const external = isExternal(href);
       let suffix: ReactNode = null;
@@ -104,7 +130,13 @@ export const MarkdownView = memo(function MarkdownView({
   const card = variant === 'card';
   return (
     <div
-      className={['min-w-0 wrap-anywhere text-neutral-800', className].filter(Boolean).join(' ')}
+      className={[
+        'min-w-0 wrap-anywhere text-neutral-800',
+        card && 'text-base leading-7',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
