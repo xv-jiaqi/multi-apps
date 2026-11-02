@@ -440,4 +440,17 @@ describe('series comments frame (CH-206 v1.4 §9)', () => {
       expect(tile.className).not.toMatch(/bg-white\/|backdrop-blur/);
     }
   });
+
+  it('paints the loading hero block opaque neutral-200', () => {
+    seriesQuery.isLoading = true;
+    seriesQuery.isPending = true;
+    seriesQuery.isFetching = true;
+    seriesQuery.isError = false;
+    seriesQuery.error = null;
+    seriesQuery.errorUpdateCount = 0;
+    renderSeries();
+    const hero = document.querySelector('.h-48.animate-pulse');
+    expect(hero).toHaveClass('bg-neutral-200');
+    expect(hero?.className).not.toMatch(/bg-neutral-200\/|backdrop-blur/);
+  });
 });
