@@ -359,6 +359,68 @@ describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
     }
   });
 
+  it('own-only: opening and closing twice leaves no inert behind', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<CondSelect id="s1" label="One" />);
+    const trigger = screen.getByRole('combobox');
+    const baseline = inertCount();
+    for (let i = 0; i < 2; i++) {
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('listbox');
+      expect(container).toHaveAttribute('inert');
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+      expect(container).not.toHaveAttribute('inert');
+      expect(inertCount()).toBe(baseline);
+      expect(trigger).toHaveFocus();
+    }
+  });
+
+  it('own-only: a node that was inert before stays inert across two opens', async () => {
+    const user = userEvent.setup();
+    const before = document.createElement('div');
+    before.setAttribute('inert', '');
+    document.body.appendChild(before);
+    try {
+      render(<CondSelect id="s1" label="One" />);
+      const trigger = screen.getByRole('combobox');
+      for (let i = 0; i < 2; i++) {
+        trigger.focus();
+        await user.keyboard('{Enter}');
+        await screen.findByRole('listbox');
+        await user.keyboard('{Escape}');
+        expect(before).toHaveAttribute('inert');
+      }
+    } finally {
+      before.remove();
+    }
+  });
+
+  it('own-only: inert another source adds while the list is open is kept on close', async () => {
+    const user = userEvent.setup();
+    const other = document.createElement('div');
+    other.innerHTML = '<a href="/x">Other link</a>';
+    document.body.appendChild(other);
+    try {
+      const { container } = render(<CondSelect id="s1" label="One" />);
+      const trigger = screen.getByRole('combobox');
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('listbox');
+      expect(other).toHaveAttribute('inert');
+      // e.g. a dialog opening behind the list marks the same node inert
+      other.setAttribute('inert', '');
+      await user.keyboard('{Escape}');
+
+      expect(container).not.toHaveAttribute('inert');
+      expect(other).toHaveAttribute('inert');
+      expect(trigger).toHaveFocus();
+    } finally {
+      other.remove();
+    }
+  });
+
   it('19-4: a Select inside a Dialog cleans up and keeps the Dialog usable', async () => {
     const user = userEvent.setup();
     render(
