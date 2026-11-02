@@ -141,6 +141,73 @@ describe('ui-web Select', () => {
 
     expect(trigger).toHaveFocus();
   });
+
+  it('points aria-controls at the listbox only while it is open', async () => {
+    const user = userEvent.setup();
+    render(
+      <Select defaultValue="any">
+        <SelectTrigger id="condition">
+          <SelectValue placeholder="Condition" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="any">Any</SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).not.toHaveAttribute('aria-controls');
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    const listbox = await screen.findByRole('listbox');
+    expect(listbox.id).not.toBe('');
+    expect(trigger).toHaveAttribute('aria-controls', listbox.id);
+
+    await user.keyboard('{Escape}');
+    expect(trigger).not.toHaveAttribute('aria-controls');
+  });
+
+  it('makes the page outside the open list inert and restores it before focus returns', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <a href="/series">Series</a>
+        <Select defaultValue="any">
+          <SelectTrigger id="condition">
+            <SelectValue placeholder="Condition" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">Any</SelectItem>
+            <SelectItem value="none">Not specified</SelectItem>
+          </SelectContent>
+        </Select>
+      </>,
+    );
+
+    const trigger = screen.getByRole('combobox');
+    expect(container).not.toHaveAttribute('inert');
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    const listbox = await screen.findByRole('listbox');
+
+    expect(container).toHaveAttribute('inert');
+    expect(container).toHaveAttribute('aria-hidden', 'true');
+    expect(container.contains(listbox)).toBe(false);
+
+    await user.keyboard('{Escape}');
+
+    expect(container).not.toHaveAttribute('inert');
+    expect(trigger).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(container).toHaveAttribute('inert');
+    await user.click(await screen.findByRole('option', { name: 'Not specified' }));
+
+    expect(container).not.toHaveAttribute('inert');
+    expect(trigger).toHaveTextContent('Not specified');
+    expect(trigger).toHaveFocus();
+  });
 });
 
 describe('ui-web Combobox', () => {
