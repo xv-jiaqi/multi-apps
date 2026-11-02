@@ -217,6 +217,7 @@ assert "historical success resolves the tag" "$(
   grep -F -q "Resolved api_digest=${tag_api_digest} web_digest=${tag_web_digest} source=tag images_run=20" "${work}/hist.out" && echo 0 || echo 1
 )"
 assert "historical success called the tag resolver" "$([ -s "${fx}/tag-called" ] && echo 0 || echo 1)"
+assert "historical success warns when it falls back to the tag" "$(grep -F -q '::warning::Images run 20 has no digest artifact' "${work}/hist.err" && echo 0 || echo 1)"
 
 fx="${work}/no-manifest"
 write_runs "${fx}" \

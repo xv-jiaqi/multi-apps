@@ -178,10 +178,9 @@ sha_tag_from_container() {
   return 1
 }
 
-# Prefer the digest the container was started with, then a registry
-# RepoDigest, then the local image id. The image id is not a manifest
-# digest; it matches only when the caller pinned that id.
-digest_of_container() {
+# Manifest digest only: @sha256 on Config.Image, then a RepoDigest.
+# The local image id is not a registry manifest. Rollback must not record it.
+registry_digest_of_container() {
   local id="$1"
   local config image_id line
   config="$(docker inspect -f '{{.Config.Image}}' "${id}" 2>/dev/null || true)"
@@ -199,6 +198,20 @@ digest_of_container() {
       fi
     done < <(docker image inspect -f '{{range .RepoDigests}}{{.}}{{"\n"}}{{end}}' "${image_id}" 2>/dev/null || true)
   fi
+  return 1
+}
+
+# Prefer the digest the container was started with, then a registry
+# RepoDigest, then the local image id. The image id is not a manifest
+# digest; it matches only when the caller pinned that id. Rollback uses
+# registry_digest_of_container and refuses this fallback.
+digest_of_container() {
+  local id="$1"
+  local image_id
+  if registry_digest_of_container "${id}"; then
+    return 0
+  fi
+  image_id="$(docker inspect -f '{{.Image}}' "${id}" 2>/dev/null || true)"
   if valid_image_digest "${image_id}"; then
     printf '%s\n' "${image_id}"
     return 0
@@ -1029,10 +1042,40 @@ main() {
     fi
   fi
   if [ "$(count_lines "${api_prev_id}")" -eq 1 ]; then
-    previous_api_digest="$(digest_of_container "${api_prev_id}" || true)"
+    previous_api_digest="$(registry_digest_of_container "${api_prev_id}" || true)"
   fi
   if [ "$(count_lines "${web_prev_id}")" -eq 1 ]; then
-    previous_web_digest="$(digest_of_container "${web_prev_id}" || true)"
+    previous_web_digest="$(registry_digest_of_container "${web_prev_id}" || true)"
+  fi
+  # A container whose only sha256 is its local image id cannot be pulled
+  # back. Refuse before pull or compose up and leave that container running.
+  refuse_image_id_rollback() {
+    local svc="$1"
+    local id="$2"
+    local repo="$3"
+    local tag="$4"
+    local digest="$5"
+    local image_id pull_tag
+    if valid_image_digest "${digest}"; then
+      return 0
+    fi
+    image_id="$(docker inspect -f '{{.Image}}' "${id}" 2>/dev/null || true)"
+    if ! valid_image_digest "${image_id}"; then
+      return 0
+    fi
+    if [[ "${tag}" =~ ^sha-[0-9a-f]{40}$ ]]; then
+      pull_tag="${tag}"
+    else
+      pull_tag="sha-<40 hex>"
+    fi
+    echo "Refusing deploy: ${svc} has no registry digest, so rollback would record local image id ${image_id}. docker pull ${repo}:${pull_tag} restores RepoDigests on that image without recreating the container. See deploy/README.md. Containers were not changed." >&2
+    exit 1
+  }
+  if [ "$(count_lines "${api_prev_id}")" -eq 1 ]; then
+    refuse_image_id_rollback api "${api_prev_id}" "${api_repo}" "${previous_api_tag}" "${previous_api_digest}"
+  fi
+  if [ "$(count_lines "${web_prev_id}")" -eq 1 ]; then
+    refuse_image_id_rollback web "${web_prev_id}" "${web_repo}" "${previous_web_tag}" "${previous_web_digest}"
   fi
   if [[ "${previous_api_tag}" =~ ^sha-[0-9a-f]{40}$ ]] && [[ "${previous_web_tag}" =~ ^sha-[0-9a-f]{40}$ ]]; then
     if [ "${previous_api_tag}" = "${previous_web_tag}" ]; then
@@ -1110,11 +1153,26 @@ main() {
         active_image_tag="${previous_tag}"
         active_api_image="${api_repo}@${previous_api_digest}"
         active_web_image="${web_repo}@${previous_web_digest}"
-        compose pull api web || true
-        # Keeps a replica already running the previous digest and drops a
-        # mismatched extra one. Recreates only a service that has already
-        # cut over.
-        compose up -d postgres redis api web || true
+        # Same services as a pull that succeeded. --pull never uses the
+        # local image when GHCR cannot be reached after api has already
+        # cut over and web has not.
+        if ! compose pull api web; then
+          echo "::error::Rollback pull failed for ${api_repo}@${previous_api_digest} and ${web_repo}@${previous_web_digest}." >&2
+          if docker image inspect "${api_repo}@${previous_api_digest}" >/dev/null 2>&1 \
+            && docker image inspect "${web_repo}@${previous_web_digest}" >/dev/null 2>&1; then
+            echo "::error::Previous api and web images are on this machine; recreating them without pulling." >&2
+            if ! compose up -d --pull never postgres redis api web; then
+              echo "::error::Rollback compose up --pull never failed for ${api_repo}@${previous_api_digest} and ${web_repo}@${previous_web_digest}." >&2
+            fi
+          else
+            echo "::error::Previous api or web image is not on this machine, so rollback did not run compose up. Running containers were left as they are." >&2
+          fi
+        else
+          # Keeps a replica already running the previous digest and drops a
+          # mismatched extra one. Recreates only a service that has already
+          # cut over.
+          compose up -d postgres redis api web || true
+        fi
       else
         echo "No previous image digest available for automatic rollback to ${previous_tag}. Running containers were left as they are." >&2
       fi
