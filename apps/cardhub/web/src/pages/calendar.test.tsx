@@ -5,6 +5,25 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { rootStore } from '../stores/root-store';
 import { CalendarPage } from './calendar';
 
+// Radix Select needs these in jsdom (same as trade-publish.test.tsx).
+if (!HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+}
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = vi.fn();
+}
+if (!HTMLElement.prototype.releasePointerCapture) {
+  HTMLElement.prototype.releasePointerCapture = vi.fn();
+}
+if (typeof ResizeObserver === 'undefined') {
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+}
+
 const list = {
   pages: [] as Array<{ items: Array<Record<string, unknown>>; nextCursor: string | null }>,
   isLoading: false,
@@ -20,6 +39,17 @@ const list = {
   refetch: vi.fn(),
 };
 
+const cats = {
+  items: [
+    { slug: 'deck', name: '构筑对战' },
+    { slug: 'pokemon', name: '宝可梦' },
+  ] as Array<{ slug: string; name: string }> | undefined,
+  isPending: false,
+  isError: false,
+};
+const listInputs: Array<Record<string, unknown>> = [];
+const listEnabled: boolean[] = [];
+
 vi.mock('../lib/shanghai-date', () => ({
   shanghaiToday: () => '2026-12-15',
 }));
@@ -28,19 +58,33 @@ vi.mock('../lib/trpc', () => ({
   trpc: {
     releases: {
       list: {
-        useInfiniteQuery: () => ({
-          data: list.isLoading || list.isError ? undefined : { pages: list.pages },
-          isLoading: list.isLoading,
-          isPending: list.isPending,
-          isFetching: list.isFetching,
-          isError: list.isError,
-          isFetchNextPageError: list.isFetchNextPageError,
-          isFetchingNextPage: list.isFetchingNextPage,
-          hasNextPage: list.hasNextPage,
-          errorUpdateCount: list.errorUpdateCount,
-          dataUpdatedAt: list.dataUpdatedAt,
-          fetchNextPage: list.fetchNextPage,
-          refetch: list.refetch,
+        useInfiniteQuery: (input: Record<string, unknown>, opts: { enabled?: boolean }) => {
+          listInputs.push(input);
+          listEnabled.push(opts.enabled !== false);
+          return {
+            data: list.isLoading || list.isError ? undefined : { pages: list.pages },
+            isLoading: list.isLoading,
+            isPending: list.isPending,
+            isFetching: list.isFetching,
+            isError: list.isError,
+            isFetchNextPageError: list.isFetchNextPageError,
+            isFetchingNextPage: list.isFetchingNextPage,
+            hasNextPage: list.hasNextPage,
+            errorUpdateCount: list.errorUpdateCount,
+            dataUpdatedAt: list.dataUpdatedAt,
+            fetchNextPage: list.fetchNextPage,
+            refetch: list.refetch,
+          };
+        },
+      },
+    },
+    categories: {
+      list: {
+        useQuery: () => ({
+          data: cats.isPending || cats.isError ? undefined : { items: cats.items },
+          isPending: cats.isPending,
+          isError: cats.isError,
+          isSuccess: !cats.isPending && !cats.isError,
         }),
       },
     },
@@ -99,6 +143,14 @@ beforeEach(() => {
   list.dataUpdatedAt = 1;
   list.fetchNextPage.mockReset();
   list.refetch.mockReset();
+  cats.items = [
+    { slug: 'deck', name: '构筑对战' },
+    { slug: 'pokemon', name: '宝可梦' },
+  ];
+  cats.isPending = false;
+  cats.isError = false;
+  listInputs.length = 0;
+  listEnabled.length = 0;
 });
 
 describe('release calendar page', () => {
@@ -260,5 +312,108 @@ describe('release calendar page', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'December 2026' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('December 2026, 1 release');
     expect(screen.getByRole('heading', { level: 3, name: 'Sun, Dec 6' })).toBeInTheDocument();
+  });
+
+  describe('category filter (CH-215 v1.5 §13)', () => {
+    const params = (router: { state: { location: { search: string } } }) =>
+      new URLSearchParams(router.state.location.search);
+
+    it('13-1: picks a category with replace, sends categorySlug, and clears it on All', async () => {
+      const user = userEvent.setup();
+      list.pages = [{ items: [row({})], nextCursor: null }];
+      const { router } = renderCalendar('/calendar?month=2026-12');
+      const trigger = screen.getByRole('combobox', { name: '品类' });
+      expect(trigger).toHaveAttribute('id', 'calendar-category');
+      expect(trigger).toHaveTextContent('全部品类');
+
+      await user.click(trigger);
+      await user.click(await screen.findByRole('option', { name: '构筑对战' }));
+      expect(params(router).get('category')).toBe('deck');
+      expect(params(router).get('month')).toBe('2026-12');
+      expect(router.state.historyAction).toBe('REPLACE');
+      expect(listInputs.at(-1)).toMatchObject({ categorySlug: 'deck' });
+      expect(screen.getByRole('combobox', { name: '品类' })).toHaveFocus();
+      expect(screen.getByRole('status')).toHaveTextContent('2026年12月 · 构筑对战，共 1 条');
+
+      await user.click(screen.getByRole('button', { name: '下个月' }));
+      expect(params(router).get('category')).toBe('deck');
+
+      await user.click(screen.getByRole('combobox', { name: '品类' }));
+      await user.click(await screen.findByRole('option', { name: '全部品类' }));
+      expect(params(router).has('category')).toBe(false);
+      expect(listInputs.at(-1)).not.toHaveProperty('categorySlug');
+    });
+
+    it('13-1: restores the category from the URL and waits for categories before listing', () => {
+      cats.isPending = true;
+      list.pages = [{ items: [row({})], nextCursor: null }];
+      const { unmount } = renderCalendar('/calendar?month=2026-12&category=deck');
+      expect(listEnabled.at(-1)).toBe(false);
+      expect(screen.getByRole('combobox', { name: '品类' })).toBeDisabled();
+      expect(screen.getByRole('combobox', { name: '品类' })).toHaveTextContent('全部品类');
+      expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
+      expect(screen.queryByText('春季补充包')).not.toBeInTheDocument();
+      unmount();
+
+      cats.isPending = false;
+      renderCalendar('/calendar?month=2026-12&category=deck');
+      expect(listEnabled.at(-1)).toBe(true);
+      expect(listInputs.at(-1)).toMatchObject({ categorySlug: 'deck' });
+      expect(screen.getByRole('combobox', { name: '品类' })).toHaveTextContent('构筑对战');
+    });
+
+    it('13-2: drops an unknown slug with replace and shows the whole month without an error', async () => {
+      list.pages = [{ items: [row({})], nextCursor: null }];
+      const { router } = renderCalendar('/calendar?month=2026-12&category=nope');
+      expect(await screen.findByText('春季补充包')).toBeInTheDocument();
+      expect(params(router).has('category')).toBe(false);
+      expect(params(router).get('month')).toBe('2026-12');
+      expect(router.state.historyAction).toBe('REPLACE');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('2026年12月，共 1 条');
+    });
+
+    it('13-2: shows the category empty state and Show all removes the param', async () => {
+      const user = userEvent.setup();
+      list.pages = [{ items: [], nextCursor: null }];
+      const { router } = renderCalendar('/calendar?month=2026-12&category=pokemon');
+      expect(screen.getByText('这个月没有「宝可梦」的发售条目')).toHaveClass('text-neutral-600');
+      expect(screen.queryByText('这个月没有发售条目')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: '查看全部品类' }));
+      expect(params(router).has('category')).toBe(false);
+      expect(screen.getByText('这个月没有发售条目')).toBeInTheDocument();
+    });
+
+    it('sends the raw slug and disables the Select when categories.list fails', () => {
+      cats.isError = true;
+      list.pages = [{ items: [], nextCursor: null }];
+      const { router } = renderCalendar('/calendar?month=2026-12&category=deck');
+      expect(listEnabled.at(-1)).toBe(true);
+      expect(listInputs.at(-1)).toMatchObject({ categorySlug: 'deck' });
+      expect(screen.getByRole('combobox', { name: '品类' })).toBeDisabled();
+      expect(params(router).get('category')).toBe('deck');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('13-3: keeps Tab order prev → next → this month → category', async () => {
+      const user = userEvent.setup();
+      list.pages = [{ items: [], nextCursor: null }];
+      renderCalendar('/calendar?month=2026-11');
+      screen.getByRole('button', { name: '上个月' }).focus();
+      await user.tab();
+      expect(screen.getByRole('button', { name: '下个月' })).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole('button', { name: '本月' })).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole('combobox', { name: '品类' })).toHaveFocus();
+    });
+
+    it('uses the English singular category status and empty copy', () => {
+      rootStore.locale.setLocale('en-US');
+      list.pages = [{ items: [row({})], nextCursor: null }];
+      renderCalendar('/calendar?month=2026-12&category=deck');
+      expect(screen.getByRole('status')).toHaveTextContent('December 2026 · 构筑对战, 1 release');
+      expect(screen.getByRole('combobox', { name: 'Category' })).toBeInTheDocument();
+    });
   });
 });
