@@ -148,6 +148,47 @@ describe('card body', () => {
     expect(resultData(publicAfter.body).body).toBeNull();
   });
 
+  it('keeps the body column out of search and import preview card queries', async () => {
+    const findName = `bodyfind${suffix}`;
+    await prisma.card.update({
+      where: { slug: cardSlug },
+      data: { name: findName, body: '不应出现在列表查询里' },
+    });
+    const spy = jest.spyOn(prisma.card, 'findMany');
+    try {
+      const search = await get('cards.search', { q: findName });
+      expect(search.status).toBe(200);
+      const global = await get('search.global', { q: findName });
+      expect(global.status).toBe(200);
+      const preview = await post('admin.catalog.import', {
+        dryRun: true,
+        data: [
+          {
+            slug: seriesSlug,
+            title: '长描述系列',
+            cards: [{ slug: cardSlug, name: findName, rarity: 'common', attributes: {} }],
+          },
+        ],
+      });
+      expect(preview.status).toBe(200);
+
+      const searchCards = resultData(search.body).results as Array<{ slug: string }>;
+      const globalCards = resultData(global.body).cards as Array<{ slug: string }>;
+      expect(searchCards.map((card) => card.slug)).toContain(cardSlug);
+      expect(globalCards.map((card) => card.slug)).toContain(cardSlug);
+      for (const card of [...searchCards, ...globalCards]) expect(card).not.toHaveProperty('body');
+
+      const calls = spy.mock.calls.map(([args]) => args as { where?: unknown; omit?: unknown });
+      expect(calls.length).toBeGreaterThanOrEqual(3);
+      for (const args of calls) expect(args.omit).toEqual({ body: true });
+      const rows = await Promise.all(spy.mock.results.map((result) => result.value));
+      for (const row of rows.flat()) expect(row).not.toHaveProperty('body');
+    } finally {
+      spy.mockRestore();
+      await prisma.card.update({ where: { slug: cardSlug }, data: { name: '改名', body: null } });
+    }
+  });
+
   it('rejects a body over 20000 characters without writing it', async () => {
     const tooLong = await post(
       'admin.cards.update',

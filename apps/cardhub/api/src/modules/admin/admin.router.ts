@@ -481,6 +481,7 @@ export class AdminRouter {
         cardSlugs.length > 0
           ? prisma.card.findMany({
               where: { slug: { in: cardSlugs } },
+              omit: { body: true },
               include: { series: { select: { slug: true } } },
             })
           : Promise.resolve([]),

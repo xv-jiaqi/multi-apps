@@ -48,6 +48,7 @@ export class SearchRouter {
         const [cards, series] = await Promise.all([
           prisma.card.findMany({
             where: buildCardSearchWhere(parsed),
+            omit: { body: true },
             include: {
               series: { select: { slug: true, title: true } },
               parallelOf: { select: { slug: true, name: true } },
