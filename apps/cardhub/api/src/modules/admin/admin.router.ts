@@ -166,6 +166,14 @@ function normalizeOptionalText(value: string | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Undefined leaves the stored long description. Null and blank clear it. */
+function cardBodyForWrite(value: string | null | undefined): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 function normalizeImageUrl(value: string | undefined): string | null {
   const trimmed = value?.trim() ?? '';
   return trimmed.length > 0 ? trimmed : null;
@@ -260,6 +268,7 @@ function formatCard(card: CardAdminRow) {
     slug: card.slug,
     name: card.name,
     description: card.description,
+    body: card.body ?? null,
     imageUrl: card.imageUrl,
     rarity: card.rarity,
     attributes: normalizeDbAttributes(card.attributes),
@@ -598,6 +607,7 @@ export class AdminRouter {
         cardSlugs.length > 0
           ? prisma.card.findMany({
               where: { slug: { in: cardSlugs } },
+              omit: { body: true },
               include: {
                 series: { select: { slug: true } },
                 parallelOf: { select: { slug: true } },
@@ -956,6 +966,7 @@ export class AdminRouter {
                   slug: input.slug,
                   name: input.name,
                   description: normalizeOptionalText(input.description),
+                  body: cardBodyForWrite(input.body) ?? null,
                   rarity: input.rarity,
                   imageUrl: normalizeImageUrl(input.imageUrl),
                   attributes: input.attributes,
@@ -1026,11 +1037,13 @@ export class AdminRouter {
                 parallelName: input.parallelName,
                 printRun: input.printRun,
               });
+              const body = cardBodyForWrite(input.body);
               const card = await tx.card.update({
                 where: { slug: input.slug },
                 data: {
                   name: input.name,
                   description: normalizeOptionalText(input.description),
+                  ...(body !== undefined ? { body } : {}),
                   rarity: input.rarity,
                   imageUrl: normalizeImageUrl(input.imageUrl),
                   attributes: input.attributes,

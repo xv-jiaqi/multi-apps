@@ -297,12 +297,12 @@ export const SeriesCardList = observer(function SeriesCardList({
   const filtered = state.q.length > 0 || state.subset !== null || state.rarity !== null;
   const total = list.data?.total ?? 0;
   const parallelCount = list.data?.parallelCount ?? 0;
-  const announcement =
-    !filtered && state.parallels
-      ? tt('series.count.withParallels', { count: total, n: total })
-      : tt(filtered ? 'series.list.found' : 'series.list.total', {
-          count: filtered ? total : seriesTotal,
-        });
+  const mentionParallels = !filtered && state.parallels && parallelCount > 0;
+  const announcement = mentionParallels
+    ? tt('series.count.withParallels', { count: total, n: total })
+    : tt(filtered ? 'series.list.found' : 'series.list.total', {
+        count: filtered ? total : seriesTotal,
+      });
   const onlyParallels =
     listView !== 'error' &&
     list.data !== undefined &&
@@ -361,7 +361,10 @@ export const SeriesCardList = observer(function SeriesCardList({
   if (list.error) failureKey.current = seriesFailureKey(list.error);
 
   const activeFilters =
-    (state.q ? 1 : 0) + (state.subset ? 1 : 0) + (state.rarity ? 1 : 0) + (state.parallels ? 1 : 0);
+    (state.q ? 1 : 0) +
+    (state.subset ? 1 : 0) +
+    (state.rarity ? 1 : 0) +
+    (state.parallels && parallelCount > 0 ? 1 : 0);
   const showSkeleton = !emptySeries && listView === 'loading' && !list.data;
   const showError = !emptySeries && listView === 'error';
   const showNoMatch =

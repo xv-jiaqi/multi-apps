@@ -467,6 +467,12 @@ export type AdminSeriesUpsertInput = z.infer<typeof adminSeriesUpsertInput>;
 /** Parallel name after trim. Matches the admin form maxLength. */
 export const PARALLEL_NAME_MAX = 40;
 
+/**
+ * Markdown long description. Count is JavaScript characters after trim,
+ * not bytes. Null and empty mean no long description.
+ */
+export const CARD_BODY_MAX = 20_000;
+
 /** Stored print-run total. Null means unnumbered. PostgreSQL INTEGER upper bound. */
 export const PRINT_RUN_MIN = 1;
 export const PRINT_RUN_MAX = 2_147_483_647;
@@ -492,6 +498,17 @@ export const printRunInput = z
   .nullable()
   .optional();
 
+/**
+ * Omitted leaves the stored value on update. Null clears it.
+ * Empty after trim is stored as null by the write path.
+ */
+export const cardBodyInput = z
+  .string()
+  .trim()
+  .max(CARD_BODY_MAX, 'card_body_too_long')
+  .nullable()
+  .optional();
+
 export const adminCardUpsertInput = z.object({
   slug: slugSchema,
   name: z.string().trim().min(1).max(120),
@@ -505,6 +522,7 @@ export const adminCardUpsertInput = z.object({
   parallelOfSlug: parallelOfSlugInput,
   parallelName: parallelNameInput,
   printRun: printRunInput,
+  body: cardBodyInput,
 });
 export type AdminCardUpsertInput = z.infer<typeof adminCardUpsertInput>;
 
