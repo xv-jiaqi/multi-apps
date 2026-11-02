@@ -21,6 +21,7 @@ import { loadCardBySlug } from './card-by-slug';
 import { loadCardsBySeries } from './list-by-series';
 
 type CardSearchRow = Prisma.CardGetPayload<{
+  omit: { body: true };
   include: {
     series: { select: { slug: true; title: true } };
     parallelOf: { select: { slug: true; name: true } };
