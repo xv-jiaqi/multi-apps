@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
 import { CATALOG_IMPORT_MAX_ROWS, appErrorMessage, catalogImportLimit, t } from '@repo/shared';
 import { Button, SegmentedControl } from '@repo/ui-web';
@@ -38,6 +38,11 @@ const RESULT_CLASS: Record<ImportStatus, string> = {
   unchanged: 'bg-neutral-100 text-neutral-600',
   error: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200',
 };
+
+// §17：程序聚焦不触发 focus-visible，用 focus: 让环可见；scroll-mt-24 避开 h-16 吸顶头。
+const FOCUS_TARGET_CLASS = 'scroll-mt-24 focus:outline-none focus:ring-2 focus:ring-brand-500';
+
+type FocusTarget = 'title' | 'summary' | 'input' | 'failure';
 
 const RESULT_KEY: Record<ImportStatus, string> = {
   created: 'admin.import.create',
@@ -104,6 +109,36 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   const [confirming, setConfirming] = useState(false);
   const [importedText, setImportedText] = useState<string | null>(null);
   const [phase, setPhase] = useState<'preview' | 'execute' | null>(null);
+  // 每个结果一个新对象：只在点「预览」/「确认导入」得到结果后移一次焦点，输入不触发。
+  // origin：点击处理函数 await 之前的焦点。结果回来时焦点已不在那里（也不是 body），说明用户自己移走了，不再抢。
+  const [focusRequest, setFocusRequest] = useState<{
+    target: FocusTarget;
+    origin: Element | null;
+    message?: string;
+  } | null>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const summaryRef = useRef<HTMLParagraphElement>(null);
+  const failureRef = useRef<HTMLDivElement>(null);
+  // §17-3：解析错误因第 5 条没移焦点时，把同一文案写进常驻的 status 摘要，只播这一次。
+  const [announce, setAnnounce] = useState<string | null>(null);
+  const requestFocus = (target: FocusTarget, origin: Element | null, message?: string) =>
+    setFocusRequest({ target, origin, message });
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const refs = { title: titleRef, summary: summaryRef, input: textRef, failure: failureRef };
+    const frame = requestAnimationFrame(() => {
+      const active = document.activeElement;
+      // 触发按钮在请求期间被禁用或卸载时焦点会掉到 body，这不算用户移走。
+      if (active && active !== document.body && active !== focusRequest.origin) {
+        if (focusRequest.target === 'input') setAnnounce(focusRequest.message ?? null);
+        return;
+      }
+      refs[focusRequest.target].current?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusRequest]);
   const importCatalog = trpc.admin.catalog.import.useMutation();
   const pending = importCatalog.isPending;
   const stale = preview !== null && preview.text !== text;
@@ -120,6 +155,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   const onText = (value: string) => {
     setText(value);
     setParseError(null);
+    setAnnounce(null);
     setConfirming(false);
     setNotice(null);
   };
@@ -133,8 +169,15 @@ const CatalogImportBody = observer(function CatalogImportBody() {
     onText(contents);
   };
 
+  const showParseError = (message: string, origin: Element | null) => {
+    setParseError(message);
+    requestFocus('input', origin, message);
+  };
+
   const previewImport = async () => {
+    const origin = document.activeElement;
     setParseError(null);
+    setAnnounce(null);
     setActionError(null);
     setActionRows(null);
     setNotice(null);
@@ -144,19 +187,20 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       data = JSON.parse(text);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message) }));
+      showParseError(tt('admin.import.parseError', { line: jsonErrorLine(text, message) }), origin);
       return;
     }
     const previewInput = { data, dryRun: true as const };
     const previewLimit = catalogImportLimit(previewInput);
     if (previewLimit) {
-      setParseError(
+      showParseError(
         previewLimit.reason === 'tooManyRows'
           ? tt('admin.import.tooManyRows', {
               count: previewLimit.count,
               max: CATALOG_IMPORT_MAX_ROWS,
             })
           : tt('admin.import.tooLarge'),
+        origin,
       );
       return;
     }
@@ -165,18 +209,22 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       const rows = await importCatalog.mutateAsync(previewInput);
       const nextRows = rows as ImportRowResult[];
       setPreview({ text, data, rows: nextRows });
-      setFilter(nextRows.some((row) => row.status === 'error') ? 'errors' : 'all');
+      const hasErrors = nextRows.some((row) => row.status === 'error');
+      setFilter(hasErrors ? 'errors' : 'all');
+      requestFocus(hasErrors ? 'summary' : 'title', origin);
     } catch (error) {
       if (isAccessRevoked(error)) {
         reportForbidden();
         return;
       }
       const failure = readTrpcFailure(error);
-      setParseError(
-        failure.admin?.code
-          ? adminErrorText(locale.locale, failure.admin.code, failure.message)
-          : appErrorMessage(locale.locale, failure.appCode),
-      );
+      if (failure.admin?.code) {
+        showParseError(adminErrorText(locale.locale, failure.admin.code, failure.message), origin);
+      } else {
+        // §17-4：预览请求本身失败（如 500）不是输入问题，走失败框。
+        setActionError(appErrorMessage(locale.locale, failure.appCode));
+        requestFocus('failure', origin);
+      }
     } finally {
       setPhase(null);
     }
@@ -184,6 +232,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
 
   const executeImport = async () => {
     if (!preview || !canImport) return;
+    const origin = document.activeElement;
     const executeInput = { data: preview.data, dryRun: false as const };
     const executeLimit = catalogImportLimit(executeInput);
     if (executeLimit) {
@@ -197,6 +246,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       );
       setActionRows(null);
       setConfirming(false);
+      requestFocus('failure', origin);
       return;
     }
     setActionError(null);
@@ -218,6 +268,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       setActionError(tt('admin.import.failed'));
       setActionRows(failure.admin?.rows ?? null);
       setConfirming(false);
+      requestFocus('failure', origin);
     } finally {
       setPhase(null);
     }
@@ -265,16 +316,19 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           {tt('admin.import.paste')}
         </label>
         <textarea
+          ref={textRef}
           id="import-json"
+          aria-invalid={parseError ? true : undefined}
+          aria-describedby={parseError ? 'import-json-error' : undefined}
           rows={14}
           spellCheck={false}
           value={text}
           readOnly={phase === 'execute' && pending}
           onChange={(event) => onText(event.target.value)}
-          className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className="flex w-full scroll-mt-24 rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
         />
         {parseError ? (
-          <p role="alert" className="text-xs text-red-700">
+          <p id="import-json-error" className="text-xs text-red-700">
             {parseError}
           </p>
         ) : null}
@@ -305,8 +359,10 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       </div>
       {actionError ? (
         <div
+          ref={failureRef}
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          tabIndex={-1}
+          className={`${FOCUS_TARGET_CLASS} rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700`}
         >
           <p>{actionError}</p>
           {actionRows?.flatMap((row) =>
@@ -321,128 +377,150 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           )}
         </div>
       ) : null}
-      {preview && summary ? (
-        <div className={stale ? 'space-y-3 opacity-60' : 'space-y-3'}>
-          {stale ? <p className="text-sm text-neutral-700">{tt('admin.import.stale')}</p> : null}
-          <p role="status">
-            {tt('admin.import.summary', {
-              newSeries: tt('admin.import.summary.series', { count: summary.newSeries }),
-              newCards: tt('admin.import.summary.cards', { count: summary.newCards }),
-              updSeries: tt('admin.import.summary.updatedSeries', { count: summary.updSeries }),
-              updCards: tt('admin.import.summary.updatedCards', { count: summary.updCards }),
-              errors: tt('admin.import.summary.errors', { count: summary.errors }),
-            })}
-          </p>
-          {summary.errors > 0 ? (
-            <SegmentedControl
-              legend={`${tt('admin.import.all')} / ${tt('admin.import.errorsOnly')}`}
-              legendSrOnly
-              name="import-filter"
-              value={filter}
-              onValueChange={(value) => setFilter(value === 'all' ? 'all' : 'errors')}
-              options={[
-                { value: 'all', label: tt('admin.import.all') },
-                { value: 'errors', label: tt('admin.import.errorsOnly') },
-              ]}
-            />
-          ) : null}
-          <AdminTable caption={tt('admin.import.caption')} regionLabel={tt('admin.import.caption')}>
-            <AdminTableHead>
-              <AdminTh>{tt('admin.import.colKind')}</AdminTh>
-              <AdminTh>{tt('admin.col.slug')}</AdminTh>
-              <AdminTh>{tt('admin.col.name')}</AdminTh>
-              <AdminTh>{tt('admin.import.colResult')}</AdminTh>
-              <AdminTh>{tt('admin.import.colProblem')}</AdminTh>
-            </AdminTableHead>
-            <tbody className="divide-y divide-neutral-200">
-              {visibleRows.map((row) => {
-                const names = displayImportNames(preview.data, row.row, row.errors);
-                return (
-                  <tr
-                    key={row.row.row}
-                    className={row.status === 'error' ? 'bg-red-50/50' : undefined}
-                  >
-                    <td
-                      className={`px-3 py-2 align-middle ${row.row.type === 'card' ? 'pl-6' : ''}`}
-                    >
-                      {row.row.type === 'series'
-                        ? tt('admin.import.kindSeries')
-                        : tt('admin.import.kindCard')}
-                    </td>
-                    <td className="px-3 py-2 align-middle font-mono text-xs text-neutral-600">
-                      {names.slug}
-                    </td>
-                    <td className="px-3 py-2 align-middle font-medium text-neutral-900">
-                      {names.name}
-                    </td>
-                    <td className="px-3 py-2 align-middle">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RESULT_CLASS[row.status]}`}
-                      >
-                        {tt(RESULT_KEY[row.status])}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 align-middle text-xs text-red-700">
-                      {orderImportErrors(row.errors).map((error) => (
-                        <p key={`${error.path}-${error.code}`}>
-                          <ImportProblem
-                            path={error.path}
-                            code={error.code}
-                            message={error.message}
-                          />
-                        </p>
-                      ))}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </AdminTable>
-          <div className="space-y-2">
-            {blocked && !stale ? (
-              <p className="text-sm text-neutral-700">
-                {tt('admin.import.blocked', { count: summary.errors })}
-              </p>
-            ) : null}
-            {nothing && !stale ? (
-              <p className="text-sm text-neutral-700">{tt('admin.import.nothing')}</p>
-            ) : null}
-            {sameAsImported && !stale ? (
-              <p className="text-sm text-neutral-700">{tt('admin.import.already')}</p>
-            ) : null}
-            <Button
-              type="button"
-              disabled={!canImport || pending}
-              aria-busy={(phase === 'execute' && pending) || undefined}
-              onClick={() => {
-                setNotice(null);
-                setConfirming(true);
-              }}
-            >
-              {phase === 'execute' && pending
-                ? tt('admin.import.executing')
-                : tt('admin.import.execute')}
-            </Button>
-            {confirming && canImport ? (
-              <InlineConfirm
-                label={tt('admin.import.confirm', {
-                  create: summary.create,
-                  update: summary.update,
-                })}
-                confirmLabel={
-                  phase === 'execute' && pending
-                    ? tt('admin.import.executing')
-                    : tt('admin.import.confirmAction')
-                }
-                cancelLabel={tt('admin.cancel')}
-                disabled={phase === 'execute' && pending}
-                onConfirm={() => void executeImport()}
-                onCancel={() => setConfirming(false)}
+      {/* §17-8：过期态不变淡，只在顶部加一行提示（不进 live region、不移焦点）。 */}
+      <div className="space-y-3">
+        {stale ? (
+          <p className="text-sm text-neutral-600">{tt('admin.import.previewStale')}</p>
+        ) : null}
+        {preview ? (
+          <h2
+            ref={titleRef}
+            id="import-preview-title"
+            tabIndex={-1}
+            className={`${FOCUS_TARGET_CLASS} text-base font-semibold`}
+          >
+            {tt('admin.import.previewTitle')}
+          </h2>
+        ) : null}
+        {/* 常驻 live region（§17-3）：无预览时为空。 */}
+        <p ref={summaryRef} role="status" tabIndex={-1} className={FOCUS_TARGET_CLASS}>
+          {summary
+            ? tt('admin.import.summary', {
+                newSeries: tt('admin.import.summary.series', { count: summary.newSeries }),
+                newCards: tt('admin.import.summary.cards', { count: summary.newCards }),
+                updSeries: tt('admin.import.summary.updatedSeries', { count: summary.updSeries }),
+                updCards: tt('admin.import.summary.updatedCards', { count: summary.updCards }),
+                errors: tt('admin.import.summary.errors', { count: summary.errors }),
+              })
+            : null}
+          {announce ? <span className="sr-only">{announce}</span> : null}
+        </p>
+        {preview && summary ? (
+          <>
+            {summary.errors > 0 ? (
+              <SegmentedControl
+                legend={`${tt('admin.import.all')} / ${tt('admin.import.errorsOnly')}`}
+                legendSrOnly
+                name="import-filter"
+                value={filter}
+                onValueChange={(value) => setFilter(value === 'all' ? 'all' : 'errors')}
+                options={[
+                  { value: 'all', label: tt('admin.import.all') },
+                  { value: 'errors', label: tt('admin.import.errorsOnly') },
+                ]}
               />
             ) : null}
-          </div>
-        </div>
-      ) : null}
+            <AdminTable
+              caption={tt('admin.import.caption')}
+              regionLabel={tt('admin.import.caption')}
+            >
+              <AdminTableHead>
+                <AdminTh>{tt('admin.import.colKind')}</AdminTh>
+                <AdminTh>{tt('admin.col.slug')}</AdminTh>
+                <AdminTh>{tt('admin.col.name')}</AdminTh>
+                <AdminTh>{tt('admin.import.colResult')}</AdminTh>
+                <AdminTh>{tt('admin.import.colProblem')}</AdminTh>
+              </AdminTableHead>
+              <tbody className="divide-y divide-neutral-200">
+                {visibleRows.map((row) => {
+                  const names = displayImportNames(preview.data, row.row, row.errors);
+                  return (
+                    <tr
+                      key={row.row.row}
+                      className={row.status === 'error' ? 'bg-red-50/50' : undefined}
+                    >
+                      <td
+                        className={`px-3 py-2 align-middle ${row.row.type === 'card' ? 'pl-6' : ''}`}
+                      >
+                        {row.row.type === 'series'
+                          ? tt('admin.import.kindSeries')
+                          : tt('admin.import.kindCard')}
+                      </td>
+                      <td className="px-3 py-2 align-middle font-mono text-xs text-neutral-600">
+                        {names.slug}
+                      </td>
+                      <td className="px-3 py-2 align-middle font-medium text-neutral-900">
+                        {names.name}
+                      </td>
+                      <td className="px-3 py-2 align-middle">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RESULT_CLASS[row.status]}`}
+                        >
+                          {tt(RESULT_KEY[row.status])}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 align-middle text-xs text-red-700">
+                        {orderImportErrors(row.errors).map((error) => (
+                          <p key={`${error.path}-${error.code}`}>
+                            <ImportProblem
+                              path={error.path}
+                              code={error.code}
+                              message={error.message}
+                            />
+                          </p>
+                        ))}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </AdminTable>
+            <div className="space-y-2">
+              {blocked && !stale ? (
+                <p className="text-sm text-neutral-700">
+                  {tt('admin.import.blocked', { count: summary.errors })}
+                </p>
+              ) : null}
+              {nothing && !stale ? (
+                <p className="text-sm text-neutral-700">{tt('admin.import.nothing')}</p>
+              ) : null}
+              {sameAsImported && !stale ? (
+                <p className="text-sm text-neutral-700">{tt('admin.import.already')}</p>
+              ) : null}
+              <Button
+                type="button"
+                disabled={!canImport || pending}
+                aria-busy={(phase === 'execute' && pending) || undefined}
+                onClick={() => {
+                  setNotice(null);
+                  setConfirming(true);
+                }}
+              >
+                {phase === 'execute' && pending
+                  ? tt('admin.import.executing')
+                  : tt('admin.import.execute')}
+              </Button>
+              {confirming && canImport ? (
+                <InlineConfirm
+                  label={tt('admin.import.confirm', {
+                    create: summary.create,
+                    update: summary.update,
+                  })}
+                  confirmLabel={
+                    phase === 'execute' && pending
+                      ? tt('admin.import.executing')
+                      : tt('admin.import.confirmAction')
+                  }
+                  cancelLabel={tt('admin.cancel')}
+                  disabled={phase === 'execute' && pending}
+                  onConfirm={() => void executeImport()}
+                  onCancel={() => setConfirming(false)}
+                />
+              ) : null}
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 });

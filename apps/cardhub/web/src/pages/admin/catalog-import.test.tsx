@@ -7,6 +7,14 @@ import { CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
 import { rootStore } from '../../stores/root-store';
 import type { ImportRowResult } from '../../components/admin/catalog-utils';
 
+function parseErrorText(): HTMLElement {
+  const node = document.getElementById('import-json-error');
+  if (!node) throw new Error('missing #import-json-error');
+  // §16/§17-3：解析错误不是 alert，只靠 aria-describedby 随焦点读。
+  expect(node).not.toHaveAttribute('role');
+  return node;
+}
+
 const calls: Array<{ data: unknown; dryRun: boolean }> = [];
 const importImpl: {
   current: (input: { data: unknown; dryRun: boolean }) => Promise<unknown>;
@@ -80,7 +88,7 @@ describe('catalog import', () => {
     await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
     await user.paste('[\n  {\n    "slug":\n  }\n]');
     await user.click(screen.getByRole('button', { name: '预览' }));
-    const alert = screen.getByRole('alert');
+    const alert = parseErrorText();
     expect(alert).toHaveTextContent('第 4 行附近的 JSON 格式有误');
     expect(alert).not.toHaveTextContent('Expected');
     expect(alert).not.toHaveTextContent('Unexpected');
@@ -97,7 +105,7 @@ describe('catalog import', () => {
     await user.click(screen.getByRole('textbox', { name: 'JSON' }));
     await user.paste('[\n  {\n    "slug":\n  }\n]');
     await user.click(screen.getByRole('button', { name: 'Preview' }));
-    const alert = screen.getByRole('alert');
+    const alert = parseErrorText();
     expect(alert).toHaveTextContent('The JSON near line 4 is not valid.');
     expect(alert).not.toHaveTextContent('Expected');
     expect(alert).not.toHaveTextContent('Unexpected');
@@ -360,7 +368,7 @@ describe('catalog import', () => {
     await user.click(textbox);
     await user.paste(JSON.stringify([{ slug: 's', cards }]));
     await user.click(screen.getByRole('button', { name: '预览' }));
-    expect(screen.getByRole('alert')).toHaveTextContent(
+    expect(parseErrorText()).toHaveTextContent(
       `一次最多导入 ${CATALOG_IMPORT_MAX_ROWS} 行，当前 ${CATALOG_IMPORT_MAX_ROWS + 1} 行`,
     );
     expect(calls).toHaveLength(0);
@@ -369,7 +377,7 @@ describe('catalog import', () => {
     await user.click(textbox);
     await user.paste(JSON.stringify([{ slug: 's', blob: 'x'.repeat(1024 * 1024) }]));
     await user.click(screen.getByRole('button', { name: '预览' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('一次最多导入 1MB');
+    expect(parseErrorText()).toHaveTextContent('一次最多导入 1MB');
     expect(calls).toHaveLength(0);
   });
 
@@ -430,5 +438,184 @@ describe('catalog import', () => {
     expect(screen.getByRole('link', { name: '返回内容管理' })).toBeInTheDocument();
     expect(screen.getByText('这份内容已经导入过，请修改后再导入')).toBeInTheDocument();
     expect(calls.filter((call) => !call.dryRun)).toHaveLength(1);
+  });
+});
+
+describe('catalog import focus and error wiring (CH-213 §17)', () => {
+  async function previewWith(text: string) {
+    const user = userEvent.setup();
+    renderPage();
+    const box = screen.getByRole('textbox', { name: 'JSON 内容' });
+    await user.click(box);
+    await user.paste(text);
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    return { user, box };
+  }
+
+  it('moves focus to the preview title when the preview has no errors', async () => {
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    await previewWith('[]');
+    const title = await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    await waitFor(() => expect(title).toHaveFocus());
+  });
+
+  it('names the preview title in English', async () => {
+    rootStore.locale.setLocale('en-US');
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON' }));
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    const title = await screen.findByRole('heading', { level: 2, name: 'Preview results' });
+    await waitFor(() => expect(title).toHaveFocus());
+  });
+
+  it('moves focus to the summary, not the first error row, when the preview has errors', async () => {
+    importImpl.current = async () => [
+      row({ status: 'created' }, 1),
+      row({ status: 'error', errors: [{ path: 'series[0].slug', code: 'SLUG_FORMAT' }] }, 2),
+    ];
+    await previewWith('[]');
+    const summary = await screen.findByRole('status');
+    await waitFor(() => expect(summary).toHaveFocus());
+    expect(summary).toHaveTextContent('1 处错误');
+  });
+
+  it('marks the textarea invalid, links the parse error, focuses it, and clears both on edit', async () => {
+    const { user, box } = await previewWith('{');
+    const alert = parseErrorText();
+    expect(box).toHaveAttribute('aria-invalid', 'true');
+    expect(box).toHaveAccessibleDescription(alert.textContent ?? '');
+    await waitFor(() => expect(box).toHaveFocus());
+    await user.type(box, '}');
+    expect(box).not.toHaveAttribute('aria-invalid');
+    expect(box).not.toHaveAttribute('aria-describedby');
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows a preview 500 in the failure box, not under the textarea, and focuses the box', async () => {
+    importImpl.current = async () => {
+      throw { message: 'Internal server error', data: { code: 'INTERNAL_SERVER_ERROR' } };
+    };
+    const { box } = await previewWith('[]');
+    const alert = await screen.findByRole('alert');
+    expect(alert.tagName).toBe('DIV');
+    expect(alert).not.toHaveTextContent('Internal server error');
+    expect(box).not.toHaveAttribute('aria-invalid');
+    expect(box).not.toHaveAccessibleDescription();
+    await waitFor(() => expect(alert).toHaveFocus());
+  });
+
+  it('focuses the failure box when the import is rejected at commit time', async () => {
+    importImpl.current = async (input) => {
+      if (!input.dryRun) throw { message: 'x', data: { code: 'BAD_REQUEST' } };
+      return [row({ status: 'created' }, 1)];
+    };
+    const { user } = await previewWith('[]');
+    await user.click(screen.getByRole('button', { name: '导入' }));
+    await user.click(screen.getByRole('button', { name: '确认导入' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('导入失败，没有任何记录被修改');
+    await waitFor(() => expect(alert).toHaveFocus());
+  });
+
+  it('does not move focus while the user edits after a preview', async () => {
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const { user, box } = await previewWith('[]');
+    const title = await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    await waitFor(() => expect(title).toHaveFocus());
+    await user.click(box);
+    await user.type(box, ' ');
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(box).toHaveFocus();
+  });
+  it('keeps focus in the textarea when the user goes back to typing while the preview is pending', async () => {
+    let resolve: (rows: ImportRowResult[]) => void = () => {};
+    importImpl.current = () =>
+      new Promise((done) => {
+        resolve = done;
+      });
+    const { user, box } = await previewWith('[]');
+    await user.click(box);
+    await user.type(box, ' ');
+    expect(box).toHaveFocus();
+    resolve([row({ status: 'created' }, 1)]);
+    await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    await new Promise((done) => requestAnimationFrame(done));
+    await new Promise((done) => requestAnimationFrame(done));
+    expect(box).toHaveFocus();
+  });
+
+  it('renders an empty status summary before any preview and uses no alert for parse errors', async () => {
+    const first = renderPage();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    first.unmount();
+    const { box } = await previewWith('{');
+    await waitFor(() => expect(box).toHaveFocus());
+    expect(parseErrorText()).toHaveTextContent('JSON');
+    expect(screen.queryByRole('alert')).toBeNull();
+    // 焦点已移到输入框，describedby 会读，摘要不再重复。
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
+  it('does not steal focus the user moved elsewhere and announces the parse error once via the summary', async () => {
+    let reject: (error: unknown) => void = () => {};
+    importImpl.current = () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      });
+    const { user } = await previewWith('[]');
+    const file = screen.getByRole('button', { name: /文件/ });
+    file.focus();
+    reject({
+      message: 'x',
+      data: { code: 'BAD_REQUEST', adminCatalogError: { code: 'IMPORT_TOO_MANY_ROWS' } },
+    });
+    await waitFor(() => expect(document.getElementById('import-json-error')).not.toBeNull());
+    await new Promise((done) => requestAnimationFrame(done));
+    await new Promise((done) => requestAnimationFrame(done));
+    expect(file).toHaveFocus();
+    const message = parseErrorText().textContent ?? '';
+    expect(message).not.toBe('');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(message));
+    expect(screen.queryByRole('alert')).toBeNull();
+    void user;
+  });
+
+  it('marks a stale preview with a hint, keeps import disabled, and does not fade the preview (§17-8)', async () => {
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const { user, box } = await previewWith('[]');
+    await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    expect(screen.getByRole('button', { name: '导入' })).toBeEnabled();
+    expect(screen.queryByText('内容已修改，请重新预览')).toBeNull();
+
+    await user.type(box, ' ');
+    const hint = screen.getByText('内容已修改，请重新预览');
+    expect(hint).toHaveClass('text-sm', 'text-neutral-600');
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    // 预览区及其祖先都不变淡（控件内部的 sr 输入框不算）。
+    for (let node: Element | null = hint.parentElement; node; node = node.parentElement) {
+      expect(node.className).not.toMatch(/opacity-|text-neutral-(400|500)/);
+    }
+    // 提示不进 live region、不移焦点。
+    expect(screen.getByRole('status')).not.toHaveTextContent('内容已修改');
+    expect(hint.closest('[role="status"],[role="alert"],[aria-live]')).toBeNull();
+    expect(box).toHaveFocus();
+  });
+
+  it('shows the stale hint in English', async () => {
+    rootStore.locale.setLocale('en-US');
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const user = userEvent.setup();
+    renderPage();
+    const box = screen.getByRole('textbox', { name: 'JSON' });
+    await user.click(box);
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    await screen.findByRole('heading', { level: 2, name: 'Preview results' });
+    await user.type(box, ' ');
+    expect(screen.getByText('Text changed. Preview again.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
   });
 });
