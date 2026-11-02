@@ -307,6 +307,7 @@ const UsersBody = observer(function UsersBody() {
     <div className="space-y-6">
       <header className="space-y-1">
         <h1
+          id="admin-users-title"
           tabIndex={-1}
           className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
@@ -377,6 +378,7 @@ const UsersBody = observer(function UsersBody() {
           )}
           <AdminTable
             caption={tt('admin.users.caption')}
+            labelledBy="admin-users-title"
             busy={query.isLoading}
             className="scroll-pl-32 sm:scroll-pl-0"
           >

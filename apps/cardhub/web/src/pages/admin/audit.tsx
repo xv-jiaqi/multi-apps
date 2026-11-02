@@ -178,6 +178,7 @@ const AuditBody = observer(function AuditBody() {
     <div className="space-y-6">
       <header className="space-y-1">
         <h1
+          id="admin-audit-title"
           tabIndex={-1}
           className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
@@ -230,7 +231,11 @@ const AuditBody = observer(function AuditBody() {
         <AdminEmpty>{tt('admin.audit.empty')}</AdminEmpty>
       ) : (
         <>
-          <AdminTable caption={tt('admin.audit.caption')} busy={query.isLoading}>
+          <AdminTable
+            caption={tt('admin.audit.caption')}
+            labelledBy="admin-audit-title"
+            busy={query.isLoading}
+          >
             <AdminTableHead>
               <AdminTh>{tt('admin.audit.colTime')}</AdminTh>
               <AdminTh>{tt('admin.audit.colActor')}</AdminTh>

@@ -54,7 +54,13 @@ function scroller() {
 
 function box(node: Element) {
   const rect = node.getBoundingClientRect();
-  return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width };
+  return {
+    left: rect.left,
+    right: rect.right,
+    top: rect.top,
+    bottom: rect.bottom,
+    width: rect.width,
+  };
 }
 
 beforeEach(async () => {

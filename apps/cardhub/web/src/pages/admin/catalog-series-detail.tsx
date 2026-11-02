@@ -148,6 +148,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <h1
+            id="admin-series-detail-title"
             ref={titleRef}
             tabIndex={-1}
             className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
@@ -238,7 +239,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
               className="w-full pl-8"
             />
           </div>
-          <AdminTable caption={title} regionLabel={title}>
+          <AdminTable caption={title} labelledBy="admin-series-detail-title">
             <CardHead tt={tt} />
             <tbody className="divide-y divide-neutral-200">
               {visible.length === 0 ? (

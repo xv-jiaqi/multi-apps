@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
 import { CATALOG_IMPORT_MAX_ROWS, appErrorMessage, catalogImportLimit, t } from '@repo/shared';
-import { Button, SegmentedControl } from '@repo/ui-web';
+import { Button, ScrollRegion, SegmentedControl } from '@repo/ui-web';
 import { Breadcrumbs } from '../../components/breadcrumbs';
 import { PageMeta } from '../../components/page-meta';
 import { PageShell } from '../../components/page-shell';
@@ -304,12 +304,18 @@ const CatalogImportBody = observer(function CatalogImportBody() {
         ) : null}
       </div>
       <details className="rounded-md border border-neutral-200 bg-white p-3">
-        <summary className={`cursor-pointer text-sm font-medium text-neutral-800 ${focusRing}`}>
+        <summary
+          id="import-example-title"
+          className={`cursor-pointer text-sm font-medium text-neutral-800 ${focusRing}`}
+        >
           {tt('admin.import.example')}
         </summary>
-        <pre className="mt-3 max-w-full overflow-x-auto whitespace-pre rounded-md bg-neutral-50 p-3 font-mono text-xs">
-          {IMPORT_EXAMPLE}
-        </pre>
+        <ScrollRegion
+          labelledBy="import-example-title"
+          className="mt-3 max-w-full rounded-md bg-neutral-50"
+        >
+          <pre className="whitespace-pre p-3 font-mono text-xs">{IMPORT_EXAMPLE}</pre>
+        </ScrollRegion>
       </details>
       <div className="space-y-2">
         <label htmlFor="import-json" className="text-sm font-medium text-neutral-800">
@@ -420,10 +426,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                 ]}
               />
             ) : null}
-            <AdminTable
-              caption={tt('admin.import.caption')}
-              regionLabel={tt('admin.import.caption')}
-            >
+            <AdminTable caption={tt('admin.import.caption')} labelledBy="import-preview-title">
               <AdminTableHead>
                 <AdminTh>{tt('admin.import.colKind')}</AdminTh>
                 <AdminTh>{tt('admin.col.slug')}</AdminTh>

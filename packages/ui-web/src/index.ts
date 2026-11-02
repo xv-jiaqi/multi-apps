@@ -61,3 +61,5 @@ export {
 export type { SelectTriggerProps } from './components/select';
 export { SegmentedControl } from './components/segmented-control';
 export type { SegmentedControlOption, SegmentedControlProps } from './components/segmented-control';
+export { ScrollRegion } from './components/scroll-region';
+export type { ScrollRegionProps } from './components/scroll-region';
