@@ -25,6 +25,9 @@ describe('NotFoundPage (CH-114 §6)', () => {
     const digits = screen.getByText('404', { ignore: false });
     expect(digits.tagName).toBe('P');
     expect(digits).toHaveAttribute('aria-hidden', 'true');
+    // CH-114 §6-1 v6.1: neutral-500 on #f6f6f6 is 4.39:1 (large text needs ≥ 3:1)
+    expect(digits).toHaveClass('text-neutral-500');
+    expect(digits).not.toHaveClass('text-neutral-300');
     expect(
       screen.queryByText('404', { ignore: '[aria-hidden="true"], [aria-hidden="true"] *' }),
     ).toBeNull();
