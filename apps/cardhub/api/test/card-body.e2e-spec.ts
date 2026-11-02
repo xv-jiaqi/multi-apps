@@ -88,10 +88,11 @@ describe('card body', () => {
   }
 
   function get(path: string, input: unknown) {
-    return request(app.getHttpServer())
+    const req = request(app.getHttpServer())
       .get(`/trpc/${path}`)
       .query({ input: JSON.stringify(input) })
       .set('X-Forwarded-For', '203.0.113.182');
+    return path.startsWith('admin.') ? req.set('Authorization', `Bearer ${adminToken}`) : req;
   }
 
   const cardInput = (extra: Record<string, unknown> = {}) => ({
@@ -138,6 +139,13 @@ describe('card body', () => {
     expect(cleared.status).toBe(200);
     expect(resultData(cleared.body).body).toBeNull();
     expect((await prisma.card.findUnique({ where: { slug: cardSlug } }))?.body).toBeNull();
+
+    await post('admin.cards.update', cardInput({ name: '改名', body: markdown }));
+    const nulled = await post('admin.cards.update', cardInput({ name: '改名', body: null }));
+    expect(nulled.status).toBe(200);
+    expect(resultData(nulled.body).body).toBeNull();
+    const publicAfter = await get('cards.bySlug', { slug: cardSlug });
+    expect(resultData(publicAfter.body).body).toBeNull();
   });
 
   it('rejects a body over 20000 characters without writing it', async () => {
