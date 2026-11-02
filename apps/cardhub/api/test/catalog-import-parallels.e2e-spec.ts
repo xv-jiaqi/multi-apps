@@ -316,22 +316,32 @@ describe('catalog import parallels', () => {
           title: '本系列',
           cards: [
             cardRow('kept', { name: '留下' }),
-            cardRow('cross', { parallelOf: slug('base'), parallelName: '跨系列' }),
             cardRow('chain', { parallelOf: slug('linked'), parallelName: '挂链' }),
             cardRow('self', { parallelOf: slug('self'), parallelName: '自己' }),
-            cardRow('parent', { parallelOf: slug('base'), parallelName: '再挂' }),
             cardRow('missing', { parallelOf: slug('no-such'), parallelName: '缺失' }),
             cardRow('noname', { parallelOf: slug('base'), parallelName: '   ' }),
             cardRow('zero', { printRun: 0, parallelOf: slug('base'), parallelName: '零' }),
             cardRow('huge', { printRun: 2_147_483_648 }),
             cardRow('fraction', { printRun: 1.5 }),
             cardRow('long-name', { parallelOf: slug('base'), parallelName: '名'.repeat(41) }),
+            cardRow('multi', {
+              printRun: 0,
+              parallelName: '名'.repeat(41),
+              parallelOf: slug('no-such'),
+            }),
+            cardRow('fresh-base', { name: '文件内基础卡' }),
+            cardRow('fresh-foil', { parallelOf: slug('fresh-base'), parallelName: '文件内' }),
+            cardRow('base', {
+              name: '基础',
+              parallelOf: slug('kept'),
+              parallelName: '再挂',
+            }),
           ],
         },
         {
           slug: slug('away'),
           title: '别的系列',
-          cards: [cardRow('cross')],
+          cards: [cardRow('cross', { parallelOf: slug('base'), parallelName: '跨系列' })],
         },
       ],
     });
@@ -351,14 +361,29 @@ describe('catalog import parallels', () => {
     expect(codes('cross')).toEqual(['parallel_cross_series']);
     expect(codes('chain')).toEqual(['parallel_chain']);
     expect(codes('self')).toEqual(['parallel_self']);
-    expect(codes('parent')).toEqual(['parallel_has_children']);
+    expect(codes('base')).toEqual(['parallel_has_children']);
     expect(codes('missing')).toEqual(['parallel_base_missing']);
     expect(codes('noname')).toEqual(['parallel_name_required']);
-    expect(codes('zero')).toEqual(['parallelOf' in {} ? 'parallel_cross_series' : 'print_run_min']);
     expect(codes('zero')).toEqual(['print_run_min']);
     expect(codes('huge')).toEqual(['too_big']);
     expect(codes('fraction')).toEqual(['invalid_type']);
     expect(codes('long-name')).toEqual(['too_big']);
+    const multi = rowsOf(preview.body).find(
+      (item) => isRecord(item.row) && item.row.slug === slug('multi'),
+    );
+    expect(multi?.errors).toEqual([
+      { path: 'series[0].cards[9].parallelOf', code: 'parallel_base_missing' },
+      { path: 'series[0].cards[9].parallelName', code: 'too_big' },
+      { path: 'series[0].cards[9].printRun', code: 'print_run_min' },
+    ]);
+    for (const name of ['fresh-base', 'fresh-foil']) {
+      const row = rowsOf(preview.body).find(
+        (item) => isRecord(item.row) && item.row.slug === slug(name),
+      );
+      expect(row?.status).toBe('created');
+      expect(row?.errors).toEqual([]);
+    }
+    expect(await prisma.card.findUnique({ where: { slug: slug('fresh-base') } })).toBeNull();
     expect(await prisma.card.findUnique({ where: { slug: slug('cross') } })).toBeNull();
 
     const failed = await post('admin.catalog.import', {
@@ -367,15 +392,12 @@ describe('catalog import parallels', () => {
         {
           slug: slug('home'),
           title: '本系列',
-          cards: [
-            cardRow('kept', { name: '留下' }),
-            cardRow('stray', { parallelOf: slug('base'), parallelName: '银折' }),
-          ],
+          cards: [cardRow('kept', { name: '留下' })],
         },
         {
           slug: slug('away'),
           title: '别的系列',
-          cards: [cardRow('stray')],
+          cards: [cardRow('stray', { parallelOf: slug('base'), parallelName: '银折' })],
         },
       ],
     });
