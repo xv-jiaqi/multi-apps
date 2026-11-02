@@ -1,0 +1,66 @@
+[
+ {
+  "w": 1440,
+  "lang": "zh",
+  "file": "after_series-skeleton_1440_zh.png",
+  "skeleton": {
+   "cls": "h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200",
+   "bg": "oklch(0.922 0 0)",
+   "tiles": [
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)"
+   ]
+  },
+  "axe": []
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "file": "after_series-skeleton_1440_en.png",
+  "skeleton": {
+   "cls": "h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200",
+   "bg": "oklch(0.922 0 0)",
+   "tiles": [
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)"
+   ]
+  },
+  "axe": []
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "file": "after_series-skeleton_375_zh.png",
+  "skeleton": {
+   "cls": "h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200",
+   "bg": "oklch(0.922 0 0)",
+   "tiles": [
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)"
+   ]
+  },
+  "axe": []
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "file": "after_series-skeleton_375_en.png",
+  "skeleton": {
+   "cls": "h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200",
+   "bg": "oklch(0.922 0 0)",
+   "tiles": [
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)",
+    "rgb(255, 255, 255)"
+   ]
+  },
+  "axe": []
+ }
+]

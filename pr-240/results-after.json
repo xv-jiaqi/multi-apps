@@ -2419,7 +2419,7 @@
   "menu_items": [
    "个人中心",
    "通知",
-   "---",
+   "",
    "管理",
    "内容管理",
    "发售条目",
@@ -2430,9 +2430,7 @@
   "expanded": "true",
   "esc_focus": "account-menu",
   "esc_closed": true,
-  "axe": [
-   "list x1"
-  ],
+  "axe": [],
   "scrollW_after": 1280,
   "file": "after_admin_1280_zh_open.png"
  },
@@ -2528,7 +2526,7 @@
   "menu_items": [
    "My account",
    "Notifications",
-   "---",
+   "",
    "Admin",
    "Catalog",
    "Releases",
@@ -2539,9 +2537,7 @@
   "expanded": "true",
   "esc_focus": "account-menu",
   "esc_closed": true,
-  "axe": [
-   "list x1"
-  ],
+  "axe": [],
   "scrollW_after": 1280,
   "file": "after_admin_1280_en_open.png"
  },
@@ -2637,7 +2633,7 @@
   "menu_items": [
    "个人中心",
    "通知",
-   "---",
+   "",
    "管理",
    "内容管理",
    "发售条目",
@@ -2648,9 +2644,7 @@
   "expanded": "true",
   "esc_focus": "account-menu",
   "esc_closed": true,
-  "axe": [
-   "list x1"
-  ],
+  "axe": [],
   "scrollW_after": 1440,
   "file": "after_admin_1440_zh_open.png"
  },
@@ -2746,7 +2740,7 @@
   "menu_items": [
    "My account",
    "Notifications",
-   "---",
+   "",
    "Admin",
    "Catalog",
    "Releases",
@@ -2757,9 +2751,7 @@
   "expanded": "true",
   "esc_focus": "account-menu",
   "esc_closed": true,
-  "axe": [
-   "list x1"
-  ],
+  "axe": [],
   "scrollW_after": 1440,
   "file": "after_admin_1440_en_open.png"
  }
