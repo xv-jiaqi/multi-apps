@@ -466,6 +466,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 #### CH-206 卡牌详情页改版
 
+- **进度**（2026-11-02）：存储和接口已做，界面还没做。迁移只加可空列 `cards.body`。`cards.bySlug` 和 `admin.cards.get` 返回 `body`（没有时为 null）。`admin.cards.create` / `update` 增加可选 `body`：省略不改已存值，空串或 null 存 null。超过 20000 个字符的字段码是 `card_body_too_long`。列表、搜索和 `series.bySlug` 的嵌套卡牌不返回这一列。
 - **来源**：历史 AI 前端指令 2，UI 规范 §4 卡牌详情（固定功能区 + 自由内容区 + 评论区）。详情页的信息顺序参考百科站点，见 [industry-benchmark.md](industry-benchmark.md) 第 4 节。价格曲线属于 CH-313，本卡不放。
 - **改动范围**
   - Prisma：`Card.body String?`（Markdown 长描述，≤ 20000 字），在 CH-107 后台编辑，用现有 `MarkdownView` 渲染。历史文档写的“富文本编辑器”统一落地为 Markdown，与论坛保持一致且已有防 XSS 方案。
