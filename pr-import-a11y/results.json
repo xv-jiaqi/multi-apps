@@ -7,6 +7,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - status",
+  "live": [
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -16,6 +20,10 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - status",
+  "live": [
+   "status: "
   ],
   "axe": []
  },
@@ -27,6 +35,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - status",
+  "live": [
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -36,6 +48,10 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - status",
+  "live": [
+   "status: "
   ],
   "axe": []
  },
@@ -47,6 +63,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"正在预览…\" [disabled]\n  - status",
+  "live": [
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -56,6 +76,10 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Previewing…\" [disabled]\n  - status",
+  "live": [
+   "status: "
   ],
   "axe": []
  },
@@ -67,6 +91,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"正在预览…\" [disabled]\n  - status",
+  "live": [
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -76,6 +104,10 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Previewing…\" [disabled]\n  - status",
+  "live": [
+   "status: "
   ],
   "axe": []
  },
@@ -87,6 +119,10 @@
    "true",
    "import-json-error"
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\" [invalid]: \"{ \\\"bad\\\":\"\n  - paragraph: 第 1 行附近的 JSON 格式有误\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - status",
+  "live": [
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -96,6 +132,10 @@
   "ta": [
    "true",
    "import-json-error"
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\" [invalid]: \"{ \\\"bad\\\":\"\n  - paragraph: The JSON near line 1 is not valid.\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - status",
+  "live": [
+   "status: "
   ],
   "axe": []
  },
@@ -107,6 +147,10 @@
    "true",
    "import-json-error"
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\" [invalid]: \"{ \\\"bad\\\":\"\n  - paragraph: 第 1 行附近的 JSON 格式有误\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - status",
+  "live": [
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -116,6 +160,10 @@
   "ta": [
    "true",
    "import-json-error"
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\" [invalid]: \"{ \\\"bad\\\":\"\n  - paragraph: The JSON near line 1 is not valid.\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - status",
+  "live": [
+   "status: "
   ],
   "axe": []
  },
@@ -127,6 +175,11 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - alert:\n    - paragraph: 出了点问题，请稍后再试\n  - status",
+  "live": [
+   "alert: 出了点问题，请稍后再试",
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -136,6 +189,11 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - alert:\n    - paragraph: Something went wrong. Try again later.\n  - status",
+  "live": [
+   "alert: Something went wrong. Try again later.",
+   "status: "
   ],
   "axe": []
  },
@@ -147,6 +205,11 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - alert:\n    - paragraph: 出了点问题，请稍后再试\n  - status",
+  "live": [
+   "alert: 出了点问题，请稍后再试",
+   "status: "
+  ],
   "axe": []
  },
  {
@@ -156,6 +219,11 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - alert:\n    - paragraph: Something went wrong. Try again later.\n  - status",
+  "live": [
+   "alert: Something went wrong. Try again later.",
+   "status: "
   ],
   "axe": []
  },
@@ -167,6 +235,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - heading \"预览结果\" [level=2]\n  - status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误\n  - region \"导入预览\":\n    - table \"导入预览\":\n      - caption: 导入预览\n      - rowgroup:\n        - row \"类型 slug 名称 结果 问题\":\n          - columnheader \"类型\"\n          - columnheader \"slug\"\n          - columnheader \"名称\"\n          - columnheader \"结果\"\n          - columnheader \"问题\"\n      - rowgroup:\n        - row \"系列 aurora-genesis 极光创世 更新\":\n          - cell \"系列\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"更新\"\n          - cell\n        - row \"卡牌 glacier-sentinel-silver 冰川哨兵 银 新增\":\n          - cell \"卡牌\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"新增\"\n          - cell\n  - button \"导入\"",
+  "live": [
+   "status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误"
+  ],
   "axe": []
  },
  {
@@ -176,6 +248,10 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - heading \"Preview results\" [level=2]\n  - status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors\n  - region \"Import preview\":\n    - table \"Import preview\":\n      - caption: Import preview\n      - rowgroup:\n        - row \"Type Slug Name Result Problem\":\n          - columnheader \"Type\"\n          - columnheader \"Slug\"\n          - columnheader \"Name\"\n          - columnheader \"Result\"\n          - columnheader \"Problem\"\n      - rowgroup:\n        - row \"Series aurora-genesis 极光创世 Update\":\n          - cell \"Series\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"Update\"\n          - cell\n        - row \"Card glacier-sentinel-silver 冰川哨兵 银 New\":\n          - cell \"Card\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"New\"\n          - cell\n  - button \"Import\"",
+  "live": [
+   "status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors"
   ],
   "axe": []
  },
@@ -187,6 +263,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - heading \"预览结果\" [level=2]\n  - status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误\n  - region \"导入预览\":\n    - table \"导入预览\":\n      - caption: 导入预览\n      - rowgroup:\n        - row \"类型 slug 名称 结果 问题\":\n          - columnheader \"类型\"\n          - columnheader \"slug\"\n          - columnheader \"名称\"\n          - columnheader \"结果\"\n          - columnheader \"问题\"\n      - rowgroup:\n        - row \"系列 aurora-genesis 极光创世 更新\":\n          - cell \"系列\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"更新\"\n          - cell\n        - row \"卡牌 glacier-sentinel-silver 冰川哨兵 银 新增\":\n          - cell \"卡牌\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"新增\"\n          - cell\n  - button \"导入\"",
+  "live": [
+   "status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误"
+  ],
   "axe": []
  },
  {
@@ -196,6 +276,10 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - heading \"Preview results\" [level=2]\n  - status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors\n  - region \"Import preview\":\n    - table \"Import preview\":\n      - caption: Import preview\n      - rowgroup:\n        - row \"Type Slug Name Result Problem\":\n          - columnheader \"Type\"\n          - columnheader \"Slug\"\n          - columnheader \"Name\"\n          - columnheader \"Result\"\n          - columnheader \"Problem\"\n      - rowgroup:\n        - row \"Series aurora-genesis 极光创世 Update\":\n          - cell \"Series\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"Update\"\n          - cell\n        - row \"Card glacier-sentinel-silver 冰川哨兵 银 New\":\n          - cell \"Card\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"New\"\n          - cell\n  - button \"Import\"",
+  "live": [
+   "status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors"
   ],
   "axe": []
  },
@@ -207,6 +291,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - heading \"预览结果\" [level=2]\n  - status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；1 处错误\n  - group \"全部 / 只看错误\":\n    - text: 全部 / 只看错误\n    - radio \"全部\"\n    - text: 全部\n    - radio \"只看错误\" [checked]\n    - text: 只看错误\n  - region \"导入预览\":\n    - table \"导入预览\":\n      - caption: 导入预览\n      - rowgroup:\n        - row \"类型 slug 名称 结果 问题\":\n          - columnheader \"类型\"\n          - columnheader \"slug\"\n          - columnheader \"名称\"\n          - columnheader \"结果\"\n          - columnheader \"问题\"\n      - rowgroup:\n        - row \"卡牌 moonlit-raven 月夜渡鸦 平行 错误 平行名称：请填写平行名称 series[0].cards[1].parallelName\":\n          - cell \"卡牌\"\n          - cell \"moonlit-raven\"\n          - cell \"月夜渡鸦 平行\"\n          - cell \"错误\"\n          - cell \"平行名称：请填写平行名称 series[0].cards[1].parallelName\":\n            - paragraph: 平行名称：请填写平行名称 series[0].cards[1].parallelName\n  - paragraph: 有 1 处错误，修正后才能导入\n  - button \"导入\" [disabled]",
+  "live": [
+   "status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；1 处错误"
+  ],
   "axe": []
  },
  {
@@ -216,6 +304,10 @@
   "ta": [
    null,
    null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - heading \"Preview results\" [level=2]\n  - status: 0 new series, 1 new card; 1 series and 0 cards updated; 1 error\n  - group \"All / Errors only\":\n    - text: All / Errors only\n    - radio \"All\"\n    - text: All\n    - radio \"Errors only\" [checked]\n    - text: Errors only\n  - region \"Import preview\":\n    - table \"Import preview\":\n      - caption: Import preview\n      - rowgroup:\n        - row \"Type Slug Name Result Problem\":\n          - columnheader \"Type\"\n          - columnheader \"Slug\"\n          - columnheader \"Name\"\n          - columnheader \"Result\"\n          - columnheader \"Problem\"\n      - rowgroup:\n        - 'row \"Card moonlit-raven 月夜渡鸦 平行 Error Parallel name: Enter a parallel name. series[0].cards[1].parallelName\"':\n          - cell \"Card\"\n          - cell \"moonlit-raven\"\n          - cell \"月夜渡鸦 平行\"\n          - cell \"Error\"\n          - 'cell \"Parallel name: Enter a parallel name. series[0].cards[1].parallelName\"':\n            - paragraph: \"Parallel name: Enter a parallel name. series[0].cards[1].parallelName\"\n  - paragraph: Fix 1 error before importing\n  - button \"Import\" [disabled]",
+  "live": [
+   "status: 0 new series, 1 new card; 1 series and 0 cards updated; 1 error"
   ],
   "axe": []
  },
@@ -227,6 +319,10 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - heading \"预览结果\" [level=2]\n  - status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；1 处错误\n  - group \"全部 / 只看错误\":\n    - text: 全部 / 只看错误\n    - radio \"全部\"\n    - text: 全部\n    - radio \"只看错误\" [checked]\n    - text: 只看错误\n  - region \"导入预览\":\n    - table \"导入预览\":\n      - caption: 导入预览\n      - rowgroup:\n        - row \"类型 slug 名称 结果 问题\":\n          - columnheader \"类型\"\n          - columnheader \"slug\"\n          - columnheader \"名称\"\n          - columnheader \"结果\"\n          - columnheader \"问题\"\n      - rowgroup:\n        - row \"卡牌 moonlit-raven 月夜渡鸦 平行 错误 平行名称：请填写平行名称 series[0].cards[1].parallelName\":\n          - cell \"卡牌\"\n          - cell \"moonlit-raven\"\n          - cell \"月夜渡鸦 平行\"\n          - cell \"错误\"\n          - cell \"平行名称：请填写平行名称 series[0].cards[1].parallelName\":\n            - paragraph: 平行名称：请填写平行名称 series[0].cards[1].parallelName\n  - paragraph: 有 1 处错误，修正后才能导入\n  - button \"导入\" [disabled]",
+  "live": [
+   "status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；1 处错误"
+  ],
   "axe": []
  },
  {
@@ -237,6 +333,74 @@
    null,
    null
   ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - heading \"Preview results\" [level=2]\n  - status: 0 new series, 1 new card; 1 series and 0 cards updated; 1 error\n  - group \"All / Errors only\":\n    - text: All / Errors only\n    - radio \"All\"\n    - text: All\n    - radio \"Errors only\" [checked]\n    - text: Errors only\n  - region \"Import preview\":\n    - table \"Import preview\":\n      - caption: Import preview\n      - rowgroup:\n        - row \"Type Slug Name Result Problem\":\n          - columnheader \"Type\"\n          - columnheader \"Slug\"\n          - columnheader \"Name\"\n          - columnheader \"Result\"\n          - columnheader \"Problem\"\n      - rowgroup:\n        - 'row \"Card moonlit-raven 月夜渡鸦 平行 Error Parallel name: Enter a parallel name. series[0].cards[1].parallelName\"':\n          - cell \"Card\"\n          - cell \"moonlit-raven\"\n          - cell \"月夜渡鸦 平行\"\n          - cell \"Error\"\n          - 'cell \"Parallel name: Enter a parallel name. series[0].cards[1].parallelName\"':\n            - paragraph: \"Parallel name: Enter a parallel name. series[0].cards[1].parallelName\"\n  - paragraph: Fix 1 error before importing\n  - button \"Import\" [disabled]",
+  "live": [
+   "status: 0 new series, 1 new card; 1 series and 0 cards updated; 1 error"
+  ],
   "axe": []
+ },
+ {
+  "file": "slow-typing_1440_zh.png",
+  "active": "TEXTAREA#import-json [\n  {\n    \"slug\": \"qa-series\",",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - heading \"预览结果\" [level=2]\n  - paragraph: 内容已修改，请重新预览\n  - status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误\n  - region \"导入预览\":\n    - table \"导入预览\":\n      - caption: 导入预览\n      - rowgroup:\n        - row \"类型 slug 名称 结果 问题\":\n          - columnheader \"类型\"\n          - columnheader \"slug\"\n          - columnheader \"名称\"\n          - columnheader \"结果\"\n          - columnheader \"问题\"\n      - rowgroup:\n        - row \"系列 aurora-genesis 极光创世 更新\":\n          - cell \"系列\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"更新\"\n          - cell\n        - row \"卡牌 glacier-sentinel-silver 冰川哨兵 银 新增\":\n          - cell \"卡牌\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"新增\"\n          - cell\n  - button \"导入\" [disabled]",
+  "live": [
+   "status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误"
+  ],
+  "axe": [
+   "color-contrast 10"
+  ]
+ },
+ {
+  "file": "slow-typing_1440_en.png",
+  "active": "TEXTAREA#import-json [\n  {\n    \"slug\": \"qa-series\",",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - heading \"Preview results\" [level=2]\n  - paragraph: The JSON changed. Preview it again.\n  - status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors\n  - region \"Import preview\":\n    - table \"Import preview\":\n      - caption: Import preview\n      - rowgroup:\n        - row \"Type Slug Name Result Problem\":\n          - columnheader \"Type\"\n          - columnheader \"Slug\"\n          - columnheader \"Name\"\n          - columnheader \"Result\"\n          - columnheader \"Problem\"\n      - rowgroup:\n        - row \"Series aurora-genesis 极光创世 Update\":\n          - cell \"Series\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"Update\"\n          - cell\n        - row \"Card glacier-sentinel-silver 冰川哨兵 银 New\":\n          - cell \"Card\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"New\"\n          - cell\n  - button \"Import\" [disabled]",
+  "live": [
+   "status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors"
+  ],
+  "axe": [
+   "color-contrast 10"
+  ]
+ },
+ {
+  "file": "slow-typing_375_zh.png",
+  "active": "TEXTAREA#import-json [\n  {\n    \"slug\": \"qa-series\",",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "aria": "- main:\n  - navigation \"面包屑导航\":\n    - list:\n      - listitem:\n        - link \"首页\":\n          - /url: /\n      - listitem: 管理\n      - listitem:\n        - link \"内容管理\":\n          - /url: /admin/catalog\n      - listitem: 导入 JSON\n  - heading \"导入 JSON\" [level=1]\n  - paragraph: 格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新\n  - group: 查看格式示例\n  - text: JSON 内容\n  - textbox \"JSON 内容\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"选择文件\"\n  - button \"选择文件\"\n  - button \"预览\"\n  - heading \"预览结果\" [level=2]\n  - paragraph: 内容已修改，请重新预览\n  - status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误\n  - region \"导入预览\":\n    - table \"导入预览\":\n      - caption: 导入预览\n      - rowgroup:\n        - row \"类型 slug 名称 结果 问题\":\n          - columnheader \"类型\"\n          - columnheader \"slug\"\n          - columnheader \"名称\"\n          - columnheader \"结果\"\n          - columnheader \"问题\"\n      - rowgroup:\n        - row \"系列 aurora-genesis 极光创世 更新\":\n          - cell \"系列\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"更新\"\n          - cell\n        - row \"卡牌 glacier-sentinel-silver 冰川哨兵 银 新增\":\n          - cell \"卡牌\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"新增\"\n          - cell\n  - button \"导入\" [disabled]",
+  "live": [
+   "status: 新增 0 个系列、1 张卡牌；更新 1 个系列、0 张卡牌；0 处错误"
+  ],
+  "axe": [
+   "color-contrast 10"
+  ]
+ },
+ {
+  "file": "slow-typing_375_en.png",
+  "active": "TEXTAREA#import-json [\n  {\n    \"slug\": \"qa-series\",",
+  "overflow": true,
+  "ta": [
+   null,
+   null
+  ],
+  "aria": "- main:\n  - navigation \"Breadcrumb\":\n    - list:\n      - listitem:\n        - link \"Home\":\n          - /url: /\n      - listitem: Admin\n      - listitem:\n        - link \"Catalog\":\n          - /url: /admin/catalog\n      - listitem: Import JSON\n  - heading \"Import JSON\" [level=1]\n  - paragraph: Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.\n  - group: See an example\n  - text: JSON\n  - textbox \"JSON\": \"[ { \\\"slug\\\": \\\"qa-series\\\", \\\"title\\\": \\\"QA\\\", \\\"cards\\\": [ { \\\"slug\\\": \\\"qa-a\\\", \\\"name\\\": \\\"A\\\", \\\"rarity\\\": \\\"rare\\\", \\\"attributes\\\": {} } ] } ]\"\n  - button \"Choose file\"\n  - button \"Choose file\"\n  - button \"Preview\"\n  - heading \"Preview results\" [level=2]\n  - paragraph: The JSON changed. Preview it again.\n  - status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors\n  - region \"Import preview\":\n    - table \"Import preview\":\n      - caption: Import preview\n      - rowgroup:\n        - row \"Type Slug Name Result Problem\":\n          - columnheader \"Type\"\n          - columnheader \"Slug\"\n          - columnheader \"Name\"\n          - columnheader \"Result\"\n          - columnheader \"Problem\"\n      - rowgroup:\n        - row \"Series aurora-genesis 极光创世 Update\":\n          - cell \"Series\"\n          - cell \"aurora-genesis\"\n          - cell \"极光创世\"\n          - cell \"Update\"\n          - cell\n        - row \"Card glacier-sentinel-silver 冰川哨兵 银 New\":\n          - cell \"Card\"\n          - cell \"glacier-sentinel-silver\"\n          - cell \"冰川哨兵 银\"\n          - cell \"New\"\n          - cell\n  - button \"Import\" [disabled]",
+  "live": [
+   "status: 0 new series, 1 new card; 1 series and 0 cards updated; 0 errors"
+  ],
+  "axe": [
+   "color-contrast 10"
+  ]
  }
 ]
