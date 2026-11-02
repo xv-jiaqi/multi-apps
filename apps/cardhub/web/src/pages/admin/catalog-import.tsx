@@ -377,7 +377,11 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           )}
         </div>
       ) : null}
-      <div className={stale ? 'space-y-3 opacity-60' : 'space-y-3'}>
+      {/* §17-8：过期态不变淡，只在顶部加一行提示（不进 live region、不移焦点）。 */}
+      <div className="space-y-3">
+        {stale ? (
+          <p className="text-sm text-neutral-600">{tt('admin.import.previewStale')}</p>
+        ) : null}
         {preview ? (
           <h2
             ref={titleRef}
@@ -388,7 +392,6 @@ const CatalogImportBody = observer(function CatalogImportBody() {
             {tt('admin.import.previewTitle')}
           </h2>
         ) : null}
-        {stale ? <p className="text-sm text-neutral-700">{tt('admin.import.stale')}</p> : null}
         {/* 常驻 live region（§17-3）：无预览时为空。 */}
         <p ref={summaryRef} role="status" tabIndex={-1} className={FOCUS_TARGET_CLASS}>
           {summary

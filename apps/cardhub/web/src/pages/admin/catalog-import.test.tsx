@@ -582,4 +582,40 @@ describe('catalog import focus and error wiring (CH-213 §17)', () => {
     expect(screen.queryByRole('alert')).toBeNull();
     void user;
   });
+
+  it('marks a stale preview with a hint, keeps import disabled, and does not fade the preview (§17-8)', async () => {
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const { user, box } = await previewWith('[]');
+    await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    expect(screen.getByRole('button', { name: '导入' })).toBeEnabled();
+    expect(screen.queryByText('内容已修改，请重新预览')).toBeNull();
+
+    await user.type(box, ' ');
+    const hint = screen.getByText('内容已修改，请重新预览');
+    expect(hint).toHaveClass('text-sm', 'text-neutral-600');
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    // 预览区及其祖先都不变淡（控件内部的 sr 输入框不算）。
+    for (let node: Element | null = hint.parentElement; node; node = node.parentElement) {
+      expect(node.className).not.toMatch(/opacity-|text-neutral-(400|500)/);
+    }
+    // 提示不进 live region、不移焦点。
+    expect(screen.getByRole('status')).not.toHaveTextContent('内容已修改');
+    expect(hint.closest('[role="status"],[role="alert"],[aria-live]')).toBeNull();
+    expect(box).toHaveFocus();
+  });
+
+  it('shows the stale hint in English', async () => {
+    rootStore.locale.setLocale('en-US');
+    importImpl.current = async () => [row({ status: 'created' }, 1)];
+    const user = userEvent.setup();
+    renderPage();
+    const box = screen.getByRole('textbox', { name: 'JSON' });
+    await user.click(box);
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    await screen.findByRole('heading', { level: 2, name: 'Preview results' });
+    await user.type(box, ' ');
+    expect(screen.getByText('Text changed. Preview again.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
+  });
 });
