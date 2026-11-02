@@ -14,7 +14,7 @@ export interface CardPickerItem {
   seriesSlug: string;
   seriesTitle: string;
   parallelName?: string | null;
-  isParallel?: boolean;
+  isParallel: boolean;
 }
 
 function cardLabel(item: CardPickerItem): string {
