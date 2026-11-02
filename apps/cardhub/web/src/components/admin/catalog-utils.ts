@@ -128,6 +128,20 @@ export function isSeriesHasCards(error: unknown): AdminCatalogDetails | null {
   return failure.admin;
 }
 
+const PARALLEL_FIELD_LABEL: Record<string, string> = {
+  parallelOf: 'admin.field.parallelOf',
+  parallelOfSlug: 'admin.field.parallelOf',
+  parallelName: 'admin.field.parallelName',
+  printRun: 'admin.field.printRun',
+};
+
+/** Parallel import columns share the card form's field names. Other columns do not. */
+export function importParallelFieldLabel(locale: Locale, path: string): string | null {
+  const field = path.split('.').pop() ?? '';
+  const key = PARALLEL_FIELD_LABEL[field];
+  return key ? t(locale, key) : null;
+}
+
 export function adminErrorText(locale: Locale, code: string | undefined, message: string): string {
   if (code && ERROR_KEYS[code]) return t(locale, ERROR_KEYS[code]);
   if (message.trim() === t('zh-CN', 'error.internal')) {

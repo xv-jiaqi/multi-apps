@@ -243,6 +243,51 @@ describe('catalog import', () => {
     expect(alert).toHaveTextContent('slug 只能包含小写字母、数字和连字符');
   });
 
+  it('lists every parallel preview error as field name, copy, then path', async () => {
+    const user = userEvent.setup();
+    importImpl.current = async () => [
+      {
+        row: { row: 2, type: 'card', slug: 'foil', name: '金箔', seriesSlug: 'dawn' },
+        status: 'error' as const,
+        errors: [
+          { path: 'series[0].cards[0].printRun', code: 'print_run_min' },
+          { path: 'series[0].cards[0].parallelOf', code: 'parallel_cross_series' },
+        ],
+      },
+    ];
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste(
+      JSON.stringify([
+        {
+          slug: 'dawn',
+          title: '黎明',
+          cards: [
+            { slug: 'foil', name: '金箔', rarity: 'common', parallelOf: 'other', printRun: 0 },
+          ],
+        },
+      ]),
+    );
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    const problem = await screen.findByText('基础卡', { exact: false });
+    const cell = problem.closest('p');
+    expect(cell).toHaveTextContent('基础卡：基础卡必须属于同一系列');
+    expect(cell).toHaveTextContent('series[0].cards[0].parallelOf');
+    expect(cell?.querySelector('span')).toHaveClass(
+      'font-mono',
+      'wrap-anywhere',
+      'text-neutral-600',
+    );
+    expect(cell).not.toHaveAttribute('role', 'alert');
+    const run = screen.getByText('限量总数', { exact: false }).closest('p');
+    expect(run).toHaveTextContent('限量总数：限量数量至少为 1，不限量请留空');
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(
+      screen.getAllByRole('status').some((node) => node.textContent?.includes('1 处错误')),
+    ).toBe(true);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('shows the same breadcrumb trail as the other admin pages', () => {
     renderPage();
     const nav = screen.getByRole('navigation', { name: '面包屑导航' });

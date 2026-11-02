@@ -280,4 +280,120 @@ describe('catalog import parallels', () => {
     expect(child?.parallelName).toBeNull();
     expect(child?.printRun).toBe(4);
   });
+
+  it('reports every parallel field error on preview and keeps an unchanged card out of created', async () => {
+    await post('admin.catalog.import', {
+      dryRun: false,
+      data: [
+        {
+          slug: slug('home'),
+          title: '本系列',
+          cards: [cardRow('kept', { name: '留下' }), cardRow('base', { name: '基础' })],
+        },
+      ],
+    });
+    await post('admin.catalog.import', {
+      dryRun: false,
+      data: [
+        {
+          slug: slug('home'),
+          title: '本系列',
+          cards: [
+            cardRow('linked', {
+              parallelOf: slug('base'),
+              parallelName: '已挂',
+            }),
+          ],
+        },
+      ],
+    });
+
+    const preview = await post('admin.catalog.import', {
+      dryRun: true,
+      data: [
+        {
+          slug: slug('home'),
+          title: '本系列',
+          cards: [
+            cardRow('kept', { name: '留下' }),
+            cardRow('cross', { parallelOf: slug('base'), parallelName: '跨系列' }),
+            cardRow('chain', { parallelOf: slug('linked'), parallelName: '挂链' }),
+            cardRow('self', { parallelOf: slug('self'), parallelName: '自己' }),
+            cardRow('parent', { parallelOf: slug('base'), parallelName: '再挂' }),
+            cardRow('missing', { parallelOf: slug('no-such'), parallelName: '缺失' }),
+            cardRow('noname', { parallelOf: slug('base'), parallelName: '   ' }),
+            cardRow('zero', { printRun: 0, parallelOf: slug('base'), parallelName: '零' }),
+            cardRow('huge', { printRun: 2_147_483_648 }),
+            cardRow('fraction', { printRun: 1.5 }),
+            cardRow('long-name', { parallelOf: slug('base'), parallelName: '名'.repeat(41) }),
+          ],
+        },
+        {
+          slug: slug('away'),
+          title: '别的系列',
+          cards: [cardRow('cross')],
+        },
+      ],
+    });
+    expect(preview.status).toBe(200);
+    const codes = (name: string) => {
+      const row = rowsOf(preview.body).find(
+        (item) => isRecord(item.row) && item.row.slug === slug(name),
+      );
+      const errors = row?.errors;
+      if (!Array.isArray(errors)) return [];
+      return errors.filter(isRecord).map((error) => error.code);
+    };
+    const kept = rowsOf(preview.body).find(
+      (item) => isRecord(item.row) && item.row.slug === slug('kept'),
+    );
+    expect(kept?.status).toBe('unchanged');
+    expect(codes('cross')).toEqual(['parallel_cross_series']);
+    expect(codes('chain')).toEqual(['parallel_chain']);
+    expect(codes('self')).toEqual(['parallel_self']);
+    expect(codes('parent')).toEqual(['parallel_has_children']);
+    expect(codes('missing')).toEqual(['parallel_base_missing']);
+    expect(codes('noname')).toEqual(['parallel_name_required']);
+    expect(codes('zero')).toEqual(['parallelOf' in {} ? 'parallel_cross_series' : 'print_run_min']);
+    expect(codes('zero')).toEqual(['print_run_min']);
+    expect(codes('huge')).toEqual(['too_big']);
+    expect(codes('fraction')).toEqual(['invalid_type']);
+    expect(codes('long-name')).toEqual(['too_big']);
+    expect(await prisma.card.findUnique({ where: { slug: slug('cross') } })).toBeNull();
+
+    const failed = await post('admin.catalog.import', {
+      dryRun: false,
+      data: [
+        {
+          slug: slug('home'),
+          title: '本系列',
+          cards: [
+            cardRow('kept', { name: '留下' }),
+            cardRow('stray', { parallelOf: slug('base'), parallelName: '银折' }),
+          ],
+        },
+        {
+          slug: slug('away'),
+          title: '别的系列',
+          cards: [cardRow('stray')],
+        },
+      ],
+    });
+    expect(failed.status).toBe(400);
+    expect(failed.body.error.message).toBe('导入数据校验失败');
+    const failedRows = failed.body.error.data.adminCatalogError.rows as Array<{
+      status: string;
+      row: { slug: string | null };
+      errors: Array<{ code: string; path: string }>;
+    }>;
+    expect(failedRows.find((row) => row.row.slug === slug('kept'))?.status).toBe('unchanged');
+    expect(
+      failedRows
+        .find((row) => row.row.slug === slug('stray'))
+        ?.errors.some((error) => error.code === 'parallel_cross_series'),
+    ).toBe(true);
+    assertNoInternalText(failed.body);
+    expect(await prisma.card.findUnique({ where: { slug: slug('stray') } })).toBeNull();
+    expect((await prisma.card.findUnique({ where: { slug: slug('kept') } }))?.name).toBe('留下');
+  });
 });
