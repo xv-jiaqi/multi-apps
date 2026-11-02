@@ -4,6 +4,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import { observer } from 'mobx-react-lite';
 import { t } from '@repo/shared';
+import { ScrollRegion } from '@repo/ui-web';
 import { rehypeMentions } from '../lib/rehype-mentions';
 import { useStores } from '../stores/root-store';
 
@@ -42,13 +43,20 @@ const MarkdownPre = observer(function MarkdownPre({
   );
 });
 
-function MarkdownTable({ node: _node, ...props }: ComponentProps<'table'> & ExtraProps) {
+// Markdown tables have no visible heading, so the region falls back to
+// a11y.scrollTable (CH-220 §2-2).
+const MarkdownTable = observer(function MarkdownTable({
+  node: _node,
+  ...props
+}: ComponentProps<'table'> & ExtraProps) {
+  const { locale } = useStores();
+  const name = t(locale.locale, 'a11y.table');
   return (
-    <div className="max-w-full overflow-x-auto">
+    <ScrollRegion label={t(locale.locale, 'a11y.scrollTable', { name })} className="max-w-full">
       <table {...props} />
-    </div>
+    </ScrollRegion>
   );
-}
+});
 
 function isExternal(href: string | undefined): boolean {
   return !!href && /^https?:\/\//i.test(href);

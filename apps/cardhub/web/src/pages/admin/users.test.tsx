@@ -391,7 +391,7 @@ describe('username column sticky contract', () => {
 
   it('leaves tables without the username class unpadded', () => {
     render(
-      <AdminTable caption="审计">
+      <AdminTable caption="审计" labelledBy="admin-audit-title">
         <tbody>
           <tr>
             <td>时间</td>

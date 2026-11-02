@@ -140,6 +140,7 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <h1
+            id="admin-series-title"
             ref={titleRef}
             tabIndex={-1}
             className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
@@ -169,28 +170,32 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
           />
         )
       ) : listView === 'loading' ? (
-        <AdminTable caption={tt('admin.series.caption')} busy>
+        <AdminTable caption={tt('admin.series.caption')} busy contained>
           <AdminTableHead>
-            <AdminTh>{tt('admin.col.cover')}</AdminTh>
-            <AdminTh>{tt('admin.col.title')}</AdminTh>
-            <AdminTh>{tt('admin.col.slug')}</AdminTh>
-            <AdminTh align="right">{tt('admin.col.cards')}</AdminTh>
-            <AdminTh>{tt('admin.col.updated')}</AdminTh>
-            <AdminTh align="right">{tt('admin.col.actions')}</AdminTh>
+            <AdminTh className="whitespace-normal px-2">{tt('admin.col.cover')}</AdminTh>
+            <AdminTh className="whitespace-normal px-2">{tt('admin.col.title')}</AdminTh>
+            <AdminTh className="whitespace-normal px-2">{tt('admin.col.slug')}</AdminTh>
+            <AdminTh align="right" className="whitespace-normal px-2">
+              {tt('admin.col.cards')}
+            </AdminTh>
+            <AdminTh className="whitespace-normal px-2">{tt('admin.col.updated')}</AdminTh>
+            <AdminTh align="right" className="whitespace-normal px-2">
+              {tt('admin.col.actions')}
+            </AdminTh>
           </AdminTableHead>
           <tbody className="divide-y divide-neutral-200">
             {Array.from({ length: 5 }, (_, index) => (
               <tr key={index}>
-                <td className="px-3 py-2">
+                <td className="px-2 py-2">
                   <span
                     className={cn(
-                      'block w-16 animate-pulse motion-reduce:animate-none rounded-sm bg-neutral-200',
+                      'block w-8 animate-pulse motion-reduce:animate-none rounded-sm bg-neutral-200',
                       ART_ASPECT.series,
                     )}
                   />
                 </td>
                 {Array.from({ length: 5 }, (_, cell) => (
-                  <td key={cell} className="px-3 py-2">
+                  <td key={cell} className="px-2 py-2">
                     <span className="block h-4 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
                   </td>
                 ))}
@@ -211,7 +216,7 @@ const CatalogSeriesBody = observer(function CatalogSeriesBody() {
           </div>
         </AdminEmpty>
       ) : (
-        <AdminTable caption={tt('admin.series.caption')}>
+        <AdminTable caption={tt('admin.series.caption')} labelledBy="admin-series-title">
           <AdminTableHead>
             <AdminTh>{tt('admin.col.cover')}</AdminTh>
             <AdminTh>{tt('admin.col.title')}</AdminTh>

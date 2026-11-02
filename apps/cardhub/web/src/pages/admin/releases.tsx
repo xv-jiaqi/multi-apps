@@ -126,6 +126,7 @@ const AdminReleasesBody = observer(function AdminReleasesBody() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1
+          id="admin-releases-title"
           ref={titleRef}
           tabIndex={-1}
           className="text-3xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
@@ -174,10 +175,7 @@ const AdminReleasesBody = observer(function AdminReleasesBody() {
         <AdminEmpty>{tt('admin.releases.empty')}</AdminEmpty>
       ) : (
         <>
-          <AdminTable
-            caption={tt('admin.releases.title')}
-            regionLabel={tt('admin.releases.listLabel')}
-          >
+          <AdminTable caption={tt('admin.releases.title')} labelledBy="admin-releases-title">
             <AdminTableHead>
               <AdminTh>{tt('admin.releases.col.date')}</AdminTh>
               <AdminTh>{tt('admin.col.title')}</AdminTh>

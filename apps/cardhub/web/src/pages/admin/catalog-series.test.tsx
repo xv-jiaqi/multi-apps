@@ -306,3 +306,19 @@ describe('CatalogSeriesPage delete', () => {
     expect(screen.queryByText('SLUG_TAKEN')).not.toBeInTheDocument();
   });
 });
+
+describe('CatalogSeriesPage loading skeleton (CH-220 20-7)', () => {
+  it('renders a contained skeleton table with no region or tab stop', () => {
+    seriesState.isLoading = true;
+    const { container } = renderPage();
+    const table = screen.getByRole('table');
+    expect(table).toHaveAttribute('aria-busy', 'true');
+    expect(screen.queryByRole('region')).toBeNull();
+    expect(container.querySelector('[tabindex="0"]')).toBeNull();
+    expect(container.querySelector('.w-16')).toBeNull();
+    for (const th of table.querySelectorAll('th')) {
+      expect(th.className).toContain('whitespace-normal');
+      expect(th.className).toContain('px-2');
+    }
+  });
+});

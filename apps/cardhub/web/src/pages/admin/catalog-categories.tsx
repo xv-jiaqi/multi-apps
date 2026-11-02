@@ -104,6 +104,7 @@ const CatalogCategoriesBody = observer(function CatalogCategoriesBody() {
       <CatalogTabs />
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1
+          id="admin-categories-title"
           ref={headingRef}
           tabIndex={-1}
           className="text-2xl font-bold tracking-tight text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
@@ -136,7 +137,7 @@ const CatalogCategoriesBody = observer(function CatalogCategoriesBody() {
       ) : (query.data?.items.length ?? 0) === 0 ? (
         <AdminEmpty>{tt('admin.category.empty')}</AdminEmpty>
       ) : (
-        <AdminTable caption={tt('admin.catalog.categoriesTab')}>
+        <AdminTable caption={tt('admin.catalog.categoriesTab')} labelledBy="admin-categories-title">
           <AdminTableHead>
             <AdminTh>{tt('admin.field.name')}</AdminTh>
             <AdminTh>{tt('admin.field.slug')}</AdminTh>

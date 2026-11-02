@@ -215,7 +215,7 @@ describe('admin release list', () => {
     list.isFetching = false;
     list.items = [entry({})];
     const loaded = renderPage();
-    const region = screen.getByRole('region', { name: '发售条目列表' });
+    const region = screen.getByRole('region', { name: '发售条目' });
     expect(region.tabIndex).toBe(0);
     expect(region).toHaveClass(
       'focus-visible:outline-none',
@@ -228,7 +228,7 @@ describe('admin release list', () => {
 
     rootStore.locale.setLocale('en-US');
     renderPage();
-    const english = screen.getByRole('region', { name: 'Release entries' });
+    const english = screen.getByRole('region', { name: 'Releases' });
     expect(english.tabIndex).toBe(0);
     expect(screen.getByRole('table', { name: 'Releases' }).parentElement).toBe(english);
   });
