@@ -2,7 +2,14 @@ import { useEffect, useId, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useSearchParams } from 'react-router';
 import { t } from '@repo/shared';
-import { Button } from '@repo/ui-web';
+import {
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui-web';
 import { ReleaseItem } from '../components/release-item';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
 import { PageMeta } from '../components/page-meta';
@@ -22,6 +29,7 @@ import { shanghaiToday } from '../lib/shanghai-date';
 import { trpc } from '../lib/trpc';
 import { useStores } from '../stores/root-store';
 
+const ALL_CATEGORIES = 'all';
 const MONTH_PAGE_SIZE = 100;
 const MAX_MONTH_PAGES = 50;
 
@@ -82,16 +90,62 @@ export const CalendarPage = observer(function CalendarPage() {
   const heading = monthHeading(locale.locale, month);
   const contentRef = useRef<HTMLDivElement>(null);
   const sectionSeed = useId();
+  const categoryParam = searchParams.get('category') ?? '';
+  const categoriesQuery = trpc.categories.list.useQuery();
+  const categories = categoriesQuery.data?.items;
+  const activeCategory = categories?.find((item) => item.slug === categoryParam);
+  // §13: with a category in the URL, wait for categories.list so the full month never flashes.
+  // If categories.list fails, send the raw slug; the API returns an empty list for unknown ones.
+  const waitingForCategories = Boolean(categoryParam) && categoriesQuery.isPending;
+  const categorySlug = categories ? activeCategory?.slug : categoryParam || undefined;
+  const categoryLabel =
+    activeCategory?.name ?? (categories ? undefined : categoryParam || undefined);
 
   useEffect(() => {
     if (rawMonth === month) return;
-    setSearchParams({ month }, { replace: true });
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current);
+        nextParams.set('month', month);
+        return nextParams;
+      },
+      { replace: true },
+    );
   }, [month, rawMonth, setSearchParams]);
 
+  useEffect(() => {
+    if (!categories || !categoryParam || activeCategory) return;
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current);
+        nextParams.delete('category');
+        return nextParams;
+      },
+      { replace: true },
+    );
+  }, [activeCategory, categories, categoryParam, setSearchParams]);
+
+  const replaceCategory = (value: string) => {
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current);
+        if (value === ALL_CATEGORIES) nextParams.delete('category');
+        else nextParams.set('category', value);
+        return nextParams;
+      },
+      { replace: true },
+    );
+  };
+
   const query = trpc.releases.list.useInfiniteQuery(
-    { from: range?.from ?? month, to: range?.to ?? month, limit: MONTH_PAGE_SIZE },
     {
-      enabled: range !== null,
+      from: range?.from ?? month,
+      to: range?.to ?? month,
+      limit: MONTH_PAGE_SIZE,
+      ...(categorySlug ? { categorySlug } : {}),
+    },
+    {
+      enabled: range !== null && !waitingForCategories,
       getNextPageParam: (last) => last.nextCursor ?? undefined,
     },
   );
@@ -99,11 +153,13 @@ export const CalendarPage = observer(function CalendarPage() {
   const capped = pageCount >= MAX_MONTH_PAGES && Boolean(query.hasNextPage);
   const base = queryFallback(query);
   const failed = base === 'error' || query.isFetchNextPageError || capped;
-  const view: QueryView = failed
-    ? 'error'
-    : base === 'loading' || query.isFetchingNextPage || Boolean(query.hasNextPage)
-      ? 'loading'
-      : 'ready';
+  const view: QueryView = waitingForCategories
+    ? 'loading'
+    : failed
+      ? 'error'
+      : base === 'loading' || query.isFetchingNextPage || Boolean(query.hasNextPage)
+        ? 'loading'
+        : 'ready';
   useFocusOnRecovery(view, contentRef);
 
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
@@ -115,14 +171,26 @@ export const CalendarPage = observer(function CalendarPage() {
   const items = view === 'ready' ? (query.data?.pages.flatMap((page) => page.items) ?? []) : [];
   const grouped = groupCalendarReleases(items, locale.locale);
   const status =
-    view === 'ready' ? tt('calendar.monthStatus', { month: heading, count: items.length }) : '';
+    view !== 'ready'
+      ? ''
+      : categoryLabel
+        ? tt('calendar.monthStatusCategory', {
+            month: heading,
+            category: categoryLabel,
+            count: items.length,
+          })
+        : tt('calendar.monthStatus', { month: heading, count: items.length });
   const onThisMonth = month === today.slice(0, 7);
   const previous = shiftCalendarMonth(month, -1);
   const next = shiftCalendarMonth(month, 1);
 
   const openMonth = (target: string | null) => {
     if (!target || target === month) return;
-    setSearchParams({ month: target });
+    setSearchParams((current) => {
+      const nextParams = new URLSearchParams(current);
+      nextParams.set('month', target);
+      return nextParams;
+    });
   };
 
   return (
@@ -180,6 +248,30 @@ export const CalendarPage = observer(function CalendarPage() {
             </Button>
           </div>
         </nav>
+        <div className="w-full sm:w-48">
+          <label htmlFor="calendar-category" className="text-sm font-medium text-neutral-800">
+            {tt('calendar.filter.category')}
+          </label>
+          <Select
+            value={activeCategory ? activeCategory.slug : ALL_CATEGORIES}
+            onValueChange={replaceCategory}
+            disabled={!categoriesQuery.isSuccess}
+          >
+            <SelectTrigger id="calendar-category" size="sm" className="w-full scroll-mt-20">
+              <span className="min-w-0 truncate">
+                <SelectValue />
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_CATEGORIES}>{tt('calendar.filter.all')}</SelectItem>
+              {(categories ?? []).map((category) => (
+                <SelectItem key={category.slug} value={category.slug}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <p className="sr-only" role="status">
           {status}
         </p>
@@ -201,8 +293,23 @@ export const CalendarPage = observer(function CalendarPage() {
               retryClassName={dataErrorRetryClassName}
             />
           ) : null}
-          {view === 'ready' && items.length === 0 ? (
+          {view === 'ready' && items.length === 0 && !categorySlug ? (
             <p className="text-neutral-600">{tt('calendar.empty')}</p>
+          ) : null}
+          {view === 'ready' && items.length === 0 && categorySlug ? (
+            <div className="space-y-2">
+              <p className="text-neutral-600">
+                {tt('calendar.emptyCategory', { category: categoryLabel ?? categorySlug })}
+              </p>
+              <Button
+                type="button"
+                variant="link"
+                className="px-0"
+                onClick={() => replaceCategory(ALL_CATEGORIES)}
+              >
+                {tt('calendar.showAllCategories')}
+              </Button>
+            </div>
           ) : null}
           {view === 'ready' && items.length > 0 ? (
             <div className="space-y-8">
