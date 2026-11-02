@@ -345,7 +345,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
               ]}
             />
           ) : null}
-          <AdminTable caption={tt('admin.import.caption')}>
+          <AdminTable caption={tt('admin.import.caption')} regionLabel={tt('admin.import.caption')}>
             <AdminTableHead>
               <AdminTh>{tt('admin.import.colKind')}</AdminTh>
               <AdminTh>{tt('admin.col.slug')}</AdminTh>
