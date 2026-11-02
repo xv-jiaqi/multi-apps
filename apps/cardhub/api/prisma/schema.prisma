@@ -144,6 +144,7 @@ model Card {
   // Required by the application when parallelOfId is set. At most 40
   // characters after trim. Deleting the base keeps it. An admin update that
   // clears a live link, or moves the base to another series, clears it.
+  // A base card with no stored name cannot gain one.
   parallelName String?
   // Null means unnumbered. A value is the print-run total, an integer >= 1.
   // There is no per-copy serial. Old servers ignore the column.

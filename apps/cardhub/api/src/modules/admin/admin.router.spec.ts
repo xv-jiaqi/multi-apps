@@ -43,6 +43,7 @@ function makeRouter() {
       delete: cardDelete,
     },
     auditLog: { create: jest.fn().mockResolvedValue({}) },
+    $queryRaw: jest.fn().mockResolvedValue([]),
     $transaction: transaction,
   } as unknown as PrismaService;
 
@@ -526,9 +527,11 @@ describe('AdminRouter.cards.create/update/delete', () => {
   });
 
   it('updates a card and can move it to another series', async () => {
-    const { caller, userFindUnique, seriesFindUnique, cardFindUnique, cardUpdate } = makeRouter();
+    const { caller, userFindUnique, seriesFindUnique, cardFindUnique, cardFindMany, cardUpdate } =
+      makeRouter();
     userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
     seriesFindUnique.mockResolvedValueOnce({ id: 's2' });
+    cardFindMany.mockResolvedValue([]);
     cardFindUnique.mockResolvedValue({
       id: 'c1',
       slug: 'existing-card',
