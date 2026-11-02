@@ -411,3 +411,33 @@ describe('series detail meta description', () => {
     expect(content).not.toContain('**');
   });
 });
+
+describe('series comments frame (CH-206 v1.4 §9)', () => {
+  it('draws the comments card in plain white without backdrop blur', () => {
+    seriesQuery.data = series;
+    seriesQuery.isError = false;
+    seriesQuery.error = null;
+    seriesQuery.dataUpdatedAt = 1;
+    renderSeries();
+    const heading = screen.getByRole('heading', { name: '系列评论' });
+    const card = heading.closest('[class*="border-neutral-200"]');
+    expect(card).toHaveClass('bg-white', 'border-neutral-200');
+    expect(card?.className).not.toMatch(/backdrop-blur|bg-white\//);
+  });
+
+  it('paints the loading skeleton tiles plain white', () => {
+    seriesQuery.isLoading = true;
+    seriesQuery.isPending = true;
+    seriesQuery.isFetching = true;
+    seriesQuery.isError = false;
+    seriesQuery.error = null;
+    seriesQuery.errorUpdateCount = 0;
+    renderSeries();
+    const tiles = [...document.querySelectorAll('.h-64.animate-pulse')];
+    expect(tiles).toHaveLength(4);
+    for (const tile of tiles) {
+      expect(tile).toHaveClass('bg-white');
+      expect(tile.className).not.toMatch(/bg-white\/|backdrop-blur/);
+    }
+  });
+});

@@ -131,7 +131,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
             {Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={idx}
-                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white"
               />
             ))}
           </div>
@@ -251,7 +251,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           fallbackCardCount={baseCardCount(series.cards)}
         />
 
-        <Card className="border-white/60 bg-white/70 backdrop-blur">
+        <Card className="border-neutral-200 bg-white">
           <CardHeader>
             <h2
               id="comment-section-title"

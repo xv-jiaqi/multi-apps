@@ -66,7 +66,7 @@ export const NotificationCacheReset = observer(function NotificationCacheReset()
 });
 
 const bellClassName =
-  'relative inline-flex items-center justify-center rounded-md p-2 text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+  'relative inline-flex size-11 shrink-0 items-center justify-center rounded-md text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
 export function NotificationBell({ className }: { className?: string }) {
   const { locale } = useStores();
