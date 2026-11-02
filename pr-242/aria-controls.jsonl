@@ -1,0 +1,2 @@
+/calendar initial {'expanded': 'false', 'controls': None, 'targetExists': None} | open {'expanded': 'true', 'controls': 'radix-_r_5_', 'targetExists': True, 'listboxId': 'radix-_r_5_'} | afterEsc {'expanded': 'false', 'controls': None, 'targetExists': None}
+/series initial {'expanded': 'false', 'controls': None, 'targetExists': None} | open {'expanded': 'true', 'controls': 'radix-_r_4_', 'targetExists': True, 'listboxId': 'radix-_r_4_'} | afterEsc {'expanded': 'false', 'controls': None, 'targetExists': None}
