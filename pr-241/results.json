@@ -1,0 +1,470 @@
+[
+ {
+  "w": 1440,
+  "lang": "zh",
+  "state": "all",
+  "url": "?month=2026-11",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "全部品类"
+  },
+  "status": "2026年11月，共 4 条",
+  "scrollW": 1440,
+  "vw": 1440,
+  "tab": [
+   "‹上个月",
+   "›下个月",
+   "本月",
+   "calendar-category"
+  ],
+  "file": "all_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "zh",
+  "state": "category",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "2026年11月 · 宝可梦集换式卡牌，共 2 条",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "category_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "zh",
+  "state": "empty",
+  "url": "?month=2026-11&category=long",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "超长品类名称用来检查截断效果的收藏卡牌"
+  },
+  "status": "2026年11月 · 超长品类名称用来检查截断效果的收藏卡牌，共 0 条",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "empty_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "zh",
+  "state": "loading",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "loading_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "zh",
+  "state": "open",
+  "url": "?month=2026-11",
+  "activeInListbox": true,
+  "options": [
+   "全部品类",
+   "宝可梦集换式卡牌",
+   "构筑对战",
+   "超长品类名称用来检查截断效果的收藏卡牌"
+  ],
+  "axe": [
+   "aria-hidden-focus x1"
+  ],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "全部品类"
+  },
+  "status": "2026年11月，共 4 条",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "open_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "zh",
+  "state": "error",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "error_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "state": "all",
+  "url": "?month=2026-11",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "All categories"
+  },
+  "status": "November 2026, 4 releases",
+  "scrollW": 1440,
+  "vw": 1440,
+  "tab": [
+   "‹Previous month",
+   "›Next month",
+   "This month",
+   "calendar-category"
+  ],
+  "file": "all_1440_en.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "state": "category",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "November 2026 · 宝可梦集换式卡牌, 2 releases",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "category_1440_en.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "state": "empty",
+  "url": "?month=2026-11&category=long",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "超长品类名称用来检查截断效果的收藏卡牌"
+  },
+  "status": "November 2026 · 超长品类名称用来检查截断效果的收藏卡牌, 0 releases",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "empty_1440_en.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "state": "loading",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "loading_1440_en.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "state": "open",
+  "url": "?month=2026-11",
+  "activeInListbox": true,
+  "options": [
+   "All categories",
+   "宝可梦集换式卡牌",
+   "构筑对战",
+   "超长品类名称用来检查截断效果的收藏卡牌"
+  ],
+  "axe": [
+   "aria-hidden-focus x1"
+  ],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "All categories"
+  },
+  "status": "November 2026, 4 releases",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "open_1440_en.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "state": "error",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 192,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 1440,
+  "vw": 1440,
+  "file": "error_1440_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "state": "all",
+  "url": "?month=2026-11",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "全部品类"
+  },
+  "status": "2026年11月，共 4 条",
+  "scrollW": 375,
+  "vw": 375,
+  "tab": [
+   "‹上个月",
+   "›下个月",
+   "本月",
+   "calendar-category"
+  ],
+  "file": "all_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "state": "category",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "2026年11月 · 宝可梦集换式卡牌，共 2 条",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "category_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "state": "empty",
+  "url": "?month=2026-11&category=long",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "超长品类名称用来检查截断效果的收藏卡牌"
+  },
+  "status": "2026年11月 · 超长品类名称用来检查截断效果的收藏卡牌，共 0 条",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "empty_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "state": "loading",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "loading_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "state": "open",
+  "url": "?month=2026-11",
+  "activeInListbox": true,
+  "options": [
+   "全部品类",
+   "宝可梦集换式卡牌",
+   "构筑对战",
+   "超长品类名称用来检查截断效果的收藏卡牌"
+  ],
+  "axe": [
+   "aria-hidden-focus x1"
+  ],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "全部品类"
+  },
+  "status": "2026年11月，共 4 条",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "open_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "state": "error",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "error_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "state": "all",
+  "url": "?month=2026-11",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "All categories"
+  },
+  "status": "November 2026, 4 releases",
+  "scrollW": 375,
+  "vw": 375,
+  "tab": [
+   "‹Previous month",
+   "›Next month",
+   "This month",
+   "calendar-category"
+  ],
+  "file": "all_375_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "state": "category",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "November 2026 · 宝可梦集换式卡牌, 2 releases",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "category_375_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "state": "empty",
+  "url": "?month=2026-11&category=long",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "超长品类名称用来检查截断效果的收藏卡牌"
+  },
+  "status": "November 2026 · 超长品类名称用来检查截断效果的收藏卡牌, 0 releases",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "empty_375_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "state": "loading",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "loading_375_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "state": "open",
+  "url": "?month=2026-11",
+  "activeInListbox": true,
+  "options": [
+   "All categories",
+   "宝可梦集换式卡牌",
+   "构筑对战",
+   "超长品类名称用来检查截断效果的收藏卡牌"
+  ],
+  "axe": [
+   "aria-hidden-focus x1"
+  ],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "All categories"
+  },
+  "status": "November 2026, 4 releases",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "open_375_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "state": "error",
+  "url": "?month=2026-11&category=pokemon",
+  "axe": [],
+  "trigger": {
+   "w": 343,
+   "h": 32,
+   "disabled": false,
+   "text": "宝可梦集换式卡牌"
+  },
+  "status": "",
+  "scrollW": 375,
+  "vw": 375,
+  "file": "error_375_en.png"
+ }
+]
