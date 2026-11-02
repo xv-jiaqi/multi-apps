@@ -7,6 +7,14 @@ import { CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
 import { rootStore } from '../../stores/root-store';
 import type { ImportRowResult } from '../../components/admin/catalog-utils';
 
+function parseErrorText(): HTMLElement {
+  const node = document.getElementById('import-json-error');
+  if (!node) throw new Error('missing #import-json-error');
+  // §16/§17-3：解析错误不是 alert，只靠 aria-describedby 随焦点读。
+  expect(node).not.toHaveAttribute('role');
+  return node;
+}
+
 const calls: Array<{ data: unknown; dryRun: boolean }> = [];
 const importImpl: {
   current: (input: { data: unknown; dryRun: boolean }) => Promise<unknown>;
@@ -80,7 +88,7 @@ describe('catalog import', () => {
     await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
     await user.paste('[\n  {\n    "slug":\n  }\n]');
     await user.click(screen.getByRole('button', { name: '预览' }));
-    const alert = screen.getByRole('alert');
+    const alert = parseErrorText();
     expect(alert).toHaveTextContent('第 4 行附近的 JSON 格式有误');
     expect(alert).not.toHaveTextContent('Expected');
     expect(alert).not.toHaveTextContent('Unexpected');
@@ -97,7 +105,7 @@ describe('catalog import', () => {
     await user.click(screen.getByRole('textbox', { name: 'JSON' }));
     await user.paste('[\n  {\n    "slug":\n  }\n]');
     await user.click(screen.getByRole('button', { name: 'Preview' }));
-    const alert = screen.getByRole('alert');
+    const alert = parseErrorText();
     expect(alert).toHaveTextContent('The JSON near line 4 is not valid.');
     expect(alert).not.toHaveTextContent('Expected');
     expect(alert).not.toHaveTextContent('Unexpected');
@@ -360,7 +368,7 @@ describe('catalog import', () => {
     await user.click(textbox);
     await user.paste(JSON.stringify([{ slug: 's', cards }]));
     await user.click(screen.getByRole('button', { name: '预览' }));
-    expect(screen.getByRole('alert')).toHaveTextContent(
+    expect(parseErrorText()).toHaveTextContent(
       `一次最多导入 ${CATALOG_IMPORT_MAX_ROWS} 行，当前 ${CATALOG_IMPORT_MAX_ROWS + 1} 行`,
     );
     expect(calls).toHaveLength(0);
@@ -369,7 +377,7 @@ describe('catalog import', () => {
     await user.click(textbox);
     await user.paste(JSON.stringify([{ slug: 's', blob: 'x'.repeat(1024 * 1024) }]));
     await user.click(screen.getByRole('button', { name: '预览' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('一次最多导入 1MB');
+    expect(parseErrorText()).toHaveTextContent('一次最多导入 1MB');
     expect(calls).toHaveLength(0);
   });
 
@@ -476,7 +484,7 @@ describe('catalog import focus and error wiring (CH-213 §17)', () => {
 
   it('marks the textarea invalid, links the parse error, focuses it, and clears both on edit', async () => {
     const { user, box } = await previewWith('{');
-    const alert = screen.getByRole('alert');
+    const alert = parseErrorText();
     expect(box).toHaveAttribute('aria-invalid', 'true');
     expect(box).toHaveAccessibleDescription(alert.textContent ?? '');
     await waitFor(() => expect(box).toHaveFocus());
@@ -521,5 +529,57 @@ describe('catalog import focus and error wiring (CH-213 §17)', () => {
     await user.type(box, ' ');
     await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(box).toHaveFocus();
+  });
+  it('keeps focus in the textarea when the user goes back to typing while the preview is pending', async () => {
+    let resolve: (rows: ImportRowResult[]) => void = () => {};
+    importImpl.current = () =>
+      new Promise((done) => {
+        resolve = done;
+      });
+    const { user, box } = await previewWith('[]');
+    await user.click(box);
+    await user.type(box, ' ');
+    expect(box).toHaveFocus();
+    resolve([row({ status: 'created' }, 1)]);
+    await screen.findByRole('heading', { level: 2, name: '预览结果' });
+    await new Promise((done) => requestAnimationFrame(done));
+    await new Promise((done) => requestAnimationFrame(done));
+    expect(box).toHaveFocus();
+  });
+
+  it('renders an empty status summary before any preview and uses no alert for parse errors', async () => {
+    const first = renderPage();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    first.unmount();
+    const { box } = await previewWith('{');
+    await waitFor(() => expect(box).toHaveFocus());
+    expect(parseErrorText()).toHaveTextContent('JSON');
+    expect(screen.queryByRole('alert')).toBeNull();
+    // 焦点已移到输入框，describedby 会读，摘要不再重复。
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
+  it('does not steal focus the user moved elsewhere and announces the parse error once via the summary', async () => {
+    let reject: (error: unknown) => void = () => {};
+    importImpl.current = () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      });
+    const { user } = await previewWith('[]');
+    const file = screen.getByRole('button', { name: /文件/ });
+    file.focus();
+    reject({
+      message: 'x',
+      data: { code: 'BAD_REQUEST', adminCatalogError: { code: 'IMPORT_TOO_MANY_ROWS' } },
+    });
+    await waitFor(() => expect(document.getElementById('import-json-error')).not.toBeNull());
+    await new Promise((done) => requestAnimationFrame(done));
+    await new Promise((done) => requestAnimationFrame(done));
+    expect(file).toHaveFocus();
+    const message = parseErrorText().textContent ?? '';
+    expect(message).not.toBe('');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(message));
+    expect(screen.queryByRole('alert')).toBeNull();
+    void user;
   });
 });
