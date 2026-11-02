@@ -1,0 +1,1289 @@
+[
+ {
+  "who": "anon",
+  "w": 375,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 343,
+  "remaining": 137.4,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "打开导航菜单",
+    "w": 36,
+    "h": 36
+   }
+  ],
+  "visible": [
+   "EN，切换到英文",
+   "打开导航菜单"
+  ],
+  "scrollW": 375,
+  "vw": 375,
+  "nav_desktop": false,
+  "axe": [],
+  "scrollW_after": 375,
+  "file": "before_anon_375_zh_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 375,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 343,
+  "remaining": 141.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Open navigation menu",
+    "w": 36,
+    "h": 36
+   }
+  ],
+  "visible": [
+   "中, Switch to Chinese",
+   "Open navigation menu"
+  ],
+  "scrollW": 375,
+  "vw": 375,
+  "nav_desktop": false,
+  "axe": [],
+  "scrollW_after": 375,
+  "file": "before_anon_375_en_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 768,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 720,
+  "remaining": 54.4,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "搜索",
+   "论坛",
+   "交易",
+   "EN，切换到英文",
+   "登录",
+   "注册"
+  ],
+  "scrollW": 768,
+  "vw": 768,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 768,
+  "file": "before_anon_768_zh_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 768,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 720,
+  "remaining": -148.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Search",
+   "Forum",
+   "Trade",
+   "中, Switch to Chinese",
+   "Sign in",
+   "Sign up"
+  ],
+  "scrollW": 800,
+  "vw": 768,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 800,
+  "file": "before_anon_768_en_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 1024,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 976,
+  "remaining": 118.4,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "全站搜索",
+   "EN，切换到英文",
+   "登录",
+   "注册"
+  ],
+  "scrollW": 1024,
+  "vw": 1024,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1024,
+  "file": "before_anon_1024_zh_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 1024,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 976,
+  "remaining": -67.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Sign in",
+   "Sign up"
+  ],
+  "scrollW": 1024,
+  "vw": 1024,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1024,
+  "file": "before_anon_1024_en_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 1280,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": 182.4,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "全站搜索",
+   "EN，切换到英文",
+   "登录",
+   "注册"
+  ],
+  "scrollW": 1280,
+  "vw": 1280,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1280,
+  "file": "before_anon_1280_zh_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 1280,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -3.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Sign in",
+   "Sign up"
+  ],
+  "scrollW": 1280,
+  "vw": 1280,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1280,
+  "file": "before_anon_1280_en_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 1440,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": 182.4,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "全站搜索",
+   "EN，切换到英文",
+   "登录",
+   "注册"
+  ],
+  "scrollW": 1440,
+  "vw": 1440,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1440,
+  "file": "before_anon_1440_zh_closed.png"
+ },
+ {
+  "who": "anon",
+  "w": 1440,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -3.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Sign in",
+   "Sign up"
+  ],
+  "scrollW": 1440,
+  "vw": 1440,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1440,
+  "file": "before_anon_1440_en_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 375,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 343,
+  "remaining": 93.4,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "打开导航菜单",
+    "w": 36,
+    "h": 36
+   }
+  ],
+  "visible": [
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "打开导航菜单"
+  ],
+  "scrollW": 375,
+  "vw": 375,
+  "nav_desktop": false,
+  "axe": [],
+  "scrollW_after": 375,
+  "file": "before_user_375_zh_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 375,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 343,
+  "remaining": 97.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "Open navigation menu",
+    "w": 36,
+    "h": 36
+   }
+  ],
+  "visible": [
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "Open navigation menu"
+  ],
+  "scrollW": 375,
+  "vw": 375,
+  "nav_desktop": false,
+  "axe": [],
+  "scrollW_after": 375,
+  "file": "before_user_375_en_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 768,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 720,
+  "remaining": -62.5,
+  "wrapped": [
+   "退出登录"
+  ],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader 的个人中心",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "搜索",
+   "论坛",
+   "交易",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_reader 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 768,
+  "vw": 768,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 768,
+  "file": "before_user_768_zh_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 768,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 720,
+  "remaining": -225.7,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader, my account",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Search",
+   "Forum",
+   "Trade",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_reader, my account",
+   "Sign out"
+  ],
+  "scrollW": 892,
+  "vw": 768,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 892,
+  "file": "before_user_768_en_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 1024,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 976,
+  "remaining": 1.5,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader 的个人中心",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "全站搜索",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_reader 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 1024,
+  "vw": 1024,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1024,
+  "file": "before_user_1024_zh_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 1024,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 976,
+  "remaining": -144.7,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader, my account",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_reader, my account",
+   "Sign out"
+  ],
+  "scrollW": 1024,
+  "vw": 1024,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1024,
+  "file": "before_user_1024_en_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 1280,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": 65.5,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader 的个人中心",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "全站搜索",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_reader 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 1280,
+  "vw": 1280,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1280,
+  "file": "before_user_1280_zh_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 1280,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -80.7,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader, my account",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_reader, my account",
+   "Sign out"
+  ],
+  "scrollW": 1280,
+  "vw": 1280,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1280,
+  "file": "before_user_1280_en_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 1440,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": 65.5,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader 的个人中心",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "全站搜索",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_reader 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 1440,
+  "vw": 1440,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1440,
+  "file": "before_user_1440_zh_closed.png"
+ },
+ {
+  "who": "user",
+  "w": 1440,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -80.7,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_reader, my account",
+    "w": 103,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_reader, my account",
+   "Sign out"
+  ],
+  "scrollW": 1440,
+  "vw": 1440,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1440,
+  "file": "before_user_1440_en_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 375,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 343,
+  "remaining": 93.4,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "打开导航菜单",
+    "w": 36,
+    "h": 36
+   }
+  ],
+  "visible": [
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "打开导航菜单"
+  ],
+  "scrollW": 375,
+  "vw": 375,
+  "nav_desktop": false,
+  "axe": [],
+  "scrollW_after": 375,
+  "file": "before_admin_375_zh_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 375,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 343,
+  "remaining": 97.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "Open navigation menu",
+    "w": 36,
+    "h": 36
+   }
+  ],
+  "visible": [
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "Open navigation menu"
+  ],
+  "scrollW": 375,
+  "vw": 375,
+  "nav_desktop": false,
+  "axe": [],
+  "scrollW_after": 375,
+  "file": "before_admin_375_en_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 768,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 720,
+  "remaining": -164.3,
+  "wrapped": [
+   "发售日历",
+   "退出登录"
+  ],
+  "iconTargets": [
+   {
+    "name": "管理",
+    "w": 50,
+    "h": 48
+   },
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long 的个人中心",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "搜索",
+   "论坛",
+   "交易",
+   "管理",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_admin_long 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 768,
+  "vw": 768,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 768,
+  "file": "before_admin_768_zh_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 768,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 720,
+  "remaining": -343.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "Admin",
+    "w": 80,
+    "h": 28
+   },
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long, my account",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Search",
+   "Forum",
+   "Trade",
+   "Admin",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_admin_long, my accou",
+   "Sign out"
+  ],
+  "scrollW": 1010,
+  "vw": 768,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1010,
+  "file": "before_admin_768_en_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 1024,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 976,
+  "remaining": -100.3,
+  "wrapped": [
+   "退出登录"
+  ],
+  "iconTargets": [
+   {
+    "name": "管理",
+    "w": 54,
+    "h": 48
+   },
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long 的个人中心",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "管理",
+   "全站搜索",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_admin_long 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 1024,
+  "vw": 1024,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1024,
+  "file": "before_admin_1024_zh_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 1024,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 976,
+  "remaining": -262.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "Admin",
+    "w": 80,
+    "h": 28
+   },
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long, my account",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Admin",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_admin_long, my accou",
+   "Sign out"
+  ],
+  "scrollW": 1035,
+  "vw": 1024,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1035,
+  "file": "before_admin_1024_en_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 1280,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -36.3,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "管理",
+    "w": 61,
+    "h": 48
+   },
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long 的个人中心",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "管理",
+   "全站搜索",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_admin_long 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 1280,
+  "vw": 1280,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1280,
+  "file": "before_admin_1280_zh_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 1280,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -198.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "Admin",
+    "w": 80,
+    "h": 28
+   },
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long, my account",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Admin",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_admin_long, my accou",
+   "Sign out"
+  ],
+  "scrollW": 1280,
+  "vw": 1280,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1280,
+  "file": "before_admin_1280_en_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 1440,
+  "lang": "zh",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -36.3,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "管理",
+    "w": 61,
+    "h": 48
+   },
+   {
+    "name": "EN，切换到英文",
+    "w": 42,
+    "h": 26
+   },
+   {
+    "name": "通知，3 条未读",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long 的个人中心",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "首页",
+   "分类",
+   "系列",
+   "发售日历",
+   "论坛",
+   "交易",
+   "管理",
+   "全站搜索",
+   "EN，切换到英文",
+   "通知，3 条未读",
+   "@qa_admin_long 的个人中心",
+   "退出登录"
+  ],
+  "scrollW": 1440,
+  "vw": 1440,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1440,
+  "file": "before_admin_1440_zh_closed.png"
+ },
+ {
+  "who": "admin",
+  "w": 1440,
+  "lang": "en",
+  "menu": "closed",
+  "header_h": 64,
+  "content_w": 1104,
+  "remaining": -198.2,
+  "wrapped": [],
+  "iconTargets": [
+   {
+    "name": "Admin",
+    "w": 80,
+    "h": 28
+   },
+   {
+    "name": "中, Switch to Chinese",
+    "w": 38,
+    "h": 26
+   },
+   {
+    "name": "Notifications, 3 unread",
+    "w": 36,
+    "h": 36
+   },
+   {
+    "name": "@qa_admin_long, my account",
+    "w": 137,
+    "h": 28
+   }
+  ],
+  "visible": [
+   "Home",
+   "Categories",
+   "Series",
+   "Release calendar",
+   "Forum",
+   "Trade",
+   "Admin",
+   "Search Cardhub",
+   "中, Switch to Chinese",
+   "Notifications, 3 unread",
+   "@qa_admin_long, my accou",
+   "Sign out"
+  ],
+  "scrollW": 1440,
+  "vw": 1440,
+  "nav_desktop": true,
+  "axe": [],
+  "scrollW_after": 1440,
+  "file": "before_admin_1440_en_closed.png"
+ }
+]

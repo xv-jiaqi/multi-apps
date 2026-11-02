@@ -1,0 +1,86 @@
+[
+ {
+  "w": 1440,
+  "lang": "zh",
+  "frame": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.922 0 0)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-neutral-200 bg-white"
+  },
+  "shot": "after_series-frame_1440_zh.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "after_series-skeleton_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "frame": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.922 0 0)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-neutral-200 bg-white"
+  },
+  "shot": "after_series-frame_1440_en.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "after_series-skeleton_1440_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "frame": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.922 0 0)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-neutral-200 bg-white"
+  },
+  "shot": "after_series-frame_375_zh.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "after_series-skeleton_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "frame": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.922 0 0)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-neutral-200 bg-white"
+  },
+  "shot": "after_series-frame_375_en.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "rgb(255, 255, 255)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "after_series-skeleton_375_en.png"
+ }
+]

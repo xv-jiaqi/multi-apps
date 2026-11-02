@@ -1,0 +1,86 @@
+[
+ {
+  "w": 1440,
+  "lang": "zh",
+  "frame": {
+   "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.7)",
+   "blur": "blur(8px)",
+   "border": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-white/60 bg-white/70 backdrop-blur"
+  },
+  "shot": "before_series-frame_1440_zh.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "oklab(0.999994 0.0000455678 0.0000200868 / 0.5)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "before_series-skeleton_1440_zh.png"
+ },
+ {
+  "w": 1440,
+  "lang": "en",
+  "frame": {
+   "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.7)",
+   "blur": "blur(8px)",
+   "border": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-white/60 bg-white/70 backdrop-blur"
+  },
+  "shot": "before_series-frame_1440_en.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "oklab(0.999994 0.0000455678 0.0000200868 / 0.5)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "before_series-skeleton_1440_en.png"
+ },
+ {
+  "w": 375,
+  "lang": "zh",
+  "frame": {
+   "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.7)",
+   "blur": "blur(8px)",
+   "border": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-white/60 bg-white/70 backdrop-blur"
+  },
+  "shot": "before_series-frame_375_zh.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "oklab(0.999994 0.0000455678 0.0000200868 / 0.5)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "before_series-skeleton_375_zh.png"
+ },
+ {
+  "w": 375,
+  "lang": "en",
+  "frame": {
+   "bg": "oklab(0.999994 0.0000455677 0.0000200868 / 0.7)",
+   "blur": "blur(8px)",
+   "border": "oklab(0.999994 0.0000455677 0.0000200868 / 0.6)",
+   "cls": "rounded-lg border text-neutral-900 shadow-sm border-white/60 bg-white/70 backdrop-blur"
+  },
+  "shot": "before_series-frame_375_en.png",
+  "axe": [],
+  "skeleton_count": 4,
+  "skeleton": {
+   "bg": "oklab(0.999994 0.0000455678 0.0000200868 / 0.5)",
+   "blur": "none",
+   "border": "oklch(0.205 0 0)",
+   "cls": "h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+  },
+  "skeleton_axe": [],
+  "skeleton_shot": "before_series-skeleton_375_en.png"
+ }
+]
