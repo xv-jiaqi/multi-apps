@@ -30,6 +30,9 @@ const createImpl: { current: (input: unknown) => Promise<unknown> } = {
   current: async (input) => input,
 };
 const invalidateSeriesBySlug = vi.hoisted(() => vi.fn());
+const updateImpl = vi.hoisted(() => ({
+  current: async (input: unknown) => input,
+}));
 const fetchBasePage = vi.hoisted(() =>
   vi.fn(async (_input: unknown) => ({ items: [] as Array<Record<string, unknown>> })),
 );
@@ -76,7 +79,10 @@ vi.mock('../../lib/trpc', () => ({
           }),
         },
         update: {
-          useMutation: () => ({ isPending: false, mutateAsync: async (input: unknown) => input }),
+          useMutation: () => ({
+            isPending: false,
+            mutateAsync: (input: unknown) => updateImpl.current(input),
+          }),
         },
       },
       subsets: {
@@ -166,6 +172,7 @@ beforeEach(() => {
     },
   ];
   createImpl.current = async (input) => input;
+  updateImpl.current = async (input) => input;
   invalidateSeriesBySlug.mockClear();
   fetchBasePage.mockReset();
   fetchBasePage.mockResolvedValue({ items: [] });
@@ -792,5 +799,28 @@ describe('card form unsaved changes', () => {
       expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn');
     });
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the stored parallel name when saving an orphan', async () => {
+    const user = userEvent.setup();
+    const calls: Array<Record<string, unknown>> = [];
+    updateImpl.current = async (input) => {
+      calls.push(input as Record<string, unknown>);
+      return input;
+    };
+    cardState.data = {
+      ...savedCard,
+      parallelOfSlug: null,
+      parallelName: '孤儿X',
+      printRun: 7,
+    };
+    const { router } = renderCard('/admin/catalog/cards/aurora-knight/edit');
+    await user.click(screen.getByRole('button', { name: '保存修改' }));
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin/catalog/series/celestial-dawn');
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.parallelOfSlug).toBe('');
+    expect(calls[0]?.parallelName).toBe('孤儿X');
   });
 });

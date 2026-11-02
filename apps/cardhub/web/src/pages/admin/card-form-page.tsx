@@ -431,7 +431,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       subsetSlug,
       cardNumber: cardNumber.trim(),
       parallelOfSlug,
-      parallelName: parallelOfSlug ? parallelName.trim() : '',
+      parallelName: parallelOfSlug ? parallelName.trim() : (card?.parallelName ?? undefined),
       printRun: printRun.value,
     };
     try {
