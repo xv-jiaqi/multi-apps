@@ -39,26 +39,42 @@ SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 export type SelectContentProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>;
 
 // Radix Select's hideOthers() sets aria-hidden on the portal's siblings (#root) but
-// leaves their links and buttons focusable (axe aria-hidden-focus). Make those
-// siblings inert while the list is open so they leave the tab order too. Like
-// hideOthers, skip [aria-live] regions so toasts and status updates still announce,
-// and never touch elements that were already inert.
+// leaves their links and buttons focusable (axe aria-hidden-focus). Make everything
+// outside the list inert while it is open so it leaves the tab order too.
+// Like hideOthers, walk down from body and keep two kinds of ancestor chains: the
+// portal's and each live region's (aria-live other than "off"). Kept nodes are not
+// made inert, but every other sibling at each level of those chains is. Elements that
+// were already inert are never touched, and SCRIPT / STYLE are skipped.
 // Radix moves focus back to the trigger (inside #root) in onCloseAutoFocus, which runs
 // before this effect cleans up, so the returned restore() must run there first.
+const LIVE_REGION = '[aria-live]:not([aria-live="off" i])';
+
 function useInertOutside(node: HTMLElement | null) {
   const restoreRef = React.useRef<(() => void) | null>(null);
   React.useLayoutEffect(() => {
     if (!node) return;
-    let top: HTMLElement = node;
-    while (top.parentElement && top.parentElement !== document.body) top = top.parentElement;
-    const changed: HTMLElement[] = [];
-    for (const el of Array.from(document.body.children)) {
-      if (el === top || !(el instanceof HTMLElement) || el.hasAttribute('inert')) continue;
-      if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
-      if (el.matches('[aria-live]') || el.querySelector('[aria-live]')) continue;
-      el.setAttribute('inert', '');
-      changed.push(el);
+    const keep = new Set<Element>();
+    const stop = new Set<Element>([node, ...document.body.querySelectorAll(LIVE_REGION)]);
+    for (const target of stop) {
+      for (let el: Element | null = target; el && el !== document.body; el = el.parentElement) {
+        keep.add(el);
+      }
     }
+    const changed: HTMLElement[] = [];
+    const walk = (parent: Element) => {
+      for (const el of Array.from(parent.children)) {
+        if (stop.has(el)) continue;
+        if (keep.has(el)) {
+          walk(el);
+          continue;
+        }
+        if (!(el instanceof HTMLElement) || el.hasAttribute('inert')) continue;
+        if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
+        el.setAttribute('inert', '');
+        changed.push(el);
+      }
+    };
+    walk(document.body);
     const restore = () => {
       for (const el of changed.splice(0)) el.removeAttribute('inert');
     };

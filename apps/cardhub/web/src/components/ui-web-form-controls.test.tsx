@@ -385,28 +385,61 @@ describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
     expect(trigger).toHaveFocus();
   });
 
-  it('19-5: leaves [aria-live] regions out of inert while open', async () => {
+  it('19-5: keeps live regions and their ancestors, inerts their siblings', async () => {
     const user = userEvent.setup();
-    const live = document.createElement('div');
-    live.innerHTML = '<p role="status" aria-live="polite">Saved</p>';
-    const own = document.createElement('div');
-    own.setAttribute('aria-live', 'assertive');
-    document.body.append(live, own);
-    try {
-      const { container } = render(<CondSelect id="s1" label="One" />);
-      screen.getByRole('combobox').focus();
-      await user.keyboard('{Enter}');
-      await screen.findByRole('listbox');
+    const { container } = render(
+      <main>
+        <section data-testid="branch">
+          <a href="/series/x">Card link</a>
+        </section>
+        <section data-testid="live-parent">
+          <p data-testid="live" role="status" aria-live="polite">
+            12 cards
+          </p>
+          <a href="/series/y">Sibling link</a>
+        </section>
+        <span data-testid="off" aria-live="off">
+          0/200
+        </span>
+        <CondSelect id="s1" label="One" />
+      </main>,
+    );
+    const baseline = inertCount();
+    screen.getByRole('combobox').focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
 
-      expect(container).toHaveAttribute('inert');
-      expect(live).not.toHaveAttribute('inert');
-      expect(own).not.toHaveAttribute('inert');
-      await user.keyboard('{Escape}');
-      expect(inertCount()).toBe(0);
-    } finally {
-      live.remove();
-      own.remove();
-    }
+    const live = screen.getByTestId('live');
+    expect(live.closest('[inert]')).toBeNull();
+    expect(container.closest('[inert]')).toBeNull();
+    expect(screen.getByTestId('live-parent')).not.toHaveAttribute('inert');
+    expect(screen.getByTestId('branch')).toHaveAttribute('inert');
+    expect(screen.getByText('Card link').closest('[inert]')).not.toBeNull();
+    expect(screen.getByText('Sibling link')).toHaveAttribute('inert');
+    expect(screen.getByTestId('off')).toHaveAttribute('inert');
+    // The trigger sits beside the portal's chain, so it is inert too while the list is open.
+    expect(screen.getByRole('combobox', { hidden: true }).closest('[inert]')).not.toBeNull();
+
+    await user.keyboard('{Escape}');
+    expect(inertCount()).toBe(baseline);
+    expect(screen.getByRole('combobox')).toHaveFocus();
+  });
+
+  it('19-5: a live region at the top of body stays out of inert', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <div aria-live="assertive" data-testid="toast" />
+        <CondSelect id="s1" label="One" />
+      </>,
+    );
+    screen.getByRole('combobox').focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(screen.getByTestId('toast').closest('[inert]')).toBeNull();
+    expect(container.closest('[inert]')).toBeNull();
+    await user.keyboard('{Escape}');
+    expect(inertCount()).toBe(0);
   });
 });
 
