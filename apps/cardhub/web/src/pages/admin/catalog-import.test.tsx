@@ -243,6 +243,103 @@ describe('catalog import', () => {
     expect(alert).toHaveTextContent('slug 只能包含小写字母、数字和连字符');
   });
 
+  it('shows a commit-time parallel rejection in the failure box with the preview format', async () => {
+    const user = userEvent.setup();
+    importImpl.current = async (input) => {
+      if (!input.dryRun) {
+        throw {
+          message: '导入数据校验失败',
+          data: {
+            code: 'BAD_REQUEST',
+            adminCatalogError: {
+              rows: [
+                row(
+                  {
+                    status: 'error',
+                    errors: [
+                      { path: 'series[0].cards[0].parallelName', code: 'parallel_name_required' },
+                      { path: 'series[0].cards[0].parallelOfSlug', code: 'parallel_chain' },
+                    ],
+                  },
+                  1,
+                ),
+              ],
+            },
+          },
+        };
+      }
+      return [row({ status: 'created' }, 1)];
+    };
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    await user.click(screen.getByRole('button', { name: '导入' }));
+    await user.click(screen.getByRole('button', { name: '确认导入' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('导入失败，没有任何记录被修改');
+    const lines = [...alert.querySelectorAll('p')].slice(1);
+    expect(lines[0]).toHaveTextContent('基础卡：');
+    expect(lines[0]).toHaveTextContent('series[0].cards[0].parallelOfSlug');
+    expect(lines[0]?.querySelector('span')).toHaveClass(
+      'font-mono',
+      'wrap-anywhere',
+      'text-neutral-600',
+    );
+    expect(lines[1]).toHaveTextContent('平行名称：');
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+  });
+
+  it('lists every parallel preview error as field name, copy, then path', async () => {
+    const user = userEvent.setup();
+    importImpl.current = async () => [
+      {
+        row: { row: 2, type: 'card', slug: 'foil', name: '金箔', seriesSlug: 'dawn' },
+        status: 'error' as const,
+        errors: [
+          { path: 'series[0].cards[0].printRun', code: 'print_run_min' },
+          { path: 'series[0].cards[0].parallelOf', code: 'parallel_cross_series' },
+        ],
+      },
+    ];
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste(
+      JSON.stringify([
+        {
+          slug: 'dawn',
+          title: '黎明',
+          cards: [
+            { slug: 'foil', name: '金箔', rarity: 'common', parallelOf: 'other', printRun: 0 },
+          ],
+        },
+      ]),
+    );
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    const problem = await screen.findByText('基础卡', { exact: false });
+    const cell = problem.closest('p');
+    expect(cell).toHaveTextContent('基础卡：基础卡必须属于同一系列');
+    expect(cell).toHaveTextContent('series[0].cards[0].parallelOf');
+    expect(cell?.querySelector('span')).toHaveClass(
+      'font-mono',
+      'wrap-anywhere',
+      'text-neutral-600',
+    );
+    expect(cell).not.toHaveAttribute('role', 'alert');
+    const lines = [...(cell?.parentElement?.querySelectorAll('p') ?? [])].map(
+      (node) => node.textContent ?? '',
+    );
+    expect(lines[0]).toContain('基础卡：');
+    expect(lines[1]).toContain('限量总数：');
+    const run = screen.getByText('限量总数', { exact: false }).closest('p');
+    expect(run).toHaveTextContent('限量总数：限量数量至少为 1，不限量请留空');
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+    expect(
+      screen.getAllByRole('status').some((node) => node.textContent?.includes('1 处错误')),
+    ).toBe(true);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('shows the same breadcrumb trail as the other admin pages', () => {
     renderPage();
     const nav = screen.getByRole('navigation', { name: '面包屑导航' });

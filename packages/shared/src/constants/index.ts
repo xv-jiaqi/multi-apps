@@ -17,6 +17,16 @@ export const ADMIN_CATALOG_ERROR_CODES = [
   'SERIES_HAS_CARDS',
   'CATEGORY_NOT_FOUND',
   'SUBSET_NOT_FOUND',
+  'print_run_min',
+  'too_big',
+  'invalid_type',
+  'slug_format',
+  'parallel_name_required',
+  'parallel_cross_series',
+  'parallel_chain',
+  'parallel_self',
+  'parallel_has_children',
+  'parallel_base_missing',
 ] as const;
 
 export type AdminCatalogErrorCode = (typeof ADMIN_CATALOG_ERROR_CODES)[number];

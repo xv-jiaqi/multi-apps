@@ -79,6 +79,16 @@ const ERROR_KEYS: Record<string, string> = {
   INVALID_RARITY: 'admin.error.rarity',
   INVALID_TYPE: 'admin.error.invalidType',
   SERIES_NOT_FOUND: 'admin.error.seriesNotFound',
+  print_run_min: 'admin.parallel.printRunMin',
+  too_big: 'error.field.too_big',
+  invalid_type: 'error.field.invalid_type',
+  slug_format: 'error.field.slug_format',
+  parallel_name_required: 'error.field.parallel_name_required',
+  parallel_cross_series: 'error.field.parallel_cross_series',
+  parallel_chain: 'error.field.parallel_chain',
+  parallel_self: 'error.field.parallel_self',
+  parallel_has_children: 'error.field.parallel_has_children',
+  parallel_base_missing: 'error.field.parallel_base_missing',
 };
 
 export function formatAdminCount(
@@ -120,6 +130,36 @@ export function isSeriesHasCards(error: unknown): AdminCatalogDetails | null {
   return failure.admin;
 }
 
+const PARALLEL_FIELD_LABEL: Record<string, string> = {
+  parallelOf: 'admin.field.parallelOf',
+  parallelOfSlug: 'admin.field.parallelOf',
+  parallelName: 'admin.field.parallelName',
+  printRun: 'admin.field.printRun',
+};
+
+const PARALLEL_FIELD_RANK: Record<string, number> = {
+  parallelOf: 0,
+  parallelOfSlug: 0,
+  parallelName: 1,
+  printRun: 2,
+};
+
+/** CH-213 §16: a row's parallel errors read parallelOf, then parallelName, then printRun. Others keep their order first. */
+export function orderImportErrors<T extends { path: string }>(errors: readonly T[]): T[] {
+  const rank = (path: string) => PARALLEL_FIELD_RANK[path.split('.').pop() ?? ''] ?? -1;
+  return errors
+    .map((error, index) => ({ error, index }))
+    .sort((a, b) => rank(a.error.path) - rank(b.error.path) || a.index - b.index)
+    .map((item) => item.error);
+}
+
+/** Parallel import columns share the card form's field names. Other columns do not. */
+export function importParallelFieldLabel(locale: Locale, path: string): string | null {
+  const field = path.split('.').pop() ?? '';
+  const key = PARALLEL_FIELD_LABEL[field];
+  return key ? t(locale, key) : null;
+}
+
 export function adminErrorText(locale: Locale, code: string | undefined, message: string): string {
   if (code && ERROR_KEYS[code]) return t(locale, ERROR_KEYS[code]);
   if (message.trim() === t('zh-CN', 'error.internal')) {
@@ -150,6 +190,7 @@ const KNOWN_FIELDS = new Set([
   'cardNumber',
   'subsetSlug',
   'parallelOfSlug',
+  'parallelOf',
   'parallelName',
   'printRun',
   'sortOrder',
