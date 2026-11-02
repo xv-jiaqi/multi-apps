@@ -359,7 +359,7 @@ describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
     }
   });
 
-  it('own-only: opening and closing twice leaves no inert behind', async () => {
+  it('19-2: opening and closing twice leaves no inert behind', async () => {
     const user = userEvent.setup();
     const { container } = render(<CondSelect id="s1" label="One" />);
     const trigger = screen.getByRole('combobox');
@@ -377,7 +377,7 @@ describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
     }
   });
 
-  it('own-only: a node that was inert before stays inert across two opens', async () => {
+  it('19-4: a node that was inert before stays inert across two opens', async () => {
     const user = userEvent.setup();
     const before = document.createElement('div');
     before.setAttribute('inert', '');
@@ -397,7 +397,7 @@ describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
     }
   });
 
-  it('own-only: inert another source adds while the list is open is kept on close', async () => {
+  it('19-7: inert another source adds while the list is open is kept on close', async () => {
     const user = userEvent.setup();
     const other = document.createElement('div');
     other.innerHTML = '<a href="/x">Other link</a>';
@@ -418,6 +418,57 @@ describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
       expect(trigger).toHaveFocus();
     } finally {
       other.remove();
+    }
+  });
+
+  it('19-7: A opens, B opens, A closes first — shared nodes stay inert until B closes', async () => {
+    // Radix closes an open Select on any outside pointer/focus, so two lists cannot be
+    // opened together by user events. Drive both with the controlled `open` prop instead.
+    function Controlled({ label, open }: { label: string; open: boolean }) {
+      return (
+        <Select defaultValue="a" open={open} onOpenChange={() => {}}>
+          <SelectTrigger aria-label={label}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="a">{`${label} A`}</SelectItem>
+            <SelectItem value="b">{`${label} B`}</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    }
+    const outside = document.createElement('div');
+    outside.innerHTML = '<a href="/x">Shared link</a>';
+    document.body.appendChild(outside);
+    try {
+      const baseline = inertCount();
+      const view = (a: boolean, b: boolean) => (
+        <>
+          <Controlled label="A" open={a} />
+          <Controlled label="B" open={b} />
+        </>
+      );
+      const { container, rerender } = render(view(true, false));
+      await screen.findByRole('option', { name: 'A A' });
+      expect(container).toHaveAttribute('inert');
+      expect(outside).toHaveAttribute('inert');
+
+      rerender(view(true, true));
+      await screen.findByRole('option', { name: 'B A' });
+
+      rerender(view(false, true));
+      await waitFor(() => expect(screen.queryByRole('option', { name: 'A A' })).toBeNull());
+      expect(screen.getByRole('option', { name: 'B A' })).toBeInTheDocument();
+      expect(container).toHaveAttribute('inert');
+      expect(outside).toHaveAttribute('inert');
+
+      rerender(view(false, false));
+      await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+      expect(container).not.toHaveAttribute('inert');
+      expect(outside).not.toHaveAttribute('inert');
+      expect(inertCount()).toBe(baseline);
+    } finally {
+      outside.remove();
     }
   });
 
