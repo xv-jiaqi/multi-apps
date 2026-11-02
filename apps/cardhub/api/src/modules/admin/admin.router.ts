@@ -804,7 +804,7 @@ export class AdminRouter {
           { timeout: IMPORT_TRANSACTION_TIMEOUT_MS },
         );
       } catch (error) {
-        if (!rollback) throw error;
+        if (!(error instanceof Error && error.message === IMPORT_ROLLBACK)) throw error;
       }
 
       for (const failure of failures) {

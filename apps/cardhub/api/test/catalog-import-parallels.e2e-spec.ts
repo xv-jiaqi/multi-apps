@@ -117,6 +117,35 @@ describe('catalog import parallels', () => {
     assertNoInternalText(tooLarge.body);
   });
 
+  it('does not swallow a real transaction failure on preview', async () => {
+    const timeout = Object.assign(new Error('Transaction already closed: P2028 timeout'), {
+      code: 'P2028',
+    });
+    const spy = jest.spyOn(prisma, '$transaction').mockRejectedValueOnce(timeout);
+    try {
+      const preview = await post('admin.catalog.import', {
+        dryRun: true,
+        data: [
+          {
+            slug: slug('tx-fail'),
+            title: '事务失败',
+            cards: [
+              cardRow('tx-card'),
+              cardRow('tx-foil', { parallelOf: slug('tx-card'), parallelName: '闪' }),
+            ],
+          },
+        ],
+      });
+      expect(spy).toHaveBeenCalled();
+      expect(preview.status).toBe(500);
+      expect(preview.body.error.data.code).toBe('INTERNAL_SERVER_ERROR');
+      expect(preview.body.result).toBeUndefined();
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await prisma.series.findUnique({ where: { slug: slug('tx-fail') } })).toBeNull();
+  });
+
   it('returns print_run_min and too_big on the import row', async () => {
     const preview = await post('admin.catalog.import', {
       dryRun: true,
