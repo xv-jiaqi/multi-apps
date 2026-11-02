@@ -44,6 +44,8 @@ import { trpc } from '../../lib/trpc';
 import { useStores } from '../../stores/root-store';
 
 const RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
+/** Later base-card pages stay complete, with only a few requests in flight. */
+const BASE_CARD_FETCH_CONCURRENCY = 3;
 
 function parsePrintRun(text: string): { value: number | null; error?: string } {
   const trimmed = text.trim();
@@ -191,23 +193,36 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       try {
         const fetchPage = listBaseCards.current?.fetch;
         if (!fetchPage) throw new Error('missing list');
-        const rest: Array<{
-          slug: string;
-          name: string;
-          cardNumber: string | null;
-          isParallel: boolean;
-        }> = [];
-        for (let page = 2; page <= listedPages; page += 1) {
-          const next = await fetchPage({
-            seriesSlug,
-            includeParallels: false,
-            page,
-            pageSize,
-            sort: 'number',
-          });
-          rest.push(...next.items);
-        }
-        if (!cancelled) setExtraBaseCards(rest);
+        const pages: number[] = [];
+        for (let page = 2; page <= listedPages; page += 1) pages.push(page);
+        const chunks: Array<
+          Array<{
+            slug: string;
+            name: string;
+            cardNumber: string | null;
+            isParallel: boolean;
+          }>
+        > = [];
+        let cursor = 0;
+        const worker = async () => {
+          while (cursor < pages.length) {
+            const index = cursor;
+            const page = pages[index];
+            cursor += 1;
+            if (page == null) return;
+            const next = await fetchPage({
+              seriesSlug,
+              includeParallels: false,
+              page,
+              pageSize,
+              sort: 'number',
+            });
+            chunks[index] = next.items;
+          }
+        };
+        const workers = Math.min(BASE_CARD_FETCH_CONCURRENCY, pages.length);
+        await Promise.all(Array.from({ length: workers }, () => worker()));
+        if (!cancelled) setExtraBaseCards(chunks.flat());
       } catch {
         if (!cancelled) {
           setExtraBaseCards([]);

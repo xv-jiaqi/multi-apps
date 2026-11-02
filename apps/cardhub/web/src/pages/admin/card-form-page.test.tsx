@@ -718,6 +718,17 @@ describe('card form base card pages', () => {
       expect.objectContaining({ page: 2, pageSize: 100, includeParallels: false }),
     );
   });
+
+  it('shows an error when a later base-card page fails', async () => {
+    baseList.total = 101;
+    baseList.pageSize = 100;
+    baseList.items = [{ slug: 'base-card', name: '基础卡', cardNumber: '001', isParallel: false }];
+    fetchBasePage.mockRejectedValue(new Error('later page failed'));
+    renderNew();
+    expect(await screen.findByRole('alert')).toHaveTextContent('加载失败');
+    expect(screen.queryByRole('combobox', { name: '基础卡' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: '001 基础卡' })).not.toBeInTheDocument();
+  });
 });
 
 describe('card form unsaved changes', () => {
