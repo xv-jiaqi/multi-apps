@@ -7,6 +7,7 @@ const dialogContentSizes = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-2xl',
+  full: 'inset-0 top-0 mx-0 max-h-none max-w-none translate-y-0 rounded-none border-0 bg-neutral-950 p-0 text-white shadow-none',
 } as const;
 
 export type DialogContentSize = keyof typeof dialogContentSizes;
@@ -41,7 +42,7 @@ export const DialogContent = React.forwardRef<
   DialogContentProps
 >(({ className, children, size = 'md', closeLabel, showClose = true, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
+    <DialogOverlay className={size === 'full' ? 'bg-neutral-950' : undefined} />
     <DialogPrimitive.Content
       ref={ref}
       aria-modal="true"

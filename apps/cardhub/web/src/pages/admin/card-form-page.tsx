@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
+  CARD_BODY_MAX,
   CARD_SERIES_LIST_PAGE_SIZE_MAX,
   fieldErrorMessage,
   PARALLEL_NAME_MAX,
@@ -88,6 +89,7 @@ interface CardBaseline {
   name: string;
   rarity: Rarity;
   description: string;
+  body: string;
   imageUrl: string;
   attributes: AttributeSnapshot[];
   subsetSlug: string;
@@ -119,6 +121,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const [name, setName] = useState('');
   const [rarity, setRarity] = useState<Rarity>('common');
   const [description, setDescription] = useState('');
+  const [body, setBody] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [subsetSlug, setSubsetSlug] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -249,6 +252,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           name: '',
           rarity: 'common',
           description: '',
+          body: '',
           imageUrl: '',
           attributes: [],
           subsetSlug: '',
@@ -263,6 +267,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
   const slugRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
   const saving = create.isPending || update.isPending;
   const revoked =
@@ -282,6 +287,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       name: card.name,
       rarity: card.rarity,
       description: card.description ?? '',
+      body: card.body ?? '',
       imageUrl: card.imageUrl ?? '',
       attributes: attributeSnapshots(nextRows),
       subsetSlug: card.subsetSlug ?? '',
@@ -295,6 +301,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     setName(next.name);
     setRarity(next.rarity);
     setDescription(next.description);
+    setBody(next.body);
     setImageUrl(next.imageUrl);
     setSubsetSlug(next.subsetSlug);
     setCardNumber(next.cardNumber);
@@ -313,6 +320,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       name !== baseline.name ||
       rarity !== baseline.rarity ||
       description !== baseline.description ||
+      body !== baseline.body ||
       imageUrl !== baseline.imageUrl ||
       subsetSlug !== baseline.subsetSlug ||
       cardNumber !== baseline.cardNumber ||
@@ -346,6 +354,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     if (key === 'slug') slugRef.current?.focus();
     if (key === 'name') nameRef.current?.focus();
     if (key === 'description') descriptionRef.current?.focus();
+    if (key === 'body') bodyRef.current?.focus();
     if (key === 'imageUrl') imageRef.current?.focus();
     if (key === 'cardNumber') document.getElementById('card-number')?.focus();
     if (key === 'parallelOfSlug') document.getElementById('card-parallel-of')?.focus();
@@ -376,6 +385,10 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
     if (nameError) next.name = nameError;
     const descriptionError = validateOptionalText(description, 5000, locale.locale);
     if (descriptionError) next.description = descriptionError;
+    // Same rule as the API (#233): trimmed length, at most CARD_BODY_MAX.
+    if (body.trim().length > CARD_BODY_MAX) {
+      next.body = fieldErrorMessage(locale.locale, 'card_body_too_long');
+    }
     const imageError = imageUrlError(imageUrl, locale.locale);
     if (imageError) next.imageUrl = imageError;
     if (cardNumber.trim().length > 20) next.cardNumber = tt('error.field.too_big');
@@ -408,6 +421,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         'printRun',
         'name',
         'description',
+        'body',
         'imageUrl',
       ];
       const first = order.find((key) => next[key]);
@@ -424,6 +438,8 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
       slug: mode === 'create' ? slugValue.trim() : routeSlug,
       name: name.trim(),
       description: description.trim() || undefined,
+      // Empty clears the stored body; the API stores empty-after-trim as null.
+      body: body.trim() ? body : mode === 'edit' ? null : undefined,
       rarity,
       imageUrl: imageUrl.trim() || undefined,
       attributes: attributes.attributes,
@@ -488,6 +504,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
         'printRun',
         'name',
         'description',
+        'body',
         'imageUrl',
         'rarity',
         'attributes',
@@ -510,6 +527,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           'printRun',
           'name',
           'description',
+          'body',
           'imageUrl',
           'rarity',
         ];
@@ -823,6 +841,21 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600 sm:text-sm"
+              />
+            </AdminField>
+            <AdminField
+              id="card-body"
+              label={tt('admin.card.body')}
+              error={errors.body}
+              count={body.trim().length}
+              max={CARD_BODY_MAX}
+            >
+              <textarea
+                ref={bodyRef}
+                rows={8}
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600 sm:text-sm"
               />
             </AdminField>
             <ImageUrlField

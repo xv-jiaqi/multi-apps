@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { Link, useParams } from 'react-router';
 import { Card, CardContent, CardHeader } from '@repo/ui-web';
 import { isAppErrorCode, t } from '@repo/shared';
+import { SeriesReleases } from '../components/series-releases';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
@@ -241,6 +242,8 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
               : null
           }
         />
+
+        <SeriesReleases locale={locale.locale} items={series.releases ?? []} />
 
         <SeriesCardList
           seriesSlug={series.slug}
