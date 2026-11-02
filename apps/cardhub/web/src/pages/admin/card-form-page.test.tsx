@@ -31,7 +31,7 @@ const createImpl: { current: (input: unknown) => Promise<unknown> } = {
 };
 const invalidateSeriesBySlug = vi.hoisted(() => vi.fn());
 const fetchBasePage = vi.hoisted(() =>
-  vi.fn(async () => ({ items: [] as Array<Record<string, unknown>> })),
+  vi.fn(async (_input: unknown) => ({ items: [] as Array<Record<string, unknown>> })),
 );
 const baseList = {
   total: 3,
