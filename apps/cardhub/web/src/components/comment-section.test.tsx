@@ -1441,3 +1441,49 @@ describe('CommentSection replies', () => {
     expect(screen.getByText('删除这条评论？它的 1 条回复也会一起删除。')).toBeInTheDocument();
   });
 });
+
+describe('CommentSection surfaces (CH-206 v1.4 §9)', () => {
+  function expectSolidWhite(node: Element | null | undefined) {
+    expect(node).toHaveClass('bg-white', 'border', 'rounded-lg');
+    expect(node?.className).not.toMatch(/backdrop|bg-white\/|border-white/);
+  }
+
+  it.each([
+    ['card', () => renderShell()],
+    ['series', () => renderSeriesShell()],
+  ] as const)('uses solid white surfaces without blur on %s pages', (_kind, renderTarget) => {
+    queryState.isLoading = true;
+    queryState.data = undefined;
+    const loading = renderTarget();
+    const rows = loading.container.querySelectorAll('[aria-busy="true"] ul > li');
+    expect(rows.length).toBeGreaterThan(0);
+    rows.forEach((row) => expectSolidWhite(row));
+    loading.unmount();
+
+    queryState.isLoading = false;
+    queryState.data = [];
+    const empty = renderTarget();
+    const prompt = screen.getByRole('link', { name: /登录后即可发表评论/ }).closest('p');
+    expectSolidWhite(prompt);
+    expect(prompt).toHaveClass('border-dashed');
+    const emptyState = screen.getByText('还没有评论，来抢沙发吧').closest('[class*="border"]');
+    expectSolidWhite(emptyState);
+    expect(emptyState).toHaveClass('border-neutral-200');
+    empty.unmount();
+
+    queryState.data = [
+      {
+        id: 'cm-1',
+        content: 'great card',
+        createdAt: '2026-05-01T00:00:00Z',
+        user: { id: 'u1', username: 'alice' },
+      },
+    ];
+    rootStore.session.signIn('jwt.token', { id: 'u1', username: 'alice' });
+    renderTarget();
+    const item = screen.getByText('great card').closest('li');
+    expectSolidWhite(item);
+    expect(item).toHaveClass('border-neutral-200');
+    expectSolidWhite(screen.getByLabelText(/撰写评论/).closest('form'));
+  });
+});

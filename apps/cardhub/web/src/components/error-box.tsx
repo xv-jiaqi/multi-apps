@@ -17,6 +17,7 @@ export function ErrorBox({
   headingAs = 'p',
   retryClassName = tradeListRetryClassName,
   retryRef,
+  headingClassName = 'font-medium',
 }: {
   title: string;
   retryLabel?: string;
@@ -26,6 +27,8 @@ export function ErrorBox({
   headingAs?: 'p' | 'h1' | 'h2';
   retryClassName?: string;
   retryRef?: Ref<HTMLButtonElement>;
+  /** Card detail passes the page-title size (CH-206 §1). */
+  headingClassName?: string;
 }) {
   const Heading = headingAs;
   const showRetry = retry != null && retryLabel != null && retryingLabel != null;
@@ -34,7 +37,7 @@ export function ErrorBox({
       role="alert"
       className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
     >
-      <Heading className="font-medium">{title}</Heading>
+      <Heading className={headingClassName}>{title}</Heading>
       {showRetry ? (
         <RetryButton
           ref={retryRef}

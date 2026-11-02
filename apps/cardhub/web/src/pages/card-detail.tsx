@@ -29,6 +29,9 @@ function normalizeRarity(rarity: string | null): (typeof RARITY_ORDER)[number] {
   return 'common';
 }
 
+// CH-206 §1: failure-state h1 matches the normal title size.
+const failureTitleClass = 'text-2xl font-bold tracking-tight sm:text-3xl';
+
 export const CardDetailPage = observer(function CardDetailPage() {
   const { cardSlug = '' } = useParams<{ cardSlug: string }>();
   const { locale } = useStores();
@@ -51,13 +54,11 @@ export const CardDetailPage = observer(function CardDetailPage() {
           <Breadcrumbs
             items={[
               { label: tt('breadcrumb.home'), to: '/' },
-              { label: tt('breadcrumb.cards'), to: '/series' },
+              { label: tt('breadcrumb.series'), to: '/series' },
               { label: cardSlug },
             ]}
           />
-          <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
-            {tt('state.notFound')}
-          </p>
+          <h1 className={failureTitleClass}>{tt('state.notFound')}</h1>
         </div>
       </PageShell>
     );
@@ -70,12 +71,13 @@ export const CardDetailPage = observer(function CardDetailPage() {
         <Breadcrumbs
           items={[
             { label: tt('breadcrumb.home'), to: '/' },
-            { label: tt('breadcrumb.cards'), to: '/series' },
+            { label: tt('breadcrumb.series'), to: '/series' },
             { label: cardSlug },
           ]}
         />
         <ErrorBox
           headingAs="h1"
+          headingClassName={failureTitleClass}
           title={tt('card.detail.loadFailed')}
           retryLabel={tt('state.retry')}
           retryingLabel={tt('state.retrying')}

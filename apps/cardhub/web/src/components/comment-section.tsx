@@ -153,10 +153,7 @@ function CommentListSkeleton({ label }: { label: string }) {
       <p className="sr-only">{label}</p>
       <ul className="space-y-3" aria-hidden="true">
         {Array.from({ length: 3 }, (_, index) => (
-          <li
-            key={index}
-            className="rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur"
-          >
+          <li key={index} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
             <div className="flex h-6 items-center">
               <div className="h-3 w-24 animate-pulse rounded bg-neutral-200 motion-reduce:animate-none" />
             </div>
@@ -811,7 +808,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       ) : session.isAuthenticated ? (
         <form
           onSubmit={onSubmit}
-          className="space-y-2 rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur"
+          className="space-y-2 rounded-lg border border-neutral-200 bg-white p-4"
         >
           <label htmlFor="comment-content" className="sr-only">
             {tt('a11y.commentArea')}
@@ -853,7 +850,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
           </div>
         </form>
       ) : (
-        <p className="rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur">
+        <p className="rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600">
           <Link
             to="/login"
             state={{
@@ -909,7 +906,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             commentsRef.current = node;
           }}
           tabIndex={-1}
-          className="scroll-mt-20 rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="scroll-mt-20 rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('card.detail.commentEmpty')}
         </p>
@@ -948,10 +945,10 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 id={`comment-${comment.id}`}
                 tabIndex={-1}
                 aria-busy={isDeleting ? true : undefined}
-                className={`scroll-mt-20 rounded-xl border p-4 shadow-sm backdrop-blur transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
+                className={`scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
                   highlightedId === comment.id
                     ? 'border-brand-200 bg-brand-50 duration-0'
-                    : 'border-white/60 bg-white/80 duration-1000'
+                    : 'border-neutral-200 bg-white duration-1000'
                 }`}
               >
                 <div className="flex min-h-6 items-center justify-between gap-x-3 text-xs text-neutral-600">
