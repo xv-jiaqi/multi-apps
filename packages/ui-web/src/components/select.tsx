@@ -44,10 +44,60 @@ export type SelectContentProps = React.ComponentPropsWithoutRef<typeof SelectPri
 // Like hideOthers, walk down from body and keep two kinds of ancestor chains: the
 // portal's and each live region's (aria-live other than "off"). Kept nodes are not
 // made inert, but every other sibling at each level of those chains is. Elements that
-// were already inert are never touched, and SCRIPT / STYLE are skipped.
+// were already inert are never touched, inert another source adds while open is
+// left in place, and SCRIPT / STYLE are skipped.
 // Radix moves focus back to the trigger (inside #root) in onCloseAutoFocus, which runs
 // before this effect cleans up, so the returned restore() must run there first.
 const LIVE_REGION = '[aria-live]:not([aria-live="off" i])';
+
+// inert set by Selects is shared and counted, so one Select closing never clears a node
+// another open Select still needs. A MutationObserver marks nodes that something else
+// wrote inert onto while we held them; those are left inert on release. Our own writes
+// are dropped with takeRecords() right after they happen.
+const owned = new Map<HTMLElement, number>();
+const foreign = new WeakSet<HTMLElement>();
+let observer: MutationObserver | null = null;
+const markForeign = (records: MutationRecord[]) => {
+  for (const r of records) {
+    const el = r.target as HTMLElement;
+    if (owned.has(el)) foreign.add(el);
+  }
+};
+const flush = () => {
+  if (observer) markForeign(observer.takeRecords());
+};
+
+function acquireInert(el: HTMLElement): boolean {
+  const count = owned.get(el);
+  if (count !== undefined) {
+    owned.set(el, count + 1);
+    return true;
+  }
+  if (el.hasAttribute('inert')) return false;
+  observer ??= new MutationObserver(markForeign);
+  flush();
+  el.setAttribute('inert', '');
+  observer.takeRecords();
+  owned.set(el, 1);
+  observer.observe(el, { attributes: true, attributeFilter: ['inert'] });
+  return true;
+}
+
+function releaseInert(el: HTMLElement) {
+  flush();
+  const count = owned.get(el);
+  if (count === undefined) return;
+  if (count > 1) {
+    owned.set(el, count - 1);
+    return;
+  }
+  owned.delete(el);
+  if (!foreign.has(el)) {
+    el.removeAttribute('inert');
+    observer?.takeRecords();
+  }
+  foreign.delete(el);
+}
 
 function useInertOutside(node: HTMLElement | null) {
   const restoreRef = React.useRef<(() => void) | null>(null);
@@ -68,15 +118,14 @@ function useInertOutside(node: HTMLElement | null) {
           walk(el);
           continue;
         }
-        if (!(el instanceof HTMLElement) || el.hasAttribute('inert')) continue;
+        if (!(el instanceof HTMLElement)) continue;
         if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
-        el.setAttribute('inert', '');
-        changed.push(el);
+        if (acquireInert(el)) changed.push(el);
       }
     };
     walk(document.body);
     const restore = () => {
-      for (const el of changed.splice(0)) el.removeAttribute('inert');
+      for (const el of changed.splice(0)) releaseInert(el);
     };
     restoreRef.current = restore;
     return () => {

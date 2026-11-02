@@ -359,6 +359,119 @@ describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
     }
   });
 
+  it('19-2: opening and closing twice leaves no inert behind', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<CondSelect id="s1" label="One" />);
+    const trigger = screen.getByRole('combobox');
+    const baseline = inertCount();
+    for (let i = 0; i < 2; i++) {
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('listbox');
+      expect(container).toHaveAttribute('inert');
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+      expect(container).not.toHaveAttribute('inert');
+      expect(inertCount()).toBe(baseline);
+      expect(trigger).toHaveFocus();
+    }
+  });
+
+  it('19-4: a node that was inert before stays inert across two opens', async () => {
+    const user = userEvent.setup();
+    const before = document.createElement('div');
+    before.setAttribute('inert', '');
+    document.body.appendChild(before);
+    try {
+      render(<CondSelect id="s1" label="One" />);
+      const trigger = screen.getByRole('combobox');
+      for (let i = 0; i < 2; i++) {
+        trigger.focus();
+        await user.keyboard('{Enter}');
+        await screen.findByRole('listbox');
+        await user.keyboard('{Escape}');
+        expect(before).toHaveAttribute('inert');
+      }
+    } finally {
+      before.remove();
+    }
+  });
+
+  it('19-7: inert another source adds while the list is open is kept on close', async () => {
+    const user = userEvent.setup();
+    const other = document.createElement('div');
+    other.innerHTML = '<a href="/x">Other link</a>';
+    document.body.appendChild(other);
+    try {
+      const { container } = render(<CondSelect id="s1" label="One" />);
+      const trigger = screen.getByRole('combobox');
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('listbox');
+      expect(other).toHaveAttribute('inert');
+      // e.g. a dialog opening behind the list marks the same node inert
+      other.setAttribute('inert', '');
+      await user.keyboard('{Escape}');
+
+      expect(container).not.toHaveAttribute('inert');
+      expect(other).toHaveAttribute('inert');
+      expect(trigger).toHaveFocus();
+    } finally {
+      other.remove();
+    }
+  });
+
+  it('19-7: A opens, B opens, A closes first — shared nodes stay inert until B closes', async () => {
+    // Radix closes an open Select on any outside pointer/focus, so two lists cannot be
+    // opened together by user events. Drive both with the controlled `open` prop instead.
+    function Controlled({ label, open }: { label: string; open: boolean }) {
+      return (
+        <Select defaultValue="a" open={open} onOpenChange={() => {}}>
+          <SelectTrigger aria-label={label}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="a">{`${label} A`}</SelectItem>
+            <SelectItem value="b">{`${label} B`}</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    }
+    const outside = document.createElement('div');
+    outside.innerHTML = '<a href="/x">Shared link</a>';
+    document.body.appendChild(outside);
+    try {
+      const baseline = inertCount();
+      const view = (a: boolean, b: boolean) => (
+        <>
+          <Controlled label="A" open={a} />
+          <Controlled label="B" open={b} />
+        </>
+      );
+      const { container, rerender } = render(view(true, false));
+      await screen.findByRole('option', { name: 'A A' });
+      expect(container).toHaveAttribute('inert');
+      expect(outside).toHaveAttribute('inert');
+
+      rerender(view(true, true));
+      await screen.findByRole('option', { name: 'B A' });
+
+      rerender(view(false, true));
+      await waitFor(() => expect(screen.queryByRole('option', { name: 'A A' })).toBeNull());
+      expect(screen.getByRole('option', { name: 'B A' })).toBeInTheDocument();
+      expect(container).toHaveAttribute('inert');
+      expect(outside).toHaveAttribute('inert');
+
+      rerender(view(false, false));
+      await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+      expect(container).not.toHaveAttribute('inert');
+      expect(outside).not.toHaveAttribute('inert');
+      expect(inertCount()).toBe(baseline);
+    } finally {
+      outside.remove();
+    }
+  });
+
   it('19-4: a Select inside a Dialog cleans up and keeps the Dialog usable', async () => {
     const user = userEvent.setup();
     render(
