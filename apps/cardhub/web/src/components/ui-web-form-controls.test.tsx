@@ -2,8 +2,13 @@ import * as React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import {
   Combobox,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
   SegmentedControl,
   Select,
   SelectContent,
@@ -140,6 +145,301 @@ describe('ui-web Select', () => {
     await user.keyboard('{Escape}');
 
     expect(trigger).toHaveFocus();
+  });
+
+  it('points aria-controls at the listbox only while it is open', async () => {
+    const user = userEvent.setup();
+    render(
+      <Select defaultValue="any">
+        <SelectTrigger id="condition">
+          <SelectValue placeholder="Condition" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="any">Any</SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).not.toHaveAttribute('aria-controls');
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    const listbox = await screen.findByRole('listbox');
+    expect(listbox.id).not.toBe('');
+    expect(trigger).toHaveAttribute('aria-controls', listbox.id);
+
+    await user.keyboard('{Escape}');
+    expect(trigger).not.toHaveAttribute('aria-controls');
+  });
+
+  it('makes the page outside the open list inert and restores it before focus returns', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <a href="/series">Series</a>
+        <Select defaultValue="any">
+          <SelectTrigger id="condition">
+            <SelectValue placeholder="Condition" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">Any</SelectItem>
+            <SelectItem value="none">Not specified</SelectItem>
+          </SelectContent>
+        </Select>
+      </>,
+    );
+
+    const trigger = screen.getByRole('combobox');
+    expect(container).not.toHaveAttribute('inert');
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    const listbox = await screen.findByRole('listbox');
+
+    expect(container).toHaveAttribute('inert');
+    expect(container).toHaveAttribute('aria-hidden', 'true');
+    expect(container.contains(listbox)).toBe(false);
+
+    await user.keyboard('{Escape}');
+
+    expect(container).not.toHaveAttribute('inert');
+    expect(trigger).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(container).toHaveAttribute('inert');
+    await user.click(await screen.findByRole('option', { name: 'Not specified' }));
+
+    expect(container).not.toHaveAttribute('inert');
+    expect(trigger).toHaveTextContent('Not specified');
+    expect(trigger).toHaveFocus();
+  });
+});
+
+function CondSelect({ id, label }: { id: string; label: string }) {
+  return (
+    <Select defaultValue="a">
+      <SelectTrigger id={id} aria-label={label}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="a">{`${label} A`}</SelectItem>
+        <SelectItem value="b">{`${label} B`}</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
+const inertCount = () => document.querySelectorAll('[inert]').length;
+
+describe('ui-web Select inert cleanup (CH-219 §3–§5)', () => {
+  it('19-3: unmounting an open Select leaves no inert behind', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [shown, setShown] = React.useState(true);
+      return (
+        <>
+          <button type="button" onClick={() => setShown(false)}>
+            Hide
+          </button>
+          {shown ? <CondSelect id="s1" label="One" /> : null}
+        </>
+      );
+    }
+    const { container } = render(<Harness />);
+    screen.getByRole('combobox').focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(container).toHaveAttribute('inert');
+
+    // The page is inert while open, so unmount the way a parent re-render would.
+    fireEvent.click(screen.getByRole('button', { name: 'Hide', hidden: true }));
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+    expect(inertCount()).toBe(0);
+  });
+
+  it('19-3: a route change while open lets the new page Tab to its links', async () => {
+    const user = userEvent.setup();
+    let go: (to: string) => void = () => {};
+    function Nav() {
+      go = useNavigate();
+      return null;
+    }
+    const { container } = render(
+      <MemoryRouter initialEntries={['/series']}>
+        <Nav />
+        <Routes>
+          <Route path="/series" element={<CondSelect id="s1" label="One" />} />
+          <Route path="/calendar" element={<a href="/forum">Forum</a>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    screen.getByRole('combobox').focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(container).toHaveAttribute('inert');
+
+    React.act(() => go('/calendar'));
+    expect(await screen.findByRole('link', { name: 'Forum' })).toBeInTheDocument();
+    expect(inertCount()).toBe(0);
+    document.body.focus();
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Forum' })).toHaveFocus();
+  });
+
+  it('19-2: clicking outside closes, clears inert, and returns focus to the trigger', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <a href="/series">Series</a>
+        <CondSelect id="s1" label="One" />
+      </>,
+    );
+    const trigger = screen.getByRole('combobox');
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(container).toHaveAttribute('inert');
+
+    fireEvent.pointerDown(document.body);
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+    expect(inertCount()).toBe(0);
+    expect(trigger).toHaveFocus();
+  });
+
+  it('19-4: two Selects opened one after another leave no inert behind', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <CondSelect id="s1" label="One" />
+        <CondSelect id="s2" label="Two" />
+      </>,
+    );
+    const [one, two] = screen.getAllByRole('combobox');
+    one!.focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(container).toHaveAttribute('inert');
+    await user.keyboard('{Escape}');
+    expect(one).toHaveFocus();
+
+    two!.focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('option', { name: 'Two A' });
+    expect(container).toHaveAttribute('inert');
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    expect(two).toHaveTextContent('Two B');
+    expect(two).toHaveFocus();
+    expect(inertCount()).toBe(0);
+  });
+
+  it('19-4: keeps inert that was on the page before it opened', async () => {
+    const user = userEvent.setup();
+    const before = document.createElement('div');
+    before.setAttribute('inert', '');
+    before.innerHTML = '<a href="/x">Dialog link</a>';
+    document.body.appendChild(before);
+    try {
+      const { container } = render(<CondSelect id="s1" label="One" />);
+      const trigger = screen.getByRole('combobox');
+      const baseline = inertCount();
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('listbox');
+      expect(container).toHaveAttribute('inert');
+      expect(inertCount()).toBeGreaterThan(baseline);
+      await user.keyboard('{Escape}');
+
+      expect(container).not.toHaveAttribute('inert');
+      expect(before).toHaveAttribute('inert');
+      expect(inertCount()).toBe(baseline);
+      expect(trigger).toHaveFocus();
+    } finally {
+      before.remove();
+    }
+  });
+
+  it('19-4: a Select inside a Dialog cleans up and keeps the Dialog usable', async () => {
+    const user = userEvent.setup();
+    render(
+      <Dialog open>
+        <DialogContent>
+          <DialogTitle>Filters</DialogTitle>
+          <DialogDescription>Pick one</DialogDescription>
+          <CondSelect id="s1" label="One" />
+        </DialogContent>
+      </Dialog>,
+    );
+    const dialog = await screen.findByRole('dialog');
+    const baseline = inertCount();
+    const trigger = within(dialog).getByRole('combobox');
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(inertCount()).toBeGreaterThan(baseline);
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(inertCount()).toBe(baseline);
+    expect(dialog.closest('[inert]')).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('19-5: keeps live regions and their ancestors, inerts their siblings', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <main>
+        <section data-testid="branch">
+          <a href="/series/x">Card link</a>
+        </section>
+        <section data-testid="live-parent">
+          <p data-testid="live" role="status" aria-live="polite">
+            12 cards
+          </p>
+          <a href="/series/y">Sibling link</a>
+        </section>
+        <span data-testid="off" aria-live="off">
+          0/200
+        </span>
+        <CondSelect id="s1" label="One" />
+      </main>,
+    );
+    const baseline = inertCount();
+    screen.getByRole('combobox').focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+
+    const live = screen.getByTestId('live');
+    expect(live.closest('[inert]')).toBeNull();
+    expect(container.closest('[inert]')).toBeNull();
+    expect(screen.getByTestId('live-parent')).not.toHaveAttribute('inert');
+    expect(screen.getByTestId('branch')).toHaveAttribute('inert');
+    expect(screen.getByText('Card link').closest('[inert]')).not.toBeNull();
+    expect(screen.getByText('Sibling link')).toHaveAttribute('inert');
+    expect(screen.getByTestId('off')).toHaveAttribute('inert');
+    // The trigger sits beside the portal's chain, so it is inert too while the list is open.
+    expect(screen.getByRole('combobox', { hidden: true }).closest('[inert]')).not.toBeNull();
+
+    await user.keyboard('{Escape}');
+    expect(inertCount()).toBe(baseline);
+    expect(screen.getByRole('combobox')).toHaveFocus();
+  });
+
+  it('19-5: a live region at the top of body stays out of inert', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <div aria-live="assertive" data-testid="toast" />
+        <CondSelect id="s1" label="One" />
+      </>,
+    );
+    screen.getByRole('combobox').focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    expect(screen.getByTestId('toast').closest('[inert]')).toBeNull();
+    expect(container.closest('[inert]')).toBeNull();
+    await user.keyboard('{Escape}');
+    expect(inertCount()).toBe(0);
   });
 });
 
