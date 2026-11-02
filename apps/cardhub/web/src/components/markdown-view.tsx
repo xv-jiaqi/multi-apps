@@ -2,7 +2,10 @@ import { memo, type ComponentProps, type ReactNode } from 'react';
 import ReactMarkdown, { type Components, type ExtraProps } from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import { observer } from 'mobx-react-lite';
+import { t } from '@repo/shared';
 import { rehypeMentions } from '../lib/rehype-mentions';
+import { useStores } from '../stores/root-store';
 
 interface MarkdownViewProps {
   body: string;
@@ -22,9 +25,22 @@ const codeBlockClass =
 
 // tabIndex=0: the block scrolls horizontally, so keyboard users must be able
 // to focus it to scroll (WCAG 2.1.1, axe scrollable-region-focusable).
-function MarkdownPre({ node: _node, ...props }: ComponentProps<'pre'> & ExtraProps) {
-  return <pre {...props} tabIndex={0} className={codeBlockClass} />;
-}
+// role=region + aria-label give the focus stop a name (CH-206 §2, WCAG 4.1.2).
+const MarkdownPre = observer(function MarkdownPre({
+  node: _node,
+  ...props
+}: ComponentProps<'pre'> & ExtraProps) {
+  const { locale } = useStores();
+  return (
+    <pre
+      {...props}
+      tabIndex={0}
+      role="region"
+      aria-label={t(locale.locale, 'card.body.codeBlock')}
+      className={codeBlockClass}
+    />
+  );
+});
 
 function MarkdownTable({ node: _node, ...props }: ComponentProps<'table'> & ExtraProps) {
   return (

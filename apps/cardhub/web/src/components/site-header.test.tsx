@@ -45,41 +45,158 @@ beforeEach(() => {
   clearNotificationCache.mockClear();
 });
 
-describe('SiteHeader admin navigation', () => {
-  it('replaces the reports link with a disclosure for admins', async () => {
+function renderAt(path = '/') {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <SiteHeader />
+    </MemoryRouter>,
+  );
+}
+
+describe('SiteHeader account menu (CH-218 §5)', () => {
+  it('shows only an avatar, and opens an admin section with separator, heading and 5 items', async () => {
     const user = userEvent.setup();
     rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
-    render(
-      <MemoryRouter>
-        <SiteHeader />
-      </MemoryRouter>,
-    );
+    renderAt();
 
-    const button = screen.getByRole('button', { name: '管理' });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('link', { name: '举报队列' })).not.toBeInTheDocument();
+    expect(screen.queryByText('@admin')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '管理' })).not.toBeInTheDocument();
+    const avatar = screen.getByRole('button', { name: '@admin 的个人中心' });
+    expect(avatar).toHaveTextContent('a');
+    expect(avatar).toHaveClass('size-11');
+    expect(avatar).toHaveAttribute('aria-controls', 'account-menu');
+    expect(avatar).toHaveAttribute('aria-expanded', 'false');
+    expect(avatar).not.toHaveClass('ring-brand-500');
 
-    await user.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: '内容管理' })).toHaveAttribute(
-      'href',
-      '/admin/catalog',
-    );
-    const menu = document.getElementById('admin-nav');
-    expect(menu).not.toBeNull();
+    await user.click(avatar);
+    expect(avatar).toHaveAttribute('aria-expanded', 'true');
+    const menu = document.getElementById('account-menu');
+    if (!(menu instanceof HTMLElement)) throw new Error('头像菜单没有打开');
+    const items = [...menu.children];
+    expect(items.every((item) => item.tagName === 'LI' && !item.hasAttribute('role'))).toBe(true);
+    const divider = items[2];
+    expect(divider).toHaveAttribute('aria-hidden', 'true');
+    expect(divider).toHaveClass('my-1', 'border-t', 'border-neutral-200');
+    expect(divider).toBeEmptyDOMElement();
+    expect(within(menu).getByText('管理')).toHaveClass('text-neutral-600');
     expect(
-      within(menu as HTMLElement)
+      within(menu)
         .getAllByRole('link')
-        .map((link) => link.textContent),
-    ).toEqual(['内容管理', '发售条目', '用户管理', '举报队列', '操作审计']);
-    expect(screen.getByRole('link', { name: '操作审计' })).toHaveAttribute('href', '/admin/audit');
+        .map((link) => [link.textContent, link.getAttribute('href')]),
+    ).toEqual([
+      ['个人中心', '/me'],
+      ['通知', '/notifications'],
+      ['内容管理', '/admin/catalog'],
+      ['发售条目', '/admin/releases'],
+      ['用户管理', '/admin/users'],
+      ['举报队列', '/reports'],
+      ['操作审计', '/admin/audit'],
+    ]);
 
     await user.keyboard('{Escape}');
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(button).toHaveFocus();
-    expect(screen.queryByRole('link', { name: '举报队列' })).not.toBeInTheDocument();
+    expect(avatar).toHaveAttribute('aria-expanded', 'false');
+    expect(avatar).toHaveFocus();
+    expect(document.getElementById('account-menu')).toBeNull();
   });
 
+  it('gives regular users no admin section and closes on an outside click', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
+    renderAt();
+    const avatar = screen.getByRole('button', { name: '@ada 的个人中心' });
+    await user.click(avatar);
+    const menu = document.getElementById('account-menu') as HTMLElement;
+    expect(menu.querySelector('li[aria-hidden="true"]')).toBeNull();
+    expect(within(menu).getAllByRole('link')).toHaveLength(2);
+    await user.click(document.body);
+    expect(avatar).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('marks the current page and rings the avatar inside the account area', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
+    renderAt('/reports');
+    const avatar = screen.getByRole('button', { name: '@admin 的个人中心' });
+    expect(avatar).toHaveClass('ring-2', 'ring-brand-500');
+    await user.click(avatar);
+    expect(screen.getByRole('link', { name: '举报队列' })).toHaveAttribute('aria-current', 'page');
+  });
+});
+
+describe('SiteHeader collapsing row (CH-218 §3 §4 §6)', () => {
+  it('keeps one nowrap row, xl-only desktop nav with 6 links and a 44px search icon', () => {
+    rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
+    renderAt();
+    const nav = screen.getAllByRole('navigation')[0] as HTMLElement;
+    expect(nav).toHaveClass('hidden', 'xl:flex');
+    expect(nav.parentElement).toHaveClass('flex-nowrap', 'h-16');
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['首页', '分类', '系列', '发售日历', '论坛', '交易']);
+    for (const link of within(nav).getAllByRole('link')) {
+      expect(link).toHaveClass('whitespace-nowrap', 'shrink-0');
+    }
+    const search = screen.getByRole('link', { name: '搜索' });
+    expect(search).toHaveAttribute('href', '/search');
+    expect(search).toHaveClass('size-11', 'lg:hidden');
+    expect(screen.getByRole('link', { name: '首页' })).toHaveClass('text-neutral-900');
+    expect(screen.getByRole('link', { name: '分类' })).toHaveClass('text-neutral-600');
+  });
+
+  it('hamburger lists the main nav then locale and logout, and Esc returns focus', async () => {
+    const user = userEvent.setup();
+    rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
+    renderAt('/series');
+    const toggle = screen.getByRole('button', { name: '打开导航菜单' });
+    expect(toggle).toHaveClass('size-11', 'xl:hidden');
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveAccessibleName('关闭导航菜单');
+    const drawer = document.getElementById('mobile-nav');
+    if (!(drawer instanceof HTMLElement)) throw new Error('汉堡菜单没有打开');
+    expect(drawer).toHaveClass('bg-white');
+    expect(drawer).not.toHaveClass('backdrop-blur');
+    expect(
+      within(drawer)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['首页', '分类', '系列', '发售日历', '论坛', '交易']);
+    expect(within(drawer).getByRole('link', { name: '系列' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(within(drawer).queryByRole('link', { name: '用户管理' })).not.toBeInTheDocument();
+    expect(within(drawer).queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(
+      within(drawer)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['EN', '退出登录']);
+
+    await user.keyboard('{Escape}');
+    expect(document.getElementById('mobile-nav')).toBeNull();
+    expect(toggle).toHaveFocus();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('closes the hamburger after an item is chosen', async () => {
+    const user = userEvent.setup();
+    renderAt();
+    await user.click(screen.getByRole('button', { name: '打开导航菜单' }));
+    const drawer = document.getElementById('mobile-nav') as HTMLElement;
+    expect(
+      within(drawer)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['首页', '分类', '系列', '发售日历', '论坛', '交易', '注册']);
+    await user.click(within(drawer).getByRole('link', { name: '论坛' }));
+    expect(document.getElementById('mobile-nav')).toBeNull();
+  });
+});
+
+describe('SiteHeader', () => {
   it('names the language button EN，切换到英文 while it shows EN', () => {
     rootStore.locale.setLocale('zh-CN');
     render(
@@ -104,23 +221,6 @@ describe('SiteHeader admin navigation', () => {
     expect(button).toHaveAccessibleName('中, Switch to Chinese');
   });
 
-  it('lists user management in the mobile drawer and hides it from non-admins', async () => {
-    const user = userEvent.setup();
-    rootStore.session.signIn('token', { id: 'admin', username: 'admin', role: 'admin' });
-    render(
-      <MemoryRouter>
-        <SiteHeader />
-      </MemoryRouter>,
-    );
-    await user.click(screen.getByRole('button', { name: '打开导航菜单' }));
-    const users = screen.getByRole('link', { name: '用户管理' });
-    expect(users).toHaveAttribute('href', '/admin/users');
-    expect(users).toHaveClass('pl-6');
-    const audit = screen.getByRole('link', { name: '操作审计' });
-    expect(audit).toHaveAttribute('href', '/admin/audit');
-    expect(audit).toHaveClass('pl-6');
-  });
-
   it('keeps the bell off the header until someone is signed in', () => {
     render(
       <MemoryRouter>
@@ -131,25 +231,21 @@ describe('SiteHeader admin navigation', () => {
     expect(unreadQuery).not.toHaveBeenCalled();
   });
 
-  it('places the bell before the username and shows the unread count without a live region', async () => {
-    const user = userEvent.setup();
+  it('places the bell before the avatar and shows the unread count without a live region', () => {
     unreadState.data = { count: 3 };
     rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
-    render(
-      <MemoryRouter>
-        <SiteHeader />
-      </MemoryRouter>,
-    );
+    renderAt();
 
-    const bells = screen.getAllByRole('link', { name: '通知，3 条未读' });
-    expect(bells.length).toBeGreaterThan(0);
-    const desktop = bells.find((bell) => bell.parentElement?.className.includes('md:flex'));
-    expect(desktop?.nextElementSibling).toHaveTextContent('@ada');
-    expect(desktop).toHaveAttribute('href', '/notifications');
-    expect(desktop?.querySelector('[aria-hidden="true"] + [aria-hidden="true"]')).toHaveTextContent(
+    const bell = screen.getByRole('link', { name: '通知，3 条未读' });
+    expect(bell).toHaveClass('size-11');
+    expect(bell.nextElementSibling?.querySelector('button')).toHaveAccessibleName(
+      '@ada 的个人中心',
+    );
+    expect(bell).toHaveAttribute('href', '/notifications');
+    expect(bell.querySelector('[aria-hidden="true"] + [aria-hidden="true"]')).toHaveTextContent(
       '3',
     );
-    expect(desktop?.closest('[aria-live]')).toBeNull();
+    expect(bell.closest('[aria-live]')).toBeNull();
     expect(unreadQuery).toHaveBeenCalledWith(
       undefined,
       expect.objectContaining({
@@ -158,18 +254,6 @@ describe('SiteHeader admin navigation', () => {
         refetchOnWindowFocus: true,
       }),
     );
-
-    await user.click(screen.getByRole('button', { name: '打开导航菜单' }));
-    const drawer = document.getElementById('mobile-nav');
-    if (!(drawer instanceof HTMLElement)) throw new Error('抽屉没有打开');
-    const links = within(drawer).getAllByRole('link');
-    const meIndex = links.findIndex((link) => link.textContent?.includes('个人中心'));
-    const drawerNotifications = links[meIndex + 1];
-    expect(drawerNotifications).toBeDefined();
-    expect(drawerNotifications).toHaveTextContent('通知 3');
-    expect(drawerNotifications).toHaveAccessibleName('通知，3 条未读');
-    expect(drawerNotifications?.querySelector('[aria-hidden="true"]')).toHaveTextContent('3');
-    expect(drawerNotifications).toHaveAttribute('href', '/notifications');
   });
 
   it('shows 99+ and clears cached notifications on sign out', async () => {

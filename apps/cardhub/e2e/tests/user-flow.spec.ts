@@ -50,7 +50,7 @@ test('browse, comment, forum, trade, and report handling', async ({ page }) => {
     await expect(page).toHaveURL(/\/login$/);
     await signIn(page, 'alice', passwords.userPassword);
     await expect(page).toHaveURL(/\/cards\/aurora-knight$/);
-    await expect(page.getByRole('link', { name: '@alice 的个人中心' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '@alice 的个人中心' })).toBeVisible();
     await page.getByRole('textbox', { name: '撰写评论' }).fill(comment);
     await page.getByRole('button', { name: '发布评论' }).click();
     const commentItem = page.getByRole('listitem').filter({ hasText: comment });
@@ -102,7 +102,7 @@ test('browse, comment, forum, trade, and report handling', async ({ page }) => {
     await page.getByRole('link', { name: '登录', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
     await signIn(page, 'admin', passwords.adminPassword);
-    await expect(page.getByRole('button', { name: '管理', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '@admin 的个人中心' })).toBeVisible();
 
     await page.goto(topicUrl);
     await expect(page.getByRole('heading', { level: 3, name: title })).toBeVisible();
@@ -117,7 +117,7 @@ test('browse, comment, forum, trade, and report handling', async ({ page }) => {
       page.getByRole('status').filter({ hasText: '举报已提交，感谢你的协助' }),
     ).toBeVisible();
 
-    await page.getByRole('button', { name: '管理', exact: true }).click();
+    await page.getByRole('button', { name: '@admin 的个人中心' }).click();
     await page.getByRole('link', { name: '举报队列', exact: true }).click();
     await expect(page).toHaveURL(/\/reports$/);
     await expect(page.getByRole('heading', { level: 1, name: '举报队列' })).toBeVisible();

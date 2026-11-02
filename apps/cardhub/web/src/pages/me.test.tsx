@@ -514,13 +514,18 @@ describe('MePage', () => {
     expect(screen.getByText('Great series')).toBeInTheDocument();
   });
 
-  it('renders /me links in the desktop header and mobile drawer', async () => {
+  it('reaches /me from the avatar menu and rings the avatar while on /me', async () => {
     const user = userEvent.setup();
     renderMe();
 
-    expect(screen.getByRole('link', { name: '@alice 的个人中心' })).toHaveAttribute('href', '/me');
-    await user.click(screen.getByRole('button', { name: '打开导航菜单' }));
-    expect(screen.getByRole('link', { name: /个人中心 @alice/ })).toHaveAttribute('href', '/me');
+    const avatar = screen.getByRole('button', { name: '@alice 的个人中心' });
+    expect(avatar).toHaveClass('ring-2', 'ring-brand-500');
+    await user.click(avatar);
+    const me = within(document.getElementById('account-menu') as HTMLElement).getByRole('link', {
+      name: '个人中心',
+    });
+    expect(me).toHaveAttribute('href', '/me');
+    expect(me).toHaveAttribute('aria-current', 'page');
   });
 
   it('moves focus to the target h2 when an anchor is clicked', async () => {

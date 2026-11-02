@@ -1,6 +1,7 @@
-import { render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { rootStore } from '../stores/root-store';
 import { MarkdownView } from './markdown-view';
 
 const body = [
@@ -71,4 +72,12 @@ describe('MarkdownView', () => {
       expect(pre).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-brand-500');
     },
   );
+  it('names the code block as a region in the current locale (CH-206 §2)', () => {
+    rootStore.locale.setLocale('zh-CN');
+    render(<MarkdownView body={body} variant="card" />);
+    expect(screen.getByRole('region', { name: '代码块' }).tagName).toBe('PRE');
+    act(() => rootStore.locale.setLocale('en-US'));
+    expect(screen.getByRole('region', { name: 'Code block' }).tagName).toBe('PRE');
+    act(() => rootStore.locale.setLocale('zh-CN'));
+  });
 });
