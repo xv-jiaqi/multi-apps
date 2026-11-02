@@ -199,8 +199,8 @@ const loadingCases: Array<{ locale: 'zh-CN' | 'en-US'; caption: string }> = [
 ];
 
 const loadedCases: Array<{ locale: 'zh-CN' | 'en-US'; regionName: string; caption: string }> = [
-  { locale: 'zh-CN', regionName: '发售条目列表', caption: '发售条目' },
-  { locale: 'en-US', regionName: 'Release entries', caption: 'Releases' },
+  { locale: 'zh-CN', regionName: '发售条目', caption: '发售条目' },
+  { locale: 'en-US', regionName: 'Releases', caption: 'Releases' },
 ];
 
 const axeCases: Array<{ locale: 'zh-CN' | 'en-US'; state: 'loading' | 'ready'; caption: string }> =
