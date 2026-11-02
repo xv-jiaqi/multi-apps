@@ -77,6 +77,16 @@ const ERROR_KEYS: Record<string, string> = {
   INVALID_RARITY: 'admin.error.rarity',
   INVALID_TYPE: 'admin.error.invalidType',
   SERIES_NOT_FOUND: 'admin.error.seriesNotFound',
+  print_run_min: 'admin.parallel.printRunMin',
+  too_big: 'error.field.too_big',
+  invalid_type: 'error.field.invalid_type',
+  slug_format: 'error.field.slug_format',
+  parallel_name_required: 'error.field.parallel_name_required',
+  parallel_cross_series: 'error.field.parallel_cross_series',
+  parallel_chain: 'error.field.parallel_chain',
+  parallel_self: 'error.field.parallel_self',
+  parallel_has_children: 'error.field.parallel_has_children',
+  parallel_base_missing: 'error.field.parallel_base_missing',
 };
 
 export function formatAdminCount(
@@ -148,6 +158,7 @@ const KNOWN_FIELDS = new Set([
   'cardNumber',
   'subsetSlug',
   'parallelOfSlug',
+  'parallelOf',
   'parallelName',
   'printRun',
   'sortOrder',

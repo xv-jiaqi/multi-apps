@@ -6,11 +6,15 @@ import {
   RARITY_VALUES,
   adminCardDeleteInput,
   adminCardUpsertInput,
+  ADMIN_CATALOG_ERROR_CODES,
   adminCatalogImportInput,
   adminSeriesDeleteInput,
   adminSeriesUpsertInput,
   CATALOG_IMPORT_MAX_ROWS,
   catalogImportLimit,
+  parallelNameInput,
+  parallelOfSlugInput,
+  printRunInput,
   slugSchema,
   t as translate,
 } from '@repo/shared';
@@ -65,6 +69,7 @@ interface NormalizedSeries {
 
 interface NormalizedCard {
   row: ImportRowSummary;
+  cardPath: string;
   slug: string;
   name: string;
   description: string | null;
@@ -72,6 +77,53 @@ interface NormalizedCard {
   imageUrl: string | null;
   attributes: Attributes;
   seriesSlug: string;
+  /** Omitted leaves the stored link. Empty string clears it. */
+  parallelOf?: string;
+  parallelName?: string;
+  printRun?: number | null;
+}
+
+class ImportFieldError extends Error {
+  constructor(
+    readonly card: NormalizedCard,
+    readonly code: AdminCatalogErrorCode,
+    readonly field: 'parallelOf' | 'parallelName' | 'printRun',
+  ) {
+    super(code);
+  }
+}
+
+const IMPORT_FIELD_CODES = new Set<string>(ADMIN_CATALOG_ERROR_CODES);
+
+function zodFieldCode(error: z.ZodError): AdminCatalogErrorCode {
+  const message = error.issues[0]?.message;
+  if (typeof message === 'string' && IMPORT_FIELD_CODES.has(message)) {
+    return message as AdminCatalogErrorCode;
+  }
+  return 'INVALID_TYPE';
+}
+
+function parallelWriteCode(error: unknown): AdminCatalogErrorCode | null {
+  if (!(error instanceof TRPCError) || !isPlainObject(error.cause)) return null;
+  const issues = error.cause.issues;
+  if (!Array.isArray(issues)) return null;
+  const issue: unknown = issues[0];
+  if (!isPlainObject(issue)) return null;
+  const message = issue.message;
+  if (typeof message !== 'string' || !IMPORT_FIELD_CODES.has(message)) return null;
+  return message as AdminCatalogErrorCode;
+}
+
+function parallelErrorField(error: unknown): 'parallelOf' | 'parallelName' | 'printRun' {
+  const cause = error instanceof TRPCError ? error.cause : undefined;
+  const issues =
+    cause && typeof cause === 'object' && 'issues' in cause
+      ? (cause as { issues?: Array<{ path?: unknown[] }> }).issues
+      : undefined;
+  const head = issues?.[0]?.path?.[0];
+  if (head === 'parallelName') return 'parallelName';
+  if (head === 'printRun') return 'printRun';
+  return 'parallelOf';
 }
 
 interface NormalizedImport {
@@ -245,6 +297,41 @@ function addError(errors: ImportRowError[], path: string, code: AdminCatalogErro
   errors.push({ path, code });
 }
 
+function importedParallelName(card: NormalizedCard, storedName: string | null): string | null {
+  if (card.parallelOf && card.parallelOf.length > 0) {
+    return card.parallelName === undefined ? storedName : card.parallelName;
+  }
+  if (storedName && storedName.length > 0) {
+    if (card.parallelName === undefined || card.parallelName.length === 0) return storedName;
+    return card.parallelName;
+  }
+  return null;
+}
+
+function readImportParallel(
+  raw: Record<string, unknown>,
+  cardPath: string,
+  errors: ImportRowError[],
+): Pick<NormalizedCard, 'parallelOf' | 'parallelName' | 'printRun'> {
+  const fields: Pick<NormalizedCard, 'parallelOf' | 'parallelName' | 'printRun'> = {};
+  if ('parallelOf' in raw) {
+    const parsed = parallelOfSlugInput.safeParse(raw.parallelOf);
+    if (!parsed.success) addError(errors, `${cardPath}.parallelOf`, zodFieldCode(parsed.error));
+    else if (parsed.data !== undefined) fields.parallelOf = parsed.data;
+  }
+  if ('parallelName' in raw) {
+    const parsed = parallelNameInput.safeParse(raw.parallelName);
+    if (!parsed.success) addError(errors, `${cardPath}.parallelName`, zodFieldCode(parsed.error));
+    else if (parsed.data !== undefined) fields.parallelName = parsed.data;
+  }
+  if ('printRun' in raw) {
+    const parsed = printRunInput.safeParse(raw.printRun);
+    if (!parsed.success) addError(errors, `${cardPath}.printRun`, zodFieldCode(parsed.error));
+    else fields.printRun = parsed.data ?? null;
+  }
+  return fields;
+}
+
 function normalizeImport(data: unknown): NormalizedImport {
   const results: ImportRowResult[] = [];
   const normalizedSeries: NormalizedSeries[] = [];
@@ -384,10 +471,15 @@ function normalizeImport(data: unknown): NormalizedImport {
         addError(cardErrors, `${cardPath}.attributes`, 'INVALID_TYPE');
       }
 
+      const parallel = isPlainObject(rawCard)
+        ? readImportParallel(rawCard, cardPath, cardErrors)
+        : {};
+
       if (cardErrors.length === 0 && typeof cardSlug === 'string' && typeof name === 'string') {
         seenCardSlugs.add(cardSlug);
         normalizedCards.push({
           row: cardRow,
+          cardPath,
           slug: cardSlug,
           name: name.trim(),
           description: normalizeOptionalText(
@@ -397,6 +489,7 @@ function normalizeImport(data: unknown): NormalizedImport {
           imageUrl: normalizeImageUrl(typeof imageUrl === 'string' ? imageUrl : undefined),
           attributes: normalizedAttributes ?? {},
           seriesSlug: typeof slug === 'string' ? slug : '',
+          ...parallel,
         });
       }
 
@@ -472,7 +565,10 @@ export class AdminRouter {
         cardSlugs.length > 0
           ? prisma.card.findMany({
               where: { slug: { in: cardSlugs } },
-              include: { series: { select: { slug: true } } },
+              include: {
+                series: { select: { slug: true } },
+                parallelOf: { select: { slug: true } },
+              },
             })
           : Promise.resolve([]),
       ]);
@@ -515,13 +611,23 @@ export class AdminRouter {
           continue;
         }
         const existingAttributes = normalizeDbAttributes(existing.attributes);
+        const sameParallel =
+          (card.parallelOf === undefined ||
+            (card.parallelOf === '' ? null : card.parallelOf) ===
+              (existing.parallelOf?.slug ?? null)) &&
+          (card.printRun === undefined ||
+            (card.printRun ?? null) === (existing.printRun ?? null)) &&
+          (card.parallelName === undefined ||
+            importedParallelName(card, existing.parallelName ?? null) ===
+              (existing.parallelName ?? null));
         result.status =
           existing.name === card.name &&
           (existing.description ?? null) === card.description &&
           existing.rarity === card.rarity &&
           (existing.imageUrl ?? null) === card.imageUrl &&
           existing.series.slug === card.seriesSlug &&
-          sameAttributes(existingAttributes, card.attributes)
+          sameAttributes(existingAttributes, card.attributes) &&
+          sameParallel
             ? 'unchanged'
             : 'updated';
       }
@@ -540,82 +646,127 @@ export class AdminRouter {
       }
 
       const normalized = normalizeImport(data);
-      await prisma.$transaction(async (tx) => {
-        const seriesIdBySlug = new Map<string, string>();
-        for (const series of normalized.series) {
-          const saved = await tx.series.upsert({
-            where: { slug: series.slug },
-            update: {
-              title: series.title,
-              description: series.description,
-              coverUrl: series.coverUrl,
-            },
-            create: {
-              slug: series.slug,
-              title: series.title,
-              description: series.description,
-              coverUrl: series.coverUrl,
-            },
-            select: { id: true, slug: true },
-          });
-          seriesIdBySlug.set(saved.slug, saved.id);
-        }
-
-        const missingSeriesSlugs = Array.from(
-          new Set(
-            normalized.cards
-              .map((card) => card.seriesSlug)
-              .filter((seriesSlug) => !seriesIdBySlug.has(seriesSlug)),
-          ),
-        );
-        if (missingSeriesSlugs.length > 0) {
-          const existingSeries = await tx.series.findMany({
-            where: { slug: { in: missingSeriesSlugs } },
-            select: { id: true, slug: true },
-          });
-          for (const series of existingSeries) {
-            seriesIdBySlug.set(series.slug, series.id);
+      try {
+        await prisma.$transaction(async (tx) => {
+          const seriesIdBySlug = new Map<string, string>();
+          for (const series of normalized.series) {
+            const saved = await tx.series.upsert({
+              where: { slug: series.slug },
+              update: {
+                title: series.title,
+                description: series.description,
+                coverUrl: series.coverUrl,
+              },
+              create: {
+                slug: series.slug,
+                title: series.title,
+                description: series.description,
+                coverUrl: series.coverUrl,
+              },
+              select: { id: true, slug: true },
+            });
+            seriesIdBySlug.set(saved.slug, saved.id);
           }
-        }
 
-        for (const card of normalized.cards) {
-          const seriesId = seriesIdBySlug.get(card.seriesSlug);
-          if (!seriesId) {
-            throw new TRPCError({
-              code: 'BAD_REQUEST',
-              message: '系列不存在',
-              cause: { code: 'SERIES_NOT_FOUND', slug: card.seriesSlug },
+          const missingSeriesSlugs = Array.from(
+            new Set(
+              normalized.cards
+                .map((card) => card.seriesSlug)
+                .filter((seriesSlug) => !seriesIdBySlug.has(seriesSlug)),
+            ),
+          );
+          if (missingSeriesSlugs.length > 0) {
+            const existingSeries = await tx.series.findMany({
+              where: { slug: { in: missingSeriesSlugs } },
+              select: { id: true, slug: true },
+            });
+            for (const series of existingSeries) {
+              seriesIdBySlug.set(series.slug, series.id);
+            }
+          }
+
+          const ordered = [
+            ...normalized.cards.filter((card) => !card.parallelOf),
+            ...normalized.cards.filter((card) => card.parallelOf),
+          ];
+          for (const card of ordered) {
+            const seriesId = seriesIdBySlug.get(card.seriesSlug);
+            if (!seriesId) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: '系列不存在',
+                cause: { code: 'SERIES_NOT_FOUND', slug: card.seriesSlug },
+              });
+            }
+            const existing = await tx.card.findUnique({
+              where: { slug: card.slug },
+              select: { seriesId: true, subsetId: true },
+            });
+            const subsetId =
+              existing && existing.seriesId !== seriesId && existing.subsetId ? null : undefined;
+            let parallel;
+            try {
+              parallel = await resolveParallelWrite(tx, {
+                mode: existing ? 'update' : 'create',
+                cardSlug: card.slug,
+                seriesId,
+                parallelOfSlug: card.parallelOf,
+                parallelName: card.parallelName,
+                printRun: card.printRun,
+              });
+            } catch (error) {
+              const code = parallelWriteCode(error);
+              if (!code) throw error;
+              throw new ImportFieldError(card, code, parallelErrorField(error));
+            }
+            await tx.card.upsert({
+              where: { slug: card.slug },
+              update: {
+                name: card.name,
+                description: card.description,
+                rarity: card.rarity,
+                imageUrl: card.imageUrl,
+                attributes: card.attributes,
+                seriesId,
+                ...(subsetId !== undefined ? { subsetId } : {}),
+                ...(parallel.parallelOfId !== undefined
+                  ? { parallelOfId: parallel.parallelOfId }
+                  : {}),
+                ...(parallel.parallelName !== undefined
+                  ? { parallelName: parallel.parallelName }
+                  : {}),
+                ...(parallel.printRun !== undefined ? { printRun: parallel.printRun } : {}),
+              },
+              create: {
+                slug: card.slug,
+                name: card.name,
+                description: card.description,
+                rarity: card.rarity,
+                imageUrl: card.imageUrl,
+                attributes: card.attributes,
+                seriesId,
+                parallelOfId: parallel.parallelOfId ?? null,
+                parallelName: parallel.parallelName ?? null,
+                printRun: parallel.printRun ?? null,
+              },
             });
           }
-          const existing = await tx.card.findUnique({
-            where: { slug: card.slug },
-            select: { seriesId: true, subsetId: true },
-          });
-          const subsetId =
-            existing && existing.seriesId !== seriesId && existing.subsetId ? null : undefined;
-          await tx.card.upsert({
-            where: { slug: card.slug },
-            update: {
-              name: card.name,
-              description: card.description,
-              rarity: card.rarity,
-              imageUrl: card.imageUrl,
-              attributes: card.attributes,
-              seriesId,
-              ...(subsetId !== undefined ? { subsetId } : {}),
-            },
-            create: {
-              slug: card.slug,
-              name: card.name,
-              description: card.description,
-              rarity: card.rarity,
-              imageUrl: card.imageUrl,
-              attributes: card.attributes,
-              seriesId,
-            },
+        });
+      } catch (error) {
+        if (error instanceof ImportFieldError) {
+          const result = normalized.results.find((item) => item.row.row === error.card.row.row);
+          if (result) {
+            result.status = 'error';
+            result.errors.push({ path: `${error.card.cardPath}.${error.field}`, code: error.code });
+          }
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: '导入数据校验失败',
+            cause: { rows: normalized.results },
           });
         }
-      });
+        throw error;
+      }
 
       return preview;
     };
