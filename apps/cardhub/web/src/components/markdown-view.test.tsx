@@ -81,3 +81,18 @@ describe('MarkdownView', () => {
     act(() => rootStore.locale.setLocale('zh-CN'));
   });
 });
+
+describe('MarkdownView forum variant source h1 (CH-221 21-6)', () => {
+  it('renders # as h2 and leaves ## / ### alone', () => {
+    const { container } = render(<MarkdownView body={'# x\n\n## y\n\n### z'} />);
+    expect(container.querySelector('h1')).toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: 'x' })).not.toHaveAttribute('class');
+    expect(screen.getByRole('heading', { level: 2, name: 'y' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'z' })).toBeInTheDocument();
+  });
+
+  it('keeps the card variant mapping (# -> h3)', () => {
+    render(<MarkdownView variant="card" body={'# x'} />);
+    expect(screen.getByRole('heading', { level: 3, name: 'x' })).toBeInTheDocument();
+  });
+});

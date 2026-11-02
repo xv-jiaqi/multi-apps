@@ -67,7 +67,7 @@ test('browse, comment, forum, trade, and report handling', async ({ page }) => {
     await page.getByLabel('正文').fill(body);
     await page.getByRole('button', { name: '发布话题' }).click();
     await expect(page).toHaveURL(/\/forum\/[^/]+$/);
-    await expect(page.getByRole('heading', { level: 3, name: title })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
     await expect(page.getByText(body, { exact: true })).toBeVisible();
     topicUrl = page.url();
     await page.getByLabel('撰写回帖').fill(reply);
@@ -105,9 +105,9 @@ test('browse, comment, forum, trade, and report handling', async ({ page }) => {
     await expect(page.getByRole('button', { name: '@admin 的个人中心' })).toBeVisible();
 
     await page.goto(topicUrl);
-    await expect(page.getByRole('heading', { level: 3, name: title })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
     const topicActions = page
-      .getByRole('heading', { level: 3, name: title })
+      .getByRole('heading', { level: 1, name: title })
       .locator('..')
       .locator('..');
     await topicActions.getByRole('button', { name: '举报', exact: true }).click();

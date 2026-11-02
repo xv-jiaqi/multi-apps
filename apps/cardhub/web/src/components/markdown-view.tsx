@@ -151,6 +151,17 @@ function cardComponents(newTabLabel: string | undefined): Components {
 }
 
 /**
+ * Forum variant (CH-221 §2-2): the topic title is the page's only h1, so a
+ * source `# x` renders as an unstyled h2. Preflight gives h1 and h2 the same
+ * look, so nothing moves visually; h2–h6 keep their level.
+ */
+const forumComponents: Components = {
+  pre: MarkdownPre,
+  table: MarkdownTable,
+  h1: ({ node: _node, ...props }: ComponentProps<'h1'> & ExtraProps) => <h2 {...props} />,
+};
+
+/**
  * Renders forum / topic / card body Markdown safely. The combination is:
  *   - remark-gfm: tables, autolinks, strikethrough, task lists.
  *   - rehype-sanitize: strips <script> / event handlers / arbitrary HTML
@@ -187,7 +198,7 @@ export const MarkdownView = memo(function MarkdownView({
             ? [rehypeSanitize, rehypeScrollTables]
             : [rehypeSanitize, rehypeMentions, rehypeScrollTables]
         }
-        components={card ? cardComponents(newTabLabel) : { pre: MarkdownPre, table: MarkdownTable }}
+        components={card ? cardComponents(newTabLabel) : forumComponents}
       >
         {body}
       </ReactMarkdown>
