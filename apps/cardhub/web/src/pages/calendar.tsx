@@ -85,7 +85,14 @@ export const CalendarPage = observer(function CalendarPage() {
 
   useEffect(() => {
     if (rawMonth === month) return;
-    setSearchParams({ month }, { replace: true });
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current);
+        nextParams.set('month', month);
+        return nextParams;
+      },
+      { replace: true },
+    );
   }, [month, rawMonth, setSearchParams]);
 
   const query = trpc.releases.list.useInfiniteQuery(
@@ -122,7 +129,11 @@ export const CalendarPage = observer(function CalendarPage() {
 
   const openMonth = (target: string | null) => {
     if (!target || target === month) return;
-    setSearchParams({ month: target });
+    setSearchParams((current) => {
+      const nextParams = new URLSearchParams(current);
+      nextParams.set('month', target);
+      return nextParams;
+    });
   };
 
   return (
