@@ -236,8 +236,9 @@ describe('SeriesCardList', () => {
     const input = screen.getByRole('searchbox', { name: '搜索本系列' });
     await user.type(input, '龙');
     expect(harness.calls.filter((call) => call.q === '龙')).toHaveLength(0);
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    expect(harness.calls.some((call) => call.q === '龙' && call.page === 1)).toBe(true);
+    await waitFor(() => {
+      expect(harness.calls.some((call) => call.q === '龙' && call.page === 1)).toBe(true);
+    });
   });
 
   it('caps page=10001 and replaces a page past the end with the last page', async () => {
