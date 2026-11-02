@@ -124,7 +124,7 @@ function AccountMenu({
           </li>
           {isAdmin ? (
             <>
-              <li role="separator" className="my-1 border-t border-neutral-200" />
+              <li aria-hidden="true" className="my-1 border-t border-neutral-200" />
               <li className="px-3 pt-2 text-xs font-medium text-neutral-600">{tt('nav.admin')}</li>
               {ADMIN_LINKS.map((link) => (
                 <li key={link.to}>

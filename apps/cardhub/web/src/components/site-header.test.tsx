@@ -72,7 +72,12 @@ describe('SiteHeader account menu (CH-218 §5)', () => {
     expect(avatar).toHaveAttribute('aria-expanded', 'true');
     const menu = document.getElementById('account-menu');
     if (!(menu instanceof HTMLElement)) throw new Error('头像菜单没有打开');
-    expect(within(menu).getByRole('separator')).toBeInTheDocument();
+    const items = [...menu.children];
+    expect(items.every((item) => item.tagName === 'LI' && !item.hasAttribute('role'))).toBe(true);
+    const divider = items[2];
+    expect(divider).toHaveAttribute('aria-hidden', 'true');
+    expect(divider).toHaveClass('my-1', 'border-t', 'border-neutral-200');
+    expect(divider).toBeEmptyDOMElement();
     expect(within(menu).getByText('管理')).toHaveClass('text-neutral-600');
     expect(
       within(menu)
@@ -101,7 +106,7 @@ describe('SiteHeader account menu (CH-218 §5)', () => {
     const avatar = screen.getByRole('button', { name: '@ada 的个人中心' });
     await user.click(avatar);
     const menu = document.getElementById('account-menu') as HTMLElement;
-    expect(within(menu).queryByRole('separator')).not.toBeInTheDocument();
+    expect(menu.querySelector('li[aria-hidden="true"]')).toBeNull();
     expect(within(menu).getAllByRole('link')).toHaveLength(2);
     await user.click(document.body);
     expect(avatar).toHaveAttribute('aria-expanded', 'false');
