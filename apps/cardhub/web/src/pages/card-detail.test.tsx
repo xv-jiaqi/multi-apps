@@ -213,19 +213,47 @@ describe('card detail data errors', () => {
     expect(document.title).toBe("Couldn't load this card · Cardhub");
   });
 
-  it('keeps the dashed not-found box for a missing card', () => {
+  it('shows the not-found copy as a page-size h1 for a missing card', () => {
     cardQuery.isError = true;
     cardQuery.error = { message: INJECTED, data: { code: 'NOT_FOUND' } };
     cardQuery.errorUpdateCount = 1;
     renderCard('not-exist');
 
     expect(screen.getByText('内容不存在')).toBeInTheDocument();
-    expect(screen.getByText('内容不存在')).toHaveClass('border-dashed');
+    expect(screen.getByRole('heading', { level: 1, name: '内容不存在' })).toHaveClass(
+      'text-2xl',
+      'font-bold',
+      'tracking-tight',
+      'sm:text-3xl',
+    );
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
     expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument();
     expect(document.body.textContent).not.toContain(INJECTED);
     expect(document.title).toBe('not-exist · Cardhub');
     expect(document.querySelector('meta[name="description"]')).toBeNull();
+  });
+
+  it.each(['NOT_FOUND', 'INTERNAL_SERVER_ERROR'])(
+    'links the second breadcrumb to the series list on %s (CH-206 §4)',
+    (code) => {
+      cardQuery.isError = true;
+      cardQuery.error = { message: INJECTED, data: { code } };
+      cardQuery.errorUpdateCount = 1;
+      renderCard();
+      const nav = screen.getByRole('navigation', { name: '面包屑导航' });
+      expect(within(nav).getByRole('link', { name: '系列' })).toHaveAttribute('href', '/series');
+      expect(within(nav).queryByText('卡牌')).toBeNull();
+    },
+  );
+
+  it('sizes the load-failure h1 like the normal title (CH-206 §1)', () => {
+    cardQuery.isError = true;
+    cardQuery.error = { message: INJECTED, data: { code: 'INTERNAL_SERVER_ERROR' } };
+    cardQuery.errorUpdateCount = 1;
+    renderCard();
+    const h1 = screen.getByRole('heading', { level: 1, name: '卡牌加载失败' });
+    expect(h1).toHaveClass('text-2xl', 'font-bold', 'tracking-tight', 'sm:text-3xl');
+    expect(h1).not.toHaveClass('font-medium');
   });
 
   it('shows the skeleton while loading and no alert', () => {
