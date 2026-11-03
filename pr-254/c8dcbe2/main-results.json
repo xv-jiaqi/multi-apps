@@ -1,0 +1,1726 @@
+[
+ {
+  "shot": "register_main_light_1440_zh.png",
+  "url": "/register",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_dark_1440_zh.png",
+  "url": "/register",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_light_1440_en.png",
+  "url": "/register",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_dark_1440_en.png",
+  "url": "/register",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_light_375_zh.png",
+  "url": "/register",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_dark_375_zh.png",
+  "url": "/register",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_light_375_en.png",
+  "url": "/register",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_dark_375_en.png",
+  "url": "/register",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_light_1440_zh.png",
+  "url": "/login",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_dark_1440_zh.png",
+  "url": "/login",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_light_1440_en.png",
+  "url": "/login",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_dark_1440_en.png",
+  "url": "/login",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_light_375_zh.png",
+  "url": "/login",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_dark_375_zh.png",
+  "url": "/login",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_light_375_en.png",
+  "url": "/login",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_dark_375_en.png",
+  "url": "/login",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_light_1440_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_dark_1440_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_light_1440_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_dark_1440_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_light_375_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_dark_375_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_light_375_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_dark_375_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_light_1440_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_dark_1440_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_light_1440_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_dark_1440_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_light_375_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_dark_375_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_light_375_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_dark_375_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_light_1440_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_dark_1440_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_light_1440_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_dark_1440_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_light_375_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_dark_375_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_light_375_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_dark_375_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_light_1440_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_dark_1440_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_light_1440_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_dark_1440_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_light_375_zh.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_dark_375_zh.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_light_375_en.png",
+  "url": "/forum",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_dark_375_en.png",
+  "url": "/forum",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_light_1440_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_dark_1440_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_light_1440_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_dark_1440_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_light_375_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_dark_375_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_light_375_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_dark_375_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_light_1440_zh.png",
+  "url": "/trade/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_dark_1440_zh.png",
+  "url": "/trade/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_light_1440_en.png",
+  "url": "/trade/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_dark_1440_en.png",
+  "url": "/trade/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_light_375_zh.png",
+  "url": "/trade/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_dark_375_zh.png",
+  "url": "/trade/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_light_375_en.png",
+  "url": "/trade/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_dark_375_en.png",
+  "url": "/trade/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_light_1440_zh.png",
+  "url": "/forum/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_dark_1440_zh.png",
+  "url": "/forum/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_light_1440_en.png",
+  "url": "/forum/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_dark_1440_en.png",
+  "url": "/forum/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_light_375_zh.png",
+  "url": "/forum/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_dark_375_zh.png",
+  "url": "/forum/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_light_375_en.png",
+  "url": "/forum/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_dark_375_en.png",
+  "url": "/forum/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_light_1440_zh.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_dark_1440_zh.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_light_1440_en.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_dark_1440_en.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_light_375_zh.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_dark_375_zh.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_light_375_en.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_dark_375_en.png",
+  "url": "/admin/catalog/series/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_light_1440_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_dark_1440_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_light_1440_en.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_dark_1440_en.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_light_375_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_dark_375_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_light_375_en.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_dark_375_en.png",
+  "url": "/admin/catalog/categories/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_light_1440_zh.png",
+  "url": "/admin/releases/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_dark_1440_zh.png",
+  "url": "/admin/releases/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_light_1440_en.png",
+  "url": "/admin/releases/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_dark_1440_en.png",
+  "url": "/admin/releases/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_light_375_zh.png",
+  "url": "/admin/releases/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_dark_375_zh.png",
+  "url": "/admin/releases/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_light_375_en.png",
+  "url": "/admin/releases/new",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_dark_375_en.png",
+  "url": "/admin/releases/new",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_light_1440_zh.png",
+  "url": "/admin/catalog/import",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_dark_1440_zh.png",
+  "url": "/admin/catalog/import",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_light_1440_en.png",
+  "url": "/admin/catalog/import",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_dark_1440_en.png",
+  "url": "/admin/catalog/import",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_light_375_zh.png",
+  "url": "/admin/catalog/import",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_dark_375_zh.png",
+  "url": "/admin/catalog/import",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_light_375_en.png",
+  "url": "/admin/catalog/import",
+  "scheme": "light",
+  "htmlDark": false,
+  "prefersDark": false,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_dark_375_en.png",
+  "url": "/admin/catalog/import",
+  "scheme": "dark",
+  "htmlDark": true,
+  "prefersDark": true,
+  "bodyBg": "oklch(0.985 0 0)",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ }
+]
