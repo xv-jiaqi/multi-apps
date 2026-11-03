@@ -21,11 +21,7 @@ export const AdminGate = observer(function AdminGate({ children }: { children: R
   if (!session.isAuthenticated) {
     return (
       <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
-        <Link
-          to="/login"
-          state={{ from: location.pathname }}
-          className="text-brand-600 hover:underline"
-        >
+        <Link to="/login" state={{ from: location.pathname }} className="text-link hover:underline">
           {tt('admin.loginRequired')}
         </Link>
       </p>

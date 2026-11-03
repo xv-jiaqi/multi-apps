@@ -581,7 +581,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
           />
         )
       ) : formView === 'loading' ? (
-        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-card p-6">
           <div className="h-4 w-40 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
         </div>
       ) : missingSeries || missingCard ? (
@@ -615,7 +615,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                   ))}
                 </SelectContent>
               </Select>
-              {errors.series ? <p className="text-xs text-red-700">{errors.series}</p> : null}
+              {errors.series ? <p className="text-xs text-danger">{errors.series}</p> : null}
             </div>
             {mode === 'create' ? (
               <AdminField
@@ -670,7 +670,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 </SelectContent>
               </Select>
               {errors.subsetSlug ? (
-                <p id="card-subset-error" className="text-xs text-red-700">
+                <p id="card-subset-error" className="text-xs text-danger">
                   {errors.subsetSlug}
                 </p>
               ) : null}
@@ -700,7 +700,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                   {tt('admin.field.parallelOf')}
                 </label>
                 {baseError ? (
-                  <p className="text-xs text-red-700" role="alert">
+                  <p className="text-xs text-danger" role="alert">
                     {tt('state.error')}
                   </p>
                 ) : baseLoading ? (
@@ -767,7 +767,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                   </p>
                 ) : null}
                 {errors.parallelOfSlug ? (
-                  <p id="card-parallel-of-error" className="text-xs text-red-700">
+                  <p id="card-parallel-of-error" className="text-xs text-danger">
                     {errors.parallelOfSlug}
                   </p>
                 ) : null}
@@ -826,7 +826,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                   ))}
                 </SelectContent>
               </Select>
-              {errors.rarity ? <p className="text-xs text-red-700">{errors.rarity}</p> : null}
+              {errors.rarity ? <p className="text-xs text-danger">{errors.rarity}</p> : null}
             </div>
             <AdminField
               id="card-description"
@@ -840,7 +840,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 rows={4}
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600 sm:text-sm"
+                className="flex w-full rounded-md border border-neutral-300 bg-card px-3 py-2 text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line sm:text-sm"
               />
             </AdminField>
             <AdminField
@@ -855,7 +855,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
                 rows={8}
                 value={body}
                 onChange={(event) => setBody(event.target.value)}
-                className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600 sm:text-sm"
+                className="flex w-full rounded-md border border-neutral-300 bg-card px-3 py-2 font-mono text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line sm:text-sm"
               />
             </AdminField>
             <ImageUrlField
@@ -882,7 +882,7 @@ const CardFormBody = observer(function CardFormBody({ mode }: { mode: 'create' |
             {formError ? (
               <p
                 role="alert"
-                className="whitespace-pre-line rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                className="whitespace-pre-line rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger"
               >
                 {formError}
               </p>

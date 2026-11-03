@@ -62,7 +62,7 @@ export function CardArtLightbox({
           {art}
           <span
             aria-hidden
-            className="absolute right-3 bottom-3 inline-flex size-8 items-center justify-center rounded-full bg-white/90 text-neutral-900"
+            className="absolute right-3 bottom-3 inline-flex size-8 items-center justify-center rounded-full bg-card/90 text-neutral-900"
           >
             <Maximize2 className="size-4" />
           </span>

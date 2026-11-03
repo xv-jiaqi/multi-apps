@@ -55,7 +55,7 @@ function KindChip({ kind, label }: { kind: ListingKind; label: string }) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-        kind === 'SELL' ? 'bg-brand-50 text-brand-700' : 'bg-neutral-100 text-neutral-700'
+        kind === 'SELL' ? 'bg-accent-soft text-link-strong' : 'bg-neutral-100 text-neutral-700'
       }`}
     >
       {label}
@@ -68,7 +68,7 @@ function StatusChip({ status, label }: { status: ListingStatus; label: string })
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
         status === 'OPEN'
-          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200'
+          ? 'bg-success-soft text-success ring-1 ring-inset ring-success-border'
           : 'bg-neutral-100 text-neutral-600 ring-1 ring-inset ring-neutral-200'
       }`}
     >
@@ -89,7 +89,7 @@ function ErrorState({
   return (
     <div
       role="alert"
-      className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+      className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger"
     >
       {message}
       <button type="button" className="ml-2 font-medium underline" onClick={onRetry}>
@@ -123,7 +123,7 @@ function MeSection({
       aria-busy={isLoading || undefined}
       className="scroll-mt-20"
     >
-      <Card className="border-white/60 bg-white/70 backdrop-blur">
+      <Card className="border-card/60 bg-card/70 backdrop-blur">
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <h2
             id={`${id}-title`}
@@ -138,7 +138,7 @@ function MeSection({
           {action ? (
             <Link
               to={action.to}
-              className="text-sm text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+              className="text-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
             >
               {action.label}
             </Link>
@@ -337,7 +337,7 @@ export const MePage = observer(function MePage() {
           aria-labelledby="me-overview-title"
           aria-busy={me.isLoading || undefined}
         >
-          <Card className="border-white/60 bg-white/70 backdrop-blur">
+          <Card className="border-card/60 bg-card/70 backdrop-blur">
             <CardContent className="space-y-4 pt-6">
               {me.isLoading ? (
                 <>
@@ -404,7 +404,7 @@ export const MePage = observer(function MePage() {
                     ].map((stat) => (
                       <div
                         key={stat.label}
-                        className="rounded-lg border border-neutral-200 bg-white px-3 py-2"
+                        className="rounded-lg border border-neutral-200 bg-card px-3 py-2"
                       >
                         <dt className="text-xs text-neutral-600">{stat.label}</dt>
                         <dd className="text-xl font-semibold tabular-nums text-neutral-900">
@@ -454,7 +454,7 @@ export const MePage = observer(function MePage() {
                     updateHash(section.id);
                   }}
                   aria-current={hash === `#${section.id}` ? 'location' : undefined}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-3 text-sm text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-[current=location]:border-neutral-900 aria-[current=location]:font-medium aria-[current=location]:text-neutral-900"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-neutral-300 bg-card px-3 text-sm text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-[current=location]:border-neutral-900 aria-[current=location]:font-medium aria-[current=location]:text-neutral-900"
                 >
                   {section.label}
                   {section.count !== undefined ? (
@@ -478,7 +478,7 @@ export const MePage = observer(function MePage() {
                 ref={successRef}
                 role="status"
                 tabIndex={-1}
-                className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="mb-3 rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 {tt('trade.closed')}
               </p>
@@ -784,7 +784,7 @@ export const MePage = observer(function MePage() {
                 ref={passwordNoticeRef}
                 role="status"
                 tabIndex={-1}
-                className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="mb-3 rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 {tt('me.password.changed')}
               </p>

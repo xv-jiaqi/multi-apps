@@ -292,13 +292,13 @@ export const TradeListPage = observer(function TradeListPage() {
             <Link
               to="/login"
               state={{ from: '/trade' }}
-              className="text-sm text-brand-600 hover:underline"
+              className="text-sm text-link hover:underline"
             >
               {tt('trade.list.loginToPublish')}
             </Link>
           )}
         </header>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-2xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
           {tt('trade.list.disclaimer')}
         </div>
 
@@ -463,7 +463,7 @@ export const TradeListPage = observer(function TradeListPage() {
                 </p>
               ) : null}
               {priceInvalid ? (
-                <p className="mt-1 text-xs text-red-700">{tt('trade.filter.priceInvalid')}</p>
+                <p className="mt-1 text-xs text-danger">{tt('trade.filter.priceInvalid')}</p>
               ) : null}
             </fieldset>
             <FilterField label={tt('trade.sort.label')} className="w-full sm:w-44">
@@ -560,7 +560,7 @@ export const TradeListPage = observer(function TradeListPage() {
             ref={noticeRef}
             role="status"
             tabIndex={-1}
-            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {tt('trade.closed')}
           </p>
@@ -614,7 +614,7 @@ export const TradeListPage = observer(function TradeListPage() {
                   <li key={listing.id}>
                     <article
                       aria-labelledby={titleId}
-                      className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur sm:p-5"
+                      className="rounded-2xl border border-card/60 bg-card/70 p-4 shadow-sm backdrop-blur sm:p-5"
                     >
                       <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-4">
                         {listing.card ? (
@@ -681,7 +681,7 @@ export const TradeListPage = observer(function TradeListPage() {
                                 <Link
                                   to="/login"
                                   state={{ from: `${location.pathname}${location.search}` }}
-                                  className="text-brand-600 hover:underline"
+                                  className="text-link hover:underline"
                                 >
                                   {tt('trade.list.contactSignIn')}
                                 </Link>
@@ -795,7 +795,7 @@ function FilterChip({
   onClear: () => void;
 }) {
   return (
-    <span className="inline-flex h-8 items-center gap-1 rounded-full border border-neutral-300 bg-white pl-3 pr-1 text-xs text-neutral-700">
+    <span className="inline-flex h-8 items-center gap-1 rounded-full border border-neutral-300 bg-card pl-3 pr-1 text-xs text-neutral-700">
       {label}
       <button
         type="button"
@@ -811,7 +811,7 @@ function FilterChip({
 function KindChip({ kind, label }: { kind: ListingKind; label: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${kind === 'SELL' ? 'bg-brand-50 text-brand-700' : 'bg-neutral-100 text-neutral-700'}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${kind === 'SELL' ? 'bg-accent-soft text-link-strong' : 'bg-neutral-100 text-neutral-700'}`}
     >
       {label}
     </span>
@@ -823,7 +823,7 @@ function PhotoFallbackLink({ url, label }: { url: string; label: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex h-16 items-center rounded-md border border-neutral-200 bg-white px-2 text-xs text-brand-600 hover:underline"
+      className="inline-flex h-16 items-center rounded-md border border-neutral-200 bg-card px-2 text-xs text-link hover:underline"
     >
       {label}
     </a>
@@ -890,7 +890,7 @@ function ListingSkeleton() {
       {Array.from({ length: 4 }).map((_, index) => (
         <li
           key={index}
-          className="animate-pulse motion-reduce:animate-none rounded-2xl border border-white/60 bg-white/50 p-4 sm:p-5"
+          className="animate-pulse motion-reduce:animate-none rounded-2xl border border-card/60 bg-card/50 p-4 sm:p-5"
         >
           <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-4">
             <div className="aspect-[63/88] w-16 rounded-sm bg-neutral-200" />

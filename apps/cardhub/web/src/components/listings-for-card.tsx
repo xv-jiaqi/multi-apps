@@ -29,7 +29,7 @@ function formatPrice(price: string | null, currency: string, fallback: string, l
 function KindChip({ kind, label }: { kind: ListingKind; label: string }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${kind === 'SELL' ? 'bg-brand-50 text-brand-700' : 'bg-neutral-100 text-neutral-700'}`}
+      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${kind === 'SELL' ? 'bg-accent-soft text-link-strong' : 'bg-neutral-100 text-neutral-700'}`}
     >
       {label}
     </span>
@@ -55,11 +55,11 @@ export const ListingsForCard = observer(function ListingsForCard({
           <p className="sr-only">{tt('a11y.loading')}</p>
           <div
             aria-hidden
-            className="h-14 animate-pulse rounded-lg border border-neutral-200 bg-white motion-reduce:animate-none"
+            className="h-14 animate-pulse rounded-lg border border-neutral-200 bg-card motion-reduce:animate-none"
           />
           <div
             aria-hidden
-            className="h-14 animate-pulse rounded-lg border border-neutral-200 bg-white motion-reduce:animate-none"
+            className="h-14 animate-pulse rounded-lg border border-neutral-200 bg-card motion-reduce:animate-none"
           />
         </div>
       ) : view === 'error' ? (
@@ -79,7 +79,7 @@ export const ListingsForCard = observer(function ListingsForCard({
             listRef.current = node;
           }}
           tabIndex={-1}
-          className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-3 text-center text-sm text-neutral-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="rounded-md border border-dashed border-neutral-200 bg-card/60 p-3 text-center text-sm text-neutral-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('trade.detail.byCardEmpty')}
         </p>
@@ -109,7 +109,7 @@ export const ListingsForCard = observer(function ListingsForCard({
             return (
               <li
                 key={listing.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-card px-3 py-2 text-sm"
               >
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export const ListingsForCard = observer(function ListingsForCard({
                       <Link
                         to="/login"
                         state={{ from: `${location.pathname}${location.search}` }}
-                        className="text-brand-600 hover:underline"
+                        className="text-link hover:underline"
                       >
                         {tt('trade.list.contactSignIn')}
                       </Link>
@@ -153,13 +153,13 @@ export const ListingsForCard = observer(function ListingsForCard({
         </ul>
       )}
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-        <Link to="/trade" className="text-brand-600 hover:underline">
+        <Link to="/trade" className="text-link hover:underline">
           {tt('trade.list.title')} →
         </Link>
         {session.isAuthenticated ? (
           <Link
             to={`/trade/new?cardSlug=${encodeURIComponent(cardSlug)}`}
-            className="text-brand-600 hover:underline"
+            className="text-link hover:underline"
           >
             {tt('trade.detail.byCardPublish')}
           </Link>

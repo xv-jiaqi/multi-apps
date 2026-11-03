@@ -214,7 +214,7 @@ describe('CommentSection (unauthenticated)', () => {
     renderShell();
     expect(screen.getByRole('link', { name: /登录后即可发表评论/ })).toHaveClass(
       'rounded',
-      'text-brand-600',
+      'text-link',
       'focus-visible:outline-none',
       'focus-visible:ring-2',
       'focus-visible:ring-brand-500',
@@ -239,17 +239,23 @@ describe('CommentSection (unauthenticated)', () => {
       expect(alert).not.toHaveTextContent('QA mock');
       expect(alert).toHaveClass(
         'rounded-lg',
-        'border-red-200',
-        'bg-red-50',
+        'border-danger-border',
+        'bg-danger-soft',
         'p-6',
         'text-sm',
-        'text-red-700',
+        'text-danger',
       );
       expect(alert.querySelector('h1')).toBeNull();
       expect(alert.querySelector('p')).toHaveClass('font-medium');
       const retry = screen.getByRole('button', { name: '重试' });
-      expect(retry).toHaveClass('mt-3', 'min-h-6', 'border-red-300', 'bg-white', 'text-red-700');
-      expect(retry).not.toHaveClass('text-brand-600');
+      expect(retry).toHaveClass(
+        'mt-3',
+        'min-h-6',
+        'border-danger-border-strong',
+        'bg-card',
+        'text-danger',
+      );
+      expect(retry).not.toHaveClass('text-link');
       expect(retry.className).not.toMatch(/ring-offset/);
       expect(screen.getByRole('link', { name: '登录后即可发表评论' })).toBeInTheDocument();
 
@@ -546,7 +552,7 @@ describe('CommentSection (unauthenticated)', () => {
     ];
     renderShell();
     const mention = screen.getByText('@Ada_1');
-    expect(mention).toHaveClass('font-medium', 'text-brand-700');
+    expect(mention).toHaveClass('font-medium', 'text-link-strong');
     expect(mention.tagName).toBe('SPAN');
     expect(mention.closest('a')).toBeNull();
     expect(mention.parentElement?.textContent).toBe('hello @Ada_1 and a@b.com');
@@ -704,7 +710,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('你没有权限删除这条评论');
-    expect(screen.getByRole('alert')).toHaveClass('bg-red-50');
+    expect(screen.getByRole('alert')).toHaveClass('bg-danger-soft');
     await waitFor(() =>
       expect(screen.getByRole('button', { name: '删除 @alice 的评论' })).toHaveFocus(),
     );
@@ -787,7 +793,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除' }));
 
     const status = await screen.findByText('评论已删除');
-    expect(status).toHaveClass('bg-emerald-50');
+    expect(status).toHaveClass('bg-success-soft');
     expect(status).toHaveFocus();
   });
 
@@ -807,7 +813,7 @@ describe('CommentSection (authenticated)', () => {
 
     await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
 
-    expect(screen.getByRole('group', { name: '删除这条评论？' })).toHaveClass('bg-red-50');
+    expect(screen.getByRole('group', { name: '删除这条评论？' })).toHaveClass('bg-danger-soft');
     expect(screen.getByText('L'.repeat(80))).toHaveClass('wrap-anywhere');
     expect(screen.getByRole('button', { name: '删除中…' })).toHaveClass('disabled:no-underline');
   });
@@ -832,7 +838,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除 @alice 的评论' }));
     await user.click(screen.getByRole('button', { name: '删除' }));
 
-    expect(statusByText('评论已删除')).toHaveClass('bg-emerald-50');
+    expect(statusByText('评论已删除')).toHaveClass('bg-success-soft');
   });
 
   it.each([
@@ -867,7 +873,7 @@ describe('CommentSection (authenticated)', () => {
     await user.click(screen.getByRole('button', { name: '删除' }));
 
     const status = await screen.findByText('评论已删除');
-    expect(status).toHaveClass('bg-emerald-50');
+    expect(status).toHaveClass('bg-success-soft');
     expect(status).toHaveFocus();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -1168,14 +1174,14 @@ describe('CommentSection replies', () => {
     renderShell();
     expect(screen.getByRole('button', { name: '删除 @bob 的评论' })).toHaveClass(
       'text-xs',
-      'text-red-700',
+      'text-danger',
     );
     const author = screen.getByText('@cara');
     expect(author).toHaveClass('wrap-anywhere');
     expect(author).not.toHaveClass('truncate');
     expect(screen.getByRole('button', { name: '删除 @cara 的评论' })).toHaveClass(
       'text-xs',
-      'text-red-700',
+      'text-danger',
     );
     expect(screen.getAllByText('0 / 500')[0]).toHaveClass('text-neutral-600');
     expect(screen.getAllByRole('button', { name: '举报' })[0]).toHaveClass('text-neutral-600');
@@ -1418,7 +1424,7 @@ describe('CommentSection replies', () => {
     expect(screen.queryByLabelText('删除原因（选填，只有管理员能看到）')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '删除' }));
     const status = statusByText('回复已删除');
-    expect(status).toHaveClass('bg-emerald-50');
+    expect(status).toHaveClass('bg-success-soft');
     expect(status).toHaveFocus();
     expect(screen.queryByText('older reply')).not.toBeInTheDocument();
     expect(screen.queryByText(/条回复/)).not.toBeInTheDocument();
@@ -1444,8 +1450,8 @@ describe('CommentSection replies', () => {
 
 describe('CommentSection surfaces (CH-206 v1.4 §9)', () => {
   function expectSolidWhite(node: Element | null | undefined) {
-    expect(node).toHaveClass('bg-white', 'border', 'rounded-lg');
-    expect(node?.className).not.toMatch(/backdrop|bg-white\/|border-white/);
+    expect(node).toHaveClass('bg-card', 'border', 'rounded-lg');
+    expect(node?.className).not.toMatch(/backdrop|bg-card\/|border-card/);
   }
 
   it.each([

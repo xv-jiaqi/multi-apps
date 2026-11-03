@@ -28,7 +28,7 @@ export const AlertDialogOverlay = React.forwardRef<
   <AlertDialogPrimitive.Overlay
     ref={ref}
     data-radix-alert-dialog-overlay=""
-    className={cn('fixed inset-0 z-50 bg-neutral-950/40', className)}
+    className={cn('fixed inset-0 z-50 bg-overlay/40', className)}
     {...props}
   />
 ));
@@ -65,7 +65,7 @@ export const AlertDialogContent = React.forwardRef<
         aria-modal="true"
         aria-busy={busy || undefined}
         className={cn(
-          'fixed inset-x-4 top-1/2 z-50 mx-auto max-h-11/12 -translate-y-1/2 overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 text-neutral-900 shadow-xl focus:outline-none',
+          'fixed inset-x-4 top-1/2 z-50 mx-auto max-h-11/12 -translate-y-1/2 overflow-y-auto rounded-xl border border-neutral-200 bg-card p-6 text-neutral-900 shadow-xl focus:outline-none',
           alertDialogContentSizes[size],
           alertDialogContentVariants[variant],
           className,

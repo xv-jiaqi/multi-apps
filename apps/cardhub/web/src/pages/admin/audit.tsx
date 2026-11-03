@@ -206,7 +206,7 @@ const AuditBody = observer(function AuditBody() {
           </Select>
         </div>
         {userParam ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs text-link-strong">
             {tt('admin.audit.userFilter', { user: userParam })}
             <button
               type="button"
@@ -262,7 +262,7 @@ const AuditBody = observer(function AuditBody() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className={`${actionClass} text-brand-600 hover:underline`}
+                      className={`${actionClass} text-link hover:underline`}
                     >
                       {tt('admin.users.clearFilters')}
                     </button>
@@ -313,13 +313,13 @@ const AuditBody = observer(function AuditBody() {
           {query.isFetchNextPageError ? (
             <div
               role="alert"
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700"
+              className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-center text-sm text-danger"
             >
               <p>{tt('state.error')}</p>
               <button
                 type="button"
                 onClick={() => void query.fetchNextPage()}
-                className={`${actionClass} mt-2 text-xs font-medium text-red-700`}
+                className={`${actionClass} mt-2 text-xs font-medium text-danger`}
               >
                 {query.isFetchingNextPage ? tt('state.loading') : tt('state.retry')}
               </button>
@@ -355,7 +355,7 @@ function AuditTarget({
     return (
       <Link
         to={`/admin/users?q=${encodeURIComponent(row.targetLabel)}`}
-        className="text-brand-600 hover:underline"
+        className="text-link hover:underline"
       >
         @{row.targetLabel}
       </Link>
@@ -366,7 +366,7 @@ function AuditTarget({
       ? tt(`admin.audit.target.${row.targetLabel}`)
       : row.targetLabel;
     return (
-      <Link to="/reports" className="text-brand-600 hover:underline">
+      <Link to="/reports" className="text-link hover:underline">
         {tt('admin.audit.target.REPORT')} · {reported}
       </Link>
     );

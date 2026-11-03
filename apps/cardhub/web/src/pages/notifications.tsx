@@ -476,7 +476,7 @@ export const NotificationsPage = observer(function NotificationsPage() {
           </Button>
         ) : null}
         {pageNotice ? (
-          <p key={pageNotice.id} role="alert" className="mt-3 text-sm text-red-700">
+          <p key={pageNotice.id} role="alert" className="mt-3 text-sm text-danger">
             {pageNotice.text}
           </p>
         ) : null}
@@ -540,7 +540,7 @@ export const NotificationsPage = observer(function NotificationsPage() {
             </div>
           ) : null}
           {moreError ? (
-            <p key={moreError.id} role="alert" className="mt-2 text-center text-sm text-red-700">
+            <p key={moreError.id} role="alert" className="mt-2 text-center text-sm text-danger">
               {moreError.text}{' '}
               <RetryButton
                 variant="inline"
@@ -636,7 +636,7 @@ function NotificationItem({
         </div>
       )}
       {notice ? (
-        <p key={notice.id} role="alert" className="px-3 text-sm text-red-700">
+        <p key={notice.id} role="alert" className="px-3 text-sm text-danger">
           {notice.text}
         </p>
       ) : null}

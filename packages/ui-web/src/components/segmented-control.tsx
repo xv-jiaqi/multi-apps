@@ -53,7 +53,7 @@ export function SegmentedControl({
           <label
             key={option.value}
             className={cn(
-              'relative inline-flex h-8 cursor-pointer items-center rounded-sm px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-white/70',
+              'relative inline-flex h-8 cursor-pointer items-center rounded-sm px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-card/70',
               'has-[:checked]:bg-brand-600 has-[:checked]:text-white',
               'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500 has-[:focus-visible]:ring-offset-2',
               'has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50',

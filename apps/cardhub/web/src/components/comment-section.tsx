@@ -69,7 +69,7 @@ interface ThreadOverlay {
 }
 
 const replyActionClassName =
-  'inline-flex min-h-6 scroll-mt-20 items-center rounded px-1 text-xs font-medium text-brand-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+  'inline-flex min-h-6 scroll-mt-20 items-center rounded px-1 text-xs font-medium text-link-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
 function emptyOverlay(): ThreadOverlay {
   return { appended: [], removed: [], countDelta: 0, cursor: undefined };
@@ -133,7 +133,7 @@ function CommentText({ content }: { content: string }) {
   if (parts.every((part) => part.kind === 'text')) return content;
   return parts.map((part, index) =>
     part.kind === 'mention' ? (
-      <span key={`${part.value}-${index}`} className="font-medium text-brand-700">
+      <span key={`${part.value}-${index}`} className="font-medium text-link-strong">
         {part.value}
       </span>
     ) : (
@@ -153,7 +153,7 @@ function CommentListSkeleton({ label }: { label: string }) {
       <p className="sr-only">{label}</p>
       <ul className="space-y-3" aria-hidden="true">
         {Array.from({ length: 3 }, (_, index) => (
-          <li key={index} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+          <li key={index} className="rounded-lg border border-neutral-200 bg-card p-4 shadow-sm">
             <div className="flex h-6 items-center">
               <div className="h-3 w-24 animate-pulse rounded bg-neutral-200 motion-reduce:animate-none" />
             </div>
@@ -808,7 +808,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       ) : session.isAuthenticated ? (
         <form
           onSubmit={onSubmit}
-          className="space-y-2 rounded-lg border border-neutral-200 bg-white p-4"
+          className="space-y-2 rounded-lg border border-neutral-200 bg-card p-4"
         >
           <label htmlFor="comment-content" className="sr-only">
             {tt('a11y.commentArea')}
@@ -829,12 +829,12 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             rows={3}
             maxLength={500}
             aria-label={tt('a11y.commentArea')}
-            className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           {error ? (
             <p
               role="alert"
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+              className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
             >
               {error}
             </p>
@@ -850,7 +850,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
           </div>
         </form>
       ) : (
-        <p className="rounded-lg border border-dashed border-neutral-300 bg-white p-4 text-center text-sm text-neutral-600">
+        <p className="rounded-lg border border-dashed border-neutral-300 bg-card p-4 text-center text-sm text-neutral-600">
           <Link
             to="/login"
             state={{
@@ -859,7 +859,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                   ? `/cards/${commentTarget.slug}`
                   : `/series/${commentTarget.slug}`,
             }}
-            className="rounded font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="rounded font-medium text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {tt('card.detail.loginToComment')}
           </Link>
@@ -872,7 +872,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
         tabIndex={-1}
         className={
           statusMessage && statusVisible
-            ? 'scroll-mt-20 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+            ? 'scroll-mt-20 rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
             : 'sr-only'
         }
       >
@@ -881,7 +881,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
       {parentGone ? (
         <p
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+          className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
         >
           {parentGone}
         </p>
@@ -906,7 +906,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             commentsRef.current = node;
           }}
           tabIndex={-1}
-          className="scroll-mt-20 rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="scroll-mt-20 rounded-lg border border-neutral-200 bg-card p-4 text-center text-sm text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('card.detail.commentEmpty')}
         </p>
@@ -947,8 +947,8 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 aria-busy={isDeleting ? true : undefined}
                 className={`scroll-mt-20 rounded-lg border p-4 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
                   highlightedId === comment.id
-                    ? 'border-brand-200 bg-brand-50 duration-0'
-                    : 'border-neutral-200 bg-white duration-1000'
+                    ? 'border-accent-border bg-accent-soft duration-0'
+                    : 'border-neutral-200 bg-card duration-1000'
                 }`}
               >
                 <div className="flex min-h-6 items-center justify-between gap-x-3 text-xs text-neutral-600">
@@ -1002,7 +1002,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               setDeleteReason('');
                               setConfirmingId(comment.id);
                             }}
-                            className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                            className="inline-flex min-h-6 items-center rounded px-1 text-xs text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                           >
                             {tt('card.detail.commentDelete')}
                           </button>
@@ -1023,12 +1023,12 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                     aria-label={confirmPrompt}
                     className={
                       showDeleteReason
-                        ? 'mt-2 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
-                        : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+                        ? 'mt-2 flex flex-col gap-2 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
+                        : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
                     }
                     onKeyDown={(event) => onConfirmKeyDown(event, comment.id)}
                   >
-                    <span className={showDeleteReason ? 'text-red-700' : 'mr-auto text-red-700'}>
+                    <span className={showDeleteReason ? 'text-danger' : 'mr-auto text-danger'}>
                       {confirmPrompt}
                     </span>
                     {showDeleteReason ? (
@@ -1051,7 +1051,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               : { id: comment.id },
                           );
                         }}
-                        className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+                        className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
                       >
                         {isDeleting
                           ? tt('card.detail.commentDeleting')
@@ -1074,7 +1074,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 {deleteError?.id === comment.id ? (
                   <p
                     role="alert"
-                    className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                    className="mt-2 rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
                   >
                     {deleteError.message}
                   </p>
@@ -1099,7 +1099,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           aria-busy={replyDeleting ? true : undefined}
                           className={`scroll-mt-20 rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
                             highlightedId === reply.id
-                              ? 'border-brand-200 bg-brand-50 duration-0'
+                              ? 'border-accent-border bg-accent-soft duration-0'
                               : 'border-transparent duration-1000'
                           }`}
                         >
@@ -1134,7 +1134,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                                             setDeleteReason('');
                                             setConfirmingId(reply.id);
                                           }}
-                                          className="inline-flex min-h-6 items-center rounded px-1 text-xs text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                                          className="inline-flex min-h-6 items-center rounded px-1 text-xs text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                                         >
                                           {tt('card.detail.commentDelete')}
                                         </button>
@@ -1177,15 +1177,13 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                               aria-label={tt('comment.reply.confirmDelete')}
                               className={
                                 replyShowReason
-                                  ? 'mt-2 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
-                                  : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+                                  ? 'mt-2 flex flex-col gap-2 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
+                                  : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
                               }
                               onKeyDown={(event) => onConfirmKeyDown(event, reply.id)}
                             >
                               <span
-                                className={
-                                  replyShowReason ? 'text-red-700' : 'mr-auto text-red-700'
-                                }
+                                className={replyShowReason ? 'text-danger' : 'mr-auto text-danger'}
                               >
                                 {tt('comment.reply.confirmDelete')}
                               </span>
@@ -1211,7 +1209,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                                         : { id: reply.id },
                                     );
                                   }}
-                                  className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+                                  className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
                                 >
                                   {replyDeleting
                                     ? tt('card.detail.commentDeleting')
@@ -1239,7 +1237,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                 {failedParentId === comment.id ? (
                   <div
                     role="alert"
-                    className="mt-2 flex flex-wrap items-center gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                    className="mt-2 flex flex-wrap items-center gap-3 rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
                   >
                     <span>{tt('comment.reply.loadFailed')}</span>
                     <RetryButton
@@ -1298,12 +1296,12 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           event.currentTarget.form?.requestSubmit();
                         }
                       }}
-                      className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                     {replyError ? (
                       <p
                         role="alert"
-                        className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                        className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
                       >
                         {replyError}
                       </p>

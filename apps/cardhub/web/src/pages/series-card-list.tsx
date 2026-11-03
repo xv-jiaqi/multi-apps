@@ -134,7 +134,7 @@ export function SeriesCardLink({
   return (
     <Link
       to={`/cards/${card.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      className="group block overflow-hidden rounded-2xl border border-card/60 bg-card/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
     >
       <SeriesCardArt card={card} />
       <div className="min-w-0 p-4">
@@ -561,7 +561,7 @@ export const SeriesCardList = observer(function SeriesCardList({
           {Array.from({ length: 6 }, (_, index) => (
             <div
               key={index}
-              className="h-64 animate-pulse rounded-2xl bg-white/50 motion-reduce:animate-none"
+              className="h-64 animate-pulse rounded-2xl bg-card/50 motion-reduce:animate-none"
             />
           ))}
         </div>

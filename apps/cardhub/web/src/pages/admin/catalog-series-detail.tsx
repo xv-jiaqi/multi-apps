@@ -292,7 +292,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                               <Link
                                 to={`/admin/catalog/cards/${card.slug}/edit`}
                                 aria-label={tt('admin.action.editAria', { name: card.name })}
-                                className={`${actionClass} text-xs font-medium text-brand-600 hover:underline`}
+                                className={`${actionClass} text-xs font-medium text-link hover:underline`}
                               >
                                 {tt('admin.action.edit')}
                               </Link>
@@ -317,7 +317,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                                   setRowError(null);
                                   setConfirmingSlug(card.slug);
                                 }}
-                                className={`${actionClass} text-xs text-red-700 hover:underline`}
+                                className={`${actionClass} text-xs text-danger hover:underline`}
                               >
                                 {tt('admin.action.delete')}
                               </button>
@@ -350,7 +350,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                           <td colSpan={COLUMNS} className="px-3 pb-2">
                             <p
                               role="alert"
-                              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                              className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
                             >
                               {rowError.message}
                             </p>

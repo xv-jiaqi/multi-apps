@@ -563,7 +563,7 @@ describe('MePage', () => {
     expect(banner).toHaveTextContent(
       '你的密码是在旧版安全规则下设置的，建议修改一次密码，让账号得到完整保护。',
     );
-    expect(banner).toHaveClass('border-amber-300', 'bg-amber-50', 'text-amber-900');
+    expect(banner).toHaveClass('border-amber-300', 'bg-warning-soft', 'text-amber-900');
     expect(banner).not.toHaveAttribute('role', 'alert');
     expect(screen.getByRole('link', { name: '去修改密码' })).toHaveAttribute(
       'href',

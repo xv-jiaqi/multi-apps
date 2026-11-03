@@ -783,8 +783,8 @@ describe('ForumDetailPage replies pagination', () => {
 
     const highlightedReply = await screen.findByText('new highlighted reply');
     await waitFor(() => {
-      expect(highlightedReply.closest('li')).toHaveClass('border-brand-200');
-      expect(highlightedReply.closest('li')).toHaveClass('bg-brand-50');
+      expect(highlightedReply.closest('li')).toHaveClass('border-accent-border');
+      expect(highlightedReply.closest('li')).toHaveClass('bg-accent-soft');
       expect(highlightedReply.closest('li')).toHaveFocus();
     });
     const highlightedItem = highlightedReply.closest('li');

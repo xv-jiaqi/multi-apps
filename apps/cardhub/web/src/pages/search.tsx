@@ -45,7 +45,7 @@ import {
 const SEARCH_DEBOUNCE_MS = 250;
 type GlobalSearchResult = inferRouterOutputs<AppRouter>['search']['global'];
 const RESULT_LIST_CLASS =
-  'divide-y divide-neutral-200/60 overflow-hidden rounded-2xl border border-white/60 bg-white/70 backdrop-blur';
+  'divide-y divide-neutral-200/60 overflow-hidden rounded-2xl border border-card/60 bg-card/70 backdrop-blur';
 const RESULT_LINK_CLASS =
   'flex items-center gap-4 p-4 hover:bg-neutral-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500';
 
@@ -333,13 +333,13 @@ function SearchResults({
 
   if (canRequest && isError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <div className="rounded-lg border border-danger-border bg-danger-soft p-6 text-sm text-danger">
         <p className="font-medium">{tt('form.searchFailed')}</p>
         <button
           type="button"
           onClick={onRetry}
           disabled={retryPending}
-          className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:pointer-events-none disabled:opacity-50"
+          className="mt-3 rounded-md border border-danger-border-strong bg-card px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:pointer-events-none disabled:opacity-50"
         >
           {tt('state.retry')}
         </button>

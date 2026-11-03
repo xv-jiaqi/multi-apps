@@ -37,7 +37,7 @@ export function SeriesReleases({ locale, items }: { locale: Locale; items: Serie
   return (
     <section
       aria-labelledby="series-releases-title"
-      className="rounded-xl border border-neutral-200 bg-white p-4"
+      className="rounded-xl border border-neutral-200 bg-card p-4"
     >
       <h2 id="series-releases-title" className="scroll-mt-24 text-base font-semibold">
         {tt('series.releases.title')}
@@ -66,7 +66,7 @@ export function SeriesReleases({ locale, items }: { locale: Locale; items: Serie
                       href={source}
                       target="_blank"
                       rel="noopener noreferrer nofollow"
-                      className="inline-flex min-h-6 items-center text-brand-600 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className="inline-flex min-h-6 items-center text-link underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       {tt('release.source')}
                       <span className="sr-only">{tt('a11y.newTab')}</span>
@@ -82,7 +82,7 @@ export function SeriesReleases({ locale, items }: { locale: Locale; items: Serie
         <p className="mt-3 text-sm">
           <Link
             to={more}
-            className="inline-flex min-h-6 items-center text-brand-600 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="inline-flex min-h-6 items-center text-link underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {tt('series.releases.more')}
           </Link>

@@ -127,7 +127,7 @@ function cardComponents(newTabLabel: string | undefined): Components {
         <a
           {...props}
           href={href}
-          className="text-brand-600 underline underline-offset-2"
+          className="text-link underline underline-offset-2"
           {...(external ? { target: '_blank', rel: 'noopener noreferrer nofollow' } : {})}
         >
           {children}

@@ -52,7 +52,7 @@ function SeriesHero({
   return (
     <header
       className={cn(
-        'relative overflow-hidden rounded-3xl border border-white/60 p-8 text-white shadow-lg',
+        'relative overflow-hidden rounded-3xl border border-card/60 p-8 text-white shadow-lg',
         hasImage ? 'bg-neutral-800' : `bg-gradient-to-br ${gradientFor(series.slug)}`,
       )}
     >
@@ -62,7 +62,7 @@ function SeriesHero({
         {category ? (
           <Link
             to={`/categories/${category.slug}`}
-            className="inline-flex min-h-6 items-center rounded-full bg-white/90 px-2 text-xs font-medium text-neutral-900 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="inline-flex min-h-6 items-center rounded-full bg-card/90 px-2 text-xs font-medium text-neutral-900 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-card"
           >
             {category.name}
           </Link>
@@ -70,7 +70,7 @@ function SeriesHero({
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="text-3xl font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-white md:text-4xl"
+          className="text-3xl font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-card md:text-4xl"
         >
           {series.title}
         </h1>
@@ -131,7 +131,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
             {Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={idx}
-                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-white"
+                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-card"
               />
             ))}
           </div>
@@ -251,7 +251,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           fallbackCardCount={baseCardCount(series.cards)}
         />
 
-        <Card className="border-neutral-200 bg-white">
+        <Card className="border-neutral-200 bg-card">
           <CardHeader>
             <h2
               id="comment-section-title"

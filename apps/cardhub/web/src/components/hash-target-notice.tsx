@@ -37,7 +37,7 @@ export function HashTargetNotice({ message, actionHref, actionLabel }: HashTarge
           <a
             href={actionHref}
             onClick={moveFocus}
-            className="inline-flex min-h-6 items-center rounded px-1 font-medium text-brand-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="inline-flex min-h-6 items-center rounded px-1 font-medium text-link-strong underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {actionLabel}
           </a>

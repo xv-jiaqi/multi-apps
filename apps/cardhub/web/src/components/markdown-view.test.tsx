@@ -51,13 +51,13 @@ describe('MarkdownView', () => {
         ].join('\n')}
       />,
     );
-    const mentions = [...container.querySelectorAll('[class~="text-brand-700"]')].map(
+    const mentions = [...container.querySelectorAll('[class~="text-link-strong"]')].map(
       (node) => node.textContent,
     );
     expect(mentions).toEqual(['@Ada']);
     expect(container.querySelector('code')?.textContent).toContain('@Ada');
     expect(container.querySelector('a')?.textContent).toBe('@Ada');
-    expect(container.querySelector('a [class~="text-brand-700"]')).toBeNull();
+    expect(container.querySelector('a [class~="text-link-strong"]')).toBeNull();
   });
   it.each(['forum', 'card'] as const)(
     'lets keyboard users focus a scrollable code block (%s, WCAG 2.1.1)',

@@ -45,9 +45,9 @@ type ReleasesQuery = ReturnType<typeof useReleasesList>;
 
 const recoveryClass = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 const sectionLinkClass =
-  'inline-flex min-h-6 items-center text-sm text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+  'inline-flex min-h-6 items-center text-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 const cardLinkClass =
-  'group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+  'group block overflow-hidden rounded-2xl border border-card/60 bg-card/70 shadow-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
 function revealFocusedCard(event: FocusEvent<HTMLAnchorElement>) {
   event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -86,7 +86,7 @@ function Pulse({ className }: { className: string }) {
   return (
     <div
       aria-hidden
-      className={`animate-pulse rounded-2xl bg-white/50 motion-reduce:animate-none ${className}`}
+      className={`animate-pulse rounded-2xl bg-card/50 motion-reduce:animate-none ${className}`}
     />
   );
 }
@@ -289,7 +289,7 @@ function HomeCategories({ tt, query }: { tt: Translate; query: CategoryQuery }) 
               <li key={category.slug} className="min-w-0">
                 <Link
                   to={`/categories/${category.slug}`}
-                  className="block rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="block rounded-2xl border border-card/60 bg-card/70 p-5 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   <h3 className="min-w-0 text-lg font-semibold text-neutral-900 wrap-anywhere">
                     {category.name}

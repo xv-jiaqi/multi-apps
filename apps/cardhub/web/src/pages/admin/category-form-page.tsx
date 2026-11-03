@@ -174,7 +174,7 @@ const CategoryForm = observer(function CategoryForm({ mode }: { mode: 'create' |
               />
             )
           ) : mode === 'edit' && view === 'loading' ? (
-            <div className="h-24 animate-pulse motion-reduce:animate-none rounded-lg bg-white/60" />
+            <div className="h-24 animate-pulse motion-reduce:animate-none rounded-lg bg-card/60" />
           ) : mode === 'edit' && ready === false && !existing && view === 'ready' ? (
             <AdminEmpty>{tt('state.notFound')}</AdminEmpty>
           ) : (
@@ -218,7 +218,7 @@ const CategoryForm = observer(function CategoryForm({ mode }: { mode: 'create' |
                     rows={4}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
-                    className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    className="flex w-full rounded-md border border-neutral-300 bg-card px-3 py-2 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                   />
                 </AdminField>
                 <AdminField
@@ -236,7 +236,7 @@ const CategoryForm = observer(function CategoryForm({ mode }: { mode: 'create' |
                 {formError ? (
                   <p
                     role="alert"
-                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                    className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger"
                   >
                     {formError}
                   </p>

@@ -130,7 +130,7 @@ const CatalogCategoriesBody = observer(function CatalogCategoriesBody() {
           {Array.from({ length: 3 }, (_, index) => (
             <li
               key={index}
-              className="h-12 animate-pulse motion-reduce:animate-none rounded-lg bg-white/60"
+              className="h-12 animate-pulse motion-reduce:animate-none rounded-lg bg-card/60"
             />
           ))}
         </ul>
@@ -161,7 +161,7 @@ const CatalogCategoriesBody = observer(function CatalogCategoriesBody() {
                   </Link>
                   <button
                     type="button"
-                    className={`${actionClass} text-red-700`}
+                    className={`${actionClass} text-danger`}
                     onClick={() => setPending({ slug: category.slug, name: category.name })}
                   >
                     {tt('admin.action.delete')}
@@ -188,7 +188,7 @@ const CatalogCategoriesBody = observer(function CatalogCategoriesBody() {
             <AlertDialogDescription>{tt('admin.category.deleteBody')}</AlertDialogDescription>
           </AlertDialogHeader>
           {error ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {error}
             </p>
           ) : null}

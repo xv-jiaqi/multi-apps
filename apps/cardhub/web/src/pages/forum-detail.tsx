@@ -583,7 +583,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         <PageMeta title={tt('state.loading')} />
         <div className="space-y-4">
           <div className="h-6 w-1/3 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
-          <div className="h-32 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/60" />
+          <div className="h-32 animate-pulse motion-reduce:animate-none rounded-2xl bg-card/60" />
         </div>
       </PageShell>
     );
@@ -681,7 +681,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
         />
 
         <Card
-          className="border-white/60 bg-white/80 backdrop-blur"
+          className="border-card/60 bg-card/80 backdrop-blur"
           aria-busy={deletingTopic || undefined}
         >
           <CardHeader className="space-y-2">
@@ -691,7 +691,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
                       {topic.pinned ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-link-strong">
                           <Pin className="size-3" aria-hidden />
                           {tt('forum.badge.pinned')}
                         </span>
@@ -750,7 +750,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                             }}
                             disabled={deleteTopic.isPending}
                             aria-label={tt('forum.detail.deleteTopicAria')}
-                            className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                            className="rounded-md border border-danger-border px-2 py-1 text-xs text-danger hover:bg-danger-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
                           >
                             {tt('forum.detail.delete')}
                           </button>
@@ -787,7 +787,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
               tabIndex={-1}
               className={
                 topicNotice
-                  ? 'mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                  ? 'mt-2 rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
                   : 'sr-only'
               }
             >
@@ -796,7 +796,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             {topicError ? (
               <p
                 role="alert"
-                className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                className="mt-2 rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
               >
                 {topicError}
               </p>
@@ -823,7 +823,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             {deleteError?.kind === 'topic' ? (
               <p
                 role="alert"
-                className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                className="mt-2 rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
               >
                 {deleteError.message}
               </p>
@@ -859,7 +859,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             tabIndex={-1}
             className={
               replyStatus.visible
-                ? 'rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                ? 'rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
                 : 'sr-only'
             }
           >
@@ -867,7 +867,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           </p>
 
           {visibleReplies.length === 0 ? (
-            <p className="rounded-md border border-dashed border-neutral-200 bg-white/60 p-4 text-center text-sm text-neutral-500">
+            <p className="rounded-md border border-dashed border-neutral-200 bg-card/60 p-4 text-center text-sm text-neutral-500">
               {tt('forum.detail.noReplies')}
             </p>
           ) : (
@@ -915,7 +915,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             showLoadMoreError ? (
               <div
                 role="alert"
-                className="flex items-center justify-center gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                className="flex items-center justify-center gap-3 rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
               >
                 <span>{tt('forum.detail.loadMoreFailed')}</span>
                 <button
@@ -937,7 +937,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                       setIsRetryingReplies(false);
                     })();
                   }}
-                  className="min-h-9 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0"
+                  className="min-h-9 rounded-md border border-danger-border-strong bg-card px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0"
                 >
                   {isRetryingReplies ? tt('state.loading') : tt('state.retry')}
                 </button>
@@ -968,7 +968,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           ) : session.isAuthenticated ? (
             <form
               onSubmit={onSubmitReply}
-              className="space-y-2 rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur"
+              className="space-y-2 rounded-2xl border border-card/60 bg-card/80 p-4 backdrop-blur"
             >
               <label htmlFor="reply-body" className="block text-sm font-medium text-neutral-700">
                 {tt('forum.detail.replyLabel')}
@@ -983,12 +983,12 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 placeholder={tt('forum.detail.replyPlaceholder')}
                 rows={4}
                 maxLength={5000}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
               />
               {replyError ? (
                 <p
                   role="alert"
-                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                  className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
                 >
                   {replyError}
                 </p>
@@ -1004,11 +1004,11 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
               <p className="text-xs text-neutral-600">{tt('comments.mentionHint')}</p>
             </form>
           ) : (
-            <p className="rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4 text-center text-sm text-neutral-600 backdrop-blur">
+            <p className="rounded-2xl border border-dashed border-neutral-300 bg-card/60 p-4 text-center text-sm text-neutral-600 backdrop-blur">
               <Link
                 to="/login"
                 state={{ from: `/forum/${slug}` }}
-                className="font-medium text-brand-600 hover:underline"
+                className="font-medium text-link hover:underline"
               >
                 {tt('forum.detail.loginToReply')}
               </Link>
@@ -1077,8 +1077,8 @@ const ForumReplyItem = memo(function ForumReplyItem({
       aria-busy={deleting || undefined}
       className={`scroll-mt-20 rounded-2xl border p-4 backdrop-blur transition-colors ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 motion-reduce:transition-none ${
         highlighted
-          ? 'border-brand-200 bg-brand-50 duration-0'
-          : 'border-white/60 bg-white/80 duration-1000'
+          ? 'border-accent-border bg-accent-soft duration-0'
+          : 'border-card/60 bg-card/80 duration-1000'
       }`}
     >
       <ReportButton targetType="REPLY" targetId={reply.id}>
@@ -1105,7 +1105,7 @@ const ForumReplyItem = memo(function ForumReplyItem({
                     type="button"
                     onClick={() => onAskDelete(reply.id)}
                     aria-label={deleteAriaLabel}
-                    className="inline-flex min-h-6 items-center rounded px-1 text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
+                    className="inline-flex min-h-6 items-center rounded px-1 text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:no-underline"
                   >
                     {deleteLabel}
                   </button>
@@ -1134,7 +1134,7 @@ const ForumReplyItem = memo(function ForumReplyItem({
       {errorMessage ? (
         <p
           role="alert"
-          className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+          className="mt-2 rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
         >
           {errorMessage}
         </p>
@@ -1179,11 +1179,11 @@ function DeleteConfirmGroup({
       }}
       className={
         showReason
-          ? 'mt-2 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
-          : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+          ? 'mt-2 flex flex-col gap-2 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
+          : 'mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
       }
     >
-      <span id={promptId} className={showReason ? 'text-red-700' : 'mr-auto text-red-700'}>
+      <span id={promptId} className={showReason ? 'text-danger' : 'mr-auto text-danger'}>
         {label}
       </span>
       {showReason ? (
@@ -1203,7 +1203,7 @@ function DeleteConfirmGroup({
             const trimmed = reason.trim();
             onConfirm(showReason && trimmed ? trimmed : undefined);
           }}
-          className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+          className="inline-flex min-h-6 items-center rounded px-1 font-semibold text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
         >
           {dangerLabel}
         </button>

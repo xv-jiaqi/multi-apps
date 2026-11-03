@@ -130,7 +130,7 @@ export function BanUserDialog({
             <span aria-live="off">{reason.length}/500</span>
           </div>
           {fieldError ? (
-            <p id={errorId} className="text-xs text-red-700">
+            <p id={errorId} className="text-xs text-danger">
               {tt('admin.ban.reasonRequired')}
             </p>
           ) : null}
@@ -138,7 +138,7 @@ export function BanUserDialog({
         {alertMessage ? (
           <p
             role="alert"
-            className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="mt-4 rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger"
           >
             {alertMessage}
           </p>

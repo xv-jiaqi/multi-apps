@@ -41,7 +41,7 @@ export const CategoryListPage = observer(function CategoryListPage() {
             {Array.from({ length: 6 }, (_, index) => (
               <li
                 key={index}
-                className="h-32 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+                className="h-32 animate-pulse motion-reduce:animate-none rounded-2xl bg-card/50"
               />
             ))}
           </ul>
@@ -63,7 +63,7 @@ export const CategoryListPage = observer(function CategoryListPage() {
               <li key={category.slug}>
                 <Link
                   to={`/categories/${category.slug}`}
-                  className="block rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="block rounded-2xl border border-card/60 bg-card/70 p-5 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   <h2 className="text-lg font-semibold text-neutral-900">{category.name}</h2>
                   {category.description ? (

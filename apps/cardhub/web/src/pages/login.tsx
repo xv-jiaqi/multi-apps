@@ -82,7 +82,7 @@ export const LoginPage = observer(function LoginPage() {
           items={[{ label: tt('breadcrumb.home'), to: '/' }, { label: tt('auth.login.title') }]}
         />
 
-        <Card className="border-white/60 bg-white/80 backdrop-blur">
+        <Card className="border-card/60 bg-card/80 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-2xl">{tt('auth.login.title')}</CardTitle>
             <p className="text-sm text-neutral-600">{tt('auth.login.subtitle')}</p>
@@ -95,7 +95,7 @@ export const LoginPage = observer(function LoginPage() {
                 tabIndex={-1}
                 className={
                   notice === 'signedOutAll'
-                    ? 'mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                    ? 'mb-4 rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
                     : 'mb-4 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
                 }
               >
@@ -113,7 +113,7 @@ export const LoginPage = observer(function LoginPage() {
                   onChange={(e) => setIdentifier(e.target.value)}
                   autoComplete="username"
                   required
-                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  className="w-full rounded-md border border-neutral-200 bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
               </label>
               <label className="block space-y-1 text-sm">
@@ -127,14 +127,14 @@ export const LoginPage = observer(function LoginPage() {
                   autoComplete="current-password"
                   required
                   minLength={8}
-                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  className="w-full rounded-md border border-neutral-200 bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
               </label>
 
               {error ? (
                 <p
                   role="alert"
-                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                  className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
                 >
                   {error}
                 </p>
@@ -145,7 +145,7 @@ export const LoginPage = observer(function LoginPage() {
               </Button>
 
               <p className="text-center text-xs text-neutral-500">
-                <Link to="/register" className="text-brand-600 hover:underline">
+                <Link to="/register" className="text-link hover:underline">
                   {tt('auth.actions.toRegister')}
                 </Link>
               </p>

@@ -134,7 +134,7 @@ describe('AdminAuditPage', () => {
     renderPage('/admin/audit?user=alice');
     expect(auditMock.inputs[0]).toEqual({ limit: 50, user: 'alice' });
     expect(screen.getByText('对象：@alice')).toBeInTheDocument();
-    expect(screen.getByText('对象：@alice').closest('span')).toHaveClass('bg-brand-50');
+    expect(screen.getByText('对象：@alice').closest('span')).toHaveClass('bg-accent-soft');
 
     await user.click(screen.getByRole('button', { name: '清除对象筛选' }));
     expect(screen.getByRole('combobox', { name: '操作类型' })).toHaveFocus();

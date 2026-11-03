@@ -42,7 +42,7 @@ export function AdminField({
             </p>
           ) : null}
           {error ? (
-            <p id={errorId} className="text-xs text-red-700">
+            <p id={errorId} className="text-xs text-danger">
               {error}
             </p>
           ) : null}

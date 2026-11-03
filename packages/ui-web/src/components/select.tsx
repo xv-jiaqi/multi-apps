@@ -196,7 +196,7 @@ export const SelectItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, ...props }, ref) => (
   <SelectPrimitive.Item ref={ref} className={cn(optionBase, className)} {...props}>
-    <span className="absolute left-2 inline-flex size-4 items-center justify-center text-brand-600">
+    <span className="absolute left-2 inline-flex size-4 items-center justify-center text-link">
       <SelectPrimitive.ItemIndicator>
         <Check className="size-4" aria-hidden="true" />
       </SelectPrimitive.ItemIndicator>

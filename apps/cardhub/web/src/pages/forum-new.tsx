@@ -70,7 +70,7 @@ export const ForumNewPage = observer(function ForumNewPage() {
           ]}
         />
 
-        <Card className="border-white/60 bg-white/80 backdrop-blur">
+        <Card className="border-card/60 bg-card/80 backdrop-blur">
           <CardHeader>
             <h1 className="font-semibold tracking-tight text-2xl">{tt('forum.new.title')}</h1>
             <p className="text-sm text-neutral-600">{tt('forum.new.subtitle')}</p>
@@ -81,7 +81,7 @@ export const ForumNewPage = observer(function ForumNewPage() {
                 <BannedNotice>{tt('ban.cannotPost')}</BannedNotice>
                 <Link
                   to="/forum"
-                  className="inline-flex min-h-6 items-center text-sm text-brand-600 hover:underline"
+                  className="inline-flex min-h-6 items-center text-sm text-link hover:underline"
                 >
                   {tt('ban.backToForum')}
                 </Link>

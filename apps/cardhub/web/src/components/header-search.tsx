@@ -180,7 +180,7 @@ export const HeaderSearch = observer(function HeaderSearch({
         trimmed && liveParsed.ok ? (
           <Link
             to={`/search?q=${encodeURIComponent(trimmed)}`}
-            className="flex min-h-9 items-center rounded-sm px-2 text-sm font-medium text-brand-600 hover:bg-neutral-100"
+            className="flex min-h-9 items-center rounded-sm px-2 text-sm font-medium text-link hover:bg-neutral-100"
             onClick={() => {
               setQuery('');
               onAfterNavigate?.();

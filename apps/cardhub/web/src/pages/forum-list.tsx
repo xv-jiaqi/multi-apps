@@ -66,7 +66,7 @@ export const ForumListPage = observer(function ForumListPage() {
             <Link
               to="/login"
               state={{ from: '/forum' }}
-              className="text-sm text-brand-600 hover:underline"
+              className="text-sm text-link hover:underline"
             >
               {tt('forum.list.loginToPost')}
             </Link>
@@ -78,7 +78,7 @@ export const ForumListPage = observer(function ForumListPage() {
             ref={noticeRef}
             role="status"
             tabIndex={-1}
-            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {notice}
           </p>
@@ -89,17 +89,17 @@ export const ForumListPage = observer(function ForumListPage() {
             {Array.from({ length: 4 }).map((_, idx) => (
               <li
                 key={idx}
-                className="h-24 animate-pulse motion-reduce:animate-none rounded-2xl border border-white/60 bg-white/50"
+                className="h-24 animate-pulse motion-reduce:animate-none rounded-2xl border border-card/60 bg-card/50"
               />
             ))}
           </ul>
         ) : query.isError ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          <div className="rounded-lg border border-danger-border bg-danger-soft p-6 text-sm text-danger">
             <p className="font-medium">{tt('state.error')}</p>
             <button
               type="button"
               onClick={() => query.refetch()}
-              className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+              className="mt-3 rounded-md border border-danger-border-strong bg-card px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong"
             >
               {tt('state.retry')}
             </button>
@@ -115,12 +115,12 @@ export const ForumListPage = observer(function ForumListPage() {
                 <li key={topic.id}>
                   <Link
                     to={`/forum/${topic.slug}`}
-                    className="group block rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-lg"
+                    className="group block rounded-2xl border border-card/60 bg-card/70 p-5 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <h2 className="flex min-w-0 flex-wrap items-center gap-2 text-lg font-semibold text-neutral-900 wrap-anywhere group-hover:text-brand-700">
+                      <h2 className="flex min-w-0 flex-wrap items-center gap-2 text-lg font-semibold text-neutral-900 wrap-anywhere group-hover:text-link-strong">
                         {topic.pinned ? (
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-link-strong">
                             <Pin className="size-3" aria-hidden />
                             {tt('forum.badge.pinned')}
                           </span>
@@ -155,7 +155,7 @@ export const ForumListPage = observer(function ForumListPage() {
                 {loadMoreFailed ? (
                   <p
                     role="alert"
-                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-red-700"
+                    className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-center text-xs text-danger"
                   >
                     {tt('state.error')}
                   </p>

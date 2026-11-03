@@ -33,10 +33,10 @@ import { trpc } from '../../lib/trpc';
 import { useStores } from '../../stores/root-store';
 
 const RESULT_CLASS: Record<ImportStatus, string> = {
-  created: 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200',
-  updated: 'bg-brand-50 text-brand-700',
+  created: 'bg-success-soft text-success ring-1 ring-inset ring-success-border',
+  updated: 'bg-accent-soft text-link-strong',
   unchanged: 'bg-neutral-100 text-neutral-600',
-  error: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200',
+  error: 'bg-danger-soft text-danger ring-1 ring-inset ring-danger-border',
 };
 
 // §17：程序聚焦不触发 focus-visible，用 focus: 让环可见；scroll-mt-24 避开 h-16 吸顶头。
@@ -297,13 +297,13 @@ const CatalogImportBody = observer(function CatalogImportBody() {
         {sameAsImported ? (
           <Link
             to="/admin/catalog"
-            className={`text-sm font-medium text-brand-600 hover:underline ${focusRing}`}
+            className={`text-sm font-medium text-link hover:underline ${focusRing}`}
           >
             {tt('admin.import.back')}
           </Link>
         ) : null}
       </div>
-      <details className="rounded-md border border-neutral-200 bg-white p-3">
+      <details className="rounded-md border border-neutral-200 bg-card p-3">
         <summary
           id="import-example-title"
           className={`cursor-pointer text-sm font-medium text-neutral-800 ${focusRing}`}
@@ -331,10 +331,10 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           value={text}
           readOnly={phase === 'execute' && pending}
           onChange={(event) => onText(event.target.value)}
-          className="flex w-full scroll-mt-24 rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className="flex w-full scroll-mt-24 rounded-md border border-neutral-300 bg-card px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
         />
         {parseError ? (
-          <p id="import-json-error" className="text-xs text-red-700">
+          <p id="import-json-error" className="text-xs text-danger">
             {parseError}
           </p>
         ) : null}
@@ -368,14 +368,14 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           ref={failureRef}
           role="alert"
           tabIndex={-1}
-          className={`${FOCUS_TARGET_CLASS} rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700`}
+          className={`${FOCUS_TARGET_CLASS} rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger`}
         >
           <p>{actionError}</p>
           {actionRows?.flatMap((row) =>
             orderImportErrors(row.errors).map((error) => (
               <p
                 key={`${row.row.row}-${error.path}-${error.code}`}
-                className="mt-1 text-xs text-red-700"
+                className="mt-1 text-xs text-danger"
               >
                 <ImportProblem path={error.path} code={error.code} message={error.message} />
               </p>
@@ -440,7 +440,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                   return (
                     <tr
                       key={row.row.row}
-                      className={row.status === 'error' ? 'bg-red-50/50' : undefined}
+                      className={row.status === 'error' ? 'bg-danger-soft/50' : undefined}
                     >
                       <td
                         className={`px-3 py-2 align-middle ${row.row.type === 'card' ? 'pl-6' : ''}`}
@@ -462,7 +462,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                           {tt(RESULT_KEY[row.status])}
                         </span>
                       </td>
-                      <td className="px-3 py-2 align-middle text-xs text-red-700">
+                      <td className="px-3 py-2 align-middle text-xs text-danger">
                         {orderImportErrors(row.errors).map((error) => (
                           <p key={`${error.path}-${error.code}`}>
                             <ImportProblem

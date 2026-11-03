@@ -28,7 +28,7 @@ function mentionElement(value: string): HastElement {
   return {
     type: 'element',
     tagName: 'span',
-    properties: { className: ['font-medium', 'text-brand-700'] },
+    properties: { className: ['font-medium', 'text-link-strong'] },
     children: [{ type: 'text', value }],
   };
 }
