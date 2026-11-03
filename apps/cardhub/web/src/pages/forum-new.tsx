@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
+import { Card, CardContent, CardHeader } from '@repo/ui-web';
 import { fieldErrorMessage, t, topicCreateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -72,7 +72,7 @@ export const ForumNewPage = observer(function ForumNewPage() {
 
         <Card className="border-white/60 bg-white/80 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-2xl">{tt('forum.new.title')}</CardTitle>
+            <h1 className="font-semibold tracking-tight text-2xl">{tt('forum.new.title')}</h1>
             <p className="text-sm text-neutral-600">{tt('forum.new.subtitle')}</p>
           </CardHeader>
           <CardContent className="space-y-3">
