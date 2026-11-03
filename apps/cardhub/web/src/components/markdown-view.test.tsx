@@ -154,7 +154,9 @@ const sampleS2 = [
 describe('MarkdownView card variant images in headings (CH-222 §2-7)', () => {
   it('shows a non-https image as its alt text inside the heading (22-13)', () => {
     const { container } = render(<MarkdownView variant="card" body={sampleS2} />);
-    const [onlyImg, mixed, https, emptyAlt] = [...container.querySelectorAll('h3')];
+    const h3s = [...container.querySelectorAll('h3')];
+    expect(h3s).toHaveLength(4);
+    const [onlyImg, mixed, https, emptyAlt] = [h3s[0]!, h3s[1]!, h3s[2]!, h3s[3]!];
     expect(onlyImg.innerHTML).toBe('<span>价格图</span>');
     expect([...mixed.childNodes].map((n) => [n.nodeName, n.textContent])).toEqual([
       ['#text', '文字 '],
