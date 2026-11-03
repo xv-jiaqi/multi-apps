@@ -1,0 +1,135 @@
+[
+ [
+  "bg-white",
+  "rgb(255, 255, 255)",
+  "bg-card",
+  "rgb(255, 255, 255)",
+  true
+ ],
+ [
+  "text-brand-600",
+  "rgb(37, 99, 235)",
+  "text-link",
+  "rgb(37, 99, 235)",
+  true
+ ],
+ [
+  "text-brand-700",
+  "rgb(29, 78, 216)",
+  "text-link-strong",
+  "rgb(29, 78, 216)",
+  true
+ ],
+ [
+  "bg-brand-50",
+  "rgb(239, 246, 255)",
+  "bg-accent-soft",
+  "rgb(239, 246, 255)",
+  true
+ ],
+ [
+  "border-brand-200",
+  "rgb(191, 219, 254)",
+  "border-accent-border",
+  "rgb(191, 219, 254)",
+  true
+ ],
+ [
+  "text-red-700",
+  "oklch(0.505 0.213 27.518)",
+  "text-danger",
+  "oklch(0.505 0.213 27.518)",
+  true
+ ],
+ [
+  "bg-red-50",
+  "oklch(0.971 0.013 17.38)",
+  "bg-danger-soft",
+  "oklch(0.971 0.013 17.38)",
+  true
+ ],
+ [
+  "bg-red-100",
+  "rgba(0, 0, 0, 0)",
+  "bg-danger-soft-strong",
+  "rgba(0, 0, 0, 0)",
+  true
+ ],
+ [
+  "border-red-200",
+  "oklch(0.885 0.062 18.334)",
+  "border-danger-border",
+  "oklch(0.885 0.062 18.334)",
+  true
+ ],
+ [
+  "border-red-300",
+  "oklch(0.808 0.114 19.571)",
+  "border-danger-border-strong",
+  "oklch(0.808 0.114 19.571)",
+  true
+ ],
+ [
+  "border-red-600",
+  "rgb(0, 0, 0)",
+  "border-danger-line",
+  "rgb(0, 0, 0)",
+  true
+ ],
+ [
+  "text-emerald-800",
+  "oklch(0.432 0.095 166.913)",
+  "text-success",
+  "oklch(0.432 0.095 166.913)",
+  true
+ ],
+ [
+  "bg-emerald-50",
+  "oklch(0.979 0.021 166.113)",
+  "bg-success-soft",
+  "oklch(0.979 0.021 166.113)",
+  true
+ ],
+ [
+  "border-emerald-200",
+  "oklch(0.905 0.093 164.15)",
+  "border-success-border",
+  "oklch(0.905 0.093 164.15)",
+  true
+ ],
+ [
+  "text-amber-800",
+  "oklch(0.473 0.137 46.201)",
+  "text-warning",
+  "oklch(0.473 0.137 46.201)",
+  true
+ ],
+ [
+  "bg-amber-50",
+  "oklch(0.987 0.022 95.277)",
+  "bg-warning-soft",
+  "oklch(0.987 0.022 95.277)",
+  true
+ ],
+ [
+  "border-amber-200",
+  "oklch(0.924 0.12 95.746)",
+  "border-warning-border",
+  "oklch(0.924 0.12 95.746)",
+  true
+ ],
+ [
+  "bg-neutral-950/60",
+  "rgba(0, 0, 0, 0)",
+  "bg-overlay/60",
+  "rgba(0, 0, 0, 0)",
+  true
+ ],
+ [
+  "text-white",
+  "rgb(255, 255, 255)",
+  "text-on-inverse",
+  "rgb(255, 255, 255)",
+  true
+ ]
+]
