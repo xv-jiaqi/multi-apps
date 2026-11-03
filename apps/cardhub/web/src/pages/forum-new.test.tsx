@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
 import { ForumNewPage } from './forum-new';
+import { SAMPLE_F, expectSampleFDom, sampleFRoots } from '../../test/ch223-sample';
+
+const createMutate = vi.fn();
 
 vi.mock('../lib/trpc', () => ({
   trpc: {
@@ -20,7 +23,7 @@ vi.mock('../lib/trpc', () => ({
       },
     },
     forum: {
-      topics: { create: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) } },
+      topics: { create: { useMutation: () => ({ mutate: createMutate, isPending: false }) } },
     },
   },
 }));
@@ -77,5 +80,32 @@ describe('ForumNewPage CH-221 §4 h1', () => {
     renderPage();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('发布新话题');
+  });
+});
+
+describe('ForumNewPage CH-223 preview images', () => {
+  beforeEach(() => {
+    rootStore.locale.setLocale('zh-CN');
+    rootStore.session.signIn('token', { id: 'u1', username: 'qa_user', role: 'user' });
+    createMutate.mockReset();
+  });
+
+  it('previews sample F with the https rule and posts the body unchanged (23-1, 23-9)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    fireEvent.change(screen.getByLabelText('标题'), { target: { value: 'CH-223 sample F' } });
+    fireEvent.change(screen.getByLabelText('正文'), { target: { value: SAMPLE_F } });
+    await user.click(screen.getByRole('button', { name: '预览' }));
+
+    const roots = sampleFRoots();
+    expect(roots).toHaveLength(1);
+    expectSampleFDom(roots[0]!);
+
+    const submit = screen.getByRole('button', { name: '发布话题' });
+    expect(submit).toBeEnabled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(submit);
+    expect(createMutate).toHaveBeenCalledTimes(1);
+    expect(createMutate.mock.calls[0]![0]).toMatchObject({ body: SAMPLE_F });
   });
 });

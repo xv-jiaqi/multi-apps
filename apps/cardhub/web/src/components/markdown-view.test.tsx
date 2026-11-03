@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { rootStore } from '../stores/root-store';
+import { SAMPLE_F, expectSampleFDom } from '../../test/ch223-sample';
 import { MarkdownView } from './markdown-view';
 
 const body = [
@@ -211,5 +212,58 @@ describe('MarkdownView card variant images in headings (CH-222 §2-7)', () => {
     const { container } = render(<MarkdownView variant="card" body={'![a](x.png) 正文'} />);
     expect(container.querySelector('img, span')).toBeNull();
     expect(container).not.toHaveTextContent(/^a/);
+  });
+});
+
+describe('MarkdownView forum variant images (CH-223)', () => {
+  it('applies the card https rule to forum images, in and out of headings (23-1, 23-2)', () => {
+    const { container } = render(<MarkdownView body={SAMPLE_F} />);
+    expectSampleFDom(container);
+  });
+
+  it('keeps the alt of a rejected image inside a demoted # heading (23-1)', () => {
+    const { container } = render(<MarkdownView body={'# ![a](x.png)'} />);
+    expect(container.querySelector('h1')).toBeNull();
+    expect(container.querySelector('h2')!.outerHTML).toBe('<h2><span>a</span></h2>');
+  });
+
+  it('treats h3–h6 like h2 and leaves them unstyled (§3-2)', () => {
+    const { container } = render(
+      <MarkdownView
+        body={'### ![c](x.png)\n\n#### ![d](x.png)\n\n##### ![e](x.png)\n\n###### ![f](x.png)'}
+      />,
+    );
+    expect([...container.querySelectorAll('h3, h4, h5, h6')].map((h) => h.outerHTML)).toEqual([
+      '<h3><span>c</span></h3>',
+      '<h4><span>d</span></h4>',
+      '<h5><span>e</span></h5>',
+      '<h6><span>f</span></h6>',
+    ]);
+  });
+
+  it('judges src after sanitize, the same way as cards, without trimming (§3-1)', () => {
+    const body =
+      '![a](HTTPS://img.test/A.png) ![b](<  https://img.test/b.png>) ![c](https://img.test/C.png)';
+    for (const variant of ['forum', 'card'] as const) {
+      const { container, unmount } = render(<MarkdownView variant={variant} body={body} />);
+      const srcs = [...container.querySelectorAll('img')].map((i) => i.getAttribute('src'));
+      expect(srcs).toEqual(['https://img.test/C.png']);
+      unmount();
+    }
+  });
+
+  it('names forum tables after their heading text (23-4)', () => {
+    render(<MarkdownView body={SAMPLE_F} />);
+    const regions = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(regions).toEqual([
+      '价格图：表格 1（可横向滚动）',
+      '文字 图 尾：表格 2（可横向滚动）',
+      '外链：表格 3（可横向滚动）',
+      '表格 4（可横向滚动）',
+      'https图：表格 5（可横向滚动）',
+    ]);
+    for (const name of ['价格图', '文字 图 尾', '外链', 'https图']) {
+      expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
+    }
   });
 });

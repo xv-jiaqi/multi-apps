@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
+import { SAMPLE_F, expectSampleFDom, sampleFRoots } from '../../test/ch223-sample';
 import { rootStore } from '../stores/root-store';
 
 const updateMutate = vi.fn();
@@ -222,5 +223,25 @@ describe('ForumEditPage', () => {
     await waitFor(() => {
       expect(screen.getByText('login:/forum/test-topic/edit')).toBeInTheDocument();
     });
+  });
+});
+
+describe('ForumEditPage CH-223 preview images', () => {
+  it('previews sample F with the https rule and saves the body unchanged (23-1, 23-9)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    fireEvent.change(screen.getByLabelText('正文'), { target: { value: SAMPLE_F } });
+    await user.click(screen.getByRole('button', { name: '预览' }));
+
+    const roots = sampleFRoots();
+    expect(roots).toHaveLength(1);
+    expectSampleFDom(roots[0]!);
+
+    const save = screen.getByRole('button', { name: '保存修改' });
+    expect(save).toBeEnabled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(save);
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+    expect(updateMutate.mock.calls[0]![0]).toMatchObject({ body: SAMPLE_F });
   });
 });

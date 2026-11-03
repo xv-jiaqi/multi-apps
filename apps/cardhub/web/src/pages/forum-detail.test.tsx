@@ -3,6 +3,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
+import { SAMPLE_F, expectSampleFDom, sampleFRoots } from '../../test/ch223-sample';
 
 const topicInvalidate = vi.fn();
 const topicsListInvalidate = vi.fn();
@@ -1080,5 +1081,24 @@ describe('ForumDetailPage CH-221 topic h1', () => {
     );
     await waitFor(() => expect(document.activeElement?.getAttribute('role')).toBe('status'));
     expect(screen.getByRole('heading', { level: 1, name: 'Test topic' })).not.toHaveFocus();
+  });
+});
+
+describe('ForumDetailPage CH-223 images', () => {
+  it('applies the https image rule to the topic body and to replies (23-1, 23-2)', () => {
+    const reply = { ...replies[0]!, body: SAMPLE_F };
+    availableReplies = [reply, ...replies.slice(1)];
+    topicState.data = {
+      ...topicState.data!,
+      body: SAMPLE_F,
+      replies: [reply, ...replies.slice(1, 20)],
+    };
+
+    renderPage();
+
+    const roots = sampleFRoots();
+    expect(roots).toHaveLength(2);
+    for (const root of roots) expectSampleFDom(root);
+    expect(roots[1]!.closest('li, article')).not.toBeNull();
   });
 });
