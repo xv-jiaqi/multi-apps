@@ -395,7 +395,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     maxLength={40}
                     placeholder={tt('trade.publish.variantNotePlaceholder')}
                   />
-                  <span className="block text-right text-xs text-neutral-500" aria-live="off">
+                  <span className="block text-right text-xs text-muted" aria-live="off">
                     {variantNote.length}/40
                   </span>
                 </label>
@@ -437,9 +437,9 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     placeholder={'https://...\nhttps://...'}
                     aria-invalid={Boolean(fieldErrors.imageUrls || imageError)}
                     aria-describedby="trade-images-hint trade-images-error"
-                    className="w-full resize-y rounded-md border border-neutral-300 bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line"
+                    className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line"
                   />
-                  <p id="trade-images-hint" className="text-xs text-neutral-500">
+                  <p id="trade-images-hint" className="text-xs text-muted">
                     {tt('trade.publish.imageUrlsHint')}
                   </p>
                   {fieldErrors.imageUrls || imageError ? (
@@ -494,7 +494,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     onChange={(event) => setNote(event.target.value)}
                     rows={3}
                     maxLength={500}
-                    className="w-full resize-y rounded-md border border-neutral-300 bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                    className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                   />
                 </label>
                 {formError ? (

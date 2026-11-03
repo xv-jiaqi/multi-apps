@@ -183,7 +183,7 @@ export const SearchPage = observer(function SearchPage() {
           <h1 className="text-3xl font-bold tracking-tight">{tt('nav.search')}</h1>
           <div className="relative max-w-xl">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-500"
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted"
               aria-hidden
             />
             <Input

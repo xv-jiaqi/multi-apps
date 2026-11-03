@@ -109,7 +109,7 @@ export const RegisterPage = observer(function RegisterPage() {
                 {mutation.isPending ? tt('auth.actions.submitting') : tt('auth.actions.register')}
               </Button>
 
-              <p className="text-center text-xs text-neutral-500">
+              <p className="text-center text-xs text-muted">
                 <Link to="/login" className="text-link hover:underline">
                   {tt('auth.actions.toLogin')}
                 </Link>
@@ -135,9 +135,7 @@ interface FieldProps {
 function Field({ label, type, value, onChange, autoComplete, required, minLength }: FieldProps) {
   return (
     <label className="block space-y-1 text-sm">
-      <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
-        {label}
-      </span>
+      <span className="text-xs font-medium uppercase tracking-widest text-muted">{label}</span>
       <input
         type={type}
         value={value}
@@ -145,7 +143,7 @@ function Field({ label, type, value, onChange, autoComplete, required, minLength
         autoComplete={autoComplete}
         required={required}
         minLength={minLength}
-        className="w-full rounded-md border border-neutral-200 bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+        className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
       />
     </label>
   );

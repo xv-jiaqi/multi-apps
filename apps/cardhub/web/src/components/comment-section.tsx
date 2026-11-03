@@ -829,7 +829,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
             rows={3}
             maxLength={500}
             aria-label={tt('a11y.commentArea')}
-            className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           {error ? (
             <p
@@ -1296,7 +1296,7 @@ export const CommentSection = observer(function CommentSection({ target }: Comme
                           event.currentTarget.form?.requestSubmit();
                         }
                       }}
-                      className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                     {replyError ? (
                       <p

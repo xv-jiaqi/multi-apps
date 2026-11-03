@@ -92,7 +92,7 @@ export function TopicForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
-          className="w-full rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+          className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
           placeholder={titlePlaceholder}
         />
       </div>
@@ -115,7 +115,7 @@ export function TopicForm({
             {body.trim() ? (
               <MarkdownView body={body} />
             ) : (
-              <p className="text-sm text-neutral-400">{previewEmptyLabel}</p>
+              <p className="text-sm text-muted">{previewEmptyLabel}</p>
             )}
           </div>
         ) : (
@@ -125,11 +125,11 @@ export function TopicForm({
             onChange={(e) => setBody(e.target.value)}
             rows={12}
             maxLength={10_000}
-            className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 font-mono text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+            className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 font-mono text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
             placeholder={bodyPlaceholder}
           />
         )}
-        <p className="text-xs text-neutral-500">{markdownHint}</p>
+        <p className="text-xs text-muted">{markdownHint}</p>
         <p className="text-xs text-neutral-600">{mentionHint}</p>
       </div>
 

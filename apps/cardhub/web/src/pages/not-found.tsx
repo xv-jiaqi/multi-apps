@@ -13,7 +13,7 @@ export const NotFoundPage = observer(function NotFoundPage() {
     <PageShell>
       <PageMeta title={tt('state.notFound')} />
       <div className="flex flex-col items-center gap-4 py-24 text-center">
-        <p aria-hidden="true" className="text-6xl font-black tracking-tight text-neutral-500">
+        <p aria-hidden="true" className="text-6xl font-black tracking-tight text-muted">
           404
         </p>
         <h1 className="text-2xl font-semibold">{tt('state.notFound')}</h1>

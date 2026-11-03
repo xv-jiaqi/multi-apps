@@ -131,9 +131,7 @@ function MeSection({
             className="text-base font-semibold text-neutral-900 focus:outline-none"
           >
             {title}{' '}
-            {count !== undefined ? (
-              <span className="font-normal text-neutral-500">{count}</span>
-            ) : null}
+            {count !== undefined ? <span className="font-normal text-muted">{count}</span> : null}
           </h2>
           {action ? (
             <Link
@@ -458,7 +456,7 @@ export const MePage = observer(function MePage() {
                 >
                   {section.label}
                   {section.count !== undefined ? (
-                    <span className="tabular-nums text-neutral-500">{section.count}</span>
+                    <span className="tabular-nums text-muted">{section.count}</span>
                   ) : null}
                 </a>
               </li>

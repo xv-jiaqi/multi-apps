@@ -49,7 +49,7 @@ const emptyValues: ReleaseFormValues = {
 };
 
 const fieldClass =
-  'flex w-full rounded-md border border-neutral-300 bg-card px-3 py-2 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line';
+  'flex w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm text-neutral-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line';
 
 type SeriesOption = { id: string; slug: string; title: string };
 

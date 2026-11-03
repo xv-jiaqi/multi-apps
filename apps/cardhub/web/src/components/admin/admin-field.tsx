@@ -48,7 +48,7 @@ export function AdminField({
           ) : null}
         </div>
         {max !== undefined && count !== undefined ? (
-          <span aria-live="off" className="shrink-0 text-xs text-neutral-500">
+          <span aria-live="off" className="shrink-0 text-xs text-muted">
             {count}/{max}
           </span>
         ) : null}

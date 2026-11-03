@@ -56,7 +56,7 @@ export const DialogContent = React.forwardRef<
       {children}
       {showClose ? (
         <DialogPrimitive.Close
-          className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           aria-label={closeLabel}
         >
           <X className="size-4" aria-hidden="true" />

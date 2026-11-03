@@ -54,3 +54,13 @@
   --color-warning-soft: var(--color-amber-50);
   --color-warning-border: var(--color-amber-200);
 }
+
+/*
+ * CH-305 v1.2 §10: light contrast fix (WCAG 1.4.3 / 1.4.11). These two groups
+ * intentionally change light pixels. Dark values arrive with the dark PR (§11-3).
+ */
+@theme {
+  --color-muted: #666666;
+  --color-input: #8a8a8a;
+  --color-input-hover: var(--color-neutral-500);
+}
