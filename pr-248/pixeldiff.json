@@ -1,0 +1,37 @@
+{
+ "banned_375_zh": {
+  "size": [
+   375,
+   900
+  ],
+  "diffPixels": 0
+ },
+ "normal_1440_en": {
+  "size": [
+   1440,
+   908
+  ],
+  "diffPixels": 0
+ },
+ "normal_1440_zh": {
+  "size": [
+   1440,
+   908
+  ],
+  "diffPixels": 0
+ },
+ "normal_375_en": {
+  "size": [
+   375,
+   1036
+  ],
+  "diffPixels": 0
+ },
+ "normal_375_zh": {
+  "size": [
+   375,
+   944
+  ],
+  "diffPixels": 0
+ }
+}
