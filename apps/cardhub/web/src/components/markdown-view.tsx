@@ -1,4 +1,4 @@
-import { memo, type ComponentProps, type ReactNode } from 'react';
+import { createContext, memo, useContext, type ComponentProps, type ReactNode } from 'react';
 import ReactMarkdown, { type Components, type ExtraProps } from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
@@ -80,11 +80,34 @@ function isExternal(href: string | undefined): boolean {
   return !!href && /^https?:\/\//i.test(href);
 }
 
+/** True inside a card body heading, so `img` can keep the alt visible (CH-222 §2-7). */
+const InCardHeading = createContext(false);
+
+function CardImage({ src, alt }: { src: unknown; alt: string | undefined }) {
+  const inHeading = useContext(InCardHeading);
+  if (typeof src !== 'string' || !/^https:\/\//i.test(src)) {
+    // CH-206: never request a non-https image. In a heading the alt is the
+    // visible text, so the heading keeps its name (CH-222 §2-7 3/5).
+    return inHeading && alt ? <span>{alt}</span> : null;
+  }
+  return (
+    <img
+      src={src}
+      alt={alt ?? ''}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      className="h-auto max-w-full rounded-lg"
+    />
+  );
+}
+
 function cardComponents(newTabLabel: string | undefined): Components {
   const heading =
     (Tag: 'h3' | 'h4' | 'h5' | 'h6', className: string) =>
     ({ node: _node, ...props }: ComponentProps<'h1'> & ExtraProps) => (
-      <Tag {...props} className={className} />
+      <InCardHeading.Provider value={true}>
+        <Tag {...props} className={className} />
+      </InCardHeading.Provider>
     );
   return {
     pre: (props: ComponentProps<'pre'> & ExtraProps) => (
@@ -137,18 +160,9 @@ function cardComponents(newTabLabel: string | undefined): Components {
         </a>
       );
     },
-    img: ({ node: _node, src, alt }: ComponentProps<'img'> & ExtraProps) => {
-      if (typeof src !== 'string' || !/^https:\/\//i.test(src)) return null;
-      return (
-        <img
-          src={src}
-          alt={alt ?? ''}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className="h-auto max-w-full rounded-lg"
-        />
-      );
-    },
+    img: ({ node: _node, src, alt }: ComponentProps<'img'> & ExtraProps) => (
+      <CardImage src={src} alt={alt} />
+    ),
   };
 }
 

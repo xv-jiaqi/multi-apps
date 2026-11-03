@@ -138,3 +138,55 @@ describe('MarkdownView card variant heading levels (CH-222)', () => {
     ]);
   });
 });
+
+// CH-222 v1.1 §2-7 / 22-12 sample S2.
+const sampleS2 = [
+  '## ![价格图](x.png)',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+  '## 文字 ![图](x.png) 尾',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+  '## ![价格图](https://img.invalid/x.png)',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+  '## ![](x.png)',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+].join('\n\n');
+
+describe('MarkdownView card variant images in headings (CH-222 §2-7)', () => {
+  it('shows a non-https image as its alt text inside the heading (22-13)', () => {
+    const { container } = render(<MarkdownView variant="card" body={sampleS2} />);
+    const [onlyImg, mixed, https, emptyAlt] = [...container.querySelectorAll('h3')];
+    expect(onlyImg.innerHTML).toBe('<span>价格图</span>');
+    expect([...mixed.childNodes].map((n) => [n.nodeName, n.textContent])).toEqual([
+      ['#text', '文字 '],
+      ['SPAN', '图'],
+      ['#text', ' 尾'],
+    ]);
+    const img = https.querySelector('img')!;
+    expect(https.children).toHaveLength(1);
+    expect(img).toHaveAttribute('alt', '价格图');
+    expect(img).toHaveAttribute('src', 'https://img.invalid/x.png');
+    expect(img).toHaveClass('h-auto max-w-full rounded-lg', { exact: true });
+    expect(emptyAlt.querySelector('span, img')).toBeNull();
+    expect(container.querySelectorAll('img')).toHaveLength(1);
+  });
+
+  it('names each heading like the table region after it (22-14)', () => {
+    render(<MarkdownView variant="card" body={sampleS2} />);
+    for (const name of ['价格图', '文字 图 尾']) {
+      expect(screen.getAllByRole('heading', { level: 3, name })[0]).toBeInTheDocument();
+    }
+    expect(screen.getAllByRole('heading', { level: 3, name: '价格图' })).toHaveLength(2);
+    const regions = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(regions.slice(0, 3).map((r) => r?.split('：')[0])).toEqual([
+      '价格图',
+      '文字 图 尾',
+      '价格图',
+    ]);
+  });
+
+  it('still drops a non-https image outside headings (CH-206)', () => {
+    const { container } = render(<MarkdownView variant="card" body={'![a](x.png) 正文'} />);
+    expect(container.querySelector('img, span')).toBeNull();
+    expect(container).not.toHaveTextContent(/^a/);
+  });
+});
