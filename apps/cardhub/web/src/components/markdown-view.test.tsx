@@ -186,6 +186,27 @@ describe('MarkdownView card variant images in headings (CH-222 §2-7)', () => {
     ]);
   });
 
+  it('joins two adjacent image alts with no space (§2-7④: 甲乙)', () => {
+    const body = [
+      '## ![甲](x.png)![乙](x.png)',
+      '',
+      '| a |',
+      '| --- |',
+      '| 1 |',
+      '',
+      '## 后',
+      '',
+      '| b |',
+      '| --- |',
+      '| 2 |',
+    ].join('\n');
+    const { container } = render(<MarkdownView variant="card" body={body} />);
+    expect(container.querySelector('h3')!.innerHTML).toBe('<span>甲</span><span>乙</span>');
+    expect(screen.getByRole('heading', { level: 3, name: '甲乙' })).toBeInTheDocument();
+    const regions = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(regions.map((r) => r?.split('：')[0])).toEqual(['甲乙', '后']);
+  });
+
   it('still drops a non-https image outside headings (CH-206)', () => {
     const { container } = render(<MarkdownView variant="card" body={'![a](x.png) 正文'} />);
     expect(container.querySelector('img, span')).toBeNull();
