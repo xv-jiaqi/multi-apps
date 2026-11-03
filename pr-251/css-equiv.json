@@ -1,0 +1,30 @@
+{
+ "mainDecls": 1364,
+ "prDecls": 1385,
+ "addedThemeVars": 0,
+ "onlyMain": [
+  "@layer utilities ¦ .text-amber-800 ¦ color ¦ var(--color-amber-800) x1/2",
+  "@layer utilities ¦ .text-white ¦ color ¦ var(--color-white) x1/2"
+ ],
+ "onlyPr": [
+  "@layer theme ¦ :root,:host ¦ --color-card ¦ var(--color-white)",
+  "@layer theme ¦ :root,:host ¦ --color-on-inverse ¦ var(--color-white)",
+  "@layer theme ¦ :root,:host ¦ --color-overlay ¦ var(--color-neutral-950)",
+  "@layer theme ¦ :root,:host ¦ --color-link ¦ var(--color-brand-600)",
+  "@layer theme ¦ :root,:host ¦ --color-link-strong ¦ var(--color-brand-700)",
+  "@layer theme ¦ :root,:host ¦ --color-accent-soft ¦ var(--color-brand-50)",
+  "@layer theme ¦ :root,:host ¦ --color-accent-border ¦ var(--color-brand-200)",
+  "@layer theme ¦ :root,:host ¦ --color-danger ¦ var(--color-red-700)",
+  "@layer theme ¦ :root,:host ¦ --color-danger-soft ¦ var(--color-red-50)",
+  "@layer theme ¦ :root,:host ¦ --color-danger-soft-strong ¦ var(--color-red-100)",
+  "@layer theme ¦ :root,:host ¦ --color-danger-border ¦ var(--color-red-200)",
+  "@layer theme ¦ :root,:host ¦ --color-danger-border-strong ¦ var(--color-red-300)",
+  "@layer theme ¦ :root,:host ¦ --color-danger-line ¦ var(--color-red-600)",
+  "@layer theme ¦ :root,:host ¦ --color-success ¦ var(--color-emerald-800)",
+  "@layer theme ¦ :root,:host ¦ --color-success-soft ¦ var(--color-emerald-50)",
+  "@layer theme ¦ :root,:host ¦ --color-success-border ¦ var(--color-emerald-200)",
+  "@layer theme ¦ :root,:host ¦ --color-warning ¦ var(--color-amber-800)",
+  "@layer theme ¦ :root,:host ¦ --color-warning-soft ¦ var(--color-amber-50)",
+  "@layer theme ¦ :root,:host ¦ --color-warning-border ¦ var(--color-amber-200)"
+ ]
+}
