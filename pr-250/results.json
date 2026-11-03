@@ -1,0 +1,290 @@
+[
+ {
+  "page": "card",
+  "w": 375,
+  "loc": "zh",
+  "before": {
+   "labels": [
+    "表格 1（可横向滚动）",
+    "表格 2（可横向滚动）",
+    "说明：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ],
+   "cleanLabels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）"
+   ],
+   "cleanAxe": [
+    "heading-order x1"
+   ]
+  },
+  "diffPx": 0
+ },
+ {
+  "page": "card",
+  "w": 375,
+  "loc": "en",
+  "before": {
+   "labels": [
+    "Table 1 (scrollable)",
+    "Table 2 (scrollable)",
+    "说明: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ],
+   "cleanLabels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)"
+   ],
+   "cleanAxe": [
+    "heading-order x1"
+   ]
+  },
+  "diffPx": 0
+ },
+ {
+  "page": "card",
+  "w": 1440,
+  "loc": "zh",
+  "before": {
+   "labels": [
+    "表格 1（可横向滚动）",
+    "表格 2（可横向滚动）",
+    "说明：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ],
+   "cleanLabels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）"
+   ],
+   "cleanAxe": [
+    "heading-order x1"
+   ]
+  },
+  "diffPx": 0
+ },
+ {
+  "page": "card",
+  "w": 1440,
+  "loc": "en",
+  "before": {
+   "labels": [
+    "Table 1 (scrollable)",
+    "Table 2 (scrollable)",
+    "说明: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1",
+    "heading-order x1"
+   ],
+   "cleanLabels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)"
+   ],
+   "cleanAxe": [
+    "heading-order x1"
+   ]
+  },
+  "diffPx": 0
+ },
+ {
+  "page": "forum",
+  "w": 375,
+  "loc": "zh",
+  "before": {
+   "labels": [
+    "表格 1（可横向滚动）",
+    "表格 2（可横向滚动）",
+    "说明：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ],
+   "cleanLabels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）"
+   ],
+   "cleanAxe": []
+  },
+  "diffPx": 0
+ },
+ {
+  "page": "forum",
+  "w": 375,
+  "loc": "en",
+  "before": {
+   "labels": [
+    "Table 1 (scrollable)",
+    "Table 2 (scrollable)",
+    "说明: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ],
+   "cleanLabels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)"
+   ],
+   "cleanAxe": []
+  },
+  "diffPx": 0
+ },
+ {
+  "page": "forum",
+  "w": 1440,
+  "loc": "zh",
+  "before": {
+   "labels": [
+    "表格 1（可横向滚动）",
+    "表格 2（可横向滚动）",
+    "说明：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）",
+    "表格 4（可横向滚动）"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ],
+   "cleanLabels": [
+    "价格图：表格 1（可横向滚动）",
+    "价格图：表格 2（可横向滚动）",
+    "说明 走势图：表格 3（可横向滚动）"
+   ],
+   "cleanAxe": []
+  },
+  "diffPx": 0
+ },
+ {
+  "page": "forum",
+  "w": 1440,
+  "loc": "en",
+  "before": {
+   "labels": [
+    "Table 1 (scrollable)",
+    "Table 2 (scrollable)",
+    "说明: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ]
+  },
+  "after": {
+   "labels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)",
+    "Table 4 (scrollable)"
+   ],
+   "axe": [
+    "empty-heading x1"
+   ],
+   "cleanLabels": [
+    "价格图: Table 1 (scrollable)",
+    "价格图: Table 2 (scrollable)",
+    "说明 走势图: Table 3 (scrollable)"
+   ],
+   "cleanAxe": []
+  },
+  "diffPx": 0
+ }
+]
