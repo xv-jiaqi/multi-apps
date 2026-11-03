@@ -199,7 +199,7 @@ const AdminReleasesBody = observer(function AdminReleasesBody() {
                     {item.series ? (
                       <Link
                         to={`/series/${item.series.slug}`}
-                        className={`${actionClass} text-brand-600 hover:underline wrap-anywhere`}
+                        className={`${actionClass} text-link hover:underline wrap-anywhere`}
                       >
                         {item.series.title}
                       </Link>
@@ -209,7 +209,7 @@ const AdminReleasesBody = observer(function AdminReleasesBody() {
                     <div className="flex flex-wrap gap-2">
                       <Link
                         to={`/admin/releases/${item.id}/edit`}
-                        className={`${actionClass} text-brand-600 hover:underline`}
+                        className={`${actionClass} text-link hover:underline`}
                         aria-label={tt('admin.action.editAria', { name: item.title })}
                       >
                         {tt('admin.action.edit')}

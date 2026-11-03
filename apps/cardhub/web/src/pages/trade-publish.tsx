@@ -51,7 +51,7 @@ function PublishImagePreview({ url, fallback }: { url: string; fallback: string 
   const [failed, setFailed] = useState(false);
   if (!isHttpsImageUrl(url) || failed) {
     const className =
-      'flex size-full items-center justify-center px-2 text-xs text-brand-600 hover:underline';
+      'flex size-full items-center justify-center px-2 text-xs text-link hover:underline';
     if (failed && isHttpsImageUrl(url)) {
       return (
         <a href={url} target="_blank" rel="noopener noreferrer" className={className}>
@@ -60,7 +60,7 @@ function PublishImagePreview({ url, fallback }: { url: string; fallback: string 
       );
     }
     return (
-      <span className="flex size-full items-center justify-center px-2 text-xs text-brand-600">
+      <span className="flex size-full items-center justify-center px-2 text-xs text-link">
         {fallback}
       </span>
     );
@@ -167,11 +167,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
             ]}
           />
           <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-600">
-            <Link
-              to="/login"
-              state={{ from: '/trade/new' }}
-              className="text-brand-600 hover:underline"
-            >
+            <Link to="/login" state={{ from: '/trade/new' }} className="text-link hover:underline">
               {tt('trade.list.loginToPublish')}
             </Link>
           </p>
@@ -263,10 +259,10 @@ export const TradePublishPage = observer(function TradePublishPage() {
             { label: tt('trade.publish.title') },
           ]}
         />
-        <Card className="border-white/60 bg-white/80 backdrop-blur">
+        <Card className="border-card/60 bg-card/80 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-2xl">{tt('trade.publish.title')}</CardTitle>
-            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-xs text-warning">
               {tt('trade.publish.disclaimer')}
             </p>
           </CardHeader>
@@ -276,7 +272,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                 <BannedNotice>{tt('ban.cannotTrade')}</BannedNotice>
                 <Link
                   to="/trade"
-                  className="inline-flex min-h-6 items-center text-sm text-brand-600 hover:underline"
+                  className="inline-flex min-h-6 items-center text-sm text-link hover:underline"
                 >
                   {tt('ban.backToTrade')}
                 </Link>
@@ -300,7 +296,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     {tt('trade.publish.card')}
                   </label>
                   {prefillQuery.isLoading && !selectedCard ? (
-                    <div className="flex items-center gap-3 rounded-md border border-neutral-300 bg-white p-3">
+                    <div className="flex items-center gap-3 rounded-md border border-neutral-300 bg-card p-3">
                       <div className="aspect-[63/88] w-16 animate-pulse motion-reduce:animate-none rounded-sm bg-neutral-200" />
                       <div className="min-w-0 flex-1 space-y-2">
                         <div className="h-4 w-1/2 rounded bg-neutral-200" />
@@ -308,7 +304,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                       </div>
                     </div>
                   ) : selectedCard && !changingCard ? (
-                    <div className="flex items-center gap-3 rounded-md border border-neutral-300 bg-white p-3">
+                    <div className="flex items-center gap-3 rounded-md border border-neutral-300 bg-card p-3">
                       <CardThumb
                         src={selectedCard.imageUrl}
                         slug={selectedCard.slug}
@@ -351,10 +347,10 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     />
                   )}
                   {prefillQuery.isError && !selectedCard ? (
-                    <p className="text-xs text-red-700">{tt('trade.publish.cardNotFound')}</p>
+                    <p className="text-xs text-danger">{tt('trade.publish.cardNotFound')}</p>
                   ) : null}
                   {fieldErrors.card ? (
-                    <p id="trade-card-error" className="text-xs text-red-700">
+                    <p id="trade-card-error" className="text-xs text-danger">
                       {fieldErrors.card}
                     </p>
                   ) : null}
@@ -417,7 +413,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                       onChange={(event) => setPrice(event.target.value)}
                     />
                     {fieldErrors.price ? (
-                      <p id="trade-price-error" className="text-xs text-red-700">
+                      <p id="trade-price-error" className="text-xs text-danger">
                         {fieldErrors.price}
                       </p>
                     ) : null}
@@ -441,13 +437,13 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     placeholder={'https://...\nhttps://...'}
                     aria-invalid={Boolean(fieldErrors.imageUrls || imageError)}
                     aria-describedby="trade-images-hint trade-images-error"
-                    className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600"
+                    className="w-full resize-y rounded-md border border-neutral-300 bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line"
                   />
                   <p id="trade-images-hint" className="text-xs text-neutral-500">
                     {tt('trade.publish.imageUrlsHint')}
                   </p>
                   {fieldErrors.imageUrls || imageError ? (
-                    <p id="trade-images-error" className="text-xs text-red-700">
+                    <p id="trade-images-error" className="text-xs text-danger">
                       {fieldErrors.imageUrls ?? imageError}
                     </p>
                   ) : null}
@@ -484,7 +480,7 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     aria-describedby={fieldErrors.contact ? 'trade-contact-error' : undefined}
                   />
                   {fieldErrors.contact ? (
-                    <p id="trade-contact-error" className="text-xs text-red-700">
+                    <p id="trade-contact-error" className="text-xs text-danger">
                       {fieldErrors.contact}
                     </p>
                   ) : null}
@@ -498,13 +494,13 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     onChange={(event) => setNote(event.target.value)}
                     rows={3}
                     maxLength={500}
-                    className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                    className="w-full resize-y rounded-md border border-neutral-300 bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                   />
                 </label>
                 {formError ? (
                   <p
                     role="alert"
-                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                    className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
                   >
                     {formError}
                   </p>

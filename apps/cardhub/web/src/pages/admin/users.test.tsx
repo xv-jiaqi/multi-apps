@@ -368,7 +368,7 @@ describe('username column sticky contract', () => {
     );
     expect(screen.getByRole('columnheader', { name: '邮箱' })).not.toHaveClass('sticky');
     const skeletonCells = within(table).getAllByRole('row')[1]?.querySelectorAll('td');
-    expect(skeletonCells?.[0]).toHaveClass('sticky', 'bg-white');
+    expect(skeletonCells?.[0]).toHaveClass('sticky', 'bg-card');
     expect(skeletonCells?.[1]).not.toHaveClass('sticky');
   });
 
@@ -380,7 +380,7 @@ describe('username column sticky contract', () => {
     expect(author).toHaveClass('wrap-anywhere', 'min-w-0');
     expect(author).not.toHaveClass('truncate');
     const row = screen.getByRole('rowheader', { name: new RegExp(longName) });
-    expect(row).toHaveClass('sticky', 'bg-white', 'wrap-anywhere', 'focus-visible:ring-inset');
+    expect(row).toHaveClass('sticky', 'bg-card', 'wrap-anywhere', 'focus-visible:ring-inset');
   });
 
   it('does not stick the clear-filter row', () => {

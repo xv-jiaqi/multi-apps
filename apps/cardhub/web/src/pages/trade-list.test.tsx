@@ -518,7 +518,7 @@ describe('TradeListPage price filters', () => {
     );
     expect(alert.querySelector('p')).toHaveClass('font-medium', 'text-neutral-700');
     const clear = screen.getByRole('button', { name: '清除筛选' });
-    expect(clear).toHaveClass('mt-4', 'h-10', 'border-neutral-300', 'bg-white');
+    expect(clear).toHaveClass('mt-4', 'h-10', 'border-neutral-300', 'bg-card');
     expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument();
     expect(screen.queryByText('加载失败')).not.toBeInTheDocument();
     expect(alert).not.toHaveTextContent('kebab');

@@ -92,7 +92,7 @@ export function TopicForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
-          className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+          className="w-full rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
           placeholder={titlePlaceholder}
         />
       </div>
@@ -105,13 +105,13 @@ export function TopicForm({
           <button
             type="button"
             onClick={() => setShowPreview((value) => !value)}
-            className="text-xs text-brand-600 hover:underline"
+            className="text-xs text-link hover:underline"
           >
             {showPreview ? hidePreviewLabel : showPreviewLabel}
           </button>
         </div>
         {showPreview ? (
-          <div className="min-h-[16rem] rounded-md border border-neutral-200 bg-white px-3 py-2">
+          <div className="min-h-[16rem] rounded-md border border-neutral-200 bg-card px-3 py-2">
             {body.trim() ? (
               <MarkdownView body={body} />
             ) : (
@@ -125,7 +125,7 @@ export function TopicForm({
             onChange={(e) => setBody(e.target.value)}
             rows={12}
             maxLength={10_000}
-            className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 font-mono text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+            className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 font-mono text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
             placeholder={bodyPlaceholder}
           />
         )}
@@ -136,7 +136,7 @@ export function TopicForm({
       {error ? (
         <p
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger"
         >
           {error}
         </p>

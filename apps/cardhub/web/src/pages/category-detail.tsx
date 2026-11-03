@@ -41,14 +41,14 @@ export const CategoryDetailPage = observer(function CategoryDetailPage() {
         {view === 'loading' ? (
           <div className="space-y-6">
             <div className="space-y-2">
-              <div className="h-9 w-48 animate-pulse motion-reduce:animate-none rounded bg-white/50" />
-              <div className="h-4 max-w-2xl animate-pulse motion-reduce:animate-none rounded bg-white/50" />
+              <div className="h-9 w-48 animate-pulse motion-reduce:animate-none rounded bg-card/50" />
+              <div className="h-4 max-w-2xl animate-pulse motion-reduce:animate-none rounded bg-card/50" />
             </div>
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }, (_, index) => (
                 <li
                   key={index}
-                  className="h-56 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50"
+                  className="h-56 animate-pulse motion-reduce:animate-none rounded-2xl bg-card/50"
                 />
               ))}
             </ul>
@@ -89,7 +89,7 @@ export const CategoryDetailPage = observer(function CategoryDetailPage() {
                   <li key={series.slug}>
                     <Link
                       to={`/series/${series.slug}`}
-                      className="group block overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className="group block overflow-hidden rounded-2xl border border-card/60 bg-card/70 shadow-sm backdrop-blur transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       <div className="relative" aria-hidden>
                         <Artwork

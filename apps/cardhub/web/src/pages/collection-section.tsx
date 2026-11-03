@@ -156,7 +156,7 @@ export function CollectionSection() {
       aria-busy={bothLoading || undefined}
       className="scroll-mt-20"
     >
-      <Card className="border-white/60 bg-white/70 backdrop-blur">
+      <Card className="border-card/60 bg-card/70 backdrop-blur">
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <h2
             id="me-collection-title"
@@ -195,7 +195,7 @@ export function CollectionSection() {
                       <div className="flex min-w-0 flex-col items-start gap-1 md:flex-row md:items-baseline md:justify-between">
                         <Link
                           to={`/series/${item.seriesSlug}`}
-                          className="min-w-0 py-1 text-brand-600 wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                          className="min-w-0 py-1 text-link wrap-anywhere hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                         >
                           {item.seriesTitle}
                         </Link>

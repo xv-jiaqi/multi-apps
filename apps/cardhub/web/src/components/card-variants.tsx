@@ -14,7 +14,7 @@ export type CardVariantItem = {
 };
 
 const itemClass =
-  'flex min-h-12 min-w-0 items-center gap-3 rounded-lg p-2 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+  'flex min-h-12 min-w-0 items-center gap-3 rounded-lg p-2 hover:bg-card/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
 
 function useNarrowViewport() {
   const [narrow, setNarrow] = useState(false);

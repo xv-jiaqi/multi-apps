@@ -273,7 +273,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
           />
         )
       ) : mode === 'edit' && editView === 'loading' ? (
-        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+        <div role="status" className="max-w-2xl rounded-lg border border-neutral-200 bg-card p-6">
           <div className="h-4 w-40 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
         </div>
       ) : mode === 'edit' && !existing ? (
@@ -332,7 +332,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
                 rows={4}
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-red-600 sm:text-sm"
+                className="flex w-full rounded-md border border-neutral-300 bg-card px-3 py-2 text-base text-neutral-900 shadow-sm placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line sm:text-sm"
               />
             </AdminField>
             <div className="space-y-1">
@@ -362,7 +362,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
                 </SelectContent>
               </Select>
               {errors.categorySlug ? (
-                <p id="series-category-error" className="text-xs text-red-700">
+                <p id="series-category-error" className="text-xs text-danger">
                   {errors.categorySlug}
                 </p>
               ) : null}
@@ -398,7 +398,7 @@ const SeriesFormBody = observer(function SeriesFormBody({ mode }: { mode: 'creat
             {formError ? (
               <p
                 role="alert"
-                className="whitespace-pre-line rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                className="whitespace-pre-line rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger"
               >
                 {formError}
               </p>

@@ -291,7 +291,7 @@ export function Combobox<T>({
           {onRetry ? (
             <button
               type="button"
-              className="font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="font-medium text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               onMouseDown={(event) => event.preventDefault()}
               onClick={onRetry}
             >
@@ -438,10 +438,7 @@ export function Combobox<T>({
                           >
                             <span className="min-w-0 flex-1">{renderItem(item)}</span>
                             {mode === 'select' && selected ? (
-                              <Check
-                                className="size-4 shrink-0 text-brand-600"
-                                aria-hidden="true"
-                              />
+                              <Check className="size-4 shrink-0 text-link" aria-hidden="true" />
                             ) : null}
                           </div>
                         );

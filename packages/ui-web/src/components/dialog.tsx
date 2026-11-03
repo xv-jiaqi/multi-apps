@@ -7,7 +7,7 @@ const dialogContentSizes = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-2xl',
-  full: 'inset-0 top-0 mx-0 max-h-none max-w-none translate-y-0 rounded-none border-0 bg-neutral-950 p-0 text-white shadow-none',
+  full: 'inset-0 top-0 mx-0 max-h-none max-w-none translate-y-0 rounded-none border-0 bg-overlay p-0 text-white shadow-none',
 } as const;
 
 export type DialogContentSize = keyof typeof dialogContentSizes;
@@ -23,7 +23,7 @@ export const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-neutral-950/40', className)}
+    className={cn('fixed inset-0 z-50 bg-overlay/40', className)}
     {...props}
   />
 ));
@@ -42,12 +42,12 @@ export const DialogContent = React.forwardRef<
   DialogContentProps
 >(({ className, children, size = 'md', closeLabel, showClose = true, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay className={size === 'full' ? 'bg-neutral-950' : undefined} />
+    <DialogOverlay className={size === 'full' ? 'bg-overlay' : undefined} />
     <DialogPrimitive.Content
       ref={ref}
       aria-modal="true"
       className={cn(
-        'fixed inset-x-4 top-1/2 z-50 mx-auto max-h-11/12 -translate-y-1/2 overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 text-neutral-900 shadow-xl focus:outline-none',
+        'fixed inset-x-4 top-1/2 z-50 mx-auto max-h-11/12 -translate-y-1/2 overflow-y-auto rounded-xl border border-neutral-200 bg-card p-6 text-neutral-900 shadow-xl focus:outline-none',
         dialogContentSizes[size],
         className,
       )}

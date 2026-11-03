@@ -84,7 +84,7 @@ function PasswordField({
         </p>
       ) : null}
       {error ? (
-        <p id={errorId} className="text-xs text-red-700">
+        <p id={errorId} className="text-xs text-danger">
           {error}
         </p>
       ) : null}
@@ -225,7 +225,7 @@ export const ChangePasswordPage = observer(function ChangePasswordPage() {
             { label: tt('me.password.title') },
           ]}
         />
-        <Card className="border-white/60 bg-white/80 backdrop-blur">
+        <Card className="border-card/60 bg-card/80 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-2xl">{tt('me.password.title')}</CardTitle>
             <p className="text-sm text-neutral-600">{tt('me.password.subtitle')}</p>
@@ -294,7 +294,7 @@ export const ChangePasswordPage = observer(function ChangePasswordPage() {
                 <p
                   id="password-form-error"
                   role="alert"
-                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                  className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger"
                 >
                   {formError}
                 </p>

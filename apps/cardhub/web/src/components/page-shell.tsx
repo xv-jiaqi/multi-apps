@@ -14,7 +14,7 @@ export const PageShell = observer(function PageShell({ children }: PropsWithChil
     <div className="min-h-screen bg-page text-neutral-900">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-neutral-900 focus:px-3 focus:py-2 focus:text-sm focus:text-white focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-neutral-900 focus:px-3 focus:py-2 focus:text-sm focus:text-on-inverse focus:shadow-lg"
       >
         {tt('a11y.skipToContent')}
       </a>

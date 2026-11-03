@@ -320,7 +320,7 @@ const UsersBody = observer(function UsersBody() {
           ref={pageErrorRef}
           role="alert"
           tabIndex={-1}
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-sm text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {pageError}
         </p>
@@ -401,7 +401,7 @@ const UsersBody = observer(function UsersBody() {
                           key={cell}
                           className={
                             cell === 0
-                              ? `${stickyUsernameClassName} bg-white px-3 py-2`
+                              ? `${stickyUsernameClassName} bg-card px-3 py-2`
                               : 'px-3 py-2'
                           }
                         >
@@ -418,7 +418,7 @@ const UsersBody = observer(function UsersBody() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className={`${actionClass} text-brand-600 hover:underline`}
+                      className={`${actionClass} text-link hover:underline`}
                     >
                       {tt('admin.users.clearFilters')}
                     </button>
@@ -452,7 +452,7 @@ const UsersBody = observer(function UsersBody() {
                         if (node) rowRefs.current.set(user.id, node);
                         else rowRefs.current.delete(user.id);
                       }}
-                      className={`${stickyUsernameClassName} bg-white px-3 py-2 text-left font-medium text-neutral-900 wrap-anywhere focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500`}
+                      className={`${stickyUsernameClassName} bg-card px-3 py-2 text-left font-medium text-neutral-900 wrap-anywhere focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500`}
                     >
                       <span className="flex min-w-0 flex-wrap items-center gap-2">
                         <span className="min-w-0 wrap-anywhere">@{user.username}</span>
@@ -468,8 +468,8 @@ const UsersBody = observer(function UsersBody() {
                       <span
                         className={
                           banned
-                            ? 'inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-200'
-                            : 'inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200'
+                            ? 'inline-flex items-center rounded-full bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger ring-1 ring-inset ring-danger-border'
+                            : 'inline-flex items-center rounded-full bg-success-soft px-2 py-0.5 text-xs font-medium text-success ring-1 ring-inset ring-success-border'
                         }
                       >
                         {tt(banned ? 'admin.users.statusBanned' : 'admin.users.statusActive')}
@@ -502,8 +502,8 @@ const UsersBody = observer(function UsersBody() {
                             }}
                             className={
                               banned
-                                ? `${actionClass} text-xs font-medium text-brand-600 hover:underline`
-                                : `${actionClass} text-xs text-red-700 hover:underline`
+                                ? `${actionClass} text-xs font-medium text-link hover:underline`
+                                : `${actionClass} text-xs text-danger hover:underline`
                             }
                             aria-label={tt(
                               banned ? 'admin.users.unbanAria' : 'admin.users.banAria',
@@ -537,13 +537,13 @@ const UsersBody = observer(function UsersBody() {
           {query.isFetchNextPageError ? (
             <div
               role="alert"
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700"
+              className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-center text-sm text-danger"
             >
               <p>{tt('state.error')}</p>
               <button
                 type="button"
                 onClick={() => void query.fetchNextPage()}
-                className={`${actionClass} mt-2 text-xs font-medium text-red-700`}
+                className={`${actionClass} mt-2 text-xs font-medium text-danger`}
               >
                 {query.isFetchingNextPage ? tt('state.loading') : tt('state.retry')}
               </button>

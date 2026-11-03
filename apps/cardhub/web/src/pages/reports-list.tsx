@@ -119,11 +119,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
 
         {!session.isAuthenticated ? (
           <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
-            <Link
-              to="/login"
-              state={{ from: '/reports' }}
-              className="text-brand-600 hover:underline"
-            >
+            <Link to="/login" state={{ from: '/reports' }} className="text-link hover:underline">
               {tt('reports.loginRequired')}
             </Link>
           </p>
@@ -133,7 +129,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
           </p>
         ) : (
           <>
-            <div className="inline-flex rounded-full border border-neutral-200 bg-white p-1">
+            <div className="inline-flex rounded-full border border-neutral-200 bg-card p-1">
               {STATUS_FILTERS.map((filter) => {
                 const active = filter.key === statusFilter;
                 return (
@@ -143,7 +139,9 @@ export const ReportsListPage = observer(function ReportsListPage() {
                     onClick={() => handleFilterChange(filter.key)}
                     aria-pressed={active}
                     className={`min-h-9 rounded-full px-4 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 ${
-                      active ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
+                      active
+                        ? 'bg-neutral-900 text-on-inverse'
+                        : 'text-neutral-600 hover:bg-neutral-100'
                     }`}
                   >
                     {tt(filter.tKey)}
@@ -157,7 +155,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
                 ref={statusRef}
                 role="status"
                 tabIndex={-1}
-                className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 {statusMessage.text}
               </p>
@@ -168,12 +166,12 @@ export const ReportsListPage = observer(function ReportsListPage() {
                 {Array.from({ length: 4 }).map((_, idx) => (
                   <li
                     key={idx}
-                    className="h-32 animate-pulse motion-reduce:animate-none rounded-2xl border border-white/60 bg-white/50"
+                    className="h-32 animate-pulse motion-reduce:animate-none rounded-2xl border border-card/60 bg-card/50"
                   />
                 ))}
               </ul>
             ) : query.isError ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+              <div className="rounded-lg border border-danger-border bg-danger-soft p-6 text-sm text-danger">
                 <p className="font-medium">{tt('state.error')}</p>
                 <p className="mt-1 break-all text-xs opacity-80">
                   {appErrorMessage(locale.locale, query.error.data?.appCode)}
@@ -183,7 +181,7 @@ export const ReportsListPage = observer(function ReportsListPage() {
                   onClick={() => query.refetch()}
                   disabled={query.isFetching}
                   aria-busy={query.isFetching}
-                  className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:pointer-events-none disabled:opacity-50"
+                  className="mt-3 rounded-md border border-danger-border-strong bg-card px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:pointer-events-none disabled:opacity-50"
                 >
                   {query.isFetching ? tt('state.loading') : tt('state.retry')}
                 </button>
@@ -316,19 +314,19 @@ function ReportListItem({
   return (
     <li
       aria-busy={isBusy || undefined}
-      className="space-y-4 rounded-2xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur"
+      className="space-y-4 rounded-2xl border border-card/60 bg-card/70 p-5 shadow-sm backdrop-blur"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
+            <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-on-inverse">
               {tt(`reports.target.${report.targetType.toLowerCase()}`)}
             </span>
             <span
               className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                 report.status === 'PENDING'
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-emerald-100 text-emerald-800'
+                  ? 'bg-amber-100 text-warning'
+                  : 'bg-emerald-100 text-success'
               }`}
             >
               {tt(report.status === 'PENDING' ? 'reports.filterPending' : 'reports.filterResolved')}
@@ -344,7 +342,7 @@ function ReportListItem({
         </div>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white/80 p-4 text-sm">
+      <div className="rounded-xl border border-neutral-200 bg-card/80 p-4 text-sm">
         {report.target ? (
           <TargetSummary report={report} locale={locale} />
         ) : (
@@ -367,7 +365,7 @@ function ReportListItem({
                 readOnly={isBusy}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder={tt('reports.resolve.notePlaceholder')}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
               />
               <p className="text-xs text-neutral-500">{note.length} / 500</p>
             </div>
@@ -383,7 +381,7 @@ function ReportListItem({
                     cancelConfirm();
                   }
                 }}
-                className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:flex sm:items-center sm:justify-between sm:space-y-0 sm:gap-3"
+                className="space-y-3 rounded-xl border border-danger-border bg-danger-soft p-3 text-sm text-danger sm:flex sm:items-center sm:justify-between sm:space-y-0 sm:gap-3"
               >
                 <p id={confirmMessageId}>
                   {tt(
@@ -412,7 +410,7 @@ function ReportListItem({
                     ref={cancelButtonRef}
                     type="button"
                     variant="ghost"
-                    className="w-full text-neutral-700 hover:bg-red-100 hover:text-neutral-900 sm:w-auto"
+                    className="w-full text-neutral-700 hover:bg-danger-soft-strong hover:text-neutral-900 sm:w-auto"
                     disabled={isBusy}
                     onClick={cancelConfirm}
                   >
@@ -443,7 +441,7 @@ function ReportListItem({
                     ref={removeButtonRef}
                     type="button"
                     variant="outline"
-                    className="h-10 w-full border-red-200 text-red-700 hover:bg-red-50 sm:w-auto"
+                    className="h-10 w-full border-danger-border text-danger hover:bg-danger-soft sm:w-auto"
                     disabled={isBusy}
                     onClick={() => setConfirmingRemove(true)}
                   >
@@ -460,7 +458,7 @@ function ReportListItem({
             {error ? (
               <p
                 role="alert"
-                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                className="rounded-md border border-danger-border bg-danger-soft px-3 py-2 text-xs text-danger"
               >
                 {error}
               </p>
@@ -516,7 +514,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
       <div className="space-y-1">
         <Link
           to={`/cards/${report.target.cardSlug}`}
-          className="font-medium text-brand-600 hover:underline"
+          className="font-medium text-link hover:underline"
         >
           {report.target.cardName ?? report.target.cardSlug}
         </Link>
@@ -533,10 +531,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
   if (report.targetType === 'TOPIC' && report.target) {
     return (
       <div className="space-y-1">
-        <Link
-          to={`/forum/${report.target.slug}`}
-          className="font-medium text-brand-600 hover:underline"
-        >
+        <Link to={`/forum/${report.target.slug}`} className="font-medium text-link hover:underline">
           {report.target.title}
         </Link>
         <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
@@ -549,7 +544,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
       <div className="space-y-1">
         <Link
           to={`/forum/${report.target.topicSlug}`}
-          className="font-medium text-brand-600 hover:underline"
+          className="font-medium text-link hover:underline"
         >
           {report.target.topicTitle}
         </Link>
@@ -571,7 +566,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
     return (
       <div className="space-y-1">
         {targetPath ? (
-          <Link to={targetPath} className="font-medium text-brand-600 hover:underline">
+          <Link to={targetPath} className="font-medium text-link hover:underline">
             {targetLabel}
           </Link>
         ) : (

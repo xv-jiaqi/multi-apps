@@ -327,7 +327,7 @@ describe('login session notices', () => {
     expect(signedOut).toHaveTextContent('已退出所有设备，请重新登录。');
     expect(signedOut).toHaveAttribute('tabIndex', '-1');
     expect(signedOut).toHaveFocus();
-    expect(signedOut.className).toContain('bg-emerald-50');
+    expect(signedOut.className).toContain('bg-success-soft');
     unmount();
 
     render(
@@ -354,7 +354,7 @@ describe('login session notices', () => {
     expect(expired).toHaveFocus();
     expect(screen.getByTestId('probe')).toHaveTextContent('/login|{"from":"/forum/topic"}');
     expect(expired.className).toContain('bg-neutral-50');
-    expect(expired.className).not.toContain('bg-red-50');
+    expect(expired.className).not.toContain('bg-danger-soft');
   });
 });
 

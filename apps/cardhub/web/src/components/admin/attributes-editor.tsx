@@ -173,7 +173,7 @@ export const AttributesEditor = observer(function AttributesEditor({
                 >
                   <X className="size-4" aria-hidden />
                 </Button>
-                {rowError ? <p className="w-full text-xs text-red-700">{rowError}</p> : null}
+                {rowError ? <p className="w-full text-xs text-danger">{rowError}</p> : null}
               </li>
             );
           })}
@@ -195,7 +195,7 @@ export const AttributesEditor = observer(function AttributesEditor({
         </p>
       ) : null}
       {formError ? (
-        <p id="card-attributes-error" className="text-xs text-red-700">
+        <p id="card-attributes-error" className="text-xs text-danger">
           {formError}
         </p>
       ) : null}

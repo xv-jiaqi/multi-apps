@@ -137,13 +137,13 @@ export const SubsetSection = observer(function SubsetSection({
         {tt('admin.subset.title')}
       </h2>
       {query.isError ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {tt('state.error')}
         </p>
       ) : (query.data?.items.length ?? 0) === 0 ? (
         <p className="text-sm text-neutral-600">{tt('admin.subset.empty')}</p>
       ) : (
-        <ul className="divide-y divide-neutral-200 rounded-xl border border-neutral-200 bg-white">
+        <ul className="divide-y divide-neutral-200 rounded-xl border border-neutral-200 bg-card">
           {query.data?.items.map((subset) => (
             <li
               key={subset.slug}
@@ -192,7 +192,7 @@ export const SubsetSection = observer(function SubsetSection({
         </ul>
       )}
       <form
-        className="max-w-2xl space-y-4 rounded-xl border border-neutral-200 bg-white p-4"
+        className="max-w-2xl space-y-4 rounded-xl border border-neutral-200 bg-card p-4"
         onSubmit={(event) => void onSubmit(event)}
       >
         <h3 className="text-base font-semibold text-neutral-900">
@@ -227,7 +227,7 @@ export const SubsetSection = observer(function SubsetSection({
           ]}
         />
         {errors.kind ? (
-          <p id="subset-kind-error" className="text-xs text-red-700">
+          <p id="subset-kind-error" className="text-xs text-danger">
             {errors.kind}
           </p>
         ) : null}
@@ -240,7 +240,7 @@ export const SubsetSection = observer(function SubsetSection({
           />
         </AdminField>
         {formError ? (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-danger">
             {formError}
           </p>
         ) : null}
@@ -273,7 +273,7 @@ export const SubsetSection = observer(function SubsetSection({
             </AlertDialogDescription>
           </AlertDialogHeader>
           {dialogError ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {dialogError}
             </p>
           ) : null}

@@ -30,7 +30,7 @@ function Item({
       state={ADJACENT_STATE}
       title={card.name}
       className={cn(
-        'flex min-h-14 min-w-0 items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 hover:border-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+        'flex min-h-14 min-w-0 items-center gap-3 rounded-xl border border-neutral-200 bg-card p-3 hover:border-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
         next && 'col-start-2 flex-row-reverse text-right',
       )}
     >

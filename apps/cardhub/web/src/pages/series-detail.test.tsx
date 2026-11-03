@@ -421,8 +421,8 @@ describe('series comments frame (CH-206 v1.4 §9)', () => {
     renderSeries();
     const heading = screen.getByRole('heading', { name: '系列评论' });
     const card = heading.closest('[class*="border-neutral-200"]');
-    expect(card).toHaveClass('bg-white', 'border-neutral-200');
-    expect(card?.className).not.toMatch(/backdrop-blur|bg-white\//);
+    expect(card).toHaveClass('bg-card', 'border-neutral-200');
+    expect(card?.className).not.toMatch(/backdrop-blur|bg-card\//);
   });
 
   it('paints the loading skeleton tiles plain white', () => {
@@ -436,8 +436,8 @@ describe('series comments frame (CH-206 v1.4 §9)', () => {
     const tiles = [...document.querySelectorAll('.h-64.animate-pulse')];
     expect(tiles).toHaveLength(4);
     for (const tile of tiles) {
-      expect(tile).toHaveClass('bg-white');
-      expect(tile.className).not.toMatch(/bg-white\/|backdrop-blur/);
+      expect(tile).toHaveClass('bg-card');
+      expect(tile.className).not.toMatch(/bg-card\/|backdrop-blur/);
     }
   });
 

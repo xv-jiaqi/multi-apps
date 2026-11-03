@@ -319,7 +319,7 @@ describe('RetryButton', () => {
     expect(screen.getByRole('button', { name: '重试' })).toHaveClass(
       'inline-flex',
       'min-h-6',
-      'text-red-700',
+      'text-danger',
       'underline',
     );
   });

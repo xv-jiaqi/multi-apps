@@ -60,14 +60,14 @@ describe('route error element', () => {
     expect(alert).toHaveTextContent('页面出错了');
     expect(screen.getByRole('link', { name: '跳到主内容' })).toBeInTheDocument();
     expect(alert.parentElement).toHaveAttribute('id', 'main');
-    expect(alert).toHaveClass('rounded-lg', 'border-red-200', 'bg-red-50');
+    expect(alert).toHaveClass('rounded-lg', 'border-danger-border', 'bg-danger-soft');
     expect(alert.className).not.toMatch(/rounded-2xl/);
     expect(screen.getByText('页面出错了')).toHaveClass('font-medium');
     expect(screen.getByText('页面出错了').className).not.toMatch(/font-semibold/);
     expect(screen.getByText('请重试，或返回首页。')).toHaveClass('mt-1');
     expect(retry.parentElement).toHaveClass('mt-4', 'flex', 'flex-wrap', 'items-center', 'gap-3');
     expect(home).toHaveAttribute('href', '/');
-    expect(retry).toHaveClass('border-red-300', 'text-red-700');
+    expect(retry).toHaveClass('border-danger-border-strong', 'text-danger');
     expect(retry.className).not.toMatch(/ring-offset/);
     expect(home).toHaveClass('min-h-6');
     expect(home.className).not.toMatch(/ring-offset/);

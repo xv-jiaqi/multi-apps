@@ -35,11 +35,11 @@ describe('ErrorBoundary fallback', () => {
       'mt-6',
       'max-w-md',
       'rounded-lg',
-      'border-red-200',
-      'bg-red-50',
+      'border-danger-border',
+      'bg-danger-soft',
       'p-6',
       'text-sm',
-      'text-red-700',
+      'text-danger',
     );
     expect(alert.className).not.toMatch(/rounded-2xl/);
     expect(alert.parentElement).toHaveClass('app-safe-x');
@@ -53,8 +53,8 @@ describe('ErrorBoundary fallback', () => {
     const home = screen.getByRole('link', { name: '返回首页' });
     expect(home).toHaveAttribute('href', '/');
     expect(retry).toHaveClass(
-      'border-red-300',
-      'text-red-700',
+      'border-danger-border-strong',
+      'text-danger',
       'focus-visible:ring-2',
       'focus-visible:ring-brand-500',
     );

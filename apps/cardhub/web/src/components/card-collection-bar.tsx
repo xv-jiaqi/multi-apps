@@ -426,7 +426,7 @@ export const CardCollectionBar = observer(function CardCollectionBar({
               <Link
                 to="/login"
                 state={{ from }}
-                className={`inline-flex min-h-6 items-center text-brand-600 underline ${FOCUS_CLASS}`}
+                className={`inline-flex min-h-6 items-center text-link underline ${FOCUS_CLASS}`}
               >
                 {loginLabel}
               </Link>
@@ -447,7 +447,7 @@ export const CardCollectionBar = observer(function CardCollectionBar({
         <p
           key={fieldError.id}
           id={fieldErrorId}
-          className="mt-3 min-w-0 text-sm text-red-700 wrap-anywhere"
+          className="mt-3 min-w-0 text-sm text-danger wrap-anywhere"
         >
           {fieldError.text}
         </p>

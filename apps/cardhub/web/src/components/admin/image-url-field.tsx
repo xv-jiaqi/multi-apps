@@ -83,12 +83,12 @@ export const ImageUrlField = observer(function ImageUrlField({
           {tt('admin.field.imageHint', { ratio })}
         </p>
         {error ? (
-          <p id={errorId} className="text-xs text-red-700">
+          <p id={errorId} className="text-xs text-danger">
             {error}
           </p>
         ) : null}
         {showWarning ? (
-          <p id={warnId} className="text-xs text-amber-800">
+          <p id={warnId} className="text-xs text-warning">
             {tt('admin.field.previewFailed')}
           </p>
         ) : null}

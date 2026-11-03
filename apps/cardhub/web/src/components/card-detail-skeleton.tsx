@@ -26,14 +26,14 @@ export function CardDetailSkeleton() {
               <div className={`h-5 w-48 max-w-full rounded ${block}`} />
               <div className={`h-5 w-32 max-w-full rounded ${block}`} />
             </div>
-            <div className="h-20 animate-pulse rounded-xl border border-neutral-200 bg-white motion-reduce:animate-none" />
+            <div className="h-20 animate-pulse rounded-xl border border-neutral-200 bg-card motion-reduce:animate-none" />
             <div className="space-y-3">
               <div className={`h-6 w-20 rounded ${block}`} />
               <div className={`h-4 w-full rounded ${block}`} />
               <div className={`h-4 w-full rounded ${block}`} />
               <div className={`h-4 w-2/3 rounded ${block}`} />
             </div>
-            <div className="h-40 animate-pulse rounded-xl border border-neutral-200 bg-white motion-reduce:animate-none" />
+            <div className="h-40 animate-pulse rounded-xl border border-neutral-200 bg-card motion-reduce:animate-none" />
           </div>
         </div>
       </div>

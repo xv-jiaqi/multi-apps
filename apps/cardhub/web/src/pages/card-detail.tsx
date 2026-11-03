@@ -192,7 +192,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
               </p>
               {card.base ? (
                 <p className="text-sm">
-                  <Link to={`/cards/${card.base.slug}`} className="text-brand-600 hover:underline">
+                  <Link to={`/cards/${card.base.slug}`} className="text-link hover:underline">
                     {tt('card.variants.baseLink', { name: card.base.name })}
                   </Link>
                 </p>
@@ -201,14 +201,14 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 {tt('card.detail.seriesLabel')}
                 <Link
                   to={`/series/${card.seriesSlug}`}
-                  className="text-brand-600 underline underline-offset-2"
+                  className="text-link underline underline-offset-2"
                 >
                   {card.seriesTitle}
                 </Link>
               </p>
             </div>
 
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="rounded-xl border border-neutral-200 bg-card p-4">
               <CardCollectionBar cardSlug={card.slug} cardName={card.name} />
             </div>
 
@@ -223,7 +223,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
 
             <CardVariants locale={locale.locale} variants={card.variants ?? []} />
 
-            <Card className="border-neutral-200 bg-white">
+            <Card className="border-neutral-200 bg-card">
               <CardHeader>
                 <h2 className="scroll-mt-24 text-base font-semibold">
                   {tt('card.detail.attributes')}
@@ -247,7 +247,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
 
         <CardAdjacentNav locale={locale.locale} adjacent={card.adjacent} />
 
-        <Card className="border-neutral-200 bg-white">
+        <Card className="border-neutral-200 bg-card">
           <CardHeader>
             <h2 className="scroll-mt-24 text-base font-semibold">
               {tt('trade.detail.byCardTitle')}
@@ -258,7 +258,7 @@ export const CardDetailPage = observer(function CardDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-200 bg-white">
+        <Card className="border-neutral-200 bg-card">
           <CardHeader>
             <h2
               id="comment-section-title"

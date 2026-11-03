@@ -187,7 +187,7 @@ export const ErrorFallback = observer(function ErrorFallback({
   const alert = (
     <div
       role="alert"
-      className="mx-auto mt-6 max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+      className="mx-auto mt-6 max-w-md rounded-lg border border-danger-border bg-danger-soft p-6 text-sm text-danger"
     >
       <p className="font-medium">{tt('state.crashTitle')}</p>
       <p className="mt-1">{tt('state.crashBody')}</p>
@@ -205,11 +205,11 @@ export const ErrorFallback = observer(function ErrorFallback({
             }
             onRetry();
           }}
-          className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 min-h-6"
+          className="rounded-md border border-danger-border-strong bg-card px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 min-h-6"
         />
         <a
           href="/"
-          className="inline-flex min-h-6 items-center rounded px-1 font-medium text-brand-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="inline-flex min-h-6 items-center rounded px-1 font-medium text-link underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('state.crashHome')}
         </a>

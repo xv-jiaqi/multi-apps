@@ -28,3 +28,29 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
 }
+
+/*
+ * CH-305 semantic color tokens (light values only; dark mode lands in a later PR).
+ * Each token aliases the exact Tailwind palette color it replaces, so light pixels are unchanged.
+ */
+@theme {
+  --color-card: var(--color-white);
+  --color-on-inverse: var(--color-white);
+  --color-overlay: var(--color-neutral-950);
+  --color-link: var(--color-brand-600);
+  --color-link-strong: var(--color-brand-700);
+  --color-accent-soft: var(--color-brand-50);
+  --color-accent-border: var(--color-brand-200);
+  --color-danger: var(--color-red-700);
+  --color-danger-soft: var(--color-red-50);
+  --color-danger-soft-strong: var(--color-red-100);
+  --color-danger-border: var(--color-red-200);
+  --color-danger-border-strong: var(--color-red-300);
+  --color-danger-line: var(--color-red-600);
+  --color-success: var(--color-emerald-800);
+  --color-success-soft: var(--color-emerald-50);
+  --color-success-border: var(--color-emerald-200);
+  --color-warning: var(--color-amber-800);
+  --color-warning-soft: var(--color-amber-50);
+  --color-warning-border: var(--color-amber-200);
+}

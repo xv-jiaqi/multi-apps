@@ -110,7 +110,7 @@ function AccountMenu({
       {open ? (
         <ul
           id="account-menu"
-          className="absolute right-0 top-full z-40 mt-2 min-w-40 rounded-md border border-neutral-200 bg-white p-1 shadow-lg"
+          className="absolute right-0 top-full z-40 mt-2 min-w-40 rounded-md border border-neutral-200 bg-card p-1 shadow-lg"
         >
           <li>
             <NavLink to="/me" className={adminLinkClass}>
@@ -201,7 +201,7 @@ export const SiteHeader = observer(function SiteHeader() {
   return (
     <NotificationUnreadProvider enabled={session.isAuthenticated}>
       <header
-        className="app-safe-top sticky top-0 z-30 border-b border-white/40 bg-white/60 backdrop-blur-xl"
+        className="app-safe-top sticky top-0 z-30 border-b border-card/40 bg-card/60 backdrop-blur-xl"
         onKeyDown={(event) => {
           if (event.key === 'Escape' && menuOpen) {
             setMenuOpen(false);
@@ -276,7 +276,7 @@ export const SiteHeader = observer(function SiteHeader() {
                 </NavLink>
                 <NavLink
                   to="/register"
-                  className="hidden shrink-0 whitespace-nowrap rounded-full bg-neutral-900 px-3 py-1 text-sm text-white transition-colors hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 xl:inline-flex"
+                  className="hidden shrink-0 whitespace-nowrap rounded-full bg-neutral-900 px-3 py-1 text-sm text-on-inverse transition-colors hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 xl:inline-flex"
                 >
                   {tt('nav.register')}
                 </NavLink>
@@ -322,7 +322,7 @@ export const SiteHeader = observer(function SiteHeader() {
 
         {/* Hamburger menu */}
         {menuOpen && (
-          <div id="mobile-nav" className="border-t border-neutral-200 bg-white xl:hidden">
+          <div id="mobile-nav" className="border-t border-neutral-200 bg-card xl:hidden">
             <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3">
               {MAIN_LINKS.map((link) => (
                 <NavLink

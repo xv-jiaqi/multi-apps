@@ -14,9 +14,9 @@ const NOTE = `${URL}\n想换同名卡`;
 
 function LongContentPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white text-neutral-900">
+    <div className="relative min-h-screen overflow-hidden bg-card text-neutral-900">
       <main id="main" className="mx-auto w-full max-w-6xl px-4 py-4">
-        <article className="rounded-lg border border-neutral-200 bg-white p-4">
+        <article className="rounded-lg border border-neutral-200 bg-card p-4">
           <h1 className="mb-2 text-lg font-semibold">长内容话题</h1>
           <MarkdownView body={TOPIC} />
         </article>

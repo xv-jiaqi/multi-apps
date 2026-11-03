@@ -38,7 +38,7 @@ export function AdminTable({ caption, busy, children, className, ...rest }: Admi
       {children}
     </table>
   );
-  const frame = 'rounded-xl border border-neutral-200 bg-white';
+  const frame = 'rounded-xl border border-neutral-200 bg-card';
   if (rest.contained) {
     return <div className={cn('max-w-full', frame, className)}>{table}</div>;
   }
@@ -100,7 +100,7 @@ export function AdminErrorBox({
   return (
     <div
       role="alert"
-      className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+      className="rounded-lg border border-danger-border bg-danger-soft p-6 text-sm text-danger"
     >
       <p className="font-medium">{title}</p>
       <RetryButton
@@ -108,7 +108,7 @@ export function AdminErrorBox({
         label={retryLabel}
         retryingLabel={retryingLabel}
         onRetry={onRetry}
-        className={`mt-3 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 ${focusRing}`}
+        className={`mt-3 rounded-md border border-danger-border-strong bg-card px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong ${focusRing}`}
       />
     </div>
   );
@@ -127,7 +127,7 @@ export function AdminStatus({
       ref={statusRef}
       role="status"
       tabIndex={-1}
-      className={`rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 focus:outline-none ${focusRing}`}
+      className={`rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success focus:outline-none ${focusRing}`}
     >
       {message}
     </p>
@@ -181,11 +181,11 @@ export function AdminConfirmRow({
           }}
           className={
             askReason
-              ? 'flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
-              : 'flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs'
+              ? 'flex flex-col gap-2 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
+              : 'flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs'
           }
         >
-          <span id={promptId} className={askReason ? 'text-red-700' : 'mr-auto text-red-700'}>
+          <span id={promptId} className={askReason ? 'text-danger' : 'mr-auto text-danger'}>
             {label}
           </span>
           {askReason ? (
@@ -202,7 +202,7 @@ export function AdminConfirmRow({
               aria-describedby={promptId}
               disabled={disabled}
               onClick={confirm}
-              className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
+              className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
             >
               {confirmLabel}
             </button>
@@ -254,9 +254,9 @@ export function InlineConfirm({
           onCancel();
         }
       }}
-      className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs"
+      className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-md border border-danger-border bg-danger-soft px-3 py-1.5 text-xs"
     >
-      <span id={promptId} className="mr-auto text-red-700">
+      <span id={promptId} className="mr-auto text-danger">
         {label}
       </span>
       <button
@@ -264,7 +264,7 @@ export function InlineConfirm({
         aria-describedby={promptId}
         disabled={disabled}
         onClick={onConfirm}
-        className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-red-700 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
+        className={`inline-flex min-h-6 items-center rounded px-1 font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50 ${focusRing}`}
       >
         {confirmLabel}
       </button>

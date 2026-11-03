@@ -156,7 +156,7 @@ describe('SiteHeader collapsing row (CH-218 §3 §4 §6)', () => {
     expect(toggle).toHaveAccessibleName('关闭导航菜单');
     const drawer = document.getElementById('mobile-nav');
     if (!(drawer instanceof HTMLElement)) throw new Error('汉堡菜单没有打开');
-    expect(drawer).toHaveClass('bg-white');
+    expect(drawer).toHaveClass('bg-card');
     expect(drawer).not.toHaveClass('backdrop-blur');
     expect(
       within(drawer)
@@ -278,7 +278,7 @@ describe('SiteHeader', () => {
       'leading-4',
       'bg-brand-600',
       'ring-2',
-      'ring-white',
+      'ring-card',
     );
     expect(badge).not.toHaveClass('h-5', 'min-w-5', '-top-0.5');
 

@@ -7,7 +7,7 @@ import type { ReleaseListItem, ReleaseRegion } from '../lib/releases-list';
 import { formatCatalogDate } from '../lib/catalog-taxonomy';
 import { useStores } from '../stores/root-store';
 
-const shellClass = 'overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-sm';
+const shellClass = 'overflow-hidden rounded-2xl border border-card/60 bg-card/70 shadow-sm';
 const motionClass =
   'transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0';
 const ringClass = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
@@ -96,7 +96,7 @@ function ReleaseSource({ url, tt }: { url: string; tt: (key: string) => string }
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex min-h-6 items-center text-sm text-brand-600 hover:underline ${ringClass}`}
+      className={`inline-flex min-h-6 items-center text-sm text-link hover:underline ${ringClass}`}
     >
       {tt('calendar.source')}
       <span className="sr-only">{tt('calendar.newWindow')}</span>

@@ -40,12 +40,12 @@ function CalendarSkeleton() {
     <div aria-busy="true" className="space-y-8">
       {Array.from({ length: 2 }, (_, group) => (
         <div key={group} className="space-y-3">
-          <div className="h-4 w-24 animate-pulse motion-reduce:animate-none rounded bg-white/50" />
+          <div className="h-4 w-24 animate-pulse motion-reduce:animate-none rounded bg-card/50" />
           <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }, (_, card) => (
               <li
                 key={card}
-                className={`h-56 animate-pulse motion-reduce:animate-none rounded-2xl bg-white/50 ${
+                className={`h-56 animate-pulse motion-reduce:animate-none rounded-2xl bg-card/50 ${
                   card > 0 ? 'hidden md:block' : ''
                 }`}
               />
