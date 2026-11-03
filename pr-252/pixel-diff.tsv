@@ -1,0 +1,81 @@
+file	main_size	pr_size	diff_px	bbox
+collapse-long_1440_en.png	1440x3660	1440x3660	0	None
+collapse-long_1440_en_body.png	650x560	650x560	0	None
+collapse-long_1440_en_expanded.png	650x1266	650x1266	0	None
+collapse-long_1440_zh.png	1440x3660	1440x3660	0	None
+collapse-long_1440_zh_body.png	650x560	650x560	0	None
+collapse-long_1440_zh_expanded.png	650x1266	650x1266	0	None
+collapse-long_375_en.png	750x8854	750x8854	0	None
+collapse-long_375_en_body.png	686x1122	686x1122	0	None
+collapse-long_375_en_expanded.png	686x3542	686x3542	0	None
+collapse-long_375_zh.png	750x8710	750x8710	0	None
+collapse-long_375_zh_body.png	686x1122	686x1122	0	None
+collapse-long_375_zh_expanded.png	686x3542	686x3542	0	None
+desc-only_1440_en.png	1440x3266	1440x3266	0	None
+desc-only_1440_zh.png	1440x3266	1440x3266	0	None
+desc-only_375_en.png	750x7902	750x7902	0	None
+desc-only_375_zh.png	750x7758	750x7758	0	None
+empty_1440_en.png	1440x3266	1440x3266	0	None
+empty_1440_zh.png	1440x3266	1440x3266	0	None
+empty_375_en.png	750x7686	750x7686	0	None
+empty_375_zh.png	750x7542	750x7542	0	None
+error_1440_en.png	1440x900	1440x900	0	None
+error_1440_zh.png	1440x900	1440x900	0	None
+error_375_en.png	750x1800	750x1800	0	None
+error_375_zh.png	750x1800	750x1800	0	None
+forum-s2_1440_en.png	1440x1132	1440x1132	0	None
+forum-s2_1440_zh.png	1440x1132	1440x1132	0	None
+forum-s2_375_en.png	750x2374	750x2374	0	None
+forum-s2_375_zh.png	750x2178	750x2178	0	None
+loading_1440_en.png	1440x908	1440x908	0	None
+loading_1440_zh.png	1440x908	1440x908	0	None
+loading_375_en.png	750x2874	750x2874	0	None
+loading_375_zh.png	750x2730	750x2730	0	None
+not-found_1440_en.png	1440x900	1440x900	0	None
+not-found_1440_zh.png	1440x900	1440x900	0	None
+not-found_375_en.png	750x1800	750x1800	0	None
+not-found_375_zh.png	750x1800	750x1800	0	None
+s2_1440_en.png	1440x3660	1440x3660	54995	(622, 478, 1272, 935)
+s2_1440_en_body.png	650x560	650x560	54995	(0, 59, 650, 516)
+s2_1440_en_expanded.png	650x663	650x703	size	None
+s2_1440_zh.png	1440x3660	1440x3660	54984	(622, 478, 1272, 935)
+s2_1440_zh_body.png	650x560	650x560	54984	(0, 59, 650, 516)
+s2_1440_zh_expanded.png	650x663	650x703	size	None
+s2_375_en.png	750x8854	750x8854	121541	(32, 2076, 718, 2961)
+s2_375_en_body.png	686x1122	686x1122	121541	(0, 120, 686, 1005)
+s2_375_en_expanded.png	686x1172	686x1252	size	None
+s2_375_zh.png	750x8710	750x8710	121511	(32, 2076, 718, 2961)
+s2_375_zh_body.png	686x1122	686x1122	121511	(0, 120, 686, 1005)
+s2_375_zh_expanded.png	686x1172	686x1252	size	None
+success-S_1440_en.png	1440x3458	1440x3458	0	None
+success-S_1440_en_body.png	650x358	650x358	0	None
+success-S_1440_zh.png	1440x3458	1440x3458	0	None
+success-S_1440_zh_body.png	650x358	650x358	0	None
+success-S_375_en.png	750x8450	750x8450	0	None
+success-S_375_en_body.png	686x718	686x718	0	None
+success-S_375_zh.png	750x8306	750x8306	0	None
+success-S_375_zh_body.png	686x718	686x718	0	None
+success-h2only_1440_en.png	1440x3266	1440x3266	0	None
+success-h2only_1440_en_body.png	650x112	650x112	0	None
+success-h2only_1440_zh.png	1440x3266	1440x3266	0	None
+success-h2only_1440_zh_body.png	650x112	650x112	0	None
+success-h2only_375_en.png	750x7958	750x7958	0	None
+success-h2only_375_en_body.png	686x226	686x226	0	None
+success-h2only_375_zh.png	750x7814	750x7814	0	None
+success-h2only_375_zh_body.png	686x226	686x226	0	None
+success-h3first_1440_en.png	1440x3266	1440x3266	0	None
+success-h3first_1440_en_body.png	650x108	650x108	0	None
+success-h3first_1440_zh.png	1440x3266	1440x3266	0	None
+success-h3first_1440_zh_body.png	650x108	650x108	0	None
+success-h3first_375_en.png	750x7950	750x7950	0	None
+success-h3first_375_en_body.png	686x218	686x218	0	None
+success-h3first_375_zh.png	750x7806	750x7806	0	None
+success-h3first_375_zh_body.png	686x218	686x218	0	None
+tables-2_1440_en.png	1440x3388	1440x3388	0	None
+tables-2_1440_en_body.png	650x288	650x288	0	None
+tables-2_1440_zh.png	1440x3388	1440x3388	0	None
+tables-2_1440_zh_body.png	650x288	650x288	0	None
+tables-2_375_en.png	750x8310	750x8310	0	None
+tables-2_375_en_body.png	686x578	686x578	0	None
+tables-2_375_zh.png	750x8166	750x8166	0	None
+tables-2_375_zh_body.png	686x578	686x578	0	None
