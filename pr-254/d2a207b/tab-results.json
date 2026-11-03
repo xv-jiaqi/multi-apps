@@ -1,0 +1,46 @@
+[
+ {
+  "shot": "admin-import_tab-file-button_light_1440_zh.png",
+  "viewport": "full_admin-import_tab-file-button_light_1440_zh.png",
+  "tag": "BUTTON",
+  "type": "button",
+  "text": "选择文件",
+  "fv": true,
+  "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+  "outline": "none rgb(16, 16, 16)",
+  "fileTabIndex": -1
+ },
+ {
+  "shot": "admin-import_tab-file-button_light_1440_en.png",
+  "viewport": "full_admin-import_tab-file-button_light_1440_en.png",
+  "tag": "BUTTON",
+  "type": "button",
+  "text": "Choose file",
+  "fv": true,
+  "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+  "outline": "none rgb(16, 16, 16)",
+  "fileTabIndex": -1
+ },
+ {
+  "shot": "admin-import_tab-file-button_light_375_zh.png",
+  "viewport": "full_admin-import_tab-file-button_light_375_zh.png",
+  "tag": "BUTTON",
+  "type": "button",
+  "text": "选择文件",
+  "fv": true,
+  "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+  "outline": "none rgb(16, 16, 16)",
+  "fileTabIndex": -1
+ },
+ {
+  "shot": "admin-import_tab-file-button_light_375_en.png",
+  "viewport": "full_admin-import_tab-file-button_light_375_en.png",
+  "tag": "BUTTON",
+  "type": "button",
+  "text": "Choose file",
+  "fv": true,
+  "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+  "outline": "none rgb(16, 16, 16)",
+  "fileTabIndex": -1
+ }
+]
