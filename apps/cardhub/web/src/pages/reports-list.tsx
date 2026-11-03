@@ -365,7 +365,7 @@ function ReportListItem({
                 readOnly={isBusy}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder={tt('reports.resolve.notePlaceholder')}
-                className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
               />
               <p className="text-xs text-muted">{note.length} / 500</p>
             </div>

@@ -199,7 +199,7 @@ export const ReportButton = observer(function ReportButton({
             aria-busy={mutation.isPending || undefined}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
-            className="w-full min-w-0 resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+            className="w-full min-w-0 resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
           />
         </label>
         {error ? (

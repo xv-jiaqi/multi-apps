@@ -113,7 +113,7 @@ export const LoginPage = observer(function LoginPage() {
                   onChange={(e) => setIdentifier(e.target.value)}
                   autoComplete="username"
                   required
-                  className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
                 />
               </label>
               <label className="block space-y-1 text-sm">
@@ -127,7 +127,7 @@ export const LoginPage = observer(function LoginPage() {
                   autoComplete="current-password"
                   required
                   minLength={8}
-                  className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
                 />
               </label>
 
