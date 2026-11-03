@@ -411,7 +411,7 @@ export const TradeListPage = observer(function TradeListPage() {
                   }}
                   placeholder={tt('trade.filter.minPrice')}
                 />
-                <span aria-hidden="true" className="text-neutral-500">
+                <span aria-hidden="true" className="text-muted">
                   –
                 </span>
                 <Input
@@ -673,7 +673,7 @@ export const TradeListPage = observer(function TradeListPage() {
                           </p>
                           {facets ? <p className="text-xs text-neutral-600">{facets}</p> : null}
                           <dl className="grid gap-x-3 gap-y-1 text-sm sm:grid-cols-[6rem_1fr]">
-                            <dt className="text-xs uppercase tracking-widest text-neutral-500">
+                            <dt className="text-xs uppercase tracking-widest text-muted">
                               {tt('trade.list.contact')}
                             </dt>
                             <dd className="min-w-0 font-mono text-neutral-800 wrap-anywhere">
@@ -691,7 +691,7 @@ export const TradeListPage = observer(function TradeListPage() {
                             </dd>
                             {listing.note ? (
                               <>
-                                <dt className="text-xs uppercase tracking-widest text-neutral-500">
+                                <dt className="text-xs uppercase tracking-widest text-muted">
                                   {tt('trade.list.note')}
                                 </dt>
                                 <dd className="min-w-0 whitespace-pre-wrap text-neutral-700 wrap-anywhere">
@@ -801,7 +801,7 @@ function FilterChip({
         type="button"
         aria-label={clearLabel}
         onClick={onClear}
-        className="inline-flex size-6 items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="inline-flex size-6 items-center justify-center rounded-full text-muted hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         ×
       </button>

@@ -79,7 +79,7 @@ export const ListingsForCard = observer(function ListingsForCard({
             listRef.current = node;
           }}
           tabIndex={-1}
-          className="rounded-md border border-dashed border-neutral-200 bg-card/60 p-3 text-center text-sm text-neutral-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="rounded-md border border-dashed border-neutral-200 bg-card/60 p-3 text-center text-sm text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {tt('trade.detail.byCardEmpty')}
         </p>
@@ -122,7 +122,7 @@ export const ListingsForCard = observer(function ListingsForCard({
                     <span className="font-semibold text-neutral-900">{priceLabel}</span>
                   </div>
                   {facets ? <p className="truncate text-xs text-neutral-600">{facets}</p> : null}
-                  <p className="truncate text-xs text-neutral-500">
+                  <p className="truncate text-xs text-muted">
                     @{listing.seller?.username ?? '-'} ·{' '}
                     {listing.contact === null ? (
                       <Link
@@ -167,7 +167,7 @@ export const ListingsForCard = observer(function ListingsForCard({
           <Link
             to="/login"
             state={{ from: `/trade/new?cardSlug=${cardSlug}` }}
-            className="text-neutral-500 hover:underline"
+            className="text-muted hover:underline"
           >
             {tt('trade.list.loginToPublish')}
           </Link>

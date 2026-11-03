@@ -78,7 +78,7 @@ export const UnsupportedHint = observer(function UnsupportedHint({
 
   return (
     <p id={id} role="status" className="flex items-start gap-1.5 text-xs text-neutral-700">
-      <Info className="size-3.5 shrink-0 text-neutral-500" aria-hidden />
+      <Info className="size-3.5 shrink-0 text-muted" aria-hidden />
       <span>{message}</span>
     </p>
   );

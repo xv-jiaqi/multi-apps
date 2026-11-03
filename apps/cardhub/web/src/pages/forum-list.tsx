@@ -127,7 +127,7 @@ export const ForumListPage = observer(function ForumListPage() {
                         ) : null}
                         <span>{topic.title}</span>
                       </h2>
-                      <span className="shrink-0 text-xs text-neutral-500">
+                      <span className="shrink-0 text-xs text-muted">
                         {tt('forum.list.replyCount', { count: topic.replyCount })}
                       </span>
                     </div>
@@ -136,7 +136,7 @@ export const ForumListPage = observer(function ForumListPage() {
                         {topic.excerpt}
                       </p>
                     ) : null}
-                    <div className="mt-3 flex items-center gap-3 text-xs text-neutral-500">
+                    <div className="mt-3 flex items-center gap-3 text-xs text-muted">
                       <span className="font-medium text-neutral-700">@{topic.author.username}</span>
                       <time dateTime={topic.createdAt}>
                         {new Date(topic.createdAt).toLocaleString(locale.locale, {

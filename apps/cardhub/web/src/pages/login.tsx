@@ -104,7 +104,7 @@ export const LoginPage = observer(function LoginPage() {
             ) : null}
             <form onSubmit={onSubmit} className="space-y-4">
               <label className="block space-y-1 text-sm">
-                <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+                <span className="text-xs font-medium uppercase tracking-widest text-muted">
                   {tt('auth.fields.identifier')}
                 </span>
                 <input
@@ -113,11 +113,11 @@ export const LoginPage = observer(function LoginPage() {
                   onChange={(e) => setIdentifier(e.target.value)}
                   autoComplete="username"
                   required
-                  className="w-full rounded-md border border-neutral-200 bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
                 />
               </label>
               <label className="block space-y-1 text-sm">
-                <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+                <span className="text-xs font-medium uppercase tracking-widest text-muted">
                   {tt('auth.fields.password')}
                 </span>
                 <input
@@ -127,7 +127,7 @@ export const LoginPage = observer(function LoginPage() {
                   autoComplete="current-password"
                   required
                   minLength={8}
-                  className="w-full rounded-md border border-neutral-200 bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-base text-neutral-900 shadow-sm transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
                 />
               </label>
 
@@ -144,7 +144,7 @@ export const LoginPage = observer(function LoginPage() {
                 {mutation.isPending ? tt('auth.actions.submitting') : tt('auth.actions.login')}
               </Button>
 
-              <p className="text-center text-xs text-neutral-500">
+              <p className="text-center text-xs text-muted">
                 <Link to="/register" className="text-link hover:underline">
                   {tt('auth.actions.toRegister')}
                 </Link>

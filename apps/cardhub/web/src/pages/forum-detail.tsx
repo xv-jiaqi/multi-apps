@@ -762,7 +762,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 </>
               )}
             </ReportButton>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
               <span className="font-medium text-neutral-700">@{topic.author.username}</span>
               <time dateTime={topic.createdAt} className="whitespace-nowrap">
                 {new Date(topic.createdAt).toLocaleString(locale.locale)}
@@ -867,7 +867,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           </p>
 
           {visibleReplies.length === 0 ? (
-            <p className="rounded-md border border-dashed border-neutral-200 bg-card/60 p-4 text-center text-sm text-neutral-500">
+            <p className="rounded-md border border-dashed border-neutral-200 bg-card/60 p-4 text-center text-sm text-muted">
               {tt('forum.detail.noReplies')}
             </p>
           ) : (
@@ -983,7 +983,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 placeholder={tt('forum.detail.replyPlaceholder')}
                 rows={4}
                 maxLength={5000}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
               />
               {replyError ? (
                 <p
@@ -994,7 +994,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 </p>
               ) : null}
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-neutral-500">{tt('forum.detail.markdownNote')}</span>
+                <span className="text-xs text-muted">{tt('forum.detail.markdownNote')}</span>
                 <Button type="submit" disabled={createReply.isPending || !replyBody.trim()}>
                   {createReply.isPending
                     ? tt('forum.detail.replySubmitting')

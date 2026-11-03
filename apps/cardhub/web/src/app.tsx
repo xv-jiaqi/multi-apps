@@ -120,7 +120,7 @@ function RouteFallback() {
     <div
       role="status"
       aria-live="polite"
-      className="mx-auto flex min-h-[40vh] max-w-2xl items-center justify-center text-sm text-neutral-500"
+      className="mx-auto flex min-h-[40vh] max-w-2xl items-center justify-center text-sm text-muted"
     >
       <span className="inline-block h-4 w-4 animate-pulse motion-reduce:animate-none rounded-full bg-neutral-400" />
     </div>

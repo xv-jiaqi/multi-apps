@@ -48,7 +48,7 @@ export const ConfirmPhraseField = React.forwardRef<HTMLInputElement, ConfirmPhra
         spellCheck={false}
         aria-describedby={descriptionId}
         className={cn(
-          'flex h-10 w-full rounded-md border border-neutral-300 bg-card px-3 py-2 font-mono text-sm text-neutral-900 shadow-sm placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-10 w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 font-mono text-sm text-neutral-900 shadow-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 aria-invalid:border-danger-line disabled:cursor-not-allowed disabled:opacity-50',
           inputClassName,
         )}
         {...props}

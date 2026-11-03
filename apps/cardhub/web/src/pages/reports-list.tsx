@@ -336,7 +336,7 @@ function ReportListItem({
             {report.reason}
           </p>
         </div>
-        <div className="flex w-full min-w-0 flex-wrap gap-x-2 text-xs text-neutral-500 sm:block sm:w-auto sm:text-right">
+        <div className="flex w-full min-w-0 flex-wrap gap-x-2 text-xs text-muted sm:block sm:w-auto sm:text-right">
           <p>@{report.reporter.username}</p>
           <time dateTime={report.createdAt}>{formatDateTime(report.createdAt, locale)}</time>
         </div>
@@ -346,7 +346,7 @@ function ReportListItem({
         {report.target ? (
           <TargetSummary report={report} locale={locale} />
         ) : (
-          <p className="text-neutral-500">{tt('reports.targetMissing')}</p>
+          <p className="text-muted">{tt('reports.targetMissing')}</p>
         )}
       </div>
 
@@ -365,9 +365,9 @@ function ReportListItem({
                 readOnly={isBusy}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder={tt('reports.resolve.notePlaceholder')}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-card px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm read-only:bg-neutral-50 read-only:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
               />
-              <p className="text-xs text-neutral-500">{note.length} / 500</p>
+              <p className="text-xs text-muted">{note.length} / 500</p>
             </div>
 
             {confirmingRemove ? (
@@ -476,11 +476,11 @@ function ResolvedReportDetails({ report, locale }: { report: ReportItem; locale:
   const tt = (key: string) => t(locale, key);
   return (
     <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 text-xs">
-      <dt className="whitespace-nowrap text-neutral-500">{tt('reports.resolve.resolvedBy')}</dt>
+      <dt className="whitespace-nowrap text-muted">{tt('reports.resolve.resolvedBy')}</dt>
       <dd className="text-neutral-800">
         {report.resolver ? `@${report.resolver.username}` : tt('reports.resolve.deletedUser')}
       </dd>
-      <dt className="whitespace-nowrap text-neutral-500">{tt('reports.resolve.resolvedAt')}</dt>
+      <dt className="whitespace-nowrap text-muted">{tt('reports.resolve.resolvedAt')}</dt>
       <dd className="text-neutral-800">
         {report.resolvedAt ? (
           <time
@@ -495,7 +495,7 @@ function ResolvedReportDetails({ report, locale }: { report: ReportItem; locale:
       </dd>
       {report.resolution ? (
         <>
-          <dt className="whitespace-nowrap text-neutral-500">{tt('reports.resolve.resolution')}</dt>
+          <dt className="whitespace-nowrap text-muted">{tt('reports.resolve.resolution')}</dt>
           <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere text-sm text-neutral-800">
             {report.resolution}
           </dd>
@@ -518,9 +518,9 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
         >
           {report.target.cardName ?? report.target.cardSlug}
         </Link>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-muted">
           @{report.target.sellerUsername ?? '-'} ·{' '}
-          <span className={listingIsOpen ? 'text-emerald-700' : 'text-neutral-500'}>
+          <span className={listingIsOpen ? 'text-emerald-700' : 'text-muted'}>
             {tt(listingIsOpen ? 'trade.list.statusOpen' : 'trade.list.statusClosed')}
           </span>
         </p>
@@ -534,7 +534,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
         <Link to={`/forum/${report.target.slug}`} className="font-medium text-link hover:underline">
           {report.target.title}
         </Link>
-        <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
+        <p className="text-xs text-muted">@{report.target.authorUsername ?? '-'}</p>
       </div>
     );
   }
@@ -549,7 +549,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
           {report.target.topicTitle}
         </Link>
         <p className="min-w-0 text-neutral-800 wrap-anywhere">{report.target.excerpt}</p>
-        <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
+        <p className="text-xs text-muted">@{report.target.authorUsername ?? '-'}</p>
       </div>
     );
   }
@@ -573,10 +573,10 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
           <p className="font-medium text-neutral-800">{targetLabel}</p>
         )}
         <p className="min-w-0 text-neutral-800 wrap-anywhere">{report.target.excerpt}</p>
-        <p className="text-xs text-neutral-500">@{report.target.authorUsername ?? '-'}</p>
+        <p className="text-xs text-muted">@{report.target.authorUsername ?? '-'}</p>
       </div>
     );
   }
 
-  return <p className="text-neutral-500">{tt('reports.targetMissing')}</p>;
+  return <p className="text-muted">{tt('reports.targetMissing')}</p>;
 }

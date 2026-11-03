@@ -334,7 +334,7 @@ const UsersBody = observer(function UsersBody() {
           </label>
           <Search
             aria-hidden
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-neutral-500"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
           />
           <Input
             ref={searchRef}

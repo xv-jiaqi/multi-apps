@@ -22,7 +22,7 @@ export const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       controlBase,
-      'justify-between gap-2 data-[placeholder]:text-neutral-500',
+      'justify-between gap-2 data-[placeholder]:text-muted',
       size === 'sm' && controlSm,
       className,
     )}
@@ -30,7 +30,7 @@ export const SelectTrigger = React.forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="size-4 shrink-0 text-neutral-500" aria-hidden="true" />
+      <ChevronDown className="size-4 shrink-0 text-muted" aria-hidden="true" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -185,7 +185,7 @@ export const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn('px-2 py-1.5 text-xs font-medium text-neutral-500', className)}
+    className={cn('px-2 py-1.5 text-xs font-medium text-muted', className)}
     {...props}
   />
 ));

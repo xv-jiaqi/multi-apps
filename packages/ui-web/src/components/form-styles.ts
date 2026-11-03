@@ -1,6 +1,6 @@
 export const controlBase =
-  'flex h-10 w-full items-center rounded-md border border-neutral-300 bg-card px-3 text-base text-neutral-900 shadow-sm ' +
-  'placeholder:text-neutral-500 sm:text-sm ' +
+  'flex h-10 w-full items-center rounded-md border border-input hover:border-input-hover bg-card px-3 text-base text-neutral-900 shadow-sm ' +
+  'placeholder:text-muted sm:text-sm ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ' +
   'disabled:cursor-not-allowed disabled:opacity-50 ' +
   'aria-invalid:border-danger-line aria-invalid:focus-visible:ring-danger-line';

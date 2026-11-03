@@ -322,7 +322,7 @@ export function Combobox<T>({
       <PopoverPrimitive.Anchor asChild>
         <div className="relative">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-500"
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted"
             aria-hidden="true"
           />
           <input
@@ -357,14 +357,14 @@ export function Combobox<T>({
           <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
             {status === 'loading' ? (
               <Loader2
-                className="size-4 animate-spin text-neutral-500 motion-reduce:animate-none"
+                className="size-4 animate-spin text-muted motion-reduce:animate-none"
                 aria-hidden="true"
               />
             ) : displayValue.length > 0 || value != null ? (
               <button
                 type="button"
                 aria-label={labels.clear}
-                className="inline-flex size-6 items-center justify-center rounded-sm text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="inline-flex size-6 items-center justify-center rounded-sm text-muted hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 disabled={disabled}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={clearValue}
@@ -412,7 +412,7 @@ export function Combobox<T>({
                   {displayGroups.map((group) => (
                     <div key={group.key} role="group" aria-label={group.label}>
                       {group.label ? (
-                        <div className="px-2 py-1.5 text-xs font-medium text-neutral-500">
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted">
                           {group.label}
                         </div>
                       ) : null}
