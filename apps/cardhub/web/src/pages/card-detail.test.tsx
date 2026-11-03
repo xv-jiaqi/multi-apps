@@ -324,6 +324,31 @@ describe('card detail meta description', () => {
     cardQuery.dataUpdatedAt = 1;
   }
 
+  it('keeps one h1, the body h2 and body headings from h3 (CH-222 22-2)', () => {
+    card.body = '# 一级\n## 价格\n### 细则\n#### 备注\n##### 五级\n###### 六级';
+    showCard();
+    renderCard();
+    const all = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')];
+    expect(all.filter((h) => h.tagName === 'H1').map((h) => h.textContent)).toEqual(['极光骑士']);
+    const about = screen.getByRole('heading', { level: 2, name: '介绍' });
+    const section = about.closest('section')!;
+    const inBody = [...section.querySelectorAll('h3, h4, h5, h6')].map((h) => [
+      h.tagName,
+      h.textContent,
+    ]);
+    expect(inBody).toEqual([
+      ['H3', '一级'],
+      ['H3', '价格'],
+      ['H4', '细则'],
+      ['H5', '备注'],
+      ['H6', '五级'],
+      ['H6', '六级'],
+    ]);
+    const after = all.slice(all.indexOf(about) + 1).filter((h) => !section.contains(h));
+    expect(after.length).toBeGreaterThan(0);
+    expect(after.every((h) => h.tagName === 'H2')).toBe(true);
+  });
+
   it('adds the subset to the breadcrumb, renders the body and the neighbour links (CH-206)', () => {
     card.subset = { slug: 'foil', name: '闪卡' };
     card.body = '## 背景\n\n长描述正文';
@@ -336,7 +361,7 @@ describe('card detail meta description', () => {
       '/series/celestial-dawn?subset=foil',
     );
     expect(screen.getByRole('heading', { level: 2, name: '介绍' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 4, name: '背景' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: '背景' })).toBeInTheDocument();
     expect(screen.getByText('长描述正文')).toBeInTheDocument();
     const adjacent = screen.getByRole('navigation', { name: '上一张和下一张' });
     expect(within(adjacent).getByRole('link')).toHaveAttribute('href', '/cards/p');

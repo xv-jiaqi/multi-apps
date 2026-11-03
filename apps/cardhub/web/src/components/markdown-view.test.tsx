@@ -96,3 +96,99 @@ describe('MarkdownView forum variant source h1 (CH-221 21-6)', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'x' })).toBeInTheDocument();
   });
 });
+
+// CH-222 §2-1 / §4 sample S.
+const sampleS = [
+  '# 一级',
+  '## 价格',
+  '### 细则',
+  '#### 备注',
+  '##### 五级',
+  '###### 六级',
+  '| a | b |',
+  '| --- | --- |',
+  '| 1 | 2 |',
+].join('\n');
+
+describe('MarkdownView card variant heading levels (CH-222)', () => {
+  it('starts source ## at h3 and caps at h6 (22-1)', () => {
+    const { container } = render(<MarkdownView variant="card" body={sampleS} />);
+    const headings = [...container.querySelectorAll('h1, h2, h3, h4, h5, h6')];
+    expect(headings.map((h) => [h.tagName, h.textContent])).toEqual([
+      ['H3', '一级'],
+      ['H3', '价格'],
+      ['H4', '细则'],
+      ['H5', '备注'],
+      ['H6', '五级'],
+      ['H6', '六级'],
+    ]);
+    expect(container.querySelector('h1, h2')).toBeNull();
+  });
+
+  it('keeps each source level class unchanged (22-3)', () => {
+    const { container } = render(<MarkdownView variant="card" body={sampleS} />);
+    const classes = [...container.querySelectorAll('h3, h4, h5, h6')].map((h) => h.className);
+    expect(classes).toEqual([
+      'mt-6 text-lg font-semibold text-neutral-900',
+      'mt-5 text-base font-semibold text-neutral-900',
+      'mt-4 text-base font-medium text-neutral-900',
+      'mt-4 text-sm font-medium text-neutral-900',
+      'mt-4 text-sm font-medium text-neutral-900',
+      'mt-4 text-sm font-medium text-neutral-900',
+    ]);
+  });
+});
+
+// CH-222 v1.1 §2-7 / 22-12 sample S2.
+const sampleS2 = [
+  '## ![价格图](x.png)',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+  '## 文字 ![图](x.png) 尾',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+  '## ![价格图](https://img.invalid/x.png)',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+  '## ![](x.png)',
+  '| a | b |\n| --- | --- |\n| 1 | 2 |',
+].join('\n\n');
+
+describe('MarkdownView card variant images in headings (CH-222 §2-7)', () => {
+  it('shows a non-https image as its alt text inside the heading (22-13)', () => {
+    const { container } = render(<MarkdownView variant="card" body={sampleS2} />);
+    const h3s = [...container.querySelectorAll('h3')];
+    expect(h3s).toHaveLength(4);
+    const [onlyImg, mixed, https, emptyAlt] = [h3s[0]!, h3s[1]!, h3s[2]!, h3s[3]!];
+    expect(onlyImg.innerHTML).toBe('<span>价格图</span>');
+    expect([...mixed.childNodes].map((n) => [n.nodeName, n.textContent])).toEqual([
+      ['#text', '文字 '],
+      ['SPAN', '图'],
+      ['#text', ' 尾'],
+    ]);
+    const img = https.querySelector('img')!;
+    expect(https.children).toHaveLength(1);
+    expect(img).toHaveAttribute('alt', '价格图');
+    expect(img).toHaveAttribute('src', 'https://img.invalid/x.png');
+    expect(img).toHaveClass('h-auto max-w-full rounded-lg', { exact: true });
+    expect(emptyAlt.querySelector('span, img')).toBeNull();
+    expect(container.querySelectorAll('img')).toHaveLength(1);
+  });
+
+  it('names each heading like the table region after it (22-14)', () => {
+    render(<MarkdownView variant="card" body={sampleS2} />);
+    for (const name of ['价格图', '文字 图 尾']) {
+      expect(screen.getAllByRole('heading', { level: 3, name })[0]).toBeInTheDocument();
+    }
+    expect(screen.getAllByRole('heading', { level: 3, name: '价格图' })).toHaveLength(2);
+    const regions = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(regions.slice(0, 3).map((r) => r?.split('：')[0])).toEqual([
+      '价格图',
+      '文字 图 尾',
+      '价格图',
+    ]);
+  });
+
+  it('still drops a non-https image outside headings (CH-206)', () => {
+    const { container } = render(<MarkdownView variant="card" body={'![a](x.png) 正文'} />);
+    expect(container.querySelector('img, span')).toBeNull();
+    expect(container).not.toHaveTextContent(/^a/);
+  });
+});

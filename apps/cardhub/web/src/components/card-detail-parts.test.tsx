@@ -32,8 +32,9 @@ describe('MarkdownView card variant (CH-206 §2)', () => {
       />,
     );
     expect(container.querySelector('h1, h2')).toBeNull();
-    expect(container.querySelector('h3')).toHaveTextContent('Big');
-    expect(container.querySelector('h4')).toHaveTextContent('Mid');
+    const h3s = container.querySelectorAll('h3');
+    expect(h3s[0]).toHaveTextContent('Big');
+    expect(h3s[1]).toHaveTextContent('Mid');
     expect(container.querySelector('script')).toBeNull();
     expect(container.innerHTML).not.toContain('onerror');
     expect(container.innerHTML).not.toContain('javascript:');

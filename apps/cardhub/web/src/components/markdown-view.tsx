@@ -1,4 +1,4 @@
-import { memo, type ComponentProps, type ReactNode } from 'react';
+import { createContext, memo, useContext, type ComponentProps, type ReactNode } from 'react';
 import ReactMarkdown, { type Components, type ExtraProps } from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
@@ -15,7 +15,9 @@ interface MarkdownViewProps {
   /**
    * `forum` (default) keeps @mentions. `card` is the CH-206 card body:
    * no mentions, headings demoted so the page keeps one h1, links get the
-   * new-tab rule and images must be https.
+   * new-tab rule and images must be https. Card headings map # and ## to h3,
+   * ### to h4, #### to h5, ##### and ###### to h6 (CH-222 §2-1); classes
+   * follow the source level, so only the tag changes.
    */
   variant?: 'forum' | 'card';
   /** Screen-reader suffix for links that open a new tab (`a11y.newTab`). */
@@ -78,11 +80,34 @@ function isExternal(href: string | undefined): boolean {
   return !!href && /^https?:\/\//i.test(href);
 }
 
+/** True inside a card body heading, so `img` can keep the alt visible (CH-222 §2-7). */
+const InCardHeading = createContext(false);
+
+function CardImage({ src, alt }: { src: unknown; alt: string | undefined }) {
+  const inHeading = useContext(InCardHeading);
+  if (typeof src !== 'string' || !/^https:\/\//i.test(src)) {
+    // CH-206: never request a non-https image. In a heading the alt is the
+    // visible text, so the heading keeps its name (CH-222 §2-7 3/5).
+    return inHeading && alt ? <span>{alt}</span> : null;
+  }
+  return (
+    <img
+      src={src}
+      alt={alt ?? ''}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      className="h-auto max-w-full rounded-lg"
+    />
+  );
+}
+
 function cardComponents(newTabLabel: string | undefined): Components {
   const heading =
     (Tag: 'h3' | 'h4' | 'h5' | 'h6', className: string) =>
     ({ node: _node, ...props }: ComponentProps<'h1'> & ExtraProps) => (
-      <Tag {...props} className={className} />
+      <InCardHeading.Provider value={true}>
+        <Tag {...props} className={className} />
+      </InCardHeading.Provider>
     );
   return {
     pre: (props: ComponentProps<'pre'> & ExtraProps) => (
@@ -96,9 +121,9 @@ function cardComponents(newTabLabel: string | undefined): Components {
       </div>
     ),
     h1: heading('h3', 'mt-6 text-lg font-semibold text-neutral-900'),
-    h2: heading('h4', 'mt-5 text-base font-semibold text-neutral-900'),
-    h3: heading('h5', 'mt-4 text-base font-medium text-neutral-900'),
-    h4: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
+    h2: heading('h3', 'mt-5 text-base font-semibold text-neutral-900'),
+    h3: heading('h4', 'mt-4 text-base font-medium text-neutral-900'),
+    h4: heading('h5', 'mt-4 text-sm font-medium text-neutral-900'),
     h5: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
     h6: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
     p: ({ node: _node, ...props }: ComponentProps<'p'> & ExtraProps) => (
@@ -135,18 +160,9 @@ function cardComponents(newTabLabel: string | undefined): Components {
         </a>
       );
     },
-    img: ({ node: _node, src, alt }: ComponentProps<'img'> & ExtraProps) => {
-      if (typeof src !== 'string' || !/^https:\/\//i.test(src)) return null;
-      return (
-        <img
-          src={src}
-          alt={alt ?? ''}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className="h-auto max-w-full rounded-lg"
-        />
-      );
-    },
+    img: ({ node: _node, src, alt }: ComponentProps<'img'> & ExtraProps) => (
+      <CardImage src={src} alt={alt} />
+    ),
   };
 }
 
