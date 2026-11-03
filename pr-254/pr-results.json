@@ -1,0 +1,804 @@
+[
+ {
+  "shot": "register_pr_1440_zh.png",
+  "url": "/register",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "register_pr_1440_en.png",
+  "url": "/register",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "register_pr_375_zh.png",
+  "url": "/register",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(147, 197, 253, 0.03) 0px 0px 0px 0.0666199px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "register_pr_375_en.png",
+  "url": "/register",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "login_pr_1440_zh.png",
+  "url": "/login",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "login_pr_1440_en.png",
+  "url": "/login",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "login_pr_375_zh.png",
+  "url": "/login",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(147, 197, 253, 0.03) 0px 0px 0px 0.0655955px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "login_pr_375_en.png",
+  "url": "/login",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(147, 197, 253, 0.03) 0px 0px 0px 0.0655955px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "forum-list_pr_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "forum-list_pr_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "forum-list_pr_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_pr_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_pr_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_pr_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_pr_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_pr_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_pr_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_pr_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_pr_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_pr_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_pr_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_pr_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_pr_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_pr_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_pr_1440_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_pr_1440_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_pr_375_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(147, 197, 253) 0px 0px 0px 2px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_pr_375_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(147, 197, 253) 0px 0px 0px 2px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_pr_1440_zh.png",
+  "url": "/trade/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_pr_1440_en.png",
+  "url": "/trade/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_pr_375_zh.png",
+  "url": "/trade/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_pr_375_en.png",
+  "url": "/trade/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "topic-new_pr_1440_zh.png",
+  "url": "/forum/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "topic-new_pr_1440_en.png",
+  "url": "/forum/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "topic-new_pr_375_zh.png",
+  "url": "/forum/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(147, 197, 253) 0px 0px 0px 2px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "topic-new_pr_375_en.png",
+  "url": "/forum/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "rgb(59, 130, 246) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(147, 197, 253) 0px 0px 0px 2px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_pr_1440_zh.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_pr_1440_en.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_pr_375_zh.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_pr_375_en.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_pr_1440_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_pr_1440_en.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_pr_375_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_pr_375_en.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_pr_1440_zh.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_pr_1440_en.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_pr_375_zh.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_pr_375_en.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000",
+   "#8a8a8a",
+   "#8a8a8a"
+  ],
+  "muted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-import_pr_1440_zh.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-import_pr_1440_en.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#8a8a8a",
+   "#8a8a8a",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-import_pr_375_zh.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#8a8a8a",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ },
+ {
+  "shot": "admin-import_pr_375_en.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#8a8a8a",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "focus": "oklch(0.556 0 0) | rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgb(59, 130, 246) 0px 0px 0px 4px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+  "axe": []
+ }
+]

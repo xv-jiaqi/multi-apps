@@ -1,0 +1,656 @@
+[
+ {
+  "shot": "register_main_1440_zh.png",
+  "url": "/register",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_1440_en.png",
+  "url": "/register",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_375_zh.png",
+  "url": "/register",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "register_main_375_en.png",
+  "url": "/register",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_1440_zh.png",
+  "url": "/login",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_1440_en.png",
+  "url": "/login",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_375_zh.png",
+  "url": "/login",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "login_main_375_en.png",
+  "url": "/login",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list_main_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-empty_main_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-loading_main_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_1440_zh.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_1440_en.png",
+  "url": "/forum",
+  "controls": [
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_375_zh.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-list-error_main_375_en.png",
+  "url": "/forum",
+  "controls": [],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_1440_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_1440_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_375_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "forum-detail_main_375_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "controls": [
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_1440_zh.png",
+  "url": "/trade/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_1440_en.png",
+  "url": "/trade/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_375_zh.png",
+  "url": "/trade/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "trade-publish_main_375_en.png",
+  "url": "/trade/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_1440_zh.png",
+  "url": "/forum/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_1440_en.png",
+  "url": "/forum/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_375_zh.png",
+  "url": "/forum/new",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "topic-new_main_375_en.png",
+  "url": "/forum/new",
+  "controls": [
+   "#0.ec083126e978d80000",
+   "#0.ec083126e978d80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_1440_zh.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_1440_en.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_375_zh.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-series-new_main_375_en.png",
+  "url": "/admin/catalog/series/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_1440_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_1440_en.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_375_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-category-new_main_375_en.png",
+  "url": "/admin/catalog/categories/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_1440_zh.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_1440_en.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_375_zh.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-release-new_main_375_en.png",
+  "url": "/admin/releases/new",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_1440_zh.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_1440_en.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_375_zh.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ },
+ {
+  "shot": "admin-import_main_375_en.png",
+  "url": "/admin/catalog/import",
+  "controls": [
+   "#0.deb851eb851eb80000",
+   "#0.347ae147ae147a0000"
+  ],
+  "muted": [],
+  "mutedN": 0,
+  "axe": []
+ }
+]

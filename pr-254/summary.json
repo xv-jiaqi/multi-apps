@@ -1,0 +1,1018 @@
+[
+ {
+  "k": "register_1440_zh.png",
+  "url": "/register",
+  "sameSize": true,
+  "diffPx": 4635,
+  "pct": 0.358,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "register_1440_en.png",
+  "url": "/register",
+  "sameSize": true,
+  "diffPx": 4980,
+  "pct": 0.384,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "register_375_zh.png",
+  "url": "/register",
+  "sameSize": true,
+  "diffPx": 2626,
+  "pct": 0.778,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "register_375_en.png",
+  "url": "/register",
+  "sameSize": true,
+  "diffPx": 3022,
+  "pct": 0.895,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 4,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "login_1440_zh.png",
+  "url": "/login",
+  "sameSize": true,
+  "diffPx": 3826,
+  "pct": 0.295,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "login_1440_en.png",
+  "url": "/login",
+  "sameSize": true,
+  "diffPx": 4188,
+  "pct": 0.323,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "login_375_zh.png",
+  "url": "/login",
+  "sameSize": true,
+  "diffPx": 2027,
+  "pct": 0.601,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "login_375_en.png",
+  "url": "/login",
+  "sameSize": true,
+  "diffPx": 2440,
+  "pct": 0.723,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list_1440_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 19017,
+  "pct": 0.404,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list_1440_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 16627,
+  "pct": 0.354,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list_375_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 17638,
+  "pct": 1.169,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list_375_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 15299,
+  "pct": 0.997,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 40,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-empty_1440_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 1379,
+  "pct": 0.106,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-empty_1440_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 1328,
+  "pct": 0.102,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-empty_375_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 0,
+  "pct": 0.0,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-empty_375_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 0,
+  "pct": 0.0,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-loading_1440_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 1379,
+  "pct": 0.106,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-loading_1440_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 1328,
+  "pct": 0.102,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-loading_375_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 0,
+  "pct": 0.0,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-loading_375_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 0,
+  "pct": 0.0,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-error_1440_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 1379,
+  "pct": 0.106,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-error_1440_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 1328,
+  "pct": 0.102,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-error_375_zh.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 0,
+  "pct": 0.0,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-list-error_375_en.png",
+  "url": "/forum",
+  "sameSize": true,
+  "diffPx": 0,
+  "pct": 0.0,
+  "mainCtl": [],
+  "prCtl": [],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": null,
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-detail_1440_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "sameSize": true,
+  "diffPx": 6393,
+  "pct": 0.493,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-detail_1440_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "sameSize": true,
+  "diffPx": 6682,
+  "pct": 0.516,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-detail_375_zh.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "sameSize": true,
+  "diffPx": 3492,
+  "pct": 0.97,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "forum-detail_375_en.png",
+  "url": "/forum/qa-ch-108-api-permission-kapwqn",
+  "sameSize": true,
+  "diffPx": 3848,
+  "pct": 0.97,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 3,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "trade-publish_1440_zh.png",
+  "url": "/trade/new",
+  "sameSize": true,
+  "diffPx": 13750,
+  "pct": 0.751,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "trade-publish_1440_en.png",
+  "url": "/trade/new",
+  "sameSize": true,
+  "diffPx": 13694,
+  "pct": 0.738,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "trade-publish_375_zh.png",
+  "url": "/trade/new",
+  "sameSize": true,
+  "diffPx": 9378,
+  "pct": 1.699,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "trade-publish_375_en.png",
+  "url": "/trade/new",
+  "sameSize": true,
+  "diffPx": 9294,
+  "pct": 1.573,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "topic-new_1440_zh.png",
+  "url": "/forum/new",
+  "sameSize": true,
+  "diffPx": 7866,
+  "pct": 0.602,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "topic-new_1440_en.png",
+  "url": "/forum/new",
+  "sameSize": true,
+  "diffPx": 7637,
+  "pct": 0.584,
+  "mainCtl": [
+   "#0.deb851eb851eb80000",
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "topic-new_375_zh.png",
+  "url": "/forum/new",
+  "sameSize": true,
+  "diffPx": 3443,
+  "pct": 0.973,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "topic-new_375_en.png",
+  "url": "/forum/new",
+  "sameSize": true,
+  "diffPx": 3275,
+  "pct": 0.843,
+  "mainCtl": [
+   "#0.ec083126e978d80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-series-new_1440_zh.png",
+  "url": "/admin/catalog/series/new",
+  "sameSize": true,
+  "diffPx": 9798,
+  "pct": 0.602,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-series-new_1440_en.png",
+  "url": "/admin/catalog/series/new",
+  "sameSize": true,
+  "diffPx": 9742,
+  "pct": 0.599,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-series-new_375_zh.png",
+  "url": "/admin/catalog/series/new",
+  "sameSize": true,
+  "diffPx": 4972,
+  "pct": 1.025,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-series-new_375_en.png",
+  "url": "/admin/catalog/series/new",
+  "sameSize": true,
+  "diffPx": 4972,
+  "pct": 0.971,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-category-new_1440_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "sameSize": true,
+  "diffPx": 7026,
+  "pct": 0.542,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-category-new_1440_en.png",
+  "url": "/admin/catalog/categories/new",
+  "sameSize": true,
+  "diffPx": 6970,
+  "pct": 0.538,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-category-new_375_zh.png",
+  "url": "/admin/catalog/categories/new",
+  "sameSize": true,
+  "diffPx": 3015,
+  "pct": 0.887,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-category-new_375_en.png",
+  "url": "/admin/catalog/categories/new",
+  "sameSize": true,
+  "diffPx": 3015,
+  "pct": 0.801,
+  "mainCtl": [
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 1,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-release-new_1440_zh.png",
+  "url": "/admin/releases/new",
+  "sameSize": true,
+  "diffPx": 12035,
+  "pct": 0.668,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-release-new_1440_en.png",
+  "url": "/admin/releases/new",
+  "sameSize": true,
+  "diffPx": 12051,
+  "pct": 0.668,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-release-new_375_zh.png",
+  "url": "/admin/releases/new",
+  "sameSize": true,
+  "diffPx": 6195,
+  "pct": 1.299,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-release-new_375_en.png",
+  "url": "/admin/releases/new",
+  "sameSize": true,
+  "diffPx": 6252,
+  "pct": 1.226,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [
+   "#666666"
+  ],
+  "mutedN": 2,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-import_1440_zh.png",
+  "url": "/admin/catalog/import",
+  "sameSize": true,
+  "diffPx": 4091,
+  "pct": 0.316,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-import_1440_en.png",
+  "url": "/admin/catalog/import",
+  "sameSize": true,
+  "diffPx": 4035,
+  "pct": 0.311,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-import_375_zh.png",
+  "url": "/admin/catalog/import",
+  "sameSize": true,
+  "diffPx": 1190,
+  "pct": 0.353,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ },
+ {
+  "k": "admin-import_375_en.png",
+  "url": "/admin/catalog/import",
+  "sameSize": true,
+  "diffPx": 1190,
+  "pct": 0.338,
+  "mainCtl": [
+   "#0.347ae147ae147a0000",
+   "#0.deb851eb851eb80000"
+  ],
+  "prCtl": [
+   "#0.347ae147ae147a0000",
+   "#8a8a8a"
+  ],
+  "prMuted": [],
+  "mutedN": 0,
+  "hover": "oklch(0.556 0 0)",
+  "axeMain": [],
+  "axePr": []
+ }
+]
