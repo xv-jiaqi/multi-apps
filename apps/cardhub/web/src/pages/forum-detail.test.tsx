@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -1041,19 +1041,31 @@ describe('ForumDetailPage CH-221 topic h1', () => {
   });
 
   it('moves focus to the h1 when the edit link disappears at the deadline (21-2)', async () => {
-    rootStore.session.signIn('jwt.token', { id: 'author-1', username: 'author' });
-    const now = Date.now();
-    topicState.data = {
-      ...topicState.data!,
-      editableUntil: new Date(now + 400).toISOString(),
-      serverNow: new Date(now).toISOString(),
-    };
-    renderPage();
-    screen.getByRole('link', { name: '编辑这个话题' }).focus();
-    await waitFor(
-      () => expect(screen.getByRole('heading', { level: 1, name: 'Test topic' })).toHaveFocus(),
-      { timeout: 3000 },
-    );
+    // Fake clock: the deadline is reached by advancing time, not by waiting on the real clock.
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
+    });
+    try {
+      const now = new Date('2026-11-03T04:00:00.000Z').getTime();
+      vi.setSystemTime(now);
+      rootStore.session.signIn('jwt.token', { id: 'author-1', username: 'author' });
+      topicState.data = {
+        ...topicState.data!,
+        editableUntil: new Date(now + 400).toISOString(),
+        serverNow: new Date(now).toISOString(),
+      };
+      renderPage();
+      const edit = screen.getByRole('link', { name: '编辑这个话题' });
+      edit.focus();
+      expect(edit).toHaveFocus();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(screen.queryByRole('link', { name: '编辑这个话题' })).toBeNull();
+      expect(screen.getByRole('heading', { level: 1, name: 'Test topic' })).toHaveFocus();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps focus on the edited notice after a successful edit (21-2)', async () => {
