@@ -75,3 +75,25 @@ describe('MarkdownTable heading text', () => {
     ]);
   });
 });
+
+// CH-220 v1.4 §2-4 / 20-9 with CH-221 §2-2: forum `#` renders as h2, but the
+// naming plugin reads the source heading, so both tables still get `价格`.
+describe.each(['zh-CN', 'en-US'] as const)('MarkdownTable naming under forum # (%s)', (locale) => {
+  it('names both tables after the demoted `# 价格` heading', () => {
+    act(() => rootStore.locale.setLocale(locale));
+    const { container } = render(
+      <MarkdownView
+        variant="forum"
+        body={'# 价格\n\n| a |\n| --- |\n| 1 |\n\n| b |\n| --- |\n| 2 |'}
+      />,
+    );
+    expect(container.querySelector('h1')).toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: '价格' })).toBeInTheDocument();
+    const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(names).toEqual(
+      locale === 'zh-CN'
+        ? ['价格：表格 1（可横向滚动）', '价格：表格 2（可横向滚动）']
+        : ['价格: Table 1 (scrollable)', '价格: Table 2 (scrollable)'],
+    );
+  });
+});
