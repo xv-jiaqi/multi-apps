@@ -96,3 +96,45 @@ describe('MarkdownView forum variant source h1 (CH-221 21-6)', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'x' })).toBeInTheDocument();
   });
 });
+
+// CH-222 §2-1 / §4 sample S.
+const sampleS = [
+  '# 一级',
+  '## 价格',
+  '### 细则',
+  '#### 备注',
+  '##### 五级',
+  '###### 六级',
+  '| a | b |',
+  '| --- | --- |',
+  '| 1 | 2 |',
+].join('\n');
+
+describe('MarkdownView card variant heading levels (CH-222)', () => {
+  it('starts source ## at h3 and caps at h6 (22-1)', () => {
+    const { container } = render(<MarkdownView variant="card" body={sampleS} />);
+    const headings = [...container.querySelectorAll('h1, h2, h3, h4, h5, h6')];
+    expect(headings.map((h) => [h.tagName, h.textContent])).toEqual([
+      ['H3', '一级'],
+      ['H3', '价格'],
+      ['H4', '细则'],
+      ['H5', '备注'],
+      ['H6', '五级'],
+      ['H6', '六级'],
+    ]);
+    expect(container.querySelector('h1, h2')).toBeNull();
+  });
+
+  it('keeps each source level class unchanged (22-3)', () => {
+    const { container } = render(<MarkdownView variant="card" body={sampleS} />);
+    const classes = [...container.querySelectorAll('h3, h4, h5, h6')].map((h) => h.className);
+    expect(classes).toEqual([
+      'mt-6 text-lg font-semibold text-neutral-900',
+      'mt-5 text-base font-semibold text-neutral-900',
+      'mt-4 text-base font-medium text-neutral-900',
+      'mt-4 text-sm font-medium text-neutral-900',
+      'mt-4 text-sm font-medium text-neutral-900',
+      'mt-4 text-sm font-medium text-neutral-900',
+    ]);
+  });
+});

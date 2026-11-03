@@ -15,7 +15,9 @@ interface MarkdownViewProps {
   /**
    * `forum` (default) keeps @mentions. `card` is the CH-206 card body:
    * no mentions, headings demoted so the page keeps one h1, links get the
-   * new-tab rule and images must be https.
+   * new-tab rule and images must be https. Card headings map # and ## to h3,
+   * ### to h4, #### to h5, ##### and ###### to h6 (CH-222 §2-1); classes
+   * follow the source level, so only the tag changes.
    */
   variant?: 'forum' | 'card';
   /** Screen-reader suffix for links that open a new tab (`a11y.newTab`). */
@@ -96,9 +98,9 @@ function cardComponents(newTabLabel: string | undefined): Components {
       </div>
     ),
     h1: heading('h3', 'mt-6 text-lg font-semibold text-neutral-900'),
-    h2: heading('h4', 'mt-5 text-base font-semibold text-neutral-900'),
-    h3: heading('h5', 'mt-4 text-base font-medium text-neutral-900'),
-    h4: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
+    h2: heading('h3', 'mt-5 text-base font-semibold text-neutral-900'),
+    h3: heading('h4', 'mt-4 text-base font-medium text-neutral-900'),
+    h4: heading('h5', 'mt-4 text-sm font-medium text-neutral-900'),
     h5: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
     h6: heading('h6', 'mt-4 text-sm font-medium text-neutral-900'),
     p: ({ node: _node, ...props }: ComponentProps<'p'> & ExtraProps) => (
