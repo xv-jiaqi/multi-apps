@@ -97,3 +97,57 @@ describe.each(['zh-CN', 'en-US'] as const)('MarkdownTable naming under forum # (
     );
   });
 });
+
+// CH-220 v1.5 §2-4 / 20-9: {heading} is the heading's accessible name — text
+// and image alt joined in order, trimmed. Empty means "no heading" and does
+// not fall back to an earlier heading.
+const imgTwoTables = (heading: string) =>
+  `${heading}\n\n| a |\n| --- |\n| 1 |\n\n| b |\n| --- |\n| 2 |`;
+const zhEn = (locale: 'zh-CN' | 'en-US', h: string | null, n: number) =>
+  locale === 'zh-CN'
+    ? h
+      ? `${h}：表格 ${n}（可横向滚动）`
+      : `表格 ${n}（可横向滚动）`
+    : h
+      ? `${h}: Table ${n} (scrollable)`
+      : `Table ${n} (scrollable)`;
+
+describe.each(['card', 'forum'] as const)(
+  'MarkdownTable naming, image headings (%s)',
+  (variant) => {
+    describe.each(['zh-CN', 'en-US'] as const)('%s', (locale) => {
+      const names = (body: string) => {
+        act(() => rootStore.locale.setLocale(locale));
+        render(<MarkdownView body={body} variant={variant} />);
+        return screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+      };
+
+      it('uses the image alt for an image-only heading', () => {
+        expect(names(imgTwoTables('## ![价格图](x.png)'))).toEqual([
+          zhEn(locale, '价格图', 1),
+          zhEn(locale, '价格图', 2),
+        ]);
+      });
+
+      it('treats an empty-alt image heading as no heading', () => {
+        expect(names(imgTwoTables('## ![](x.png)'))).toEqual([
+          zhEn(locale, null, 1),
+          zhEn(locale, null, 2),
+        ]);
+      });
+
+      it('joins text and alt in document order', () => {
+        expect(names(imgTwoTables('##  价格 ![走势图](x.png) 对照 '))).toEqual([
+          zhEn(locale, '价格 走势图 对照', 1),
+          zhEn(locale, '价格 走势图 对照', 2),
+        ]);
+      });
+
+      it('does not fall back to an earlier heading past an empty-alt heading', () => {
+        expect(
+          names('## 价格\n\n| a |\n| --- |\n| 1 |\n\n## ![](x.png)\n\n| b |\n| --- |\n| 2 |'),
+        ).toEqual([zhEn(locale, '价格', 1), zhEn(locale, null, 2)]);
+      });
+    });
+  },
+);
