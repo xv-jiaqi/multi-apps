@@ -342,6 +342,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           <input
             ref={fileRef}
             type="file"
+            tabIndex={-1}
             accept=".json,application/json"
             className="sr-only"
             aria-label={tt('admin.import.file')}

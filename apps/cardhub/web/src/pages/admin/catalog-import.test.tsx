@@ -520,6 +520,17 @@ describe('catalog import focus and error wiring (CH-213 §17)', () => {
     await waitFor(() => expect(alert).toHaveFocus());
   });
 
+  it('skips the sr-only file input in Tab order and lands on the visible file button (WCAG 2.4.7)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const input = screen.getByLabelText('选择文件', { selector: 'input' });
+    expect(input).toHaveAttribute('tabindex', '-1');
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.tab();
+    expect(input).not.toHaveFocus();
+    expect(screen.getByRole('button', { name: '选择文件' })).toHaveFocus();
+  });
+
   it('does not move focus while the user edits after a preview', async () => {
     importImpl.current = async () => [row({ status: 'created' }, 1)];
     const { user, box } = await previewWith('[]');
