@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
+import { Card, CardContent, CardHeader } from '@repo/ui-web';
 import { APP_ERROR_CODES, fieldErrorMessage, t, topicUpdateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -220,7 +220,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
 
         <Card className="border-card/60 bg-card/80 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-2xl">{tt('forum.edit.title')}</CardTitle>
+            <h1 className="font-semibold tracking-tight text-2xl">{tt('forum.edit.title')}</h1>
             <p className="text-sm text-neutral-600" aria-live="off">
               {expired ? tt('forum.edit.expired') : formatRemaining(remainingMs, tt)}
             </p>

@@ -872,7 +872,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             </p>
           ) : (
             <ul className="space-y-3">
-              {visibleReplies.map((reply) => {
+              {visibleReplies.map((reply, replyIndex) => {
                 const canDelete = session.user?.id === reply.author.id || session.isAdmin;
                 const confirmingThisReply =
                   confirmingDelete?.kind === 'reply' && confirmingDelete.id === reply.id;
@@ -881,6 +881,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                     key={reply.id}
                     reply={reply}
                     locale={locale.locale}
+                    tableRegionPrefix={tt('a11y.scrollTableReplyPrefix', { n: replyIndex + 1 })}
                     highlighted={highlightedReplyId === reply.id}
                     canDelete={canDelete}
                     showReport={session.user?.id !== reply.author.id}
@@ -1023,6 +1024,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 const ForumReplyItem = memo(function ForumReplyItem({
   reply,
   locale,
+  tableRegionPrefix,
   highlighted,
   canDelete,
   showReport,
@@ -1044,6 +1046,8 @@ const ForumReplyItem = memo(function ForumReplyItem({
 }: {
   reply: TopicReply;
   locale: string;
+  /** CH-220 §2-5: prepended to every table region label in this reply. */
+  tableRegionPrefix: string;
   highlighted: boolean;
   canDelete: boolean;
   showReport: boolean;
@@ -1117,7 +1121,7 @@ const ForumReplyItem = memo(function ForumReplyItem({
         )}
       </ReportButton>
       <div className="mt-2 min-w-0">
-        <MarkdownView body={reply.body} />
+        <MarkdownView body={reply.body} tableRegionPrefix={tableRegionPrefix} />
       </div>
       {confirming ? (
         <DeleteConfirmGroup

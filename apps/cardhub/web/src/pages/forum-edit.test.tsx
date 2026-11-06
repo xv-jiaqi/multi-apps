@@ -226,6 +226,47 @@ describe('ForumEditPage', () => {
   });
 });
 
+describe('ForumEditPage CH-221 §5 h1 (21-11)', () => {
+  it('renders the page title as the only h1 with the f80efda classes', () => {
+    renderPage();
+    const h1s = screen.getAllByRole('heading', { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0]).toHaveTextContent('编辑话题');
+    expect(h1s[0]!.tagName).toBe('H1');
+    expect(h1s[0]!.className).toBe('font-semibold tracking-tight text-2xl');
+    expect(h1s[0]).not.toHaveAttribute('tabindex');
+    expect(document.querySelectorAll('h1')).toHaveLength(1);
+  });
+
+  it('uses the English title in en-US', () => {
+    rootStore.locale.setLocale('en-US');
+    renderPage();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Edit topic');
+  });
+
+  it('keeps one h1 when the preview shows "# x\\n## y" as two h2', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    fireEvent.change(screen.getByLabelText('正文'), { target: { value: '# x\n## y' } });
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    expect(document.querySelectorAll('h1')).toHaveLength(1);
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 2, name: 'x' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'y' })).toBeInTheDocument();
+  });
+
+  it('has no h1 when the account is banned (5-5)', () => {
+    rootStore.session.signIn('jwt.token', {
+      id: 'author-1',
+      username: 'author',
+      bannedAt: '2026-10-27T00:00:00.000Z',
+    });
+    renderPage();
+    expect(document.querySelectorAll('h1')).toHaveLength(0);
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+  });
+});
+
 describe('ForumEditPage CH-223 preview images', () => {
   it('previews sample F with the https rule and saves the body unchanged (23-1, 23-9)', async () => {
     const user = userEvent.setup();
