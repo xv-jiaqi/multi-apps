@@ -155,7 +155,7 @@ describe('CatalogSeriesPage delete', () => {
     expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
 
     await user.keyboard('{Escape}');
-    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /删除系列/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '删除「安静」' })).toHaveFocus();
 
     await user.click(screen.getByRole('button', { name: '删除「安静」' }));
@@ -175,7 +175,7 @@ describe('CatalogSeriesPage delete', () => {
     await user.click(screen.getByRole('button', { name: '删除「安静」' }));
 
     const dialog = await screen.findByRole('alertdialog');
-    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /删除系列/ })).not.toBeInTheDocument();
     expect(dialog).toHaveTextContent('删除系列「安静」及其系列评论');
     expect(dialog).toHaveTextContent('3 条系列评论');
     expect(dialog).not.toHaveTextContent('这些卡牌下的');
@@ -191,7 +191,7 @@ describe('CatalogSeriesPage delete', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete “Quiet Notes”' }));
     const dialog = await screen.findByRole('alertdialog');
-    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /删除系列/ })).not.toBeInTheDocument();
     expect(dialog).toHaveTextContent('Delete “Quiet Notes” and its series comments');
     expect(dialog).toHaveTextContent('1 series comment');
     expect(dialog).not.toHaveTextContent('on them');
@@ -281,7 +281,7 @@ describe('CatalogSeriesPage delete', () => {
     expect(dialog).toHaveTextContent('4 张卡牌');
     expect(dialog).toHaveTextContent('2 条评论');
     expect(screen.queryByText('SERIES_HAS_CARDS')).not.toBeInTheDocument();
-    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /删除系列/ })).not.toBeInTheDocument();
   });
 
   it('shows a translated delete failure inside the dialog', async () => {

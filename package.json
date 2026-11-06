@@ -18,7 +18,7 @@
     "dev:miniapp:alipay": "pnpm --filter @cardhub/miniapp --fail-if-no-match exec pnpm run dev:alipay",
     "dev:packages": "turbo run dev --filter=./packages/*",
     "build": "turbo run build --filter=!@cardhub/native",
-    "lint": "pnpm check:tailwind-grid && eslint .",
+    "lint": "pnpm check:tailwind-grid && pnpm check:ch305-colors && eslint .",
     "check:tailwind-grid": "node scripts/check-tailwind-arbitrary-grid.mjs",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
@@ -33,7 +33,8 @@
     "seed:catalog": "pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run seed:catalog",
     "seed:demo": "pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run seed:demo",
     "db:studio": "pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:studio",
-    "prepare": "husky"
+    "prepare": "husky",
+    "check:ch305-colors": "node scripts/check-ch305-hardcoded-colors.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",

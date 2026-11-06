@@ -73,7 +73,7 @@ const retryButtonVariantClassName = {
   default: '',
   /** G-3 inline control inside a field-level red bar. */
   inline:
-    'inline-flex min-h-6 items-center rounded px-1 text-xs font-medium text-danger underline hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+    'inline-flex min-h-6 items-center rounded px-1 text-xs font-medium text-danger underline hover:text-red-800 dark:hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
 } as const;
 
 export type RetryButtonVariant = keyof typeof retryButtonVariantClassName;

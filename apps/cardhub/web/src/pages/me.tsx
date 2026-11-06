@@ -798,7 +798,7 @@ export const MePage = observer(function MePage() {
                 <p
                   className={
                     session.user?.passwordChangeRecommended
-                      ? 'text-sm text-amber-900'
+                      ? 'text-sm text-amber-900 dark:text-warning'
                       : 'text-sm text-neutral-600'
                   }
                 >

@@ -30,7 +30,7 @@
 }
 
 /*
- * CH-305 semantic color tokens (light values only; dark mode lands in a later PR).
+ * CH-305 semantic color tokens (light values; :root.dark below supplies dark).
  * Each token aliases the exact Tailwind palette color it replaces, so light pixels are unchanged.
  */
 @theme {
@@ -57,10 +57,56 @@
 
 /*
  * CH-305 v1.2 §10: light contrast fix (WCAG 1.4.3 / 1.4.11). These two groups
- * intentionally change light pixels. Dark values arrive with the dark PR (§11-3).
+ * intentionally change light pixels. Dark values are in :root.dark (§11-3).
  */
 @theme {
   --color-muted: #666666;
   --color-input: #8a8a8a;
   --color-input-hover: var(--color-neutral-500);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* CH-305 §3 / appendix §C: dark palette. Neutral literals avoid self-reference after the scale flip. */
+:root.dark {
+  --color-page: #0a0a0a;
+  --color-card: #171717;
+  --color-on-inverse: #0a0a0a;
+  --color-overlay: #000000;
+  --color-neutral-50: #141414;
+  --color-neutral-100: #1f1f1f;
+  --color-neutral-200: #2e2e2e;
+  --color-neutral-300: #6b6b6b;
+  --color-neutral-400: #7a7a7a;
+  --color-neutral-500: #9e9e9e;
+  --color-neutral-600: #b8b8b8;
+  --color-neutral-700: #d4d4d4;
+  --color-neutral-800: #e5e5e5;
+  --color-neutral-900: #f2f2f2;
+  --color-neutral-950: #fafafa;
+  --color-muted: #9e9e9e;
+  --color-input: #6b6b6b;
+  --color-input-hover: #9e9e9e;
+  --color-link: var(--color-brand-400);
+  --color-link-strong: var(--color-brand-300);
+  --color-accent-soft: #172554;
+  --color-accent-border: var(--color-brand-800);
+  --color-danger: var(--color-red-400);
+  --color-danger-soft: #2a1010;
+  --color-danger-soft-strong: #3d1414;
+  --color-danger-border: var(--color-red-900);
+  --color-danger-border-strong: var(--color-red-800);
+  --color-danger-line: var(--color-red-500);
+  --color-success: var(--color-emerald-300);
+  --color-success-soft: #062a1f;
+  --color-success-border: var(--color-emerald-800);
+  --color-warning: var(--color-amber-300);
+  --color-warning-soft: #2a1d06;
+  --color-warning-border: var(--color-amber-900);
+  color-scheme: dark;
+}
+
+/* CH-305 §2-6 / 305-9: ring-offset defaults to white; pin to card in dark. */
+.dark * {
+  --tw-ring-offset-color: var(--color-card);
 }

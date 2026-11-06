@@ -17,7 +17,7 @@ export function DeleteReasonField({
   const countId = `${fieldId}-count`;
   return (
     <div className="flex w-full flex-col gap-1">
-      <label htmlFor={fieldId} className="text-xs font-medium text-red-800">
+      <label htmlFor={fieldId} className="text-xs font-medium text-red-800 dark:text-danger">
         {t(locale, 'admin.deleteReason.label')}
       </label>
       <Input

@@ -53,7 +53,9 @@ function SeriesHero({
     <header
       className={cn(
         'relative overflow-hidden rounded-3xl border border-card/60 p-8 text-white shadow-lg',
-        hasImage ? 'bg-neutral-800' : `bg-gradient-to-br ${gradientFor(series.slug)}`,
+        hasImage
+          ? 'bg-neutral-800 dark:bg-neutral-200'
+          : `bg-gradient-to-br ${gradientFor(series.slug)}`,
       )}
     >
       {hasImage ? <img key={series.coverUrl} {...art.imgProps} /> : null}

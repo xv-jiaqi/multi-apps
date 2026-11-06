@@ -32,6 +32,9 @@ export default [
       'apps/cardhub/e2e/test-results/**',
       'apps/cardhub/e2e/playwright-report/**',
       'apps/cardhub/e2e/blob-report/**',
+      // Classic browser scripts (no modules); theme-init is appendix §D verbatim.
+      'apps/cardhub/web/public/theme-init.js',
+      'apps/cardhub/web/public/config.js',
     ],
   },
   {
