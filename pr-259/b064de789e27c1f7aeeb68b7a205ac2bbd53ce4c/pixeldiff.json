@@ -1,0 +1,31 @@
+{
+  "valid_1440_en": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      1364
+    ]
+  },
+  "valid_1440_zh": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      1348
+    ]
+  },
+  "valid_375_en": {
+    "diff_px": 0,
+    "size": [
+      375,
+      1652
+    ]
+  },
+  "valid_375_zh": {
+    "diff_px": 0,
+    "size": [
+      375,
+      1548
+    ]
+  },
+  "_trigger_rects_equal": true
+}
