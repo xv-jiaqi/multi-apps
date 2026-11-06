@@ -18,8 +18,8 @@
     "typecheck": "echo 'native has no JS sources to typecheck'"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.11.0",
-    "@tauri-apps/plugin-sql": "^2.4.0"
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-sql": "^2.6.0"
   },
   "devDependencies": {
     "@cardhub/web": "workspace:*",
