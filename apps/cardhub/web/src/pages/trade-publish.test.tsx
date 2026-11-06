@@ -1,4 +1,5 @@
 import { APP_ERROR_CODES } from '@repo/shared';
+import type * as Shared from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -35,7 +36,7 @@ const schemaHarness = vi.hoisted(() => ({
 }));
 
 vi.mock('@repo/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@repo/shared')>();
+  const actual = await importOriginal<typeof Shared>();
   return {
     ...actual,
     listingPublishInput: {
