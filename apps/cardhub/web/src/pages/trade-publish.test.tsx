@@ -1,10 +1,11 @@
 import { APP_ERROR_CODES } from '@repo/shared';
+import type * as Shared from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
-import { TradePublishPage } from './trade-publish';
+import { SelectField, TradePublishPage } from './trade-publish';
 
 if (!HTMLElement.prototype.scrollIntoView) {
   HTMLElement.prototype.scrollIntoView = vi.fn();
@@ -29,6 +30,29 @@ const publishHarness = vi.hoisted(() => ({
     | ((error: { message: string; data?: { code?: string; appCode?: string } }) => void)
     | undefined,
 }));
+
+const schemaHarness = vi.hoisted(() => ({
+  failOn: null as null | 'condition' | 'language' | 'currency',
+}));
+
+vi.mock('@repo/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof Shared>();
+  return {
+    ...actual,
+    listingPublishInput: {
+      safeParse: (input: unknown) => {
+        const field = schemaHarness.failOn;
+        if (!field) return actual.listingPublishInput.safeParse(input);
+        return {
+          success: false,
+          error: {
+            issues: [{ code: 'invalid_value', path: [field], message: 'Invalid option' }],
+          },
+        };
+      },
+    },
+  };
+});
 
 vi.mock('../lib/trpc', () => ({
   clearActiveQueryClient: vi.fn(),
@@ -96,6 +120,7 @@ vi.mock('../lib/trpc', () => ({
 
 describe('TradePublishPage', () => {
   beforeEach(() => {
+    schemaHarness.failOn = null;
     rootStore.locale.setLocale('zh-CN');
     rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
   });
@@ -312,5 +337,84 @@ describe('TradePublishPage', () => {
     expect(screen.getByText('价格最长 64 个字符')).toBeInTheDocument();
     expect(screen.queryByText(/Too big/)).not.toBeInTheDocument();
     expect(price).toHaveFocus();
+  });
+
+  it.each([
+    ['condition', '品相', 'trade-condition-error'],
+    ['language', '语言', 'trade-language-error'],
+    ['currency', '货币', 'trade-currency-error'],
+  ] as const)(
+    'puts a %s schema failure on that dropdown and focuses its trigger',
+    async (field, label, errorId) => {
+      const user = userEvent.setup();
+      render(
+        <MemoryRouter initialEntries={['/trade/new?cardSlug=aurora-knight']}>
+          <TradePublishPage />
+        </MemoryRouter>,
+      );
+      expect(await screen.findByText('极光骑士')).toBeInTheDocument();
+      await user.type(screen.getByRole('textbox', { name: /联系方式/ }), 'wechat');
+      schemaHarness.failOn = field;
+      await user.click(screen.getByRole('button', { name: '发布意向' }));
+
+      const trigger = screen.getByRole('combobox', { name: label });
+      expect(trigger).toHaveAttribute('aria-invalid', 'true');
+      expect(trigger).toHaveAttribute('aria-describedby', errorId);
+      expect(document.getElementById(errorId)).toHaveClass('text-xs', 'text-danger');
+      expect(trigger).toHaveAccessibleDescription(document.getElementById(errorId)!.textContent!);
+      expect(document.activeElement).toBe(trigger);
+      expect(screen.queryByText('请选择一张卡牌')).not.toBeInTheDocument();
+    },
+  );
+
+  it('leaves the dropdown triggers without aria-invalid while valid', () => {
+    render(
+      <MemoryRouter initialEntries={['/trade/new']}>
+        <TradePublishPage />
+      </MemoryRouter>,
+    );
+    for (const name of ['品相', '语言', '货币']) {
+      const trigger = screen.getByRole('combobox', { name });
+      expect(trigger).not.toHaveAttribute('aria-invalid');
+      expect(trigger).not.toHaveAttribute('aria-describedby');
+    }
+  });
+});
+
+describe('SelectField', () => {
+  const options = [{ value: 'CNY', label: 'CNY' }];
+
+  it.each([undefined, false])('has no aria-invalid or error text when invalid is %s', (invalid) => {
+    render(
+      <SelectField
+        label="货币"
+        value="CNY"
+        onValueChange={() => {}}
+        options={options}
+        invalid={invalid}
+        errorId="x-error"
+      />,
+    );
+    const trigger = screen.getByRole('combobox', { name: '货币' });
+    expect(trigger).not.toHaveAttribute('aria-invalid');
+    expect(trigger).not.toHaveAttribute('aria-describedby');
+    expect(document.getElementById('x-error')).toBeNull();
+  });
+
+  it('marks the trigger invalid and describes it with the error', () => {
+    render(
+      <SelectField
+        label="货币"
+        value="CNY"
+        onValueChange={() => {}}
+        options={options}
+        invalid
+        error="请选择货币"
+        errorId="x-error"
+      />,
+    );
+    const trigger = screen.getByRole('combobox', { name: '货币' });
+    expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    expect(trigger).toHaveAccessibleDescription('请选择货币');
   });
 });
