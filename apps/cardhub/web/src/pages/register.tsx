@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { observer } from 'mobx-react-lite';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@repo/ui-web';
+import { Button, Card, CardContent, CardHeader } from '@repo/ui-web';
 import {
   APP_ERROR_CODES,
   appErrorMessage,
@@ -67,7 +67,7 @@ export const RegisterPage = observer(function RegisterPage() {
 
         <Card className="border-card/60 bg-card/80 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-2xl">{tt('auth.register.title')}</CardTitle>
+            <h1 className="font-semibold tracking-tight text-2xl">{tt('auth.register.title')}</h1>
             <p className="text-sm text-neutral-600">{tt('auth.register.subtitle')}</p>
           </CardHeader>
           <CardContent>

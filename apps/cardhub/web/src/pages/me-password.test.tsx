@@ -328,6 +328,10 @@ describe('login session notices', () => {
     expect(signedOut).toHaveAttribute('tabIndex', '-1');
     expect(signedOut).toHaveFocus();
     expect(signedOut.className).toContain('bg-success-soft');
+    const heading = screen.getAllByRole('heading', { level: 1 });
+    expect(heading).toHaveLength(1);
+    expect(heading[0]).toHaveAccessibleName('登录');
+    expect(heading[0]).not.toHaveFocus();
     unmount();
 
     render(

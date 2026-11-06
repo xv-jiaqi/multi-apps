@@ -98,6 +98,34 @@ describe('mapped API error copy', () => {
     rootStore.session.signOut();
   });
 
+  it.each([
+    ['zh-CN', '登录', '创建账户'],
+    ['en-US', 'Sign in', 'Create account'],
+  ] as const)(
+    'login and register each have one h1 with the page title (%s)',
+    (lang, login, register) => {
+      rootStore.locale.setLocale(lang);
+      const { unmount } = render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
+      const loginHeadings = screen.getAllByRole('heading', { level: 1 });
+      expect(loginHeadings).toHaveLength(1);
+      expect(loginHeadings[0]).toHaveAccessibleName(login);
+      unmount();
+
+      render(
+        <MemoryRouter>
+          <RegisterPage />
+        </MemoryRouter>,
+      );
+      const registerHeadings = screen.getAllByRole('heading', { level: 1 });
+      expect(registerHeadings).toHaveLength(1);
+      expect(registerHeadings[0]).toHaveAccessibleName(register);
+    },
+  );
+
   it('register shows the conflict sentence instead of the server text or code', () => {
     render(
       <MemoryRouter>
