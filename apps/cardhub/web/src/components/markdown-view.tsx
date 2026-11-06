@@ -14,8 +14,9 @@ interface MarkdownViewProps {
   className?: string;
   /**
    * `forum` (default) keeps @mentions. `card` is the CH-206 card body:
-   * no mentions, headings demoted so the page keeps one h1, links get the
-   * new-tab rule and images must be https. Card headings map # and ## to h3,
+   * no mentions, headings demoted so the page keeps one h1 and links get the
+   * new-tab rule. Both variants share `MarkdownImage`: only https images
+   * render, with no-referrer + lazy (CH-206, CH-223). Card headings map # and ## to h3,
    * ### to h4, #### to h5, ##### and ###### to h6 (CH-222 §2-1); classes
    * follow the source level, so only the tag changes.
    */
@@ -80,14 +81,15 @@ function isExternal(href: string | undefined): boolean {
   return !!href && /^https?:\/\//i.test(href);
 }
 
-/** True inside a card body heading, so `img` can keep the alt visible (CH-222 §2-7). */
-const InCardHeading = createContext(false);
+/** True inside a Markdown heading, so `img` can keep the alt visible (CH-222 §2-7, CH-223 §3-2). */
+const InMarkdownHeading = createContext(false);
 
-function CardImage({ src, alt }: { src: unknown; alt: string | undefined }) {
-  const inHeading = useContext(InCardHeading);
+/** The one image rule for card and forum bodies (CH-206, CH-223 §3). */
+function MarkdownImage({ src, alt }: { src: unknown; alt: string | undefined }) {
+  const inHeading = useContext(InMarkdownHeading);
   if (typeof src !== 'string' || !/^https:\/\//i.test(src)) {
-    // CH-206: never request a non-https image. In a heading the alt is the
-    // visible text, so the heading keeps its name (CH-222 §2-7 3/5).
+    // CH-206 / CH-223: never request a non-https image. In a heading the alt
+    // is the visible text, so the heading keeps its name (CH-222 §2-7 3/5).
     return inHeading && alt ? <span>{alt}</span> : null;
   }
   return (
@@ -101,13 +103,17 @@ function CardImage({ src, alt }: { src: unknown; alt: string | undefined }) {
   );
 }
 
+const markdownImg = ({ node: _node, src, alt }: ComponentProps<'img'> & ExtraProps) => (
+  <MarkdownImage src={src} alt={alt} />
+);
+
 function cardComponents(newTabLabel: string | undefined): Components {
   const heading =
     (Tag: 'h3' | 'h4' | 'h5' | 'h6', className: string) =>
     ({ node: _node, ...props }: ComponentProps<'h1'> & ExtraProps) => (
-      <InCardHeading.Provider value={true}>
+      <InMarkdownHeading.Provider value={true}>
         <Tag {...props} className={className} />
-      </InCardHeading.Provider>
+      </InMarkdownHeading.Provider>
     );
   return {
     pre: (props: ComponentProps<'pre'> & ExtraProps) => (
@@ -160,21 +166,34 @@ function cardComponents(newTabLabel: string | undefined): Components {
         </a>
       );
     },
-    img: ({ node: _node, src, alt }: ComponentProps<'img'> & ExtraProps) => (
-      <CardImage src={src} alt={alt} />
-    ),
+    img: markdownImg,
   };
 }
 
 /**
  * Forum variant (CH-221 §2-2): the topic title is the page's only h1, so a
  * source `# x` renders as an unstyled h2. Preflight gives h1 and h2 the same
- * look, so nothing moves visually; h2–h6 keep their level.
+ * look, so nothing moves visually; h2–h6 keep their level. Images follow
+ * the card rule (CH-223): a rejected image shows its alt only in a heading.
  */
+const forumHeading =
+  (Tag: 'h2' | 'h3' | 'h4' | 'h5' | 'h6') =>
+  ({ node: _node, ...props }: ComponentProps<'h1'> & ExtraProps) => (
+    <InMarkdownHeading.Provider value={true}>
+      <Tag {...props} />
+    </InMarkdownHeading.Provider>
+  );
+
 const forumComponents: Components = {
   pre: MarkdownPre,
   table: MarkdownTable,
-  h1: ({ node: _node, ...props }: ComponentProps<'h1'> & ExtraProps) => <h2 {...props} />,
+  h1: forumHeading('h2'),
+  h2: forumHeading('h2'),
+  h3: forumHeading('h3'),
+  h4: forumHeading('h4'),
+  h5: forumHeading('h5'),
+  h6: forumHeading('h6'),
+  img: markdownImg,
 };
 
 /**
