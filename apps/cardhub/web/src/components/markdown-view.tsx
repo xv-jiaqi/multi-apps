@@ -23,6 +23,12 @@ interface MarkdownViewProps {
   variant?: 'forum' | 'card';
   /** Screen-reader suffix for links that open a new tab (`a11y.newTab`). */
   newTabLabel?: string;
+  /**
+   * Optional prefix for every table ScrollRegion label on this instance
+   * (CH-220 §2-5). Forum replies pass `a11y.scrollTableReplyPrefix`; topic
+   * body, card body, and compose/edit preview leave it unset.
+   */
+  tableRegionPrefix?: string;
 }
 
 const codeBlockClass =
@@ -55,6 +61,7 @@ const MarkdownTable = observer(function MarkdownTable({
   ...props
 }: ComponentProps<'table'> & ExtraProps) {
   const { locale } = useStores();
+  const tableRegionPrefix = useContext(TableRegionPrefix);
   const {
     'data-scroll-n': _n,
     'data-scroll-heading': _h,
@@ -70,6 +77,7 @@ const MarkdownTable = observer(function MarkdownTable({
   } else {
     label = t(locale.locale, 'a11y.scrollTable', { name: t(locale.locale, 'a11y.table') });
   }
+  if (tableRegionPrefix) label = `${tableRegionPrefix}${label}`;
   return (
     <ScrollRegion label={label} className="max-w-full">
       <table {...rest} />
@@ -83,6 +91,9 @@ function isExternal(href: string | undefined): boolean {
 
 /** True inside a Markdown heading, so `img` can keep the alt visible (CH-222 §2-7, CH-223 §3-2). */
 const InMarkdownHeading = createContext(false);
+
+/** Prefix for table region labels when several MarkdownView instances share a page (CH-220 §2-5). */
+const TableRegionPrefix = createContext<string | undefined>(undefined);
 
 /** The one image rule for card and forum bodies (CH-206, CH-223 §3). */
 function MarkdownImage({ src, alt }: { src: unknown; alt: string | undefined }) {
@@ -214,29 +225,32 @@ export const MarkdownView = memo(function MarkdownView({
   className,
   variant = 'forum',
   newTabLabel,
+  tableRegionPrefix,
 }: MarkdownViewProps) {
   const card = variant === 'card';
   return (
-    <div
-      className={[
-        'min-w-0 wrap-anywhere text-neutral-800',
-        card && 'text-base leading-7',
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={
-          card
-            ? [rehypeSanitize, rehypeScrollTables]
-            : [rehypeSanitize, rehypeMentions, rehypeScrollTables]
-        }
-        components={card ? cardComponents(newTabLabel) : forumComponents}
+    <TableRegionPrefix.Provider value={tableRegionPrefix}>
+      <div
+        className={[
+          'min-w-0 wrap-anywhere text-neutral-800',
+          card && 'text-base leading-7',
+          className,
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
-        {body}
-      </ReactMarkdown>
-    </div>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={
+            card
+              ? [rehypeSanitize, rehypeScrollTables]
+              : [rehypeSanitize, rehypeMentions, rehypeScrollTables]
+          }
+          components={card ? cardComponents(newTabLabel) : forumComponents}
+        >
+          {body}
+        </ReactMarkdown>
+      </div>
+    </TableRegionPrefix.Provider>
   );
 });

@@ -151,3 +151,29 @@ describe.each(['card', 'forum'] as const)(
     });
   },
 );
+
+// CH-220 v1.9 §2-5 / 20-11: tableRegionPrefix is prepended; without it names stay §2-4.
+describe.each(['zh-CN', 'en-US'] as const)('MarkdownTable tableRegionPrefix (%s)', (locale) => {
+  const prefix = locale === 'zh-CN' ? '回复 1：' : 'Reply 1: ';
+
+  it('prepends the prefix to every §2-4 label', () => {
+    act(() => rootStore.locale.setLocale(locale));
+    render(<MarkdownView body={multiTableBody} tableRegionPrefix={prefix} />);
+    const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(names).toEqual(expected[locale].map((n) => `${prefix}${n}`));
+    expect(new Set(names).size).toBe(3);
+  });
+
+  it('leaves names unchanged when the prefix is omitted', () => {
+    act(() => rootStore.locale.setLocale(locale));
+    render(<MarkdownView body={multiTableBody} />);
+    const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(names).toEqual(expected[locale]);
+  });
+
+  it('prepends the prefix to a single-table label', () => {
+    act(() => rootStore.locale.setLocale(locale));
+    render(<MarkdownView body={singleBody} tableRegionPrefix={prefix} />);
+    expect(screen.getByRole('region')).toHaveAttribute('aria-label', `${prefix}${single[locale]}`);
+  });
+});
