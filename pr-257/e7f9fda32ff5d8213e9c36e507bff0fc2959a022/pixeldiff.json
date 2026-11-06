@@ -1,0 +1,30 @@
+{
+  "normal_375_zh": {
+    "diff_px": 0,
+    "size": [
+      375,
+      1020
+    ]
+  },
+  "normal_375_en": {
+    "diff_px": 0,
+    "size": [
+      375,
+      1092
+    ]
+  },
+  "normal_1440_zh": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      984
+    ]
+  },
+  "normal_1440_en": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      984
+    ]
+  }
+}
