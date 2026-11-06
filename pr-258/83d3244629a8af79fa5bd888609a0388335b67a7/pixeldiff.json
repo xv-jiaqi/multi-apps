@@ -1,0 +1,86 @@
+{
+  "login_normal_1440_en": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      900
+    ]
+  },
+  "login_normal_1440_zh": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      900
+    ]
+  },
+  "login_normal_375_en": {
+    "diff_px": 0,
+    "size": [
+      375,
+      900
+    ]
+  },
+  "login_normal_375_zh": {
+    "diff_px": 0,
+    "size": [
+      375,
+      900
+    ]
+  },
+  "login_signedOutAll_1440_en": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      900
+    ]
+  },
+  "login_signedOutAll_1440_zh": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      900
+    ]
+  },
+  "login_signedOutAll_375_en": {
+    "diff_px": 0,
+    "size": [
+      375,
+      916
+    ]
+  },
+  "login_signedOutAll_375_zh": {
+    "diff_px": 0,
+    "size": [
+      375,
+      900
+    ]
+  },
+  "register_normal_1440_en": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      900
+    ]
+  },
+  "register_normal_1440_zh": {
+    "diff_px": 0,
+    "size": [
+      1440,
+      900
+    ]
+  },
+  "register_normal_375_en": {
+    "diff_px": 0,
+    "size": [
+      375,
+      940
+    ]
+  },
+  "register_normal_375_zh": {
+    "diff_px": 0,
+    "size": [
+      375,
+      900
+    ]
+  }
+}
