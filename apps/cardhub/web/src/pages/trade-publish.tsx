@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { forwardRef, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import {
   Button,
@@ -42,7 +42,9 @@ import { CardPicker, type CardPickerItem } from '../components/card-picker';
 import { CardThumb, isHttpsImageUrl } from '../components/card-thumb';
 import { RarityBadge } from '../components/rarity-badge';
 
-type FieldErrors = Partial<Record<'card' | 'price' | 'imageUrls' | 'contact', string>>;
+type FieldErrors = Partial<
+  Record<'card' | 'condition' | 'language' | 'price' | 'currency' | 'imageUrls' | 'contact', string>
+>;
 
 function isKnownRarity(rarity: string | null): rarity is 'common' | 'rare' | 'epic' | 'legendary' {
   return rarity === 'common' || rarity === 'rare' || rarity === 'epic' || rarity === 'legendary';
@@ -123,7 +125,10 @@ export const TradePublishPage = observer(function TradePublishPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const cardInputRef = useRef<HTMLInputElement | null>(null);
+  const conditionRef = useRef<HTMLButtonElement | null>(null);
+  const languageRef = useRef<HTMLButtonElement | null>(null);
   const priceRef = useRef<HTMLInputElement | null>(null);
+  const currencyRef = useRef<HTMLButtonElement | null>(null);
   const imageRef = useRef<HTMLTextAreaElement | null>(null);
   const contactRef = useRef<HTMLInputElement | null>(null);
   const prefillSlug = searchParams.get('cardSlug') ?? '';
@@ -191,7 +196,10 @@ export const TradePublishPage = observer(function TradePublishPage() {
 
   function focusFirstError(errors: FieldErrors) {
     if (errors.card) cardInputRef.current?.focus();
+    else if (errors.condition) conditionRef.current?.focus();
+    else if (errors.language) languageRef.current?.focus();
     else if (errors.price) priceRef.current?.focus();
+    else if (errors.currency) currencyRef.current?.focus();
     else if (errors.imageUrls) imageRef.current?.focus();
     else if (errors.contact) contactRef.current?.focus();
   }
@@ -238,6 +246,12 @@ export const TradePublishPage = observer(function TradePublishPage() {
           issue.code === 'too_big'
             ? tt('trade.publish.error.priceTooLong')
             : tt('trade.publish.error.price');
+      } else if (
+        issue?.path[0] === 'condition' ||
+        issue?.path[0] === 'language' ||
+        issue?.path[0] === 'currency'
+      ) {
+        mapped[issue.path[0]] = fieldErrorMessage(locale.locale, issue.message);
       } else if (issue?.path[0] === 'contact') mapped.contact = tt('trade.publish.error.contact');
       else mapped.card = tt('trade.publish.error.cardRequired');
       setFieldErrors(mapped);
@@ -357,7 +371,11 @@ export const TradePublishPage = observer(function TradePublishPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <SelectField
+                    ref={conditionRef}
                     label={tt('trade.condition.label')}
+                    invalid={Boolean(fieldErrors.condition)}
+                    error={fieldErrors.condition}
+                    errorId="trade-condition-error"
                     value={condition ?? 'none'}
                     onValueChange={(value) =>
                       setCondition(value === 'none' ? undefined : (value as ListingCondition))
@@ -371,7 +389,11 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     ]}
                   />
                   <SelectField
+                    ref={languageRef}
                     label={tt('trade.language.label')}
+                    invalid={Boolean(fieldErrors.language)}
+                    error={fieldErrors.language}
+                    errorId="trade-language-error"
                     value={language ?? 'none'}
                     onValueChange={(value) =>
                       setLanguage(value === 'none' ? undefined : (value as ListingLanguage))
@@ -419,7 +441,11 @@ export const TradePublishPage = observer(function TradePublishPage() {
                     ) : null}
                   </label>
                   <SelectField
+                    ref={currencyRef}
                     label={tt('trade.publish.currency')}
+                    invalid={Boolean(fieldErrors.currency)}
+                    error={fieldErrors.currency}
+                    errorId="trade-currency-error"
                     value={currency}
                     onValueChange={(value) => setCurrency(value as TradeCurrency)}
                     options={TRADE_CURRENCY_VALUES.map((value) => ({ value, label: value }))}
@@ -524,34 +550,46 @@ export const TradePublishPage = observer(function TradePublishPage() {
   );
 });
 
-function SelectField({
-  label,
-  value,
-  onValueChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
+export const SelectField = forwardRef<
+  HTMLButtonElement,
+  {
+    label: string;
+    value: string;
+    onValueChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    invalid?: boolean;
+    error?: string;
+    errorId?: string;
+  }
+>(function SelectField({ label, value, onValueChange, options, invalid, error, errorId }, ref) {
   return (
-    <label className="block space-y-1">
-      <span className="text-xs font-medium text-neutral-600">{label}</span>
-      <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </label>
+    <div className="space-y-1">
+      <label className="block space-y-1">
+        <span className="text-xs font-medium text-neutral-600">{label}</span>
+        <Select value={value} onValueChange={onValueChange}>
+          <SelectTrigger
+            ref={ref}
+            aria-invalid={invalid || undefined}
+            aria-describedby={error ? errorId : undefined}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </label>
+      {error ? (
+        <p id={errorId} className="text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
-}
+});
