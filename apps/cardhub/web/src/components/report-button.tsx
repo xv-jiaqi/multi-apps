@@ -153,7 +153,7 @@ export const ReportButton = observer(function ReportButton({
       ref={statusRef}
       role="status"
       tabIndex={-1}
-      className="text-xs text-emerald-700 focus:outline-none"
+      className="text-xs text-emerald-700 dark:text-success focus:outline-none"
     >
       {tt('report.success')}
     </span>

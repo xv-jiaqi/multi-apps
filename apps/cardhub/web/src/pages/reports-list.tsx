@@ -325,8 +325,8 @@ function ReportListItem({
             <span
               className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                 report.status === 'PENDING'
-                  ? 'bg-amber-100 text-warning'
-                  : 'bg-emerald-100 text-success'
+                  ? 'bg-amber-100 text-warning dark:bg-warning-soft'
+                  : 'bg-emerald-100 text-success dark:bg-success-soft'
               }`}
             >
               {tt(report.status === 'PENDING' ? 'reports.filterPending' : 'reports.filterResolved')}
@@ -520,7 +520,7 @@ function TargetSummary({ report, locale }: { report: ReportItem; locale: Locale 
         </Link>
         <p className="text-xs text-muted">
           @{report.target.sellerUsername ?? '-'} ·{' '}
-          <span className={listingIsOpen ? 'text-emerald-700' : 'text-muted'}>
+          <span className={listingIsOpen ? 'text-emerald-700 dark:text-success' : 'text-muted'}>
             {tt(listingIsOpen ? 'trade.list.statusOpen' : 'trade.list.statusClosed')}
           </span>
         </p>

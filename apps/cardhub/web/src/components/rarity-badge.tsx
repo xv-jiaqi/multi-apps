@@ -21,7 +21,7 @@ const RARITY_STYLE: Record<
   },
   legendary: {
     bg: 'bg-gradient-to-r from-amber-200 to-orange-300',
-    text: 'text-amber-800',
+    text: 'text-amber-900',
     label: { 'zh-CN': '传说', 'en-US': 'Legendary' },
   },
 };
