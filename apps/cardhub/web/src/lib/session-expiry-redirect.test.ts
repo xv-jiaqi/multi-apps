@@ -61,6 +61,7 @@ describe('applySessionExpiry', () => {
       hash: '#list',
       navigate,
       error: unauthorized('auth.me'),
+      origin: 'query',
     });
 
     expect(navigate).not.toHaveBeenCalled();

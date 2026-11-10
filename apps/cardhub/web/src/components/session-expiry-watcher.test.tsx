@@ -12,7 +12,7 @@ vi.mock('../lib/trpc', () => ({
 }));
 
 import { SessionExpiryWatcher } from './session-expiry-watcher';
-import { noteTrpcFailure } from '../lib/session-expiry';
+import { noteTrpcFailure, noteTrpcQueryFailure } from '../lib/session-expiry';
 import { resetSessionExpiryRedirectForTests } from '../lib/session-expiry-redirect';
 
 function Probe() {
@@ -71,7 +71,7 @@ describe('SessionExpiryWatcher', () => {
   it('signs out on a public page without leaving it', () => {
     renderAt('/forum');
     act(() => {
-      noteTrpcFailure({
+      noteTrpcQueryFailure({
         data: {
           code: 'UNAUTHORIZED',
           httpStatus: 401,

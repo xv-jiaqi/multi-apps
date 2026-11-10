@@ -43,17 +43,11 @@ type ExpireNavigation = {
     to: string,
     options: { replace: true; state: { from: string; notice: 'sessionExpired' } },
   ) => void;
+  /** Not read for the decision: only the route and `origin` count (CH-227 27-A). */
   error?: unknown;
   /** Omitted means a user action (useAppMutationError). */
   origin?: SessionExpiryOrigin;
 };
-
-function readProcedurePath(error: unknown): string | undefined {
-  if (typeof error !== 'object' || error === null || !('data' in error)) return undefined;
-  const data = error.data;
-  if (typeof data !== 'object' || data === null || !('path' in data)) return undefined;
-  return typeof data.path === 'string' ? data.path : undefined;
-}
 
 function pageRequiresLogin(pathname: string): boolean {
   const path = normalizeAppPathname(pathname);
@@ -68,36 +62,30 @@ function pageRequiresLogin(pathname: string): boolean {
 }
 
 /**
- * Protected pages always return to login. A card page does too: it is public
- * to read, but opening it with a rejected token must not stop on the card.
- * On /forum and /forum/:slug any background read (auth.me, the header's
- * unread count) only signs out (CH-226 §6). auth.me on any other public page
- * only signs out. Any other procedure is a user action (comment, report,
- * collection write) and returns to login.
+ * Two questions decide it (CH-227 27-A), never which request arrived first:
+ * does this route need a session, and was the rejected request a background
+ * read or a user action? Protected pages and card pages (CH-203) always
+ * return to login. On every other page a background read (auth.me, the
+ * header's unread count) only signs out; a user action (comment, report,
+ * collection write) returns to login.
  */
 function sessionExpiryReturnsToLogin({
   pathname,
-  error,
   origin,
 }: {
   pathname: string;
-  error: unknown;
   origin: SessionExpiryOrigin;
 }): boolean {
   const path = normalizeAppPathname(pathname);
   if (pageRequiresLogin(path)) return true;
   if (/^\/cards\/[^/]+$/.test(path)) return true;
-  if (origin === 'query' && isPublicForumPath(path)) return false;
-  const procedure = readProcedurePath(error);
-  if (!procedure || procedure === 'auth.me') return false;
-  return true;
+  return origin === 'action';
 }
 
 export function applySessionExpiry(input: ExpireNavigation): void {
   const hadToken = rootStore.session.token !== null;
   const returnsToLogin = sessionExpiryReturnsToLogin({
     pathname: input.pathname,
-    error: input.error,
     origin: input.origin ?? 'action',
   });
   if (hadToken) {
