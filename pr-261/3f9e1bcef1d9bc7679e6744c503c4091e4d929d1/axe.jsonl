@@ -1,0 +1,72 @@
+{"name":"list-expired_375_zh_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"detail-expired_375_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"new-restored_375_zh_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-restored_375_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-375-zh-light-eu3bga/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"reply-restored_375_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-375-zh-light-eu3bga","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-expired-restored_375_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-375-zh-light-0ffmcf/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"detail-notfound-expired_375_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"cta-focus_375_zh_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_375_zh_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}
+{"name":"list-expired_375_zh_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"detail-expired_375_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"new-restored_375_zh_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-restored_375_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-375-zh-dark-as2ybx/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"reply-restored_375_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-375-zh-dark-as2ybx","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-expired-restored_375_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-375-zh-dark-xe12pk/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"detail-notfound-expired_375_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"cta-focus_375_zh_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_375_zh_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}
+{"name":"list-expired_375_en_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"detail-expired_375_en_light","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"new-restored_375_en_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-restored_375_en_light","url":"http://127.0.0.1:5181/forum/ch-226-375-en-light-00hjib/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"reply-restored_375_en_light","url":"http://127.0.0.1:5181/forum/ch-226-375-en-light-00hjib","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-expired-restored_375_en_light","url":"http://127.0.0.1:5181/forum/ch-226-375-en-light-ccmosw/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"detail-notfound-expired_375_en_light","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"cta-focus_375_en_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_375_en_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}
+{"name":"list-expired_375_en_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"detail-expired_375_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"new-restored_375_en_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-restored_375_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-375-en-dark-virz2e/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"reply-restored_375_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-375-en-dark-virz2e","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-expired-restored_375_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-375-en-dark-ag5euh/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"detail-notfound-expired_375_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"cta-focus_375_en_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_375_en_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}
+{"name":"list-expired_1440_zh_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"detail-expired_1440_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"new-restored_1440_zh_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-restored_1440_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-1440-zh-light-elg5tm/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"reply-restored_1440_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-1440-zh-light-elg5tm","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-expired-restored_1440_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-1440-zh-light-5rqh1d/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"detail-notfound-expired_1440_zh_light","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"cta-focus_1440_zh_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_1440_zh_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}
+{"name":"list-expired_1440_zh_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"detail-expired_1440_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"new-restored_1440_zh_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-restored_1440_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-1440-zh-dark-jy88ke/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"reply-restored_1440_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-1440-zh-dark-jy88ke","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"edit-expired-restored_1440_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-1440-zh-dark-rdnfh4/edit","violations":[],"statuses":["已恢复未发送的内容。"]}
+{"name":"detail-notfound-expired_1440_zh_dark","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["登录已失效，请重新登录。 登录"]}
+{"name":"cta-focus_1440_zh_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_1440_zh_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}
+{"name":"list-expired_1440_en_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"detail-expired_1440_en_light","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"new-restored_1440_en_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-restored_1440_en_light","url":"http://127.0.0.1:5181/forum/ch-226-1440-en-light-wvopj2/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"reply-restored_1440_en_light","url":"http://127.0.0.1:5181/forum/ch-226-1440-en-light-wvopj2","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-expired-restored_1440_en_light","url":"http://127.0.0.1:5181/forum/ch-226-1440-en-light-dt9m9g/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"detail-notfound-expired_1440_en_light","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"cta-focus_1440_en_light","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_1440_en_light","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}
+{"name":"list-expired_1440_en_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"detail-expired_1440_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-qilhi1","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"new-restored_1440_en_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-restored_1440_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-1440-en-dark-y8c38u/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"reply-restored_1440_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-1440-en-dark-y8c38u","violations":[],"statuses":["Unsent text restored."]}
+{"name":"edit-expired-restored_1440_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-1440-en-dark-r4tuja/edit","violations":[],"statuses":["Unsent text restored."]}
+{"name":"detail-notfound-expired_1440_en_dark","url":"http://127.0.0.1:5181/forum/ch-226-no-such-topic","violations":[],"statuses":["Your session has ended. Sign in again. Sign in"]}
+{"name":"cta-focus_1440_en_dark","url":"http://127.0.0.1:5181/forum","violations":[],"statuses":[]}
+{"name":"cta-landed-new_1440_en_dark","url":"http://127.0.0.1:5181/forum/new","violations":[],"statuses":[]}

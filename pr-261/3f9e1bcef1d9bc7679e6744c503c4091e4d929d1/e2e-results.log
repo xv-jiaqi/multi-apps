@@ -1,0 +1,18 @@
+  ✓   1 tests/forum-session-accounts.spec.ts:21:1 › 26-5: A saves a reply draft, B signs in → not restored and gone; A signs in later → still nothing (3.4s)
+  ✓   2 tests/forum-session-accounts.spec.ts:56:1 › 26-8: anonymous 登录发帖 is ≥ 24px tall and lands on /forum/new after login (821ms)
+  ✓   3 tests/forum-session-drafts.spec.ts:30:1 › 26-4 /forum/new: submit after expiry → login with sessionExpired → same text back → publish clears the key (1.0s)
+  ✓   4 tests/forum-session-drafts.spec.ts:60:1 › 26-4 /forum/:slug/edit: save after expiry → login → edited text back (Save enabled) → save clears the key (1.6s)
+  ✓   5 tests/forum-session-drafts.spec.ts:94:1 › 26-4 reply: submit after expiry → login → reply back in #reply-body → posting clears the key (1.5s)
+  ✓   6 tests/forum-session-drafts.spec.ts:129:1 › §7-6 v1.2: the author comes back after the edit window with a valid draft → expired form, text restored, Save disabled (1.4s)
+  ✓   7 tests/forum-session-reading.spec.ts:52:1 › 26-1 + 26-2 /forum: stays, one status, no skeleton, scroll and focus kept; login returns to the same URL (1.5s)
+  ✓   8 tests/forum-session-reading.spec.ts:89:1 › 26-1 + 26-2 /forum/:slug: stays, notice in the reply area, no skeleton, scroll kept; login returns with query and hash (1.5s)
+  ✓   9 tests/forum-session-reading.spec.ts:124:1 › 26-3: focus in the reply box at a silent expiry lands on the notice, and the text is kept and restored (1.5s)
+{"variant":"whole batch rejects","before":900,"after":900,"flashed":false,"url":"http://127.0.0.1:4173/forum/ch-226-5-whole-batch-rejects-1794273672727-31fs53"}
+  ✓  10 tests/forum-session-scroll.spec.ts:27:3 › §5: silent expiry while reading a long topic keeps scroll, URL and content (whole batch rejects) (1.9s)
+{"variant":"only auth.me rejects","before":900,"after":900,"flashed":false,"url":"http://127.0.0.1:4173/forum/ch-226-5-only-auth-me-rejects-1794273674612-a4d8s2"}
+  ✓  11 tests/forum-session-scroll.spec.ts:27:3 › §5: silent expiry while reading a long topic keeps scroll, URL and content (only auth.me rejects) (1.4s)
+  ✓  12 tests/series-list-retry-focus.spec.ts:172:1 › a failed list retry keeps focus on the retry button (2.9s)
+  ✓  13 tests/series-list-retry-focus.spec.ts:185:1 › a successful list retry moves focus to the cards title (1.9s)
+  ✓  14 tests/session-expiry-card.spec.ts:19:1 › a bad token on a card opens login and returns to that card (777ms)
+  ✓  15 tests/user-flow.spec.ts:24:1 › browse, comment, forum, trade, and report handling (5.5s)
+  15 passed (34.0s)
