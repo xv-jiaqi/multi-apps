@@ -28,12 +28,13 @@ async function scrollY(page: Page): Promise<number> {
 test.describe.configure({ mode: 'serial' });
 
 let slug = '';
+let title = '';
 
 test.beforeAll(async () => {
   const admin = await apiLogin({ identifier: 'admin', password: readPasswords().adminPassword });
   const topic = await apiCreateTopic({
     session: admin,
-    title: `CH-226 阅读 ${Date.now()}`,
+    title: (title = `CH-226 阅读 ${Date.now()}`),
     body: Array.from({ length: 30 }, (_, i) => `第 ${i + 1} 段，读帖时登录失效不应把页面打回骨架。`).join('\n\n'),
   });
   slug = topic.slug;
@@ -46,10 +47,10 @@ test('26-1 + 26-2 /forum: stays, one status, no skeleton, scroll and focus kept;
   await aliceOnPage(page);
   await page.clock.install();
   await page.goto('/forum?view=all#top');
-  await expect(page.getByRole('link', { name: /CH-226 阅读/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: title })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 200));
   const before = await scrollY(page);
-  const topicLink = page.getByRole('link', { name: /CH-226 阅读/ });
+  const topicLink = page.getByRole('link', { name: title });
   await topicLink.focus();
   await watchForSkeleton(page);
 
