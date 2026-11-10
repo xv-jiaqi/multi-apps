@@ -13,7 +13,7 @@ import { useAppMutationError } from '../lib/app-mutation-error';
 import {
   discardForumDraft,
   saveTopicDraft,
-  takeTopicDraft,
+  peekTopicDraft,
   type TopicDraftTarget,
 } from '../lib/forum-draft';
 import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
@@ -32,7 +32,6 @@ export const ForumNewPage = observer(function ForumNewPage() {
   const utils = trpc.useUtils();
 
   // CH-226 §7: the draft under cardhub:draft:forum:new.
-  const [restoredDraft, setRestoredDraft] = useState<RestoredTopicDraft | null>(null);
   const valuesRef = useRef<TopicFormValues>({ title: '', body: '' });
   const onValuesChange = useCallback((values: TopicFormValues) => {
     valuesRef.current = values;
@@ -65,20 +64,27 @@ export const ForumNewPage = observer(function ForumNewPage() {
     [],
   );
 
-  // §7-5: restore once the form is on screen; a banned user gets no form.
+  // §7-5 / §7-10 (c): decided during render, once per user, so the form's
+  // first frame already holds the draft. Read only here; the key is removed
+  // in the effect below. A banned user gets no form, so the draft is dropped.
   const userId = session.user?.id;
   const formShown = session.isAuthenticated && !session.isBanned;
-  const restoredForRef = useRef<string | null>(null);
+  const [restore, setRestore] = useState<{
+    userId: string;
+    draft: RestoredTopicDraft | null;
+  } | null>(null);
+  if (userId && restore?.userId !== userId) {
+    const peeked = formShown ? peekTopicDraft({ target: NEW_TOPIC_DRAFT, userId }) : null;
+    setRestore({
+      userId,
+      draft: peeked?.kind === 'restored' ? { id: Date.now(), ...peeked.draft } : null,
+    });
+  }
+  const restoredDraft = restore?.draft ?? null;
+  const decidedForUserId = restore?.userId;
   useEffect(() => {
-    if (!userId || restoredForRef.current === userId) return;
-    restoredForRef.current = userId;
-    if (!formShown) {
-      discardForumDraft(NEW_TOPIC_DRAFT);
-      return;
-    }
-    const restore = takeTopicDraft({ target: NEW_TOPIC_DRAFT, userId });
-    if (restore.kind === 'restored') setRestoredDraft({ id: Date.now(), ...restore.draft });
-  }, [formShown, userId]);
+    if (decidedForUserId) discardForumDraft(NEW_TOPIC_DRAFT);
+  }, [decidedForUserId]);
 
   // Bounce anonymous users back to login. The state.from contract makes the
   // existing redirect-after-login flow (M2) bring them straight here.

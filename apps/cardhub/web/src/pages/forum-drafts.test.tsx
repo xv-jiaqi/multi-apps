@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Profiler } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
@@ -30,6 +31,9 @@ const EDIT_KEY = `cardhub:draft:forum:edit:${TOPIC_ID}`;
 const REPLY_KEY = `cardhub:draft:forum:reply:${TOPIC_ID}`;
 const RESTORED = '已恢复未发送的内容。';
 const SESSION_EXPIRED = '登录已失效，请重新登录。';
+
+/** When the cached bySlug data was fetched (TanStack `dataUpdatedAt`). */
+const topicMeta = vi.hoisted(() => ({ dataUpdatedAt: 0 }));
 
 const topic = vi.hoisted(() => ({
   current: {
@@ -94,7 +98,13 @@ vi.mock('../lib/trpc', () => ({
     forum: {
       topics: {
         bySlug: {
-          useQuery: () => ({ isLoading: false, isError: false, error: null, data: topic.current }),
+          useQuery: () => ({
+            isLoading: false,
+            isError: false,
+            error: null,
+            data: topic.current,
+            dataUpdatedAt: topicMeta.dataUpdatedAt,
+          }),
         },
         create: { useMutation: recordMutation(calls.create, 'cardhub:draft:forum:new') },
         update: {
@@ -152,17 +162,54 @@ function LoginProbe() {
   return <p data-testid="login">login|{JSON.stringify(location.state)}</p>;
 }
 
+/** What a user could see after one React commit (CH-226 §7-10). */
+type Frame = {
+  skeleton: boolean;
+  notAllowed: boolean;
+  countdown: boolean;
+  expiredAlert: boolean;
+  title: string | null;
+  body: string | null;
+  reply: string | null;
+  saveEnabled: boolean | null;
+};
+
+function snapshotFrame(): Frame {
+  const text = document.body.textContent ?? '';
+  const title = document.querySelector<HTMLInputElement>('#topic-title');
+  const body = document.querySelector<HTMLTextAreaElement>('#topic-body');
+  const reply = document.querySelector<HTMLTextAreaElement>('#reply-body');
+  const save = screen.queryByRole('button', { name: '保存修改' });
+  return {
+    skeleton: document.querySelector('.animate-pulse') !== null,
+    notAllowed: text.includes('这个话题已不能编辑'),
+    countdown: text.includes('还可编辑'),
+    expiredAlert: screen
+      .queryAllByRole('alert')
+      .some((node) => node.textContent?.includes('已超过 5 分钟编辑时限') ?? false),
+    title: title?.value ?? null,
+    body: body?.value ?? null,
+    reply: reply?.value ?? null,
+    saveEnabled: save === null ? null : !save.hasAttribute('disabled'),
+  };
+}
+
+/** Every commit, in order. A Profiler's onRender runs after React has written the DOM. */
+const frames: Frame[] = [];
+
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <SessionExpiryWatcher />
-      <Routes>
-        <Route path="/forum" element={<p>forum list</p>} />
-        <Route path="/forum/new" element={<ForumNewPage />} />
-        <Route path="/forum/:slug" element={<ForumDetailPage />} />
-        <Route path="/forum/:slug/edit" element={<ForumEditPage />} />
-        <Route path="/login" element={<LoginProbe />} />
-      </Routes>
+      <Profiler id="page" onRender={() => frames.push(snapshotFrame())}>
+        <Routes>
+          <Route path="/forum" element={<p>forum list</p>} />
+          <Route path="/forum/new" element={<ForumNewPage />} />
+          <Route path="/forum/:slug" element={<ForumDetailPage />} />
+          <Route path="/forum/:slug/edit" element={<ForumEditPage />} />
+          <Route path="/login" element={<LoginProbe />} />
+        </Routes>
+      </Profiler>
     </MemoryRouter>,
   );
 }
@@ -200,6 +247,8 @@ beforeEach(() => {
     editableUntil: new Date(Date.now() + 5 * 60_000).toISOString(),
     serverNow: new Date().toISOString(),
   };
+  topicMeta.dataUpdatedAt = Date.now();
+  frames.length = 0;
 });
 
 describe('/forum/new draft', () => {
@@ -492,5 +541,155 @@ describe('/forum/:slug reply draft', () => {
     heading.focus();
     act(() => noteTrpcQueryFailure(rejected('auth.me')));
     expect(document.activeElement).toBe(heading);
+  });
+});
+
+function firstFormFrame(): Frame | undefined {
+  return frames.find(
+    (frame) =>
+      !frame.skeleton && (frame.title !== null || frame.reply !== null || frame.notAllowed),
+  );
+}
+
+function describedByIds(node: HTMLElement): string[] {
+  return (node.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+}
+
+describe('§7-10 v1.3: the first frame is already the final state', () => {
+  /** The topic was fetched 6 minutes ago (still in the cache); its window closed 1 minute ago. */
+  function cachedExpiredTopic() {
+    const fetchedAt = Date.now() - 6 * 60_000;
+    topic.current = {
+      ...topic.current,
+      editableUntil: new Date(fetchedAt + 5 * 60_000).toISOString(),
+      serverNow: new Date(fetchedAt).toISOString(),
+    };
+    topicMeta.dataUpdatedAt = fetchedAt;
+  }
+
+  /** Cold load: fetched just now, window closed 1 minute ago. */
+  function freshExpiredTopic() {
+    topic.current = {
+      ...topic.current,
+      editableUntil: new Date(Date.now() - 60_000).toISOString(),
+      serverNow: new Date().toISOString(),
+    };
+    topicMeta.dataUpdatedAt = Date.now();
+  }
+
+  it('26-11 (a): cached topic past its window → every frame is expired, never a countdown or an enabled Save', () => {
+    cachedExpiredTopic();
+    storeDraft(EDIT_KEY, { userId: 'u1', title: 'Draft title', body: 'Draft body' });
+    renderAt('/forum/test-topic/edit');
+
+    expect(frames.length).toBeGreaterThan(0);
+    for (const frame of frames) {
+      expect(frame.countdown).toBe(false);
+      expect(frame.saveEnabled).not.toBe(true);
+    }
+    expect(firstFormFrame()).toMatchObject({ expiredAlert: true, title: 'Draft title' });
+  });
+
+  it('26-11 (a): a cached topic still inside its window shows the real time left, not the time at fetch', () => {
+    const fetchedAt = Date.now() - 3 * 60_000;
+    topic.current = {
+      ...topic.current,
+      editableUntil: new Date(fetchedAt + 5 * 60_000).toISOString(),
+      serverNow: new Date(fetchedAt).toISOString(),
+    };
+    topicMeta.dataUpdatedAt = fetchedAt;
+    renderAt('/forum/test-topic/edit');
+    expect(screen.getByText('还可编辑 2 分钟')).toBeInTheDocument();
+  });
+
+  it('26-12 (b): cold load past the window with a valid draft → no frame ever shows notAllowed', () => {
+    freshExpiredTopic();
+    storeDraft(EDIT_KEY, { userId: 'u1', title: 'Draft title', body: 'Draft body' });
+    renderAt('/forum/test-topic/edit');
+
+    expect(frames.some((frame) => frame.notAllowed)).toBe(false);
+    expect(firstFormFrame()).toMatchObject({
+      expiredAlert: true,
+      title: 'Draft title',
+      body: 'Draft body',
+      saveEnabled: false,
+    });
+    expect(window.sessionStorage.getItem(EDIT_KEY)).toBeNull();
+  });
+
+  it('26-12 (b): with no valid draft, notAllowed is the first and only state', () => {
+    freshExpiredTopic();
+    renderAt('/forum/test-topic/edit');
+    expect(firstFormFrame()).toMatchObject({ notAllowed: true, title: null });
+    expect(frames.some((frame) => frame.title !== null)).toBe(false);
+  });
+
+  it('26-13 (c): /forum/new shows the draft in the first frame, never an empty form', () => {
+    storeDraft(NEW_KEY, { userId: 'u1', title: 'New draft', body: 'New body' });
+    renderAt('/forum/new');
+    expect(firstFormFrame()).toMatchObject({ title: 'New draft', body: 'New body' });
+    expect(frames.some((frame) => frame.title === '')).toBe(false);
+  });
+
+  it('26-13 (c): edit inside the window shows the draft in the first frame, never the topic text', () => {
+    storeDraft(EDIT_KEY, { userId: 'u1', title: 'Edited title', body: 'Edited body' });
+    renderAt('/forum/test-topic/edit');
+    expect(firstFormFrame()).toMatchObject({ title: 'Edited title', body: 'Edited body' });
+    expect(frames.some((frame) => frame.title === 'Original title')).toBe(false);
+    expect(screen.getByRole('button', { name: '保存修改' })).toBeEnabled();
+  });
+
+  it('26-13 (c): the reply box shows the draft in the first frame, never empty', () => {
+    storeDraft(REPLY_KEY, { userId: 'u1', body: '我的回帖' });
+    renderAt('/forum/test-topic');
+    const withReply = frames.filter((frame) => frame.reply !== null);
+    expect(withReply[0]?.reply).toBe('我的回帖');
+    expect(withReply.some((frame) => frame.reply === '')).toBe(false);
+  });
+
+  it('§7-8: focus still moves to the restored field after the text is in', () => {
+    storeDraft(NEW_KEY, { userId: 'u1', title: 'New draft', body: 'New body' });
+    renderAt('/forum/new');
+    expect(document.activeElement).toBe(screen.getByLabelText('标题'));
+    expect(restoredLine()).toBeDefined();
+  });
+});
+
+describe('§7-8 v1.4 / 26-14: every restored field is described by the restored line', () => {
+  function expectDescribedByRestored(field: HTMLElement) {
+    const line = restoredLine();
+    expect(line).toBeDefined();
+    expect(line?.id).toBeTruthy();
+    expect(describedByIds(field)).toContain(line?.id);
+  }
+
+  it('/forum/new: title and body both point at the restored line', () => {
+    storeDraft(NEW_KEY, { userId: 'u1', title: 'New draft', body: 'New body' });
+    renderAt('/forum/new');
+    expectDescribedByRestored(screen.getByLabelText('标题'));
+    expectDescribedByRestored(screen.getByLabelText('正文'));
+    expect(screen.getByLabelText('正文')).toHaveAccessibleDescription(RESTORED);
+  });
+
+  it('edit: title and body both point at the restored line', () => {
+    storeDraft(EDIT_KEY, { userId: 'u1', title: 'Edited title', body: 'Edited body' });
+    renderAt('/forum/test-topic/edit');
+    expectDescribedByRestored(screen.getByLabelText('标题'));
+    expectDescribedByRestored(screen.getByLabelText('正文'));
+  });
+
+  it('reply: the reply box points at the restored line', () => {
+    storeDraft(REPLY_KEY, { userId: 'u1', body: '我的回帖' });
+    renderAt('/forum/test-topic');
+    expectDescribedByRestored(screen.getByLabelText('撰写回帖'));
+  });
+
+  it('the id goes away with the line after the first edit', async () => {
+    const user = userEvent.setup();
+    storeDraft(NEW_KEY, { userId: 'u1', title: 'New draft', body: 'New body' });
+    renderAt('/forum/new');
+    await user.type(screen.getByLabelText('正文'), '!');
+    expect(screen.getByLabelText('标题')).not.toHaveAttribute('aria-describedby');
+    expect(screen.getByLabelText('正文')).not.toHaveAttribute('aria-describedby');
   });
 });

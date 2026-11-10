@@ -26,12 +26,7 @@ import { useAppMutationError } from '../lib/app-mutation-error';
 import { BannedNotice } from '../components/banned-notice';
 import { HashTargetNotice } from '../components/hash-target-notice';
 import { ForumSessionNotice, useForumSessionNoticeHere } from '../components/forum-session-notice';
-import {
-  discardForumDraft,
-  saveReplyDraft,
-  takeReplyDraft,
-  type ReplyDraftTarget,
-} from '../lib/forum-draft';
+import { discardForumDraft, saveReplyDraft, peekReplyDraft } from '../lib/forum-draft';
 import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
 import {
   illegalHashTarget,
@@ -39,6 +34,7 @@ import {
   parseHashTarget,
   revealElement,
 } from '../lib/hash-target';
+import { describedBy } from '../lib/aria';
 import { trpc } from '../lib/trpc';
 
 interface TopicReply {
@@ -124,7 +120,6 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const [replyRestored, setReplyRestored] = useState<{ id: number; text: string } | null>(null);
   const [focusRestoredReply, setFocusRestoredReply] = useState(false);
   const [focusSessionNotice, setFocusSessionNotice] = useState(false);
-  const restoredForRef = useRef<string | null>(null);
   // Who typed the reply. Kept from render so an expiry listener that runs
   // after signOut() still knows (§7-3 userId).
   const draftUserIdRef = useRef<string | null>(null);
@@ -276,27 +271,39 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
     setFocusSessionNotice(false);
   }, [focusSessionNotice, sessionNoticeShown]);
 
-  // §7-5: once the reply form is on screen for this user, restore the draft
-  // for this topic (or drop it). Banned users get no form, so the draft goes.
+  // §7-5 / §7-10 (c): decided during render, once per topic and user, so the
+  // reply box's first frame already holds the draft. Read only here; the key
+  // is removed in the effect below. Banned users get no form, so it goes.
   const restoreTopicId = topicQuery.data?.id;
   const restoreUserId = session.user?.id;
   const replyFormShown = session.isAuthenticated && !session.isBanned;
-  useEffect(() => {
-    if (!restoreTopicId || !restoreUserId) return;
-    const pass = `${restoreTopicId}:${restoreUserId}`;
-    if (restoredForRef.current === pass) return;
-    restoredForRef.current = pass;
-    const target: ReplyDraftTarget = { kind: 'reply', topicId: restoreTopicId };
-    if (!replyFormShown) {
-      discardForumDraft(target);
-      return;
+  const [replyRestorePass, setReplyRestorePass] = useState<{
+    topicId: string;
+    userId: string;
+  } | null>(null);
+  if (
+    restoreTopicId &&
+    restoreUserId &&
+    (replyRestorePass?.topicId !== restoreTopicId || replyRestorePass.userId !== restoreUserId)
+  ) {
+    setReplyRestorePass({ topicId: restoreTopicId, userId: restoreUserId });
+    const restore = replyFormShown
+      ? peekReplyDraft({
+          target: { kind: 'reply', topicId: restoreTopicId },
+          userId: restoreUserId,
+        })
+      : null;
+    if (restore?.kind === 'restored') {
+      setReplyBody(restore.draft.body);
+      setReplyRestored({ id: Date.now(), text: t(locale.locale, 'forum.draft.restored') });
+      setFocusRestoredReply(true);
     }
-    const restore = takeReplyDraft({ target, userId: restoreUserId });
-    if (restore.kind !== 'restored') return;
-    setReplyBody(restore.draft.body);
-    setReplyRestored({ id: Date.now(), text: t(locale.locale, 'forum.draft.restored') });
-    setFocusRestoredReply(true);
-  }, [locale.locale, replyFormShown, restoreTopicId, restoreUserId]);
+  }
+  const decidedReplyTopicId = replyRestorePass?.topicId;
+  const decidedReplyUserId = replyRestorePass?.userId;
+  useEffect(() => {
+    if (decidedReplyTopicId) discardForumDraft({ kind: 'reply', topicId: decidedReplyTopicId });
+  }, [decidedReplyTopicId, decidedReplyUserId]);
 
   useEffect(() => {
     if (!focusRestoredReply) return;
@@ -1084,7 +1091,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 ref={replyBodyRef}
                 id="reply-body"
                 value={replyBody}
-                aria-describedby={replyRestored?.text ? restoredLineId : undefined}
+                aria-describedby={describedBy(replyRestored?.text ? restoredLineId : undefined)}
                 onChange={(e) => {
                   setReplyBody(e.target.value);
                   setReplyRestored(null);

@@ -10,12 +10,7 @@ import { TopicForm, type RestoredTopicDraft, type TopicFormValues } from '../com
 import { BannedNotice } from '../components/banned-notice';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
-import {
-  discardForumDraft,
-  saveTopicDraft,
-  takeTopicDraft,
-  type TopicDraftTarget,
-} from '../lib/forum-draft';
+import { discardForumDraft, peekTopicDraft, saveTopicDraft } from '../lib/forum-draft';
 import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
 import { isSessionExpiryNavigationPending } from '../lib/session-expiry-redirect';
 import { trpc } from '../lib/trpc';
@@ -40,7 +35,6 @@ export const ForumEditPage = observer(function ForumEditPage() {
   const [tick, setTick] = useState(0);
 
   // CH-226 §7: the draft under cardhub:draft:forum:edit:<topic.id>.
-  const [restoredDraft, setRestoredDraft] = useState<RestoredTopicDraft | null>(null);
   const valuesRef = useRef<TopicFormValues | null>(null);
   const onValuesChange = useCallback((values: TopicFormValues) => {
     valuesRef.current = values;
@@ -94,10 +88,13 @@ export const ForumEditPage = observer(function ForumEditPage() {
   });
 
   const topic = topicQuery.data;
+  // §7-10 (a): skew between the server clock and ours at the moment the data
+  // was fetched. Date.now() at mount would count a cached topic's age as skew.
+  const { dataUpdatedAt } = topicQuery;
   const serverOffsetMs = useMemo(() => {
-    if (!topic?.serverNow) return 0;
-    return Date.parse(topic.serverNow) - Date.now();
-  }, [topic?.serverNow]);
+    if (!topic?.serverNow || !dataUpdatedAt) return 0;
+    return Date.parse(topic.serverNow) - dataUpdatedAt;
+  }, [dataUpdatedAt, topic?.serverNow]);
 
   useEffect(() => {
     if (!topic?.editableUntil) return;
@@ -135,29 +132,39 @@ export const ForumEditPage = observer(function ForumEditPage() {
     [],
   );
 
-  // §7-5: once the topic has loaded, restore into the form, or drop the
-  // draft when no form can be shown (banned, not the author).
-  // §7-6 (v1.2): an author back after the edit window with a valid draft is
-  // treated as having entered while editable, so the expired form shows.
+  // §7-5 / §7-10 (b): decided during render, once per topic and user, so the
+  // first frame already knows whether there is a draft to bring back. Read
+  // only here; the key is removed in the effect below. Banned users and
+  // non-authors get no form, so their draft is dropped. §7-6 v1.2: an author
+  // with a valid draft is treated as having entered while editable.
   const canHaveForm = !session.isBanned && topic !== undefined && isOwner;
   const restoreTopicId = topic?.id;
   const restoreUserId = session.user?.id;
-  const restoredForRef = useRef<string | null>(null);
+  const [restore, setRestore] = useState<{
+    topicId: string;
+    userId: string;
+    draft: RestoredTopicDraft | null;
+  } | null>(null);
+  if (
+    restoreTopicId &&
+    restoreUserId &&
+    (restore?.topicId !== restoreTopicId || restore.userId !== restoreUserId)
+  ) {
+    const peeked = canHaveForm
+      ? peekTopicDraft({ target: { kind: 'edit', topicId: restoreTopicId }, userId: restoreUserId })
+      : null;
+    const draft = peeked?.kind === 'restored' ? { id: Date.now(), ...peeked.draft } : null;
+    setRestore({ topicId: restoreTopicId, userId: restoreUserId, draft });
+    if (draft) setEnteredAllowed(true);
+  }
+  const restoredDraft = restore?.draft ?? null;
+  // Keyed on the decision, not the live session: when the session ends the
+  // user goes to null and the draft saved for §7-4 must survive that render.
+  const decidedTopicId = restore?.topicId;
+  const decidedUserId = restore?.userId;
   useEffect(() => {
-    if (!restoreTopicId || !restoreUserId) return;
-    const pass = `${restoreTopicId}:${restoreUserId}`;
-    if (restoredForRef.current === pass) return;
-    restoredForRef.current = pass;
-    const target: TopicDraftTarget = { kind: 'edit', topicId: restoreTopicId };
-    if (!canHaveForm) {
-      discardForumDraft(target);
-      return;
-    }
-    const restore = takeTopicDraft({ target, userId: restoreUserId });
-    if (restore.kind !== 'restored') return;
-    setEnteredAllowed(true);
-    setRestoredDraft({ id: Date.now(), ...restore.draft });
-  }, [canHaveForm, restoreTopicId, restoreUserId]);
+    if (decidedTopicId) discardForumDraft({ kind: 'edit', topicId: decidedTopicId });
+  }, [decidedTopicId, decidedUserId]);
 
   if (!session.isAuthenticated) return null;
 

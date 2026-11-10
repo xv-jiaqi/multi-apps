@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@repo/ui-web';
 import { MarkdownView } from './markdown-view';
+import { describedBy } from '../lib/aria';
 
 export interface TopicFormValues {
   title: string;
@@ -65,12 +66,21 @@ export function TopicForm({
   onCancel,
   onSubmit,
 }: TopicFormProps) {
-  const [title, setTitle] = useState(initialTitle);
-  const [body, setBody] = useState(initialBody);
+  // §7-10 (c): a draft known at mount is the first value, so the first frame
+  // already shows it. It never becomes initialTitle/initialBody (§7-6), so
+  // `unchanged` still compares against the topic's own text.
+  const [title, setTitle] = useState(restoredDraft?.title ?? initialTitle);
+  const [body, setBody] = useState(restoredDraft?.body ?? initialBody);
   const [showPreview, setShowPreview] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  // Follow later changes to the topic's text, not the mount (which would
+  // overwrite a restored draft).
+  const syncedInitialRef = useRef({ title: initialTitle, body: initialBody });
   useEffect(() => {
+    const synced = syncedInitialRef.current;
+    if (synced.title === initialTitle && synced.body === initialBody) return;
+    syncedInitialRef.current = { title: initialTitle, body: initialBody };
     setTitle(initialTitle);
     setBody(initialBody);
   }, [initialBody, initialTitle]);
@@ -80,14 +90,26 @@ export function TopicForm({
   }, [focusTitle]);
 
   const restoredLineId = useId();
-  const [restoredText, setRestoredText] = useState('');
-  useEffect(() => {
+  const [restoredText, setRestoredText] = useState(restoredDraft ? restoredLabel : '');
+  // A draft that arrives after mount (new `id`) is written before paint too;
+  // focus goes to the title once the text is in (§7-8).
+  const appliedDraftIdRef = useRef<number | null>(restoredDraft?.id ?? null);
+  const focusedDraftIdRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
     if (!restoredDraft) return;
-    setTitle(restoredDraft.title);
-    setBody(restoredDraft.body);
-    setRestoredText(restoredLabel);
-    titleInputRef.current?.focus();
+    if (appliedDraftIdRef.current !== restoredDraft.id) {
+      appliedDraftIdRef.current = restoredDraft.id;
+      setTitle(restoredDraft.title);
+      setBody(restoredDraft.body);
+      setRestoredText(restoredLabel);
+    }
+    if (focusedDraftIdRef.current !== restoredDraft.id) {
+      focusedDraftIdRef.current = restoredDraft.id;
+      titleInputRef.current?.focus();
+    }
   }, [restoredDraft, restoredLabel]);
+  // §7-8 v1.4: every restored field points at the restored line.
+  const restoredDescription = describedBy(restoredText ? restoredLineId : undefined);
 
   useEffect(() => {
     onValuesChange?.({ title, body });
@@ -117,7 +139,7 @@ export function TopicForm({
           id="topic-title"
           type="text"
           value={title}
-          aria-describedby={restoredText ? restoredLineId : undefined}
+          aria-describedby={restoredDescription}
           onChange={(e) => {
             setTitle(e.target.value);
             setRestoredText('');
@@ -153,6 +175,7 @@ export function TopicForm({
           <textarea
             id="topic-body"
             value={body}
+            aria-describedby={restoredDescription}
             onChange={(e) => {
               setBody(e.target.value);
               setRestoredText('');

@@ -62,12 +62,10 @@ function write({ key, record }: { key: string; record: object }): void {
   }
 }
 
-function readAndRemove(key: string): unknown {
+function read(key: string): unknown {
   let raw: string | null | undefined;
   try {
-    const store = storage();
-    raw = store?.getItem(key);
-    store?.removeItem(key);
+    raw = storage()?.getItem(key);
   } catch {
     return undefined;
   }
@@ -78,6 +76,16 @@ function readAndRemove(key: string): unknown {
   } catch {
     return undefined;
   }
+}
+
+function readAndRemove(key: string): unknown {
+  const value = read(key);
+  try {
+    storage()?.removeItem(key);
+  } catch {
+    // Storage unavailable: nothing to remove.
+  }
+  return value;
 }
 
 function blank(text: string): boolean {
@@ -159,6 +167,63 @@ function usable({
  * and saved at most 60 minutes ago. Anything else (another account, too old,
  * broken JSON, another version, storage errors) is dropped without a word.
  */
+function topicDraftFrom({
+  value,
+  userId,
+  now,
+}: {
+  value: unknown;
+  userId: string;
+  now: number;
+}): DraftRestore<TopicDraft> {
+  const parsed = topicDraftSchema.safeParse(value);
+  if (!parsed.success || !usable({ record: parsed.data, userId, now })) return { kind: 'none' };
+  return { kind: 'restored', draft: { title: parsed.data.title, body: parsed.data.body } };
+}
+
+function replyDraftFrom({
+  value,
+  userId,
+  now,
+}: {
+  value: unknown;
+  userId: string;
+  now: number;
+}): DraftRestore<ReplyDraft> {
+  const parsed = replyDraftSchema.safeParse(value);
+  if (!parsed.success || !usable({ record: parsed.data, userId, now })) return { kind: 'none' };
+  return { kind: 'restored', draft: { body: parsed.data.body } };
+}
+
+/**
+ * §7-10 (b)/(c): the same §7-5 checks, read only. Safe to call during render
+ * so the first frame can already show the draft; the key is removed later by
+ * `discardForumDraft` or `take*`.
+ */
+export function peekTopicDraft({
+  target,
+  userId,
+  now = Date.now(),
+}: {
+  target: TopicDraftTarget;
+  userId: string;
+  now?: number;
+}): DraftRestore<TopicDraft> {
+  return topicDraftFrom({ value: read(forumDraftKey(target)), userId, now });
+}
+
+export function peekReplyDraft({
+  target,
+  userId,
+  now = Date.now(),
+}: {
+  target: ReplyDraftTarget;
+  userId: string;
+  now?: number;
+}): DraftRestore<ReplyDraft> {
+  return replyDraftFrom({ value: read(forumDraftKey(target)), userId, now });
+}
+
 export function takeTopicDraft({
   target,
   userId,
@@ -168,9 +233,7 @@ export function takeTopicDraft({
   userId: string;
   now?: number;
 }): DraftRestore<TopicDraft> {
-  const parsed = topicDraftSchema.safeParse(readAndRemove(forumDraftKey(target)));
-  if (!parsed.success || !usable({ record: parsed.data, userId, now })) return { kind: 'none' };
-  return { kind: 'restored', draft: { title: parsed.data.title, body: parsed.data.body } };
+  return topicDraftFrom({ value: readAndRemove(forumDraftKey(target)), userId, now });
 }
 
 export function takeReplyDraft({
@@ -182,7 +245,5 @@ export function takeReplyDraft({
   userId: string;
   now?: number;
 }): DraftRestore<ReplyDraft> {
-  const parsed = replyDraftSchema.safeParse(readAndRemove(forumDraftKey(target)));
-  if (!parsed.success || !usable({ record: parsed.data, userId, now })) return { kind: 'none' };
-  return { kind: 'restored', draft: { body: parsed.data.body } };
+  return replyDraftFrom({ value: readAndRemove(forumDraftKey(target)), userId, now });
 }
