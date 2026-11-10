@@ -368,6 +368,57 @@ describe('/forum/:slug/edit draft', () => {
     expect(screen.queryByLabelText('标题')).not.toBeInTheDocument();
     expect(window.sessionStorage.getItem(EDIT_KEY)).toBeNull();
   });
+
+  describe('§7-6 v1.2: the author comes back after the edit window', () => {
+    beforeEach(() => {
+      topic.current = {
+        ...topic.current,
+        editableUntil: new Date(Date.now() - 60_000).toISOString(),
+        serverNow: new Date().toISOString(),
+      };
+    });
+
+    it('a valid draft shows the expired form with the text restored and Save disabled', () => {
+      storeDraft(EDIT_KEY, { userId: 'u1', title: 'Edited title', body: 'Edited body' });
+      renderAt('/forum/test-topic/edit');
+
+      expect(screen.queryByText('这个话题已不能编辑')).not.toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent('已超过 5 分钟编辑时限');
+      const title = screen.getByLabelText('标题');
+      expect(title).toHaveValue('Edited title');
+      expect(screen.getByLabelText('正文')).toHaveValue('Edited body');
+      expect(document.activeElement).toBe(title);
+      expect(restoredLine()).toBeDefined();
+      expect(screen.getByRole('button', { name: '保存修改' })).toBeDisabled();
+      expect(window.sessionStorage.getItem(EDIT_KEY)).toBeNull();
+    });
+
+    it('with no draft it stays not-editable', () => {
+      renderAt('/forum/test-topic/edit');
+      expect(screen.getByText('这个话题已不能编辑')).toBeInTheDocument();
+      expect(screen.queryByLabelText('标题')).not.toBeInTheDocument();
+    });
+
+    it('a draft older than 60 minutes is deleted and the page stays not-editable', () => {
+      storeDraft(EDIT_KEY, {
+        userId: 'u1',
+        title: 'Old',
+        body: 'Old',
+        savedAt: Date.now() - 60 * 60_000 - 1,
+      });
+      renderAt('/forum/test-topic/edit');
+      expect(screen.getByText('这个话题已不能编辑')).toBeInTheDocument();
+      expect(screen.queryByLabelText('标题')).not.toBeInTheDocument();
+      expect(window.sessionStorage.getItem(EDIT_KEY)).toBeNull();
+    });
+
+    it('another account’s draft is deleted and the page stays not-editable', () => {
+      storeDraft(EDIT_KEY, { userId: 'u9', title: 'T', body: 'B' });
+      renderAt('/forum/test-topic/edit');
+      expect(screen.getByText('这个话题已不能编辑')).toBeInTheDocument();
+      expect(window.sessionStorage.getItem(EDIT_KEY)).toBeNull();
+    });
+  });
 });
 
 describe('/forum/:slug reply draft', () => {

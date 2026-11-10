@@ -136,9 +136,10 @@ export const ForumEditPage = observer(function ForumEditPage() {
   );
 
   // §7-5: once the topic has loaded, restore into the form, or drop the
-  // draft when no form is shown (banned, not the owner, outside the window).
-  const formShown =
-    !session.isBanned && topic !== undefined && isOwner && (enteredAllowed || isWithinWindow);
+  // draft when no form can be shown (banned, not the author).
+  // §7-6 (v1.2): an author back after the edit window with a valid draft is
+  // treated as having entered while editable, so the expired form shows.
+  const canHaveForm = !session.isBanned && topic !== undefined && isOwner;
   const restoreTopicId = topic?.id;
   const restoreUserId = session.user?.id;
   const restoredForRef = useRef<string | null>(null);
@@ -148,13 +149,15 @@ export const ForumEditPage = observer(function ForumEditPage() {
     if (restoredForRef.current === pass) return;
     restoredForRef.current = pass;
     const target: TopicDraftTarget = { kind: 'edit', topicId: restoreTopicId };
-    if (!formShown) {
+    if (!canHaveForm) {
       discardForumDraft(target);
       return;
     }
     const restore = takeTopicDraft({ target, userId: restoreUserId });
-    if (restore.kind === 'restored') setRestoredDraft({ id: Date.now(), ...restore.draft });
-  }, [formShown, restoreTopicId, restoreUserId]);
+    if (restore.kind !== 'restored') return;
+    setEnteredAllowed(true);
+    setRestoredDraft({ id: Date.now(), ...restore.draft });
+  }, [canHaveForm, restoreTopicId, restoreUserId]);
 
   if (!session.isAuthenticated) return null;
 
