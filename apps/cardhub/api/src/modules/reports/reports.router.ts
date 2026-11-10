@@ -1,14 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import { reportCreateInput, reportListInput, reportResolveInput } from '@repo/shared';
+import {
+  reportCreateInput,
+  reportListInput,
+  reportResolveInput,
+  t as translate,
+} from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { writeReportResolve } from '../audit/content-delete';
 import { notifyAfterCommit, notifyModeration } from '../notifications/notify';
 import { readTargetSnapshot } from '../notifications/target-snapshot';
 import {
+  isReportQuotaLockTimeout,
   lockReportQuota,
+  REPORT_QUOTA_LOCK_RETRY_AFTER_SECONDS,
   REPORT_DAILY_LIMIT,
   REPORT_QUOTA_WINDOW_MS,
   reportQuotaCause,
@@ -132,43 +139,56 @@ export class ReportsRouter {
         // makes a second report from the same account wait until this one
         // commits, so it counts the row this one wrote. Other accounts do not
         // wait. No table lock and no Serializable retry.
-        const created = await prisma.$transaction(async (tx) => {
-          await lockReportQuota(tx, reporterId);
-          // Read the clock after the wait, so the window and Retry-After start now.
-          const at = now();
-          const inWindow = {
-            reporterId,
-            createdAt: { gte: new Date(at - REPORT_QUOTA_WINDOW_MS) },
-          };
-          const recent = await tx.report.count({ where: inWindow });
-          if (recent >= REPORT_DAILY_LIMIT) {
-            // Only on the rejected path, read under the same lock: when the
-            // oldest one leaves the window (CH-229).
-            const oldest = await tx.report.findFirst({
-              where: inWindow,
-              orderBy: { createdAt: 'asc' },
-              select: { createdAt: true },
+        const created = await prisma
+          .$transaction(async (tx) => {
+            await lockReportQuota(tx, reporterId);
+            // Read the clock after the wait, so the window and Retry-After start now.
+            const at = now();
+            const inWindow = {
+              reporterId,
+              createdAt: { gte: new Date(at - REPORT_QUOTA_WINDOW_MS) },
+            };
+            const recent = await tx.report.count({ where: inWindow });
+            if (recent >= REPORT_DAILY_LIMIT) {
+              // Only on the rejected path, read under the same lock: when the
+              // oldest one leaves the window (CH-229).
+              const oldest = await tx.report.findFirst({
+                where: inWindow,
+                orderBy: { createdAt: 'asc' },
+                select: { createdAt: true },
+              });
+              // Gone between the two reads (deleted with its account): wait a full window.
+              const seconds = oldest
+                ? reportQuotaRetryAfterSeconds({ oldestCreatedAt: oldest.createdAt, now: at })
+                : REPORT_QUOTA_WINDOW_MS / 1000;
+              throw new TRPCError({
+                code: 'TOO_MANY_REQUESTS',
+                message: '今日举报次数已达上限，请明天再试',
+                cause: reportQuotaCause({ retryAfterSeconds: seconds }),
+              });
+            }
+            await assertReportTargetExists(tx, input.targetType, input.targetId);
+            return tx.report.create({
+              data: {
+                reporterId,
+                targetType: input.targetType,
+                targetId: input.targetId,
+                reason: input.reason,
+              },
             });
-            // Gone between the two reads (deleted with its account): wait a full window.
-            const seconds = oldest
-              ? reportQuotaRetryAfterSeconds({ oldestCreatedAt: oldest.createdAt, now: at })
-              : REPORT_QUOTA_WINDOW_MS / 1000;
+          })
+          .catch((error: unknown) => {
+            // CH-231: another request held this account's quota lock past 3s.
+            // The transaction rolled back, so nothing was written or counted.
+            // Same generic 429 copy as the user layer; the client retries in 1s.
+            if (!isReportQuotaLockTimeout(error)) throw error;
+            ctx.req.log?.warn({ layer: 'reportQuota' }, 'report quota lock wait timed out');
             throw new TRPCError({
               code: 'TOO_MANY_REQUESTS',
-              message: '今日举报次数已达上限，请明天再试',
-              cause: reportQuotaCause({ retryAfterSeconds: seconds }),
+              message: translate('zh-CN', 'error.app.TOO_MANY_REQUESTS'),
+              cause: reportQuotaCause({ retryAfterSeconds: REPORT_QUOTA_LOCK_RETRY_AFTER_SECONDS }),
             });
-          }
-          await assertReportTargetExists(tx, input.targetType, input.targetId);
-          return tx.report.create({
-            data: {
-              reporterId,
-              targetType: input.targetType,
-              targetId: input.targetId,
-              reason: input.reason,
-            },
           });
-        });
         return {
           id: created.id,
           createdAt: created.createdAt.toISOString(),
