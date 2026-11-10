@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { APP_ERROR_CODES } from '@repo/shared';
 import { retryAfterSeconds } from '../../bootstrap/rate-limiters';
 import type { PerUserTooManyCause } from '../../trpc/user-rate-limit-headers';
@@ -33,4 +34,26 @@ export function reportQuotaCause({
   retryAfterSeconds: number;
 }): PerUserTooManyCause {
   return { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS, layer: 'reportQuota', retryAfterSeconds };
+}
+
+/**
+ * First key of the two-int advisory lock that serializes one account's quota
+ * check and insert (CH-230 230-A). A fixed namespace keeps these locks apart
+ * from any other advisory lock (Prisma migrate uses a single bigint key,
+ * which Postgres keeps in a separate key space from two-int keys).
+ */
+export const REPORT_QUOTA_LOCK_NAMESPACE = 230;
+
+/**
+ * Takes the per-account quota lock for the rest of the transaction. Only
+ * the same reporterId waits; it is released on commit or rollback.
+ * The second key is `hashtext(reporterId)` (int4). Two accounts whose ids
+ * hash to the same value would also wait on each other. That only adds a
+ * short wait to an occasional unrelated report and never lets one through.
+ */
+export async function lockReportQuota(
+  tx: Pick<Prisma.TransactionClient, '$executeRaw'>,
+  reporterId: string,
+): Promise<void> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${REPORT_QUOTA_LOCK_NAMESPACE}::int4, hashtext(${reporterId}))`;
 }

@@ -8,6 +8,7 @@ import { writeReportResolve } from '../audit/content-delete';
 import { notifyAfterCommit, notifyModeration } from '../notifications/notify';
 import { readTargetSnapshot } from '../notifications/target-snapshot';
 import {
+  lockReportQuota,
   REPORT_DAILY_LIMIT,
   REPORT_QUOTA_WINDOW_MS,
   reportQuotaCause,
@@ -24,7 +25,7 @@ type ReportWithReporter = Prisma.ReportGetPayload<{
 type AdminRequester = { id: string; role: string } | null;
 
 async function assertReportTargetExists(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient,
   targetType: 'LISTING' | 'TOPIC' | 'REPLY' | 'COMMENT',
   targetId: string,
 ) {
@@ -126,37 +127,47 @@ export class ReportsRouter {
         // express-rate-limit doesn't have to sniff the bearer token; 10
         // is generous enough for legitimate moderation reports while
         // still curbing report-flood griefing.
-        const at = now();
-        const inWindow = {
-          reporterId: ctx.user.sub,
-          createdAt: { gte: new Date(at - REPORT_QUOTA_WINDOW_MS) },
-        };
-        const recent = await prisma.report.count({ where: inWindow });
-        if (recent >= REPORT_DAILY_LIMIT) {
-          // Only on the rejected path: when the oldest one leaves the window (CH-229).
-          const oldest = await prisma.report.findFirst({
-            where: inWindow,
-            orderBy: { createdAt: 'asc' },
-            select: { createdAt: true },
+        const reporterId = ctx.user.sub;
+        // CH-230: count and insert as one step per account. The advisory lock
+        // makes a second report from the same account wait until this one
+        // commits, so it counts the row this one wrote. Other accounts do not
+        // wait. No table lock and no Serializable retry.
+        const created = await prisma.$transaction(async (tx) => {
+          await lockReportQuota(tx, reporterId);
+          // Read the clock after the wait, so the window and Retry-After start now.
+          const at = now();
+          const inWindow = {
+            reporterId,
+            createdAt: { gte: new Date(at - REPORT_QUOTA_WINDOW_MS) },
+          };
+          const recent = await tx.report.count({ where: inWindow });
+          if (recent >= REPORT_DAILY_LIMIT) {
+            // Only on the rejected path, read under the same lock: when the
+            // oldest one leaves the window (CH-229).
+            const oldest = await tx.report.findFirst({
+              where: inWindow,
+              orderBy: { createdAt: 'asc' },
+              select: { createdAt: true },
+            });
+            // Gone between the two reads (deleted with its account): wait a full window.
+            const seconds = oldest
+              ? reportQuotaRetryAfterSeconds({ oldestCreatedAt: oldest.createdAt, now: at })
+              : REPORT_QUOTA_WINDOW_MS / 1000;
+            throw new TRPCError({
+              code: 'TOO_MANY_REQUESTS',
+              message: '今日举报次数已达上限，请明天再试',
+              cause: reportQuotaCause({ retryAfterSeconds: seconds }),
+            });
+          }
+          await assertReportTargetExists(tx, input.targetType, input.targetId);
+          return tx.report.create({
+            data: {
+              reporterId,
+              targetType: input.targetType,
+              targetId: input.targetId,
+              reason: input.reason,
+            },
           });
-          // Gone between the two reads (deleted with its account): wait a full window.
-          const seconds = oldest
-            ? reportQuotaRetryAfterSeconds({ oldestCreatedAt: oldest.createdAt, now: at })
-            : REPORT_QUOTA_WINDOW_MS / 1000;
-          throw new TRPCError({
-            code: 'TOO_MANY_REQUESTS',
-            message: '今日举报次数已达上限，请明天再试',
-            cause: reportQuotaCause({ retryAfterSeconds: seconds }),
-          });
-        }
-        await assertReportTargetExists(prisma, input.targetType, input.targetId);
-        const created = await prisma.report.create({
-          data: {
-            reporterId: ctx.user.sub,
-            targetType: input.targetType,
-            targetId: input.targetId,
-            reason: input.reason,
-          },
         });
         return {
           id: created.id,

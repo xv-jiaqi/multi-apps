@@ -14,7 +14,11 @@ function userRejection(seconds: number): TRPCError {
   });
 }
 
-/** The reports daily quota is a 429 too, but not the user rate-limit layer. */
+/**
+ * A 429 whose cause has no `layer` / `retryAfterSeconds`. Since CH-229 the
+ * reports daily quota carries `layer: 'reportQuota'` (see reportQuotaRejection);
+ * this one stands for any 429 without that cause, which must not change headers.
+ */
 function reportsQuota(): TRPCError {
   return new TRPCError({
     code: 'TOO_MANY_REQUESTS',
