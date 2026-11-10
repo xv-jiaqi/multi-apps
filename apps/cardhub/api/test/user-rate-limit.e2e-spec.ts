@@ -2,10 +2,15 @@ import type { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { APP_ERROR_CODES, t } from '@repo/shared';
+import * as trpcExpress from '@trpc/server/adapters/express';
+import express from 'express';
 import { createApp } from '../src/bootstrap/create-app';
 import { subscribeLogLines } from '../src/bootstrap/http-logger';
 import { userRateLimitStorePrefix, type WriteRateLimitName } from '../src/bootstrap/rate-limiters';
+import { AuthService } from '../src/modules/auth/auth.service';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
+import { TrpcService } from '../src/trpc/trpc.service';
+import { makeCreateContext } from '../src/trpc/context';
 import { RedisService } from '../src/modules/redis/redis.service';
 import { createSignedUser } from './fixtures/signed-user';
 
@@ -345,6 +350,42 @@ describe('429 log lines name the layer (CH-227 §4)', () => {
       );
     } finally {
       unsubscribe();
+      await app.close();
+    }
+  });
+});
+
+describe('a context without the user limiter fails closed', () => {
+  it('returns 500 with the public message and does not run the write', async () => {
+    const app = await createApp({ rateLimitPrefix: testPrefix() });
+    await app.init();
+    try {
+      const prisma = app.get(PrismaService);
+      // Same router and context factory as createApp, minus the limiter.
+      const server = express();
+      server.use(express.json());
+      server.use(
+        '/trpc',
+        trpcExpress.createExpressMiddleware({
+          router: app.get(TrpcService).appRouter,
+          createContext: makeCreateContext(app.get(AuthService), prisma),
+        }),
+      );
+      const a = await createSignedUser(app);
+      const res = await withProductionErrors(() =>
+        request(server)
+          .post('/trpc/forum.topics.create')
+          .set('Content-Type', 'application/json')
+          .set('Authorization', `Bearer ${a.token}`)
+          .send({ title: '不该写入', body: '正文' }),
+      );
+      expect(res.status).toBe(500);
+      expect(res.body.error.message).toBe(t('zh-CN', 'error.internal'));
+      expect(res.body.error.data.code).toBe('INTERNAL_SERVER_ERROR');
+      expect(res.body.error.data.stack).toBeUndefined();
+      expect(JSON.stringify(res.body)).not.toMatch(/rate limit|limiter|redis|node_modules/i);
+      expect(await prisma.topic.count({ where: { userId: a.id } })).toBe(0);
+    } finally {
       await app.close();
     }
   });

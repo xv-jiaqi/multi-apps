@@ -9,6 +9,7 @@ import {
   userRateLimitStorePrefix,
 } from './rate-limiters';
 import { CatalogCache } from '../modules/redis/catalog-cache';
+import { PrismaService } from '../modules/prisma/prisma.service';
 import { RedisService } from '../modules/redis/redis.service';
 import { createSignedUser } from '../../test/fixtures/signed-user';
 
@@ -152,6 +153,7 @@ describe('Redis rate limit store', () => {
       await app.init();
       expect(app.get(RedisService).client.options.port).toBe(6390);
       const user = await createSignedUser(app);
+      const prisma = app.get(PrismaService);
       const before = rateLimitRedisErrorCount();
       const first = await postTopic(app, user.token, '203.0.113.44');
       expect(first.status).toBe(400);
@@ -159,6 +161,17 @@ describe('Redis rate limit store', () => {
       expect(second.status).toBe(429);
       expect(second.body.error.data.appCode).toBe('TOO_MANY_REQUESTS');
       expect(rateLimitRedisErrorCount()).toBeGreaterThan(before);
+
+      // A valid write over the in-process limit is refused, not let through.
+      const valid = await request(app.getHttpServer())
+        .post('/trpc/forum.topics.create')
+        .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${user.token}`)
+        .set('X-Forwarded-For', '203.0.113.46')
+        .send({ title: '降级', body: '正文' });
+      expect(valid.status).toBe(429);
+      expect(valid.body.error.data.appCode).toBe('TOO_MANY_REQUESTS');
+      expect(await prisma.topic.count({ where: { userId: user.id } })).toBe(0);
     } finally {
       await close(app);
       if (previousHost === undefined) delete process.env.REDIS_HOST;
