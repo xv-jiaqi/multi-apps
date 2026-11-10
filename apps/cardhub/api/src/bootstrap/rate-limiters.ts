@@ -611,11 +611,23 @@ export function userRateLimitStorePrefix(name: WriteRateLimitName, base: string)
   return `${base}user:${name}:`;
 }
 
-export type UserRateLimitVerdict = {
-  limited: boolean;
-  totalHits: number;
-  limit: number;
-};
+export type UserRateLimitVerdict =
+  | { limited: false; totalHits: number; limit: number }
+  | {
+      limited: true;
+      totalHits: number;
+      limit: number;
+      /** Whole seconds until this user's window resets (CH-228 228-A). */
+      retryAfterSeconds: number;
+    };
+
+/**
+ * Seconds until `resetTime`, rounded up, never below 1 (CH-228 228-A). A
+ * reset that is due or already past still tells the client to wait a second.
+ */
+export function retryAfterSeconds({ resetTime, now }: { resetTime: Date; now: number }): number {
+  return Math.max(1, Math.ceil((resetTime.getTime() - now) / 1000));
+}
 
 /** Counts one tRPC call for one signed-in user. Carried on the tRPC context. */
 export type UserRateLimiter = {
@@ -659,8 +671,18 @@ export function createUserRateLimiter(
     async hit(name, userId) {
       const limiter = limiters.get(name);
       if (!limiter) throw new Error(`unknown user rate limit ${name}`);
-      const { totalHits } = await limiter.store.increment(userId);
-      return { limited: totalHits > limiter.window.limit, totalHits, limit: limiter.window.limit };
+      const { totalHits, resetTime } = await limiter.store.increment(userId);
+      const limit = limiter.window.limit;
+      if (totalHits <= limit) return { limited: false, totalHits, limit };
+      const now = Date.now();
+      // Both stores return resetTime; a missing one means a full window is left.
+      const reset = resetTime ?? new Date(now + limiter.window.windowMs);
+      return {
+        limited: true,
+        totalHits,
+        limit,
+        retryAfterSeconds: retryAfterSeconds({ resetTime: reset, now }),
+      };
     },
   };
 }

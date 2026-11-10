@@ -10,6 +10,7 @@ import {
 } from '@repo/shared';
 import type { WriteRateLimitName } from '../bootstrap/rate-limiters';
 import type { TrpcContext } from './context';
+import type { UserRateLimitCause } from './user-rate-limit-headers';
 
 const ADMIN_CATALOG_ERROR_CODE_SET = new Set<string>(ADMIN_CATALOG_ERROR_CODES);
 const IMPORT_ROW_STATUS_SET = new Set(['created', 'updated', 'unchanged', 'error']);
@@ -286,12 +287,21 @@ function sessionRejected(): TRPCError {
   });
 }
 
-/** Same body as the IP layer's 429 once formatted: appCode and zh copy (CH-227 §2). */
-function userRateLimited(): TRPCError {
+/**
+ * Same body as the IP layer's 429 once formatted: appCode and zh copy (CH-227 §2).
+ * `layer` and `retryAfterSeconds` stay on the cause, which the error formatter
+ * does not serialize; userRateLimitResponseMeta reads them for the headers (CH-228).
+ */
+function userRateLimited({ retryAfterSeconds }: { retryAfterSeconds: number }): TRPCError {
+  const cause: UserRateLimitCause = {
+    appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+    layer: 'user',
+    retryAfterSeconds,
+  };
   return new TRPCError({
     code: 'TOO_MANY_REQUESTS',
     message: t('zh-CN', 'error.app.TOO_MANY_REQUESTS'),
-    cause: { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+    cause,
   });
 }
 
@@ -403,7 +413,7 @@ export class TrpcBase {
           { layer: 'user', rateLimit: name, totalHits: verdict.totalHits, limit: verdict.limit },
           'rate limit exceeded',
         );
-        throw userRateLimited();
+        throw userRateLimited({ retryAfterSeconds: verdict.retryAfterSeconds });
       }
       return next();
     });

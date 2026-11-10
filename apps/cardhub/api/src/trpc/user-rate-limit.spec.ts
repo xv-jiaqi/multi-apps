@@ -36,7 +36,9 @@ describe('userRateLimit middleware', () => {
       req: {} as never,
       res: {} as never,
       user,
-      userRateLimit: { hit: async () => ({ limited: true, totalHits: 6, limit: 5 }) },
+      userRateLimit: {
+        hit: async () => ({ limited: true, totalHits: 6, limit: 5, retryAfterSeconds: 30 }),
+      },
     });
     const error = await caller.write().catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(TRPCError);

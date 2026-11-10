@@ -20,6 +20,7 @@ import {
 import { RedisService } from '../modules/redis/redis.service';
 import { TrpcService } from '../trpc/trpc.service';
 import { makeCreateContext } from '../trpc/context';
+import { userRateLimitResponseMeta } from '../trpc/user-rate-limit-headers';
 import { DEFAULT_CORS_ORIGIN } from '../modules/seo/public-web-origin';
 import { serverTiming } from '../common/server-timing';
 import { configureApp } from './configure-app';
@@ -200,6 +201,8 @@ export async function createApp(options: CreateAppOptions = {}) {
         redis.client,
         createUserRateLimiter(redis, options.rateLimitOverrides, rateLimitPrefix),
       ),
+      // Retry-After and no IP RateLimit* when the user layer rejected a call (CH-228).
+      responseMeta: userRateLimitResponseMeta,
       onError: ({ error, path, type, req }) => {
         const requestId = requestIdFrom(req);
         // requestId is already a child binding on req.log. Repeating it here
