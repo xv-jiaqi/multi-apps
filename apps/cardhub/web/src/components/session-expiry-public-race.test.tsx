@@ -142,3 +142,26 @@ describe('CH-227 27-A: what still goes to login', () => {
     );
   });
 });
+
+describe('CH-227 27-5b: a rejected session without a procedure path', () => {
+  const noPath = {
+    data: { code: 'UNAUTHORIZED', httpStatus: 401, appCode: APP_ERROR_CODES.UNAUTHORIZED },
+  };
+
+  it('27-5b: a user action on a public page goes to login with from set to the current page', () => {
+    renderAt('/series/aurora?tab=comments#c1');
+    act(() => noteTrpcFailure(noPath));
+    expect(rootStore.session.token).toBeNull();
+    expect(screen.getByTestId('probe')).toHaveTextContent(
+      '/login|{"from":"/series/aurora?tab=comments#c1","notice":"sessionExpired"}',
+    );
+  });
+
+  it('27-5b: a background read on a public page stays and signs out', () => {
+    renderAt('/series/aurora?tab=comments#c1');
+    act(() => noteTrpcQueryFailure(noPath));
+    expect(rootStore.session.token).toBeNull();
+    expect(clearActiveQueryClient).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('probe')).toHaveTextContent('/series/aurora?tab=comments#c1|null');
+  });
+});
