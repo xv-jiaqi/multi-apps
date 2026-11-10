@@ -42,6 +42,8 @@ function makeRouter() {
       req: {} as never,
       res: {} as never,
       user,
+      // Quota behavior is covered end to end in test/user-rate-limit.e2e-spec.ts.
+      userRateLimit: { hit: async () => ({ limited: false, totalHits: 1, limit: 1 }) },
     });
   }
 

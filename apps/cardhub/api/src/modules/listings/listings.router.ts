@@ -91,6 +91,8 @@ export class ListingsRouter {
 
   build() {
     const t = this.t;
+    // Per-user quota after auth, before input validation (CH-227).
+    const publishProcedure = t.activeUserProcedure.use(t.userRateLimit('listingPublish'));
     const prisma = this.prisma;
 
     return t.router({
@@ -200,7 +202,7 @@ export class ListingsRouter {
         };
       }),
 
-      publish: t.activeUserProcedure.input(listingPublishInput).mutation(async ({ ctx, input }) => {
+      publish: publishProcedure.input(listingPublishInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         // Sanity check the cardSlug exists at publish time so users do
         // not post listings for typos. We do not lock the relation

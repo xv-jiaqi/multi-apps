@@ -21,7 +21,7 @@
 - [ ] **共享包**：改了 `packages/*` 要 build 对应包；改了任何 router 的输入输出要 `pnpm --filter @repo/trpc-contract build`，否则客户端拿到旧类型。
 - [ ] **输入校验**：新的输入 schema 放 `packages/shared/src/zod/index.ts`，前后端共用；前端提交前 `safeParse`。
 - [ ] **权限**：需要登录用 `t.authedProcedure`；“本人或管理员”沿用现有写法（先比对所有者，不是本人时再查库确认 `role === 'admin'`）；管理员接口每次请求都重新查库确认角色，不信任 token 里的信息。
-- [ ] **限流**：新增的写接口评估是否需要限流。需要时在 `apps/cardhub/api/src/bootstrap/rate-limiters.ts` 同时补 `RateLimitName` 和 `productionRateLimitConfigs`，并在 `apps/cardhub/api/src/common/rate-limit-proxy.spec.ts` 覆盖。
+- [ ] **限流**：新增的写接口评估是否需要限流。需要时在 `apps/cardhub/api/src/bootstrap/rate-limiters.ts` 同时补 `RateLimitName`、`userRateLimitConfigs`、`WRITE_RATE_LIMIT_NAMES` 和 `productionRateLimitConfigs`（IP 兜底），在 procedure 上接 `.use(t.userRateLimit(name))`（鉴权之后、`.input()` 之前），并在 `apps/cardhub/api/src/common/rate-limit-proxy.spec.ts` 和 `apps/cardhub/api/test/user-rate-limit.e2e-spec.ts` 覆盖。
 - [ ] **测试**：每个新 procedure 至少覆盖成功、权限拒绝、目标不存在或输入非法三类；写法参考 `apps/cardhub/api/src/modules/forum/forum.router.spec.ts`（mock Prisma + `createCaller`）。
 - [ ] **界面**：zh-CN 和 en-US 文案都要加（新 key 放在所属模块的分组里，不要都追加到字典末尾，减少并行冲突）；有加载 / 错误 / 空状态；键盘可操作；移动端布局正常。能本地跑起来就用浏览器走一遍。
 - [ ] **文档**：更新 feature-inventory.md 的状态；遇到新坑写进 handoff-context.md §6。

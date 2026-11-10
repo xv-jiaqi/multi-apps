@@ -211,12 +211,14 @@ export class CollectionRouter {
 
   build() {
     const t = this.t;
+    // Per-user quota after auth, before input validation (CH-227).
+    const upsertProcedure = t.authedProcedure.use(t.userRateLimit('collectionUpsert'));
     const prisma = this.prisma;
 
     return t.router({
       // Private inventory, not a public post. A banned account can still
       // record what it owns. Progress counts base cards only.
-      upsert: t.authedProcedure.input(collectionUpsertInput).mutation(async ({ ctx, input }) => {
+      upsert: upsertProcedure.input(collectionUpsertInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const userId = ctx.user.sub;
         const card = await prisma.card.findUnique({

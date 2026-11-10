@@ -29,7 +29,19 @@ export type RateLimitName =
   | 'reportCreate'
   | 'collectionUpsert';
 
+/** The six write limiters. Each has a per-user layer and an IP fallback layer. */
+export type WriteRateLimitName = Exclude<RateLimitName, 'authMutation'>;
+
+/**
+ * createApp `rateLimitOverrides`: the per-user layer for the six writes, and
+ * the IP + account buckets for authMutation (which has no user layer).
+ */
 export type RateLimitOverrides = Partial<Record<RateLimitName, Partial<RateLimitOverrideConfig>>>;
+
+/** createApp `ipRateLimitOverrides`: the IP fallback layer of the six writes. */
+export type IpRateLimitOverrides = Partial<
+  Record<WriteRateLimitName, Partial<RateLimitOverrideConfig>>
+>;
 
 type MountedRateLimiter = {
   path: string;
@@ -178,22 +190,41 @@ function trpcTooManyRequestsError(path: string | undefined) {
   };
 }
 
-function trpcRateLimitHandler(req: Request, res: Response): void {
-  const parsed = parseTrpcProcedures(req);
-  if (!parsed.ok) {
-    res.status(429).type('application/json').send(trpcTooManyRequestsError(undefined));
-    return;
-  }
-  const payload = parsed.batch
-    ? parsed.procedures.map((path) => trpcTooManyRequestsError(path || undefined))
-    : trpcTooManyRequestsError(parsed.procedures[0] || undefined);
+export type RateLimitLayer = 'ip' | 'account' | 'user';
 
-  res.status(429).type('application/json').send(payload);
+/** One structured line per 429, so user-layer and IP-layer hits can be counted apart. */
+function logRateLimited(
+  req: { log?: { warn(fields: object, message: string): void } },
+  fields: { layer: RateLimitLayer; rateLimit: RateLimitName; totalHits?: number; limit?: number },
+): void {
+  req.log?.warn(fields, 'rate limit exceeded');
+}
+
+function trpcRateLimitHandler(layer: RateLimitLayer, name: RateLimitName) {
+  return (req: Request, res: Response): void => {
+    logRateLimited(req, { layer, rateLimit: name });
+    const parsed = parseTrpcProcedures(req);
+    if (!parsed.ok) {
+      res.status(429).type('application/json').send(trpcTooManyRequestsError(undefined));
+      return;
+    }
+    const payload = parsed.batch
+      ? parsed.procedures.map((path) => trpcTooManyRequestsError(path || undefined))
+      : trpcTooManyRequestsError(parsed.procedures[0] || undefined);
+
+    res.status(429).type('application/json').send(payload);
+  };
 }
 
 // tRPC procedures live behind Express middleware, so NestJS guards / the
-// ThrottlerGuard do not intercept them. We layer express-rate-limit on the
-// sensitive write paths instead. Reads (queries) stay un-throttled here.
+// ThrottlerGuard do not intercept them. Reads (queries) stay un-throttled.
+// The six writes have two layers (CH-227 §2):
+// - user layer: a tRPC middleware after activeUserProcedure / authedProcedure
+//   and before `.input()`, keyed by userId. Every call counts, one per batch
+//   slot, including calls that then fail input validation. A 401 or a ban is
+//   rejected before it, so it never counts against any user.
+// - IP fallback: express-rate-limit on /trpc before auth, keyed by IP, counts
+//   every HTTP request (401s too), at 10x the user limit.
 // Counters live in Redis so API replicas share one bucket. Each limiter has
 // its own prefix. When Redis errors, a write falls back to a process-local
 // counter with the same limit instead of being allowed through.
@@ -450,6 +481,43 @@ export const CLEAR_LOGIN_ACCOUNT_LIMIT = 'clearLoginAccountLimit';
 
 export type ClearLoginAccountLimit = (identifier: string) => Promise<void>;
 
+type RateLimitWindow = RateLimitOverrideConfig;
+
+export const WRITE_RATE_LIMIT_NAMES: readonly WriteRateLimitName[] = [
+  'commentCreate',
+  'forumTopicCreate',
+  'forumReplyCreate',
+  'listingPublish',
+  'reportCreate',
+  'collectionUpsert',
+];
+
+/** Per-user quota of each write (CH-227 §1). One count per tRPC call. */
+export const userRateLimitConfigs: Record<WriteRateLimitName, RateLimitWindow> = {
+  commentCreate: { windowMs: 60 * 60_000, limit: 30 },
+  forumTopicCreate: { windowMs: 60 * 60_000, limit: 5 },
+  forumReplyCreate: { windowMs: 60 * 60_000, limit: 30 },
+  listingPublish: { windowMs: 60 * 60_000, limit: 10 },
+  reportCreate: { windowMs: 60 * 60_000, limit: 20 },
+  collectionUpsert: { windowMs: 60_000, limit: 60 },
+};
+
+/**
+ * IP fallback = user quota x 10 (CH-227 §2 27-C): ten active users behind one
+ * NAT can each use their own quota before the shared IP is throttled.
+ */
+export const IP_FALLBACK_MULTIPLIER = 10;
+
+function ipFallback(name: WriteRateLimitName, needle: string): RateLimitConfig {
+  const user = userRateLimitConfigs[name];
+  return {
+    windowMs: user.windowMs,
+    limit: user.limit * IP_FALLBACK_MULTIPLIER,
+    skip: urlDoesNotInclude(needle),
+  };
+}
+
+/** Express (IP) limiters, mounted on /trpc before auth. */
 export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> = {
   authMutation: {
     windowMs: 60_000,
@@ -460,36 +528,12 @@ export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> 
       return !parsed.procedures.some((name) => AUTH_WRITE_PROCEDURES.has(name));
     },
   },
-  commentCreate: {
-    windowMs: 60 * 60_000,
-    limit: 30,
-    skip: urlDoesNotInclude('comments.create'),
-  },
-  forumTopicCreate: {
-    windowMs: 60 * 60_000,
-    limit: 5,
-    skip: urlDoesNotInclude('forum.topics.create'),
-  },
-  forumReplyCreate: {
-    windowMs: 60 * 60_000,
-    limit: 30,
-    skip: urlDoesNotInclude('forum.replies.create'),
-  },
-  listingPublish: {
-    windowMs: 60 * 60_000,
-    limit: 10,
-    skip: urlDoesNotInclude('listings.publish'),
-  },
-  reportCreate: {
-    windowMs: 60 * 60_000,
-    limit: 20,
-    skip: urlDoesNotInclude('reports.create'),
-  },
-  collectionUpsert: {
-    windowMs: 60_000,
-    limit: 60,
-    skip: urlDoesNotInclude('collection.upsert'),
-  },
+  commentCreate: ipFallback('commentCreate', 'comments.create'),
+  forumTopicCreate: ipFallback('forumTopicCreate', 'forum.topics.create'),
+  forumReplyCreate: ipFallback('forumReplyCreate', 'forum.replies.create'),
+  listingPublish: ipFallback('listingPublish', 'listings.publish'),
+  reportCreate: ipFallback('reportCreate', 'reports.create'),
+  collectionUpsert: ipFallback('collectionUpsert', 'collection.upsert'),
 };
 
 export function createRateLimiters(
@@ -509,7 +553,7 @@ export function createRateLimiters(
           legacyHeaders: false,
           keyGenerator: ipKey,
           skip: resolved.skip,
-          handler: trpcRateLimitHandler,
+          handler: trpcRateLimitHandler('ip', name),
           // The fallback store swallows Redis errors. If it still throws, fail
           // the request instead of letting the write through.
           passOnStoreError: false,
@@ -549,7 +593,7 @@ export function createAuthAccountLimiter(
     // touches the IP without ipKeyGenerator, and this bucket is not per IP.
     keyGenerator: (req) => authAccountKey(readAuthAccount(req) ?? ''),
     skip: (req) => readAuthAccount(req) === undefined,
-    handler: trpcRateLimitHandler,
+    handler: trpcRateLimitHandler('account', 'authMutation'),
     passOnStoreError: false,
     logger: redisStoreLogger,
     store,
@@ -560,4 +604,63 @@ export function createAuthAccountLimiter(
     await store.resetKey(authAccountKey(normalized));
   };
   return { middleware, clear };
+}
+
+/** Redis key prefix of the per-user layer: `<base>user:<name>:`, then the userId. */
+export function userRateLimitStorePrefix(name: WriteRateLimitName, base: string): string {
+  return `${base}user:${name}:`;
+}
+
+export type UserRateLimitVerdict = {
+  limited: boolean;
+  totalHits: number;
+  limit: number;
+};
+
+/** Counts one tRPC call for one signed-in user. Carried on the tRPC context. */
+export type UserRateLimiter = {
+  hit(name: WriteRateLimitName, userId: string): Promise<UserRateLimitVerdict>;
+};
+
+/**
+ * Store.init takes the full express-rate-limit Options, which only
+ * `rateLimit()` builds. The returned middleware is never mounted: it is
+ * created so the store gets the same init (window, memory sweep timer) as the
+ * IP layer. The user layer then calls `store.increment` itself.
+ */
+function initStore(store: Store, window: RateLimitWindow): void {
+  rateLimit({
+    windowMs: window.windowMs,
+    limit: window.limit,
+    passOnStoreError: false,
+    store,
+  });
+}
+
+/**
+ * Per-user layer of the six writes (CH-227 27-B). Same Redis store and memory
+ * fallback as the IP layer: replicas share one counter, and a Redis error
+ * counts in process instead of letting the call through. A key lives for one
+ * fixed window (PX windowMs set on the first hit).
+ */
+export function createUserRateLimiter(
+  redis: RateLimitRedis,
+  overrides: RateLimitOverrides = {},
+  keyPrefix: string = defaultRateLimitPrefix(),
+): UserRateLimiter {
+  const limiters = new Map<WriteRateLimitName, { window: RateLimitWindow; store: Store }>();
+  for (const name of WRITE_RATE_LIMIT_NAMES) {
+    const window = { ...userRateLimitConfigs[name], ...overrides[name] };
+    const store = createRedisStore(redis, userRateLimitStorePrefix(name, keyPrefix));
+    initStore(store, window);
+    limiters.set(name, { window, store });
+  }
+  return {
+    async hit(name, userId) {
+      const limiter = limiters.get(name);
+      if (!limiter) throw new Error(`unknown user rate limit ${name}`);
+      const { totalHits } = await limiter.store.increment(userId);
+      return { limited: totalHits > limiter.window.limit, totalHits, limit: limiter.window.limit };
+    },
+  };
 }
