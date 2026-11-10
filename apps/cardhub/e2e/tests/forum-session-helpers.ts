@@ -275,3 +275,23 @@ export async function closeEditWindowInDb(topicId: string): Promise<void> {
     await client.end();
   }
 }
+
+/** Sets a topic's createdAt (stored as UTC without a zone) so that its 5-minute edit window ends `secondsLeft` from now. */
+export async function setEditWindowLeftInDb({
+  topicId,
+  secondsLeft,
+}: {
+  topicId: string;
+  secondsLeft: number;
+}): Promise<void> {
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try {
+    await client.query(
+      `UPDATE topics SET "createdAt" = (now() AT TIME ZONE 'UTC') - interval '5 minutes' + make_interval(secs => $2) WHERE id = $1`,
+      [topicId, secondsLeft],
+    );
+  } finally {
+    await client.end();
+  }
+}
