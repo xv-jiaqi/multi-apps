@@ -63,6 +63,14 @@ export const REPORT_QUOTA_LOCK_NAMESPACE = 230;
  * (the reporter's user row in the FK check, the target row) as before CH-231,
  * bounded by Prisma's 5s transaction timeout (P2028, a 500). So the only
  * statement that can raise 55P03 here, and become a 429, is the lock itself.
+ *
+ * "Lifted" means back to the configured value, not forced to 0 (CH-233):
+ * `TO DEFAULT` restores the reset value, i.e. postgresql.conf, ALTER DATABASE,
+ * ALTER ROLE (e.g. on cardhub_runtime) or a connection startup option
+ * (`options=-c lock_timeout=…`). A plain session-level `SET lock_timeout` is
+ * not a reset value, so it does not come back inside this transaction; it is
+ * in effect again once the transaction ends. Nothing sets lock_timeout today,
+ * so the value here is still 0.
  */
 export async function lockReportQuota(
   tx: Pick<Prisma.TransactionClient, '$executeRaw'>,
@@ -70,7 +78,7 @@ export async function lockReportQuota(
 ): Promise<void> {
   await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(${REPORT_QUOTA_LOCK_NAMESPACE}::int4, hashtext(${reporterId}))`;
-  await tx.$executeRaw`SET LOCAL lock_timeout = 0`;
+  await tx.$executeRaw`SET LOCAL lock_timeout TO DEFAULT`;
 }
 
 /** Retry-After for a report that timed out waiting on its account's lock (CH-231 231-B). */
