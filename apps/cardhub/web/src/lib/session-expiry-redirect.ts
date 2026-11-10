@@ -68,12 +68,22 @@ function pageRequiresLogin(pathname: string): boolean {
 }
 
 /**
- * Protected pages always return to login. A card page does too: it is public
- * to read, but opening it with a rejected token must not stop on the card.
- * On /forum and /forum/:slug any background read (auth.me, the header's
- * unread count) only signs out (CH-226 §6). auth.me on any other public page
- * only signs out. Any other procedure is a user action (comment, report,
- * collection write) and returns to login.
+ * auth.me is the session check AuthBootstrap runs as a query. A caller that
+ * reports its rejection without saying where it came from still reports a
+ * background read, never a user action.
+ */
+function failureOrigin(origin: SessionExpiryOrigin, error: unknown): SessionExpiryOrigin {
+  if (origin === 'query') return 'query';
+  return readProcedurePath(error) === 'auth.me' ? 'query' : 'action';
+}
+
+/**
+ * Two questions decide it (CH-227 27-A), never which request arrived first:
+ * does this route need a session, and was the rejected request a background
+ * read or a user action? Protected pages and card pages (CH-203) always
+ * return to login. On every other page a background read (auth.me, the
+ * header's unread count) only signs out; a user action (comment, report,
+ * collection write) returns to login.
  */
 function sessionExpiryReturnsToLogin({
   pathname,
@@ -87,10 +97,7 @@ function sessionExpiryReturnsToLogin({
   const path = normalizeAppPathname(pathname);
   if (pageRequiresLogin(path)) return true;
   if (/^\/cards\/[^/]+$/.test(path)) return true;
-  if (origin === 'query' && isPublicForumPath(path)) return false;
-  const procedure = readProcedurePath(error);
-  if (!procedure || procedure === 'auth.me') return false;
-  return true;
+  return failureOrigin(origin, error) === 'action';
 }
 
 export function applySessionExpiry(input: ExpireNavigation): void {
