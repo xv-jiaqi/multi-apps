@@ -201,6 +201,19 @@ describe('reports quota lock timeout (CH-231 231-B)', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('does not turn a 55P03 from a model query after the lock into a 429 (CH-232)', async () => {
+    // A model query (report.create) that hits a lock timeout surfaces as an
+    // unknown request error, not P2010; it stays a 500.
+    const afterLock = new Prisma.PrismaClientUnknownRequestError(
+      'Error occurred during query execution: ConnectorError(... code: "55P03", message: "canceling statement due to lock timeout" ...)',
+      { clientVersion: '6.19.3' },
+    );
+    expect(isReportQuotaLockTimeout(afterLock)).toBe(false);
+    const { caller } = failingTransaction(afterLock);
+    const error = await caller.create(input).catch((caught: unknown) => caught);
+    expect(error).toMatchObject({ code: 'INTERNAL_SERVER_ERROR', cause: afterLock });
+  });
+
   it('passes any other database error through unchanged', async () => {
     const deadlock = rawQueryError('40P01', 'ERROR: deadlock detected');
     const { caller } = failingTransaction(deadlock);

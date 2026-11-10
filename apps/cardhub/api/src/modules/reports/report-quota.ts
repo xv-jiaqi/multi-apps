@@ -57,6 +57,12 @@ export const REPORT_QUOTA_LOCK_NAMESPACE = 230;
  * `SET LOCAL lock_timeout` set just before the lock. SET LOCAL ends with this
  * transaction: the pooled connection and the server default are unchanged.
  * Past the cap Postgres raises 55P03; see isReportQuotaLockTimeout.
+ *
+ * Once the lock is held the cap is lifted again (CH-232): the cap is only for
+ * waiting on this account's quota lock. Later statements wait for other locks
+ * (the reporter's user row in the FK check, the target row) as before CH-231,
+ * bounded by Prisma's 5s transaction timeout (P2028, a 500). So the only
+ * statement that can raise 55P03 here, and become a 429, is the lock itself.
  */
 export async function lockReportQuota(
   tx: Pick<Prisma.TransactionClient, '$executeRaw'>,
@@ -64,6 +70,7 @@ export async function lockReportQuota(
 ): Promise<void> {
   await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(${REPORT_QUOTA_LOCK_NAMESPACE}::int4, hashtext(${reporterId}))`;
+  await tx.$executeRaw`SET LOCAL lock_timeout = 0`;
 }
 
 /** Retry-After for a report that timed out waiting on its account's lock (CH-231 231-B). */
