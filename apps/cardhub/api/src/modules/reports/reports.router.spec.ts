@@ -6,6 +6,8 @@ import type { TrpcContext } from '../../trpc/context';
 
 function makeRouter() {
   const reportCount = jest.fn();
+  // CH-229: read for Retry-After once the quota is hit.
+  const reportFindFirst = jest.fn();
   const reportCreate = jest.fn();
   const reportFindMany = jest.fn();
   const reportFindUnique = jest.fn();
@@ -30,6 +32,7 @@ function makeRouter() {
   const prisma = {
     report: {
       count: reportCount,
+      findFirst: reportFindFirst,
       create: reportCreate,
       findMany: reportFindMany,
       findUnique: reportFindUnique,
