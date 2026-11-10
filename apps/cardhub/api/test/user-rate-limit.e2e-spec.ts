@@ -152,6 +152,33 @@ describe('per-user write rate limits (CH-227)', () => {
       expect(JSON.stringify(single.body)).not.toMatch(/redis|stack|node_modules|rate limit/i);
     });
   });
+
+  it('27-9: a batch where every call is over the limit is 429 overall and writes nothing', async () => {
+    const a = await createSignedUser(app);
+    const ip = '203.0.113.164';
+    for (let i = 0; i < 5; i += 1) {
+      expect((await post(app, 'forum.topics.create', topicBody, ip, a.token)).status).toBe(200);
+    }
+    const prisma = app.get(PrismaService);
+    const before = await prisma.topic.count({ where: { userId: a.id } });
+    expect(before).toBe(5);
+
+    await withProductionErrors(async () => {
+      const batch = await request(app.getHttpServer())
+        .post('/trpc/forum.topics.create,forum.topics.create?batch=1')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', ip)
+        .set('Authorization', `Bearer ${a.token}`)
+        .send({ 0: { title: '超限一', body: '正文' }, 1: { title: '超限二', body: '正文' } });
+      expect(batch.status).toBe(429);
+      expect(batch.headers['content-type']).toMatch(/application\/json/);
+      expect(batch.body).toEqual([
+        tooManyBody('forum.topics.create'),
+        tooManyBody('forum.topics.create'),
+      ]);
+    });
+    expect(await prisma.topic.count({ where: { userId: a.id } })).toBe(before);
+  });
 });
 
 describe('27-7: users behind one IP each get their own quota, for all six limiters', () => {
