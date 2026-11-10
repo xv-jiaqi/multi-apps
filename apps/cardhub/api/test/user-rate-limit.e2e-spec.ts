@@ -56,6 +56,28 @@ function tooManyBody(path: string) {
   };
 }
 
+type HeaderBag = Record<string, string | string[] | undefined>;
+
+/** Retry-After as whole seconds. Undefined when the header is absent or not an integer. */
+function retryAfter(headers: HeaderBag): number | undefined {
+  const value = headers['retry-after'];
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) return undefined;
+  return Number(value);
+}
+
+/** CH-228 228-A/B: a user-layer rejection says when to retry and drops the IP layer's quota headers. */
+function expectUserLayerHeaders(
+  headers: HeaderBag,
+  window: { minSeconds: number; maxSeconds: number },
+) {
+  const seconds = retryAfter(headers);
+  expect(seconds).toBeDefined();
+  expect(seconds).toBeGreaterThanOrEqual(window.minSeconds);
+  expect(seconds).toBeLessThanOrEqual(window.maxSeconds);
+  expect(headers['ratelimit']).toBeUndefined();
+  expect(headers['ratelimit-policy']).toBeUndefined();
+}
+
 describe('per-user write rate limits (CH-227)', () => {
   let app: INestApplication;
   let prefix = '';
@@ -95,10 +117,16 @@ describe('per-user write rate limits (CH-227)', () => {
     for (let i = 0; i < 5; i += 1) {
       const res = await post(app, 'forum.topics.create', topicBody, ip, a.token);
       expect(res.status).toBe(200);
+      // CH-228 28-4: a call that is not rejected keeps the IP layer's headers.
+      expect(res.headers['ratelimit']).toEqual(expect.any(String));
+      expect(res.headers['ratelimit-policy']).toEqual(expect.any(String));
+      expect(res.headers['retry-after']).toBeUndefined();
     }
     const sixth = await post(app, 'forum.topics.create', topicBody, ip, a.token);
     expect(sixth.status).toBe(429);
     expect(sixth.body.error.data.appCode).toBe(APP_ERROR_CODES.TOO_MANY_REQUESTS);
+    // CH-228 28-1: forumTopicCreate's window is one hour.
+    expectUserLayerHeaders(sixth.headers, { minSeconds: 1, maxSeconds: 3600 });
   });
 
   it('27-8: a batch with two forum.topics.create adds 2 to the user count', async () => {
@@ -143,6 +171,8 @@ describe('per-user write rate limits (CH-227)', () => {
       expect(batch.body).toHaveLength(2);
       expect(batch.body[0].result.data.title).toBe(topicBody.title);
       expect(batch.body[1]).toEqual(tooManyBody('forum.topics.create'));
+      // CH-228 28-2: a mixed 207 still says when to retry and drops RateLimit*.
+      expectUserLayerHeaders(batch.headers, { minSeconds: 1, maxSeconds: 3600 });
 
       const single = await post(app, 'forum.topics.create', topicBody, ip, a.token);
       expect(single.status).toBe(429);
@@ -150,6 +180,7 @@ describe('per-user write rate limits (CH-227)', () => {
       expect(single.body).toEqual(tooManyBody('forum.topics.create'));
       expect(single.body.error.message).toBe('操作太频繁，请稍后再试');
       expect(JSON.stringify(single.body)).not.toMatch(/redis|stack|node_modules|rate limit/i);
+      expectUserLayerHeaders(single.headers, { minSeconds: 1, maxSeconds: 3600 });
     });
   });
 
@@ -176,6 +207,8 @@ describe('per-user write rate limits (CH-227)', () => {
         tooManyBody('forum.topics.create'),
         tooManyBody('forum.topics.create'),
       ]);
+      // CH-228 228-C / 28-2: the all-over 429 carries Retry-After and no RateLimit*.
+      expectUserLayerHeaders(batch.headers, { minSeconds: 1, maxSeconds: 3600 });
     });
     expect(await prisma.topic.count({ where: { userId: a.id } })).toBe(before);
   });
@@ -312,6 +345,10 @@ describe('27-10: IP fallback', () => {
       const capped = await post(app, 'forum.topics.create', body, flood);
       expect(capped.status).toBe(429);
       expect(capped.body).toEqual(tooManyBody('forum.topics.create'));
+      // CH-228 28-3: the IP layer's own 429 keeps its RateLimit headers and Retry-After.
+      expect(capped.headers['ratelimit']).toEqual(expect.any(String));
+      expect(capped.headers['ratelimit-policy']).toEqual(expect.any(String));
+      expect(retryAfter(capped.headers)).toBeGreaterThanOrEqual(1);
 
       const a = await createSignedUser(app);
       const key = `${userRateLimitStorePrefix('forumTopicCreate', prefix)}${a.id}`;
@@ -415,5 +452,103 @@ describe('a context without the user limiter fails closed', () => {
     } finally {
       await app.close();
     }
+  });
+});
+
+describe('CH-228 user-layer Retry-After and banned accounts', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    app = await createApp({
+      rateLimitPrefix: testPrefix(),
+      rateLimitOverrides: {
+        forumTopicCreate: { limit: 1, windowMs: 60_000 },
+        forumReplyCreate: { limit: 1, windowMs: 60 * 60_000 },
+      },
+    });
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app?.close();
+  });
+
+  function batch(paths: string[], body: Record<string, unknown>, ip: string, token: string) {
+    return request(app.getHttpServer())
+      .post(`/trpc/${paths.join(',')}?batch=1`)
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', ip)
+      .set('Authorization', `Bearer ${token}`)
+      .send(body);
+  }
+
+  it('228-A: a batch with two user-layer rejections uses the larger Retry-After, in either order', async () => {
+    const a = await createSignedUser(app);
+    const ip = '203.0.113.200';
+    const created = await post(
+      app,
+      'forum.topics.create',
+      { title: '帖', body: '正文' },
+      ip,
+      a.token,
+    );
+    expect(created.status).toBe(200);
+    const topicId: unknown = created.body.result.data.id;
+    expect(typeof topicId).toBe('string');
+    expect(
+      (await post(app, 'forum.replies.create', { topicId, body: '回帖' }, ip, a.token)).status,
+    ).toBe(200);
+
+    const topic = { title: '超限', body: '正文' };
+    const reply = { topicId, body: '超限回帖' };
+    // forumTopicCreate resets within 60s, forumReplyCreate within an hour.
+    for (const [paths, body] of [
+      [['forum.topics.create', 'forum.replies.create'], { 0: topic, 1: reply }],
+      [['forum.replies.create', 'forum.topics.create'], { 0: reply, 1: topic }],
+    ] as const) {
+      const res = await withProductionErrors(() => batch([...paths], body, ip, a.token));
+      expect(res.status).toBe(429);
+      expect(res.body).toEqual(paths.map((path) => tooManyBody(path)));
+      expectUserLayerHeaders(res.headers, { minSeconds: 61, maxSeconds: 3600 });
+    }
+  });
+
+  it('228-A: a single rejection rounds the remaining window up to whole seconds', async () => {
+    const a = await createSignedUser(app);
+    const ip = '203.0.113.201';
+    const body = { title: '帖', body: '正文' };
+    expect((await post(app, 'forum.topics.create', body, ip, a.token)).status).toBe(200);
+    const over = await post(app, 'forum.topics.create', body, ip, a.token);
+    expect(over.status).toBe(429);
+    expectUserLayerHeaders(over.headers, { minSeconds: 1, maxSeconds: 60 });
+  });
+
+  it('228-D: a banned account over the quota is always USER_BANNED and uses none of it', async () => {
+    const prisma = app.get(PrismaService);
+    const banned = await createSignedUser(app, { banned: true });
+    const ip = '203.0.113.202';
+    const body = { title: '封禁期间', body: '正文' };
+    // forumTopicCreate allows 1 per window here; send three times that.
+    for (let i = 0; i < 3; i += 1) {
+      const res = await post(app, 'forum.topics.create', body, ip, banned.token);
+      expect(res.status).toBe(403);
+      expect(res.body.error.data.code).toBe('FORBIDDEN');
+      expect(res.body.error.data.appCode).toBe(APP_ERROR_CODES.USER_BANNED);
+      expect(res.headers['retry-after']).toBeUndefined();
+    }
+    expect(await prisma.topic.count({ where: { userId: banned.id } })).toBe(0);
+
+    // Test database only: lift the ban the way governance does, by clearing bannedAt.
+    await prisma.user.update({
+      where: { id: banned.id },
+      data: { bannedAt: null, bannedById: null },
+    });
+
+    const first = await post(app, 'forum.topics.create', body, ip, banned.token);
+    expect(first.status).toBe(200);
+    expect(first.body.result.data.title).toBe(body.title);
+    // That success was the account's first counted call: the next one is over the limit of 1.
+    const second = await post(app, 'forum.topics.create', body, ip, banned.token);
+    expect(second.status).toBe(429);
   });
 });
