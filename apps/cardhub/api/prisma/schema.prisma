@@ -343,6 +343,8 @@ model Report {
   @@index([targetType, targetId])
   @@index([status, createdAt])
   @@index([resolvedById])
+  // Daily report quota: count by reporter inside the last 24h (CH-230).
+  @@index([reporterId, createdAt])
   @@map("reports")
 }
 

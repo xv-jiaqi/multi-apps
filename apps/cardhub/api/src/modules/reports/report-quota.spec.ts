@@ -56,7 +56,15 @@ describe('reports.create quota with an injected clock (CH-229 229-A)', () => {
     const count = jest.fn().mockResolvedValue(10);
     const findFirst = jest.fn().mockResolvedValue(oldest ? { createdAt: oldest } : null);
     const create = jest.fn();
-    const prisma = { report: { count, findFirst, create } } as unknown as PrismaService;
+    const tx = {
+      report: { count, findFirst, create },
+      $executeRaw: jest.fn().mockResolvedValue(1),
+    };
+    const prisma = {
+      ...tx,
+      // CH-230: the quota check runs inside an interactive transaction.
+      $transaction: async (callback: (client: typeof tx) => unknown) => callback(tx),
+    } as unknown as PrismaService;
     const built = new ReportsRouter(new TrpcBase(), prisma).build({ now: () => NOW });
     const caller = built.createCaller({
       req: {} as never,
