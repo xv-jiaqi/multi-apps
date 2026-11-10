@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { APP_NAME, t } from '@repo/shared';
+import { discardAllForumDrafts } from '../lib/forum-draft';
 import { clearNotificationCache } from '../lib/notification-cache';
 import { useStores } from '../stores/root-store';
 import { HeaderSearch } from './header-search';
@@ -177,6 +178,7 @@ export const SiteHeader = observer(function SiteHeader() {
 
   const signOut = () => {
     clearNotificationCache();
+    discardAllForumDrafts();
     session.signOut();
     closeMenu();
     navigate('/');

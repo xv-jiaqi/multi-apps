@@ -31,6 +31,7 @@ const queryState = {
 };
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     search: {
       global: {
@@ -63,6 +64,12 @@ vi.mock('../lib/trpc', () => ({
 }));
 
 import { ForumListPage } from './forum-list';
+import { act } from '@testing-library/react';
+import { APP_ERROR_CODES } from '@repo/shared';
+import { SessionExpiryWatcher } from '../components/session-expiry-watcher';
+import { noteTrpcQueryFailure } from '../lib/session-expiry';
+import { resetSessionExpiryRedirectForTests } from '../lib/session-expiry-redirect';
+import { resetForumSessionNoticeForTests } from '../lib/forum-session-notice';
 
 function makeTopic(overrides: Partial<TopicFixture> = {}): TopicFixture {
   return {
@@ -178,5 +185,76 @@ describe('ForumListPage CH-103 rendering', () => {
     await user.click(screen.getByRole('button', { name: '加载更多' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('加载失败');
+  });
+});
+
+describe('ForumListPage CH-226', () => {
+  function expireSilently() {
+    act(() =>
+      noteTrpcQueryFailure({
+        data: { code: 'UNAUTHORIZED', appCode: APP_ERROR_CODES.UNAUTHORIZED, path: 'auth.me' },
+      }),
+    );
+  }
+
+  function renderWithWatcher(
+    entry: { pathname: string; state?: unknown } = { pathname: '/forum' },
+  ) {
+    return render(
+      <MemoryRouter initialEntries={[entry]}>
+        <SessionExpiryWatcher />
+        <Routes>
+          <Route path="/forum" element={<ForumListPage />} />
+          <Route path="/login" element={<LocationStateProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  beforeEach(() => {
+    resetSessionExpiryRedirectForTests();
+    resetForumSessionNoticeForTests();
+    rootStore.locale.setLocale('zh-CN');
+  });
+
+  it('26-8: 登录发帖 sends state.from = /forum/new and has a 24px, focus-ringed hit area', async () => {
+    const user = userEvent.setup();
+    renderWithWatcher();
+    const link = screen.getByRole('link', { name: '登录后发布话题' });
+    expect(link).toHaveClass('inline-flex', 'min-h-6', 'items-center', 'text-link');
+    expect(link).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-brand-500');
+    await user.click(link);
+    expect(screen.getByLabelText('location-state')).toHaveTextContent('{"from":"/forum/new"}');
+  });
+
+  it('§6-2: the session notice sits under the topicDeleted notice', () => {
+    rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
+    queryState.items = [makeTopic()];
+    renderWithWatcher({ pathname: '/forum', state: { notice: 'topicDeleted' } });
+    expireSilently();
+    const deleted = screen.getByText('话题已删除');
+    const expired = screen.getByText((_, node) =>
+      Boolean(node?.matches('p[role="status"]') && node.textContent?.startsWith('登录已失效')),
+    );
+    expect(
+      deleted.compareDocumentPosition(expired) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByText('Topic title')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['loading', () => (queryState.isLoading = true)],
+    ['error', () => (queryState.isError = true)],
+    ['empty', () => (queryState.items = [])],
+  ])('§6-8: the notice also shows in the %s state, next to its own UI', (state, arrange) => {
+    arrange();
+    rootStore.session.signIn('token', { id: 'u1', username: 'alice', role: 'user' });
+    renderWithWatcher();
+    expireSilently();
+    expect(
+      screen.getAllByRole('status').filter((node) => node.textContent?.startsWith('登录已失效')),
+    ).toHaveLength(1);
+    if (state === 'error') expect(screen.getByRole('button', { name: '重试' })).toBeInTheDocument();
+    if (state === 'empty') expect(screen.getByText('还没有话题，第一个开聊吧')).toBeInTheDocument();
   });
 });

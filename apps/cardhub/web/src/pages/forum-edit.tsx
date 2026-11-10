@@ -1,15 +1,23 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Card, CardContent, CardHeader } from '@repo/ui-web';
 import { APP_ERROR_CODES, fieldErrorMessage, t, topicUpdateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
-import { TopicForm } from '../components/topic-form';
+import { TopicForm, type RestoredTopicDraft, type TopicFormValues } from '../components/topic-form';
 import { BannedNotice } from '../components/banned-notice';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
+import {
+  discardForumDraft,
+  saveTopicDraft,
+  takeTopicDraft,
+  type TopicDraftTarget,
+} from '../lib/forum-draft';
+import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
+import { isSessionExpiryNavigationPending } from '../lib/session-expiry-redirect';
 import { trpc } from '../lib/trpc';
 
 function formatRemaining(ms: number, tt: (key: string, vars?: Record<string, number>) => string) {
@@ -31,8 +39,25 @@ export const ForumEditPage = observer(function ForumEditPage() {
   const [enteredAllowed, setEnteredAllowed] = useState(false);
   const [tick, setTick] = useState(0);
 
+  // CH-226 §7: the draft under cardhub:draft:forum:edit:<topic.id>.
+  const [restoredDraft, setRestoredDraft] = useState<RestoredTopicDraft | null>(null);
+  const valuesRef = useRef<TopicFormValues | null>(null);
+  const onValuesChange = useCallback((values: TopicFormValues) => {
+    valuesRef.current = values;
+  }, []);
+  // Kept from render so a listener that runs after signOut() still has it.
+  const draftUserIdRef = useRef<string | null>(null);
+  if (session.user) draftUserIdRef.current = session.user.id;
+  const draftTopicIdRef = useRef<string | null>(null);
+  draftTopicIdRef.current = topicQuery.data?.id ?? null;
+  const discardEditDraft = () => {
+    const topicId = draftTopicIdRef.current;
+    if (topicId) discardForumDraft({ kind: 'edit', topicId });
+  };
+
+  // An expired session is already on its way to /login with sessionExpired.
   useEffect(() => {
-    if (!session.isAuthenticated) {
+    if (!session.isAuthenticated && !isSessionExpiryNavigationPending()) {
       navigate('/login', { state: { from: `/forum/${slug}/edit` }, replace: true });
     }
   }, [navigate, session.isAuthenticated, slug]);
@@ -44,6 +69,7 @@ export const ForumEditPage = observer(function ForumEditPage() {
 
   const updateTopic = trpc.forum.topics.update.useMutation({
     async onSuccess() {
+      discardEditDraft();
       await Promise.all([
         utils.forum.topics.bySlug.invalidate({ slug }),
         utils.forum.topics.list.invalidate(),
@@ -51,6 +77,8 @@ export const ForumEditPage = observer(function ForumEditPage() {
       navigate(`/forum/${slug}`, { replace: true, state: { notice: 'topicEdited' } });
     },
     onError(err) {
+      // §7-7: not an expired session, so the text is still in the form.
+      if (!isSessionInvalidError(err)) discardEditDraft();
       if (err.data?.appCode === APP_ERROR_CODES.USER_BANNED) {
         const message = presentError(err);
         if (message) setError(message);
@@ -91,6 +119,45 @@ export const ForumEditPage = observer(function ForumEditPage() {
   useEffect(() => {
     if (isOwner && isWithinWindow) setEnteredAllowed(true);
   }, [isOwner, isWithinWindow]);
+
+  // §7-4b: the session ended mid-edit (this page then goes to login). Only
+  // once the form has reported its fields, so nothing is saved before it shows.
+  useEffect(
+    () =>
+      subscribeSessionExpired(() => {
+        const userId = draftUserIdRef.current;
+        const topicId = draftTopicIdRef.current;
+        const values = valuesRef.current;
+        if (userId && topicId && values) {
+          saveTopicDraft({ target: { kind: 'edit', topicId }, userId, draft: values });
+        }
+      }),
+    [],
+  );
+
+  // §7-5: once the topic has loaded, restore into the form, or drop the
+  // draft when no form can be shown (banned, not the author).
+  // §7-6 (v1.2): an author back after the edit window with a valid draft is
+  // treated as having entered while editable, so the expired form shows.
+  const canHaveForm = !session.isBanned && topic !== undefined && isOwner;
+  const restoreTopicId = topic?.id;
+  const restoreUserId = session.user?.id;
+  const restoredForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!restoreTopicId || !restoreUserId) return;
+    const pass = `${restoreTopicId}:${restoreUserId}`;
+    if (restoredForRef.current === pass) return;
+    restoredForRef.current = pass;
+    const target: TopicDraftTarget = { kind: 'edit', topicId: restoreTopicId };
+    if (!canHaveForm) {
+      discardForumDraft(target);
+      return;
+    }
+    const restore = takeTopicDraft({ target, userId: restoreUserId });
+    if (restore.kind !== 'restored') return;
+    setEnteredAllowed(true);
+    setRestoredDraft({ id: Date.now(), ...restore.draft });
+  }, [canHaveForm, restoreTopicId, restoreUserId]);
 
   if (!session.isAuthenticated) return null;
 
@@ -202,6 +269,9 @@ export const ForumEditPage = observer(function ForumEditPage() {
       );
       return;
     }
+    const userId = session.user?.id;
+    if (userId)
+      saveTopicDraft({ target: { kind: 'edit', topicId: topic.id }, userId, draft: values });
     updateTopic.mutate(parsed.data);
   };
 
@@ -253,7 +323,13 @@ export const ForumEditPage = observer(function ForumEditPage() {
               isSubmitting={updateTopic.isPending}
               submitDisabled={expired}
               focusTitle
-              onCancel={() => navigate(`/forum/${topic.slug}`)}
+              restoredDraft={restoredDraft}
+              restoredLabel={tt('forum.draft.restored')}
+              onValuesChange={onValuesChange}
+              onCancel={() => {
+                discardForumDraft({ kind: 'edit', topicId: topic.id });
+                navigate(`/forum/${topic.slug}`);
+              }}
               onSubmit={onSubmit}
             />
           </CardContent>

@@ -287,6 +287,21 @@ describe('SiteHeader', () => {
     expect(screen.queryByRole('link', { name: /通知/ })).not.toBeInTheDocument();
   });
 
+  it('CH-226 26-7: signing out from the header deletes every forum draft in this tab', async () => {
+    const user = userEvent.setup();
+    window.sessionStorage.clear();
+    window.sessionStorage.setItem('cardhub:draft:forum:new', '{}');
+    window.sessionStorage.setItem('cardhub:draft:forum:edit:t1', '{}');
+    window.sessionStorage.setItem('cardhub:draft:forum:reply:t1', '{}');
+    window.sessionStorage.setItem('cardhub:legacyPasswordLater', '1');
+    rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
+    renderAt('/forum');
+
+    await user.click(screen.getByRole('button', { name: '退出登录' }));
+
+    expect(Object.keys(window.sessionStorage)).toEqual(['cardhub:legacyPasswordLater']);
+  });
+
   it('hides the admin entry from non-admins', () => {
     rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
     render(

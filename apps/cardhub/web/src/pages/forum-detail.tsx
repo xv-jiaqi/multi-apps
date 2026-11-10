@@ -25,6 +25,14 @@ import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
 import { BannedNotice } from '../components/banned-notice';
 import { HashTargetNotice } from '../components/hash-target-notice';
+import { ForumSessionNotice, useForumSessionNoticeHere } from '../components/forum-session-notice';
+import {
+  discardForumDraft,
+  saveReplyDraft,
+  takeReplyDraft,
+  type ReplyDraftTarget,
+} from '../lib/forum-draft';
+import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
 import {
   illegalHashTarget,
   illegalParentId,
@@ -107,6 +115,28 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
   const editLinkRef = useRef<HTMLAnchorElement>(null);
   const pinButtonRef = useRef<HTMLButtonElement>(null);
   const topicNoticeRef = useRef<HTMLParagraphElement>(null);
+  // CH-226 §6/§7: silent sign-out notice, reply draft, restored-draft line.
+  const sessionNoticeShown = useForumSessionNoticeHere();
+  const sessionNoticeRef = useRef<HTMLParagraphElement>(null);
+  const replyFormRef = useRef<HTMLFormElement>(null);
+  const replyBodyRef = useRef<HTMLTextAreaElement>(null);
+  const restoredLineId = useId();
+  const [replyRestored, setReplyRestored] = useState<{ id: number; text: string } | null>(null);
+  const [focusRestoredReply, setFocusRestoredReply] = useState(false);
+  const [focusSessionNotice, setFocusSessionNotice] = useState(false);
+  const restoredForRef = useRef<string | null>(null);
+  // Who typed the reply. Kept from render so an expiry listener that runs
+  // after signOut() still knows (§7-3 userId).
+  const draftUserIdRef = useRef<string | null>(null);
+  if (session.user) draftUserIdRef.current = session.user.id;
+  const replyBodyValueRef = useRef(replyBody);
+  replyBodyValueRef.current = replyBody;
+  const loadedTopicIdRef = useRef<string | null>(null);
+  loadedTopicIdRef.current = topicQuery.data?.id ?? null;
+  const discardReplyDraft = () => {
+    const topicIdNow = loadedTopicIdRef.current;
+    if (topicIdNow) discardForumDraft({ kind: 'reply', topicId: topicIdNow });
+  };
 
   // Valid UUID placeholder keeps the query input shape stable while `enabled`
   // prevents requests before the topic has loaded.
@@ -197,6 +227,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
 
   const createReply = trpc.forum.replies.create.useMutation({
     async onSuccess(created) {
+      discardReplyDraft();
+      setReplyRestored(null);
       setReplyBody('');
       setReplyError(null);
       clearDeleteState();
@@ -210,10 +242,69 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       ]);
     },
     onError(err) {
+      // §7-7: a failure that is not an expired session keeps the text in the form.
+      if (!isSessionInvalidError(err)) discardReplyDraft();
       const message = presentError(err);
       if (message) setReplyError(message);
     },
   });
+
+  // §7-4b and §6-6: when the session ends without a submit, keep what was
+  // typed, and if the reply form held focus, hand focus to the notice that
+  // replaces it so it does not fall to <body>.
+  useEffect(
+    () =>
+      subscribeSessionExpired(() => {
+        const topicIdNow = loadedTopicIdRef.current;
+        const userId = draftUserIdRef.current;
+        if (topicIdNow && userId) {
+          saveReplyDraft({
+            target: { kind: 'reply', topicId: topicIdNow },
+            userId,
+            draft: { body: replyBodyValueRef.current },
+          });
+        }
+        const form = replyFormRef.current;
+        if (form && form.contains(document.activeElement)) setFocusSessionNotice(true);
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    if (!focusSessionNotice || !sessionNoticeShown) return;
+    sessionNoticeRef.current?.focus();
+    setFocusSessionNotice(false);
+  }, [focusSessionNotice, sessionNoticeShown]);
+
+  // §7-5: once the reply form is on screen for this user, restore the draft
+  // for this topic (or drop it). Banned users get no form, so the draft goes.
+  const restoreTopicId = topicQuery.data?.id;
+  const restoreUserId = session.user?.id;
+  const replyFormShown = session.isAuthenticated && !session.isBanned;
+  useEffect(() => {
+    if (!restoreTopicId || !restoreUserId) return;
+    const pass = `${restoreTopicId}:${restoreUserId}`;
+    if (restoredForRef.current === pass) return;
+    restoredForRef.current = pass;
+    const target: ReplyDraftTarget = { kind: 'reply', topicId: restoreTopicId };
+    if (!replyFormShown) {
+      discardForumDraft(target);
+      return;
+    }
+    const restore = takeReplyDraft({ target, userId: restoreUserId });
+    if (restore.kind !== 'restored') return;
+    setReplyBody(restore.draft.body);
+    setReplyRestored({ id: Date.now(), text: t(locale.locale, 'forum.draft.restored') });
+    setFocusRestoredReply(true);
+  }, [locale.locale, replyFormShown, restoreTopicId, restoreUserId]);
+
+  useEffect(() => {
+    if (!focusRestoredReply) return;
+    const field = replyBodyRef.current;
+    if (!field) return;
+    field.focus();
+    setFocusRestoredReply(false);
+  }, [focusRestoredReply, replyRestored]);
 
   const deleteTopic = trpc.forum.topics.delete.useMutation({
     async onSuccess() {
@@ -582,6 +673,8 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
       <PageShell>
         <PageMeta title={tt('state.loading')} />
         <div className="space-y-4">
+          {/* CH-226 §6-2: no breadcrumbs or reply area while loading; the notice leads. */}
+          <ForumSessionNotice ref={sessionNoticeRef} />
           <div className="h-6 w-1/3 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
           <div className="h-32 animate-pulse motion-reduce:animate-none rounded-2xl bg-card/60" />
         </div>
@@ -602,6 +695,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
               { label: slug },
             ]}
           />
+          <ForumSessionNotice ref={sessionNoticeRef} />
           <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
             {isNotFound
               ? tt('state.notFound')
@@ -632,6 +726,15 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
           : tt('state.error'),
       );
       return;
+    }
+    const userId = session.user?.id;
+    // §7-4a: written before the request, so a rejected session cannot lose it.
+    if (userId) {
+      saveReplyDraft({
+        target: { kind: 'reply', topicId: topic.id },
+        userId,
+        draft: { body: replyBody },
+      });
     }
     createReply.mutate({ topicId: topic.id, body: parsed.data });
   };
@@ -964,10 +1067,13 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
             )
           ) : null}
 
+          {/* CH-226 §6-2: stays mounted; when shown it takes the sign-in prompt's place. */}
+          <ForumSessionNotice ref={sessionNoticeRef} />
           {session.isAuthenticated && session.isBanned ? (
             <BannedNotice>{tt('ban.cannotReply')}</BannedNotice>
           ) : session.isAuthenticated ? (
             <form
+              ref={replyFormRef}
               onSubmit={onSubmitReply}
               className="space-y-2 rounded-2xl border border-card/60 bg-card/80 p-4 backdrop-blur"
             >
@@ -975,16 +1081,19 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                 {tt('forum.detail.replyLabel')}
               </label>
               <textarea
+                ref={replyBodyRef}
                 id="reply-body"
                 value={replyBody}
+                aria-describedby={replyRestored?.text ? restoredLineId : undefined}
                 onChange={(e) => {
                   setReplyBody(e.target.value);
+                  setReplyRestored(null);
                   clearDeleteState();
                 }}
                 placeholder={tt('forum.detail.replyPlaceholder')}
                 rows={4}
                 maxLength={5000}
-                className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
+                className="w-full scroll-mt-20 resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
               />
               {replyError ? (
                 <p
@@ -994,6 +1103,13 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
                   {replyError}
                 </p>
               ) : null}
+              <p
+                id={restoredLineId}
+                role="status"
+                className={replyRestored?.text ? 'text-sm text-neutral-600' : 'sr-only'}
+              >
+                {replyRestored?.text ?? ''}
+              </p>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-muted">{tt('forum.detail.markdownNote')}</span>
                 <Button type="submit" disabled={createReply.isPending || !replyBody.trim()}>
@@ -1004,7 +1120,7 @@ export const ForumDetailPage = observer(function ForumDetailPage() {
               </div>
               <p className="text-xs text-neutral-600">{tt('comments.mentionHint')}</p>
             </form>
-          ) : (
+          ) : sessionNoticeShown ? null : (
             <p className="rounded-2xl border border-dashed border-neutral-300 bg-card/60 p-4 text-center text-sm text-neutral-600 backdrop-blur">
               <Link
                 to="/login"

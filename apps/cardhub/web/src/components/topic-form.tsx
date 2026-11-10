@@ -1,10 +1,15 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@repo/ui-web';
 import { MarkdownView } from './markdown-view';
 
-interface TopicFormValues {
+export interface TopicFormValues {
   title: string;
   body: string;
+}
+
+/** CH-226 §7: text brought back after sign-in. A new `id` applies it again. */
+export interface RestoredTopicDraft extends TopicFormValues {
+  id: number;
 }
 
 interface TopicFormProps {
@@ -26,6 +31,11 @@ interface TopicFormProps {
   isSubmitting: boolean;
   submitDisabled?: boolean;
   focusTitle?: boolean;
+  /** §7-6: goes into the current fields, never into initialTitle/initialBody. */
+  restoredDraft?: RestoredTopicDraft | null;
+  restoredLabel?: string;
+  /** Latest field values, for §7-4b (save when the session ends mid-edit). */
+  onValuesChange?: (values: TopicFormValues) => void;
   onCancel: () => void;
   onSubmit: (values: TopicFormValues) => void;
 }
@@ -49,6 +59,9 @@ export function TopicForm({
   isSubmitting,
   submitDisabled = false,
   focusTitle = false,
+  restoredDraft = null,
+  restoredLabel = '',
+  onValuesChange,
   onCancel,
   onSubmit,
 }: TopicFormProps) {
@@ -65,6 +78,20 @@ export function TopicForm({
   useEffect(() => {
     if (focusTitle) titleInputRef.current?.focus();
   }, [focusTitle]);
+
+  const restoredLineId = useId();
+  const [restoredText, setRestoredText] = useState('');
+  useEffect(() => {
+    if (!restoredDraft) return;
+    setTitle(restoredDraft.title);
+    setBody(restoredDraft.body);
+    setRestoredText(restoredLabel);
+    titleInputRef.current?.focus();
+  }, [restoredDraft, restoredLabel]);
+
+  useEffect(() => {
+    onValuesChange?.({ title, body });
+  }, [body, onValuesChange, title]);
 
   const unchanged = title === initialTitle && body === initialBody;
   const disabled =
@@ -90,9 +117,13 @@ export function TopicForm({
           id="topic-title"
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          aria-describedby={restoredText ? restoredLineId : undefined}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            setRestoredText('');
+          }}
           maxLength={120}
-          className="w-full rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
+          className="w-full scroll-mt-20 rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
           placeholder={titlePlaceholder}
         />
       </div>
@@ -122,7 +153,10 @@ export function TopicForm({
           <textarea
             id="topic-body"
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(e) => {
+              setBody(e.target.value);
+              setRestoredText('');
+            }}
             rows={12}
             maxLength={10_000}
             className="w-full resize-y rounded-md border border-input hover:border-input-hover bg-card px-3 py-2 font-mono text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card aria-invalid:border-danger-line"
@@ -141,6 +175,14 @@ export function TopicForm({
           {error}
         </p>
       ) : null}
+
+      <p
+        id={restoredLineId}
+        role="status"
+        className={restoredText ? 'text-sm text-neutral-600' : 'sr-only'}
+      >
+        {restoredText}
+      </p>
 
       <div className="flex items-center justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>

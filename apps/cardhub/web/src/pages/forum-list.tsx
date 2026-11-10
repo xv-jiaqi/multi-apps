@@ -7,6 +7,7 @@ import { t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
+import { ForumSessionNotice } from '../components/forum-session-notice';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 
@@ -65,8 +66,8 @@ export const ForumListPage = observer(function ForumListPage() {
           ) : (
             <Link
               to="/login"
-              state={{ from: '/forum' }}
-              className="text-sm text-link hover:underline"
+              state={{ from: '/forum/new' }}
+              className="inline-flex min-h-6 items-center rounded text-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               {tt('forum.list.loginToPost')}
             </Link>
@@ -83,6 +84,9 @@ export const ForumListPage = observer(function ForumListPage() {
             {notice}
           </p>
         ) : null}
+
+        {/* CH-226 §6-2: under topicDeleted, above the list, in every list state (§6-8). */}
+        <ForumSessionNotice />
 
         {query.isLoading ? (
           <ul className="space-y-3">
