@@ -1,0 +1,21 @@
+{
+  "name": "26-11-cached-delay-0",
+  "paintedFrames": 1154,
+  "fromCache": true,
+  "countdownFrames": 1102,
+  "saveEnabledFrames": 1102,
+  "countdownInDom": 1105,
+  "firstPainted": {
+    "kind": "raf",
+    "t": 24489.100000000093,
+    "path": "/forum/ch-226-1794280648686-ipz3zj/edit",
+    "skeleton": false,
+    "notAllowed": false,
+    "countdown": true,
+    "expiredAlert": false,
+    "title": "缓存稿子",
+    "body": "原正文",
+    "reply": null,
+    "saveEnabled": true
+  }
+}
