@@ -113,10 +113,12 @@ export class ReportsRouter {
 
   build() {
     const t = this.t;
+    // Per-user quota after auth, before input validation (CH-227).
+    const reportCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('reportCreate'));
     const prisma = this.prisma;
 
     return t.router({
-      create: t.activeUserProcedure.input(reportCreateInput).mutation(async ({ ctx, input }) => {
+      create: reportCreateProcedure.input(reportCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         // Per-user per-day quota is enforced at the procedure level so
         // express-rate-limit doesn't have to sniff the bearer token; 10

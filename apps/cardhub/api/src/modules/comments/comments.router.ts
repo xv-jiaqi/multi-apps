@@ -64,6 +64,8 @@ export class CommentsRouter {
 
   build() {
     const t = this.t;
+    // Per-user quota after auth, before input validation (CH-227).
+    const commentCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('commentCreate'));
     const prisma = this.prisma;
 
     const userSelect = { select: { id: true, username: true } } as const;
@@ -270,7 +272,7 @@ export class CommentsRouter {
         return mapPage(rows);
       }),
 
-      create: t.activeUserProcedure.input(commentInput).mutation(async ({ ctx, input }) => {
+      create: commentCreateProcedure.input(commentInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) {
           throw new TRPCError({ code: 'UNAUTHORIZED' });
         }
@@ -303,7 +305,7 @@ export class CommentsRouter {
         }
       }),
 
-      createForSeries: t.activeUserProcedure
+      createForSeries: commentCreateProcedure
         .input(seriesCommentInput)
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) {

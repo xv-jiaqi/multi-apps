@@ -102,6 +102,9 @@ export class ForumRouter {
 
   build() {
     const t = this.t;
+    // Per-user quota after auth, before input validation (CH-227).
+    const topicCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('forumTopicCreate'));
+    const replyCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('forumReplyCreate'));
     const prisma = this.prisma;
 
     const topics = t.router({
@@ -163,7 +166,7 @@ export class ForumRouter {
           };
         }),
 
-      create: t.activeUserProcedure.input(topicCreateInput).mutation(async ({ ctx, input }) => {
+      create: topicCreateProcedure.input(topicCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const actorId = ctx.user.sub;
         const created = await createTopicWithUniqueSlug(prisma, {
@@ -347,7 +350,7 @@ export class ForumRouter {
         return mapPage(items);
       }),
 
-      create: t.activeUserProcedure.input(replyCreateInput).mutation(async ({ ctx, input }) => {
+      create: replyCreateProcedure.input(replyCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const topic = await prisma.topic.findUnique({
           where: { id: input.topicId },

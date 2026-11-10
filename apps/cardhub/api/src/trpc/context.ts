@@ -1,4 +1,5 @@
 import type { CreateExpressContextOptions } from '@trpc/server/adapters/express';
+import type { UserRateLimiter } from '../bootstrap/rate-limiters';
 import { InvalidAuthTokenError, type AuthService } from '../modules/auth/auth.service';
 import { recordDailyActivity, type DailyActivityRedis } from '../modules/metrics/daily-activity';
 import type { PrismaService } from '../modules/prisma/prisma.service';
@@ -16,6 +17,12 @@ export interface TrpcContext {
   req: CreateExpressContextOptions['req'];
   res: CreateExpressContextOptions['res'];
   user: TrpcUser | null;
+  /**
+   * Per-user write quota (CH-227). createApp always sets it. A rate-limited
+   * procedure fails closed (500) when it is missing, so a context built
+   * without it cannot skip the quota.
+   */
+  userRateLimit?: UserRateLimiter;
 }
 
 const BEARER_PREFIX = 'Bearer ';
@@ -34,6 +41,7 @@ export function makeCreateContext(
   auth: AuthService,
   prisma: PrismaService,
   redis?: DailyActivityRedis,
+  userRateLimit?: UserRateLimiter,
 ) {
   return async ({ req, res }: CreateExpressContextOptions): Promise<TrpcContext> => {
     const header = req.headers['authorization'];
@@ -70,6 +78,7 @@ export function makeCreateContext(
                 tokenVersion: row.tokenVersion,
                 bannedAt: row.bannedAt,
               },
+              ...(userRateLimit ? { userRateLimit } : {}),
             };
           }
         } catch (error) {
@@ -77,6 +86,6 @@ export function makeCreateContext(
         }
       }
     }
-    return { req, res, user: null };
+    return { req, res, user: null, ...(userRateLimit ? { userRateLimit } : {}) };
   };
 }

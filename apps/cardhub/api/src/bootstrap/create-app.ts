@@ -28,14 +28,19 @@ import {
   CLEAR_LOGIN_ACCOUNT_LIMIT,
   createAuthAccountLimiter,
   createRateLimiters,
+  createUserRateLimiter,
   defaultRateLimitPrefix,
   rejectInvalidTrpcCall,
   TRPC_MAX_BATCH_SIZE,
+  type IpRateLimitOverrides,
   type RateLimitOverrides,
 } from './rate-limiters';
 
 export type CreateAppOptions = {
+  /** Per-user layer of the six writes, plus the authMutation IP and account buckets. */
   rateLimitOverrides?: RateLimitOverrides;
+  /** IP fallback layer of the six writes (default: user limit x 10). */
+  ipRateLimitOverrides?: IpRateLimitOverrides;
   /** Overrides the Redis key prefix. Tests pass one prefix to share a bucket. */
   rateLimitPrefix?: string;
 };
@@ -148,11 +153,12 @@ export async function createApp(options: CreateAppOptions = {}) {
 
   // One prefix so the IP buckets and the account bucket share a test namespace.
   const rateLimitPrefix = options.rateLimitPrefix ?? defaultRateLimitPrefix();
-  for (const { path, middleware } of createRateLimiters(
-    redis,
-    options.rateLimitOverrides,
-    rateLimitPrefix,
-  )) {
+  const authMutationOverride = options.rateLimitOverrides?.authMutation;
+  const ipOverrides: RateLimitOverrides = {
+    ...options.ipRateLimitOverrides,
+    ...(authMutationOverride ? { authMutation: authMutationOverride } : {}),
+  };
+  for (const { path, middleware } of createRateLimiters(redis, ipOverrides, rateLimitPrefix)) {
     app.use(path, middleware);
   }
 
@@ -188,7 +194,12 @@ export async function createApp(options: CreateAppOptions = {}) {
     trpcExpress.createExpressMiddleware({
       router: trpcService.appRouter,
       maxBatchSize: TRPC_MAX_BATCH_SIZE,
-      createContext: makeCreateContext(authService, prisma, redis.client),
+      createContext: makeCreateContext(
+        authService,
+        prisma,
+        redis.client,
+        createUserRateLimiter(redis, options.rateLimitOverrides, rateLimitPrefix),
+      ),
       onError: ({ error, path, type, req }) => {
         const requestId = requestIdFrom(req);
         // requestId is already a child binding on req.log. Repeating it here

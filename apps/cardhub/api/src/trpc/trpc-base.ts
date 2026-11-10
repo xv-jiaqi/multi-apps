@@ -8,6 +8,7 @@ import {
   t,
   type AdminCatalogErrorCode,
 } from '@repo/shared';
+import type { WriteRateLimitName } from '../bootstrap/rate-limiters';
 import type { TrpcContext } from './context';
 
 const ADMIN_CATALOG_ERROR_CODE_SET = new Set<string>(ADMIN_CATALOG_ERROR_CODES);
@@ -285,6 +286,15 @@ function sessionRejected(): TRPCError {
   });
 }
 
+/** Same body as the IP layer's 429 once formatted: appCode and zh copy (CH-227 §2). */
+function userRateLimited(): TRPCError {
+  return new TRPCError({
+    code: 'TOO_MANY_REQUESTS',
+    message: t('zh-CN', 'error.app.TOO_MANY_REQUESTS'),
+    cause: { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+  });
+}
+
 const trpc = initTRPC.context<TrpcContext>().create({
   errorFormatter({ shape, error }) {
     const adminCatalogError = sanitizeAdminCatalogError(error.cause);
@@ -374,4 +384,28 @@ export class TrpcBase {
     }
     return next({ ctx: { ...ctx, user: ctx.user } });
   }) as unknown as TrpcProcedure;
+
+  /**
+   * Per-user write quota (CH-227 27-B). Chain it right after
+   * activeUserProcedure / authedProcedure and before `.input()`, so a 401 or a
+   * ban never counts and a call that fails validation still does. tRPC runs
+   * this once per call, so each batch slot counts on its own.
+   */
+  userRateLimit(name: WriteRateLimitName) {
+    return trpc.middleware(async ({ ctx, next }) => {
+      if (!ctx.user) throw sessionRejected();
+      if (!ctx.userRateLimit) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'user rate limit missing' });
+      }
+      const verdict = await ctx.userRateLimit.hit(name, ctx.user.sub);
+      if (verdict.limited) {
+        ctx.req.log?.warn(
+          { layer: 'user', rateLimit: name, totalHits: verdict.totalHits, limit: verdict.limit },
+          'rate limit exceeded',
+        );
+        throw userRateLimited();
+      }
+      return next();
+    });
+  }
 }

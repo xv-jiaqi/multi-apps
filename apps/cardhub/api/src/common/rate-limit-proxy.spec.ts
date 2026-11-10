@@ -2,8 +2,13 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { APP_ERROR_CODES } from '@repo/shared';
 import { createApp } from '../bootstrap/create-app';
-import { productionRateLimitConfigs } from '../bootstrap/rate-limiters';
+import {
+  IP_FALLBACK_MULTIPLIER,
+  productionRateLimitConfigs,
+  userRateLimitConfigs,
+} from '../bootstrap/rate-limiters';
 import { HealthService } from '../modules/health/health.service';
+import { createSignedUser } from '../../test/fixtures/signed-user';
 
 async function makeTestApp(): Promise<INestApplication> {
   const app = await createApp({
@@ -25,20 +30,50 @@ async function makeTestApp(): Promise<INestApplication> {
 }
 
 describe('rate limit proxy IP handling', () => {
-  it('keeps the production comments.create limit at 30 per hour', () => {
+  it('keeps the production comments.create limit at 30 per hour per user, 300 per IP', () => {
+    expect(userRateLimitConfigs.commentCreate).toEqual({ windowMs: 3_600_000, limit: 30 });
     expect(productionRateLimitConfigs.commentCreate.windowMs).toBe(3_600_000);
-    expect(productionRateLimitConfigs.commentCreate.limit).toBe(30);
+    expect(productionRateLimitConfigs.commentCreate.limit).toBe(300);
   });
 
-  it('keeps the production collection.upsert limit at 60 per minute', () => {
+  it('keeps the production collection.upsert limit at 60 per minute per user, 600 per IP', () => {
+    expect(userRateLimitConfigs.collectionUpsert).toEqual({ windowMs: 60_000, limit: 60 });
     expect(productionRateLimitConfigs.collectionUpsert.windowMs).toBe(60_000);
-    expect(productionRateLimitConfigs.collectionUpsert.limit).toBe(60);
+    expect(productionRateLimitConfigs.collectionUpsert.limit).toBe(600);
     expect(productionRateLimitConfigs.collectionUpsert.skip({ url: '/trpc/collection.list' })).toBe(
       true,
     );
     expect(
       productionRateLimitConfigs.collectionUpsert.skip({ url: '/trpc/collection.upsert' }),
     ).toBe(false);
+  });
+
+  it('27-12: user and IP layers match CH-227 §1 and §2 27-C', () => {
+    const hour = 3_600_000;
+    expect(userRateLimitConfigs).toEqual({
+      commentCreate: { windowMs: hour, limit: 30 },
+      forumTopicCreate: { windowMs: hour, limit: 5 },
+      forumReplyCreate: { windowMs: hour, limit: 30 },
+      listingPublish: { windowMs: hour, limit: 10 },
+      reportCreate: { windowMs: hour, limit: 20 },
+      collectionUpsert: { windowMs: 60_000, limit: 60 },
+    });
+    expect(IP_FALLBACK_MULTIPLIER).toBe(10);
+    const ip = Object.fromEntries(
+      Object.entries(productionRateLimitConfigs).map(([name, config]) => [
+        name,
+        { windowMs: config.windowMs, limit: config.limit },
+      ]),
+    );
+    expect(ip).toEqual({
+      authMutation: { windowMs: 60_000, limit: 10 },
+      commentCreate: { windowMs: hour, limit: 300 },
+      forumTopicCreate: { windowMs: hour, limit: 50 },
+      forumReplyCreate: { windowMs: hour, limit: 300 },
+      listingPublish: { windowMs: hour, limit: 100 },
+      reportCreate: { windowMs: hour, limit: 200 },
+      collectionUpsert: { windowMs: 60_000, limit: 600 },
+    });
   });
 
   it('sets Vary: Origin on CORS responses for dynamic origins', async () => {
@@ -171,20 +206,57 @@ describe('rate limit proxy IP handling', () => {
     }
   });
 
-  it('throttles comments.create on the 31st request per IP', async () => {
+  it('throttles comments.create on the 31st call per user, from any IP', async () => {
     const app = await makeTestApp();
     try {
+      const user = await createSignedUser(app);
+      const call = (ip: string) =>
+        request(app.getHttpServer())
+          .post('/trpc/comments.create')
+          .set('Content-Type', 'application/json')
+          .set('Authorization', `Bearer ${user.token}`)
+          .set('X-Forwarded-For', ip)
+          .send({ cardSlug: 'rl-missing-card', content: 'counted' });
+      // Each call reaches the handler (missing card = 404) and still counts.
       for (let i = 0; i < 30; i += 1) {
+        await call(`203.0.113.${20 + (i % 3)}`).expect(404);
+      }
+
+      await call('203.0.113.29')
+        .expect('Content-Type', /application\/json/)
+        .expect(429)
+        .expect((res) => {
+          expect(res.body.error.message).toBe('操作太频繁，请稍后再试');
+          expect(res.body.error.code).toBe(-32029);
+          expect(res.body.error.data).toMatchObject({
+            code: 'TOO_MANY_REQUESTS',
+            appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+            httpStatus: 429,
+            path: 'comments.create',
+          });
+        });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('throttles comments.createForSeries on the 301st request per IP (fallback, 401s count)', async () => {
+    const app = await makeTestApp();
+    try {
+      for (let i = 0; i < 300; i += 1) {
         await request(app.getHttpServer())
-          .get('/trpc/comments.create')
-          .set('X-Forwarded-For', '203.0.113.20')
-          .expect((res) => expect(res.status).not.toBe(429));
+          .post('/trpc/comments.createForSeries')
+          .set('Content-Type', 'application/json')
+          .set('X-Forwarded-For', '203.0.113.21')
+          .send({ seriesSlug: 'rl-series', content: 'anonymous' })
+          .expect(401);
       }
 
       await request(app.getHttpServer())
-        .get('/trpc/comments.create')
-        .set('X-Forwarded-For', '203.0.113.20')
-        .expect('Content-Type', /application\/json/)
+        .post('/trpc/comments.createForSeries')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', '203.0.113.21')
+        .send({ seriesSlug: 'rl-series', content: 'anonymous' })
         .expect(429)
         .expect((res) => {
           expect(res.body).toEqual({
@@ -195,34 +267,10 @@ describe('rate limit proxy IP handling', () => {
                 code: 'TOO_MANY_REQUESTS',
                 appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
                 httpStatus: 429,
-                path: 'comments.create',
+                path: 'comments.createForSeries',
               },
             },
           });
-        });
-    } finally {
-      await app.close();
-    }
-  });
-
-  it('throttles comments.createForSeries with the same comment bucket', async () => {
-    const app = await makeTestApp();
-    try {
-      for (let i = 0; i < 30; i += 1) {
-        await request(app.getHttpServer())
-          .get('/trpc/comments.createForSeries')
-          .set('X-Forwarded-For', '203.0.113.21')
-          .expect((res) => expect(res.status).not.toBe(429));
-      }
-
-      await request(app.getHttpServer())
-        .get('/trpc/comments.createForSeries')
-        .set('X-Forwarded-For', '203.0.113.21')
-        .expect(429)
-        .expect((res) => {
-          expect(res.body.error.data.code).toBe('TOO_MANY_REQUESTS');
-          expect(res.body.error.data.appCode).toBe('TOO_MANY_REQUESTS');
-          expect(res.body.error.data.path).toBe('comments.createForSeries');
         });
     } finally {
       await app.close();
