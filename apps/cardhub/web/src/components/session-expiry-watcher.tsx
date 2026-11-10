@@ -13,14 +13,13 @@ export function SessionExpiryWatcher() {
   locationRef.current = location;
 
   useEffect(() => {
-    return subscribeSessionExpired((error, origin) => {
+    return subscribeSessionExpired((_error, origin) => {
       const current = locationRef.current;
       applySessionExpiry({
         pathname: current.pathname,
         search: current.search,
         hash: current.hash,
         navigate,
-        error,
         origin,
       });
     });

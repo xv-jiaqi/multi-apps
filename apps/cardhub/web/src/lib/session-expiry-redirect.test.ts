@@ -60,7 +60,6 @@ describe('applySessionExpiry', () => {
       search: '?year=2024',
       hash: '#list',
       navigate,
-      error: unauthorized('auth.me'),
       origin: 'query',
     });
 
@@ -78,7 +77,6 @@ describe('applySessionExpiry', () => {
       search: '',
       hash: '',
       navigate,
-      error: unauthorized('auth.me'),
     });
 
     expect(navigate).toHaveBeenCalledTimes(1);
@@ -97,7 +95,6 @@ describe('applySessionExpiry', () => {
       search: '',
       hash: '',
       navigate,
-      error: unauthorized('auth.me'),
     });
 
     expect(navigate).toHaveBeenCalledWith('/login', {
@@ -115,7 +112,6 @@ describe('applySessionExpiry', () => {
       search: '?next=/me',
       hash: '#form',
       navigate,
-      error: unauthorized('comments.create'),
     });
 
     expect(navigate).toHaveBeenCalledWith('/login', {
@@ -131,7 +127,6 @@ describe('applySessionExpiry', () => {
       search: '',
       hash: '',
       navigate: dotted,
-      error: unauthorized('comments.create'),
     });
     expect(dotted).toHaveBeenCalledWith('/login', {
       replace: true,

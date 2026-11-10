@@ -29,7 +29,6 @@ export function useAppMutationError() {
           search: location.search,
           hash: location.hash,
           navigate,
-          error,
         });
         return null;
       }

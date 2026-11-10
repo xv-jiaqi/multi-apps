@@ -43,8 +43,6 @@ type ExpireNavigation = {
     to: string,
     options: { replace: true; state: { from: string; notice: 'sessionExpired' } },
   ) => void;
-  /** Not read for the decision: only the route and `origin` count (CH-227 27-A). */
-  error?: unknown;
   /** Omitted means a user action (useAppMutationError). */
   origin?: SessionExpiryOrigin;
 };
