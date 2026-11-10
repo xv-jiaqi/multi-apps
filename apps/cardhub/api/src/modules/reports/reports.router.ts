@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import {
-  APP_ERROR_CODES,
-  reportCreateInput,
-  reportListInput,
-  reportResolveInput,
-} from '@repo/shared';
+import { reportCreateInput, reportListInput, reportResolveInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { writeReportResolve } from '../audit/content-delete';
 import { notifyAfterCommit, notifyModeration } from '../notifications/notify';
 import { readTargetSnapshot } from '../notifications/target-snapshot';
+import {
+  REPORT_DAILY_LIMIT,
+  REPORT_QUOTA_WINDOW_MS,
+  reportQuotaCause,
+  reportQuotaRetryAfterSeconds,
+} from './report-quota';
 
 type ReportWithReporter = Prisma.ReportGetPayload<{
   include: {
@@ -111,7 +112,8 @@ export class ReportsRouter {
     private readonly prisma: PrismaService,
   ) {}
 
-  build() {
+  /** `now` is injectable so tests can pin the quota window edges (CH-229). */
+  build({ now = Date.now }: { now?: () => number } = {}) {
     const t = this.t;
     // Per-user quota after auth, before input validation (CH-227).
     const reportCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('reportCreate'));
@@ -124,15 +126,27 @@ export class ReportsRouter {
         // express-rate-limit doesn't have to sniff the bearer token; 10
         // is generous enough for legitimate moderation reports while
         // still curbing report-flood griefing.
-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const recent = await prisma.report.count({
-          where: { reporterId: ctx.user.sub, createdAt: { gte: since } },
-        });
-        if (recent >= 10) {
+        const at = now();
+        const inWindow = {
+          reporterId: ctx.user.sub,
+          createdAt: { gte: new Date(at - REPORT_QUOTA_WINDOW_MS) },
+        };
+        const recent = await prisma.report.count({ where: inWindow });
+        if (recent >= REPORT_DAILY_LIMIT) {
+          // Only on the rejected path: when the oldest one leaves the window (CH-229).
+          const oldest = await prisma.report.findFirst({
+            where: inWindow,
+            orderBy: { createdAt: 'asc' },
+            select: { createdAt: true },
+          });
+          // Gone between the two reads (deleted with its account): wait a full window.
+          const seconds = oldest
+            ? reportQuotaRetryAfterSeconds({ oldestCreatedAt: oldest.createdAt, now: at })
+            : REPORT_QUOTA_WINDOW_MS / 1000;
           throw new TRPCError({
             code: 'TOO_MANY_REQUESTS',
             message: '今日举报次数已达上限，请明天再试',
-            cause: { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+            cause: reportQuotaCause({ retryAfterSeconds: seconds }),
           });
         }
         await assertReportTargetExists(prisma, input.targetType, input.targetId);

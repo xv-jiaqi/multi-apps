@@ -22,6 +22,18 @@ function reportsQuota(): TRPCError {
   });
 }
 
+/** CH-229: the reports daily quota's 429 carries its own wait. */
+function reportQuotaRejection(seconds: number): TRPCError {
+  return new TRPCError({
+    code: 'TOO_MANY_REQUESTS',
+    cause: {
+      appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS,
+      layer: 'reportQuota',
+      retryAfterSeconds: seconds,
+    },
+  });
+}
+
 function responseHeaders() {
   const headers = new Map<string, string>([
     ['ratelimit', 'limit=50, remaining=48, reset=3540'],
@@ -70,6 +82,32 @@ describe('userRateLimitResponseMeta (CH-228 228-A/B)', () => {
       );
       expect(headers.size).toBe(3);
     }
+  });
+
+  it('treats the reports daily quota like the user layer and takes the largest wait (CH-229 229-B)', () => {
+    const { headers, res } = responseHeaders();
+    const meta = userRateLimitResponseMeta({
+      ctx: { res },
+      errors: [reportQuotaRejection(82_800)],
+      eagerGeneration: false,
+    });
+    expect(meta).toEqual({ headers: { 'Retry-After': '82800' } });
+    expect([...headers.keys()]).toEqual(['x-request-id']);
+
+    for (const errors of [
+      [userRejection(3600), reportQuotaRejection(30)],
+      [reportQuotaRejection(30), userRejection(3600)],
+    ]) {
+      expect(userRateLimitResponseMeta({ errors, eagerGeneration: false })).toEqual({
+        headers: { 'Retry-After': '3600' },
+      });
+    }
+    expect(
+      userRateLimitResponseMeta({
+        errors: [userRejection(60), reportQuotaRejection(82_800)],
+        eagerGeneration: false,
+      }),
+    ).toEqual({ headers: { 'Retry-After': '82800' } });
   });
 
   it('still sets Retry-After when the context was not built', () => {
