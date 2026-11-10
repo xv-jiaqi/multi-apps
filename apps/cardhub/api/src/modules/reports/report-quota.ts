@@ -1,4 +1,5 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { APP_ERROR_CODES } from '@repo/shared';
 import { retryAfterSeconds } from '../../bootstrap/rate-limiters';
 import type { PerUserTooManyCause } from '../../trpc/user-rate-limit-headers';
@@ -50,10 +51,38 @@ export const REPORT_QUOTA_LOCK_NAMESPACE = 230;
  * The second key is `hashtext(reporterId)` (int4). Two accounts whose ids
  * hash to the same value would also wait on each other. That only adds a
  * short wait to an occasional unrelated report and never lets one through.
+ *
+ * The wait is capped at 3s (CH-231 231-A). Prisma's transaction timeout does
+ * not cancel a statement blocked inside Postgres, so the cap is a
+ * `SET LOCAL lock_timeout` set just before the lock. SET LOCAL ends with this
+ * transaction: the pooled connection and the server default are unchanged.
+ * Past the cap Postgres raises 55P03; see isReportQuotaLockTimeout.
  */
 export async function lockReportQuota(
   tx: Pick<Prisma.TransactionClient, '$executeRaw'>,
   reporterId: string,
 ): Promise<void> {
+  await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(${REPORT_QUOTA_LOCK_NAMESPACE}::int4, hashtext(${reporterId}))`;
+}
+
+/** Retry-After for a report that timed out waiting on its account's lock (CH-231 231-B). */
+export const REPORT_QUOTA_LOCK_RETRY_AFTER_SECONDS = 1;
+
+/**
+ * How Prisma 6.19 surfaces Postgres 55P03 (lock_not_available) from a raw
+ * query, measured on Postgres 16 (CH-231): PrismaClientKnownRequestError with
+ * code P2010 and the SQLSTATE in meta.code.
+ */
+const lockTimeoutError = z.object({
+  code: z.literal('P2010'),
+  meta: z.object({ code: z.literal('55P03') }),
+});
+
+/** True only for the lock-wait timeout above; every other error is false. */
+export function isReportQuotaLockTimeout(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    lockTimeoutError.safeParse(error).success
+  );
 }
