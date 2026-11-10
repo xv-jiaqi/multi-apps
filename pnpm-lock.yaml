@@ -500,6 +500,9 @@ importers:
       swr:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.5)
+      zod:
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@axe-core/react':
         specifier: ^4.11.3
@@ -6705,6 +6708,7 @@ packages:
   image-size@0.5.5:
     resolution: {integrity: sha512-6TDAlDPZxUFCv+fuOkIoXT/V/f3Qbq8e37p+YOiYrUv3v9cc3/6x78VdfPgFVaB9dZYeLUfKgHRebpkm/oP2VQ==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please migrate to image-size@2.x
     hasBin: true
 
   immutable@5.1.5:

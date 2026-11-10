@@ -1,16 +1,26 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader } from '@repo/ui-web';
 import { fieldErrorMessage, t, topicCreateInput } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
-import { TopicForm } from '../components/topic-form';
+import { TopicForm, type RestoredTopicDraft, type TopicFormValues } from '../components/topic-form';
 import { BannedNotice } from '../components/banned-notice';
 import { useStores } from '../stores/root-store';
 import { useAppMutationError } from '../lib/app-mutation-error';
+import {
+  discardForumDraft,
+  saveTopicDraft,
+  takeTopicDraft,
+  type TopicDraftTarget,
+} from '../lib/forum-draft';
+import { isSessionInvalidError, subscribeSessionExpired } from '../lib/session-expiry';
+import { isSessionExpiryNavigationPending } from '../lib/session-expiry-redirect';
 import { trpc } from '../lib/trpc';
+
+const NEW_TOPIC_DRAFT: TopicDraftTarget = { kind: 'new' };
 
 export const ForumNewPage = observer(function ForumNewPage() {
   const { locale, session } = useStores();
@@ -21,21 +31,60 @@ export const ForumNewPage = observer(function ForumNewPage() {
   const [error, setError] = useState<string | null>(null);
   const utils = trpc.useUtils();
 
+  // CH-226 §7: the draft under cardhub:draft:forum:new.
+  const [restoredDraft, setRestoredDraft] = useState<RestoredTopicDraft | null>(null);
+  const valuesRef = useRef<TopicFormValues>({ title: '', body: '' });
+  const onValuesChange = useCallback((values: TopicFormValues) => {
+    valuesRef.current = values;
+  }, []);
+  // Kept from render so a listener that runs after signOut() still has it.
+  const draftUserIdRef = useRef<string | null>(null);
+  if (session.user) draftUserIdRef.current = session.user.id;
+
   const create = trpc.forum.topics.create.useMutation({
     onSuccess(topic) {
+      discardForumDraft(NEW_TOPIC_DRAFT);
       void utils.forum.topics.list.invalidate();
       navigate(`/forum/${topic.slug}`);
     },
     onError(err) {
+      // §7-7: not an expired session, so the text is still in the form.
+      if (!isSessionInvalidError(err)) discardForumDraft(NEW_TOPIC_DRAFT);
       const message = presentError(err);
       if (message) setError(message);
     },
   });
 
+  // §7-4b: the session ended while typing (this page then goes to login).
+  useEffect(
+    () =>
+      subscribeSessionExpired(() => {
+        const userId = draftUserIdRef.current;
+        if (userId) saveTopicDraft({ target: NEW_TOPIC_DRAFT, userId, draft: valuesRef.current });
+      }),
+    [],
+  );
+
+  // §7-5: restore once the form is on screen; a banned user gets no form.
+  const userId = session.user?.id;
+  const formShown = session.isAuthenticated && !session.isBanned;
+  const restoredForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!userId || restoredForRef.current === userId) return;
+    restoredForRef.current = userId;
+    if (!formShown) {
+      discardForumDraft(NEW_TOPIC_DRAFT);
+      return;
+    }
+    const restore = takeTopicDraft({ target: NEW_TOPIC_DRAFT, userId });
+    if (restore.kind === 'restored') setRestoredDraft({ id: Date.now(), ...restore.draft });
+  }, [formShown, userId]);
+
   // Bounce anonymous users back to login. The state.from contract makes the
   // existing redirect-after-login flow (M2) bring them straight here.
+  // An expired session is already on its way to /login with sessionExpired.
   useEffect(() => {
-    if (!session.isAuthenticated) {
+    if (!session.isAuthenticated && !isSessionExpiryNavigationPending()) {
       navigate('/login', { state: { from: '/forum/new' }, replace: true });
     }
   }, [session.isAuthenticated, navigate]);
@@ -55,6 +104,7 @@ export const ForumNewPage = observer(function ForumNewPage() {
       );
       return;
     }
+    if (userId) saveTopicDraft({ target: NEW_TOPIC_DRAFT, userId, draft: values });
     create.mutate(parsed.data);
   };
 
@@ -102,7 +152,13 @@ export const ForumNewPage = observer(function ForumNewPage() {
                 submittingLabel={tt('forum.new.publishing')}
                 error={error}
                 isSubmitting={create.isPending}
-                onCancel={() => navigate('/forum')}
+                restoredDraft={restoredDraft}
+                restoredLabel={tt('forum.draft.restored')}
+                onValuesChange={onValuesChange}
+                onCancel={() => {
+                  discardForumDraft(NEW_TOPIC_DRAFT);
+                  navigate('/forum');
+                }}
                 onSubmit={onSubmit}
               />
             )}
