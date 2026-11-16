@@ -642,7 +642,7 @@ describe('catalog import focus and error wiring (CH-213 §17)', () => {
   });
 });
 
-describe('catalog import taxonomy errors (CH-107 v4 §7.4–§7.8)', () => {
+describe('catalog import taxonomy errors (CH-107 v4.1 §7.4–§7.8)', () => {
   async function previewAc62(locale: 'zh-CN' | 'en-US') {
     rootStore.locale.setLocale(locale);
     importImpl.current = async () => AC62_ROWS;
