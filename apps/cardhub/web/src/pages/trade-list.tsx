@@ -30,7 +30,7 @@ import { PageMeta } from '../components/page-meta';
 import { ErrorBox } from '../components/error-box';
 import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { useStores } from '../stores/root-store';
-import { trpc } from '../lib/trpc';
+import { shouldRetryQuery, trpc } from '../lib/trpc';
 import { ReportButton } from '../components/report-button';
 import { ListingCloseControl } from '../components/listing-close-control';
 import { CardPicker, type CardPickerItem } from '../components/card-picker';
@@ -184,7 +184,7 @@ export const TradeListPage = observer(function TradeListPage() {
     {
       enabled: !priceInvalid,
       getNextPageParam: (last) => last.nextCursor ?? undefined,
-      retry: (count, error) => error.data?.code !== 'BAD_REQUEST' && count < 1,
+      retry: (count, error) => error.data?.code !== 'BAD_REQUEST' && shouldRetryQuery(count, error),
     },
   );
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];

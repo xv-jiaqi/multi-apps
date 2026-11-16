@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router';
+import type * as TrpcModule from '../lib/trpc';
 import { rootStore } from '../stores/root-store';
 import { TradeListPage } from './trade-list';
 
@@ -44,82 +45,86 @@ const listHarness = vi.hoisted(() => ({
   refetch: vi.fn(),
 }));
 
-vi.mock('../lib/trpc', () => ({
-  trpc: {
-    useUtils: () => ({
-      listings: {
-        list: { invalidate: vi.fn() },
-        byCard: { invalidate: vi.fn() },
-        mine: { invalidate: vi.fn() },
-      },
-    }),
-    search: {
-      global: {
-        useQuery: () => ({
-          data: undefined,
-          isFetching: false,
-          isError: false,
-          isSuccess: false,
-          refetch: vi.fn(),
-        }),
-      },
-    },
-    cards: {
-      bySlug: {
-        useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
-      },
+vi.mock('../lib/trpc', async (importOriginal) => {
+  const actual = await importOriginal<typeof TrpcModule>();
+  return {
+    shouldRetryQuery: actual.shouldRetryQuery,
+    trpc: {
+      useUtils: () => ({
+        listings: {
+          list: { invalidate: vi.fn() },
+          byCard: { invalidate: vi.fn() },
+          mine: { invalidate: vi.fn() },
+        },
+      }),
       search: {
-        useQuery: () => ({
-          data: undefined,
-          isLoading: false,
-          isFetching: false,
-          isError: false,
-          refetch: vi.fn(),
-        }),
-      },
-    },
-    listings: {
-      list: {
-        useInfiniteQuery: (
-          input: ListInput,
-          options: { retry?: (count: number, error: { data?: { code?: string } }) => boolean },
-        ) => {
-          listHarness.inputs.push(input);
-          listHarness.options.push(options);
-          return {
-            data: listHarness.isLoading
-              ? undefined
-              : { pages: [{ items: listHarness.items, nextCursor: null }] },
-            isLoading: listHarness.isLoading,
-            isPending: listHarness.isLoading,
-            isError: listHarness.isError,
-            isFetching: listHarness.isFetching,
-            isFetchingNextPage: false,
-            hasNextPage: false,
-            error: listHarness.isError
-              ? {
-                  message: listHarness.errorMessage,
-                  data: listHarness.errorCode ? { code: listHarness.errorCode } : undefined,
-                }
-              : null,
-            errorUpdateCount: listHarness.isError ? 1 : 0,
-            dataUpdatedAt: listHarness.isError ? 0 : 1,
-            refetch: listHarness.refetch,
-            fetchNextPage: vi.fn(),
-          };
+        global: {
+          useQuery: () => ({
+            data: undefined,
+            isFetching: false,
+            isError: false,
+            isSuccess: false,
+            refetch: vi.fn(),
+          }),
         },
       },
-      close: {
-        useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+      cards: {
+        bySlug: {
+          useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
+        },
+        search: {
+          useQuery: () => ({
+            data: undefined,
+            isLoading: false,
+            isFetching: false,
+            isError: false,
+            refetch: vi.fn(),
+          }),
+        },
+      },
+      listings: {
+        list: {
+          useInfiniteQuery: (
+            input: ListInput,
+            options: { retry?: (count: number, error: { data?: { code?: string } }) => boolean },
+          ) => {
+            listHarness.inputs.push(input);
+            listHarness.options.push(options);
+            return {
+              data: listHarness.isLoading
+                ? undefined
+                : { pages: [{ items: listHarness.items, nextCursor: null }] },
+              isLoading: listHarness.isLoading,
+              isPending: listHarness.isLoading,
+              isError: listHarness.isError,
+              isFetching: listHarness.isFetching,
+              isFetchingNextPage: false,
+              hasNextPage: false,
+              error: listHarness.isError
+                ? {
+                    message: listHarness.errorMessage,
+                    data: listHarness.errorCode ? { code: listHarness.errorCode } : undefined,
+                  }
+                : null,
+              errorUpdateCount: listHarness.isError ? 1 : 0,
+              dataUpdatedAt: listHarness.isError ? 0 : 1,
+              refetch: listHarness.refetch,
+              fetchNextPage: vi.fn(),
+            };
+          },
+        },
+        close: {
+          useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+        },
+      },
+      reports: {
+        create: {
+          useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+        },
       },
     },
-    reports: {
-      create: {
-        useMutation: () => ({ mutate: vi.fn(), isPending: false }),
-      },
-    },
-  },
-}));
+  };
+});
 
 function SearchProbe() {
   const [params] = useSearchParams();
@@ -530,6 +535,7 @@ describe('TradeListPage price filters', () => {
     const retry = listHarness.options.at(-1)?.retry;
     expect(retry).toEqual(expect.any(Function));
     expect(retry?.(0, { data: { code: 'BAD_REQUEST' } })).toBe(false);
+    expect(retry?.(0, { data: { code: 'NOT_FOUND' } })).toBe(false);
     expect(retry?.(0, { data: { code: APP_ERROR_CODES.TOO_MANY_REQUESTS } })).toBe(true);
     expect(retry?.(0, { data: { code: 'INTERNAL_SERVER_ERROR' } })).toBe(true);
     expect(retry?.(1, { data: { code: 'INTERNAL_SERVER_ERROR' } })).toBe(false);
