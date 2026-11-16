@@ -45,6 +45,8 @@ export function reportQuotaCause({
  */
 export const REPORT_QUOTA_LOCK_NAMESPACE = 230;
 
+const lockTimeoutSetting = z.tuple([z.object({ lock_timeout: z.string() })]);
+
 /**
  * Takes the per-account quota lock for the rest of the transaction. Only
  * the same reporterId waits; it is released on commit or rollback.
@@ -64,21 +66,22 @@ export const REPORT_QUOTA_LOCK_NAMESPACE = 230;
  * bounded by Prisma's 5s transaction timeout (P2028, a 500). So the only
  * statement that can raise 55P03 here, and become a 429, is the lock itself.
  *
- * "Lifted" means back to the configured value, not forced to 0 (CH-233):
- * `TO DEFAULT` restores the reset value, i.e. postgresql.conf, ALTER DATABASE,
- * ALTER ROLE (e.g. on cardhub_runtime) or a connection startup option
- * (`options=-c lock_timeout=…`). A plain session-level `SET lock_timeout` is
- * not a reset value, so it does not come back inside this transaction; it is
- * in effect again once the transaction ends. Nothing sets lock_timeout today,
- * so the value here is still 0.
+ * "Lifted" means back to the value in effect when this function started, not
+ * forced to 0. The previous value is read with `current_setting('lock_timeout')`
+ * before the 3s cap, then written back with `set_config(..., true)` (SET LOCAL)
+ * after the lock. That restores postgresql.conf, ALTER DATABASE, ALTER ROLE,
+ * connection startup options, and a session-level `SET lock_timeout`.
  */
 export async function lockReportQuota(
-  tx: Pick<Prisma.TransactionClient, '$executeRaw'>,
+  tx: Pick<Prisma.TransactionClient, '$executeRaw' | '$queryRaw'>,
   reporterId: string,
 ): Promise<void> {
+  const [{ lock_timeout: previous }] = lockTimeoutSetting.parse(
+    await tx.$queryRaw`SELECT current_setting('lock_timeout') AS lock_timeout`,
+  );
   await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(${REPORT_QUOTA_LOCK_NAMESPACE}::int4, hashtext(${reporterId}))`;
-  await tx.$executeRaw`SET LOCAL lock_timeout TO DEFAULT`;
+  await tx.$executeRaw`SELECT set_config('lock_timeout', ${previous}, true)`;
 }
 
 /** Retry-After for a report that timed out waiting on its account's lock (CH-231 231-B). */

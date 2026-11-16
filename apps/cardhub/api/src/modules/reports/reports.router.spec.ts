@@ -50,6 +50,7 @@ function makeRouter() {
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
     // CH-230: reports.create takes a per-account advisory lock in its transaction.
     $executeRaw: jest.fn().mockResolvedValue(1),
+    $queryRaw: jest.fn().mockResolvedValue([{ lock_timeout: '0' }]),
   } as unknown as PrismaService;
 
   const router = new ReportsRouter(new TrpcBase(), prisma);
