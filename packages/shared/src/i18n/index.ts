@@ -876,6 +876,21 @@ const zhCN: Dictionary = {
   'admin.import.title': '导入 JSON',
   'admin.import.subtitle': '格式和 seed-data 的 SeedSeries[] 相同，按 slug 新增或更新',
   'admin.import.example': '查看格式示例',
+  'admin.import.exampleFields':
+    '其他可选字段：description、coverUrl、imageUrl、attributes、parallelOf、parallelName、printRun。子集的 kind 只能是 BASE 或 INSERT。',
+  'admin.import.colRow': '行',
+  'admin.import.rowRef': '第 {row} 行',
+  'admin.import.problemsTitle': '需要修改的 {count} 处',
+  'admin.import.err.categoryNotFound':
+    '没有 slug 为「{value}」的品类。先到 内容管理 › 品类 新建，或改成已有品类的 slug。',
+  'admin.import.err.subsetNotFound':
+    '子集「{value}」不在这个系列里，本文件的 subsets 里也没有。把它加进这个系列的 subsets，或改成已有子集的 slug。',
+  'admin.import.err.cardNumberTooLong':
+    '卡号「{value}」有 {length} 个字符，最多 {max} 个。删到 {max} 个以内。',
+  'admin.import.err.releaseDateInvalid':
+    '发售日期「{value}」不是有效日期。按 YYYY-MM-DD 写，例如 2026-11-14。',
+  'admin.import.err.unknownField':
+    '不认识字段「{field}」。对照「查看格式示例」改成正确的字段名，或删掉它。',
   'admin.import.paste': 'JSON 内容',
   'admin.import.file': '选择文件',
   'admin.import.preview': '预览',
@@ -1940,6 +1955,23 @@ const enUS: Dictionary = {
   'admin.import.subtitle':
     'Same shape as SeedSeries[] in seed-data. Records are created or updated by slug.',
   'admin.import.example': 'See an example',
+  'admin.import.exampleFields':
+    "Other optional fields: description, coverUrl, imageUrl, attributes, parallelOf, parallelName, printRun. A subset's kind is BASE or INSERT.",
+  'admin.import.colRow': 'Row',
+  'admin.import.rowRef': 'Row {row}',
+  'admin.import.problemsTitle': '{count} problems to fix',
+  'admin.import.problemsTitle_one': '{count} problem to fix',
+  'admin.import.problemsTitle_other': '{count} problems to fix',
+  'admin.import.err.categoryNotFound':
+    'No category has the slug "{value}". Create it in Catalog › Categories first, or use an existing category slug.',
+  'admin.import.err.subsetNotFound':
+    'Subset "{value}" is not in this series or in this file\'s subsets. Add it to the series\' subsets, or use an existing subset slug.',
+  'admin.import.err.cardNumberTooLong':
+    'Card number "{value}" has {length} characters. The limit is {max}. Shorten it.',
+  'admin.import.err.releaseDateInvalid':
+    'Release date "{value}" is not a valid date. Use YYYY-MM-DD, for example 2026-11-14.',
+  'admin.import.err.unknownField':
+    'Unknown field "{field}". Rename it to a field from the example, or delete it.',
   'admin.import.paste': 'JSON',
   'admin.import.file': 'Choose file',
   'admin.import.preview': 'Preview',

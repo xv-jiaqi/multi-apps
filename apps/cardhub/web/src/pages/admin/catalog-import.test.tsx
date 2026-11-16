@@ -1,9 +1,9 @@
 import './test-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
+import { CARD_NUMBER_MAX, CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
 import { rootStore } from '../../stores/root-store';
 import type { ImportRowResult } from '../../components/admin/catalog-utils';
 
@@ -47,6 +47,7 @@ vi.mock('../../lib/trpc', () => ({
 }));
 
 import { CatalogImportPage } from './catalog-import';
+import { AC62_IMPORT, AC62_ROWS } from './catalog-import-fixture';
 
 function row(
   partial: Partial<ImportRowResult> &
@@ -172,8 +173,12 @@ describe('catalog import', () => {
     expect(screen.queryByText('新增')).not.toBeInTheDocument();
     expect(screen.queryByText('无变化')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: '只看错误' })).toBeChecked();
-    expect(screen.getByText('series[0].cards[2].rarity')).toBeInTheDocument();
-    expect(screen.getByText(/必须是 common、rare、epic、legendary 之一/)).toBeInTheDocument();
+    // 375 的问题清单在 jsdom 里也渲染（没有 CSS），问题列断言限定在表格内。
+    const table = screen.getByRole('table');
+    expect(within(table).getByText('series[0].cards[2].rarity')).toBeInTheDocument();
+    expect(
+      within(table).getByText(/必须是 common、rare、epic、legendary 之一/),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
     expect(screen.getByText('有 1 处错误，修正后才能导入')).toBeInTheDocument();
 
@@ -207,8 +212,9 @@ describe('catalog import', () => {
     await user.click(screen.getByRole('textbox', { name: 'JSON' }));
     await user.paste('[]');
     await user.click(screen.getByRole('button', { name: 'Preview' }));
-    expect(screen.getByText(/Must be common, rare, epic, or legendary/)).toBeInTheDocument();
-    expect(screen.getByText(/Something went wrong: 服务端中文说明/)).toBeInTheDocument();
+    const table = screen.getByRole('table');
+    expect(within(table).getByText(/Must be common, rare, epic, or legendary/)).toBeInTheDocument();
+    expect(within(table).getByText(/Something went wrong: 服务端中文说明/)).toBeInTheDocument();
     expect(screen.queryByText('WAT')).not.toBeInTheDocument();
   });
 
@@ -324,7 +330,9 @@ describe('catalog import', () => {
       ]),
     );
     await user.click(screen.getByRole('button', { name: '预览' }));
-    const problem = await screen.findByText('基础卡', { exact: false });
+    const problem = await within(await screen.findByRole('table')).findByText('基础卡', {
+      exact: false,
+    });
     const cell = problem.closest('p');
     expect(cell).toHaveTextContent('基础卡：基础卡必须属于同一系列');
     expect(cell).toHaveTextContent('series[0].cards[0].parallelOf');
@@ -339,11 +347,14 @@ describe('catalog import', () => {
     );
     expect(lines[0]).toContain('基础卡：');
     expect(lines[1]).toContain('限量总数：');
-    const run = screen.getByText('限量总数', { exact: false }).closest('p');
+    const run = within(screen.getByRole('table'))
+      .getByText('限量总数', { exact: false })
+      .closest('p');
     expect(run).toHaveTextContent('限量总数：限量数量至少为 1，不限量请留空');
     expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
     expect(
-      screen.getAllByRole('status').some((node) => node.textContent?.includes('1 处错误')),
+      // CH-107 v4 §7.4：每条错误算一处，这一行有 2 条。
+      screen.getAllByRole('status').some((node) => node.textContent?.includes('2 处错误')),
     ).toBe(true);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -628,5 +639,243 @@ describe('catalog import focus and error wiring (CH-213 §17)', () => {
     await user.type(box, ' ');
     expect(screen.getByText('Text changed. Preview again.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
+  });
+});
+
+describe('catalog import taxonomy errors (CH-107 v4.1 §7.4–§7.8)', () => {
+  async function previewAc62(locale: 'zh-CN' | 'en-US') {
+    rootStore.locale.setLocale(locale);
+    importImpl.current = async () => AC62_ROWS;
+    const user = userEvent.setup();
+    renderPage();
+    const box = screen.getByRole('textbox', { name: locale === 'zh-CN' ? 'JSON 内容' : 'JSON' });
+    await user.click(box);
+    await user.paste(JSON.stringify(AC62_IMPORT));
+    await user.click(screen.getByRole('button', { name: locale === 'zh-CN' ? '预览' : 'Preview' }));
+    return { user, box, table: await screen.findByRole('table') };
+  }
+
+  it('shows the §7.4 copy for each of the five errors in Chinese, with field and path, never the code', async () => {
+    const { table } = await previewAc62('zh-CN');
+    const text = table.textContent ?? '';
+    expect(text).toContain(
+      'categorySlug：没有 slug 为「no-such-category」的品类。先到 内容管理 › 品类 新建，或改成已有品类的 slug。',
+    );
+    expect(text).toContain(
+      'releaseDate：发售日期「2026-13-01」不是有效日期。按 YYYY-MM-DD 写，例如 2026-11-14。',
+    );
+    expect(text).toContain(
+      'subsetSlug：子集「nowhere」不在这个系列里，本文件的 subsets 里也没有。把它加进这个系列的 subsets，或改成已有子集的 slug。',
+    );
+    expect(text).toContain(
+      `cardNumber：卡号「123456789012345678901」有 21 个字符，最多 ${CARD_NUMBER_MAX} 个。删到 ${CARD_NUMBER_MAX} 个以内。`,
+    );
+    expect(text).toContain(
+      'cardNo：不认识字段「cardNo」。对照「查看格式示例」改成正确的字段名，或删掉它。',
+    );
+    for (const path of [
+      'series[0].categorySlug',
+      'series[1].releaseDate',
+      'series[2].cards[0].subsetSlug',
+      'series[2].cards[1].cardNumber',
+      'series[2].cards[2].cardNo',
+    ]) {
+      const node = within(table).getByText(path);
+      expect(node).toHaveClass('font-mono', 'text-xs', 'text-muted', 'wrap-anywhere');
+    }
+    for (const code of [
+      'CATEGORY_NOT_FOUND',
+      'SUBSET_NOT_FOUND',
+      'TOO_LONG',
+      'INVALID_DATE',
+      'UNKNOWN_FIELD',
+    ]) {
+      expect(document.body.textContent).not.toContain(code);
+    }
+    // 行列、汇总与阻断：5 处错误。
+    expect(within(table).getByRole('columnheader', { name: '行' })).toBeInTheDocument();
+    expect(screen.getByText('有 5 处错误，修正后才能导入')).toHaveAttribute('id', 'import-blocked');
+    expect(screen.getByRole('button', { name: '导入' })).toHaveAttribute(
+      'aria-describedby',
+      'import-blocked',
+    );
+  });
+
+  it('shows the §7.4 copy in English and lists every problem for 375 under the summary', async () => {
+    await previewAc62('en-US');
+    const section = screen.getByRole('region', { name: '5 problems to fix' });
+    expect(section).toHaveClass('sm:hidden');
+    const items = within(section).getAllByRole('listitem');
+    expect(items).toHaveLength(5);
+    expect(items[0]).toHaveTextContent('Row 1 · Series · bad-category');
+    expect(items[0]).toHaveTextContent(
+      'categorySlug: No category has the slug "no-such-category". Create it in Catalog › Categories first, or use an existing category slug.',
+    );
+    expect(items[1]).toHaveTextContent(
+      'releaseDate: Release date "2026-13-01" is not a valid date. Use YYYY-MM-DD, for example 2026-11-14.',
+    );
+    expect(items[2]).toHaveTextContent('Row 4 · Card · bad-subset');
+    expect(items[2]).toHaveTextContent(
+      `subsetSlug: Subset "nowhere" is not in this series or in this file's subsets.`,
+    );
+    expect(items[3]).toHaveTextContent(
+      `cardNumber: Card number "123456789012345678901" has 21 characters. The limit is ${CARD_NUMBER_MAX}. Shorten it.`,
+    );
+    expect(items[4]).toHaveTextContent(
+      'cardNo: Unknown field "cardNo". Rename it to a field from the example, or delete it.',
+    );
+    // 问题列在 375 隐藏。
+    expect(screen.getByRole('columnheader', { name: 'Problem' })).toHaveClass(
+      'hidden',
+      'sm:table-cell',
+    );
+  });
+
+  it('keeps the problem list complete when the filter shows every row', async () => {
+    const { user } = await previewAc62('zh-CN');
+    await user.click(screen.getByRole('radio', { name: '全部' }));
+    const section = screen.getByRole('region', { name: '需要修改的 5 处' });
+    expect(within(section).getAllByRole('listitem')).toHaveLength(5);
+  });
+
+  it('adds import-blocked to the textarea describedby and drops only that id when the preview goes stale', async () => {
+    const { user, box } = await previewAc62('zh-CN');
+    expect(box).toHaveAttribute('aria-describedby', 'import-blocked');
+    await user.type(box, ' ');
+    expect(box).not.toHaveAttribute('aria-describedby');
+    // 重新预览后 blocked 回来；再改坏 JSON 点预览，只剩解析错误的 id。
+    await user.clear(box);
+    await user.paste(JSON.stringify(AC62_IMPORT));
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    expect(box).toHaveAttribute('aria-describedby', 'import-blocked');
+    await user.clear(box);
+    await user.paste('{');
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    expect(box).toHaveAttribute('aria-describedby', 'import-json-error');
+  });
+
+  it('truncates a long value to 40 characters plus an ellipsis and counts length after trim', async () => {
+    const long = `  ${'A'.repeat(45)}  `;
+    rootStore.locale.setLocale('zh-CN');
+    importImpl.current = async () => [
+      {
+        row: { row: 1, type: 'card', slug: 'c', name: 'c', seriesSlug: 's' },
+        status: 'error',
+        errors: [{ path: 'series[0].cards[0].cardNumber', code: 'TOO_LONG' }],
+      },
+    ];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste(
+      JSON.stringify([
+        {
+          slug: 's',
+          title: 's',
+          cards: [{ slug: 'c', name: 'c', rarity: 'common', cardNumber: long }],
+        },
+      ]),
+    );
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    const table = await screen.findByRole('table');
+    const shown = `  ${'A'.repeat(38)}…`;
+    expect(table.textContent).toContain(
+      `卡号「${shown}」有 45 个字符，最多 ${CARD_NUMBER_MAX} 个。`,
+    );
+  });
+
+  it('counts {length} in code points like the server, so 21 emoji show 21', async () => {
+    const emoji = '😀'.repeat(21);
+    rootStore.locale.setLocale('en-US');
+    importImpl.current = async () => [
+      {
+        row: { row: 1, type: 'card', slug: 'c', name: 'c', seriesSlug: 's' },
+        status: 'error',
+        errors: [{ path: 'series[0].cards[0].cardNumber', code: 'TOO_LONG' }],
+      },
+    ];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON' }));
+    await user.paste(
+      JSON.stringify([
+        {
+          slug: 's',
+          title: 's',
+          cards: [{ slug: 'c', name: 'c', rarity: 'common', cardNumber: emoji }],
+        },
+      ]),
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    const table = await screen.findByRole('table');
+    expect(table.textContent).toContain(
+      `Card number "${emoji}" has 21 characters. The limit is ${CARD_NUMBER_MAX}.`,
+    );
+    expect(table.textContent).not.toContain('has 42 characters');
+  });
+
+  it('falls back to the code table, then to the unknown sentence, for codes outside §7.4', async () => {
+    rootStore.locale.setLocale('zh-CN');
+    importImpl.current = async () => [
+      {
+        row: { row: 1, type: 'series', slug: 's', name: 's' },
+        status: 'error',
+        errors: [
+          { path: 'series[0].categorySlug', code: 'SLUG_FORMAT' },
+          { path: 'series[0].subsets[0].kind', code: 'INVALID_TYPE' },
+          { path: 'series[0].subsets[1].slug', code: 'SLUG_DUPLICATE_IN_FILE' },
+          { path: 'series[0].title', code: 'SOMETHING_NEW', message: '服务端说明' },
+        ],
+      },
+    ];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste('[{"slug":"s","title":"s","categorySlug":"Bad Slug"}]');
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    const table = await screen.findByRole('table');
+    const text = table.textContent ?? '';
+    expect(text).toContain('categorySlug：slug 只能包含小写字母、数字和连字符');
+    expect(text).toContain('kind：');
+    expect(text).toContain('series[0].subsets[1].slug');
+    expect(text).toContain('title：出错了：服务端说明');
+    expect(text).not.toContain('SOMETHING_NEW');
+    expect(text).not.toContain('INVALID_TYPE');
+  });
+
+  it('shows the locale example with the new fields and the other-fields line', async () => {
+    const user = userEvent.setup();
+    rootStore.locale.setLocale('zh-CN');
+    const view = renderPage();
+    const summary = screen.getByText('查看格式示例');
+    expect(summary).toHaveClass('py-0.5');
+    await user.click(summary);
+    const pre = view.container.querySelector('details pre');
+    const zh = pre?.textContent ?? '';
+    for (const field of [
+      '"categorySlug": "ptcg-sc"',
+      '"releaseDate": "2026-11-14"',
+      '"subsets"',
+      '"cardNumber": "001"',
+      '"subsetSlug": "base"',
+      '"kind": "INSERT"',
+    ]) {
+      expect(zh).toContain(field);
+    }
+    expect(zh).toContain('"title": "天穹黎明"');
+    expect(JSON.parse(zh)).toHaveLength(1);
+    expect(screen.getByText(/其他可选字段：description、coverUrl/)).toHaveClass(
+      'text-xs',
+      'text-muted',
+    );
+
+    view.unmount();
+    rootStore.locale.setLocale('en-US');
+    const en = renderPage();
+    const enText = en.container.querySelector('details pre')?.textContent ?? '';
+    expect(enText).toContain('"title": "Celestial Dawn"');
+    expect(enText).toContain('"name": "Promos"');
+    expect(enText).toContain('"subsetSlug": "base"');
+    expect(screen.getByText(/A subset's kind is BASE or INSERT\./)).toBeInTheDocument();
   });
 });
