@@ -17,6 +17,10 @@ export const ADMIN_CATALOG_ERROR_CODES = [
   'SERIES_HAS_CARDS',
   'CATEGORY_NOT_FOUND',
   'SUBSET_NOT_FOUND',
+  /** Import: a key the importer does not read. Not silently dropped (CH-234). */
+  'UNKNOWN_FIELD',
+  /** Import: `releaseDate` is not a real `YYYY-MM-DD` day. */
+  'INVALID_DATE',
   'print_run_min',
   'too_big',
   'invalid_type',
