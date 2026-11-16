@@ -38,6 +38,18 @@ function isPublicForumRead(queryKey: QueryKey): boolean {
 
 export type QueryClearScope = 'everything' | 'keepPublicForumReads';
 
+function isTrpcNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const code = (error as { data?: { code?: unknown } }).data?.code;
+  return code === 'NOT_FOUND';
+}
+
+/** Default query retry: once, except tRPC NOT_FOUND (cut-6 AC6-11). */
+function shouldRetryQuery(failureCount: number, error: unknown): boolean {
+  if (isTrpcNotFound(error)) return false;
+  return failureCount < 1;
+}
+
 /**
  * Drops cached data after a sign-out. `keepPublicForumReads` is CH-226 §5:
  * clearing the topic a reader is on remounts it as a skeleton and loses the
@@ -76,7 +88,7 @@ export function TrpcProvider({ children }: PropsWithChildren) {
       defaultOptions: {
         queries: {
           staleTime: 30_000,
-          retry: 1,
+          retry: shouldRetryQuery,
         },
       },
     });
