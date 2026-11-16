@@ -2,6 +2,7 @@ import {
   ADMIN_ATTRIBUTE_KEY_MAX,
   ADMIN_ATTRIBUTE_MAX_KEYS,
   ADMIN_ATTRIBUTE_VALUE_MAX,
+  CARD_NUMBER_MAX,
   LISTING_IMAGE_URL_MAX,
   appErrorMessage,
   fieldErrorMessage,
@@ -588,7 +589,10 @@ export function summarizeImport(rows: ImportRowResult[]) {
     newCards: count('created', 'card'),
     updSeries: count('updated', 'series'),
     updCards: count('updated', 'card'),
-    errors: count('error'),
+    // CH-107 §7.4: every error on a row counts as one problem.
+    errors: rows
+      .filter((row) => row.status === 'error')
+      .reduce((total, row) => total + Math.max(1, row.errors.length), 0),
     create: count('created'),
     update: count('updated'),
   };
@@ -719,24 +723,132 @@ export function validateAttributeRows(
   return { ok: true, attributes };
 }
 
-export const IMPORT_EXAMPLE = `[
+/** CH-107 appendix §7.5-A v1. Same keys, slugs and numbers in both; only display names differ. */
+export const IMPORT_EXAMPLES: Record<Locale, string> = {
+  'zh-CN': `[
   {
     "slug": "celestial-dawn",
     "title": "天穹黎明",
-    "description": "故事开端的限定系列",
-    "coverUrl": "gradient:from-sky-400-via-indigo-400-to-purple-500",
+    "categorySlug": "ptcg-sc",
+    "releaseDate": "2026-11-14",
+    "subsets": [
+      { "slug": "base", "name": "基础", "kind": "BASE", "sortOrder": 0 },
+      { "slug": "promo", "name": "特典", "kind": "INSERT", "sortOrder": 1 }
+    ],
     "cards": [
       {
         "slug": "aurora-knight",
         "name": "极光骑士",
-        "description": "身披极光鳞甲的天穹守护者",
         "rarity": "legendary",
-        "imageUrl": "https://example.com/aurora-knight.png",
-        "attributes": { "cost": 8, "type": "随从" }
+        "cardNumber": "001",
+        "subsetSlug": "base"
       }
     ]
   }
-]`;
+]`,
+  'en-US': `[
+  {
+    "slug": "celestial-dawn",
+    "title": "Celestial Dawn",
+    "categorySlug": "ptcg-sc",
+    "releaseDate": "2026-11-14",
+    "subsets": [
+      { "slug": "base", "name": "Base", "kind": "BASE", "sortOrder": 0 },
+      { "slug": "promo", "name": "Promos", "kind": "INSERT", "sortOrder": 1 }
+    ],
+    "cards": [
+      {
+        "slug": "aurora-knight",
+        "name": "Aurora Knight",
+        "rarity": "legendary",
+        "cardNumber": "001",
+        "subsetSlug": "base"
+      }
+    ]
+  }
+]`,
+};
+
+/** CH-107 §7.4: `{value}` longer than this is cut in JS and ends with an ellipsis. */
+export const IMPORT_VALUE_DISPLAY_MAX = 40;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Last `path` segment, e.g. `series[0].cards[3].cardNo` gives `cardNo`. */
+export function importErrorField(path: string): string {
+  return path.split('.').pop() ?? path;
+}
+
+/**
+ * The submitted value at an import error `path` (`series[i]`, `cards[j]`,
+ * `subsets[k]`, then a key). `series[i]` indexes the top-level array.
+ */
+export function importValueAt(data: unknown, path: string): unknown {
+  let current: unknown = data;
+  for (const [index, segment] of path.split('.').entries()) {
+    const match = /^([A-Za-z0-9_$-]+)(?:\[(\d+)\])?$/.exec(segment);
+    if (!match) return undefined;
+    const [, key, position] = match;
+    if (!(index === 0 && key === 'series')) {
+      if (!isRecord(current) || key === undefined || !(key in current)) return undefined;
+      current = current[key];
+    }
+    if (position !== undefined) {
+      if (!Array.isArray(current)) return undefined;
+      current = current[Number(position)];
+    }
+  }
+  return current;
+}
+
+/** Raw text of a submitted value: strings as-is, other values as JSON. */
+export function importValueText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value === undefined) return '';
+  return JSON.stringify(value) ?? '';
+}
+
+/** First 40 characters plus an ellipsis, so the screen reader reads what is shown. */
+export function truncateImportValue(text: string): string {
+  const chars = Array.from(text);
+  if (chars.length <= IMPORT_VALUE_DISPLAY_MAX) return text;
+  return `${chars.slice(0, IMPORT_VALUE_DISPLAY_MAX).join('')}…`;
+}
+
+/**
+ * CH-107 §7.4 lookup: field + code first, then the code table (appendix §12),
+ * then `admin.error.unknown`. The error code itself is never shown.
+ */
+export function importErrorText(
+  locale: Locale,
+  data: unknown,
+  error: { path: string; code: string; message?: string },
+): string {
+  const field = importErrorField(error.path);
+  if (error.code === 'UNKNOWN_FIELD') {
+    return t(locale, 'admin.import.err.unknownField', { field });
+  }
+  const raw = importValueText(importValueAt(data, error.path));
+  const value = truncateImportValue(raw);
+  if (field === 'releaseDate') return t(locale, 'admin.import.err.releaseDateInvalid', { value });
+  if (field === 'categorySlug' && error.code === 'CATEGORY_NOT_FOUND') {
+    return t(locale, 'admin.import.err.categoryNotFound', { value });
+  }
+  if (field === 'subsetSlug' && error.code === 'SUBSET_NOT_FOUND') {
+    return t(locale, 'admin.import.err.subsetNotFound', { value });
+  }
+  if (field === 'cardNumber' && error.code === 'TOO_LONG') {
+    return t(locale, 'admin.import.err.cardNumberTooLong', {
+      value,
+      // Code points, like the server's zod `.max()` (11 emoji count as 11, not 22).
+      length: [...raw.trim()].length,
+      max: CARD_NUMBER_MAX,
+    });
+  }
+  return adminErrorText(locale, error.code, error.message ?? '');
+}
 
 export const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';

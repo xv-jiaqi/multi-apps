@@ -15,9 +15,11 @@ import {
   InlineConfirm,
 } from '../../components/admin/admin-table';
 import {
-  IMPORT_EXAMPLE,
+  IMPORT_EXAMPLES,
   adminErrorText,
   displayImportNames,
+  importErrorField,
+  importErrorText,
   importParallelFieldLabel,
   orderImportErrors,
   focusRing,
@@ -51,25 +53,42 @@ const RESULT_KEY: Record<ImportStatus, string> = {
   error: 'admin.import.error',
 };
 
-function ImportProblem({ path, code, message }: { path: string; code: string; message?: string }) {
+/**
+ * One import error. Parallel fields keep the CH-213 §16 label form. Every other
+ * field uses CH-107 §7.4: `{field}：copy` on the first line, the full path below.
+ */
+function ImportProblem({
+  data,
+  path,
+  code,
+  message,
+}: {
+  data: unknown;
+  path: string;
+  code: string;
+  message?: string;
+}) {
   const { locale } = useStores();
   const label = importParallelFieldLabel(locale.locale, path);
-  const copy = adminErrorText(locale.locale, code, message ?? '');
+  const copy = importErrorText(locale.locale, data, { path, code, message });
   const sep = locale.locale === 'zh-CN' ? '：' : ': ';
-  if (!label) {
+  if (label) {
     return (
       <>
-        <span className="font-mono wrap-anywhere">{path}</span>
+        {label}
         {sep}
-        {copy}
+        {copy} <span className="font-mono wrap-anywhere text-neutral-600">{path}</span>
       </>
     );
   }
   return (
     <>
-      {label}
-      {sep}
-      {copy} <span className="font-mono wrap-anywhere text-neutral-600">{path}</span>
+      <span className="block">
+        <span className="font-mono wrap-anywhere">{importErrorField(path)}</span>
+        {sep}
+        {copy}
+      </span>
+      <span className="block font-mono text-xs text-muted wrap-anywhere">{path}</span>
     </>
   );
 }
@@ -151,6 +170,21 @@ const CatalogImportBody = observer(function CatalogImportBody() {
   );
   const sameAsImported = importedText !== null && text === importedText;
   const canImport = Boolean(preview) && !stale && !blocked && !nothing && !sameAsImported;
+  // CH-107 §7.7：解析错误和「有错误不能导入」各占一个 id，并存时空格拼接。
+  const inputDescribedBy =
+    [parseError ? 'import-json-error' : null, blocked && !stale ? 'import-blocked' : null]
+      .filter((id): id is string => id !== null)
+      .join(' ') || undefined;
+  const importHint: { id: string; text: string } | null = stale
+    ? null
+    : blocked && summary
+      ? { id: 'import-blocked', text: tt('admin.import.blocked', { count: summary.errors }) }
+      : nothing
+        ? { id: 'import-nothing', text: tt('admin.import.nothing') }
+        : sameAsImported
+          ? { id: 'import-already', text: tt('admin.import.already') }
+          : null;
+  const errorRows = preview?.rows.filter((row) => row.status === 'error') ?? [];
 
   const onText = (value: string) => {
     setText(value);
@@ -306,7 +340,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
       <details className="rounded-md border border-neutral-200 bg-card p-3">
         <summary
           id="import-example-title"
-          className={`cursor-pointer text-sm font-medium text-neutral-800 ${focusRing}`}
+          className={`cursor-pointer py-0.5 text-sm font-medium text-neutral-800 ${focusRing}`}
         >
           {tt('admin.import.example')}
         </summary>
@@ -314,8 +348,11 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           labelledBy="import-example-title"
           className="mt-3 max-w-full rounded-md bg-neutral-50"
         >
-          <pre className="whitespace-pre p-3 font-mono text-xs">{IMPORT_EXAMPLE}</pre>
+          <pre className="whitespace-pre p-3 font-mono text-xs">
+            {IMPORT_EXAMPLES[locale.locale]}
+          </pre>
         </ScrollRegion>
+        <p className="mt-2 text-xs text-muted">{tt('admin.import.exampleFields')}</p>
       </details>
       <div className="space-y-2">
         <label htmlFor="import-json" className="text-sm font-medium text-neutral-800">
@@ -325,7 +362,7 @@ const CatalogImportBody = observer(function CatalogImportBody() {
           ref={textRef}
           id="import-json"
           aria-invalid={parseError ? true : undefined}
-          aria-describedby={parseError ? 'import-json-error' : undefined}
+          aria-describedby={inputDescribedBy}
           rows={14}
           spellCheck={false}
           value={text}
@@ -378,7 +415,12 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                 key={`${row.row.row}-${error.path}-${error.code}`}
                 className="mt-1 text-xs text-danger"
               >
-                <ImportProblem path={error.path} code={error.code} message={error.message} />
+                <ImportProblem
+                  data={preview?.data}
+                  path={error.path}
+                  code={error.code}
+                  message={error.message}
+                />
               </p>
             )),
           )}
@@ -414,6 +456,41 @@ const CatalogImportBody = observer(function CatalogImportBody() {
         </p>
         {preview && summary ? (
           <>
+            {errorRows.length > 0 ? (
+              <section aria-labelledby="import-problems-title" className="space-y-2 sm:hidden">
+                <h3 id="import-problems-title" className="text-sm font-semibold">
+                  {tt('admin.import.problemsTitle', { count: summary.errors })}
+                </h3>
+                <ol className="space-y-2">
+                  {errorRows.flatMap((row) => {
+                    const names = displayImportNames(preview.data, row.row, row.errors);
+                    const kind =
+                      row.row.type === 'series'
+                        ? tt('admin.import.kindSeries')
+                        : tt('admin.import.kindCard');
+                    return orderImportErrors(row.errors).map((error) => (
+                      <li
+                        key={`${row.row.row}-${error.path}-${error.code}`}
+                        className="rounded-md border border-danger-border bg-card p-3 text-xs"
+                      >
+                        <span className="block text-neutral-700">
+                          {tt('admin.import.rowRef', { row: row.row.row })} · {kind} ·{' '}
+                          <span className="font-mono wrap-anywhere">{names.slug}</span>
+                        </span>
+                        <span className="mt-1 block text-danger">
+                          <ImportProblem
+                            data={preview.data}
+                            path={error.path}
+                            code={error.code}
+                            message={error.message}
+                          />
+                        </span>
+                      </li>
+                    ));
+                  })}
+                </ol>
+              </section>
+            ) : null}
             {summary.errors > 0 ? (
               <SegmentedControl
                 legend={`${tt('admin.import.all')} / ${tt('admin.import.errorsOnly')}`}
@@ -429,11 +506,12 @@ const CatalogImportBody = observer(function CatalogImportBody() {
             ) : null}
             <AdminTable caption={tt('admin.import.caption')} labelledBy="import-preview-title">
               <AdminTableHead>
+                <AdminTh>{tt('admin.import.colRow')}</AdminTh>
                 <AdminTh>{tt('admin.import.colKind')}</AdminTh>
                 <AdminTh>{tt('admin.col.slug')}</AdminTh>
                 <AdminTh>{tt('admin.col.name')}</AdminTh>
                 <AdminTh>{tt('admin.import.colResult')}</AdminTh>
-                <AdminTh>{tt('admin.import.colProblem')}</AdminTh>
+                <AdminTh className="hidden sm:table-cell">{tt('admin.import.colProblem')}</AdminTh>
               </AdminTableHead>
               <tbody className="divide-y divide-neutral-200">
                 {visibleRows.map((row) => {
@@ -443,30 +521,34 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                       key={row.row.row}
                       className={row.status === 'error' ? 'bg-danger-soft/50' : undefined}
                     >
+                      <td className="whitespace-nowrap px-3 py-2 align-top tabular-nums text-muted">
+                        {row.row.row}
+                      </td>
                       <td
-                        className={`px-3 py-2 align-middle ${row.row.type === 'card' ? 'pl-6' : ''}`}
+                        className={`whitespace-nowrap px-3 py-2 align-top ${row.row.type === 'card' ? 'pl-6' : ''}`}
                       >
                         {row.row.type === 'series'
                           ? tt('admin.import.kindSeries')
                           : tt('admin.import.kindCard')}
                       </td>
-                      <td className="px-3 py-2 align-middle font-mono text-xs text-neutral-600">
+                      <td className="px-3 py-2 align-top font-mono text-xs text-neutral-600 wrap-anywhere">
                         {names.slug}
                       </td>
-                      <td className="px-3 py-2 align-middle font-medium text-neutral-900">
+                      <td className="min-w-24 px-3 py-2 align-top font-medium text-neutral-900 wrap-anywhere">
                         {names.name}
                       </td>
-                      <td className="px-3 py-2 align-middle">
+                      <td className="whitespace-nowrap px-3 py-2 align-top">
                         <span
                           className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RESULT_CLASS[row.status]}`}
                         >
                           {tt(RESULT_KEY[row.status])}
                         </span>
                       </td>
-                      <td className="px-3 py-2 align-middle text-xs text-danger">
+                      <td className="hidden px-3 py-2 align-top text-xs text-danger sm:table-cell">
                         {orderImportErrors(row.errors).map((error) => (
                           <p key={`${error.path}-${error.code}`}>
                             <ImportProblem
+                              data={preview.data}
                               path={error.path}
                               code={error.code}
                               message={error.message}
@@ -480,30 +562,28 @@ const CatalogImportBody = observer(function CatalogImportBody() {
               </tbody>
             </AdminTable>
             <div className="space-y-2">
-              {blocked && !stale ? (
-                <p className="text-sm text-neutral-700">
-                  {tt('admin.import.blocked', { count: summary.errors })}
-                </p>
-              ) : null}
-              {nothing && !stale ? (
-                <p className="text-sm text-neutral-700">{tt('admin.import.nothing')}</p>
-              ) : null}
-              {sameAsImported && !stale ? (
-                <p className="text-sm text-neutral-700">{tt('admin.import.already')}</p>
-              ) : null}
-              <Button
-                type="button"
-                disabled={!canImport || pending}
-                aria-busy={(phase === 'execute' && pending) || undefined}
-                onClick={() => {
-                  setNotice(null);
-                  setConfirming(true);
-                }}
-              >
-                {phase === 'execute' && pending
-                  ? tt('admin.import.executing')
-                  : tt('admin.import.execute')}
-              </Button>
+              {/* CH-107 §7.3：按钮在左、提示在右，同一时间只有一条提示，按钮 describedby 指向它。 */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  disabled={!canImport || pending}
+                  aria-busy={(phase === 'execute' && pending) || undefined}
+                  aria-describedby={importHint?.id}
+                  onClick={() => {
+                    setNotice(null);
+                    setConfirming(true);
+                  }}
+                >
+                  {phase === 'execute' && pending
+                    ? tt('admin.import.executing')
+                    : tt('admin.import.execute')}
+                </Button>
+                {importHint ? (
+                  <p id={importHint.id} className="text-sm text-neutral-700">
+                    {importHint.text}
+                  </p>
+                ) : null}
+              </div>
               {confirming && canImport ? (
                 <InlineConfirm
                   label={tt('admin.import.confirm', {
