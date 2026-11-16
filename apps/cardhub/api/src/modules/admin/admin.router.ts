@@ -29,6 +29,16 @@ import {
 } from '../catalog/release-date';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { buildAdminTaxonomyRouter } from './admin-taxonomy';
+import {
+  CARD_IMPORT_FIELDS,
+  type CardTaxonomyFields,
+  type NormalizedSubset,
+  SERIES_IMPORT_FIELDS,
+  type SeriesTaxonomyFields,
+  readCardTaxonomy,
+  readSeriesTaxonomy,
+  reportUnknownFields,
+} from './catalog-import-fields';
 import { buildAdminAuditRouter, buildAdminUsersRouter } from './governance.router';
 import { buildAdminMetricsProcedure } from '../metrics/metrics.router';
 import { TrpcBase } from '../../trpc/trpc-base';
@@ -59,15 +69,17 @@ export interface ImportRowResult {
   errors: ImportRowError[];
 }
 
-interface NormalizedSeries {
+interface NormalizedSeries extends SeriesTaxonomyFields {
   row: ImportRowSummary;
+  seriesPath: string;
   slug: string;
   title: string;
   description: string | null;
   coverUrl: string | null;
+  subsets: NormalizedSubset[];
 }
 
-interface NormalizedCard {
+interface NormalizedCard extends CardTaxonomyFields {
   row: ImportRowSummary;
   cardPath: string;
   slug: string;
@@ -379,6 +391,8 @@ function normalizeImport(data: unknown): NormalizedImport {
 
     if (!isPlainObject(rawSeries)) {
       addError(errors, seriesPath, 'INVALID_TYPE');
+    } else {
+      reportUnknownFields(rawSeries, SERIES_IMPORT_FIELDS, seriesPath, errors);
     }
 
     const slug = isPlainObject(rawSeries) ? rawSeries.slug : undefined;
@@ -407,10 +421,16 @@ function normalizeImport(data: unknown): NormalizedImport {
       addError(errors, `${seriesPath}.coverUrl`, 'IMAGE_URL');
     }
 
+    const taxonomy: SeriesTaxonomyFields = isPlainObject(rawSeries)
+      ? readSeriesTaxonomy(rawSeries, seriesPath, errors)
+      : { subsets: [] };
+
     if (errors.length === 0 && typeof slug === 'string' && typeof title === 'string') {
       seenSeriesSlugs.add(slug);
       normalizedSeries.push({
+        ...taxonomy,
         row,
+        seriesPath,
         slug,
         title: title.trim(),
         description: normalizeOptionalText(
@@ -447,6 +467,8 @@ function normalizeImport(data: unknown): NormalizedImport {
 
       if (!isPlainObject(rawCard)) {
         addError(cardErrors, cardPath, 'INVALID_TYPE');
+      } else {
+        reportUnknownFields(rawCard, CARD_IMPORT_FIELDS, cardPath, cardErrors);
       }
 
       const cardSlug = isPlainObject(rawCard) ? rawCard.slug : undefined;
@@ -488,6 +510,10 @@ function normalizeImport(data: unknown): NormalizedImport {
         addError(cardErrors, `${cardPath}.attributes`, 'INVALID_TYPE');
       }
 
+      const cardTaxonomy: CardTaxonomyFields = isPlainObject(rawCard)
+        ? readCardTaxonomy(rawCard, cardPath, cardErrors)
+        : {};
+
       const parallel = isPlainObject(rawCard)
         ? readImportParallel(rawCard, cardPath, cardErrors)
         : {};
@@ -528,6 +554,7 @@ function normalizeImport(data: unknown): NormalizedImport {
             imageUrl: normalizeImageUrl(typeof imageUrl === 'string' ? imageUrl : undefined),
             attributes: normalizedAttributes ?? {},
             seriesSlug: slug,
+            ...cardTaxonomy,
             ...fields,
             ...(cardErrors.length > 0 ? { relationOnly: true } : {}),
           });
@@ -597,24 +624,68 @@ export class AdminRouter {
       const cardSlugs = normalized.cards.map((card) => card.slug);
       const referencedSeriesSlugs = normalized.cards.map((card) => card.seriesSlug);
 
-      const [existingSeries, referencedSeries, existingCards] = await Promise.all([
-        seriesSlugs.length > 0
-          ? prisma.series.findMany({ where: { slug: { in: seriesSlugs } } })
-          : Promise.resolve([]),
-        referencedSeriesSlugs.length > 0
-          ? prisma.series.findMany({ where: { slug: { in: referencedSeriesSlugs } } })
-          : Promise.resolve([]),
-        cardSlugs.length > 0
-          ? prisma.card.findMany({
-              where: { slug: { in: cardSlugs } },
-              omit: { body: true },
-              include: {
-                series: { select: { slug: true } },
-                parallelOf: { select: { slug: true } },
-              },
-            })
-          : Promise.resolve([]),
-      ]);
+      const categorySlugs = Array.from(
+        new Set(
+          normalized.series
+            .map((series) => series.categorySlug)
+            .filter((value): value is string => typeof value === 'string' && value !== ''),
+        ),
+      );
+
+      const subsetSeriesSlugs = Array.from(
+        new Set(normalized.cards.filter((card) => card.subsetSlug).map((card) => card.seriesSlug)),
+      );
+
+      const [existingSeries, referencedSeries, existingCards, existingCategories, storedSubsets] =
+        await Promise.all([
+          seriesSlugs.length > 0
+            ? prisma.series.findMany({
+                where: { slug: { in: seriesSlugs } },
+                include: {
+                  category: { select: { slug: true } },
+                  subsets: { select: { slug: true, name: true, kind: true, sortOrder: true } },
+                },
+              })
+            : Promise.resolve([]),
+          referencedSeriesSlugs.length > 0
+            ? prisma.series.findMany({ where: { slug: { in: referencedSeriesSlugs } } })
+            : Promise.resolve([]),
+          cardSlugs.length > 0
+            ? prisma.card.findMany({
+                where: { slug: { in: cardSlugs } },
+                omit: { body: true },
+                include: {
+                  series: { select: { slug: true } },
+                  subset: { select: { slug: true } },
+                  parallelOf: { select: { slug: true } },
+                },
+              })
+            : Promise.resolve([]),
+          categorySlugs.length > 0
+            ? prisma.category.findMany({
+                where: { slug: { in: categorySlugs } },
+                select: { slug: true },
+              })
+            : Promise.resolve([]),
+          subsetSeriesSlugs.length > 0
+            ? prisma.subset.findMany({
+                where: { series: { slug: { in: subsetSeriesSlugs } } },
+                select: { slug: true, series: { select: { slug: true } } },
+              })
+            : Promise.resolve([]),
+        ]);
+      const knownCategorySlugs = new Set(existingCategories.map((category) => category.slug));
+      // Subsets a card may name: stored on its series, or listed for that series in this file.
+      const subsetSlugsBySeries = new Map<string, Set<string>>();
+      const addSubsetSlug = (seriesSlug: string, subsetSlug: string) => {
+        const slugs = subsetSlugsBySeries.get(seriesSlug) ?? new Set<string>();
+        slugs.add(subsetSlug);
+        subsetSlugsBySeries.set(seriesSlug, slugs);
+      };
+      for (const subset of storedSubsets) addSubsetSlug(subset.series.slug, subset.slug);
+      for (const series of normalized.series) {
+        for (const subset of series.subsets) addSubsetSlug(series.slug, subset.slug);
+      }
 
       const existingSeriesBySlug = new Map(existingSeries.map((series) => [series.slug, series]));
       const existingCardBySlug = new Map(existingCards.map((card) => [card.slug, card]));
@@ -624,15 +695,43 @@ export class AdminRouter {
       for (const series of normalized.series) {
         const result = results.find((item) => item.row.row === series.row.row);
         if (!result || result.status === 'error') continue;
+        if (series.categorySlug && !knownCategorySlugs.has(series.categorySlug)) {
+          result.status = 'error';
+          result.errors.push({
+            path: `${series.seriesPath}.categorySlug`,
+            code: 'CATEGORY_NOT_FOUND',
+          });
+          continue;
+        }
         const existing = existingSeriesBySlug.get(series.slug);
         if (!existing) {
           result.status = 'created';
           continue;
         }
+        const sameCategory =
+          series.categorySlug === undefined ||
+          (series.categorySlug === '' ? null : series.categorySlug) ===
+            (existing.category?.slug ?? null);
+        const sameReleaseDate =
+          series.releaseDate === undefined ||
+          (series.releaseDate === '' ? null : series.releaseDate) ===
+            formatReleaseDate(existing.releaseDate);
+        const sameSubsets = series.subsets.every((subset) => {
+          const stored = existing.subsets.find((item) => item.slug === subset.slug);
+          return (
+            stored !== undefined &&
+            stored.name === subset.name &&
+            stored.kind === subset.kind &&
+            (subset.sortOrder === undefined || stored.sortOrder === subset.sortOrder)
+          );
+        });
         result.status =
           existing.title === series.title &&
           (existing.description ?? null) === series.description &&
-          (existing.coverUrl ?? null) === series.coverUrl
+          (existing.coverUrl ?? null) === series.coverUrl &&
+          sameCategory &&
+          sameReleaseDate &&
+          sameSubsets
             ? 'unchanged'
             : 'updated';
       }
@@ -648,11 +747,20 @@ export class AdminRouter {
           });
           continue;
         }
+        if (card.subsetSlug && !subsetSlugsBySeries.get(card.seriesSlug)?.has(card.subsetSlug)) {
+          result.status = 'error';
+          result.errors.push({ path: `${card.cardPath}.subsetSlug`, code: 'SUBSET_NOT_FOUND' });
+          continue;
+        }
         const existing = existingCardBySlug.get(card.slug);
         if (!existing) {
           result.status = 'created';
           continue;
         }
+        const sameTaxonomy =
+          (card.cardNumber === undefined || card.cardNumber === (existing.cardNumber ?? null)) &&
+          (card.subsetSlug === undefined ||
+            (card.subsetSlug === '' ? null : card.subsetSlug) === (existing.subset?.slug ?? null));
         const existingAttributes = normalizeDbAttributes(existing.attributes);
         const sameParallel =
           (card.parallelOf === undefined ||
@@ -670,7 +778,8 @@ export class AdminRouter {
           (existing.imageUrl ?? null) === card.imageUrl &&
           existing.series.slug === card.seriesSlug &&
           sameAttributes(existingAttributes, card.attributes) &&
-          sameParallel
+          sameParallel &&
+          sameTaxonomy
             ? 'unchanged'
             : 'updated';
       }
@@ -692,33 +801,88 @@ export class AdminRouter {
         });
       }
 
-      const failures: Array<{
-        card: NormalizedCard;
-        code: AdminCatalogErrorCode;
-        field: 'parallelOf' | 'parallelName' | 'printRun';
-      }> = [];
+      // Relations that only fail inside the transaction (parallel rules, or a
+      // category or subset removed since the preview read).
+      const failures: Array<{ rowNumber: number; path: string; code: AdminCatalogErrorCode }> = [];
       let rollback = dryRun || hasShapeError;
       try {
         await prisma.$transaction(
           async (tx) => {
             const seriesIdBySlug = new Map<string, string>();
+            const categoryIdBySlug = new Map<string, string>();
+            const categorySlugs = Array.from(
+              new Set(
+                normalized.series
+                  .map((series) => series.categorySlug)
+                  .filter((value): value is string => typeof value === 'string' && value !== ''),
+              ),
+            );
+            if (categorySlugs.length > 0) {
+              const categories = await tx.category.findMany({
+                where: { slug: { in: categorySlugs } },
+                select: { id: true, slug: true },
+              });
+              for (const category of categories) categoryIdBySlug.set(category.slug, category.id);
+            }
+            const subsetIdByKey = new Map<string, string>();
+            const subsetKey = (seriesId: string, slug: string) => `${seriesId}\u0000${slug}`;
             for (const series of normalized.series) {
+              // Omitted fields leave the stored value. Empty string clears it.
+              let categoryId: string | null | undefined;
+              if (series.categorySlug === '') categoryId = null;
+              else if (series.categorySlug !== undefined) {
+                categoryId = categoryIdBySlug.get(series.categorySlug);
+                if (categoryId === undefined) {
+                  failures.push({
+                    rowNumber: series.row.row,
+                    path: `${series.seriesPath}.categorySlug`,
+                    code: 'CATEGORY_NOT_FOUND',
+                  });
+                }
+              }
+              const releaseDate = releaseDateForInput(series.releaseDate);
+              const taxonomy = {
+                ...(categoryId !== undefined ? { categoryId } : {}),
+                ...(releaseDate !== undefined ? { releaseDate } : {}),
+              };
               const saved = await tx.series.upsert({
                 where: { slug: series.slug },
                 update: {
                   title: series.title,
                   description: series.description,
                   coverUrl: series.coverUrl,
+                  ...taxonomy,
                 },
                 create: {
                   slug: series.slug,
                   title: series.title,
                   description: series.description,
                   coverUrl: series.coverUrl,
+                  ...taxonomy,
                 },
                 select: { id: true, slug: true },
               });
               seriesIdBySlug.set(saved.slug, saved.id);
+              // Listed subsets are created or updated by seriesId+slug. Unlisted ones stay.
+              for (const subset of series.subsets) {
+                const savedSubset = await tx.subset.upsert({
+                  where: { seriesId_slug: { seriesId: saved.id, slug: subset.slug } },
+                  update: {
+                    name: subset.name,
+                    kind: subset.kind,
+                    ...(subset.sortOrder !== undefined ? { sortOrder: subset.sortOrder } : {}),
+                  },
+                  create: {
+                    seriesId: saved.id,
+                    slug: subset.slug,
+                    name: subset.name,
+                    kind: subset.kind,
+                    sortOrder: subset.sortOrder ?? 0,
+                  },
+                  select: { id: true },
+                });
+                subsetIdByKey.set(subsetKey(saved.id, subset.slug), savedSubset.id);
+              }
             }
 
             const missingSeriesSlugs = Array.from(
@@ -735,6 +899,24 @@ export class AdminRouter {
               });
               for (const series of existingSeries) {
                 seriesIdBySlug.set(series.slug, series.id);
+              }
+            }
+
+            const subsetLookupSeriesIds = Array.from(
+              new Set(
+                normalized.cards
+                  .filter((card) => card.subsetSlug)
+                  .map((card) => seriesIdBySlug.get(card.seriesSlug))
+                  .filter((seriesId): seriesId is string => seriesId !== undefined),
+              ),
+            );
+            if (subsetLookupSeriesIds.length > 0) {
+              const storedSubsets = await tx.subset.findMany({
+                where: { seriesId: { in: subsetLookupSeriesIds } },
+                select: { id: true, seriesId: true, slug: true },
+              });
+              for (const subset of storedSubsets) {
+                subsetIdByKey.set(subsetKey(subset.seriesId, subset.slug), subset.id);
               }
             }
 
@@ -755,8 +937,26 @@ export class AdminRouter {
                 where: { slug: card.slug },
                 select: { seriesId: true, subsetId: true },
               });
-              const subsetId =
-                existing && existing.seriesId !== seriesId && existing.subsetId ? null : undefined;
+              let subsetId: string | null | undefined;
+              if (card.subsetSlug === undefined) {
+                // Not given: keep the stored subset unless the card leaves its series.
+                subsetId =
+                  existing && existing.seriesId !== seriesId && existing.subsetId
+                    ? null
+                    : undefined;
+              } else if (card.subsetSlug === '') {
+                subsetId = null;
+              } else {
+                subsetId = subsetIdByKey.get(subsetKey(seriesId, card.subsetSlug));
+                if (subsetId === undefined) {
+                  failures.push({
+                    rowNumber: card.row.row,
+                    path: `${card.cardPath}.subsetSlug`,
+                    code: 'SUBSET_NOT_FOUND',
+                  });
+                  continue;
+                }
+              }
               let parallel;
               try {
                 parallel = await resolveParallelWrite(tx, {
@@ -770,7 +970,11 @@ export class AdminRouter {
               } catch (error) {
                 const failure = parallelWriteFailure(error);
                 if (!failure) throw error;
-                failures.push({ card, code: failure.code, field: failure.field });
+                failures.push({
+                  rowNumber: card.row.row,
+                  path: `${card.cardPath}.${failure.field}`,
+                  code: failure.code,
+                });
                 continue;
               }
               if (card.relationOnly) continue;
@@ -784,6 +988,7 @@ export class AdminRouter {
                   attributes: card.attributes,
                   seriesId,
                   ...(subsetId !== undefined ? { subsetId } : {}),
+                  ...(card.cardNumber !== undefined ? cardNumberColumns(card.cardNumber) : {}),
                   ...(parallel.parallelOfId !== undefined
                     ? { parallelOfId: parallel.parallelOfId }
                     : {}),
@@ -800,6 +1005,8 @@ export class AdminRouter {
                   imageUrl: card.imageUrl,
                   attributes: card.attributes,
                   seriesId,
+                  subsetId: subsetId ?? null,
+                  ...cardNumberColumns(card.cardNumber ?? null),
                   parallelOfId: parallel.parallelOfId ?? null,
                   parallelName: parallel.parallelName ?? null,
                   printRun: parallel.printRun ?? null,
@@ -818,13 +1025,15 @@ export class AdminRouter {
       }
 
       for (const failure of failures) {
-        const result = preview.find((item) => item.row.row === failure.card.row.row);
+        const result = preview.find((item) => item.row.row === failure.rowNumber);
         if (!result) continue;
         result.status = 'error';
-        result.errors.push({
-          path: `${failure.card.cardPath}.${failure.field}`,
-          code: failure.code,
-        });
+        // The preview may already carry the same relation error.
+        if (
+          result.errors.some((error) => error.path === failure.path && error.code === failure.code)
+        )
+          continue;
+        result.errors.push({ path: failure.path, code: failure.code });
         sortImportErrors(result.errors);
       }
       if (!dryRun && preview.some((row) => row.status === 'error')) {
