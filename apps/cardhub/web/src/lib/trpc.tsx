@@ -38,10 +38,11 @@ function isPublicForumRead(queryKey: QueryKey): boolean {
 
 export type QueryClearScope = 'everything' | 'keepPublicForumReads';
 
-export function isTrpcNotFound(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const code = (error as { data?: { code?: unknown } }).data?.code;
-  return code === 'NOT_FOUND';
+function isTrpcNotFound(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('data' in error)) return false;
+  const { data } = error;
+  if (typeof data !== 'object' || data === null || !('code' in data)) return false;
+  return data.code === 'NOT_FOUND';
 }
 
 /** Default query retry: once, except tRPC NOT_FOUND (cut-6 AC6-11). */
