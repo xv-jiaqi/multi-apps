@@ -65,6 +65,7 @@ describe('reports.create quota with an injected clock (CH-229 229-A)', () => {
     const tx = {
       report: { count, findFirst, create },
       $executeRaw: jest.fn().mockResolvedValue(1),
+      $queryRaw: jest.fn().mockResolvedValue([{ lock_timeout: '0' }]),
     };
     const prisma = {
       ...tx,

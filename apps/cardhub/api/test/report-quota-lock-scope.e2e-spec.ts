@@ -137,11 +137,10 @@ describe('reports quota lock wait cap covers only the quota lock (CH-232)', () =
   }, 40_000);
 
   /**
-   * CH-233: after the quota lock the transaction goes back to the configured
-   * lock_timeout (`SET LOCAL lock_timeout TO DEFAULT`). "Configured" is the
-   * reset value: postgresql.conf, ALTER DATABASE, ALTER ROLE, or a connection
-   * startup option. A plain session `SET lock_timeout` is not a reset value
-   * and is not restored inside the transaction (measured on PG 16).
+   * After the quota lock the transaction goes back to the lock_timeout that
+   * was in effect at the start (`current_setting` + `set_config(..., true)`).
+   * That includes postgresql.conf, ALTER DATABASE, ALTER ROLE, a connection
+   * startup option, and a session-level `SET lock_timeout`.
    */
   async function lockTimeoutAroundQuotaLock(client: PrismaClient, reporterId: string) {
     const before = await showLockTimeout(client);
@@ -177,13 +176,14 @@ describe('reports quota lock wait cap covers only the quota lock (CH-232)', () =
     const a = await createSignedUser(app);
     const role = `ch233_${randomUUID().replace(/-/g, '').slice(0, 12)}`;
     const password = randomUUID();
-    await prisma.$executeRawUnsafe(`CREATE ROLE ${role} LOGIN PASSWORD '${password}'`);
-    await prisma.$executeRawUnsafe(`ALTER ROLE ${role} SET lock_timeout = '2500ms'`);
-    const url = new URL(process.env.DATABASE_URL ?? '');
-    url.username = role;
-    url.password = password;
-    const client = singleConnectionClient({ url: url.toString() });
+    let client: PrismaClient | undefined;
     try {
+      await prisma.$executeRawUnsafe(`CREATE ROLE ${role} LOGIN PASSWORD '${password}'`);
+      await prisma.$executeRawUnsafe(`ALTER ROLE ${role} SET lock_timeout = '2500ms'`);
+      const url = new URL(process.env.DATABASE_URL ?? '');
+      url.username = role;
+      url.password = password;
+      client = singleConnectionClient({ url: url.toString() });
       expect(await lockTimeoutAroundQuotaLock(client, a.id)).toEqual({
         before: '2500ms',
         inTx: '2500ms',
@@ -191,8 +191,30 @@ describe('reports quota lock wait cap covers only the quota lock (CH-232)', () =
         sameConnection: true,
       });
     } finally {
-      await client.$disconnect();
+      await client?.$disconnect();
       await prisma.$executeRawUnsafe(`DROP ROLE IF EXISTS ${role}`);
+    }
+  });
+
+  it('a session-level SET lock_timeout is restored after the quota lock', async () => {
+    const a = await createSignedUser(app);
+    const client = singleConnectionClient();
+    try {
+      await client.$executeRaw`SET lock_timeout = '1500ms'`;
+      const pidBefore = await backendPid(client);
+      const { pid, settings } = await client.$transaction(async (tx) => {
+        await lockReportQuota(tx, a.id);
+        return {
+          pid: await backendPid(tx),
+          settings: await tx.$queryRaw<Array<{ lock_timeout: string }>>`SHOW lock_timeout`,
+        };
+      });
+      expect(settings).toEqual([{ lock_timeout: '1500ms' }]);
+      expect(pid).toBe(pidBefore);
+      expect(await backendPid(client)).toBe(pid);
+      expect(await client.$queryRaw`SHOW lock_timeout`).toEqual([{ lock_timeout: '1500ms' }]);
+    } finally {
+      await client.$disconnect();
     }
   });
 });
