@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { TrpcProvider } from '../lib/trpc';
 import { rootStore } from '../stores/root-store';
 import { TradeListPage } from './trade-list';
+import {
+  PAST_RETRY_DELAY_MS,
+  untilBeforeRetryDelay,
+  useFakeRetryClock,
+} from '../../test/retry-clock';
 
 type TrpcErrorCode = 'NOT_FOUND' | 'INTERNAL_SERVER_ERROR';
 
@@ -68,9 +73,11 @@ function renderTrade() {
 beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signOut();
+  useFakeRetryClock();
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -79,20 +86,25 @@ describe('trade list listings.list retry matches the global NOT_FOUND rule', () 
     const api = mockProcedureErrors({ 'listings.list': 'NOT_FOUND' });
     renderTrade();
 
-    expect(await screen.findByText('加载失败', {}, { timeout: 1500 })).toBeInTheDocument();
+    await untilBeforeRetryDelay(() => expect(screen.getByText('加载失败')).toBeInTheDocument());
     expect(api.count('listings.list')).toBe(1);
 
-    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
     expect(api.count('listings.list')).toBe(1);
   });
 
-  it('still retries listings.list twice after a 500', async () => {
+  it('still retries listings.list once after a 500, two requests in all', async () => {
     const api = mockProcedureErrors({ 'listings.list': 'INTERNAL_SERVER_ERROR' });
     renderTrade();
 
-    await waitFor(() => expect(api.count('listings.list')).toBe(2), { timeout: 3000 });
-    expect(await screen.findByText('加载失败')).toBeInTheDocument();
-    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await untilBeforeRetryDelay(() => expect(api.count('listings.list')).toBe(1));
+    expect(screen.queryByText('加载失败')).not.toBeInTheDocument();
+
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
+    await untilBeforeRetryDelay(() => expect(screen.getByText('加载失败')).toBeInTheDocument());
+    expect(api.count('listings.list')).toBe(2);
+
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
     expect(api.count('listings.list')).toBe(2);
   });
 });

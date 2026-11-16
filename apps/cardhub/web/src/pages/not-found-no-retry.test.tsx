@@ -1,10 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { TrpcProvider } from '../lib/trpc';
 import { rootStore } from '../stores/root-store';
 import { CardDetailPage } from './card-detail';
 import { SeriesDetailPage } from './series-detail';
+import {
+  PAST_RETRY_DELAY_MS,
+  untilBeforeRetryDelay,
+  useFakeRetryClock,
+} from '../../test/retry-clock';
 
 type TrpcErrorCode = 'NOT_FOUND' | 'INTERNAL_SERVER_ERROR';
 
@@ -41,7 +46,6 @@ function trpcBatchError(code: TrpcErrorCode): Response {
 
 function mockProcedureErrors(errors: Record<string, TrpcErrorCode>) {
   const calls: Record<string, number> = {};
-  let firstResponseAt: number | undefined;
   const fetch = vi.fn(async (input: RequestInfo | URL) => {
     const procedure = procedureFromRequest(input);
     calls[procedure] = (calls[procedure] ?? 0) + 1;
@@ -49,15 +53,10 @@ function mockProcedureErrors(errors: Record<string, TrpcErrorCode>) {
     if (!code) {
       throw new Error(`unmocked tRPC procedure: ${procedure}`);
     }
-    const response = trpcBatchError(code);
-    firstResponseAt ??= performance.now();
-    return response;
+    return trpcBatchError(code);
   });
   vi.stubGlobal('fetch', fetch);
-  return {
-    count: (procedure: string) => calls[procedure] ?? 0,
-    firstResponseAt: () => firstResponseAt,
-  };
+  return { count: (procedure: string) => calls[procedure] ?? 0 };
 }
 
 function renderCard(slug: string) {
@@ -89,54 +88,61 @@ beforeEach(() => {
   rootStore.session.signOut();
 });
 
+beforeEach(() => {
+  useFakeRetryClock();
+});
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
 describe('cut-6 AC6-11: missing card and series do not retry NOT_FOUND', () => {
-  it('shows 内容不存在 within 1s of a card NOT_FOUND and requests once', async () => {
+  it('shows 内容不存在 for a card NOT_FOUND before any retry delay and requests once', async () => {
     const api = mockProcedureErrors({ 'cards.bySlug': 'NOT_FOUND' });
     renderCard('ptcg-sc-no-such-card');
 
-    const copy = await screen.findByText('内容不存在', {}, { timeout: 1500 });
-    const respondedAt = api.firstResponseAt();
-    expect(respondedAt).toBeDefined();
-    expect(performance.now() - respondedAt!).toBeLessThanOrEqual(1000);
-    expect(copy).toBeInTheDocument();
+    await untilBeforeRetryDelay(() => expect(screen.getByText('内容不存在')).toBeInTheDocument());
     expect(api.count('cards.bySlug')).toBe(1);
 
-    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
     expect(api.count('cards.bySlug')).toBe(1);
+    expect(screen.getByText('内容不存在')).toBeInTheDocument();
   });
 
-  it('shows 内容不存在 within 1s of a series NOT_FOUND and requests once', async () => {
+  it('shows 内容不存在 for a series NOT_FOUND before any retry delay and requests once', async () => {
     const api = mockProcedureErrors({ 'series.bySlug': 'NOT_FOUND' });
     renderSeries('no-such-series');
 
-    const copy = await screen.findByText('内容不存在', {}, { timeout: 1500 });
-    const respondedAt = api.firstResponseAt();
-    expect(respondedAt).toBeDefined();
-    expect(performance.now() - respondedAt!).toBeLessThanOrEqual(1000);
-    expect(copy).toBeInTheDocument();
+    await untilBeforeRetryDelay(() => expect(screen.getByText('内容不存在')).toBeInTheDocument());
     expect(api.count('series.bySlug')).toBe(1);
 
-    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
     expect(api.count('series.bySlug')).toBe(1);
+    expect(screen.getByText('内容不存在')).toBeInTheDocument();
   });
 
-  it('still retries a card query after a 500', async () => {
+  it('still retries a card query once after a 500', async () => {
     const api = mockProcedureErrors({ 'cards.bySlug': 'INTERNAL_SERVER_ERROR' });
     renderCard('ptcg-sc-no-such-card');
 
-    await waitFor(() => expect(api.count('cards.bySlug')).toBeGreaterThan(1), { timeout: 3000 });
+    await untilBeforeRetryDelay(() => expect(api.count('cards.bySlug')).toBe(1));
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
+    await untilBeforeRetryDelay(() => expect(api.count('cards.bySlug')).toBe(2));
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
+    expect(api.count('cards.bySlug')).toBe(2);
     expect(screen.queryByText('内容不存在')).not.toBeInTheDocument();
   });
 
-  it('still retries a series query after a 500', async () => {
+  it('still retries a series query once after a 500', async () => {
     const api = mockProcedureErrors({ 'series.bySlug': 'INTERNAL_SERVER_ERROR' });
     renderSeries('no-such-series');
 
-    await waitFor(() => expect(api.count('series.bySlug')).toBeGreaterThan(1), { timeout: 3000 });
+    await untilBeforeRetryDelay(() => expect(api.count('series.bySlug')).toBe(1));
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
+    await untilBeforeRetryDelay(() => expect(api.count('series.bySlug')).toBe(2));
+    await vi.advanceTimersByTimeAsync(PAST_RETRY_DELAY_MS);
+    expect(api.count('series.bySlug')).toBe(2);
     expect(screen.queryByText('内容不存在')).not.toBeInTheDocument();
   });
 });
