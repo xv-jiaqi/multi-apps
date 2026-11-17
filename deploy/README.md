@@ -289,6 +289,25 @@ Cardhub Images run for that exact commit has succeeded, then reads the
 going, or pushed again later; the artifact is the manifest that run actually
 pushed.
 
+After that push, and before the digest file is uploaded, the same job
+pulls `image@digest` and starts it. Nothing in that step pushes or
+retags. The API container gets a `JWT_SECRET` from `openssl rand -hex 32`
+in the job, plus the job's Postgres 16 and Redis 7 services. Migrations
+run in a one-shot container, the same way compose does, and the API
+process does not receive `MIGRATE_DATABASE_URL`. Within 60 seconds
+`/health` must be HTTP 200 with `status` ok and both `db` and `redis`
+true. The web container gets a dummy `TRPC_URL` and must return 200 for
+`/` and for a hashed `/assets/` file. `/` must also send the API
+preconnect `Link` header, a `Content-Security-Policy`, and
+`Cache-Control: no-cache`. The hashed asset must be `immutable` and
+must not send a `Link` header. Failure prints `docker logs` and
+fails the job, so the digest artifact is not uploaded. Deploy then
+refuses the run and does not fall back to the tag. The tags themselves
+are already pushed; deploy does not pull them. CI's `API image build`
+and `Web image build` jobs boot the image they just loaded, under those
+same check names, so a broken image fails the required check before
+Images runs.
+
 The newest Images run for that SHA is the one that counts. If it is still
 in progress, failed, or missing, resolution exits and the VPS is not
 contacted. A later failure wins over an older success for the same SHA:
@@ -299,6 +318,20 @@ successful run that genuinely has no artifact (a build from before this
 change, or one whose artifact aged out) is the only case that resolves
 `sha-<commit>` to a digest, and only after that run has already succeeded.
 A missing manifest fails the same way.
+
+Before any file is synced to the VPS, the deploy job checks both digests
+with `docker buildx imagetools inspect` on
+`ghcr.io/xv-jiaqi/cardhub-api@sha256:...` and the same form for web, using
+the workflow's GHCR login. A missing manifest fails that step. Sync and the
+VPS deploy script are not started, and the running containers stay as they
+are.
+
+On the VPS, `docker pull` of each digest is tried 3 times. A resolve
+failure, a registry `: not found` or `manifest unknown`, a 429 or
+502/503/504, or a network error waits 5s and then 15s between tries (the
+backoff schedule is 5s, 15s, 30s). `command not found` does not retry. Any
+other pull error stops on the first try. When the tries are exhausted the
+script exits before it replaces a container.
 
 Use `staging` with `/opt/cardhub/staging/staging.env` for staging. If both run
 on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
@@ -788,18 +821,36 @@ reference stays `name@sha256:<digest>`. Cleanup keeps, independently for
 `cardhub-prod` and `cardhub-staging`:
 
 - the images currently referenced by that compose project's containers;
-- the previous API and web tags recorded in that environment's state file;
+- the previous API and web tags recorded in that environment's
+  `.deploy-state/previous-images.env` (production's rollback point);
+- the images for the most recent main commits, 5 by default and at least 1
+  (`CARDHUB_CLEANUP_KEEP_MAIN_COMMITS` or `--keep-main`);
 - any Cardhub image still referenced by any local Docker container, running or
   stopped, including both the old and new replica while a rollout overlaps; and
 - any tag whose image ID is the image of such a container.
 
+The deploy job passes those main SHAs into `remote-deploy.sh`. The script
+writes `/opt/cardhub/.main-shas` as soon as the digests are accepted, before
+it pulls and before cleanup. A later manual run reads that file.
+`CARDHUB_GIT_DIR` is used only when neither the variable nor the file is set.
+
+Cleanup deletes nothing unless production's `previous-images.env` has both
+`PREVIOUS_API_TAG` and `PREVIOUS_WEB_TAG` as `sha-<40 hex>`, and unless the
+main commit list has at least one full SHA with a keep-count of at least 1.
+A missing file, an empty file, a short SHA, `keep-count=0`, or a failed
+`docker ps` / `docker inspect` exits non-zero before `image rm`. That check
+runs only after the new api and web are healthy and rollback has been
+disarmed, so a cleanup failure does not roll the containers back. It does
+fail the Deploy job (`::error::`), because a warning on a green job is how
+a bad keep-set stayed invisible. Running cleanup again does not delete a tag
+that is still protected.
+
 This is intentionally cross-environment: a staging deploy scans both production
 and staging state before deleting anything, so staging cannot remove production's
-current image or production's rollback target. Cleanup is best-effort and logs a
-warning instead of failing the deployment if Docker cleanup fails. Cleanup takes
+current image or production's rollback target. Cleanup takes
 a non-blocking lock at `/opt/cardhub/.image-cleanup.lock`; if staging and
-production deploy concurrently, whichever cleanup starts second skips its cleanup
-attempt and the deploy still succeeds. The script is scoped to Cardhub API/Web
+production deploy concurrently, whichever cleanup starts second skips and exits 0.
+That skip is not a failed keep-set. The failed keep-set above still fails the job. The script is scoped to Cardhub API/Web
 `sha-*` tags and does not run a machine-wide dangling image prune. Docker frees
 layers that become unreferenced by the removed Cardhub tags, while unrelated
 dangling images are left alone.
@@ -831,6 +882,12 @@ container startup; a missing or malformed `TRPC_URL` makes the web container
 exit instead of silently falling back to another API URL. The production web
 build omits source maps, and nginx answers `/assets/*.map` with 404. CI
 passes the browser DSN through `WEB_SENTRY_DSN` and does not upload maps.
+The same entrypoint writes `/etc/nginx/conf.d/api-preconnect.inc`, so SPA HTML
+responses (only `location /`) carry
+`Link: <API origin>; rel=preconnect; crossorigin`. The browser opens the API
+TLS connection while the JS bundle downloads (CH-240 first card). A
+`TRPC_URL` whose origin is not a plain `scheme://host[:port]` gets an empty
+file and no hint.
 
 ## Rollback
 

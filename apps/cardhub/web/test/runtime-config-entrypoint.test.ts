@@ -11,6 +11,7 @@ function runScript(trpcUrl: string, extraEnv: Record<string, string | undefined>
   const dir = mkdtempSync(path.join(tmpdir(), 'cardhub-runtime-config-'));
   const configPath = path.join(dir, 'config.js');
   const headersPath = path.join(dir, 'security-headers.inc');
+  const preconnectPath = path.join(dir, 'api-preconnect.inc');
   const robotsPath = path.join(dir, 'robots.txt');
   try {
     execFileSync('sh', [scriptPath], {
@@ -33,6 +34,7 @@ function runScript(trpcUrl: string, extraEnv: Record<string, string | undefined>
       ok: true as const,
       config: readFileSync(configPath, 'utf8'),
       headers: readFileSync(headersPath, 'utf8'),
+      preconnect: readFileSync(preconnectPath, 'utf8'),
       robots: existsSync(robotsPath) ? readFileSync(robotsPath, 'utf8') : undefined,
     };
   } catch (error) {
@@ -64,6 +66,35 @@ describe('runtime config entrypoint', () => {
     expect(result.headers).toContain("frame-ancestors 'none'");
     expect(result.headers).toContain("connect-src 'self' https://api-staging.card-hub.app;");
     expect(result.headers).not.toContain('sentry');
+  });
+
+  it('writes a preconnect Link header for the API origin (CH-240 first card)', () => {
+    const result = runScript('https://api-staging.card-hub.app/trpc');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.preconnect).toBe(
+      'add_header Link "<https://api-staging.card-hub.app>; rel=preconnect; crossorigin" always;\n',
+    );
+    expect(result.headers).not.toContain('Link');
+  });
+
+  it('preconnects to the origin only when the tRPC URL has a path prefix or port', () => {
+    const result = runScript('http://localhost:3000/api/trpc');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.preconnect).toBe(
+      'add_header Link "<http://localhost:3000>; rel=preconnect; crossorigin" always;\n',
+    );
+  });
+
+  it('writes an empty preconnect file when the API host is not a plain hostname', () => {
+    const result = runScript('https://api$host.example/trpc');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.preconnect).toBe('');
   });
 
   it('writes optional Sentry runtime config when values are set', () => {

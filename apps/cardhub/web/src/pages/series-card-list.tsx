@@ -48,6 +48,7 @@ import {
   seriesListSearch,
   type SeriesListState,
 } from '../lib/series-list-params';
+import { seriesCardListInput } from '../lib/series-detail-queries';
 import { useDebounced } from '../lib/use-debounced';
 import { trpc } from '../lib/trpc';
 
@@ -198,11 +199,14 @@ type SubsetOption = { slug: string; name: string };
 export const SeriesCardList = observer(function SeriesCardList({
   seriesSlug,
   subsets,
+  subsetsReady = true,
   fallbackCardCount,
 }: {
   seriesSlug: string;
   subsets?: SubsetOption[];
-  fallbackCardCount: number;
+  /** False while series.bySlug is still loading, so a ?subset= value is kept. */
+  subsetsReady?: boolean;
+  fallbackCardCount?: number;
 }) {
   const { locale: localeStore } = useStores();
   const locale = localeStore.locale;
@@ -210,8 +214,8 @@ export const SeriesCardList = observer(function SeriesCardList({
   const [searchParams, setSearchParams] = useSearchParams();
   const subsetOptions = subsets ?? [];
   const subsetSlugs = useMemo(
-    () => new Set(subsetOptions.map((item) => item.slug)),
-    [subsetOptions],
+    () => (subsetsReady ? new Set(subsetOptions.map((item) => item.slug)) : null),
+    [subsetOptions, subsetsReady],
   );
   const parsed = useMemo(
     () => parseSeriesListParams(searchParams, subsetSlugs),
@@ -274,26 +278,16 @@ export const SeriesCardList = observer(function SeriesCardList({
     );
   }, [debounced, setSearchParams]);
 
-  const list = trpc.cards.listBySeries.useQuery(
-    {
-      seriesSlug,
-      page: state.page,
-      pageSize: SERIES_LIST_PAGE_SIZE,
-      ...(state.q ? { q: state.q } : {}),
-      ...(state.subset ? { subsetSlug: state.subset } : {}),
-      ...(state.rarity ? { rarity: state.rarity } : {}),
-      ...(state.sort !== 'number' ? { sort: state.sort } : {}),
-      ...(state.parallels ? { includeParallels: true } : {}),
-    },
-    { placeholderData: keepPreviousData },
-  );
+  const list = trpc.cards.listBySeries.useQuery(seriesCardListInput(seriesSlug, state), {
+    placeholderData: keepPreviousData,
+  });
   const listView = queryFallback(list);
   useFocusOnRecovery(listView, titleRef);
 
   const seriesTotal =
     list.data && typeof list.data.seriesTotal === 'number'
       ? list.data.seriesTotal
-      : fallbackCardCount;
+      : (fallbackCardCount ?? 0);
   const filtered = state.q.length > 0 || state.subset !== null || state.rarity !== null;
   const total = list.data?.total ?? 0;
   const parallelCount = list.data?.parallelCount ?? 0;
@@ -314,9 +308,7 @@ export const SeriesCardList = observer(function SeriesCardList({
   const emptySeries =
     !onlyParallels &&
     listView !== 'error' &&
-    (list.data !== undefined
-      ? seriesTotal === 0 && parallelCount === 0
-      : seriesTotal === 0 && fallbackCardCount === 0);
+    (list.data !== undefined ? seriesTotal === 0 && parallelCount === 0 : fallbackCardCount === 0);
   const pageCount = list.data ? Math.ceil(list.data.total / SERIES_LIST_PAGE_SIZE) : 0;
 
   useEffect(() => {

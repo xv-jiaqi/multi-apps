@@ -16,12 +16,9 @@ import { trpc } from '../lib/trpc';
 import { useArtImage } from '../components/artwork';
 import { cn } from '@repo/ui-web';
 import { formatCatalogDate } from '../lib/catalog-taxonomy';
+import { seriesDetailInput } from '../lib/series-detail-queries';
 import { gradientFor } from '../lib/gradients';
 import { SeriesCardList } from './series-card-list';
-
-function baseCardCount(cards: Array<{ parallelOfId?: string | null }>): number {
-  return cards.filter((card) => card.parallelOfId == null).length;
-}
 
 type SeriesHeroProps = {
   series: { slug: string; title: string; description: string | null; coverUrl: string | null };
@@ -105,7 +102,12 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
   const { seriesSlug = '' } = useParams<{ seriesSlug: string }>();
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
-  const query = trpc.series.bySlug.useQuery({ slug: seriesSlug }, { enabled: !!seriesSlug });
+  // retryOnMount: false — SeriesDetailPrefetch has already fetched (and, for
+  // a 5xx, retried) this query. A NOT_FOUND it got stays final (cut-6 AC6-11).
+  const query = trpc.series.bySlug.useQuery(seriesDetailInput(seriesSlug), {
+    enabled: !!seriesSlug,
+    retryOnMount: false,
+  });
   const view = queryFallback(query);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const retryRef = useRef<HTMLButtonElement>(null);
@@ -122,6 +124,16 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
     if (failedRetry) retryRef.current?.focus({ preventScroll: true });
   }, [view, query.isFetching]);
 
+  const cardList =
+    seriesSlug && view !== 'error' ? (
+      <SeriesCardList
+        seriesSlug={query.data?.slug ?? seriesSlug}
+        subsets={query.data?.subsets ?? []}
+        subsetsReady={view === 'ready' && query.data !== undefined}
+        fallbackCardCount={query.data?.baseCardCount}
+      />
+    ) : null;
+
   if (view === 'loading') {
     return (
       <PageShell>
@@ -129,14 +141,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
         <div className="space-y-6">
           <div className="h-4 w-40 animate-pulse motion-reduce:animate-none rounded bg-neutral-200" />
           <div className="h-48 animate-pulse motion-reduce:animate-none rounded-3xl bg-neutral-200" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 4 }).map((_, idx) => (
-              <div
-                key={idx}
-                className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-card"
-              />
-            ))}
-          </div>
+          {cardList}
         </div>
       </PageShell>
     );
@@ -200,7 +205,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
         description={seriesMetaDescription({
           locale: locale.locale,
           title: series.title,
-          cardCount: baseCardCount(series.cards),
+          cardCount: series.baseCardCount,
           description: series.description,
         })}
       />
@@ -229,7 +234,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
           series={series}
           alt={tt('artwork.seriesAlt', { title: series.title })}
           cardCountLabel={tt('series.cardCount', {
-            count: baseCardCount(series.cards),
+            count: series.baseCardCount,
           })}
           headingRef={headingRef}
           category={series.category}
@@ -247,11 +252,7 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
 
         <SeriesReleases locale={locale.locale} items={series.releases ?? []} />
 
-        <SeriesCardList
-          seriesSlug={series.slug}
-          subsets={series.subsets ?? []}
-          fallbackCardCount={baseCardCount(series.cards)}
-        />
+        {cardList}
 
         <Card className="border-neutral-200 bg-card">
           <CardHeader>

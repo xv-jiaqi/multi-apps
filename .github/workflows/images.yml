@@ -33,6 +33,28 @@ jobs:
           - name: web
             file: Dockerfile.web
             image: ghcr.io/xv-jiaqi/cardhub-web
+    # API boot needs both. The web leg starts them too; they are idle there.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cardhub
+          POSTGRES_PASSWORD: cardhub
+          POSTGRES_DB: cardhub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U cardhub -d cardhub_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,6 +93,84 @@ jobs:
           tags: |
             ${{ matrix.image }}:sha-${{ github.event.workflow_run.head_sha }}
             ${{ matrix.image }}:main
+
+      # Push already happened and is unchanged. This step does not push or
+      # retag. It runs image@digest from the build step. The digest artifact
+      # below is written only after the container boots, so a failed boot
+      # fails the job before deploy will accept a digest. Deploy still pulls
+      # image@digest from a successful run.
+      - name: Boot ${{ matrix.name }} image
+        env:
+          IMAGE: ${{ matrix.image }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          ROLE: ${{ matrix.name }}
+          EXPECTED_GIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${IMAGE}" =~ ^ghcr\.io/xv-jiaqi/cardhub-(api|web)$ ]]; then
+            echo "Unexpected image name" >&2
+            exit 1
+          fi
+          if [[ ! "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Refusing to boot an image digest that is not sha256:<64 hex>" >&2
+            exit 1
+          fi
+          if [[ "${ROLE}" != "api" && "${ROLE}" != "web" ]]; then
+            echo "Unexpected image role" >&2
+            exit 1
+          fi
+          if [[ ! "${EXPECTED_GIT_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "EXPECTED_GIT_SHA is not 40 hex characters" >&2
+            exit 1
+          fi
+          ref="${IMAGE}@${DIGEST}"
+          echo "Booting ${ref}"
+          docker pull "${IMAGE}@${DIGEST}"
+          name="cardhub-${ROLE}-boot"
+          docker rm -f "$name" >/dev/null 2>&1 || true
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              if docker inspect "$name" >/dev/null 2>&1; then
+                echo "::group::${ROLE} container logs"
+                docker logs "$name" || true
+                echo "::endgroup::"
+              fi
+            fi
+            docker rm -f "$name" >/dev/null 2>&1 || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+          if [ "$ROLE" = "api" ]; then
+            # Compose runs migrate in a one-shot container, then starts the
+            # API without MIGRATE_DATABASE_URL. /health is SELECT 1; migrate
+            # is what deploy does before the process is serving.
+            docker run --rm --network host \
+              -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
+              --entrypoint /usr/local/bin/migrate-entrypoint.sh \
+              "${IMAGE}@${DIGEST}"
+            jwt_secret="$(openssl rand -hex 32)"
+            if [ "${#jwt_secret}" -ne 64 ]; then
+              echo "Refusing to start the API with a JWT_SECRET that is not 32 bytes" >&2
+              exit 1
+            fi
+            docker run -d --name "$name" --network host \
+              -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
+              -e JWT_SECRET="$jwt_secret" \
+              -e REDIS_HOST=127.0.0.1 \
+              -e REDIS_PORT=6379 \
+              "${IMAGE}@${DIGEST}"
+            API_BASE_URL=http://127.0.0.1:4000 \
+              API_CONTAINER="$name" \
+              bash scripts/check-api-health.sh
+          else
+            docker run -d --name "$name" -p 127.0.0.1:8080:8080 \
+              -e TRPC_URL=http://127.0.0.1:4000/trpc \
+              "${IMAGE}@${DIGEST}"
+            WEB_BASE_URL=http://127.0.0.1:8080 \
+              WEB_CONTAINER="$name" \
+              bash scripts/check-web-image.sh
+          fi
 
       # The tag can move again after this step. Deploy reads this file from
       # the successful run and pulls image@digest, not the tag.

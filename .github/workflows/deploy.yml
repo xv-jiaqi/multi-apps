@@ -241,6 +241,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash deploy/resolve-image-digests.sh
 
+      # Runner-only. docker buildx imagetools inspect of both image@sha256
+      # digests, using the GHCR login above. A missing manifest fails here.
+      # This stays before the re-check, which stays immediately above sync.
+      # No SSH in this step.
+      - name: Verify image digests exist in GHCR
+        shell: bash
+        env:
+          API_IMAGE_DIGEST: ${{ steps.image-digests.outputs.api_digest }}
+          WEB_IMAGE_DIGEST: ${{ steps.image-digests.outputs.web_digest }}
+        run: bash deploy/verify-image-digests.sh
+
       # Keep this step immediately above "Sync deploy files". Digest
       # resolution above can run for about 10 minutes after the first
       # --assert; this fetch is the check that still matches origin/main
@@ -315,9 +326,45 @@ jobs:
             echo "API_IMAGE_DIGEST and WEB_IMAGE_DIGEST must be sha256:<64 hex> before the VPS deploy" >&2
             exit 1
           fi
+          # Recent main commits stay on the VPS so image-cleanup does not
+          # delete them. origin/main was fetched by the re-check above.
+          # The deploy script was not started yet; sync already uploaded files.
+          keep_main="${CARDHUB_CLEANUP_KEEP_MAIN_COMMITS:-5}"
+          if ! [[ "${keep_main}" =~ ^[0-9]+$ ]] || [ "${keep_main}" -lt 1 ]; then
+            echo "CARDHUB_CLEANUP_KEEP_MAIN_COMMITS must be a positive integer. The VPS deploy script was not started." >&2
+            exit 1
+          fi
+          # The deploy job fetches origin/main in the previous step. A shallow
+          # checkout that has not fetched it (the deploy-script tests) uses HEAD.
+          if ! main_shas="$(git rev-list --max-count "${keep_main}" origin/main 2>/dev/null)"; then
+            if ! main_shas="$(git rev-list --max-count "${keep_main}" HEAD 2>/dev/null)"; then
+              echo "Refusing deploy: could not list recent main commits. The VPS deploy script was not started." >&2
+              exit 1
+            fi
+          fi
+          main_shas_one_line=""
+          while IFS= read -r main_sha; do
+            [ -n "${main_sha}" ] || continue
+            if [[ ! "${main_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Refusing deploy: origin/main list contained a value that is not 40 hex. The VPS deploy script was not started." >&2
+              exit 1
+            fi
+            if [ -n "${main_shas_one_line}" ]; then
+              main_shas_one_line="${main_shas_one_line} ${main_sha}"
+            else
+              main_shas_one_line="${main_sha}"
+            fi
+          done <<< "${main_shas}"
+          if [ -z "${main_shas_one_line}" ]; then
+            echo "Refusing deploy: origin/main has no commits to protect from image cleanup. The VPS deploy script was not started." >&2
+            exit 1
+          fi
           # Digests are fixed sha256:<64 hex>. They go before the other
           # prefixes so those prefixes stay immediately in front of bash.
+          # Main SHAs are hex and spaces, quoted for the remote shell.
           digest_prefix="API_IMAGE_DIGEST=${API_IMAGE_DIGEST} WEB_IMAGE_DIGEST=${WEB_IMAGE_DIGEST} "
+          keep_prefix="CARDHUB_CLEANUP_KEEP_MAIN_COMMITS=${keep_main} "
+          main_prefix="CARDHUB_MAIN_SHAS='${main_shas_one_line}' "
           # Unset or blank keeps the server line. Only true or false is sent,
           # and the raw value is not printed. The remote script writes the key.
           prehash="$(
@@ -372,4 +419,4 @@ jobs:
             dsn_prefix="WEB_SENTRY_DSN=${dsn_quoted} "
           fi
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${remote}" \
-            "${digest_prefix}${cache_header_prefix}${dsn_prefix}${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"
+            "${digest_prefix}${keep_prefix}${main_prefix}${cache_header_prefix}${dsn_prefix}${prehash_prefix}bash ${remote_script} ${deploy_environment} ${image_tag} ${expected_sha}"

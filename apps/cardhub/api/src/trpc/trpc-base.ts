@@ -15,6 +15,13 @@ import type { UserRateLimitCause } from './user-rate-limit-headers';
 const ADMIN_CATALOG_ERROR_CODE_SET = new Set<string>(ADMIN_CATALOG_ERROR_CODES);
 const IMPORT_ROW_STATUS_SET = new Set(['created', 'updated', 'unchanged', 'error']);
 const IMPORT_ROW_TYPE_SET = new Set(['series', 'card']);
+type ImportRowTaxonomyKey = 'categorySlug' | 'releaseDate' | 'subsetSlug' | 'cardNumber';
+const IMPORT_ROW_TAXONOMY_KEYS: readonly ImportRowTaxonomyKey[] = [
+  'categorySlug',
+  'releaseDate',
+  'subsetSlug',
+  'cardNumber',
+];
 
 export interface SanitizedImportRowError {
   path: string;
@@ -28,6 +35,10 @@ export interface SanitizedImportRow {
     slug: string | null;
     name: string | null;
     seriesSlug?: string | null;
+    categorySlug?: string;
+    releaseDate?: string;
+    subsetSlug?: string;
+    cardNumber?: string;
   };
   status: 'created' | 'updated' | 'unchanged' | 'error';
   errors: SanitizedImportRowError[];
@@ -73,6 +84,13 @@ function sanitizeRows(value: unknown): SanitizedImportRow[] | undefined {
     ) {
       return undefined;
     }
+    const taxonomy: Partial<Record<ImportRowTaxonomyKey, string>> = {};
+    for (const key of IMPORT_ROW_TAXONOMY_KEYS) {
+      const value = row[key];
+      if (value === undefined) continue;
+      if (typeof value !== 'string') return undefined;
+      taxonomy[key] = value;
+    }
     if (typeof item.status !== 'string' || !IMPORT_ROW_STATUS_SET.has(item.status)) {
       return undefined;
     }
@@ -93,6 +111,7 @@ function sanitizeRows(value: unknown): SanitizedImportRow[] | undefined {
         slug: row.slug,
         name: row.name,
         ...(row.seriesSlug !== undefined ? { seriesSlug: row.seriesSlug } : {}),
+        ...taxonomy,
       },
       status: item.status as SanitizedImportRow['status'],
       errors,

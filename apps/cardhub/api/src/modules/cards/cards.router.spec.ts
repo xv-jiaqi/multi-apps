@@ -323,7 +323,7 @@ describe('CardsRouter.listBySeries', () => {
     const page = await caller.listBySeries({
       seriesSlug: 'dawn-set',
       q: '十',
-      rarity: 'rare',
+      rarity: 'common',
       subsetSlug: 'base',
       page: 1,
       pageSize: 2,
@@ -331,11 +331,9 @@ describe('CardsRouter.listBySeries', () => {
 
     expect(findUnique).toHaveBeenCalledTimes(1);
     expect(findUnique.mock.calls[0]?.[0].where).toEqual({ slug: 'dawn-set' });
-    expect(findUnique.mock.calls[0]?.[0].select.cards.where).toEqual({
-      parallelOfId: null,
-      rarity: 'rare',
-      subset: { slug: 'base' },
-    });
+    // CH-239: the whole series is read once so `rarityCodes` does not follow
+    // filters; parallels, rarity, subset, and keyword filter in process.
+    expect(findUnique.mock.calls[0]?.[0].select.cards.where).toBeUndefined();
     expect(page.total).toBe(1);
     expect(page.seriesTotal).toBe(3);
     expect(page.pageSize).toBe(2);
@@ -456,6 +454,164 @@ describe('CardsRouter.listBySeries', () => {
 
       expect(second.total).toBe(176);
       expect(second.items.map((item) => item.cardNumber)).toEqual(expected.slice(160));
+    });
+  });
+
+  describe('official rarity code (CH-239 / AC7-7)', () => {
+    const subsets = {
+      main: { slug: 'main', sortOrder: 0 },
+      special: { slug: 'special', sortOrder: 2 },
+    };
+    type Row = ReturnType<typeof codeRow>;
+    function codeRow(
+      cardNumber: string,
+      code: unknown,
+      extra: Partial<{
+        rarity: string;
+        subset: { slug: string; sortOrder: number };
+        name: string;
+        parallelOfId: string | null;
+      }> = {},
+    ) {
+      return {
+        id: `id-${cardNumber}${extra.parallelOfId ? '-p' : ''}`,
+        slug: `ptcg-sc-30th-${cardNumber}${extra.parallelOfId ? '-p' : ''}`,
+        name: extra.name ?? `卡${cardNumber}`,
+        rarity: extra.rarity ?? 'common',
+        imageUrl: null,
+        cardNumber,
+        attributes: code === undefined ? {} : { 稀有度: code, 插画师: 'A' },
+        createdAt: new Date('2026-11-17T00:00:00.000Z'),
+        parallelOfId: extra.parallelOfId ?? null,
+        parallelName: extra.parallelOfId ? '闪' : null,
+        printRun: null,
+        subset: extra.subset ?? subsets.main,
+      };
+    }
+    // Stored out of number order so first appearance must follow sort=number.
+    const fixture: Row[] = [
+      codeRow('177', 'FUR', { rarity: 'legendary' }),
+      codeRow('166', 'SAR', { rarity: 'legendary' }),
+      codeRow('003', 'RR', { rarity: 'rare' }),
+      codeRow('001', 'C'),
+      codeRow('100', '无标记'),
+      codeRow('168', ' SAR ', { rarity: 'legendary', name: '皮卡丘' }),
+      codeRow('002', 'R', { rarity: 'rare' }),
+      codeRow('120', 'AR', { rarity: 'epic' }),
+      codeRow('004', 'C'),
+      codeRow('R', 'SAR', { rarity: 'legendary', subset: subsets.special }),
+      codeRow('050', '   '),
+      codeRow('051', 7),
+      codeRow('052', undefined),
+      codeRow('053', 'TOO-LONG-CODE'),
+    ];
+    const ALL_CODES = ['C', 'R', 'RR', '无标记', 'AR', 'SAR', 'FUR'];
+
+    function load(cards: Row[] = fixture) {
+      const router = makeListRouter();
+      router.findUnique.mockResolvedValue({
+        cards,
+        _count: { cards: cards.filter((card) => card.parallelOfId === null).length },
+      });
+      return router;
+    }
+
+    it('keeps only cards whose trimmed attributes.稀有度 equals rarityCode', async () => {
+      const { caller, findUnique } = load();
+      const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'SAR' });
+
+      expect(findUnique).toHaveBeenCalledTimes(1);
+      expect(page.total).toBe(3);
+      expect(page.items.map((item) => item.cardNumber)).toEqual(['166', '168', 'R']);
+      expect(page.items.every((item) => item.rarityCode === 'SAR')).toBe(true);
+      expect(page.items[1]?.attributes).toEqual({ 稀有度: ' SAR ', 插画师: 'A' });
+      expect(page.seriesTotal).toBe(fixture.length);
+      expect(page.rarityCodes).toEqual(ALL_CODES);
+    });
+
+    it('lists every code in first sort=number appearance, whatever the filters', async () => {
+      const { caller } = load();
+      for (const input of [
+        {},
+        { rarityCode: 'C' },
+        { rarity: 'epic' as const },
+        { subsetSlug: 'special' },
+        { q: '皮卡丘' },
+        { sort: 'name' as const },
+        { sort: 'created' as const, page: 3, pageSize: 1 },
+        { includeParallels: true },
+      ]) {
+        const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', ...input });
+        expect(page.rarityCodes).toEqual(ALL_CODES);
+      }
+    });
+
+    it('sets item rarityCode to the trimmed code or null', async () => {
+      const { caller } = load();
+      const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', pageSize: 100 });
+      const byNumber = new Map(page.items.map((item) => [item.cardNumber, item.rarityCode]));
+      expect(byNumber.get('168')).toBe('SAR');
+      expect(byNumber.get('100')).toBe('无标记');
+      expect(byNumber.get('050')).toBeNull();
+      expect(byNumber.get('051')).toBeNull();
+      expect(byNumber.get('052')).toBeNull();
+      // Shown on the card, but not offered as a filter it could never pass.
+      expect(byNumber.get('053')).toBe('TOO-LONG-CODE');
+      expect(page.rarityCodes).not.toContain('TOO-LONG-CODE');
+    });
+
+    it('returns an empty page, not an error, for a code the series does not have', async () => {
+      const { caller } = load();
+      const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'XYZ' });
+      expect(page.items).toEqual([]);
+      expect(page.total).toBe(0);
+      expect(page.seriesTotal).toBe(fixture.length);
+      expect(page.rarityCodes).toEqual(ALL_CODES);
+    });
+
+    it('combines rarityCode with rarity, subset, and keyword', async () => {
+      const { caller } = load();
+      const special = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        rarityCode: 'SAR',
+        subsetSlug: 'special',
+      });
+      expect(special.items.map((item) => item.cardNumber)).toEqual(['R']);
+      const keyword = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        rarityCode: 'SAR',
+        q: '皮卡丘',
+      });
+      expect(keyword.items.map((item) => item.cardNumber)).toEqual(['168']);
+      const conflicting = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        rarityCode: 'SAR',
+        rarity: 'common',
+      });
+      expect(conflicting.total).toBe(0);
+    });
+
+    it('hides parallels by default, but their codes stay in rarityCodes', async () => {
+      const cards = [codeRow('001', 'C'), codeRow('001', 'S', { parallelOfId: 'id-001' })];
+      const { caller } = load(cards);
+      const hidden = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'S' });
+      expect(hidden.total).toBe(0);
+      expect(hidden.rarityCodes).toEqual(['C', 'S']);
+      const shown = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        rarityCode: 'S',
+        includeParallels: true,
+      });
+      expect(shown.items.map((item) => item.slug)).toEqual(['ptcg-sc-30th-001-p']);
+      expect(shown.items[0]?.isParallel).toBe(true);
+    });
+
+    it('returns an empty rarityCodes for a series without official codes', async () => {
+      const { caller } = load([codeRow('1', undefined), codeRow('2', '  ')]);
+      const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th' });
+      expect(page.rarityCodes).toEqual([]);
+      expect(page.total).toBe(2);
+      expect(page.items.map((item) => item.rarityCode)).toEqual([null, null]);
     });
   });
 });

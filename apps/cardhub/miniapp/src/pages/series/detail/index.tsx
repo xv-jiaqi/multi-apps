@@ -102,7 +102,7 @@ export default observer(function SeriesDetailPage() {
               <Text style={{ fontSize: '26rpx', opacity: 0.95 }}>{data.description}</Text>
               <View style={{ height: '12rpx' }} />
               <Text style={{ fontSize: '22rpx', opacity: 0.85, letterSpacing: '3rpx' }}>
-                {tt('series.cardCount', { count: data.cards.length })}
+                {tt('series.cardCount', { count: (data.cards ?? []).length })}
               </Text>
             </View>
 
@@ -117,11 +117,11 @@ export default observer(function SeriesDetailPage() {
               {tt('series.detail.cardsTitle')}
             </Text>
 
-            {data.cards.length === 0 ? (
+            {(data.cards ?? []).length === 0 ? (
               <Empty title={tt('series.empty')} />
             ) : (
               <View>
-                {data.cards.map((card) => (
+                {(data.cards ?? []).map((card) => (
                   <Link
                     key={card.slug}
                     to={`/pages/cards/detail/index?slug=${card.slug}`}

@@ -324,24 +324,43 @@ API 启动命令仍是 `npx prisma migrate deploy && node dist/main.js`，首次
 
 ### 7.5.2 镜像发布与部署
 
-- `.github/workflows/images.yml`：CI 在 main push 成功后构建 API + Web 镜像，推送到 GHCR，标签为 `sha-<full sha>` 与 `main`。`Web image build` 失败时 main 的整次 CI 是红的，因此 API 和 Web 都不发布，staging 自动部署也不启动。
+- `.github/workflows/images.yml`：CI 在 main push 成功后构建 API + Web 镜像，推送到 GHCR，标签为 `sha-<full sha>` 与 `main`。推送步骤不变。随后用同一 digest `docker pull` 并启动：API 配 job 内生成的 `JWT_SECRET`、Postgres 16 和 Redis 7，`/health` 必须 ok；Web 用假的 `TRPC_URL`，`/` 和 `/assets/` 必须 200，且 `/` 带 API preconnect 的 Link、CSP 和 `Cache-Control: no-cache`，带 hash 的 `/assets/` 文件带 `immutable`、没有 Link。失败则打印 `docker logs`，并且不上传 digest artifact。`API image build` 或 `Web image build` 失败时 main 的整次 CI 是红的，因此 API 和 Web 都不发布，staging 自动部署也不启动。部署仍只接受成功 Images run 里的 digest。
 - `.github/workflows/deploy.yml`：手动部署 staging / production；自动 staging 仅接受同仓库 main push 的 CI workflow_run。production 和 staging 的部署 SHA 都必须可从 `origin/main` 到达。
 - 部署脚本会同步已验证 commit 的 `deploy/` 文件到 `/opt/cardhub/<environment>/deploy`，再运行远端部署。健康校验要求 API `/health.gitSha` 等于目标 SHA，并等待 Web Docker health 为 `healthy` 且 `/healthz` 可访问。部署、健康检查或 seed 失败会尝试回滚到上一个不可变 `sha-` tag 并让 job 失败。
 - 备份：`deploy/backup.sh` 由 cron 每日执行（Asia/Shanghai 02:15 staging、02:20 prod），保留 7 份日备份 + 4 份周备份。两条任务追加到同一个 `/opt/cardhub/backups/backup.log`。阿里云 OSS（香港）上传是强制的：`offsite.env` 缺失、不可读，或缺少 `OSS_ACCESS_KEY_ID` / `OSS_ACCESS_KEY_SECRET` / `OSS_BUCKET` / `OSS_ENDPOINT` 任一键，脚本非零退出并留下本地 dump。每次退出写一行 `BACKUP_RESULT=ok|fail`。没有配置 `BACKUP_PING_URL`，巡检对每个 project 跑 `deploy/check-backup-log.sh`（`project=` 整词匹配，staging 成功不能掩盖 prod 失败）。
 
 ### 7.5.3 本地验证生产构建
 
-CI 的 `api-image` job（检查名 `API image build`）会构建 API 镜像并运行 [`scripts/check-api-image.sh`](../../scripts/check-api-image.sh)。脚本检查 `/health`（`gitSha`、`db`、`redis`）、`Server-Timing`、`Timing-Allow-Origin`、超大 body 的 413 和坏 JSON 的 400。`web-image`（检查名 `Web image build`）用与 Cardhub Images 相同的 context、`Dockerfile.web` 和 `GIT_SHA` / `BUILD_TIME` 构建 Web 镜像，不登录镜像仓库，也不推送。PR 用这两条 job 的日志代替手贴这些响应。本地要复现 API 检查时，把镜像接到真实的 Postgres 16 和 Redis 7，再跑同一个脚本：
+CI 的 `api-image` job（检查名 `API image build`）会构建 API 镜像，再 `docker run` 刚加载的 `cardhub-api:ci`。[`scripts/check-api-health.sh`](../../scripts/check-api-health.sh) 在 60 秒内用 `curl -fsS` 要求 `/health` 为 200，且 `status` 为 ok、`db` 与 `redis` 为 true。随后 [`scripts/check-api-image.sh`](../../scripts/check-api-image.sh) 继续检查 `gitSha`、`Server-Timing`、`Timing-Allow-Origin`、超大 body 的 413 和坏 JSON 的 400。`JWT_SECRET` 在 job 里用 `openssl rand -hex 32` 生成。`web-image`（检查名 `Web image build`）用与 Cardhub Images 相同的 context、`Dockerfile.web` 和 `GIT_SHA` / `BUILD_TIME` 构建 Web 镜像，不登录、不推送，然后启动 `cardhub-web:ci`，[`scripts/check-web-image.sh`](../../scripts/check-web-image.sh) 要求 `/` 和其中一个 `/assets/` 文件都是 200，且 `/` 带 API preconnect 的 Link、CSP 和 `Cache-Control: no-cache`，该 hash 资源带 `immutable`、没有 Link。两条检查都在原来的 job 里。PR 用这两条 job 的日志代替手贴这些响应。本地要复现时，把 API 镜像接到真实的 Postgres 16 和 Redis 7：
 
 ```bash
 docker build -f Dockerfile.api --build-arg GIT_SHA="$(git rev-parse HEAD)" -t cardhub-api:test .
 docker build -f Dockerfile.web -t cardhub-web:test .
 ENV_NAME=prod docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config
 ENV_NAME=prod docker compose -f deploy/edge/docker-compose.yml --env-file deploy/.env.example config
+docker run --rm --network host \
+  -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
+  --entrypoint /usr/local/bin/migrate-entrypoint.sh \
+  cardhub-api:test
+docker run -d --name cardhub-api-test --network host \
+  -e DATABASE_URL='postgresql://cardhub:cardhub@127.0.0.1:5432/cardhub_test?schema=public' \
+  -e JWT_SECRET="$(openssl rand -hex 32)" \
+  -e REDIS_HOST=127.0.0.1 \
+  -e REDIS_PORT=6379 \
+  cardhub-api:test
+EXPECTED_GIT_SHA="$(git rev-parse HEAD)" \
+  API_BASE_URL=http://127.0.0.1:4000 \
+  API_CONTAINER=cardhub-api-test \
+  bash scripts/check-api-health.sh
 EXPECTED_GIT_SHA="$(git rev-parse HEAD)" \
   API_BASE_URL=http://127.0.0.1:4000 \
   API_CONTAINER=cardhub-api-test \
   bash scripts/check-api-image.sh
+docker run -d --name cardhub-web-test -p 127.0.0.1:8080:8080 \
+  -e TRPC_URL=http://127.0.0.1:4000/trpc \
+  cardhub-web:test
+WEB_BASE_URL=http://127.0.0.1:8080 WEB_CONTAINER=cardhub-web-test \
+  bash scripts/check-web-image.sh
 ```
 
 `Server-Timing` 只有 `app`、`db`、`cache` 的 `dur`。不写 SQL、表名、缓存键或用户信息。`Timing-Allow-Origin` 只回写已经在 `CORS_ORIGIN` 白名单里的 Origin，不用 `*`。设了 `REDIS_CONTAINER` 时，脚本会停掉那个 Redis，并要求一条已登录请求在 300ms 内返回。

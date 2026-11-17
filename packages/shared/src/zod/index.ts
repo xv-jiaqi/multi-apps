@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CARD_RARITY_CODE_MAX } from '../card-rarity-code';
 
 export const RARITY_VALUES = ['common', 'rare', 'epic', 'legendary'] as const;
 export type Rarity = (typeof RARITY_VALUES)[number];
@@ -419,6 +420,13 @@ export const seriesListInput = paginationSchema.extend({
 });
 export type SeriesListInput = z.infer<typeof seriesListInput>;
 
+export const seriesBySlugInput = z.object({
+  slug: slugSchema,
+  /** When omitted or true, the nested `cards` list is included. Web passes false. */
+  includeCards: z.boolean().optional(),
+});
+export type SeriesBySlugInput = z.infer<typeof seriesBySlugInput>;
+
 /** Checklist order. `number` compares the printed card number, not the slug. */
 export const CARD_SERIES_LIST_SORT_VALUES = ['number', 'name', 'rarity', 'created'] as const;
 export type CardSeriesListSort = (typeof CARD_SERIES_LIST_SORT_VALUES)[number];
@@ -436,6 +444,18 @@ const cardsListBySeriesQuery = z
   .transform((value) => (value === undefined || value.length === 0 ? undefined : value));
 
 /**
+ * CH-239: official rarity code filter, matched exactly against the trimmed
+ * `attributes.稀有度`. Length counts code points after trim (`★★★` is 3).
+ * Blank is treated as omitted, like `q`.
+ */
+const cardsListBySeriesRarityCode = z
+  .string()
+  .trim()
+  .refine((value) => [...value].length <= CARD_RARITY_CODE_MAX, { message: 'too_big' })
+  .optional()
+  .transform((value) => (value === undefined || value.length === 0 ? undefined : value));
+
+/**
  * Page and page size stay JSON numbers. Unlike `series.list`, strings are
  * not coerced: a query-string number is an input error.
  */
@@ -443,6 +463,8 @@ export const cardsListBySeriesInput = z.object({
   seriesSlug: slugSchema,
   q: cardsListBySeriesQuery,
   rarity: z.enum(RARITY_VALUES).optional(),
+  /** CH-239: optional, combines with `q`, `rarity`, `subsetSlug`, `includeParallels`. */
+  rarityCode: cardsListBySeriesRarityCode,
   subsetSlug: slugSchema.optional(),
   sort: z.enum(CARD_SERIES_LIST_SORT_VALUES).default('number'),
   page: z.number().int().min(1).max(CARD_SERIES_LIST_PAGE_MAX).default(1),

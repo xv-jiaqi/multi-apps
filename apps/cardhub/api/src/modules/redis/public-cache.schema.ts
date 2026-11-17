@@ -58,6 +58,8 @@ export const seriesBySlugSchema = z.object({
       parallelOfId: z.string().nullable(),
     }),
   ),
+  // Number of cards in the series whose parallelOfId is null (base cards).
+  baseCardCount: z.number().int().nonnegative(),
 });
 
 const attributeLabelSchema = z.object({
@@ -79,6 +81,8 @@ export const cardsListBySeriesSchema = z.object({
       parallelName: z.string().nullable(),
       printRun: z.number().int().nullable(),
       isParallel: z.boolean(),
+      /** CH-239. Required so an entry cached before this field misses and reloads. */
+      rarityCode: z.string().nullable(),
     }),
   ),
   page: z.number(),
@@ -88,6 +92,8 @@ export const cardsListBySeriesSchema = z.object({
   parallelCount: z.number().int().nonnegative(),
   sort: z.enum(CARD_SERIES_LIST_SORT_VALUES),
   attributeLabels: z.record(z.string(), attributeLabelSchema),
+  /** CH-239. Required for the same reason as `items[].rarityCode`. */
+  rarityCodes: z.array(z.string()),
 });
 
 export const cardBySlugSchema = z.object({

@@ -4,6 +4,7 @@ import {
   ADMIN_ATTRIBUTE_VALUE_MAX,
   CARD_NUMBER_MAX,
   LISTING_IMAGE_URL_MAX,
+  SUBSETS_PER_SERIES_MAX,
   appErrorMessage,
   fieldErrorMessage,
   slugSchema,
@@ -58,6 +59,12 @@ export interface ImportRowResult {
     slug: string | null;
     name: string | null;
     seriesSlug?: string | null;
+    /** Present only on series rows (CH-238). Absent = omitted; "" / null = will clear. */
+    categorySlug?: string | null;
+    releaseDate?: string | null;
+    /** Present only on card rows (CH-238). Absent = omitted; "" / null = will clear. */
+    subsetSlug?: string | null;
+    cardNumber?: string | null;
   };
   status: ImportStatus;
   errors: Array<{ path: string; code: string; message?: string }>;
@@ -829,6 +836,9 @@ export function importErrorText(
   const field = importErrorField(error.path);
   if (error.code === 'UNKNOWN_FIELD') {
     return t(locale, 'admin.import.err.unknownField', { field });
+  }
+  if (field === 'subsets' && error.code === 'TOO_MANY_SUBSETS') {
+    return t(locale, 'admin.import.err.tooManySubsets', { max: SUBSETS_PER_SERIES_MAX });
   }
   const raw = importValueText(importValueAt(data, error.path));
   const value = truncateImportValue(raw);
