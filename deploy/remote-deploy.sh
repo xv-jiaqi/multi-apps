@@ -31,6 +31,31 @@ if ! [[ "${health_timeout_seconds}" =~ ^[0-9]+$ ]]; then
   exit 64
 fi
 
+# Digest pulls are tried this many times. Between tries, a resolve,
+# not-found, or network error waits the next value from the backoff list
+# (default 5s, then 15s; 30s is the following wait if attempts are raised).
+# Tests set the waits to 0. Other pull errors fail on the first attempt.
+validate_image_pull_settings() {
+  local part
+  image_pull_attempts="${CARDHUB_IMAGE_PULL_ATTEMPTS:-3}"
+  image_pull_backoff="${CARDHUB_IMAGE_PULL_BACKOFF_SECONDS:-5 15 30}"
+  if ! [[ "${image_pull_attempts}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Invalid CARDHUB_IMAGE_PULL_ATTEMPTS: ${image_pull_attempts}" >&2
+    exit 64
+  fi
+  if [ -z "${image_pull_backoff}" ]; then
+    echo "Invalid CARDHUB_IMAGE_PULL_BACKOFF_SECONDS: empty" >&2
+    exit 64
+  fi
+  for part in ${image_pull_backoff}; do
+    if ! [[ "${part}" =~ ^[0-9]+$ ]]; then
+      echo "Invalid CARDHUB_IMAGE_PULL_BACKOFF_SECONDS: ${image_pull_backoff}" >&2
+      exit 64
+    fi
+  done
+}
+validate_image_pull_settings
+
 # Archived api/web logs for both compose projects. 20160 minutes is 14 days.
 # 1073741824 bytes is 1 GiB, shared by cardhub-prod and cardhub-staging.
 # Tests set the variables after sourcing. A non-integer falls back inside
@@ -142,6 +167,117 @@ compose() {
 
 valid_image_digest() {
   [[ "$1" =~ ^sha256:[0-9a-f]{64}$ ]]
+}
+
+# True when docker pull failed because the registry could not be resolved,
+# did not have the manifest yet, or the network failed. GHCR has answered
+# "not found" for an OCI index that was pullable a moment later.
+pull_error_is_retryable() {
+  local file="$1"
+  if [ ! -s "${file}" ]; then
+    return 1
+  fi
+  grep -Eiq \
+    -e 'failed to resolve' \
+    -e 'not found' \
+    -e 'manifest unknown' \
+    -e 'no such host' \
+    -e 'connection refused' \
+    -e 'connection reset' \
+    -e 'connection timed out' \
+    -e 'i/o timeout' \
+    -e 'tls handshake timeout' \
+    -e 'temporary failure in name resolution' \
+    -e 'network is unreachable' \
+    -e 'no route to host' \
+    -e 'net/http: request canceled' \
+    -e 'Client.Timeout' \
+    -e 'unexpected EOF' \
+    "${file}"
+}
+
+# Pull one image@sha256 ref. Does not replace containers; the caller exits
+# before rollback is armed when this returns non-zero.
+pull_image_by_digest() {
+  local ref="$1"
+  local attempt delay rc retryable part err
+  local -a delays=()
+  for part in ${image_pull_backoff}; do
+    delays+=("${part}")
+  done
+  attempt=1
+  while [ "${attempt}" -le "${image_pull_attempts}" ]; do
+    err="$(mktemp)"
+    rc=0
+    docker pull "${ref}" >"${err}" 2>&1 || rc=$?
+    if [ -s "${err}" ]; then
+      cat "${err}" >&2
+    fi
+    if [ "${rc}" -eq 0 ]; then
+      rm -f "${err}"
+      return 0
+    fi
+    retryable=1
+    pull_error_is_retryable "${err}" || retryable=0
+    if [ "${retryable}" -eq 0 ] || [ "${attempt}" -ge "${image_pull_attempts}" ]; then
+      rm -f "${err}"
+      return "${rc}"
+    fi
+    delay="${delays[$((attempt - 1))]:-}"
+    if [ -z "${delay}" ]; then
+      delay="${delays[$((${#delays[@]} - 1))]}"
+    fi
+    rm -f "${err}"
+    echo "Retrying pull of ${ref} in ${delay}s (attempt ${attempt}/${image_pull_attempts})" >&2
+    if [ "${delay}" -gt 0 ]; then
+      sleep "${delay}"
+    fi
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+# Newest main commits, so image-cleanup can keep those sha-* tags after this
+# deploy exits. Empty CARDHUB_MAIN_SHAS leaves an existing file alone.
+persist_main_shas() {
+  local raw="${CARDHUB_MAIN_SHAS:-}"
+  [ -n "${raw}" ] || return 0
+  local dest tmp line sha count wrote
+  local -a shas=()
+  dest="${cardhub_root}/.main-shas"
+  count="${CARDHUB_CLEANUP_KEEP_MAIN_COMMITS:-}"
+  if [ -z "${count}" ]; then
+    count=0
+  fi
+  if ! [[ "${count}" =~ ^[0-9]+$ ]]; then
+    echo "Warning: CARDHUB_CLEANUP_KEEP_MAIN_COMMITS is not a number; not recording main commits" >&2
+    return 0
+  fi
+  for line in ${raw}; do
+    sha="${line#sha-}"
+    sha="${sha//$'\r'/}"
+    if [[ "${sha}" =~ ^[0-9a-f]{40}$ ]]; then
+      shas+=("${sha}")
+    fi
+  done
+  if [ "${#shas[@]}" -eq 0 ]; then
+    echo "Warning: CARDHUB_MAIN_SHAS had no usable commits; ${dest} was left unchanged" >&2
+    return 0
+  fi
+  if [ "${count}" -eq 0 ]; then
+    count="${#shas[@]}"
+  fi
+  mkdir -p "${cardhub_root}"
+  tmp="$(mktemp "${cardhub_root}/.main-shas.XXXXXX")"
+  {
+    printf '# keep-count=%s\n' "${count}"
+    for sha in "${shas[@]}"; do
+      printf '%s\n' "${sha}"
+    done
+  } > "${tmp}"
+  mv "${tmp}" "${dest}"
+  wrote="${#shas[@]}"
+  echo "Recorded ${wrote} main commits for image cleanup in ${dest}"
 }
 
 # sha-<40 hex> embedded in a reference, with or without @sha256:<digest>.
@@ -927,6 +1063,7 @@ main() {
   fi
   active_api_image="${api_repo}@${api_digest}"
   active_web_image="${web_repo}@${web_digest}"
+  persist_main_shas
 
   cd "${app_dir}"
 
@@ -1471,15 +1608,16 @@ main() {
   # An incomplete pair is not an old image, even when MIGRATE_DATABASE_URL
   # is empty. A daemon error must not skip migrations and roll the API forward.
   # Both digests are pulled here. A missing manifest exits before rollback
-  # is armed and before any container is replaced.
+  # is armed and before any container is replaced. Resolve, not-found, and
+  # network errors are retried; any other pull error stops on the first try.
   local migrate_database_url api_image entrypoint_rc
   migrate_database_url="$(read_env_file_var "${env_file}" MIGRATE_DATABASE_URL)"
   api_image="${active_api_image}"
-  if ! docker pull "${api_image}"; then
+  if ! pull_image_by_digest "${api_image}"; then
     echo "Failed to pull ${api_image}; the running API was not replaced" >&2
     exit 1
   fi
-  if ! docker pull "${active_web_image}"; then
+  if ! pull_image_by_digest "${active_web_image}"; then
     echo "Failed to pull ${active_web_image}; the running API was not replaced" >&2
     exit 1
   fi

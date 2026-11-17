@@ -296,6 +296,19 @@ change, or one whose artifact aged out) is the only case that resolves
 `sha-<commit>` to a digest, and only after that run has already succeeded.
 A missing manifest fails the same way.
 
+Before any file is synced to the VPS, the deploy job checks both digests
+with `docker buildx imagetools inspect` on
+`ghcr.io/xv-jiaqi/cardhub-api@sha256:...` and the same form for web, using
+the workflow's GHCR login. A missing manifest fails that step. Sync and the
+VPS deploy script are not started, and the running containers stay as they
+are.
+
+On the VPS, `docker pull` of each digest is tried 3 times. A resolve
+failure, a not-found error, or a network error waits 5s and then 15s
+between tries (the backoff schedule is 5s, 15s, 30s). Any other pull error
+stops on the first try. When the tries are exhausted the script exits
+before it replaces a container.
+
 Use `staging` with `/opt/cardhub/staging/staging.env` for staging. If both run
 on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
 and passwords in each env file. Production deploys are manual; staging can be
@@ -784,10 +797,21 @@ reference stays `name@sha256:<digest>`. Cleanup keeps, independently for
 `cardhub-prod` and `cardhub-staging`:
 
 - the images currently referenced by that compose project's containers;
-- the previous API and web tags recorded in that environment's state file;
+- the previous API and web tags recorded in that environment's
+  `.deploy-state/previous-images.env` (production's rollback point);
+- when production has no such stamp, the two newest local `sha-*` tags of
+  `cardhub-api` and of `cardhub-web`;
+- the images for the most recent main commits, 5 by default
+  (`CARDHUB_CLEANUP_KEEP_MAIN_COMMITS` or `--keep-main`);
 - any Cardhub image still referenced by any local Docker container, running or
   stopped, including both the old and new replica while a rollout overlaps; and
 - any tag whose image ID is the image of such a container.
+
+The deploy job passes those main SHAs into `remote-deploy.sh`, which records
+them in `/opt/cardhub/.main-shas` before cleanup. A later manual run reads
+that file. `CARDHUB_GIT_DIR` is the fallback when neither the variable nor
+the file is set. Running cleanup again does not delete a tag that is still
+protected.
 
 This is intentionally cross-environment: a staging deploy scans both production
 and staging state before deleting anything, so staging cannot remove production's
