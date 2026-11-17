@@ -88,6 +88,7 @@ run_case() {
   local previous="${4:-absent}"
   local pull_rc="${5:-}"
   local pull_not_found_times="${6:-}"
+  local pull_error="${7:-}"
   local work docker_log script_log script_rc
   work="$(mktemp -d)"
   docker_log="${work}/docker.log"
@@ -117,7 +118,11 @@ if [ "${cmd}" = "pull" ]; then
   n=$((n + 1))
   printf '%s\n' "${n}" > "${state}/pull-count"
   if [ -n "${DOCKER_STUB_PULL_NOT_FOUND_TIMES:-}" ] && [ "${n}" -le "${DOCKER_STUB_PULL_NOT_FOUND_TIMES}" ]; then
-    printf '%s\n' 'failed to resolve reference "ghcr.io/xv-jiaqi/cardhub-api@sha256:1111111111111111111111111111111111111111111111111111111111111111": not found' >&2
+    if [ -n "${DOCKER_STUB_PULL_ERROR:-}" ]; then
+      printf '%s\n' "${DOCKER_STUB_PULL_ERROR}" >&2
+    else
+      printf '%s\n' 'failed to resolve reference "ghcr.io/xv-jiaqi/cardhub-api@sha256:1111111111111111111111111111111111111111111111111111111111111111": not found' >&2
+    fi
     exit 1
   fi
   if [ -n "${DOCKER_STUB_PULL_RC:-}" ]; then
@@ -340,6 +345,7 @@ EOF
     ${forced_rc:+DOCKER_STUB_ENTRYPOINT_RC="${forced_rc}"} \
     ${pull_rc:+DOCKER_STUB_PULL_RC="${pull_rc}"} \
     ${pull_not_found_times:+DOCKER_STUB_PULL_NOT_FOUND_TIMES="${pull_not_found_times}"} \
+    ${pull_error:+DOCKER_STUB_PULL_ERROR="${pull_error}"} \
     bash "${deploy_script}" staging "${tag}" "${sha}" > "${script_log}" 2>&1 || script_rc=$?
 
   CASE_RC="${script_rc}"
@@ -438,6 +444,20 @@ assert "pull retry exhaustion did not pull web" "$(
   [ "$(count_pulls "${web_digest}")" -eq 0 ] && echo 0 || echo 1
 )"
 assert_stopped "pull retry exhaustion"
+
+# "command not found" is not a registry miss. One attempt, then stop.
+run_case complete "" "" absent "" 9 "docker: command not found"
+assert "command not found is a single pull" "$(
+  [ "$(count_pulls "${api_digest}")" -eq 1 ] && echo 0 || echo 1
+)"
+assert_stopped "command not found"
+
+# GHCR 503 is retried like not-found.
+run_case complete "" "" absent "" 9 "503 Service Unavailable"
+assert "http 503 retries api three times" "$(
+  [ "$(count_pulls "${api_digest}")" -eq 3 ] && echo 0 || echo 1
+)"
+assert_stopped "http 503"
 
 # Dangling symlinks exist. They are not an old image.
 run_case dangling ""

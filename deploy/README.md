@@ -320,10 +320,11 @@ VPS deploy script are not started, and the running containers stay as they
 are.
 
 On the VPS, `docker pull` of each digest is tried 3 times. A resolve
-failure, a not-found error, or a network error waits 5s and then 15s
-between tries (the backoff schedule is 5s, 15s, 30s). Any other pull error
-stops on the first try. When the tries are exhausted the script exits
-before it replaces a container.
+failure, a registry `: not found` or `manifest unknown`, a 429 or
+502/503/504, or a network error waits 5s and then 15s between tries (the
+backoff schedule is 5s, 15s, 30s). `command not found` does not retry. Any
+other pull error stops on the first try. When the tries are exhausted the
+script exits before it replaces a container.
 
 Use `staging` with `/opt/cardhub/staging/staging.env` for staging. If both run
 on the same host, keep distinct `WEB_DOMAIN`, `API_DOMAIN`, Postgres DB names,
@@ -815,27 +816,34 @@ reference stays `name@sha256:<digest>`. Cleanup keeps, independently for
 - the images currently referenced by that compose project's containers;
 - the previous API and web tags recorded in that environment's
   `.deploy-state/previous-images.env` (production's rollback point);
-- when production has no such stamp, the two newest local `sha-*` tags of
-  `cardhub-api` and of `cardhub-web`;
-- the images for the most recent main commits, 5 by default
+- the images for the most recent main commits, 5 by default and at least 1
   (`CARDHUB_CLEANUP_KEEP_MAIN_COMMITS` or `--keep-main`);
 - any Cardhub image still referenced by any local Docker container, running or
   stopped, including both the old and new replica while a rollout overlaps; and
 - any tag whose image ID is the image of such a container.
 
-The deploy job passes those main SHAs into `remote-deploy.sh`, which records
-them in `/opt/cardhub/.main-shas` before cleanup. A later manual run reads
-that file. `CARDHUB_GIT_DIR` is the fallback when neither the variable nor
-the file is set. Running cleanup again does not delete a tag that is still
-protected.
+The deploy job passes those main SHAs into `remote-deploy.sh`. The script
+writes `/opt/cardhub/.main-shas` as soon as the digests are accepted, before
+it pulls and before cleanup. A later manual run reads that file.
+`CARDHUB_GIT_DIR` is used only when neither the variable nor the file is set.
+
+Cleanup deletes nothing unless production's `previous-images.env` has both
+`PREVIOUS_API_TAG` and `PREVIOUS_WEB_TAG` as `sha-<40 hex>`, and unless the
+main commit list has at least one full SHA with a keep-count of at least 1.
+A missing file, an empty file, a short SHA, `keep-count=0`, or a failed
+`docker ps` / `docker inspect` exits non-zero before `image rm`. That check
+runs only after the new api and web are healthy and rollback has been
+disarmed, so a cleanup failure does not roll the containers back. It does
+fail the Deploy job (`::error::`), because a warning on a green job is how
+a bad keep-set stayed invisible. Running cleanup again does not delete a tag
+that is still protected.
 
 This is intentionally cross-environment: a staging deploy scans both production
 and staging state before deleting anything, so staging cannot remove production's
-current image or production's rollback target. Cleanup is best-effort and logs a
-warning instead of failing the deployment if Docker cleanup fails. Cleanup takes
+current image or production's rollback target. Cleanup takes
 a non-blocking lock at `/opt/cardhub/.image-cleanup.lock`; if staging and
-production deploy concurrently, whichever cleanup starts second skips its cleanup
-attempt and the deploy still succeeds. The script is scoped to Cardhub API/Web
+production deploy concurrently, whichever cleanup starts second skips and exits 0.
+That skip is not a failed keep-set. The failed keep-set above still fails the job. The script is scoped to Cardhub API/Web
 `sha-*` tags and does not run a machine-wide dangling image prune. Docker frees
 layers that become unreferenced by the removed Cardhub tags, while unrelated
 dangling images are left alone.

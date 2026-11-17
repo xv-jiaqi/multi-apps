@@ -56,6 +56,10 @@ cmd="${1:-}"
 shift || true
 
 if [ "${cmd}" = "ps" ]; then
+  if [ "${DOCKER_STUB_PS_RC:-0}" != "0" ]; then
+    echo "stub docker ps failed" >&2
+    exit "${DOCKER_STUB_PS_RC}"
+  fi
   list_ids=0
   list_images=0
   project=""
@@ -85,6 +89,10 @@ if [ "${cmd}" = "ps" ]; then
 fi
 
 if [ "${cmd}" = "inspect" ]; then
+  if [ "${DOCKER_STUB_INSPECT_RC:-0}" != "0" ]; then
+    echo "stub docker inspect failed" >&2
+    exit "${DOCKER_STUB_INSPECT_RC}"
+  fi
   fmt=""
   cid=""
   prev=""
@@ -129,6 +137,10 @@ if [ "${cmd}" = "image" ]; then
       exit 0
       ;;
     inspect)
+      if [ "${DOCKER_STUB_IMAGE_INSPECT_RC:-0}" != "0" ]; then
+        echo "stub image inspect failed" >&2
+        exit "${DOCKER_STUB_IMAGE_INSPECT_RC}"
+      fi
       fmt=""
       ref=""
       prev=""
@@ -159,6 +171,7 @@ if [ "${cmd}" = "image" ]; then
       ;;
     rm)
       target="${1:-}"
+      printf 'rm %s\n' "${target}" >> "${DOCKER_FIXTURE_LOG:?}"
       tmp="${images}.tmp"
       found=0
       : > "${tmp}"
@@ -200,6 +213,7 @@ invoke() {
     CARDHUB_DOCKER_BIN="${STUB}" \
     DOCKER_FIXTURE_IMAGES="${IMAGES}" \
     DOCKER_FIXTURE_CONTAINERS="${CONTAINERS}" \
+    DOCKER_FIXTURE_LOG="${DOCKER_LOG}" \
     bash "${script}" --root "${LAB}" "$@" >"${log}" 2>"${log}.err" || CASE_RC=$?
   CASE_LOG="${log}"
   CASE_ERR="${log}.err"
@@ -219,6 +233,12 @@ new_lab() {
   CONTAINERS="${LAB}/containers.tsv"
   : > "${IMAGES}"
   : > "${CONTAINERS}"
+  DOCKER_LOG="${LAB}/docker-calls.log"
+  : > "${DOCKER_LOG}"
+}
+
+rm_calls() {
+  awk '$1 == "rm" { n++ } END { print n + 0 }' "${DOCKER_LOG}"
 }
 
 write_stamp() {
@@ -262,6 +282,22 @@ assert "deploy passes recent main commits to the VPS" "$(
 assert "cleanup reads the production rollback stamp" "$(
   grep -F -q 'previous-images.env' "${script}" \
     && grep -F -q 'PREVIOUS_API_TAG' "${script}" \
+    && echo 0 || echo 1
+)"
+assert "persist_main_shas runs before image cleanup" "$(
+  awk '
+    /^  persist_main_shas$/ { persist = NR }
+    /if ! cleanup_old_images/ { cleanup = NR }
+    END { exit (persist > 0 && cleanup > persist) ? 0 : 1 }
+  ' "${deploy_script}" && echo 0 || echo 1
+)"
+assert "cleanup failure is after rollback is disarmed and fails the job" "$(
+  awk '
+    /rollback_armed=0/ { armed = NR }
+    /if ! cleanup_old_images/ { cleanup = NR }
+    END { exit (armed > 0 && cleanup > armed) ? 0 : 1 }
+  ' "${deploy_script}" \
+    && grep -F -q '::error::Image cleanup failed after api and web were healthy. Running containers were not rolled back.' "${deploy_script}" \
     && echo 0 || echo 1
 )"
 
@@ -310,32 +346,6 @@ expect_dry_delete "newest unused web is deleted when the prod stamp exists" "$(w
 CARDHUB_MAIN_SHAS="${main_shas}" invoke "${LAB}/a2.out" --dry-run --keep-main 5
 assert "dry-run is idempotent" "$(cmp -s "${LAB}/a.out" "${LAB}/a2.out" && echo 0 || echo 1)"
 
-# No production stamp: keep the running image and the two newest of each repo.
-new_lab
-dumped=0
-add_image "2020-01-01T00:00:00Z" "$(img_id 1)" "$(api_ref 1)"
-add_image "2021-01-01T00:00:00Z" "$(img_id 2)" "$(api_ref 2)"
-add_image "2022-01-01T00:00:00Z" "$(img_id 3)" "$(api_ref 3)"
-add_image "2023-01-01T00:00:00Z" "$(img_id 4)" "$(api_ref 4)"
-add_image "2020-01-01T00:00:00Z" "$(img_id 11)" "$(web_ref 1)"
-add_image "2021-01-01T00:00:00Z" "$(img_id 12)" "$(web_ref 2)"
-add_image "2022-01-01T00:00:00Z" "$(img_id 13)" "$(web_ref 3)"
-add_image "2023-01-01T00:00:00Z" "$(img_id 14)" "$(web_ref 4)"
-add_container cold cardhub-prod "ghcr.io/xv-jiaqi/cardhub-api@$(img_id 99)" "$(img_id 1)"
-invoke "${LAB}/b.out" --dry-run --keep-main 0
-assert "missing prod stamp exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
-expect_keep "oldest running prod api is kept" "$(api_ref 1)" "image id in use by a container"
-expect_keep "second newest api is kept without a prod stamp" "$(api_ref 3)" "production rollback stamp is missing"
-expect_keep "newest api is kept without a prod stamp" "$(api_ref 4)" "production rollback stamp is missing"
-expect_dry_delete "middle api is deleted without a prod stamp" "$(api_ref 2)"
-expect_keep "second newest web is kept without a prod stamp" "$(web_ref 3)" "production rollback stamp is missing"
-expect_keep "newest web is kept without a prod stamp" "$(web_ref 4)" "production rollback stamp is missing"
-expect_dry_delete "oldest web is deleted without a prod stamp" "$(web_ref 1)"
-expect_dry_delete "middle web is deleted without a prod stamp" "$(web_ref 2)"
-assert "keep-main 0 does not warn about main commits" "$(
-  grep -F -q 'no recent main commits' "${CASE_ERR}" && echo 1 || echo 0
-)"
-
 # A real delete, then the same command again, removes nothing further.
 new_lab
 dumped=0
@@ -343,7 +353,7 @@ write_stamp production 21 22
 add_image "2020-01-01T00:00:00Z" "$(img_id 21)" "$(api_ref 21)"
 add_image "2020-01-01T00:00:00Z" "$(img_id 22)" "$(web_ref 22)"
 add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
-invoke "${LAB}/c1.out" --keep-main 0
+CARDHUB_MAIN_SHAS="$(hex40 41)" invoke "${LAB}/c1.out"
 assert "first delete exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 assert "first delete removes the unused tag" "$(
   grep -F -x -q "DELETE $(api_ref 31)" "${CASE_LOG}" && echo 0 || echo 1
@@ -354,7 +364,7 @@ assert "first delete leaves the rollback tag on disk" "$(
 assert "first delete drops the unused tag from the fixture" "$(
   grep -F -q "$(api_ref 31)" "${IMAGES}" && echo 1 || echo 0
 )"
-invoke "${LAB}/c2.out" --keep-main 0
+CARDHUB_MAIN_SHAS="$(hex40 41)" invoke "${LAB}/c2.out"
 assert "second delete exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
 assert "second delete removes nothing" "$(
   grep -F -q 'DELETE ' "${CASE_LOG}" && echo 1 || echo 0
@@ -425,17 +435,101 @@ expect_keep "fifth git commit is kept" "ghcr.io/xv-jiaqi/cardhub-api:sha-${commi
 expect_dry_delete "oldest git commit is deleted" "ghcr.io/xv-jiaqi/cardhub-api:sha-${commits[5]}"
 expect_keep "prod stamp is kept beside git commits" "$(api_ref 80)" "previous api"
 
-# No list at all still exits 0 and still keeps the running image.
+# Bad keep-set: exit non-zero and do not call image rm.
+refuse_rm() {
+  local name="$1"
+  assert "${name} exits non-zero" "$([ "${CASE_RC}" -ne 0 ] && echo 0 || echo 1)"
+  assert "${name} does not call image rm" "$([ "$(rm_calls)" -eq 0 ] && echo 0 || echo 1)"
+}
+
 new_lab
 dumped=0
-add_image "2020-01-01T00:00:00Z" "$(img_id 1)" "$(api_ref 1)"
-add_container cone cardhub-prod "ghcr.io/xv-jiaqi/cardhub-api@$(img_id 99)" "$(img_id 1)"
-invoke "${LAB}/f.out" --dry-run
-assert "missing main list exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
-assert "missing main list warns" "$(
-  grep -F -q 'no recent main commits to protect' "${CASE_ERR}" && echo 0 || echo 1
+write_stamp production 21 22
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+add_image "2026-11-01T00:00:00Z" "$(img_id 1)" "$(api_ref 1)"
+invoke "${LAB}/missing-main.out"
+refuse_rm "missing main sha list"
+assert "missing main sha list names the gap" "$(
+  grep -F -q 'no usable main commits' "${CASE_ERR}" && echo 0 || echo 1
 )"
-expect_keep "running image is kept without a main list" "$(api_ref 1)" "image id in use by a container"
+
+new_lab
+dumped=0
+write_stamp production 21 22
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+: > "${LAB}/.main-shas"
+invoke "${LAB}/empty-main.out"
+refuse_rm "empty main sha list"
+
+new_lab
+dumped=0
+write_stamp production 21 22
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+printf '%s\n' 'c3c7bf0' > "${LAB}/.main-shas"
+invoke "${LAB}/short-main.out"
+refuse_rm "short main sha"
+assert "short main sha names the bad line" "$(
+  grep -F -q 'not a 40-hex commit' "${CASE_ERR}" && echo 0 || echo 1
+)"
+
+new_lab
+dumped=0
+write_stamp production 21 22
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+add_image "2026-11-01T00:00:00Z" "$(img_id 1)" "$(api_ref 1)"
+printf '# keep-count=0\n%s\n' "$(hex40 1)" > "${LAB}/.main-shas"
+invoke "${LAB}/zero-count.out"
+refuse_rm "keep-count 0"
+assert "keep-count 0 names the count" "$(
+  grep -F -q 'keep-count' "${CASE_ERR}" && echo 0 || echo 1
+)"
+
+new_lab
+dumped=0
+write_stamp production 21 22
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+printf '# keep-count=abc\n%s\n' "$(hex40 1)" > "${LAB}/.main-shas"
+invoke "${LAB}/bad-count.out"
+refuse_rm "non-numeric keep-count"
+
+new_lab
+dumped=0
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+add_image "2020-01-01T00:00:00Z" "$(img_id 1)" "$(api_ref 1)"
+CARDHUB_MAIN_SHAS="$(hex40 1)" invoke "${LAB}/no-stamp.out"
+refuse_rm "missing prod rollback stamp"
+assert "missing prod rollback stamp names the file" "$(
+  grep -F -q 'previous-images.env is missing' "${CASE_ERR}" && echo 0 || echo 1
+)"
+
+new_lab
+dumped=0
+mkdir -p "${LAB}/production/.deploy-state"
+printf 'PREVIOUS_API_TAG=garbage\nPREVIOUS_WEB_TAG=sha-%s\n' "$(hex40 22)" > "${LAB}/production/.deploy-state/previous-images.env"
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+CARDHUB_MAIN_SHAS="$(hex40 1)" invoke "${LAB}/bad-stamp.out"
+refuse_rm "invalid prod rollback stamp"
+assert "invalid prod rollback stamp names the tags" "$(
+  grep -F -q 'no valid PREVIOUS_API_TAG and PREVIOUS_WEB_TAG' "${CASE_ERR}" && echo 0 || echo 1
+)"
+
+new_lab
+dumped=0
+write_stamp production 21 22
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+add_container cone cardhub-prod "ghcr.io/xv-jiaqi/cardhub-api@$(img_id 90)" "$(img_id 11)"
+DOCKER_STUB_PS_RC=1 CARDHUB_MAIN_SHAS="$(hex40 1)" invoke "${LAB}/ps-fail.out"
+refuse_rm "docker ps failure"
+assert "docker ps failure names the query" "$(
+  grep -F -q 'docker ps failed' "${CASE_ERR}" || grep -F -q 'ps -a' "${CASE_ERR}" && echo 0 || echo 1
+)"
+
+new_lab
+dumped=0
+write_stamp production 21 22
+add_image "2026-12-01T00:00:00Z" "$(img_id 31)" "$(api_ref 31)"
+DOCKER_STUB_IMAGE_INSPECT_RC=1 CARDHUB_MAIN_SHAS="$(hex40 1)" invoke "${LAB}/inspect-fail.out"
+refuse_rm "docker image inspect failure"
 
 rc=0
 bash "${script}" --keep-main no --root "${LAB}" >"${LAB}/bad.out" 2>"${LAB}/bad.err" || rc=$?

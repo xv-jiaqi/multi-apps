@@ -177,10 +177,16 @@ pull_error_is_retryable() {
   if [ ! -s "${file}" ]; then
     return 1
   fi
+  # "not found" alone also matches "command not found" and
+  # "executable file not found". Only the registry phrase ": not found" retries.
+  # 429 and 502/503/504 are transient GHCR responses.
   grep -Eiq \
-    -e 'failed to resolve' \
-    -e 'not found' \
     -e 'manifest unknown' \
+    -e ': not found([[:space:]]|$)' \
+    -e 'failed to resolve reference' \
+    -e 'toomanyrequests' \
+    -e '(^|[^0-9])429([^0-9]|$)' \
+    -e '(^|[^0-9])50[234]([^0-9]|$)' \
     -e 'no such host' \
     -e 'connection refused' \
     -e 'connection reset' \
@@ -250,7 +256,7 @@ persist_main_shas() {
     count=0
   fi
   if ! [[ "${count}" =~ ^[0-9]+$ ]]; then
-    echo "Warning: CARDHUB_CLEANUP_KEEP_MAIN_COMMITS is not a number; not recording main commits" >&2
+    echo "::warning::CARDHUB_CLEANUP_KEEP_MAIN_COMMITS is not a number; ${dest} was left unchanged" >&2
     return 0
   fi
   for line in ${raw}; do
@@ -261,7 +267,7 @@ persist_main_shas() {
     fi
   done
   if [ "${#shas[@]}" -eq 0 ]; then
-    echo "Warning: CARDHUB_MAIN_SHAS had no usable commits; ${dest} was left unchanged" >&2
+    echo "::warning::CARDHUB_MAIN_SHAS had no usable commits; ${dest} was left unchanged" >&2
     return 0
   fi
   if [ "${count}" -eq 0 ]; then
@@ -1271,7 +1277,7 @@ main() {
       return 0
     fi
 
-    "${app_dir}/image-cleanup.sh" --root "${cardhub_root}" || echo "Warning: image cleanup failed; deploy continues" >&2
+    "${app_dir}/image-cleanup.sh" --root "${cardhub_root}"
   }
 
   local rollback_armed rollback_in_progress
@@ -1696,7 +1702,14 @@ main() {
   # before the switch made a failed deploy record the version just rolled
   # back to, and the next cleanup then deleted the real previous image.
   record_previous_images
-  cleanup_old_images || true
+  # New api and web are already healthy. rollback_armed is 0, and exit does
+  # not run the ERR trap, so a cleanup failure leaves those containers up.
+  # The deploy job still goes red: a warning on a green job hid the 11-17
+  # cleanup path. ::error:: is the annotation; the non-zero exit is the check.
+  if ! cleanup_old_images; then
+    echo "::error::Image cleanup failed after api and web were healthy. Running containers were not rolled back." >&2
+    exit 1
+  fi
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
