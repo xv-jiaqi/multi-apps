@@ -16,6 +16,7 @@ import {
   parallelOfSlugInput,
   printRunInput,
   slugSchema,
+  SUBSETS_PER_SERIES_MAX,
   t as translate,
 } from '@repo/shared';
 import { z } from 'zod';
@@ -695,6 +696,15 @@ export class AdminRouter {
       for (const series of normalized.series) {
         const result = results.find((item) => item.row.row === series.row.row);
         if (!result || result.status === 'error') continue;
+        const subsetSlugs = new Set([
+          ...(existingSeriesBySlug.get(series.slug)?.subsets.map((subset) => subset.slug) ?? []),
+          ...series.subsets.map((subset) => subset.slug),
+        ]);
+        if (subsetSlugs.size > SUBSETS_PER_SERIES_MAX) {
+          result.status = 'error';
+          result.errors.push({ path: `${series.seriesPath}.subsets`, code: 'TOO_MANY_SUBSETS' });
+          continue;
+        }
         if (series.categorySlug && !knownCategorySlugs.has(series.categorySlug)) {
           result.status = 'error';
           result.errors.push({
@@ -885,6 +895,35 @@ export class AdminRouter {
               }
             }
 
+            // Stored count after the upserts, so a subset added since the preview still counts.
+            const listedSeriesIds = normalized.series
+              .filter((series) => series.subsets.length > 0)
+              .map((series) => ({ series, seriesId: seriesIdBySlug.get(series.slug) }));
+            if (listedSeriesIds.length > 0) {
+              const counts = await tx.subset.groupBy({
+                by: ['seriesId'],
+                where: {
+                  seriesId: {
+                    in: listedSeriesIds
+                      .map((item) => item.seriesId)
+                      .filter((seriesId): seriesId is string => seriesId !== undefined),
+                  },
+                },
+                _count: { _all: true },
+              });
+              const countBySeriesId = new Map(counts.map((row) => [row.seriesId, row._count._all]));
+              for (const { series, seriesId } of listedSeriesIds) {
+                if (seriesId === undefined) continue;
+                if ((countBySeriesId.get(seriesId) ?? 0) > SUBSETS_PER_SERIES_MAX) {
+                  failures.push({
+                    rowNumber: series.row.row,
+                    path: `${series.seriesPath}.subsets`,
+                    code: 'TOO_MANY_SUBSETS',
+                  });
+                }
+              }
+            }
+
             const missingSeriesSlugs = Array.from(
               new Set(
                 normalized.cards
@@ -920,6 +959,17 @@ export class AdminRouter {
               }
             }
 
+            // One read for every card in the file. Only the card's own upsert below
+            // changes its seriesId or subsetId, and slugs are unique in a file.
+            const storedCards =
+              normalized.cards.length > 0
+                ? await tx.card.findMany({
+                    where: { slug: { in: normalized.cards.map((card) => card.slug) } },
+                    select: { slug: true, seriesId: true, subsetId: true },
+                  })
+                : [];
+            const storedCardBySlug = new Map(storedCards.map((card) => [card.slug, card]));
+
             const ordered = [
               ...normalized.cards.filter((card) => !card.parallelOf),
               ...normalized.cards.filter((card) => card.parallelOf),
@@ -933,10 +983,7 @@ export class AdminRouter {
                   cause: { code: 'SERIES_NOT_FOUND', slug: card.seriesSlug },
                 });
               }
-              const existing = await tx.card.findUnique({
-                where: { slug: card.slug },
-                select: { seriesId: true, subsetId: true },
-              });
+              const existing = storedCardBySlug.get(card.slug);
               let subsetId: string | null | undefined;
               if (card.subsetSlug === undefined) {
                 // Not given: keep the stored subset unless the card leaves its series.

@@ -21,6 +21,8 @@ export const ADMIN_CATALOG_ERROR_CODES = [
   'UNKNOWN_FIELD',
   /** Import: `releaseDate` is not a real `YYYY-MM-DD` day. */
   'INVALID_DATE',
+  /** Import: the series would hold more than `SUBSETS_PER_SERIES_MAX` subsets. Row-level. */
+  'TOO_MANY_SUBSETS',
   'print_run_min',
   'too_big',
   'invalid_type',

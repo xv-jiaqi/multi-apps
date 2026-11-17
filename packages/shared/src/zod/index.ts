@@ -364,6 +364,9 @@ export const adminAttributesSchema = z
 /** Printed card number. Empty string clears it. The grid renders a leading #. */
 export const CARD_NUMBER_MAX = 20;
 
+/** Subsets one series may hold, stored plus new (import `TOO_MANY_SUBSETS`). */
+export const SUBSETS_PER_SERIES_MAX = 20;
+
 export const SUBSET_KIND_VALUES = ['BASE', 'INSERT'] as const;
 export type SubsetKindValue = (typeof SUBSET_KIND_VALUES)[number];
 
