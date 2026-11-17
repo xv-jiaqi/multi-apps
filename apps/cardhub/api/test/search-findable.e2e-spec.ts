@@ -75,6 +75,7 @@ describe('search.global CH-241 (cardTotal, cardPage, relevance, bare card number
   const undated = `fnd-${suffix}`;
   // A number no other suite uses, so a global bare-number query is exact.
   const uniqueNumber = String(randomInt(100_000_000, 999_999_999));
+  const undatedNumber = String(randomInt(100_000_000, 999_999_999));
   const slugs: string[] = [];
 
   beforeAll(async () => {
@@ -136,7 +137,8 @@ describe('search.global CH-241 (cardTotal, cardPage, relevance, bare card number
     }
     await card(s151.id, `${older}-025b`, `多多冰${suffix}`, '#025', main.id);
     // Undated series sorts last inside its tier.
-    await card(sNone.id, `${undated}-001`, term, '001');
+    // Random number: a short one like 001 would also match other suites' global `c:1`.
+    await card(sNone.id, `${undated}-001`, term, undatedNumber);
     // Bare 25-07 and a unique global number.
     await card(sNone.id, `${undated}-25-07`, `玛俐的莫鲁贝可${suffix}`, '25-07');
     await card(sNone.id, `${undated}-u`, `编号卡${suffix}`, uniqueNumber);
