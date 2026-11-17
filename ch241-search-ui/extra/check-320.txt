@@ -1,0 +1,6 @@
+皮卡丘 zh-CN scrollWidth 320 axe [] small<24 []
+皮卡丘 en-US scrollWidth 320 axe [] small<24 []
+ex -皮卡丘 zh-CN scrollWidth 320 axe [] small<24 []
+ex -皮卡丘 en-US scrollWidth 320 axe [] small<24 []
+zqxv不存在卡牌 zh-CN scrollWidth 320 axe [] small<24 []
+zqxv不存在卡牌 en-US scrollWidth 320 axe [] small<24 []

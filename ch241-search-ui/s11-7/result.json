@@ -1,0 +1,216 @@
+{
+  "ok": true,
+  "detail": {
+    "threshold_px": 0,
+    "views": [
+      {
+        "viewport": "1440x900",
+        "first_top": 446,
+        "done_top": 446,
+        "delta_px": 0,
+        "delta_px_rounded": 0,
+        "title_slot_first": true,
+        "heading_first": null,
+        "heading_done": "卡牌（41）",
+        "heading_first_has_digit": false,
+        "first": {
+          "firstRow": {
+            "top": 446,
+            "topRounded": 446,
+            "tag": "LI",
+            "id": null,
+            "h": 89,
+            "cls": "flex items-center gap-4 p-4"
+          },
+          "firstRowTop": 446,
+          "firstRowTopRounded": 446,
+          "heading": null,
+          "headingPresent": false,
+          "headingHasDigit": false,
+          "titleSlotPresent": true,
+          "titleSlot": {
+            "top": 405,
+            "topRounded": 405,
+            "tag": "DIV",
+            "id": null,
+            "h": 28,
+            "cls": "h-7 w-32 animate-pulse rounded-sm bg-neutral-200 motion-reduce:animate-none"
+          },
+          "cardLinks": 0,
+          "skeletonPulses": 2,
+          "url": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98"
+        },
+        "done": {
+          "firstRow": {
+            "top": 446,
+            "topRounded": 446,
+            "tag": "LI",
+            "id": null,
+            "h": 89,
+            "cls": ""
+          },
+          "firstRowTop": 446,
+          "firstRowTopRounded": 446,
+          "heading": "卡牌（41）",
+          "headingPresent": true,
+          "headingHasDigit": true,
+          "titleSlotPresent": true,
+          "titleSlot": {
+            "top": 405,
+            "topRounded": 405,
+            "tag": "H2",
+            "id": "sr-cards",
+            "h": 28,
+            "cls": "scroll-mt-20 text-lg font-semibold focus:outline-none focus-visible:ring-2 focus"
+          },
+          "cardLinks": 30,
+          "skeletonPulses": 0,
+          "url": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98"
+        },
+        "ok": true,
+        "top_ok": true,
+        "shot_first": "s11-7-first-1440.png",
+        "shot_done": "s11-7-done-1440.png"
+      },
+      {
+        "viewport": "1350x940",
+        "first_top": 446,
+        "done_top": 446,
+        "delta_px": 0,
+        "delta_px_rounded": 0,
+        "title_slot_first": true,
+        "heading_first": null,
+        "heading_done": "卡牌（41）",
+        "heading_first_has_digit": false,
+        "first": {
+          "firstRow": {
+            "top": 446,
+            "topRounded": 446,
+            "tag": "LI",
+            "id": null,
+            "h": 89,
+            "cls": "flex items-center gap-4 p-4"
+          },
+          "firstRowTop": 446,
+          "firstRowTopRounded": 446,
+          "heading": null,
+          "headingPresent": false,
+          "headingHasDigit": false,
+          "titleSlotPresent": true,
+          "titleSlot": {
+            "top": 405,
+            "topRounded": 405,
+            "tag": "DIV",
+            "id": null,
+            "h": 28,
+            "cls": "h-7 w-32 animate-pulse rounded-sm bg-neutral-200 motion-reduce:animate-none"
+          },
+          "cardLinks": 0,
+          "skeletonPulses": 2,
+          "url": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98"
+        },
+        "done": {
+          "firstRow": {
+            "top": 446,
+            "topRounded": 446,
+            "tag": "LI",
+            "id": null,
+            "h": 89,
+            "cls": ""
+          },
+          "firstRowTop": 446,
+          "firstRowTopRounded": 446,
+          "heading": "卡牌（41）",
+          "headingPresent": true,
+          "headingHasDigit": true,
+          "titleSlotPresent": true,
+          "titleSlot": {
+            "top": 405,
+            "topRounded": 405,
+            "tag": "H2",
+            "id": "sr-cards",
+            "h": 28,
+            "cls": "scroll-mt-20 text-lg font-semibold focus:outline-none focus-visible:ring-2 focus"
+          },
+          "cardLinks": 30,
+          "skeletonPulses": 0,
+          "url": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98"
+        },
+        "ok": true,
+        "top_ok": true,
+        "shot_first": "s11-7-first-1350.png",
+        "shot_done": "s11-7-done-1350.png"
+      },
+      {
+        "viewport": "375x812",
+        "first_top": 578,
+        "done_top": 578,
+        "delta_px": 0,
+        "delta_px_rounded": 0,
+        "title_slot_first": true,
+        "heading_first": null,
+        "heading_done": "卡牌（41）",
+        "heading_first_has_digit": false,
+        "first": {
+          "firstRow": {
+            "top": 578,
+            "topRounded": 578,
+            "tag": "LI",
+            "id": null,
+            "h": 89,
+            "cls": "flex items-center gap-4 p-4"
+          },
+          "firstRowTop": 578,
+          "firstRowTopRounded": 578,
+          "heading": null,
+          "headingPresent": false,
+          "headingHasDigit": false,
+          "titleSlotPresent": true,
+          "titleSlot": {
+            "top": 537,
+            "topRounded": 537,
+            "tag": "DIV",
+            "id": null,
+            "h": 28,
+            "cls": "h-7 w-32 animate-pulse rounded-sm bg-neutral-200 motion-reduce:animate-none"
+          },
+          "cardLinks": 0,
+          "skeletonPulses": 2,
+          "url": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98"
+        },
+        "done": {
+          "firstRow": {
+            "top": 578,
+            "topRounded": 578,
+            "tag": "LI",
+            "id": null,
+            "h": 89,
+            "cls": ""
+          },
+          "firstRowTop": 578,
+          "firstRowTopRounded": 578,
+          "heading": "卡牌（41）",
+          "headingPresent": true,
+          "headingHasDigit": true,
+          "titleSlotPresent": true,
+          "titleSlot": {
+            "top": 537,
+            "topRounded": 537,
+            "tag": "H2",
+            "id": "sr-cards",
+            "h": 28,
+            "cls": "scroll-mt-20 text-lg font-semibold focus:outline-none focus-visible:ring-2 focus"
+          },
+          "cardLinks": 30,
+          "skeletonPulses": 0,
+          "url": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98"
+        },
+        "ok": true,
+        "top_ok": true,
+        "shot_first": "s11-7-first-375.png",
+        "shot_done": "s11-7-done-375.png"
+      }
+    ],
+    "note": "同一导航拦住 search.global 拍首帧，放行后拍完成帧。top 四舍五入到 1px 后相差必须为 0。"
+  }
+}
