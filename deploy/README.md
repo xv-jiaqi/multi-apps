@@ -142,8 +142,8 @@ installs Caddy 2.11.7, the version currently reported by `caddy:2-alpine`,
 and fails if that binary is missing.
 
 The apex web site, staging web, and both API sites compress responses with
-`encode zstd gzip` (zstd, then gzip). GET/HEAD retries stay at 5s. The www
-host remains a 308 redirect.
+`zstd better` and `gzip 9` (`encode` prefers zstd). GET/HEAD retries stay at
+5s. The www host remains a 308 redirect.
 
 `GET /sitemap.xml` on the apex and on `staging.card-hub.app` is proxied to
 that environment's API (`{$ENV_NAME}-api:4000` and `staging-api:4000`). The

@@ -125,14 +125,20 @@
 import optional/root-web.caddy
 
 {$API_DOMAIN} {
-	encode zstd gzip
+	encode {
+		zstd better
+		gzip 9
+	}
 	import cardhub_access_log
 	import cardhub_api_headers
 	import cardhub_upstream {$ENV_NAME}-api:4000
 }
 
 {$STAGING_WEB_DOMAIN} {
-	encode zstd gzip
+	encode {
+		zstd better
+		gzip 9
+	}
 	import cardhub_access_log
 	import cardhub_web_headers
 	import cardhub_sitemap staging-api:4000
@@ -142,7 +148,10 @@ import optional/root-web.caddy
 }
 
 {$STAGING_API_DOMAIN} {
-	encode zstd gzip
+	encode {
+		zstd better
+		gzip 9
+	}
 	import cardhub_access_log
 	import cardhub_api_headers
 	import cardhub_upstream staging-api:4000
