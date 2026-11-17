@@ -293,7 +293,10 @@ run in a one-shot container, the same way compose does, and the API
 process does not receive `MIGRATE_DATABASE_URL`. Within 60 seconds
 `/health` must be HTTP 200 with `status` ok and both `db` and `redis`
 true. The web container gets a dummy `TRPC_URL` and must return 200 for
-`/` and for a hashed `/assets/` file. Failure prints `docker logs` and
+`/` and for a hashed `/assets/` file. `/` must also send the API
+preconnect `Link` header, a `Content-Security-Policy`, and
+`Cache-Control: no-cache`. The hashed asset must be `immutable` and
+must not send a `Link` header. Failure prints `docker logs` and
 fails the job, so the digest artifact is not uploaded. Deploy then
 refuses the run and does not fall back to the tag. The tags themselves
 are already pushed; deploy does not pull them. CI's `API image build`

@@ -1,6 +1,11 @@
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import { cardAttributeLabels, type CardsListBySeriesInput } from '@repo/shared';
+import {
+  cardAttributeLabels,
+  cardRarityCode,
+  isSelectableCardRarityCode,
+  type CardsListBySeriesInput,
+} from '@repo/shared';
 import type { PrismaService } from '../prisma/prisma.service';
 import { compareSeriesListCards } from './card-list-order';
 
@@ -35,6 +40,8 @@ export type CardsListBySeriesItem = {
   parallelName: string | null;
   printRun: number | null;
   isParallel: boolean;
+  /** CH-239: trimmed `attributes.稀有度`, or null when the card has none. */
+  rarityCode: string | null;
 };
 
 export type CardsListBySeriesResult = {
@@ -51,6 +58,14 @@ export type CardsListBySeriesResult = {
   parallelCount: number;
   sort: CardsListBySeriesInput['sort'];
   attributeLabels: ReturnType<typeof cardAttributeLabels>;
+  /**
+   * CH-239: every official rarity code in the series (base and parallels),
+   * in the order each first appears under `sort=number`. Filters and paging
+   * do not change it. Empty when no card has `attributes.稀有度`. Codes longer
+   * than the `rarityCode` input limit are left out because no filter can
+   * select them.
+   */
+  rarityCodes: string[];
 };
 
 /**
@@ -87,14 +102,35 @@ function toListItem(card: ListedCardRow): CardsListBySeriesItem {
     parallelName: card.parallelName ?? null,
     printRun: card.printRun ?? null,
     isParallel: card.parallelOfId != null,
+    rarityCode: cardRarityCode(card.attributes),
   };
 }
 
+function seriesRarityCodes(cards: readonly ListedCardRow[]): string[] {
+  const codes = new Set<string>();
+  const byNumber = [...cards].sort((left, right) => compareSeriesListCards('number', left, right));
+  for (const card of byNumber) {
+    const code = cardRarityCode(card.attributes);
+    if (code !== null && isSelectableCardRarityCode(code)) codes.add(code);
+  }
+  return [...codes];
+}
+
+function matchesFilters(card: ListedCardRow, input: CardsListBySeriesInput): boolean {
+  if (!input.includeParallels && card.parallelOfId != null) return false;
+  if (input.rarity && card.rarity !== input.rarity) return false;
+  if (input.subsetSlug && card.subset?.slug !== input.subsetSlug) return false;
+  if (input.rarityCode && cardRarityCode(card.attributes) !== input.rarityCode) return false;
+  return true;
+}
+
 /**
- * One series read joins its cards and the unfiltered card count. Sorting and
- * paging happen in memory so the printed-number order does not need a stored
- * key. `cards_seriesId_idx` already bounds the read; subset, rarity, and
- * keyword are filters on that set. `seriesTotal` counts base cards only
+ * One series read joins all of its cards and the unfiltered card count.
+ * Filtering, sorting, and paging happen in memory so the printed-number order
+ * does not need a stored key and `rarityCodes` can be built from the whole
+ * series in the same read (CH-239). `cards_seriesId_idx` bounds the read;
+ * parallels, subset, rarity, official rarity code, and keyword are filters on
+ * that set. `seriesTotal` counts base cards only
  * (`parallelOfId` null) and does not follow filters. `includeParallels`
  * defaults to false and drops rows with `parallelOfId` before the keyword
  * filter. `parallelCount` is a separate count of those rows and does not
@@ -104,17 +140,12 @@ export async function loadCardsBySeries(
   prisma: PrismaService,
   input: CardsListBySeriesInput,
 ): Promise<CardsListBySeriesResult> {
-  const where: Prisma.CardWhereInput = {};
-  if (!input.includeParallels) where.parallelOfId = null;
-  if (input.rarity) where.rarity = input.rarity;
-  if (input.subsetSlug) where.subset = { slug: input.subsetSlug };
-
   const [series, parallelCount] = await Promise.all([
     prisma.series.findUnique({
       where: { slug: input.seriesSlug },
       select: {
         _count: { select: { cards: { where: { parallelOfId: null } } } },
-        cards: { where, select: cardSelect },
+        cards: { select: cardSelect },
       },
     }),
     prisma.card.count({
@@ -128,12 +159,12 @@ export async function loadCardsBySeries(
   // Keyword stays in process. Postgres LIKE would treat `%` and `_` in `q`
   // as wildcards, and the series rows are already loaded for card-number order.
   const needle = input.q?.toLocaleLowerCase('en-US');
-  const matched = needle
-    ? series.cards.filter((card) => {
-        if (card.name.toLocaleLowerCase('en-US').includes(needle)) return true;
-        return (card.cardNumber ?? '').toLocaleLowerCase('en-US').includes(needle);
-      })
-    : series.cards;
+  const matched = series.cards.filter((card) => {
+    if (!matchesFilters(card, input)) return false;
+    if (!needle) return true;
+    if (card.name.toLocaleLowerCase('en-US').includes(needle)) return true;
+    return (card.cardNumber ?? '').toLocaleLowerCase('en-US').includes(needle);
+  });
 
   const sorted = [...matched].sort((left, right) =>
     compareSeriesListCards(input.sort, left, right),
@@ -150,5 +181,6 @@ export async function loadCardsBySeries(
     attributeLabels: cardAttributeLabels(
       sorted.flatMap((card) => Object.keys(flatCardAttributes(card.attributes) ?? {})),
     ),
+    rarityCodes: seriesRarityCodes(series.cards),
   };
 }
