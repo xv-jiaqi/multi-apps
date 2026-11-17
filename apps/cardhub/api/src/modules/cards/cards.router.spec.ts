@@ -591,19 +591,36 @@ describe('CardsRouter.listBySeries', () => {
       expect(conflicting.total).toBe(0);
     });
 
-    it('hides parallels by default, but their codes stay in rarityCodes', async () => {
-      const cards = [codeRow('001', 'C'), codeRow('001', 'S', { parallelOfId: 'id-001' })];
+    it('lists parallel-only codes only when includeParallels is on (需求 v1.1)', async () => {
+      const cards = [
+        codeRow('002', 'R', { parallelOfId: 'id-002' }),
+        codeRow('001', 'C'),
+        codeRow('001', 'S', { parallelOfId: 'id-001' }),
+        codeRow('002', 'R'),
+      ];
       const { caller } = load(cards);
-      const hidden = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'S' });
-      expect(hidden.total).toBe(0);
-      expect(hidden.rarityCodes).toEqual(['C', 'S']);
+      const hidden = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th' });
+      expect(hidden.rarityCodes).toEqual(['C', 'R']);
+      // An old link with a parallel-only code and parallels off: empty, no error.
+      const stale = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'S' });
+      expect(stale.total).toBe(0);
+      expect(stale.items).toEqual([]);
+      expect(stale.rarityCodes).toEqual(['C', 'R']);
       const shown = await caller.listBySeries({
         seriesSlug: 'ptcg-sc-30th',
         rarityCode: 'S',
         includeParallels: true,
       });
+      expect(shown.rarityCodes).toEqual(['C', 'S', 'R']);
       expect(shown.items.map((item) => item.slug)).toEqual(['ptcg-sc-30th-001-p']);
       expect(shown.items[0]?.isParallel).toBe(true);
+      // Other filters still do not change the list.
+      const filtered = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        rarityCode: 'C',
+        includeParallels: true,
+      });
+      expect(filtered.rarityCodes).toEqual(['C', 'S', 'R']);
     });
 
     it('returns an empty rarityCodes for a series without official codes', async () => {
