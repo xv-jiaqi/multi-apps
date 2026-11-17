@@ -54,14 +54,10 @@ export default defineConfig({
   // The shared packages (@repo/*) ship as CommonJS so the NestJS API can
   // require() them directly. Forcing Vite to pre-bundle them lets us keep the
   // CJS output while still exposing named ES exports to the browser.
+  // @repo/shared is not listed: the production build already resolves it, and
+  // pre-bundling the CJS barrel in dev is unnecessary.
   optimizeDeps: {
-    include: [
-      '@repo/shared',
-      '@repo/stores',
-      '@repo/trpc-contract',
-      '@repo/design-tokens',
-      '@repo/ui-web',
-    ],
+    include: ['@repo/stores', '@repo/trpc-contract', '@repo/design-tokens', '@repo/ui-web'],
   },
   test: {
     environment: 'jsdom',
