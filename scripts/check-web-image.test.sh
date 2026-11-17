@@ -21,6 +21,11 @@ index = (
     b"<script src=\"/assets/index-Ab12cd.js\"></script>"
 )
 asset = b"console.log('cardhub');"
+INDEX_CSP = (
+    "default-src 'self'; frame-ancestors 'none'; script-src 'self'; "
+    "connect-src 'self' http://127.0.0.1:4000"
+)
+INDEX_LINK = "<http://127.0.0.1:4000>; rel=preconnect; crossorigin"
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
@@ -33,7 +38,26 @@ class Handler(BaseHTTPRequestHandler):
                 body = b"<!doctype html><h1>empty</h1>"
             else:
                 body = index
-            self._send(200, "text/html", body)
+            headers = {
+                "Link": INDEX_LINK,
+                "Content-Security-Policy": INDEX_CSP,
+                "Cache-Control": "no-cache",
+            }
+            if mode == "no-link":
+                headers.pop("Link")
+            elif mode == "bad-link":
+                headers["Link"] = "</foo.css>; rel=stylesheet"
+            elif mode == "no-csp":
+                headers.pop("Content-Security-Policy")
+            elif mode == "csp-no-connect":
+                headers["Content-Security-Policy"] = (
+                    "default-src 'self'; frame-ancestors 'none'; script-src 'self'"
+                )
+            elif mode == "link-csp-mismatch":
+                headers["Link"] = "<https://api.card-hub.app>; rel=preconnect; crossorigin"
+            elif mode == "index-cached":
+                headers["Cache-Control"] = "public, max-age=3600"
+            self._send(200, "text/html", body, headers)
             return
         if path == "/assets/index-Ab12cd.js":
             if mode == "asset-404":
@@ -42,14 +66,24 @@ class Handler(BaseHTTPRequestHandler):
             if mode == "asset-html":
                 self._send(200, "text/html", index)
                 return
-            self._send(200, "application/javascript", asset)
+            headers = {
+                "Cache-Control": "public, max-age=31536000, immutable",
+            }
+            if mode == "asset-mutable":
+                headers["Cache-Control"] = "public, max-age=3600"
+            elif mode == "asset-link":
+                headers["Link"] = INDEX_LINK
+            self._send(200, "application/javascript", asset, headers)
             return
         self._send(404, "text/plain", b"no")
 
-    def _send(self, status, content_type, body):
+    def _send(self, status, content_type, body, extra_headers=None):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        if extra_headers:
+            for name, value in extra_headers.items():
+                self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
 
@@ -92,6 +126,7 @@ expect_fail() {
   set -e
   if [ "$rc" -eq 0 ]; then
     echo "expected ${mode} to fail" >&2
+    cat "${work}/out" >&2
     exit 1
   fi
   if ! grep -q "$needle" "${work}/err"; then
@@ -111,12 +146,33 @@ if ! grep -q "web image checks passed / /assets/index-Ab12cd.js" "${work}/out"; 
   cat "${work}/out" >&2
   exit 1
 fi
+for needle in \
+  "GET / Link: <http://127.0.0.1:4000>; rel=preconnect; crossorigin" \
+  "GET / Content-Security-Policy:" \
+  "GET / Cache-Control: no-cache" \
+  "GET /assets/index-Ab12cd.js Cache-Control: public, max-age=31536000, immutable" \
+  "GET /assets/index-Ab12cd.js has no Link header"
+do
+  if ! grep -qF "$needle" "${work}/out"; then
+    echo "expected passing output to contain: ${needle}" >&2
+    cat "${work}/out" >&2
+    exit 1
+  fi
+done
 stop_server
-echo "OK web image serves / and /assets/"
+echo "OK web image serves / and /assets/ with headers"
 
 expect_fail no-asset "no hashed /assets/ URL"
 expect_fail asset-404 "GET /assets/index-Ab12cd.js failed"
 expect_fail asset-html "returned the SPA document"
+expect_fail no-link "missing the Link header"
+expect_fail bad-link "Link header is not an API preconnect"
+expect_fail no-csp "missing the Content-Security-Policy header"
+expect_fail csp-no-connect "missing the connect-src directive"
+expect_fail link-csp-mismatch "is not in Content-Security-Policy connect-src"
+expect_fail index-cached "GET / Cache-Control is public, max-age=3600, expected no-cache"
+expect_fail asset-mutable "GET /assets/index-Ab12cd.js Cache-Control is public, max-age=3600, expected immutable"
+expect_fail asset-link "must not have a Link header"
 
 set +e
 BOOT_TIMEOUT=2 WEB_BASE_URL="http://127.0.0.1:1" bash "$script" >"${work}/out" 2>"${work}/err"
