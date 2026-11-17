@@ -18,7 +18,7 @@ const cardSelect = {
   parallelOfId: true,
   parallelName: true,
   printRun: true,
-  subset: { select: { slug: true } },
+  subset: { select: { slug: true, sortOrder: true } },
 } as const;
 
 type ListedCardRow = Prisma.CardGetPayload<{ select: typeof cardSelect }>;

@@ -13,6 +13,7 @@ function card(
     parallelOfId: overrides.parallelOfId ?? null,
     parallelName: overrides.parallelName ?? null,
     printRun: overrides.printRun === undefined ? null : overrides.printRun,
+    subset: overrides.subset === undefined ? null : overrides.subset,
   };
 }
 
@@ -134,5 +135,32 @@ describe('compareSeriesListCards', () => {
       card({ id: 'early', createdAt: new Date('2020-01-01T00:00:00.000Z') }),
     ].sort((left, right) => compareSeriesListCards('created', left, right));
     expect(rows.map((row) => row.id)).toEqual(['early', 'same-a', 'same-b', 'late', 'bad']);
+  });
+
+  it('orders letter card numbers by subset sortOrder after the numbered cards (CH-237)', () => {
+    const special = { sortOrder: 2 };
+    const energy = { sortOrder: 3 };
+    const rows = [
+      card({ id: 'wat', cardNumber: 'WAT', subset: energy }),
+      card({ id: 'r', cardNumber: 'R', subset: special }),
+      card({ id: 'dar', cardNumber: 'DAR', subset: energy }),
+      card({ id: 'n10', cardNumber: '010', subset: { sortOrder: 1 } }),
+      card({ id: 'b', cardNumber: 'B', subset: special }),
+      card({ id: 'loose', cardNumber: 'A', subset: null }),
+      card({ id: 'n2', cardNumber: '002', subset: { sortOrder: 0 } }),
+      card({ id: 'g', cardNumber: 'G', subset: special }),
+    ].sort((left, right) => compareSeriesListCards('number', left, right));
+    expect(rows.map((row) => row.id)).toEqual(['n2', 'n10', 'b', 'g', 'r', 'dar', 'wat', 'loose']);
+  });
+
+  it('leaves name, rarity, and created order alone when subsets differ (CH-237 Out)', () => {
+    const rows = [
+      card({ id: 'z', name: 'A', rarity: 'common', cardNumber: 'Z', subset: { sortOrder: 0 } }),
+      card({ id: 'a', name: 'B', rarity: 'common', cardNumber: 'A', subset: { sortOrder: 9 } }),
+    ];
+    const byName = [...rows].sort((left, right) => compareSeriesListCards('name', left, right));
+    expect(byName.map((row) => row.id)).toEqual(['z', 'a']);
+    const byRarity = [...rows].sort((left, right) => compareSeriesListCards('rarity', left, right));
+    expect(byRarity.map((row) => row.id)).toEqual(['a', 'z']);
   });
 });

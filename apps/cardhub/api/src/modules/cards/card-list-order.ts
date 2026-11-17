@@ -1,4 +1,4 @@
-import { RARITY_VALUES, compareCardNumbers, type CardSeriesListSort } from '@repo/shared';
+import { RARITY_VALUES, compareCardNumbersInSubsets, type CardSeriesListSort } from '@repo/shared';
 
 export type SeriesListSortCard = {
   id: string;
@@ -10,6 +10,11 @@ export type SeriesListSortCard = {
   parallelOfId?: string | null;
   parallelName?: string | null;
   printRun?: number | null;
+  /**
+   * CH-237: orders card numbers without digits by subset. Omitted or null
+   * means no subset. Callers whose rows all share one subset may omit it.
+   */
+  subset?: { sortOrder: number } | null;
 };
 
 export type VariantSortCard = {
@@ -104,7 +109,10 @@ function primaryCompare(
     case 'created':
       return compareCreated(left.createdAt, right.createdAt);
     case 'number': {
-      const byNumber = compareCardNumbers(left.cardNumber, right.cardNumber);
+      const byNumber = compareCardNumbersInSubsets({
+        left: { cardNumber: left.cardNumber, subsetSortOrder: left.subset?.sortOrder },
+        right: { cardNumber: right.cardNumber, subsetSortOrder: right.subset?.sortOrder },
+      });
       if (byNumber !== 0) return byNumber;
       return compareParallelTail(variantView(left), variantView(right));
     }
