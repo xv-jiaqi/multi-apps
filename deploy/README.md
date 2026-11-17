@@ -874,8 +874,9 @@ if set and it fails, it triggers the same rollback path and exits non-zero.
 The web container receives runtime `TRPC_URL` and optional browser Sentry
 settings (`WEB_SENTRY_DSN`, `SENTRY_ENVIRONMENT`, and the image `GIT_SHA`) via
 the nginx entrypoint. The generated `/config.js` is uncached and validated at
-container startup; a missing or malformed `TRPC_URL` makes the web container
-exit instead of silently falling back to another API URL. The same entrypoint
+container startup; a missing required field or malformed value makes the web
+container exit and names the field (for example `TRPC_URL`) instead of
+silently falling back to another API URL. The same entrypoint
 writes `/etc/nginx/conf.d/api-preconnect.inc`, so SPA HTML responses (only
 `location /`) carry `Link: <API origin>; rel=preconnect; crossorigin`. The
 browser opens the API TLS connection while the JS bundle downloads (CH-240
