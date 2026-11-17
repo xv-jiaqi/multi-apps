@@ -87,7 +87,9 @@
     "id": "color-contrast",
     "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "搜索失败",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "search-error_375_zh": {
   "violations": [],
@@ -97,7 +99,9 @@
     "id": "color-contrast",
     "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "搜索失败",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "search-error_1440_en": {
   "violations": [],
@@ -107,7 +111,9 @@
     "id": "color-contrast",
     "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "Search failed",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "search-error_375_en": {
   "violations": [],
@@ -117,7 +123,9 @@
     "id": "color-contrast",
     "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "Search failed",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-success_1440_zh": {
   "violations": [],
@@ -161,82 +169,98 @@
  },
  "series-error_1440_zh": {
   "violations": [],
-  "passes": 26,
+  "passes": 25,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "出了点问题，请稍后再试",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-error_375_zh": {
   "violations": [],
-  "passes": 26,
+  "passes": 25,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "出了点问题，请稍后再试",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-error_1440_en": {
   "violations": [],
-  "passes": 26,
+  "passes": 25,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "Something went wrong. Try again later.",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-error_375_en": {
   "violations": [],
-  "passes": 26,
+  "passes": 25,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "Something went wrong. Try again later.",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-not-found_1440_zh": {
   "violations": [],
-  "passes": 26,
+  "passes": 25,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "内容不存在",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-not-found_375_zh": {
   "violations": [],
-  "passes": 26,
+  "passes": 22,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "内容不存在",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-not-found_1440_en": {
   "violations": [],
-  "passes": 26,
+  "passes": 25,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "Not found",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  },
  "series-not-found_375_en": {
   "violations": [],
-  "passes": 26,
+  "passes": 22,
   "incomplete": [
    {
     "id": "color-contrast",
-    "nodes": 8
+    "nodes": 1
    }
-  ]
+  ],
+  "waitedFor": "Not found",
+  "head": "47500c25fb26131517d206381ef8955534b85b5e"
  }
 }
