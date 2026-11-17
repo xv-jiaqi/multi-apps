@@ -41,6 +41,9 @@ const cards = [
     imageUrl: 'https://example.com/aurora.png',
     seriesSlug: 'celestial-dawn',
     seriesTitle: '天穹黎明',
+    cardNumber: '025',
+    subsetSlug: 'ptcg-sc-151',
+    subsetName: '151',
   },
   {
     id: 'c2',
@@ -50,6 +53,9 @@ const cards = [
     imageUrl: null,
     seriesSlug: 'celestial-dawn',
     seriesTitle: '天穹黎明',
+    cardNumber: 'SV-P-001',
+    subsetSlug: 'promo-slug',
+    subsetName: null,
   },
 ];
 
@@ -182,6 +188,13 @@ describe('HeaderSearch', () => {
       expect.stringContaining('冰川哨兵'),
       expect.stringContaining('天穹黎明'),
     ]);
+    // CH-241 §2: the number · subset line, falling back to the subset slug.
+    expect(within(options[0]!).getByText('#025 · 151')).toBeInTheDocument();
+    expect(within(options[1]!).getByText('#SV-P-001 · promo-slug')).toBeInTheDocument();
+    // CH-241 §2 v1.3: the name is truncated visually only; the option's
+    // accessible name still carries the full card name.
+    expect(within(options[0]!).getByText('极光骑士')).toHaveClass('truncate');
+    expect(within(listbox).getByRole('option', { name: /极光骑士/ })).toBe(options[0]);
     expect(listbox.textContent?.indexOf('卡牌')).toBeLessThan(
       listbox.textContent?.indexOf('系列') ?? -1,
     );
@@ -325,8 +338,8 @@ describe('HeaderSearch', () => {
     renderInline();
     const input = screen.getByRole('combobox', { name: '全站搜索' });
     await user.click(input);
-    await user.click(await screen.findByRole('button', { name: '用「r:legendary」搜索' }));
-    expect(input).toHaveValue('r:legendary');
+    await user.click(await screen.findByRole('button', { name: '用「c:025 s:ptcg-sc-151」搜索' }));
+    expect(input).toHaveValue('c:025 s:ptcg-sc-151');
     expect(input).toHaveFocus();
   });
 });

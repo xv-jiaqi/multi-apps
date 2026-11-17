@@ -267,6 +267,7 @@ const zhCN: Dictionary = {
   'auth.notice.sessionExpired': '登录已失效，请重新登录。',
   'search.placeholder': '搜索卡牌或系列…',
   'search.empty': '没有找到匹配的卡牌或系列',
+  'search.emptyHint': '搜卡号可以直接输入 025 或 25-07。字母卡号请用 c:，例如 c:B。',
   'search.results': '搜索结果',
   'search.results.title': '关于 “{query}” 的搜索结果',
   'search.headerLabel': '全站搜索',
@@ -275,7 +276,8 @@ const zhCN: Dictionary = {
   'search.viewAllFor': '查看「{query}」的全部结果',
   'search.syntaxLabel': '试试：',
   'search.trySyntax': '用「{example}」搜索',
-  'search.syntaxHelp': 'r: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除',
+  'search.syntaxHelp':
+    'r: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。',
   'search.unsupportedPrefix':
     '不支持「{token}」。可用的前缀：r:（稀有度）、s:（系列）、c:（卡号）、y:（发售年）',
   'search.ignoredYear': '已忽略「{token}」：年份要写 4 位，如 y:2024',
@@ -314,6 +316,8 @@ const zhCN: Dictionary = {
   'pagination.next': '下一页',
   'pagination.page': '第 {page} 页',
   'pagination.of': '第 {page} / {count} 页',
+  'pagination.top': '顶部分页',
+  'pagination.bottom': '底部分页',
   'search.invalidRarity': '没有「{value}」这个稀有度，可选 common、rare、epic、legendary',
   'search.filterRarity': '稀有度',
   'search.filterSeries': '系列',
@@ -1335,6 +1339,8 @@ const enUS: Dictionary = {
   'auth.notice.sessionExpired': 'Your session has ended. Sign in again.',
   'search.placeholder': 'Search cards or series…',
   'search.empty': 'No matching cards or series',
+  'search.emptyHint':
+    'Search a numeric card number like 025 or 25-07. Use c: for a letter card number, for example c:B.',
   'search.results': 'Search results',
   'search.results.title': 'Results for “{query}”',
   'search.headerLabel': 'Search Cardhub',
@@ -1344,7 +1350,7 @@ const enUS: Dictionary = {
   'search.syntaxLabel': 'Try:',
   'search.trySyntax': 'Search for “{example}”',
   'search.syntaxHelp':
-    'r: rarity, s: series, c: card number, y: release year, OR for either, - to exclude',
+    'r: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.',
   'search.unsupportedPrefix':
     "“{token}” isn't supported. Use r: (rarity), s: (series), c: (card number), or y: (release year).",
   'search.ignoredYear': 'Ignored “{token}”: use a 4-digit year, like y:2024.',
@@ -1383,6 +1389,8 @@ const enUS: Dictionary = {
   'pagination.next': 'Next',
   'pagination.page': 'Page {page}',
   'pagination.of': 'Page {page} of {count}',
+  'pagination.top': 'Top pagination',
+  'pagination.bottom': 'Bottom pagination',
   'search.invalidRarity': "There's no “{value}” rarity. Use common, rare, epic, or legendary.",
   'search.filterRarity': 'Rarity',
   'search.filterSeries': 'Series',

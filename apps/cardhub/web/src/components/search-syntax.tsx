@@ -8,12 +8,13 @@ function valueAfterColon(token: string): string {
   return colon >= 0 ? token.slice(colon + 1) : token;
 }
 
+/** CH-241 §4: real ptcg-sc examples, each with results on the 7 imported sets. */
 export const SEARCH_SYNTAX_EXAMPLES = [
-  'r:legendary',
-  's:celestial-dawn',
-  '极光 OR 冰川',
-  '守 -冰川',
-  'y:2024',
+  '皮卡丘',
+  '025',
+  'c:025 s:ptcg-sc-151',
+  '皮卡丘 OR 喷火龙',
+  'ex -皮卡丘',
 ] as const;
 
 export const SyntaxExamples = observer(function SyntaxExamples({
@@ -41,7 +42,7 @@ export const SyntaxExamples = observer(function SyntaxExamples({
               if (compact) event.preventDefault();
             }}
             onClick={() => onExample(example)}
-            className="rounded-sm bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-800 hover:bg-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="min-h-6 rounded-sm bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-800 wrap-anywhere hover:bg-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {example}
           </button>
