@@ -640,6 +640,7 @@ describe('AdminRouter.catalog.import dryRun', () => {
           title: 'Existing',
           description: 'old',
           coverUrl: null,
+          subsets: [],
         },
       ])
       .mockResolvedValueOnce([{ slug: 'existing-series' }]);
@@ -814,7 +815,8 @@ describe('AdminRouter.catalog.import execute', () => {
     } = makeRouter();
     userFindUnique.mockResolvedValueOnce({ id: 'u-admin', role: 'admin' });
     seriesFindMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
-    cardFindMany.mockResolvedValueOnce([]);
+    // Preview read, then the one stored-card read inside the transaction.
+    cardFindMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     seriesUpsert.mockResolvedValueOnce({ id: 's1', slug: 'new-series' });
     cardUpsert.mockRejectedValueOnce(new Error('database write failed'));
 

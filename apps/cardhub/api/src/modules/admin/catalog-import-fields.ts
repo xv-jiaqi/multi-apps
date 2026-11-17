@@ -59,7 +59,11 @@ export interface NormalizedSubset {
 
 /** Empty string clears the link. A non-empty value must be a slug. */
 const importSlugOrEmpty = z.union([slugSchema, z.literal('')]);
-const importReleaseDate = z.union([releaseDateSchema, z.literal('')]);
+/** Whitespace-only is the empty string: it clears the stored date. */
+const importReleaseDate = z
+  .string()
+  .trim()
+  .pipe(z.union([z.literal(''), releaseDateSchema]));
 const importCardNumber = z.string().trim().max(CARD_NUMBER_MAX);
 const importSubsetName = z.string().trim().min(1).max(120);
 const importSubsetKind = z.enum(SUBSET_KIND_VALUES);
