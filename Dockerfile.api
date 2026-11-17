@@ -97,5 +97,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 # PID 1 and the same listener runs.
 COPY --chmod=555 deploy/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
 COPY --chmod=555 deploy/migrate-entrypoint.sh /usr/local/bin/migrate-entrypoint.sh
-# Throwaway: the image still builds, but the process exits immediately.
-CMD ["node", "-e", "console.error('boot-check: refusing to start'); process.exit(1)"]
+CMD ["/usr/local/bin/api-entrypoint.sh"]
