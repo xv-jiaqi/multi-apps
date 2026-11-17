@@ -178,9 +178,15 @@ describe('card body', () => {
       expect(globalCards.map((card) => card.slug)).toContain(cardSlug);
       for (const card of [...searchCards, ...globalCards]) expect(card).not.toHaveProperty('body');
 
-      const calls = spy.mock.calls.map(([args]) => args as { where?: unknown; omit?: unknown });
+      const calls = spy.mock.calls.map(
+        ([args]) => args as { where?: unknown; omit?: unknown; select?: Record<string, unknown> },
+      );
       expect(calls.length).toBeGreaterThanOrEqual(3);
-      for (const args of calls) expect(args.omit).toEqual({ body: true });
+      // search.global ranks with a narrow `select` (CH-241), which never names body.
+      for (const args of calls) {
+        if (args.select) expect(args.select).not.toHaveProperty('body');
+        else expect(args.omit).toEqual({ body: true });
+      }
       const rows = await Promise.all(spy.mock.results.map((result) => result.value));
       for (const row of rows.flat()) expect(row).not.toHaveProperty('body');
     } finally {

@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import type { CardSearchParseResult } from '@repo/shared';
+import { bareCardNumberTerm, type CardSearchParseResult } from '@repo/shared';
 import { seriesReleaseYearFilter } from './release-year';
 
 type ParsedSearch = Extract<CardSearchParseResult, { ok: true }>;
@@ -31,14 +31,20 @@ function seriesPrefixFilter(parsed: ParsedSearch): Prisma.SeriesWhereInput | und
 }
 
 /**
- * A free-text term matches the printed name or the parallel name. Card number
- * stays on the `c:` prefix. Series-page `q` does not use this helper.
- * A name hit is `true OR NULL` when parallelName is null, so include terms
- * still keep base cards.
+ * A free-text term matches the printed name or the parallel name. A bare
+ * numeric term (`025`, `25-07`, `025/165`) also matches `cardNumberNormalized`
+ * exactly (CH-241 §2, `bareCardNumberTerm`); letter card numbers stay on `c:`.
+ * Series-page `q` does not use this helper. A name hit is `true OR NULL` when
+ * parallelName is null, so include terms still keep base cards.
  */
 function keywordTerm(term: string): Prisma.CardWhereInput {
+  const cardNumber = bareCardNumberTerm(term);
   return {
-    OR: [{ name: insensitiveContains(term) }, { parallelName: insensitiveContains(term) }],
+    OR: [
+      { name: insensitiveContains(term) },
+      { parallelName: insensitiveContains(term) },
+      ...(cardNumber ? [{ cardNumberNormalized: cardNumber }] : []),
+    ],
   };
 }
 
