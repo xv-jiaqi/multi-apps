@@ -1,0 +1,515 @@
+{
+ "sha": "unknown",
+ "results": [
+  {
+   "file": "search-success_1440_zh.png",
+   "case": "search-success",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 41 张卡牌、0 个系列\n\n卡牌（41）\n上一页\n1\n2\n下一页\n皮卡丘\n#017 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#018 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#019 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#020 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#021 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#022 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#023 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#024 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#025 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#026 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#027 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#028 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#029 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#030 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#031 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#032 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#033 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#034 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#035 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#036 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#037 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#038 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#039 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#040 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#041 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#042 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#043 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#044 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#045 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#046 · 收录卡\n30周年庆典\n普通\n上一页\n1\n2\n下一页",
+   "axe": []
+  },
+  {
+   "file": "search-success_1440_en.png",
+   "case": "search-success",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n41 results. Found 41 cards and 0 series.\n\nCards (41)\nPrevious\n1\n2\nNext\n皮卡丘\n#017 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#018 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#019 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#020 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#021 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#022 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#023 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#024 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#025 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#026 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#027 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#028 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#029 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#030 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#031 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#032 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#033 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#034 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#035 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#036 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#037 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#038 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#039 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#040 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#041 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#042 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#043 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#044 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#045 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#046 · 收录卡\n30周年庆典\nCommon\nPrevious\n1\n2\nNext",
+   "axe": []
+  },
+  {
+   "file": "search-success_375_zh.png",
+   "case": "search-success",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 41 张卡牌、0 个系列\n\n卡牌（41）\n上一页\n1\n2\n下一页\n皮卡丘\n#017 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#018 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#019 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#020 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#021 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#022 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#023 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#024 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#025 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#026 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#027 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#028 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#029 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#030 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#031 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#032 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#033 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#034 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#035 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#036 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#037 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#038 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#039 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#040 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#041 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#042 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#043 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#044 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#045 · 收录卡\n30周年庆典\n普通\n皮卡丘\n#046 · 收录卡\n30周年庆典\n普通\n上一页\n1\n2\n下一页",
+   "axe": []
+  },
+  {
+   "file": "search-success_375_en.png",
+   "case": "search-success",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n41 results. Found 41 cards and 0 series.\n\nCards (41)\nPrevious\n1\n2\nNext\n皮卡丘\n#017 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#018 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#019 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#020 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#021 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#022 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#023 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#024 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#025 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#026 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#027 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#028 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#029 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#030 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#031 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#032 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#033 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#034 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#035 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#036 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#037 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#038 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#039 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#040 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#041 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#042 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#043 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#044 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#045 · 收录卡\n30周年庆典\nCommon\n皮卡丘\n#046 · 收录卡\n30周年庆典\nCommon\nPrevious\n1\n2\nNext",
+   "axe": []
+  },
+  {
+   "file": "search-page2_1440_zh.png",
+   "case": "search-page2",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 41 张卡牌、0 个系列\n\n卡牌（41）\n上一页\n1\n2\n下一页\n皮卡丘\n#136 · 编号外\n30周年庆典\n普通\n皮卡丘\n#025 · 收录卡\n收集啦151\n普通\n皮卡丘\n#170 · 编号外\n收集啦151\n史诗\n皮卡丘\n#171 · 编号外\n收集啦151\n史诗\n皮卡丘\n#172 · 编号外\n收集啦151\n史诗\n皮卡丘\n#173 · 编号外\n收集啦151\n史诗\n皮卡丘ex\n#047 · 收录卡\n30周年庆典\n稀有\n皮卡丘ex\n#048 · 收录卡\n30周年庆典\n稀有\n皮卡丘ex\n#126 · 编号外\n30周年庆典\n传说\n皮卡丘ex\n#127 · 编号外\n30周年庆典\n传说\n皮卡丘&捷克罗姆GX\n#160 · 编号外\n30周年庆典\n普通\n上一页\n1\n2\n下一页",
+   "axe": []
+  },
+  {
+   "file": "search-page2_1440_en.png",
+   "case": "search-page2",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n41 results. Found 41 cards and 0 series.\n\nCards (41)\nPrevious\n1\n2\nNext\n皮卡丘\n#136 · 编号外\n30周年庆典\nCommon\n皮卡丘\n#025 · 收录卡\n收集啦151\nCommon\n皮卡丘\n#170 · 编号外\n收集啦151\nEpic\n皮卡丘\n#171 · 编号外\n收集啦151\nEpic\n皮卡丘\n#172 · 编号外\n收集啦151\nEpic\n皮卡丘\n#173 · 编号外\n收集啦151\nEpic\n皮卡丘ex\n#047 · 收录卡\n30周年庆典\nRare\n皮卡丘ex\n#048 · 收录卡\n30周年庆典\nRare\n皮卡丘ex\n#126 · 编号外\n30周年庆典\nLegendary\n皮卡丘ex\n#127 · 编号外\n30周年庆典\nLegendary\n皮卡丘&捷克罗姆GX\n#160 · 编号外\n30周年庆典\nCommon\nPrevious\n1\n2\nNext",
+   "axe": []
+  },
+  {
+   "file": "search-page2_375_zh.png",
+   "case": "search-page2",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 41 张卡牌、0 个系列\n\n卡牌（41）\n上一页\n1\n2\n下一页\n皮卡丘\n#136 · 编号外\n30周年庆典\n普通\n皮卡丘\n#025 · 收录卡\n收集啦151\n普通\n皮卡丘\n#170 · 编号外\n收集啦151\n史诗\n皮卡丘\n#171 · 编号外\n收集啦151\n史诗\n皮卡丘\n#172 · 编号外\n收集啦151\n史诗\n皮卡丘\n#173 · 编号外\n收集啦151\n史诗\n皮卡丘ex\n#047 · 收录卡\n30周年庆典\n稀有\n皮卡丘ex\n#048 · 收录卡\n30周年庆典\n稀有\n皮卡丘ex\n#126 · 编号外\n30周年庆典\n传说\n皮卡丘ex\n#127 · 编号外\n30周年庆典\n传说\n皮卡丘&捷克罗姆GX\n#160 · 编号外\n30周年庆典\n普通\n上一页\n1\n2\n下一页",
+   "axe": []
+  },
+  {
+   "file": "search-page2_375_en.png",
+   "case": "search-page2",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n41 results. Found 41 cards and 0 series.\n\nCards (41)\nPrevious\n1\n2\nNext\n皮卡丘\n#136 · 编号外\n30周年庆典\nCommon\n皮卡丘\n#025 · 收录卡\n收集啦151\nCommon\n皮卡丘\n#170 · 编号外\n收集啦151\nEpic\n皮卡丘\n#171 · 编号外\n收集啦151\nEpic\n皮卡丘\n#172 · 编号外\n收集啦151\nEpic\n皮卡丘\n#173 · 编号外\n收集啦151\nEpic\n皮卡丘ex\n#047 · 收录卡\n30周年庆典\nRare\n皮卡丘ex\n#048 · 收录卡\n30周年庆典\nRare\n皮卡丘ex\n#126 · 编号外\n30周年庆典\nLegendary\n皮卡丘ex\n#127 · 编号外\n30周年庆典\nLegendary\n皮卡丘&捷克罗姆GX\n#160 · 编号外\n30周年庆典\nCommon\nPrevious\n1\n2\nNext",
+   "axe": []
+  },
+  {
+   "file": "search-loading_1440_zh.png",
+   "case": "search-loading",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n搜索中…",
+   "axe": []
+  },
+  {
+   "file": "search-loading_1440_en.png",
+   "case": "search-loading",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\nSearching…",
+   "axe": []
+  },
+  {
+   "file": "search-loading_375_zh.png",
+   "case": "search-loading",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n搜索中…",
+   "axe": []
+  },
+  {
+   "file": "search-loading_375_en.png",
+   "case": "search-loading",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\nSearching…",
+   "axe": []
+  },
+  {
+   "file": "search-error_1440_zh.png",
+   "case": "search-error",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n搜索失败\n重试",
+   "axe": []
+  },
+  {
+   "file": "search-error_1440_en.png",
+   "case": "search-error",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\nSearch failed\nRetry",
+   "axe": []
+  },
+  {
+   "file": "search-error_375_zh.png",
+   "case": "search-error",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n搜索失败\n重试",
+   "axe": []
+  },
+  {
+   "file": "search-error_375_en.png",
+   "case": "search-error",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\nSearch failed\nRetry",
+   "axe": []
+  },
+  {
+   "file": "search-empty_1440_zh.png",
+   "case": "search-empty",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 0 张卡牌、0 个系列\n\n没有找到匹配的卡牌或系列\n\n搜卡号可以直接输入 025 或 25-07。字母卡号请用 c:，例如 c:B。",
+   "axe": []
+  },
+  {
+   "file": "search-empty_1440_en.png",
+   "case": "search-empty",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n0 results. Found 0 cards and 0 series.\n\nNo matching cards or series\n\nSearch a numeric card number like 025 or 25-07. Use c: for a letter card number, for example c:B.",
+   "axe": []
+  },
+  {
+   "file": "search-empty_375_zh.png",
+   "case": "search-empty",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 0 张卡牌、0 个系列\n\n没有找到匹配的卡牌或系列\n\n搜卡号可以直接输入 025 或 25-07。字母卡号请用 c:，例如 c:B。",
+   "axe": []
+  },
+  {
+   "file": "search-empty_375_en.png",
+   "case": "search-empty",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n0 results. Found 0 cards and 0 series.\n\nNo matching cards or series\n\nSearch a numeric card number like 025 or 25-07. Use c: for a letter card number, for example c:B.",
+   "axe": []
+  },
+  {
+   "file": "search-number_1440_zh.png",
+   "case": "search-number",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 5 张卡牌、0 个系列\n\n卡牌（5）\n原盖海龟\n#025 · 收录卡\n黑雷奔流\n普通\n多多冰\n#025 · 收录卡\n白焰迸涌\n普通\n皮卡丘\n#025 · 收录卡\n30周年庆典\n普通\n鸭嘴火兽\n#025 · 收录卡\n共逐荣光\n普通\n皮卡丘\n#025 · 收录卡\n收集啦151\n普通",
+   "axe": []
+  },
+  {
+   "file": "search-number_1440_en.png",
+   "case": "search-number",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n5 results. Found 5 cards and 0 series.\n\nCards (5)\n原盖海龟\n#025 · 收录卡\n黑雷奔流\nCommon\n多多冰\n#025 · 收录卡\n白焰迸涌\nCommon\n皮卡丘\n#025 · 收录卡\n30周年庆典\nCommon\n鸭嘴火兽\n#025 · 收录卡\n共逐荣光\nCommon\n皮卡丘\n#025 · 收录卡\n收集啦151\nCommon",
+   "axe": []
+  },
+  {
+   "file": "search-number_375_zh.png",
+   "case": "search-number",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 5 张卡牌、0 个系列\n\n卡牌（5）\n原盖海龟\n#025 · 收录卡\n黑雷奔流\n普通\n多多冰\n#025 · 收录卡\n白焰迸涌\n普通\n皮卡丘\n#025 · 收录卡\n30周年庆典\n普通\n鸭嘴火兽\n#025 · 收录卡\n共逐荣光\n普通\n皮卡丘\n#025 · 收录卡\n收集啦151\n普通",
+   "axe": []
+  },
+  {
+   "file": "search-number_375_en.png",
+   "case": "search-number",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n5 results. Found 5 cards and 0 series.\n\nCards (5)\n原盖海龟\n#025 · 收录卡\n黑雷奔流\nCommon\n多多冰\n#025 · 收录卡\n白焰迸涌\nCommon\n皮卡丘\n#025 · 收录卡\n30周年庆典\nCommon\n鸭嘴火兽\n#025 · 收录卡\n共逐荣光\nCommon\n皮卡丘\n#025 · 收录卡\n收集啦151\nCommon",
+   "axe": []
+  },
+  {
+   "file": "series-pagination_1440_zh.png",
+   "case": "series-pagination",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n分类\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n收录 192 张卡牌\n\n发售于 2025年1月17日\n\n搜索本系列\n子集\n全部\n稀有度\n全部\n排序\n卡号\n本系列卡牌\n\n共 192 张\n\n上一页\n1\n2\n…\n4\n下一页\n妙\n#001妙蛙种子\n普通\n妙\n#002妙蛙草\n普通\n妙\n#003妙蛙花ex\n稀有\n小\n#004小火龙\n普通\n火\n#005火恐龙\n普通\n喷\n#006喷火龙ex\n稀有\n杰\n#007杰尼龟\n普通\n卡\n#008卡咪龟\n普通\n水\n#009水箭龟ex\n稀有\n绿\n#010绿毛虫\n普通\n铁\n#011铁甲蛹\n普通\n巴\n#012巴大蝶\n普通\n独\n#013独角虫\n普通\n铁\n#014铁壳蛹\n普通\n大\n#015大针蜂\n稀有\n波\n#016波波\n普通\n比\n#017比比鸟\n普通\n大\n#018大比鸟\n普通\n小\n#019小拉达\n普通\n拉\n#020拉达\n普通\n烈\n#021烈雀\n普通\n大\n#022大嘴雀\n普通\n阿\n#023阿柏蛇\n普通\n阿\n#024阿柏怪ex\n稀有\n皮\n#025皮卡丘\n普通\n雷\n#026雷丘\n稀有\n穿\n#027穿山鼠\n普通\n穿\n#028穿山王\n普通\n尼\n#029尼多兰\n普通\n尼\n#030尼多娜\n普通\n尼\n#031尼多后\n普通\n尼\n#032尼多朗\n普通\n尼\n#033尼多力诺\n普通\n尼\n#034尼多王\n稀有\n皮\n#035皮皮\n普通\n皮\n#036皮可西\n普通\n六\n#037六尾\n普通\n九\n#038九尾ex\n稀有\n胖\n#039胖丁\n普通\n胖\n#040胖可丁ex\n稀有\n超\n#041超音蝠\n普通\n大\n#042大嘴蝠\n普通\n走\n#043走路草\n普通\n臭\n#044臭臭花\n普通\n霸\n#045霸王花\n稀有\n派\n#046派拉斯\n普通\n派\n#047派拉斯特\n普通\n毛\n#048毛球\n普通\n摩\n#049摩鲁蛾\n普通\n地\n#050地鼠\n普通\n三\n#051三地鼠\n普通\n喵\n#052喵喵\n普通\n猫\n#053猫老大\n普通\n可\n#054可达鸭\n普通\n哥\n#055哥达鸭\n普通\n猴\n#056猴怪\n普通\n火\n#057火暴猴\n普通\n卡\n#058卡蒂狗\n普通\n风\n#059风速狗\n普通\n蚊\n#060蚊香蝌蚪\n普通\n上一页\n1\n2\n…\n4\n下一页\n系列评论\n\n登录后即可发表评论\n\n还没有评论，来抢沙发吧",
+   "axe": []
+  },
+  {
+   "file": "series-pagination_1440_en.png",
+   "case": "series-pagination",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nCategories\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n192 CARDS INSIDE\n\nReleased Jan 17, 2025\n\nSearch this set\nSubset\nAll\nRarity\nAll\nSort\nNumber\nCards in this series\n\n192 cards\n\nPrevious\n1\n2\n…\n4\nNext\n妙\n#001妙蛙种子\nCommon\n妙\n#002妙蛙草\nCommon\n妙\n#003妙蛙花ex\nRare\n小\n#004小火龙\nCommon\n火\n#005火恐龙\nCommon\n喷\n#006喷火龙ex\nRare\n杰\n#007杰尼龟\nCommon\n卡\n#008卡咪龟\nCommon\n水\n#009水箭龟ex\nRare\n绿\n#010绿毛虫\nCommon\n铁\n#011铁甲蛹\nCommon\n巴\n#012巴大蝶\nCommon\n独\n#013独角虫\nCommon\n铁\n#014铁壳蛹\nCommon\n大\n#015大针蜂\nRare\n波\n#016波波\nCommon\n比\n#017比比鸟\nCommon\n大\n#018大比鸟\nCommon\n小\n#019小拉达\nCommon\n拉\n#020拉达\nCommon\n烈\n#021烈雀\nCommon\n大\n#022大嘴雀\nCommon\n阿\n#023阿柏蛇\nCommon\n阿\n#024阿柏怪ex\nRare\n皮\n#025皮卡丘\nCommon\n雷\n#026雷丘\nRare\n穿\n#027穿山鼠\nCommon\n穿\n#028穿山王\nCommon\n尼\n#029尼多兰\nCommon\n尼\n#030尼多娜\nCommon\n尼\n#031尼多后\nCommon\n尼\n#032尼多朗\nCommon\n尼\n#033尼多力诺\nCommon\n尼\n#034尼多王\nRare\n皮\n#035皮皮\nCommon\n皮\n#036皮可西\nCommon\n六\n#037六尾\nCommon\n九\n#038九尾ex\nRare\n胖\n#039胖丁\nCommon\n胖\n#040胖可丁ex\nRare\n超\n#041超音蝠\nCommon\n大\n#042大嘴蝠\nCommon\n走\n#043走路草\nCommon\n臭\n#044臭臭花\nCommon\n霸\n#045霸王花\nRare\n派\n#046派拉斯\nCommon\n派\n#047派拉斯特\nCommon\n毛\n#048毛球\nCommon\n摩\n#049摩鲁蛾\nCommon\n地\n#050地鼠\nCommon\n三\n#051三地鼠\nCommon\n喵\n#052喵喵\nCommon\n猫\n#053猫老大\nCommon\n可\n#054可达鸭\nCommon\n哥\n#055哥达鸭\nCommon\n猴\n#056猴怪\nCommon\n火\n#057火暴猴\nCommon\n卡\n#058卡蒂狗\nCommon\n风\n#059风速狗\nCommon\n蚊\n#060蚊香蝌蚪\nCommon\nPrevious\n1\n2\n…\n4\nNext\nSeries comments\n\nSign in to leave a comment\n\nNo comments yet — be the first to chime in",
+   "axe": []
+  },
+  {
+   "file": "series-pagination_375_zh.png",
+   "case": "series-pagination",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n分类\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n收录 192 张卡牌\n\n发售于 2025年1月17日\n\n搜索本系列\n\n共 192 张\n\n筛选\n本系列卡牌\n上一页\n1\n2\n…\n4\n下一页\n妙\n#001妙蛙种子\n普通\n妙\n#002妙蛙草\n普通\n妙\n#003妙蛙花ex\n稀有\n小\n#004小火龙\n普通\n火\n#005火恐龙\n普通\n喷\n#006喷火龙ex\n稀有\n杰\n#007杰尼龟\n普通\n卡\n#008卡咪龟\n普通\n水\n#009水箭龟ex\n稀有\n绿\n#010绿毛虫\n普通\n铁\n#011铁甲蛹\n普通\n巴\n#012巴大蝶\n普通\n独\n#013独角虫\n普通\n铁\n#014铁壳蛹\n普通\n大\n#015大针蜂\n稀有\n波\n#016波波\n普通\n比\n#017比比鸟\n普通\n大\n#018大比鸟\n普通\n小\n#019小拉达\n普通\n拉\n#020拉达\n普通\n烈\n#021烈雀\n普通\n大\n#022大嘴雀\n普通\n阿\n#023阿柏蛇\n普通\n阿\n#024阿柏怪ex\n稀有\n皮\n#025皮卡丘\n普通\n雷\n#026雷丘\n稀有\n穿\n#027穿山鼠\n普通\n穿\n#028穿山王\n普通\n尼\n#029尼多兰\n普通\n尼\n#030尼多娜\n普通\n尼\n#031尼多后\n普通\n尼\n#032尼多朗\n普通\n尼\n#033尼多力诺\n普通\n尼\n#034尼多王\n稀有\n皮\n#035皮皮\n普通\n皮\n#036皮可西\n普通\n六\n#037六尾\n普通\n九\n#038九尾ex\n稀有\n胖\n#039胖丁\n普通\n胖\n#040胖可丁ex\n稀有\n超\n#041超音蝠\n普通\n大\n#042大嘴蝠\n普通\n走\n#043走路草\n普通\n臭\n#044臭臭花\n普通\n霸\n#045霸王花\n稀有\n派\n#046派拉斯\n普通\n派\n#047派拉斯特\n普通\n毛\n#048毛球\n普通\n摩\n#049摩鲁蛾\n普通\n地\n#050地鼠\n普通\n三\n#051三地鼠\n普通\n喵\n#052喵喵\n普通\n猫\n#053猫老大\n普通\n可\n#054可达鸭\n普通\n哥\n#055哥达鸭\n普通\n猴\n#056猴怪\n普通\n火\n#057火暴猴\n普通\n卡\n#058卡蒂狗\n普通\n风\n#059风速狗\n普通\n蚊\n#060蚊香蝌蚪\n普通\n上一页\n1\n2\n…\n4\n下一页\n系列评论\n\n登录后即可发表评论\n\n还没有评论，来抢沙发吧",
+   "axe": []
+  },
+  {
+   "file": "series-pagination_375_en.png",
+   "case": "series-pagination",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nCategories\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n192 CARDS INSIDE\n\nReleased Jan 17, 2025\n\nSearch this set\n\n192 cards\n\nFilters\nCards in this series\nPrevious\n1\n2\n…\n4\nNext\n妙\n#001妙蛙种子\nCommon\n妙\n#002妙蛙草\nCommon\n妙\n#003妙蛙花ex\nRare\n小\n#004小火龙\nCommon\n火\n#005火恐龙\nCommon\n喷\n#006喷火龙ex\nRare\n杰\n#007杰尼龟\nCommon\n卡\n#008卡咪龟\nCommon\n水\n#009水箭龟ex\nRare\n绿\n#010绿毛虫\nCommon\n铁\n#011铁甲蛹\nCommon\n巴\n#012巴大蝶\nCommon\n独\n#013独角虫\nCommon\n铁\n#014铁壳蛹\nCommon\n大\n#015大针蜂\nRare\n波\n#016波波\nCommon\n比\n#017比比鸟\nCommon\n大\n#018大比鸟\nCommon\n小\n#019小拉达\nCommon\n拉\n#020拉达\nCommon\n烈\n#021烈雀\nCommon\n大\n#022大嘴雀\nCommon\n阿\n#023阿柏蛇\nCommon\n阿\n#024阿柏怪ex\nRare\n皮\n#025皮卡丘\nCommon\n雷\n#026雷丘\nRare\n穿\n#027穿山鼠\nCommon\n穿\n#028穿山王\nCommon\n尼\n#029尼多兰\nCommon\n尼\n#030尼多娜\nCommon\n尼\n#031尼多后\nCommon\n尼\n#032尼多朗\nCommon\n尼\n#033尼多力诺\nCommon\n尼\n#034尼多王\nRare\n皮\n#035皮皮\nCommon\n皮\n#036皮可西\nCommon\n六\n#037六尾\nCommon\n九\n#038九尾ex\nRare\n胖\n#039胖丁\nCommon\n胖\n#040胖可丁ex\nRare\n超\n#041超音蝠\nCommon\n大\n#042大嘴蝠\nCommon\n走\n#043走路草\nCommon\n臭\n#044臭臭花\nCommon\n霸\n#045霸王花\nRare\n派\n#046派拉斯\nCommon\n派\n#047派拉斯特\nCommon\n毛\n#048毛球\nCommon\n摩\n#049摩鲁蛾\nCommon\n地\n#050地鼠\nCommon\n三\n#051三地鼠\nCommon\n喵\n#052喵喵\nCommon\n猫\n#053猫老大\nCommon\n可\n#054可达鸭\nCommon\n哥\n#055哥达鸭\nCommon\n猴\n#056猴怪\nCommon\n火\n#057火暴猴\nCommon\n卡\n#058卡蒂狗\nCommon\n风\n#059风速狗\nCommon\n蚊\n#060蚊香蝌蚪\nCommon\nPrevious\n1\n2\n…\n4\nNext\nSeries comments\n\nSign in to leave a comment\n\nNo comments yet — be the first to chime in",
+   "axe": []
+  },
+  {
+   "file": "header-dropdown_1440_zh.png",
+   "case": "header-dropdown",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "INPUT#_r_0_-input ",
+   "text": "欢迎来到 Cardhub\n\n权威、集中的卡牌知识分享平台\n\n浏览全部系列\n搜索卡牌\n\n最近发售 · 2026年11月6日\n\n宝石包 VOL.7\n\n宝可梦卡牌简体中文版宝石包 VOL.7，2026 年 11 月 6 日发售，收录 56 张。\n\n56 张卡牌\n\n分类\n宝可梦简中\n\n7 个系列\n\n最新收录\n全部系列 →\n共逐荣光\n\n宝可梦卡牌简体中文版补充包，2026 年 7 月 16 日发售，收录 287 张。\n\n287 张卡牌\n\n白焰迸涌\n\n宝可梦卡牌简体中文版补充包，2026 年 11 月 6 日发售，收录 174 张。\n\n174 张卡牌\n\n黑雷奔流\n\n宝可梦卡牌简体中文版补充包，2026 年 11 月 6 日发售，收录 174 张。\n\n174 张卡牌\n\n宝石包 VOL.6\n\n宝可梦卡牌简体中文版宝石包 VOL.6，2026 年 8 月 7 日发售，收录 56 张。\n\n56 张卡牌\n\n30周年庆典\n\n宝可梦卡牌简体中文版补充包，2026 年 9 月 16 日发售，收录 176 张。\n\n176 张卡牌\n\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n192 张卡牌",
+   "axe": []
+  },
+  {
+   "file": "header-dropdown_1440_en.png",
+   "case": "header-dropdown",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "INPUT#_r_0_-input ",
+   "text": "Welcome to Cardhub\n\nA central, authoritative card knowledge platform\n\nBrowse all series\nSearch cards\n\nReleased Nov 6, 2026\n\n宝石包 VOL.7\n\n宝可梦卡牌简体中文版宝石包 VOL.7，2026 年 11 月 6 日发售，收录 56 张。\n\n56 cards\n\nCategories\n宝可梦简中\n\n7 series\n\nNewly added\nAll series →\n共逐荣光\n\n宝可梦卡牌简体中文版补充包，2026 年 7 月 16 日发售，收录 287 张。\n\n287 cards\n\n白焰迸涌\n\n宝可梦卡牌简体中文版补充包，2026 年 11 月 6 日发售，收录 174 张。\n\n174 cards\n\n黑雷奔流\n\n宝可梦卡牌简体中文版补充包，2026 年 11 月 6 日发售，收录 174 张。\n\n174 cards\n\n宝石包 VOL.6\n\n宝可梦卡牌简体中文版宝石包 VOL.6，2026 年 8 月 7 日发售，收录 56 张。\n\n56 cards\n\n30周年庆典\n\n宝可梦卡牌简体中文版补充包，2026 年 9 月 16 日发售，收录 176 张。\n\n176 cards\n\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n192 cards",
+   "axe": []
+  }
+ ]
+}

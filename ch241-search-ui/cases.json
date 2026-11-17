@@ -1,0 +1,16 @@
+{
+  "base": "http://localhost:5241",
+  "api": "http://localhost:4241",
+  "viewports": [1440, 375],
+  "langs": ["zh", "en"],
+  "cases": [
+    {"name": "search-success", "path": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98", "wait_for": "main a[href^='/cards/']", "wait_ms": 1500, "full_page": true},
+    {"name": "search-page2", "path": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98&page=2", "wait_for": "main a[href^='/cards/']", "wait_ms": 1500, "full_page": true},
+    {"name": "search-loading", "path": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98", "hold": "search.global", "wait_ms": 2000},
+    {"name": "search-error", "path": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98", "route_fail": "search.global", "wait_for": "[role='alert']", "wait_ms": 1500},
+    {"name": "search-empty", "path": "/search?q=zzzzqqq", "wait_ms": 2500},
+    {"name": "search-number", "path": "/search?q=025", "wait_for": "main a[href^='/cards/']", "wait_ms": 1500},
+    {"name": "series-pagination", "path": "/series/ptcg-sc-151", "wait_for": "nav[aria-label='顶部分页'], nav[aria-label='Top pagination']", "wait_ms": 1500},
+    {"name": "header-dropdown", "path": "/", "viewports": [1440], "fill": {"[role='combobox']": "皮卡丘"}, "wait_for": "[role='listbox'] [role='option']", "wait_ms": 1500}
+  ]
+}

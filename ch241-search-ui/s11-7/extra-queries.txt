@@ -1,0 +1,12 @@
+ex -皮卡丘 375 zh delta 36 卡牌（157）
+ex -皮卡丘 375 en delta 36 Cards (157)
+ex -皮卡丘 320 zh delta 36 卡牌（157）
+ex -皮卡丘 320 en delta 36 Cards (157)
+ex -皮卡丘 1440 zh delta 0 卡牌（157）
+ex -皮卡丘 1440 en delta 0 Cards (157)
+皮卡丘 375 zh delta 0 卡牌（41）
+皮卡丘 375 en delta 0 Cards (41)
+皮卡丘 320 zh delta 36 卡牌（41）
+皮卡丘 320 en delta 36 Cards (41)
+皮卡丘 1440 zh delta 0 卡牌（41）
+皮卡丘 1440 en delta 0 Cards (41)
