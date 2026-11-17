@@ -254,6 +254,31 @@ export function hasCardSearchConditions(
   );
 }
 
+const BARE_CARD_NUMBER = /^[0-9]+(?:[-/][0-9]+)?$/;
+
+/**
+ * CH-241 §2: a bare word that is all digits (`025`), or digits joined by one
+ * `-` or `/` (`25-07`, `025/165`), also matches the card number exactly.
+ * Returns the `cardNumberNormalized` key (same as `c:`), or null when the word
+ * only matches names. Letter card numbers (`B`, `DAR`) stay on `c:` so they do
+ * not collide with names like `ex`. The word itself stays in `includeGroups`;
+ * the server ORs the name match with this key.
+ */
+export function bareCardNumberTerm(term: string): string | null {
+  if (term.length > CARD_NUMBER_MAX || !BARE_CARD_NUMBER.test(term)) return null;
+  return normalizedCardNumber(term);
+}
+
+/**
+ * CH-241 §1: relevance tiers compare names with the first positive bare word
+ * (first word of the first OR group). Undefined when the query has none.
+ */
+export function relevanceSearchTerm(
+  parsed: Extract<CardSearchParseResult, { ok: true }>,
+): string | undefined {
+  return parsed.includeGroups[0]?.[0];
+}
+
 export function shouldRequestCardSearchQuery(query: string): boolean {
   const parsed = parseCardSearchQuery(query);
   return parsed.ok && hasCardSearchConditions(parsed);
