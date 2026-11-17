@@ -495,6 +495,7 @@ function ResultLists({
   const cards = data?.cards ?? [];
   const series = data?.series ?? [];
   const cardTotal = data?.cardTotal ?? cards.length;
+  const seriesPage = data?.cardPage ?? page;
   const pageCount = Math.max(1, Math.ceil(cardTotal / SEARCH_PAGE_SIZE));
   const pagination = (place: 'top' | 'bottom', className: string) => (
     <PagePagination
@@ -525,7 +526,12 @@ function ResultLists({
 
   return (
     <div className="space-y-6">
-      {series.length > 0 ? (
+      {/*
+        CH-241 §1 v1.3: series only on page 1, no placeholder after that. Read
+        the page the shown data belongs to, so a kept previous page does not
+        flash the series in or out before the new page arrives.
+      */}
+      {series.length > 0 && seriesPage === 1 ? (
         <section aria-labelledby="sr-series" className="space-y-3">
           <h2 id="sr-series" className="text-lg font-semibold">
             {tt('search.seriesHeading', { count: series.length })}
@@ -553,8 +559,9 @@ function ResultLists({
         <section aria-labelledby="sr-cards" className="space-y-3">
           {/*
             The heading row stays h-7 (28px) like the loading slot, so the
-            first row does not move (§6). The top pagination shares the row;
-            -my-0.5 keeps its 32px buttons from growing the row.
+            first row does not move (§6). From sm the top pagination shares
+            the row; -my-0.5 keeps its 32px buttons from growing the row.
+            Below sm it is not shown, so the row never wraps (§1 v1.3).
           */}
           <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <h2
@@ -565,7 +572,7 @@ function ResultLists({
             >
               {tt('search.cardsHeading', { count: cardTotal })}
             </h2>
-            {pageCount > 1 ? pagination('top', '-my-0.5') : null}
+            {pageCount > 1 ? pagination('top', 'hidden -my-0.5 sm:flex') : null}
           </div>
           <ul className={RESULT_LIST_CLASS} aria-busy={busy ? true : undefined}>
             {cards.map((card) => {

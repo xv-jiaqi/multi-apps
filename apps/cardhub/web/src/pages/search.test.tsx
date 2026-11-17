@@ -773,6 +773,49 @@ describe('SearchPage pages and totals (CH-241)', () => {
     expect(pageParam()).toBeNull();
   });
 
+  it('shows the top pagination only from sm, in the heading row, and keeps the bottom one at every width (§1 v1.3)', async () => {
+    harness.cardTotal = 157;
+    renderSearch('?q=极光');
+    const heading = await screen.findByRole('heading', { name: '卡牌（157）' });
+    const top = screen.getByRole('navigation', { name: '顶部分页' });
+    const bottom = screen.getByRole('navigation', { name: '底部分页' });
+    // <sm: display none, so a narrow heading row never wraps (§6 0px).
+    expect(top).toHaveClass('hidden', 'sm:flex', '-my-0.5');
+    expect(top).not.toHaveClass('flex');
+    expect(top.parentElement).toBe(heading.parentElement);
+    expect(bottom).not.toHaveClass('hidden');
+    expect(bottom).toHaveClass('flex');
+  });
+
+  it('renders the series section on page 1 only, with no placeholder on page 2 (§1 v1.3)', async () => {
+    const user = userEvent.setup();
+    harness.cardTotal = 41;
+    renderSearch('?q=极光');
+    expect(await screen.findByRole('region', { name: '系列（1）' })).toBeInTheDocument();
+
+    await user.click(
+      within(screen.getByRole('navigation', { name: '底部分页' })).getByRole('link', {
+        name: '第 2 页',
+      }),
+    );
+    expect(pageParam()).toBe('2');
+    await screen.findByRole('heading', { name: '卡牌（41）' });
+    expect(screen.queryByRole('region', { name: '系列（1）' })).not.toBeInTheDocument();
+    expect(document.getElementById('sr-series')).toBeNull();
+    const cards = screen.getByRole('region', { name: '卡牌（41）' });
+    expect(cards.previousElementSibling).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: '后退' }));
+    expect(await screen.findByRole('region', { name: '系列（1）' })).toBeInTheDocument();
+  });
+
+  it('does not render the series section when opened directly on page 2', async () => {
+    harness.cardTotal = 41;
+    renderSearch('?q=极光&page=2');
+    await screen.findByRole('heading', { name: '卡牌（41）' });
+    expect(screen.queryByRole('heading', { name: '系列（1）' })).not.toBeInTheDocument();
+  });
+
   it('removes an invalid page', async () => {
     harness.cardTotal = 41;
     renderSearch('?q=极光&page=abc');

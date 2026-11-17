@@ -191,6 +191,10 @@ describe('HeaderSearch', () => {
     // CH-241 §2: the number · subset line, falling back to the subset slug.
     expect(within(options[0]!).getByText('#025 · 151')).toBeInTheDocument();
     expect(within(options[1]!).getByText('#SV-P-001 · promo-slug')).toBeInTheDocument();
+    // CH-241 §2 v1.3: the name is truncated visually only; the option's
+    // accessible name still carries the full card name.
+    expect(within(options[0]!).getByText('极光骑士')).toHaveClass('truncate');
+    expect(within(listbox).getByRole('option', { name: /极光骑士/ })).toBe(options[0]);
     expect(listbox.textContent?.indexOf('卡牌')).toBeLessThan(
       listbox.textContent?.indexOf('系列') ?? -1,
     );
