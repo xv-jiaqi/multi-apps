@@ -2,12 +2,13 @@ import { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Link, useLocation, useParams } from 'react-router';
 import { Card, CardContent, CardHeader } from '@repo/ui-web';
-import { cardAttributeLabel, printRunLabel, t } from '@repo/shared';
+import { cardAttributeLabel, cardRarityCode, printRunLabel, t } from '@repo/shared';
 import { PageShell } from '../components/page-shell';
 import { Breadcrumbs } from '../components/breadcrumbs';
 import { PageMeta } from '../components/page-meta';
 import { cardMetaDescription } from '../lib/meta-description';
 import { RarityBadge } from '../components/rarity-badge';
+import { RarityCodeBadge } from '../components/rarity-code-badge';
 import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { CardCollectionBar } from '../components/card-collection-bar';
@@ -106,6 +107,8 @@ export const CardDetailPage = observer(function CardDetailPage() {
 
   const card = query.data;
   const attributes = card.attributes ?? {};
+  // Spec CH-239 §4-1: trimmed attributes.稀有度; the attribute row stays as stored.
+  const officialCode = cardRarityCode(card.attributes);
 
   return (
     <PageShell>
@@ -155,11 +158,15 @@ export const CardDetailPage = observer(function CardDetailPage() {
                 <h1
                   ref={headingRef}
                   tabIndex={-1}
-                  className="text-2xl font-bold tracking-tight wrap-anywhere focus:outline-none sm:text-3xl focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="min-w-0 text-2xl font-bold tracking-tight wrap-anywhere focus:outline-none sm:text-3xl focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   {card.name}
                 </h1>
-                <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
+                {officialCode ? (
+                  <RarityCodeBadge locale={locale.locale} code={officialCode} />
+                ) : (
+                  <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
+                )}
               </div>
               {card.cardNumber || card.subset ? (
                 <p className="wrap-anywhere text-sm text-neutral-600">

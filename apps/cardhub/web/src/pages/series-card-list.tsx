@@ -36,6 +36,7 @@ import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
 import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { CardVariantBadgeRow } from '../components/card-variant-badge';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
+import { RarityCodeBadge, RarityCodeText } from '../components/rarity-code-badge';
 import { displayCardNumber } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
 import { useStores } from '../stores/root-store';
@@ -127,6 +128,8 @@ export function SeriesCardLink({
     parallelName?: string | null;
     printRun?: number | null;
     isParallel?: boolean;
+    /** CH-239: official code; when set it replaces the 4-tier badge (§4). */
+    rarityCode?: string | null;
   };
   locale: Locale;
   attributeLine: string | null;
@@ -150,7 +153,11 @@ export function SeriesCardLink({
               {card.name}
             </span>
           </span>
-          <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale} />
+          {card.rarityCode ? (
+            <RarityCodeBadge locale={locale} code={card.rarityCode} />
+          ) : (
+            <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale} />
+          )}
         </div>
         <CardVariantBadgeRow
           locale={locale}
@@ -196,6 +203,13 @@ function scrollHeadingIntoView(node: HTMLElement) {
 
 type SubsetOption = { slug: string; name: string };
 
+/** Spec CH-239 §1–§3: the series' official codes, kept per series. */
+type RarityCodeTable = { seriesSlug: string; all: string[]; base: string[] };
+
+function sameCodes(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((code, index) => code === right[index]);
+}
+
 export const SeriesCardList = observer(function SeriesCardList({
   seriesSlug,
   subsets,
@@ -217,9 +231,13 @@ export const SeriesCardList = observer(function SeriesCardList({
     () => (subsetsReady ? new Set(subsetOptions.map((item) => item.slug)) : null),
     [subsetOptions, subsetsReady],
   );
+  // Only a settled (non-placeholder) answer for this series fills the table,
+  // so a previous series' codes never clean this series' URL.
+  const [codeTable, setCodeTable] = useState<RarityCodeTable | null>(null);
+  const codes = codeTable?.seriesSlug === seriesSlug ? codeTable : null;
   const parsed = useMemo(
-    () => parseSeriesListParams(searchParams, subsetSlugs),
-    [searchParams, subsetSlugs],
+    () => parseSeriesListParams(searchParams, subsetSlugs, codes ? codes.all : null),
+    [searchParams, subsetSlugs, codes],
   );
   const state = parsed.state;
   const stateRef = useRef(state);
@@ -281,6 +299,28 @@ export const SeriesCardList = observer(function SeriesCardList({
   const list = trpc.cards.listBySeries.useQuery(seriesCardListInput(seriesSlug, state), {
     placeholderData: keepPreviousData,
   });
+  const settled = list.data && !list.isPlaceholderData ? list.data : null;
+  if (settled) {
+    // A payload from an API without CH-239 has no codes: keep the 4-tier filter.
+    const all = settled.rarityCodes ?? [];
+    const base = settled.baseRarityCodes ?? all;
+    if (
+      codeTable === null ||
+      codeTable.seriesSlug !== seriesSlug ||
+      !sameCodes(codeTable.all, all) ||
+      !sameCodes(codeTable.base, base)
+    ) {
+      setCodeTable({ seriesSlug, all, base });
+    }
+  }
+  // §2: a code that is not in the series is dropped with `replace`. Until the
+  // list without it settles, the old empty answer belongs to the dropped code,
+  // so show the skeleton rather than 「没有符合条件的卡牌」.
+  const droppingCode = searchParams.get('rarityCode') !== null && state.rarityCode === null;
+  const [cleaningCode, setCleaningCode] = useState(false);
+  if (droppingCode && !cleaningCode) setCleaningCode(true);
+  if (cleaningCode && !droppingCode && settled && !list.isFetching) setCleaningCode(false);
+  const staleAfterCleanup = cleaningCode && (droppingCode || list.isPlaceholderData === true);
   const listView = queryFallback(list);
   useFocusOnRecovery(listView, titleRef);
 
@@ -288,7 +328,11 @@ export const SeriesCardList = observer(function SeriesCardList({
     list.data && typeof list.data.seriesTotal === 'number'
       ? list.data.seriesTotal
       : (fallbackCardCount ?? 0);
-  const filtered = state.q.length > 0 || state.subset !== null || state.rarity !== null;
+  const filtered =
+    state.q.length > 0 ||
+    state.subset !== null ||
+    state.rarity !== null ||
+    state.rarityCode !== null;
   const total = list.data?.total ?? 0;
   const parallelCount = list.data?.parallelCount ?? 0;
   const mentionParallels = !filtered && state.parallels && parallelCount > 0;
@@ -356,17 +400,33 @@ export const SeriesCardList = observer(function SeriesCardList({
     (state.q ? 1 : 0) +
     (state.subset ? 1 : 0) +
     (state.rarity ? 1 : 0) +
+    (state.rarityCode ? 1 : 0) +
     (state.parallels && parallelCount > 0 ? 1 : 0);
-  const showSkeleton = !emptySeries && listView === 'loading' && !list.data;
   const showError = !emptySeries && listView === 'error';
+  const showSkeleton =
+    !emptySeries && ((listView === 'loading' && !list.data) || (!showError && staleAfterCleanup));
   const showNoMatch =
     !emptySeries &&
     !showError &&
+    !staleAfterCleanup &&
     list.data !== undefined &&
     list.data.items.length === 0 &&
     list.data.total === 0 &&
     !list.isLoading;
-  const showGrid = !emptySeries && !showError && !!list.data && list.data.items.length > 0;
+  const showGrid =
+    !emptySeries && !showError && !staleAfterCleanup && !!list.data && list.data.items.length > 0;
+
+  // §1: no rarity control until the codes are known; official codes replace
+  // the 4 tiers. §3: with the parallels switch rendered and off, offer only
+  // codes on base cards; the full list still decides what is invalid (§2).
+  const officialCodes = codes !== null && codes.all.length > 0 ? codes : null;
+  const showTierRarity = codes !== null && codes.all.length === 0;
+  const codeOptions =
+    officialCodes === null
+      ? []
+      : parallelCount > 0 && !state.parallels
+        ? officialCodes.base
+        : officialCodes.all;
 
   const hrefFor = (next: SeriesListState) => {
     const search = seriesListSearch(next, searchParams);
@@ -455,39 +515,92 @@ export const SeriesCardList = observer(function SeriesCardList({
                 </Select>
               </Field>
             ) : null}
-            <Field
-              id={rarityId}
-              label={tt('series.list.rarity')}
-              className="w-full sm:order-2 sm:w-40"
-            >
-              <Select
-                value={state.rarity ?? SERIES_LIST_ANY}
-                onValueChange={(value) =>
-                  commit(
-                    {
-                      ...state,
-                      rarity: value === SERIES_LIST_ANY ? null : rarityValue(value),
-                      page: 1,
-                    },
-                    false,
-                  )
-                }
+            {officialCodes ? (
+              <Field
+                id={rarityId}
+                label={tt('series.list.rarity')}
+                className="w-full sm:order-2 sm:w-40"
               >
-                <SelectTrigger id={rarityId} className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value={SERIES_LIST_ANY}>{tt('series.list.any')}</SelectItem>
-                    {CARD_RARITY_VALUES.map((rarity) => (
-                      <SelectItem key={rarity} value={rarity}>
-                        {RARITY_LABELS[rarity][locale]}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
+                <Select
+                  value={state.rarityCode ?? SERIES_LIST_ANY}
+                  onValueChange={(value) =>
+                    commit(
+                      {
+                        ...state,
+                        rarityCode: value === SERIES_LIST_ANY ? null : value,
+                        page: 1,
+                      },
+                      false,
+                    )
+                  }
+                >
+                  <SelectTrigger id={rarityId} className="w-full min-w-0 overflow-hidden *:min-w-0">
+                    {/* Children keep a selected parallel-only code visible while it is not offered (§2).
+                        Radix drops className on SelectValue, so `*:min-w-0` lets its span shrink: a 10-character
+                        code truncates and the chevron stays inside (§3 v1.3). */}
+                    <SelectValue>
+                      <span className="block min-w-0 truncate">
+                        {state.rarityCode ? (
+                          <RarityCodeText locale={locale} code={state.rarityCode} />
+                        ) : (
+                          tt('series.list.any')
+                        )}
+                      </span>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value={SERIES_LIST_ANY}>{tt('series.list.any')}</SelectItem>
+                      {codeOptions.map((code) => (
+                        <SelectItem
+                          key={code}
+                          value={code}
+                          textValue={code}
+                          className="min-w-0 whitespace-normal wrap-anywhere"
+                        >
+                          <RarityCodeText locale={locale} code={code} />
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            ) : null}
+            {showTierRarity ? (
+              <Field
+                id={rarityId}
+                label={tt('series.list.rarity')}
+                className="w-full sm:order-2 sm:w-40"
+              >
+                <Select
+                  value={state.rarity ?? SERIES_LIST_ANY}
+                  onValueChange={(value) =>
+                    commit(
+                      {
+                        ...state,
+                        rarity: value === SERIES_LIST_ANY ? null : rarityValue(value),
+                        page: 1,
+                      },
+                      false,
+                    )
+                  }
+                >
+                  <SelectTrigger id={rarityId} className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value={SERIES_LIST_ANY}>{tt('series.list.any')}</SelectItem>
+                      {CARD_RARITY_VALUES.map((rarity) => (
+                        <SelectItem key={rarity} value={rarity}>
+                          {RARITY_LABELS[rarity][locale]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            ) : null}
             <Field id={sortId} label={tt('series.list.sort')} className="w-full sm:order-2 sm:w-40">
               <Select
                 value={state.sort}
@@ -587,7 +700,10 @@ export const SeriesCardList = observer(function SeriesCardList({
             variant="outline"
             className="mt-4"
             onClick={() => {
-              commit({ ...state, q: '', subset: null, rarity: null, page: 1 }, false);
+              commit(
+                { ...state, q: '', subset: null, rarity: null, rarityCode: null, page: 1 },
+                false,
+              );
               inputRef.current?.focus();
             }}
           >
