@@ -156,7 +156,8 @@ pnpm dev
 3. `pnpm lint` / `pnpm typecheck` / `pnpm build` / `pnpm test`
 4. 并行：`pnpm audit --prod --audit-level high`
 5. 独立 job `e2e-smoke`：Playwright 用户流程冒烟（浏览 → 卡牌 → 登录 → 评论；发帖 → 回帖；发布意向 → 关闭；admin 处理举报）。自带 Postgres 与 Redis，不进 `pnpm test`。
-6. 独立 job `Web image build`：用与 Cardhub Images 相同的 context（`.`）、`Dockerfile.web`、`GIT_SHA` 和 `BUILD_TIME` 构建 Web 生产镜像。不登录镜像仓库，也不推送。和 `API image build` 一样读 Buildx 的 GitHub Actions cache（scope `web`）。Web 构建失败会让 main 上的整次 CI 变红；Cardhub Images 只在 CI 成功后发布，所以 API 镜像也不会推送，staging 自动部署同样停住。
+6. 独立 job `API image build`：构建 `Dockerfile.api` 并加载 `cardhub-api:ci` 后，在同一 job 里启动它。Postgres 16 和 Redis 7 是 job service。`JWT_SECRET` 用 `openssl rand -hex 32` 在 job 内生成，不读取生产密钥。迁移和 compose 一样由一次性容器执行，API 进程不拿 `MIGRATE_DATABASE_URL`。`/health` 要在 60 秒内返回 200，且 `status` 为 ok、`db` 与 `redis` 为 true；随后的检查仍覆盖 `gitSha`、`Server-Timing`、413 和 400。容器起不来会打印 `docker logs` 并让这个 job 失败。不推送镜像。
+7. 独立 job `Web image build`：用与 Cardhub Images 相同的 context（`.`）、`Dockerfile.web`、`GIT_SHA` 和 `BUILD_TIME` 构建 Web 生产镜像，读 Buildx 的 GitHub Actions cache（scope `web`）。构建后启动 `cardhub-web:ci`（假的 `TRPC_URL`），`curl -fsS` `/` 和页面里的一个 `/assets/` 文件，两者都必须 200。不登录镜像仓库，也不推送。这两条 job 的检查名不变，已有的 required check 会带上启动结果。任一镜像起不来都会让 main 上的整次 CI 变红；Cardhub Images 只在 CI 成功后发布，并且在写入 digest artifact 之前对刚推送的 `image@digest` 再启动一次。部署仍然按 digest 拉取，不读移动的 tag。
 
 [`.github/dependabot.yml`](.github/dependabot.yml) 每周一开 minor/patch 升级 PR（npm 与 GitHub Actions 各一组）。
 
