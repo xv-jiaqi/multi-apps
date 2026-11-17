@@ -1,9 +1,9 @@
 # CH-239 系列页官方稀有度码筛选 UI 截图与 axe
 
-- 分支 xiangzi/ch239-rarity-ui，UI 代码提交 4c7a73f；本机 vite（:5239）+ 本机 API（:4239，含 #292 的 baseRarityCodes）+ 本机库 cardhub_ch239ui。不碰 staging。
-- **平行卡是本地模拟数据**（目前库里没有平行卡）：`ch239-ui-seed.sql`——30th 001 加平行「镜面闪」，官方码 MA（只在平行卡上）；124 加平行「金框」SAR 限量 99；另加无官方码的旧品类系列和空系列。
-- 脚本 `shoot.py`（Playwright Chromium + axe-core 4.11.4，标签 wcag2a/2aa/21a/21aa/22aa）。加载态和错误态只拦 `cards.listBySeries` / `cards.bySlug`，其余走真 API。
-- 共 52 张（13 场景 × 1440/375 × zh/en）；axe 违规 **0**；页面横向滚动 0 张。逐张结果见 `results.json`（含 URL、触发器文字、选项列表、是否空态）。
+- 分支 xiangzi/ch239-rarity-ui，UI 代码 head 021e60b（Design BLOCK 修复后全部重拍）；本机 vite（:5239）+ 本机 API（:4239，含 #292 的 baseRarityCodes）+ 本机库 cardhub_ch239ui。不碰 staging。
+- **平行卡是本地模拟数据**（目前库里没有平行卡）：`ch239-ui-seed.sql`——30th 001 加平行「镜面闪」，官方码 MA（只在平行卡上）；124 加平行「金框」SAR 限量 99；另加无官方码的旧品类系列、空系列，以及 10 字长码系列 `sim-long-code-set`（码「超级稀有特别插画平行」，Spec v1.3 §10-10）。
+- 脚本 `shoot.py`（01–13）和 `shoot_long.py`（14–16，另记触发器几何：箭头是否在框内、值是否被截断）（Playwright Chromium + axe-core 4.11.4，标签 wcag2a/2aa/21a/21aa/22aa）。加载态和错误态只拦 `cards.listBySeries` / `cards.bySlug`，其余走真 API。
+- 共 64 张（16 场景 × 1440/375 × zh/en）；axe 违规 **0**；页面横向滚动 0 张。逐张结果见 `results.json`（含 URL、触发器文字、选项列表、是否空态；14/15 含 `triggerGeom`）。
 
 | 场景 | 说明 | 1440 zh | 1440 en | 375 zh | 375 en |
 |---|---|---|---|---|---|
@@ -20,3 +20,6 @@
 | 11-detail-sar | 详情页 ptcg-sc-30th-124：标题旁 SAR 中性徽章，属性区「稀有度」行保留 | [png](11-detail-sar-1440-zh.png) | [png](11-detail-sar-1440-en.png) | [png](11-detail-sar-375-zh.png) | [png](11-detail-sar-375-en.png) |
 | 12-detail-symbol | 详情页 ptcg-sc-cbb6-01-07：标题旁 ★★★（读屏「三星」） | [png](12-detail-symbol-1440-zh.png) | [png](12-detail-symbol-1440-en.png) | [png](12-detail-symbol-375-zh.png) | [png](12-detail-symbol-375-en.png) |
 | 13-detail-legacy | 详情页 sim-legacy-1：无官方码，仍是 4 档徽章 | [png](13-detail-legacy-1440-zh.png) | [png](13-detail-legacy-1440-en.png) | [png](13-detail-legacy-375-zh.png) | [png](13-detail-legacy-375-en.png) |
+| 14-long-code-trigger | 10 字长码已选：1440 `w-40` 触发器单行截断，箭头在框内（`chevronInside:true`，`valueTruncated:true`）；375 `w-full` 不截断；DOM 和读屏是完整码 | [png](14-long-code-trigger-1440-zh.png) | [png](14-long-code-trigger-1440-en.png) | [png](14-long-code-trigger-375-zh.png) | [png](14-long-code-trigger-375-en.png) |
+| 15-long-code-options | 展开选项：长码折行完整显示 | [png](15-long-code-options-1440-zh.png) | [png](15-long-code-options-1440-en.png) | [png](15-long-code-options-375-zh.png) | [png](15-long-code-options-375-en.png) |
+| 16-detail-long-code | 详情页 sim-long-2：长码徽章 `max-w-24 truncate`，`title` 为完整码 | [png](16-detail-long-code-1440-zh.png) | [png](16-detail-long-code-1440-en.png) | [png](16-detail-long-code-375-zh.png) | [png](16-detail-long-code-375-en.png) |

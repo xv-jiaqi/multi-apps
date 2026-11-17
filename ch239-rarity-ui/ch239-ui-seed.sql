@@ -12,3 +12,8 @@ VALUES ('sim-l1','sim-legacy-1','晨星骑士','rare','{"cost":3,"attack":2}','s
        ('sim-l3','sim-legacy-3','见习剑士','common','{}','sim-legacy',now(),now(),'3');
 -- 追加：空系列
 INSERT INTO series (id, slug, title, "createdAt", "updatedAt") VALUES ('sim-empty','sim-empty-set','空系列示例（模拟）',now(),now());
+-- 追加：10 字长码系列（Spec CH-239 v1.3 §10-10）
+INSERT INTO series (id, slug, title, "createdAt", "updatedAt") VALUES ('sim-long','sim-long-code-set','长码示例（模拟）',now(),now());
+INSERT INTO cards (id, slug, name, rarity, attributes, "seriesId", "createdAt", "updatedAt", "cardNumber")
+VALUES ('sim-long-1','sim-long-1','晨星骑士','common','{"稀有度":"C"}','sim-long',now(),now(),'1'),
+       ('sim-long-2','sim-long-2','暮色法师','legendary','{"稀有度":"超级稀有特别插画平行"}','sim-long',now(),now(),'2');

@@ -1014,5 +1014,289 @@
   "noMatch": false,
   "status": [],
   "active": "BODY Skip to main contentCCardhubHo"
+ },
+ {
+  "name": "14-long-code-trigger",
+  "w": 1440,
+  "lang": "zh",
+  "file": "14-long-code-trigger-1440-zh.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "zh-CN",
+  "noHscroll": true,
+  "scrollWidth": 1440,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [],
+  "noMatch": false,
+  "status": [
+   "找到 1 张",
+   "找到 1 张"
+  ],
+  "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+  "triggerGeom": {
+   "triggerW": 160,
+   "chevronInside": true,
+   "valueTruncated": true,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "15-long-code-options",
+  "w": 1440,
+  "lang": "zh",
+  "file": "15-long-code-options-1440-zh.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "zh-CN",
+  "noHscroll": true,
+  "scrollWidth": 1440,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [
+   "全部",
+   "C稀有度码 C",
+   "超级稀有特别插画平行"
+  ],
+  "noMatch": false,
+  "status": [
+   "找到 1 张",
+   "找到 1 张"
+  ],
+  "active": "DIV 超级稀有特别插画平行",
+  "triggerGeom": {
+   "triggerW": 160,
+   "chevronInside": true,
+   "valueTruncated": true,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "16-detail-long-code",
+  "w": 1440,
+  "lang": "zh",
+  "file": "16-detail-long-code-1440-zh.png",
+  "axe": [],
+  "url": "/cards/sim-long-2",
+  "htmlLang": "zh-CN",
+  "noHscroll": true,
+  "scrollWidth": 1440,
+  "rarityTrigger": null,
+  "options": [],
+  "noMatch": false,
+  "status": [],
+  "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+  "triggerGeom": null
+ },
+ {
+  "name": "14-long-code-trigger",
+  "w": 1440,
+  "lang": "en",
+  "file": "14-long-code-trigger-1440-en.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "en-US",
+  "noHscroll": true,
+  "scrollWidth": 1440,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [],
+  "noMatch": false,
+  "status": [
+   "1 card found",
+   "1 card found"
+  ],
+  "active": "BODY Skip to main contentCCardhubHo",
+  "triggerGeom": {
+   "triggerW": 160,
+   "chevronInside": true,
+   "valueTruncated": true,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "15-long-code-options",
+  "w": 1440,
+  "lang": "en",
+  "file": "15-long-code-options-1440-en.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "en-US",
+  "noHscroll": true,
+  "scrollWidth": 1440,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [
+   "All",
+   "CRarity code C",
+   "超级稀有特别插画平行"
+  ],
+  "noMatch": false,
+  "status": [
+   "1 card found",
+   "1 card found"
+  ],
+  "active": "DIV 超级稀有特别插画平行",
+  "triggerGeom": {
+   "triggerW": 160,
+   "chevronInside": true,
+   "valueTruncated": true,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "16-detail-long-code",
+  "w": 1440,
+  "lang": "en",
+  "file": "16-detail-long-code-1440-en.png",
+  "axe": [],
+  "url": "/cards/sim-long-2",
+  "htmlLang": "en-US",
+  "noHscroll": true,
+  "scrollWidth": 1440,
+  "rarityTrigger": null,
+  "options": [],
+  "noMatch": false,
+  "status": [],
+  "active": "BODY Skip to main contentCCardhubHo",
+  "triggerGeom": null
+ },
+ {
+  "name": "14-long-code-trigger",
+  "w": 375,
+  "lang": "zh",
+  "file": "14-long-code-trigger-375-zh.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "zh-CN",
+  "noHscroll": true,
+  "scrollWidth": 375,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [],
+  "noMatch": false,
+  "status": [
+   "找到 1 张",
+   "找到 1 张"
+  ],
+  "active": "BUTTON 筛选（1）",
+  "triggerGeom": {
+   "triggerW": 343,
+   "chevronInside": true,
+   "valueTruncated": false,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "15-long-code-options",
+  "w": 375,
+  "lang": "zh",
+  "file": "15-long-code-options-375-zh.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "zh-CN",
+  "noHscroll": true,
+  "scrollWidth": 375,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [
+   "全部",
+   "C稀有度码 C",
+   "超级稀有特别插画平行"
+  ],
+  "noMatch": false,
+  "status": [
+   "找到 1 张",
+   "找到 1 张"
+  ],
+  "active": "DIV 超级稀有特别插画平行",
+  "triggerGeom": {
+   "triggerW": 343,
+   "chevronInside": true,
+   "valueTruncated": false,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "16-detail-long-code",
+  "w": 375,
+  "lang": "zh",
+  "file": "16-detail-long-code-375-zh.png",
+  "axe": [],
+  "url": "/cards/sim-long-2",
+  "htmlLang": "zh-CN",
+  "noHscroll": true,
+  "scrollWidth": 375,
+  "rarityTrigger": null,
+  "options": [],
+  "noMatch": false,
+  "status": [],
+  "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+  "triggerGeom": null
+ },
+ {
+  "name": "14-long-code-trigger",
+  "w": 375,
+  "lang": "en",
+  "file": "14-long-code-trigger-375-en.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "en-US",
+  "noHscroll": true,
+  "scrollWidth": 375,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [],
+  "noMatch": false,
+  "status": [
+   "1 card found",
+   "1 card found"
+  ],
+  "active": "BUTTON Filters (1)",
+  "triggerGeom": {
+   "triggerW": 343,
+   "chevronInside": true,
+   "valueTruncated": false,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "15-long-code-options",
+  "w": 375,
+  "lang": "en",
+  "file": "15-long-code-options-375-en.png",
+  "axe": [],
+  "url": "/series/sim-long-code-set?rarityCode=超级稀有特别插画平行",
+  "htmlLang": "en-US",
+  "noHscroll": true,
+  "scrollWidth": 375,
+  "rarityTrigger": "超级稀有特别插画平行",
+  "options": [
+   "All",
+   "CRarity code C",
+   "超级稀有特别插画平行"
+  ],
+  "noMatch": false,
+  "status": [
+   "1 card found",
+   "1 card found"
+  ],
+  "active": "DIV 超级稀有特别插画平行",
+  "triggerGeom": {
+   "triggerW": 343,
+   "chevronInside": true,
+   "valueTruncated": false,
+   "valueText": "超级稀有特别插画平行"
+  }
+ },
+ {
+  "name": "16-detail-long-code",
+  "w": 375,
+  "lang": "en",
+  "file": "16-detail-long-code-375-en.png",
+  "axe": [],
+  "url": "/cards/sim-long-2",
+  "htmlLang": "en-US",
+  "noHscroll": true,
+  "scrollWidth": 375,
+  "rarityTrigger": null,
+  "options": [],
+  "noMatch": false,
+  "status": [],
+  "active": "BODY Skip to main contentCCardhubHo",
+  "triggerGeom": null
  }
 ]
