@@ -278,10 +278,8 @@ export const SeriesCardList = observer(function SeriesCardList({
     );
   }, [debounced, setSearchParams]);
 
-  // retryOnMount: false — see series-detail.tsx; the route prefetch owns the first fetch.
   const list = trpc.cards.listBySeries.useQuery(seriesCardListInput(seriesSlug, state), {
     placeholderData: keepPreviousData,
-    retryOnMount: false,
   });
   const listView = queryFallback(list);
   useFocusOnRecovery(listView, titleRef);
