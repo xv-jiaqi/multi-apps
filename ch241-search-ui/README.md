@@ -1,6 +1,6 @@
 # 截图索引
 - staging SHA: unknown
-- 时间: 2026-11-17 18:00 (UTC+8)
+- 时间: 2026-11-17 18:45 (UTC+8)
 
 | 文件 | 宽度 | 语言 | 目标/实际 ms | 整页无横向滚动 | 被裁容器 | 焦点 | axe |
 |---|---|---|---|---|---|---|---|
@@ -12,6 +12,14 @@
 | search-page2_1440_en.png | 1440 | en | 0/0 | True | 0 | BODY Skip to main contentCCardhubHo | - |
 | search-page2_375_zh.png | 375 | zh | 0/0 | True | 0 | BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登 | - |
 | search-page2_375_en.png | 375 | en | 0/0 | True | 0 | BODY Skip to main contentCCardhubHo | - |
+| search-series-p1_1440_zh.png | 1440 | zh | 0/0 | True | 0 | BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登 | - |
+| search-series-p1_1440_en.png | 1440 | en | 0/0 | True | 0 | BODY Skip to main contentCCardhubHo | - |
+| search-series-p1_375_zh.png | 375 | zh | 0/0 | True | 0 | BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登 | - |
+| search-series-p1_375_en.png | 375 | en | 0/0 | True | 0 | BODY Skip to main contentCCardhubHo | - |
+| search-series-p2_1440_zh.png | 1440 | zh | 0/0 | True | 0 | BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登 | - |
+| search-series-p2_1440_en.png | 1440 | en | 0/0 | True | 0 | BODY Skip to main contentCCardhubHo | - |
+| search-series-p2_375_zh.png | 375 | zh | 0/0 | True | 0 | BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登 | - |
+| search-series-p2_375_en.png | 375 | en | 0/0 | True | 0 | BODY Skip to main contentCCardhubHo | - |
 | search-loading_1440_zh.png | 1440 | zh | 0/0 | True | 0 | BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登 | - |
 | search-loading_1440_en.png | 1440 | en | 0/0 | True | 0 | BODY Skip to main contentCCardhubHo | - |
 | search-loading_375_zh.png | 375 | zh | 0/0 | True | 0 | BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登 | - |
