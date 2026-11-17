@@ -402,4 +402,129 @@ describe('catalog import hardening (批量导入加固)', () => {
       ]);
     });
   });
+
+  describe('CH-236 v1.1: the 20-subset cap only applies when the file lists subsets', () => {
+    /** Writes an already over-limit series directly (the admin form can do this; the import cannot). */
+    async function seedOverLimit({ seriesSlug, count }: { seriesSlug: string; count: number }) {
+      const series = await prisma.series.create({
+        data: {
+          slug: seriesSlug,
+          title: '已有二十一个',
+          subsets: {
+            create: subsetList({ count, prefix: 'old' }).map(
+              ({ slug, name, sortOrder }, index) => ({
+                slug,
+                name,
+                sortOrder,
+                kind: index === 0 ? 'BASE' : 'INSERT',
+              }),
+            ),
+          },
+        },
+        select: { id: true },
+      });
+      await prisma.card.create({
+        data: {
+          slug: `${seriesSlug}-001`,
+          name: '旧卡',
+          rarity: 'common',
+          seriesId: series.id,
+          attributes: {},
+        },
+      });
+    }
+
+    it('36-7: 21 stored subsets, a file that only changes the title and 1 card (no subsets) previews clean and imports', async () => {
+      const seriesSlug = slug('subsets-21-stored');
+      await seedOverLimit({ seriesSlug, count: 21 });
+      const data = [
+        {
+          slug: seriesSlug,
+          title: '改了标题',
+          cards: [{ slug: `${seriesSlug}-001`, name: '改了卡名', rarity: 'common' }],
+        },
+      ];
+      const preview = await importCatalog({ data, dryRun: true });
+      expect(preview.status).toBe(200);
+      expect(rowsOf(preview.body).map((row) => [row.status, row.errors])).toEqual([
+        ['updated', []],
+        ['updated', []],
+      ]);
+      const imported = await importCatalog({ data, dryRun: false });
+      expect(imported.status).toBe(200);
+      expect(rowsOf(imported.body).map((row) => row.status)).toEqual(['updated', 'updated']);
+      const stored = await prisma.series.findUniqueOrThrow({
+        where: { slug: seriesSlug },
+        select: { title: true, _count: { select: { subsets: true } } },
+      });
+      expect(stored).toEqual({ title: '改了标题', _count: { subsets: 21 } });
+      const card = await prisma.card.findUniqueOrThrow({
+        where: { slug: `${seriesSlug}-001` },
+        select: { name: true },
+      });
+      expect(card.name).toBe('改了卡名');
+    });
+
+    it('36-7: the same series with 1 new subset listed reports TOO_MANY_SUBSETS, and dryRun:false writes nothing', async () => {
+      const seriesSlug = slug('subsets-21-listed');
+      await seedOverLimit({ seriesSlug, count: 21 });
+      const data = [
+        {
+          slug: seriesSlug,
+          title: '改了标题',
+          subsets: subsetList({ count: 1, prefix: 'new' }),
+          cards: [{ slug: `${seriesSlug}-001`, name: '改了卡名', rarity: 'common' }],
+        },
+      ];
+      const preview = await importCatalog({ data, dryRun: true });
+      expect(preview.status).toBe(200);
+      expect(rowsOf(preview.body)[0]?.errors).toEqual([
+        { path: 'series[0].subsets', code: 'TOO_MANY_SUBSETS' },
+      ]);
+      const before = await ownedCounts();
+      const forced = await importCatalog({ data, dryRun: false });
+      expect(forced.status).toBe(400);
+      expect(await ownedCounts()).toEqual(before);
+      const stored = await prisma.series.findUniqueOrThrow({
+        where: { slug: seriesSlug },
+        select: { title: true },
+      });
+      expect(stored.title).toBe('已有二十一个');
+    });
+
+    it('two concurrent dryRun:false imports each adding 1 subset to a 19-subset series: one 200, one 400 TOO_MANY_SUBSETS', async () => {
+      for (let round = 0; round < 5; round += 1) {
+        const seriesSlug = slug(`race-${round}`);
+        const seeded = await importCatalog({
+          data: [
+            {
+              slug: seriesSlug,
+              title: '十九个',
+              subsets: subsetList({ count: 19, prefix: 'old' }),
+            },
+          ],
+          dryRun: false,
+        });
+        expect(seeded.status).toBe(200);
+        const add = (tag: string) =>
+          importCatalog({
+            data: [
+              {
+                slug: seriesSlug,
+                title: '十九个',
+                subsets: [{ slug: `new-${tag}`, name: tag, kind: 'INSERT' }],
+              },
+            ],
+            dryRun: false,
+          });
+        const responses = await Promise.all([add('a'), add('b')]);
+        expect(responses.map((response) => response.status).sort()).toEqual([200, 400]);
+        const rejected = responses.find((response) => response.status === 400);
+        expect(errorRowsOf(rejected?.body)[0]?.errors).toEqual([
+          { path: 'series[0].subsets', code: 'TOO_MANY_SUBSETS' },
+        ]);
+        expect(await prisma.subset.count({ where: { series: { slug: seriesSlug } } })).toBe(20);
+      }
+    });
+  });
 });

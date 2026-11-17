@@ -414,6 +414,21 @@ function assignPreviewTaxonomy({
   }
 }
 
+/**
+ * CH-236 v1.1: the 20-subset cap only applies to a series whose file row lists
+ * subsets. `subsetCount` is the series' subsets after this import (stored plus
+ * listed, deduped by slug). Preview and the transaction recheck share this.
+ */
+function exceedsSubsetLimit({
+  listedSubsets,
+  subsetCount,
+}: {
+  listedSubsets: readonly NormalizedSubset[];
+  subsetCount: number;
+}): boolean {
+  return listedSubsets.length > 0 && subsetCount > SUBSETS_PER_SERIES_MAX;
+}
+
 function normalizeImport(data: unknown): NormalizedImport {
   const results: ImportRowResult[] = [];
   const normalizedSeries: NormalizedSeries[] = [];
@@ -758,7 +773,7 @@ export class AdminRouter {
           ...(existingSeriesBySlug.get(series.slug)?.subsets.map((subset) => subset.slug) ?? []),
           ...series.subsets.map((subset) => subset.slug),
         ]);
-        if (subsetSlugs.size > SUBSETS_PER_SERIES_MAX) {
+        if (exceedsSubsetLimit({ listedSubsets: series.subsets, subsetCount: subsetSlugs.size })) {
           result.status = 'error';
           result.errors.push({ path: `${series.seriesPath}.subsets`, code: 'TOO_MANY_SUBSETS' });
           continue;
@@ -913,6 +928,7 @@ export class AdminRouter {
                 ...(categoryId !== undefined ? { categoryId } : {}),
                 ...(releaseDate !== undefined ? { releaseDate } : {}),
               };
+              // Row-locks this series until commit; the 20-subset recheck below relies on it.
               const saved = await tx.series.upsert({
                 where: { slug: series.slug },
                 update: {
@@ -954,6 +970,9 @@ export class AdminRouter {
             }
 
             // Stored count after the upserts, so a subset added since the preview still counts.
+            // Concurrency: the `tx.series.upsert` above row-locks the series until commit, so a
+            // second import of the same series waits there and its count below sees the first
+            // import's subsets. That lock is what keeps the 20 cap under concurrent imports.
             const listedSeriesIds = normalized.series
               .filter((series) => series.subsets.length > 0)
               .map((series) => ({ series, seriesId: seriesIdBySlug.get(series.slug) }));
@@ -972,7 +991,12 @@ export class AdminRouter {
               const countBySeriesId = new Map(counts.map((row) => [row.seriesId, row._count._all]));
               for (const { series, seriesId } of listedSeriesIds) {
                 if (seriesId === undefined) continue;
-                if ((countBySeriesId.get(seriesId) ?? 0) > SUBSETS_PER_SERIES_MAX) {
+                if (
+                  exceedsSubsetLimit({
+                    listedSubsets: series.subsets,
+                    subsetCount: countBySeriesId.get(seriesId) ?? 0,
+                  })
+                ) {
                   failures.push({
                     rowNumber: series.row.row,
                     path: `${series.seriesPath}.subsets`,
