@@ -365,4 +365,97 @@ describe('CardsRouter.listBySeries', () => {
     expect(defaults.sort).toBe('number');
     expect(defaults.items.map((item) => item.cardNumber)).toEqual(['1', '2', '10']);
   });
+
+  describe('ptcg-sc-30th shape (CH-237 / AC7-4)', () => {
+    const SPECIAL = ['R', 'G', 'B'];
+    const ENERGY = ['GRA', 'FIR', 'WAT', 'LIG', 'PSY', 'FIG', 'DAR', 'MET'];
+    const subsets = {
+      main: { slug: 'main', sortOrder: 0 },
+      secret: { slug: 'secret', sortOrder: 1 },
+      special: { slug: 'special', sortOrder: 2 },
+      energy: { slug: 'energy', sortOrder: 3 },
+    };
+    const listRow = (cardNumber: string, subset: { slug: string; sortOrder: number }) => ({
+      id: `id-${cardNumber}`,
+      slug: `ptcg-sc-30th-${cardNumber}`,
+      name: cardNumber,
+      rarity: 'common',
+      imageUrl: null,
+      cardNumber,
+      attributes: {},
+      createdAt: new Date('2026-11-17T00:00:00.000Z'),
+      parallelOfId: null,
+      parallelName: null,
+      printRun: null,
+      subset,
+    });
+    const numbered = Array.from({ length: 165 }, (_, index) => {
+      const value = index + 1;
+      return listRow(String(value).padStart(3, '0'), value <= 103 ? subsets.main : subsets.secret);
+    });
+    const lettered = [
+      ...SPECIAL.map((value) => listRow(value, subsets.special)),
+      ...ENERGY.map((value) => listRow(value, subsets.energy)),
+    ];
+    // Interleave so the input order is neither numeric nor grouped by subset.
+    const fixture = [...lettered, ...numbered].reverse();
+    const expected = [
+      ...numbered.map((row) => row.cardNumber),
+      'B',
+      'G',
+      'R',
+      'DAR',
+      'FIG',
+      'FIR',
+      'GRA',
+      'LIG',
+      'MET',
+      'PSY',
+      'WAT',
+    ];
+
+    it('lists 165 numbers ascending, then special B G R, then the 8 energies', async () => {
+      const { caller, findUnique } = makeListRouter();
+      findUnique.mockResolvedValue({ cards: fixture, _count: { cards: fixture.length } });
+
+      // pageSize is capped at 100 (CARD_SERIES_LIST input), so AC7-4's 176
+      // cards come back as two pages of the same call.
+      const first = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        sort: 'number',
+        pageSize: 100,
+      });
+      const second = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        sort: 'number',
+        page: 2,
+        pageSize: 100,
+      });
+
+      expect(findUnique).toHaveBeenCalledTimes(2);
+      expect(findUnique.mock.calls[0]?.[0].select.cards.select.subset).toEqual({
+        select: { slug: true, sortOrder: true },
+      });
+      expect(first.total).toBe(176);
+      expect(second.total).toBe(176);
+      const items = [...first.items, ...second.items];
+      expect(items.map((item) => item.cardNumber)).toEqual(expected);
+      expect(items.at(-1)).toMatchObject({ cardNumber: 'WAT', subsetSlug: 'energy' });
+    });
+
+    it('sorts the whole series before slicing a page', async () => {
+      const { caller, findUnique } = makeListRouter();
+      findUnique.mockResolvedValue({ cards: fixture, _count: { cards: fixture.length } });
+
+      const second = await caller.listBySeries({
+        seriesSlug: 'ptcg-sc-30th',
+        sort: 'number',
+        page: 3,
+        pageSize: 80,
+      });
+
+      expect(second.total).toBe(176);
+      expect(second.items.map((item) => item.cardNumber)).toEqual(expected.slice(160));
+    });
+  });
 });
