@@ -72,3 +72,32 @@ export const AC62_ROWS: ImportRowResult[] = [
     errors: [],
   },
 ];
+
+/** CH-107 §7.8 (AC7-3): a normal series, then a new series listing 21 subsets. */
+export const AC73_IMPORT = [
+  { slug: 'neighbour', title: '正常系列' },
+  {
+    slug: 'subsets-21',
+    title: '二十一个子集',
+    subsets: Array.from({ length: 21 }, (_, index) => ({
+      slug: `s-${index + 1}`,
+      name: `子集 ${index + 1}`,
+      kind: index === 0 ? 'BASE' : 'INSERT',
+      sortOrder: index,
+    })),
+  },
+];
+
+/** What `admin.catalog.import` (#279) returns for `AC73_IMPORT` with `dryRun: true`. */
+export const AC73_ROWS: ImportRowResult[] = [
+  {
+    row: { row: 1, type: 'series', slug: 'neighbour', name: '正常系列' },
+    status: 'created',
+    errors: [],
+  },
+  {
+    row: { row: 2, type: 'series', slug: 'subsets-21', name: '二十一个子集' },
+    status: 'error',
+    errors: [{ path: 'series[1].subsets', code: 'TOO_MANY_SUBSETS' }],
+  },
+];

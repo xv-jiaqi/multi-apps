@@ -891,6 +891,8 @@ const zhCN: Dictionary = {
     '发售日期「{value}」不是有效日期。按 YYYY-MM-DD 写，例如 2026-11-14。',
   'admin.import.err.unknownField':
     '不认识字段「{field}」。对照「查看格式示例」改成正确的字段名，或删掉它。',
+  'admin.import.err.tooManySubsets':
+    '一个系列最多 {max} 个子集，已存的和本文件列出的都算。删到 {max} 个以内。',
   'admin.import.paste': 'JSON 内容',
   'admin.import.file': '选择文件',
   'admin.import.preview': '预览',
@@ -1972,6 +1974,8 @@ const enUS: Dictionary = {
     'Release date "{value}" is not a valid date. Use YYYY-MM-DD, for example 2026-11-14.',
   'admin.import.err.unknownField':
     'Unknown field "{field}". Rename it to a field from the example, or delete it.',
+  'admin.import.err.tooManySubsets':
+    'A series can have at most {max} subsets, including ones already saved and ones listed in this file. Remove extras until the total is {max} or fewer.',
   'admin.import.paste': 'JSON',
   'admin.import.file': 'Choose file',
   'admin.import.preview': 'Preview',
