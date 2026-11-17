@@ -1,5 +1,14 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData } from '@tanstack/react-query';
 import type { inferRouterOutputs } from '@trpc/server';
@@ -29,6 +38,10 @@ import { PageMeta } from '../components/page-meta';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
 import { CardVariantBadgeRow } from '../components/card-variant-badge';
 import { CardThumb } from '../components/card-thumb';
+import { CardNumberSubsetLine } from '../components/card-number-subset';
+import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
+import { PagePagination } from '../components/page-pagination';
+import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { SeriesMark } from '../components/series-mark';
 import { SearchParseHint, SyntaxExamples } from '../components/search-syntax';
 import { useStores } from '../stores/root-store';
@@ -43,6 +56,38 @@ import {
 } from '../lib/search-query';
 
 const SEARCH_DEBOUNCE_MS = 250;
+/** CH-241 §1: 30 cards per page, not in the URL. */
+export const SEARCH_PAGE_SIZE = 30;
+/** Same cap as `search.global` `cardPage` (api search.router.ts SEARCH_CARD_PAGE_MAX). */
+const SEARCH_CARD_PAGE_MAX = 10_000;
+const PAGE_PARAM = /^[1-9][0-9]*$/;
+
+/**
+ * `?page=` → page number. Absent is page 1. Anything that is not a positive
+ * integer within the API cap is invalid and gets removed with `replace`.
+ */
+export function searchPageParam(raw: string | null): { page: number; valid: boolean } {
+  if (raw === null) return { page: 1, valid: true };
+  if (!PAGE_PARAM.test(raw)) return { page: 1, valid: false };
+  const page = Number(raw);
+  if (!Number.isSafeInteger(page) || page > SEARCH_CARD_PAGE_MAX) return { page: 1, valid: false };
+  return { page, valid: true };
+}
+
+/** `/search?q=…&page=n`. Page 1 is not written (CH-241 §1). */
+export function searchHref(q: string, page: number): string {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (page > 1) params.set('page', String(page));
+  const search = params.toString();
+  return search ? `/search?${search}` : '/search';
+}
+
+function scrollHeadingIntoView(node: HTMLElement) {
+  node.focus({ preventScroll: true });
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  node.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+}
 type GlobalSearchResult = inferRouterOutputs<AppRouter>['search']['global'];
 const RESULT_LIST_CLASS =
   'divide-y divide-neutral-200/60 overflow-hidden rounded-2xl border border-card/60 bg-card/70 backdrop-blur';
@@ -77,9 +122,18 @@ function Field({
   );
 }
 
+/**
+ * CH-241 §6: the 40px title slot (h-7 + space-y-3) sits above the 3 skeleton
+ * rows, so the first row does not move when «卡牌（N）» arrives. No number,
+ * no pagination while loading.
+ */
 function SearchSkeleton() {
   return (
-    <div className="min-h-svh">
+    <div className="min-h-svh space-y-3">
+      <div
+        aria-hidden
+        className="h-7 w-32 animate-pulse rounded-sm bg-neutral-200 motion-reduce:animate-none"
+      />
       <ul className={`${RESULT_LIST_CLASS} animate-pulse motion-reduce:animate-none`}>
         {Array.from({ length: 3 }, (_, index) => (
           <li key={index} className="flex items-center gap-4 p-4">
@@ -100,6 +154,8 @@ export const SearchPage = observer(function SearchPage() {
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') ?? '';
+  const rawPage = searchParams.get('page');
+  const pageParam = searchPageParam(rawPage);
   const [query, setQuery] = useState(urlQuery);
   const [trackedUrl, setTrackedUrl] = useState(urlQuery);
   const debounced = useDebounced(query, SEARCH_DEBOUNCE_MS);
@@ -138,10 +194,73 @@ export const SearchPage = observer(function SearchPage() {
   const liveHint = cardSearchHint(liveParsed) !== null;
   const liveCanRequest = shouldRequestCardSearchQuery(visibleQuery);
   const canRequest = shouldRequestCardSearchQuery(requested);
+  // A typed query that has not reached the URL yet starts on page 1.
+  const cardPage = requested === urlQuery ? pageParam.page : 1;
   const results = trpc.search.global.useQuery(
-    { q: requested, limit: 30 },
+    { q: requested, limit: SEARCH_PAGE_SIZE, cardPage },
     { enabled: canRequest, placeholderData: keepPreviousData },
   );
+  const resultsView = queryFallback(results);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const retryRef = useRef<HTMLButtonElement>(null);
+  const pageFocus = useRef(false);
+  const retryWasBusy = useRef(false);
+  useFocusOnRecovery(resultsView, headingRef);
+
+  // `?page=` that is not a positive integer, or an explicit page 1, is dropped.
+  useEffect(() => {
+    if (pageParam.valid && rawPage !== '1') return;
+    if (rawPage === null) return;
+    setSearchParamsRef.current(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [pageParam.valid, rawPage]);
+
+  // Past the last page: replace with the last page (page 1 is not written).
+  const freshData =
+    results.data && !results.isPlaceholderData && results.data.query === requested
+      ? results.data
+      : undefined;
+  const pageCount = freshData ? Math.max(1, Math.ceil(freshData.cardTotal / SEARCH_PAGE_SIZE)) : 0;
+  const lastPageParam = pageCount > 1 ? String(pageCount) : null;
+  const pastEnd = freshData !== undefined && requested === urlQuery && cardPage > pageCount;
+  useEffect(() => {
+    // Compare against the address bar so the write happens once, whatever the
+    // identity of `data` on later renders.
+    if (!pastEnd || rawPage === lastPageParam) return;
+    setSearchParamsRef.current(
+      (current) => {
+        const next = new URLSearchParams(current);
+        if (lastPageParam) next.set('page', lastPageParam);
+        else next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [lastPageParam, pastEnd, rawPage]);
+
+  // After a page click, focus «卡牌（N）» once the new page is on screen.
+  useLayoutEffect(() => {
+    if (!pageFocus.current || results.isFetching || !results.data) return;
+    pageFocus.current = false;
+    if (headingRef.current) scrollHeadingIntoView(headingRef.current);
+  }, [results.data, results.isFetching]);
+
+  // CH-202 §7: a retry that fails again keeps focus on the retry button.
+  useLayoutEffect(() => {
+    const busy = resultsView === 'error' && results.isFetching;
+    const failedRetry = retryWasBusy.current && !busy && resultsView === 'error';
+    retryWasBusy.current = busy;
+    const active = document.activeElement;
+    if (failedRetry && (active === null || active === document.body)) {
+      retryRef.current?.focus({ preventScroll: true });
+    }
+  }, [results.isFetching, resultsView]);
   const seriesList = trpc.series.list.useQuery({ pageSize: 100 });
 
   const seriesOptions = useMemo(() => {
@@ -158,7 +277,7 @@ export const SearchPage = observer(function SearchPage() {
 
   const clearFilters = () => setQuery(clearRarityAndSeries(visibleQuery));
 
-  const cardTotal = results.data?.cards.length ?? 0;
+  const cardTotal = results.data?.cardTotal ?? 0;
   const seriesTotal = results.data?.series.length ?? 0;
   const statusText =
     canRequest && results.isFetching
@@ -265,51 +384,62 @@ export const SearchPage = observer(function SearchPage() {
           parsedOk={liveParsed.ok}
           canRequest={canRequest}
           hasFilters={hasFilters}
-          isLoading={results.isLoading}
-          isError={results.isError}
+          view={resultsView}
           data={results.data}
+          busy={results.isFetching}
           onRetry={() => {
             void results.refetch();
           }}
-          retryPending={results.isFetching}
+          retryRef={retryRef}
           onClearFilters={clearFilters}
           locale={locale.locale}
           tt={tt}
+          headingRef={headingRef}
+          page={Math.min(cardPage, Math.max(1, pageCount || cardPage))}
+          hrefFor={(page) => searchHref(urlQuery, page)}
+          onPage={() => {
+            pageFocus.current = true;
+          }}
         />
       </div>
     </PageShell>
   );
 });
 
+type Translate = (key: string, vars?: Record<string, string | number>) => string;
+
+type ListProps = {
+  data: GlobalSearchResult | undefined;
+  locale: 'zh-CN' | 'en-US';
+  tt: Translate;
+  hasFilters: boolean;
+  onClearFilters: () => void;
+  busy: boolean;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+  page: number;
+  hrefFor: (page: number) => string;
+  onPage: () => void;
+};
+
 function SearchResults({
   query,
   liveCanRequest,
   parsedOk,
   canRequest,
-  hasFilters,
-  isLoading,
-  isError,
-  data,
+  view,
   onRetry,
-  retryPending,
-  onClearFilters,
-  locale,
-  tt,
-}: {
+  retryRef,
+  ...list
+}: ListProps & {
   query: string;
   liveCanRequest: boolean;
   parsedOk: boolean;
   canRequest: boolean;
-  hasFilters: boolean;
-  isLoading: boolean;
-  isError: boolean;
-  data: GlobalSearchResult | undefined;
+  view: 'error' | 'loading' | 'ready';
   onRetry: () => void;
-  retryPending: boolean;
-  onClearFilters: () => void;
-  locale: 'zh-CN' | 'en-US';
-  tt: (key: string, vars?: Record<string, string | number>) => string;
+  retryRef: RefObject<HTMLButtonElement | null>;
 }) {
+  const { data, tt } = list;
   if (!query.trim()) {
     return <p className="text-sm text-neutral-600">{tt('search.prompt')}</p>;
   }
@@ -318,13 +448,7 @@ function SearchResults({
     if (!data) return null;
     return (
       <div className="opacity-60">
-        <ResultLists
-          data={data}
-          locale={locale}
-          tt={tt}
-          hasFilters={hasFilters}
-          onClearFilters={onClearFilters}
-        />
+        <ResultLists {...list} />
       </div>
     );
   }
@@ -333,33 +457,27 @@ function SearchResults({
     return <p className="text-sm text-neutral-600">{tt('search.prompt')}</p>;
   }
 
-  if (canRequest && isError) {
+  // Error before loading (CH-202 §9): a retry in flight keeps the ErrorBox.
+  if (canRequest && view === 'error') {
     return (
-      <div className="rounded-lg border border-danger-border bg-danger-soft p-6 text-sm text-danger">
-        <p className="font-medium">{tt('form.searchFailed')}</p>
-        <button
-          type="button"
-          onClick={onRetry}
-          disabled={retryPending}
-          className="mt-3 rounded-md border border-danger-border-strong bg-card px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:pointer-events-none disabled:opacity-50"
-        >
-          {tt('state.retry')}
-        </button>
-      </div>
+      <ErrorBox
+        headingAs="h2"
+        title={tt('form.searchFailed')}
+        retryLabel={tt('state.retry')}
+        retryingLabel={tt('state.retrying')}
+        retrying={list.busy}
+        retry={onRetry}
+        retryClassName={dataErrorRetryClassName}
+        retryRef={retryRef}
+      />
     );
   }
 
-  if (!data || isLoading) return <SearchSkeleton />;
+  if (!data || view === 'loading') return <SearchSkeleton />;
+  // A page past the end is being replaced with the last page.
+  if (data.cards.length === 0 && data.cardTotal > 0) return <SearchSkeleton />;
 
-  return (
-    <ResultLists
-      data={data}
-      locale={locale}
-      tt={tt}
-      hasFilters={hasFilters}
-      onClearFilters={onClearFilters}
-    />
-  );
+  return <ResultLists {...list} />;
 }
 
 function ResultLists({
@@ -368,19 +486,34 @@ function ResultLists({
   tt,
   hasFilters,
   onClearFilters,
-}: {
-  data: GlobalSearchResult | undefined;
-  locale: 'zh-CN' | 'en-US';
-  tt: (key: string, vars?: Record<string, string | number>) => string;
-  hasFilters: boolean;
-  onClearFilters: () => void;
-}) {
+  busy,
+  headingRef,
+  page,
+  hrefFor,
+  onPage,
+}: ListProps) {
   const cards = data?.cards ?? [];
   const series = data?.series ?? [];
+  const cardTotal = data?.cardTotal ?? cards.length;
+  const pageCount = Math.max(1, Math.ceil(cardTotal / SEARCH_PAGE_SIZE));
+  const pagination = (place: 'top' | 'bottom', className: string) => (
+    <PagePagination
+      label={tt(place === 'top' ? 'pagination.top' : 'pagination.bottom')}
+      previousLabel={tt('pagination.prev')}
+      nextLabel={tt('pagination.next')}
+      pageLabel={(item) => tt('pagination.page', { page: item })}
+      page={Math.min(page, pageCount)}
+      pageCount={pageCount}
+      hrefFor={hrefFor}
+      onPage={onPage}
+      className={className}
+    />
+  );
   if (cards.length === 0 && series.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
         <p>{tt('search.empty')}</p>
+        <p className="mt-2 text-sm text-neutral-600">{tt('search.emptyHint')}</p>
         {hasFilters ? (
           <Button type="button" variant="outline" className="mt-4" onClick={onClearFilters}>
             {tt('search.clearFilters')}
@@ -418,10 +551,23 @@ function ResultLists({
       ) : null}
       {cards.length > 0 ? (
         <section aria-labelledby="sr-cards" className="space-y-3">
-          <h2 id="sr-cards" className="text-lg font-semibold">
-            {tt('search.cardsHeading', { count: cards.length })}
-          </h2>
-          <ul className={RESULT_LIST_CLASS}>
+          {/*
+            The heading row stays h-7 (28px) like the loading slot, so the
+            first row does not move (§6). The top pagination shares the row;
+            -my-0.5 keeps its 32px buttons from growing the row.
+          */}
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <h2
+              id="sr-cards"
+              ref={headingRef}
+              tabIndex={-1}
+              className="scroll-mt-20 text-lg font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              {tt('search.cardsHeading', { count: cardTotal })}
+            </h2>
+            {pageCount > 1 ? pagination('top', '-my-0.5') : null}
+          </div>
+          <ul className={RESULT_LIST_CLASS} aria-busy={busy ? true : undefined}>
             {cards.map((card) => {
               const rarity = knownRarity(card.rarity);
               return (
@@ -429,8 +575,16 @@ function ResultLists({
                   <Link to={`/cards/${card.slug}`} className={RESULT_LINK_CLASS}>
                     <CardThumb src={card.imageUrl} slug={card.slug} width="w-10" />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-neutral-900">
+                      <span className="block text-sm font-semibold text-neutral-900 wrap-anywhere">
                         {card.name}
+                      </span>
+                      <CardNumberSubsetLine
+                        cardNumber={card.cardNumber}
+                        subsetName={card.subsetName}
+                        subsetSlug={card.subsetSlug}
+                      />
+                      <span className="block text-xs text-neutral-600 wrap-anywhere">
+                        {card.seriesTitle}
                       </span>
                       <CardVariantBadgeRow
                         locale={locale}
@@ -439,9 +593,6 @@ function ResultLists({
                         isParallel={card.isParallel}
                         className="mt-2 flex flex-wrap gap-1"
                       />
-                      <span className="block truncate text-xs text-neutral-600">
-                        {card.seriesTitle}
-                      </span>
                     </span>
                     {rarity ? <RarityBadge rarity={rarity} locale={locale} /> : null}
                   </Link>
@@ -449,6 +600,7 @@ function ResultLists({
               );
             })}
           </ul>
+          {pageCount > 1 ? pagination('bottom', 'justify-center') : null}
         </section>
       ) : null}
     </div>

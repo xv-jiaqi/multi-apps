@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { rootStore } from '../stores/root-store';
@@ -228,7 +228,12 @@ describe('SeriesCardList', () => {
       attributeLabels: labels,
     };
     renderList();
-    await user.click(screen.getByRole('link', { name: '第 2 页' }));
+    const top = screen.getByRole('navigation', { name: '顶部分页' });
+    const bottom = screen.getByRole('navigation', { name: '底部分页' });
+    expect(within(top).getByRole('link', { name: '第 2 页' })).toBeInTheDocument();
+    expect(within(top).getByText('1').closest('[aria-current="page"]')).not.toBeNull();
+    expect(screen.queryByText('第 1 / 2 页')).not.toBeInTheDocument();
+    await user.click(within(bottom).getByRole('link', { name: '第 2 页' }));
     expect(harness.calls.at(-1)).toMatchObject({ page: 2 });
     await user.click(screen.getByRole('button', { name: '后退' }));
     expect(harness.calls.at(-1)?.page ?? 1).toBe(1);
@@ -256,7 +261,8 @@ describe('SeriesCardList', () => {
     expect(harness.calls.some((call) => call.page === 10_001)).toBe(false);
     await waitFor(() => {
       expect(harness.calls.at(-1)).toMatchObject({ page: 2 });
-      expect(screen.getByText('第 2 / 2 页')).toBeInTheDocument();
+      const bottom = screen.getByRole('navigation', { name: '底部分页' });
+      expect(within(bottom).getByText('2').closest('[aria-current="page"]')).not.toBeNull();
     });
   });
 

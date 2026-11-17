@@ -12,6 +12,7 @@ import {
 import { trpc } from '../lib/trpc';
 import { useDebounced } from '../lib/use-debounced';
 import { useStores } from '../stores/root-store';
+import { CardNumberSubsetLine } from './card-number-subset';
 import { CardThumb } from './card-thumb';
 import { SearchParseHint, SyntaxExamples } from './search-syntax';
 import { SeriesMark } from './series-mark';
@@ -25,6 +26,9 @@ type HeaderHit =
       name: string;
       seriesTitle: string;
       imageUrl: string | null;
+      cardNumber: string | null;
+      subsetName: string | null;
+      subsetSlug: string | null;
     }
   | {
       kind: 'series';
@@ -105,6 +109,9 @@ export const HeaderSearch = observer(function HeaderSearch({
       name: card.name,
       seriesTitle: card.seriesTitle,
       imageUrl: card.imageUrl,
+      cardNumber: card.cardNumber,
+      subsetName: card.subsetName,
+      subsetSlug: card.subsetSlug,
     }));
     const series: HeaderHit[] = (result.data?.series ?? []).map((item) => ({
       kind: 'series' as const,
@@ -149,6 +156,11 @@ export const HeaderSearch = observer(function HeaderSearch({
               <span className="block truncate text-sm font-medium text-neutral-900">
                 {item.name}
               </span>
+              <CardNumberSubsetLine
+                cardNumber={item.cardNumber}
+                subsetName={item.subsetName}
+                subsetSlug={item.subsetSlug}
+              />
               <span className="block truncate text-xs text-neutral-600">{item.seriesTitle}</span>
             </span>
           </span>

@@ -24,7 +24,13 @@ if (typeof ResizeObserver === 'undefined') {
   vi.stubGlobal('ResizeObserver', ResizeObserverMock);
 }
 
-type GlobalInput = { q?: string; limit?: number; cardLimit?: number; seriesLimit?: number };
+type GlobalInput = {
+  q?: string;
+  limit?: number;
+  cardLimit?: number;
+  seriesLimit?: number;
+  cardPage?: number;
+};
 
 const harness = vi.hoisted(() => ({
   calls: [] as Array<{
@@ -35,6 +41,8 @@ const harness = vi.hoisted(() => ({
   mode: 'success' as 'success' | 'empty' | 'error' | 'loading' | 'refreshing',
   includeSeries: true,
   seriesLoading: false,
+  /** Overrides `cardTotal`; defaults to the number of cards returned. */
+  cardTotal: undefined as number | undefined,
   lastData: undefined as
     | {
         cards: Array<{ slug: string; name: string }>;
@@ -43,6 +51,26 @@ const harness = vi.hoisted(() => ({
     | undefined,
   refetch: vi.fn(),
 }));
+
+type MockCard = { slug: string; name: string } & Record<string, unknown>;
+
+/** CH-241 contract fields that every `search.global` response carries. */
+function paged(
+  result: { query: string; cards: MockCard[]; series: Array<{ slug: string; title: string }> },
+  input: GlobalInput,
+) {
+  return {
+    ...result,
+    cards: result.cards.map((card) => ({
+      cardNumber: null,
+      subsetSlug: null,
+      subsetName: null,
+      ...card,
+    })),
+    cardTotal: harness.cardTotal ?? result.cards.length,
+    cardPage: input.cardPage ?? 1,
+  };
+}
 
 const sampleCards = [
   {
@@ -53,6 +81,9 @@ const sampleCards = [
     imageUrl: 'https://example.com/aurora.png',
     seriesSlug: 'celestial-dawn',
     seriesTitle: '天穹黎明',
+    cardNumber: '025',
+    subsetSlug: 'ptcg-sc-151',
+    subsetName: '151',
   },
   {
     id: 'c2',
@@ -62,6 +93,9 @@ const sampleCards = [
     imageUrl: null,
     seriesSlug: 'celestial-dawn',
     seriesTitle: '天穹黎明',
+    cardNumber: 'SV-P-001',
+    subsetSlug: 'promo-slug',
+    subsetName: null,
   },
 ];
 
@@ -203,7 +237,7 @@ vi.mock('../lib/trpc', () => ({
             };
           }
           if (harness.mode === 'empty') {
-            const data = { query: input.q ?? '', cards: [], series: [] };
+            const data = paged({ query: input.q ?? '', cards: [], series: [] }, input);
             harness.lastData = data;
             return {
               data,
@@ -216,7 +250,7 @@ vi.mock('../lib/trpc', () => ({
               refetch: harness.refetch,
             };
           }
-          const data = currentResult(input.q ?? '');
+          const data = paged(currentResult(input.q ?? ''), input);
           harness.lastData = data;
           if (harness.mode === 'refreshing') {
             return {
@@ -379,6 +413,7 @@ describe('SearchPage', () => {
     harness.mode = 'success';
     harness.includeSeries = true;
     harness.seriesLoading = false;
+    harness.cardTotal = undefined;
     harness.lastData = undefined;
     harness.refetch.mockReset();
     rootStore.locale.setLocale('zh-CN');
@@ -614,14 +649,24 @@ describe('SearchPage', () => {
     const input = screen.getByRole('searchbox', { name: '全站搜索' });
     expect(input).toHaveAttribute('aria-describedby', 'search-syntax');
     expect(document.getElementById('search-syntax')).toHaveTextContent(
-      'r: 稀有度，s: 系列，c: 卡号，y: 发售年',
+      'r: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。',
     );
+
+    // CH-241 §4: real Pokémon examples, in this order, each at least 24px tall.
+    const examples = ['皮卡丘', '025', 'c:025 s:ptcg-sc-151', '皮卡丘 OR 喷火龙', 'ex -皮卡丘'];
+    for (const example of examples) {
+      expect(screen.getByRole('button', { name: `用「${example}」搜索` })).toHaveClass(
+        'min-h-6',
+        'wrap-anywhere',
+      );
+    }
+    expect(screen.queryByRole('button', { name: '用「r:legendary」搜索' })).not.toBeInTheDocument();
 
     input.focus();
     await user.tab();
-    expect(screen.getByRole('button', { name: '用「r:legendary」搜索' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: '用「皮卡丘」搜索' })).toHaveFocus();
     await user.keyboard('{Enter}');
-    expect(input).toHaveValue('r:legendary');
+    expect(input).toHaveValue('皮卡丘');
   });
 
   it('disables the series select while the series list is loading', () => {
@@ -635,6 +680,7 @@ describe('SearchPage result links', () => {
   beforeEach(() => {
     harness.calls.length = 0;
     harness.mode = 'success';
+    harness.cardTotal = undefined;
     harness.lastData = undefined;
     rootStore.locale.setLocale('zh-CN');
   });
@@ -667,5 +713,176 @@ describe('SearchPage result links', () => {
     renderSearch('?q=极光');
     const section = await screen.findByRole('region', { name: '系列（1）' });
     expect(within(section).getByRole('link', { name: /天穹黎明/ })).toBeInTheDocument();
+  });
+});
+
+describe('SearchPage pages and totals (CH-241)', () => {
+  beforeEach(() => {
+    harness.calls.length = 0;
+    harness.mode = 'success';
+    harness.includeSeries = true;
+    harness.cardTotal = undefined;
+    harness.lastData = undefined;
+    rootStore.locale.setLocale('zh-CN');
+  });
+
+  function pageParam() {
+    return new URLSearchParams(screen.getByLabelText('search').textContent ?? '').get('page');
+  }
+
+  it('counts with cardTotal and pages with numbers above and below the list (§1)', async () => {
+    const user = userEvent.setup();
+    harness.cardTotal = 41;
+    renderSearch('?q=极光');
+
+    const heading = await screen.findByRole('heading', { name: '卡牌（41）' });
+    expect(heading).toHaveAttribute('id', 'sr-cards');
+    expect(heading).toHaveAttribute('tabindex', '-1');
+    expect(heading).toHaveClass('scroll-mt-20');
+    expect(screen.getByText('找到 41 张卡牌、1 个系列')).toHaveAttribute('role', 'status');
+    expect(enabledPageCalls().at(-1)?.input).toMatchObject({ q: '极光', limit: 30, cardPage: 1 });
+
+    const top = screen.getByRole('navigation', { name: '顶部分页' });
+    const bottom = screen.getByRole('navigation', { name: '底部分页' });
+    expect(heading.compareDocumentPosition(top) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const list = screen.getByRole('region', { name: '卡牌（41）' }).querySelector('ul');
+    if (!list) throw new Error('no result list');
+    expect(list).not.toHaveAttribute('aria-busy');
+    expect(top.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(list.compareDocumentPosition(bottom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(top).getByText('1').closest('[aria-current="page"]')).toHaveClass(
+      'bg-brand-600',
+      'text-white',
+    );
+    expect(within(top).getByText('上一页').closest('[aria-disabled="true"]')).not.toBeNull();
+    const pageTwo = within(bottom).getByRole('link', { name: '第 2 页' });
+    expect(new URL(pageTwo.getAttribute('href') ?? '', 'http://x').searchParams.get('page')).toBe(
+      '2',
+    );
+    expect(within(top).getByRole('link', { name: '第 1 页' }).getAttribute('href')).not.toContain(
+      'page=',
+    );
+
+    await user.click(pageTwo);
+    expect(pageParam()).toBe('2');
+    expect(enabledPageCalls().at(-1)?.input).toMatchObject({ q: '极光', cardPage: 2 });
+    await waitFor(() => expect(screen.getByRole('heading', { name: '卡牌（41）' })).toHaveFocus());
+
+    // A page click is a history entry.
+    await user.click(screen.getByRole('button', { name: '后退' }));
+    expect(pageParam()).toBeNull();
+  });
+
+  it('removes an invalid page', async () => {
+    harness.cardTotal = 41;
+    renderSearch('?q=极光&page=abc');
+    await waitFor(() => expect(pageParam()).toBeNull());
+    expect(urlQuery()).toBe('极光');
+    expect(enabledPageCalls().every((call) => call.input.cardPage === 1)).toBe(true);
+  });
+
+  it('drops an explicit page=1', async () => {
+    harness.cardTotal = 41;
+    renderSearch('?q=极光&page=1');
+    await waitFor(() => expect(pageParam()).toBeNull());
+  });
+
+  it('never requests a page above 10000', async () => {
+    harness.cardTotal = 41;
+    renderSearch('?q=极光&page=10001');
+    await waitFor(() => expect(pageParam()).toBeNull());
+    expect(enabledPageCalls().some((call) => (call.input.cardPage ?? 1) > 10_000)).toBe(false);
+  });
+
+  it('replaces a page past the end with the last page', async () => {
+    harness.cardTotal = 41;
+    renderSearch('?q=极光&page=9');
+    await waitFor(() => expect(pageParam()).toBe('2'));
+    expect(enabledPageCalls().at(-1)?.input).toMatchObject({ cardPage: 2 });
+  });
+
+  it('starts a new query on page 1 and drops page from the URL', async () => {
+    const user = userEvent.setup();
+    harness.cardTotal = 41;
+    renderSearch('?q=极光&page=2');
+    await screen.findByRole('heading', { name: '卡牌（41）' });
+    const input = screen.getByRole('searchbox', { name: '全站搜索' });
+    await user.clear(input);
+    await user.type(input, '冰川');
+    await waitFor(() => expect(urlQuery()).toBe('冰川'));
+    expect(pageParam()).toBeNull();
+    expect(enabledPageCalls().at(-1)?.input).toMatchObject({ q: '冰川', cardPage: 1 });
+  });
+
+  it('shows one row per card with the number and subset line, never merging same names (§2)', async () => {
+    renderSearch('?q=极光');
+    const line = await screen.findByText('#025 · 151');
+    expect(line).toHaveClass('font-mono', 'text-xs', 'tabular-nums', 'text-neutral-600');
+    expect(line).toHaveClass('wrap-anywhere');
+    expect(screen.getByText('#SV-P-001 · promo-slug')).toBeInTheDocument();
+    const name = screen.getByText('极光骑士', { selector: 'span' });
+    expect(name).toHaveClass('text-sm', 'font-semibold', 'text-neutral-900', 'wrap-anywhere');
+    expect(name).not.toHaveClass('truncate');
+    expect(name.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('keeps two cards with the same name as two rows', async () => {
+    renderSearch('?q=金箔');
+    const rows = await screen.findAllByRole('link', { name: /极光骑士/ });
+    expect(rows.map((row) => row.getAttribute('href'))).toEqual([
+      '/cards/aurora-foil',
+      '/cards/aurora-plain',
+    ]);
+  });
+
+  it('adds the c: hint to the empty state (§3)', async () => {
+    harness.mode = 'empty';
+    renderSearch('?q=025');
+    expect(await screen.findByText('没有找到匹配的卡牌或系列')).toBeInTheDocument();
+    expect(
+      screen.getByText('搜卡号可以直接输入 025 或 25-07。字母卡号请用 c:，例如 c:B。'),
+    ).toHaveClass('text-sm', 'text-neutral-600');
+  });
+
+  it('reserves the 40px title slot while loading, with no number or pagination (§6)', () => {
+    harness.mode = 'loading';
+    renderSearch('?q=极光');
+    const slot = document.querySelector('.h-7.animate-pulse');
+    expect(slot).toHaveAttribute('aria-hidden');
+    expect(slot).toHaveClass('rounded-sm', 'bg-neutral-200', 'motion-reduce:animate-none');
+    expect(slot?.parentElement).toHaveClass('space-y-3', 'min-h-svh');
+    expect(slot?.nextElementSibling?.querySelectorAll('li')).toHaveLength(3);
+    expect(screen.queryByRole('heading', { name: /卡牌/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: '顶部分页' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the previous page on screen and marks the list busy while paging', async () => {
+    harness.mode = 'refreshing';
+    harness.cardTotal = 41;
+    renderSearch('?q=极光');
+    await screen.findByRole('heading', { name: '卡牌（41）' });
+    const region = screen.getByRole('region', { name: '卡牌（41）' });
+    expect(region.querySelector('ul')).toHaveAttribute('aria-busy', 'true');
+    expect(document.querySelector('.h-7.animate-pulse')).toBeNull();
+  });
+
+  it('shows the error as an alert before any skeleton and retries', async () => {
+    const user = userEvent.setup();
+    harness.mode = 'error';
+    renderSearch('?q=极光');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('搜索失败');
+    expect(document.querySelector('.animate-pulse')).toBeNull();
+    await user.click(within(alert).getByRole('button', { name: '重试' }));
+    expect(harness.refetch).toHaveBeenCalled();
+  });
+
+  it('uses the English copy', async () => {
+    rootStore.locale.setLocale('en-US');
+    harness.cardTotal = 41;
+    renderSearch('?q=极光');
+    expect(await screen.findByRole('heading', { name: 'Cards (41)' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Top pagination' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Bottom pagination' })).toBeInTheDocument();
   });
 });

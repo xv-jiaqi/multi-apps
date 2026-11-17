@@ -21,7 +21,6 @@ import {
 } from '@repo/shared';
 import {
   Button,
-  buttonVariants,
   cn,
   Input,
   Select,
@@ -35,6 +34,7 @@ import { ART_ASPECT, ART_SURFACE, useArtImage } from '../components/artwork';
 import { dataErrorRetryClassName, ErrorBox } from '../components/error-box';
 import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { CardVariantBadgeRow } from '../components/card-variant-badge';
+import { PagePagination } from '../components/page-pagination';
 import { RARITY_LABELS, RarityBadge } from '../components/rarity-badge';
 import { displayCardNumber } from '../lib/catalog-taxonomy';
 import { gradientFor } from '../lib/gradients';
@@ -42,7 +42,6 @@ import { useStores } from '../stores/root-store';
 import {
   SERIES_LIST_ANY,
   SERIES_LIST_PAGE_SIZE,
-  pageTokens,
   parseSeriesListParams,
   seriesCardAttributeLine,
   seriesListSearch,
@@ -368,6 +367,24 @@ export const SeriesCardList = observer(function SeriesCardList({
     !list.isLoading;
   const showGrid = !emptySeries && !showError && !!list.data && list.data.items.length > 0;
 
+  // CH-241 §5: one control above the grid and one below, same behaviour.
+  const showPagination = !emptySeries && !showError && pageCount > 1;
+  const pagination = (place: 'top' | 'bottom') => (
+    <PagePagination
+      label={tt(place === 'top' ? 'pagination.top' : 'pagination.bottom')}
+      previousLabel={tt('pagination.prev')}
+      nextLabel={tt('pagination.next')}
+      pageLabel={(page) => tt('pagination.page', { page })}
+      page={Math.min(state.page, pageCount)}
+      pageCount={pageCount}
+      hrefFor={(page) => hrefFor({ ...state, page })}
+      onPage={() => {
+        pageFocus.current = true;
+      }}
+      className="justify-center"
+    />
+  );
+
   const hrefFor = (next: SeriesListState) => {
     const search = seriesListSearch(next, searchParams);
     return search ? `/series/${seriesSlug}?${search}` : `/series/${seriesSlug}`;
@@ -542,6 +559,8 @@ export const SeriesCardList = observer(function SeriesCardList({
         {emptySeries ? null : <CountText text={announced} className="ms-auto hidden sm:block" />}
       </div>
 
+      {showPagination ? pagination('top') : null}
+
       {emptySeries ? (
         <p className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-neutral-600">
           {tt('series.list.empty')}
@@ -617,21 +636,7 @@ export const SeriesCardList = observer(function SeriesCardList({
         </ul>
       ) : null}
 
-      {!emptySeries && !showError && pageCount > 1 ? (
-        <SeriesPagination
-          label={tt('pagination.label')}
-          previousLabel={tt('pagination.prev')}
-          nextLabel={tt('pagination.next')}
-          pageLabel={(page) => tt('pagination.page', { page })}
-          positionLabel={tt('pagination.of', { page: state.page, count: pageCount })}
-          page={Math.min(state.page, pageCount)}
-          pageCount={pageCount}
-          hrefFor={(page) => hrefFor({ ...state, page })}
-          onPage={() => {
-            pageFocus.current = true;
-          }}
-        />
-      ) : null}
+      {showPagination ? pagination('bottom') : null}
     </section>
   );
 });
@@ -652,125 +657,4 @@ function rarityValue(value: string): CardRarity {
 function sortValue(value: string): CardSeriesListSort {
   const matched = CARD_SERIES_LIST_SORT_VALUES.find((item) => item === value);
   return matched ?? 'number';
-}
-
-function SeriesPagination({
-  label,
-  previousLabel,
-  nextLabel,
-  pageLabel,
-  positionLabel,
-  page,
-  pageCount,
-  hrefFor,
-  onPage,
-}: {
-  label: string;
-  previousLabel: string;
-  nextLabel: string;
-  pageLabel: (page: number) => string;
-  positionLabel: string;
-  page: number;
-  pageCount: number;
-  hrefFor: (page: number) => string;
-  onPage: () => void;
-}) {
-  const tokens = pageTokens(page, pageCount);
-  return (
-    <nav aria-label={label} className="flex flex-wrap items-center justify-center gap-2">
-      <PageEdge
-        label={previousLabel}
-        href={hrefFor(page - 1)}
-        disabled={page <= 1}
-        onPage={onPage}
-      />
-      <span className="text-sm text-neutral-600 sm:hidden">{positionLabel}</span>
-      <ol className="hidden sm:contents">
-        {tokens.map((token) =>
-          token.kind === 'gap' ? (
-            <li key={token.key} aria-hidden className="px-1 text-sm text-neutral-600">
-              …
-            </li>
-          ) : (
-            <li key={token.page} className="flex">
-              <PageNumber
-                page={token.page}
-                current={token.page === page}
-                href={hrefFor(token.page)}
-                label={pageLabel(token.page)}
-                onPage={onPage}
-              />
-            </li>
-          ),
-        )}
-      </ol>
-      <PageEdge
-        label={nextLabel}
-        href={hrefFor(page + 1)}
-        disabled={page >= pageCount}
-        onPage={onPage}
-      />
-    </nav>
-  );
-}
-
-function PageEdge({
-  label,
-  href,
-  disabled,
-  onPage,
-}: {
-  label: string;
-  href: string;
-  disabled: boolean;
-  onPage: () => void;
-}) {
-  if (disabled) {
-    return (
-      <span aria-disabled="true" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-        {label}
-      </span>
-    );
-  }
-  return (
-    <Button asChild variant="outline" size="sm">
-      <Link to={href} onClick={onPage}>
-        {label}
-      </Link>
-    </Button>
-  );
-}
-
-function PageNumber({
-  page,
-  current,
-  href,
-  label,
-  onPage,
-}: {
-  page: number;
-  current: boolean;
-  href: string;
-  label: string;
-  onPage: () => void;
-}) {
-  return (
-    <Button
-      asChild
-      variant="outline"
-      size="sm"
-      className={
-        current ? 'bg-brand-600 text-white hover:bg-brand-600 hover:text-white' : undefined
-      }
-    >
-      <Link
-        to={href}
-        aria-label={label}
-        aria-current={current ? 'page' : undefined}
-        onClick={onPage}
-      >
-        {page}
-      </Link>
-    </Button>
-  );
 }
