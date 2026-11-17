@@ -141,6 +141,10 @@ before recreating the edge. `lb_try_duration` is unchanged.
 installs Caddy 2.11.7, the version currently reported by `caddy:2-alpine`,
 and fails if that binary is missing.
 
+The apex web site, staging web, and both API sites compress responses with
+`encode zstd gzip` (zstd, then gzip). GET/HEAD retries stay at 5s. The www
+host remains a 308 redirect.
+
 `GET /sitemap.xml` on the apex and on `staging.card-hub.app` is proxied to
 that environment's API (`{$ENV_NAME}-api:4000` and `staging-api:4000`). The
 web container still serves `/robots.txt`. `www` keeps the 308, so
@@ -824,7 +828,9 @@ The web container receives runtime `TRPC_URL` and optional browser Sentry
 settings (`WEB_SENTRY_DSN`, `SENTRY_ENVIRONMENT`, and the image `GIT_SHA`) via
 the nginx entrypoint. The generated `/config.js` is uncached and validated at
 container startup; a missing or malformed `TRPC_URL` makes the web container
-exit instead of silently falling back to another API URL.
+exit instead of silently falling back to another API URL. The production web
+build omits source maps, and nginx answers `/assets/*.map` with 404. CI
+passes the browser DSN through `WEB_SENTRY_DSN` and does not upload maps.
 
 ## Rollback
 

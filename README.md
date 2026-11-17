@@ -165,9 +165,9 @@ pnpm dev
 Cardhub 使用平台无关的 Docker 镜像 + Docker Compose 部署到单台 Linux VPS，当前运行在阿里云香港（详见 [`deploy/README.md`](deploy/README.md)）。
 
 - **API 镜像（仓库根）**：[`Dockerfile.api`](Dockerfile.api) — 构建阶段会 `prisma generate`。一次性 `migrate` 容器用 `MIGRATE_DATABASE_URL` 执行 `prisma migrate deploy`（未设置时回退到 `DATABASE_URL`），长驻 API 容器只拿 `DATABASE_URL` 并 `exec node dist/main.js`。生产库的角色拆分见 [`deploy/db/README.md`](deploy/db/README.md)。
-- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；该变量必填，缺失或格式不合法时容器拒绝启动。`PUBLIC_WEB_ORIGIN` 会重写 `/robots.txt` 的 `Sitemap` 行；不设置时沿用镜像里的 `https://card-hub.app/sitemap.xml`。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
+- **Web 镜像**：[`Dockerfile.web`](Dockerfile.web) — 运行时环境变量 `TRPC_URL`（完整 URL，含 `/trpc`，例如 `https://api.card-hub.app/trpc`）由 nginx entrypoint 写入 `/config.js`；该变量必填，缺失或格式不合法时容器拒绝启动。`PUBLIC_WEB_ORIGIN` 会重写 `/robots.txt` 的 `Sitemap` 行；不设置时沿用镜像里的 `https://card-hub.app/sitemap.xml`。生产构建不输出 source map（Vite `build.sourcemap` 保持默认关闭），产物 JS 不含 `sourceMappingURL`。nginx 对 `/assets/*.map` 返回 404。静态托管时也可直接 `pnpm --filter @cardhub/web build`，产物为 `apps/cardhub/web/dist/`。
 - **站点地图**：`GET /sitemap.xml` 由 API 生成系列、卡牌和话题地址。边缘 Caddy 在 Web 域名上把它反代到 API。页面 `description` 和预渲染不在这项里。
-- **VPS 部署**：[`deploy/docker-compose.yml`](deploy/docker-compose.yml) 启动 API / Web / Postgres / Redis；[`deploy/edge`](deploy/edge) 的共享 Caddy 负责 HTTPS 和反向代理。
+- **VPS 部署**：[`deploy/docker-compose.yml`](deploy/docker-compose.yml) 启动 API / Web / Postgres / Redis；[`deploy/edge`](deploy/edge) 的共享 Caddy 负责 HTTPS 和反向代理。反代 Web 与 API 的站点使用 `encode zstd gzip`（先 zstd，再 gzip）。`www` 保持 308。
 - 多端 tRPC URL：Web Docker 用运行时 `TRPC_URL`；非容器静态托管可用 `VITE_TRPC_URL` fallback；Tauri / Android emulator 各自的特殊路由见 [`docs/Cardhub/handoff-context.md`](docs/Cardhub/handoff-context.md)。
 
 ## tRPC 端到端类型安全
