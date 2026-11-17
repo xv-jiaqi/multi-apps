@@ -1,10 +1,10 @@
-import { loadSeriesReleases } from './series-releases';
+import { loadSeriesReleases, type SeriesRelease } from './series-releases';
 import { Injectable } from '@nestjs/common';
-import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { seriesListInput, slugSchema } from '@repo/shared';
+import { seriesBySlugInput, seriesListInput } from '@repo/shared';
 import { formatReleaseDate } from '../catalog/release-date';
 import { TrpcBase } from '../../trpc/trpc-base';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CatalogCache,
@@ -22,6 +22,66 @@ import {
   seriesListWhere,
   toPublicSeries,
 } from './series-public';
+
+const seriesMetaSelect = {
+  id: true,
+  slug: true,
+  title: true,
+  description: true,
+  coverUrl: true,
+  releaseDate: true,
+  category: { select: { slug: true, name: true } },
+  subsets: {
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }, { slug: 'asc' }],
+    select: { slug: true, name: true, kind: true, sortOrder: true },
+  },
+} satisfies Prisma.SeriesSelect;
+
+function toSeriesMeta(
+  series: {
+    id: string;
+    slug: string;
+    title: string;
+    description: string | null;
+    coverUrl: string | null;
+    releaseDate: Date | null;
+    category: { slug: string; name: string } | null;
+    subsets: Array<{ slug: string; name: string; kind: 'BASE' | 'INSERT'; sortOrder: number }>;
+  },
+  stamped: { createdAt: string; updatedAt: string },
+) {
+  return {
+    id: series.id,
+    slug: series.slug,
+    title: series.title,
+    description: series.description,
+    coverUrl: series.coverUrl,
+    createdAt: stamped.createdAt,
+    updatedAt: stamped.updatedAt,
+    releaseDate: formatReleaseDate(series.releaseDate),
+    category: series.category ? { slug: series.category.slug, name: series.category.name } : null,
+    subsets: series.subsets,
+  };
+}
+
+type SeriesBySlugCard = {
+  id: string;
+  slug: string;
+  name: string;
+  rarity: string | null;
+  imageUrl: string | null;
+  cardNumber: string | null;
+  subsetSlug: string | null;
+  parallelName: string | null;
+  printRun: number | null;
+  parallelOfId: string | null;
+};
+
+type SeriesBySlugResult = ReturnType<typeof toSeriesMeta> & {
+  baseCardCount: number;
+  releases: SeriesRelease[];
+  cards?: SeriesBySlugCard[];
+};
 
 @Injectable()
 export class SeriesRouter {
@@ -75,66 +135,62 @@ export class SeriesRouter {
         });
       }),
 
-      bySlug: t.procedure.input(z.object({ slug: slugSchema })).query(async ({ input }) => {
-        const detail = await cache.read(
-          seriesBySlugKey(input.slug),
-          seriesBySlugSchema,
-          async () => {
+      bySlug: t.procedure
+        .input(seriesBySlugInput)
+        .query(async ({ input }): Promise<SeriesBySlugResult> => {
+          const includeCards = input.includeCards !== false;
+          if (!includeCards) {
             const series = await prisma.series.findUnique({
               where: { slug: input.slug },
-              select: {
-                id: true,
-                slug: true,
-                title: true,
-                description: true,
-                coverUrl: true,
-                releaseDate: true,
-                category: { select: { slug: true, name: true } },
-                subsets: {
-                  orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }, { slug: 'asc' }],
-                  select: { slug: true, name: true, kind: true, sortOrder: true },
-                },
-                // Pending removal. The miniapp and the current web series page
-                // still read this full list in createdAt order. Checklist
-                // search, numeric order, and paging live on cards.listBySeries.
-                cards: {
-                  orderBy: { createdAt: 'asc' },
-                  select: {
-                    id: true,
-                    slug: true,
-                    name: true,
-                    rarity: true,
-                    imageUrl: true,
-                    cardNumber: true,
-                    parallelName: true,
-                    printRun: true,
-                    parallelOfId: true,
-                    subset: { select: { slug: true } },
-                  },
-                },
-              },
+              select: seriesMetaSelect,
             });
             if (!series) {
               throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
             }
-            const stamped = requireSeriesTimes(
-              await readSeriesTimes(prisma, [series.id]),
-              series.id,
-            );
-            return {
-              id: series.id,
-              slug: series.slug,
-              title: series.title,
-              description: series.description,
-              coverUrl: series.coverUrl,
-              createdAt: stamped.createdAt,
-              updatedAt: stamped.updatedAt,
-              releaseDate: formatReleaseDate(series.releaseDate),
-              category: series.category
-                ? { slug: series.category.slug, name: series.category.name }
-                : null,
-              subsets: series.subsets,
-              cards: series.cards.map((card) => ({
+            const [stamped, baseCardCount, releases] = await Promise.all([
+              requireSeriesTimes(await readSeriesTimes(prisma, [series.id]), series.id),
+              prisma.card.count({ where: { seriesId: series.id, parallelOfId: null } }),
+              loadSeriesReleases(prisma, series.id),
+            ]);
+            return { ...toSeriesMeta(series, stamped), baseCardCount, releases, cards: undefined };
+          }
+
+          const detail = await cache.read(
+            seriesBySlugKey(input.slug),
+            seriesBySlugSchema,
+            async () => {
+              const series = await prisma.series.findUnique({
+                where: { slug: input.slug },
+                select: {
+                  ...seriesMetaSelect,
+                  // Pending removal. The miniapp and admin still read this full
+                  // list in createdAt order. The web series page passes
+                  // includeCards: false and uses cards.listBySeries instead.
+                  cards: {
+                    orderBy: { createdAt: 'asc' },
+                    select: {
+                      id: true,
+                      slug: true,
+                      name: true,
+                      rarity: true,
+                      imageUrl: true,
+                      cardNumber: true,
+                      parallelName: true,
+                      printRun: true,
+                      parallelOfId: true,
+                      subset: { select: { slug: true } },
+                    },
+                  },
+                },
+              });
+              if (!series) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
+              }
+              const stamped = requireSeriesTimes(
+                await readSeriesTimes(prisma, [series.id]),
+                series.id,
+              );
+              const cards = series.cards.map((card) => ({
                 id: card.id,
                 slug: card.slug,
                 name: card.name,
@@ -145,13 +201,17 @@ export class SeriesRouter {
                 parallelName: card.parallelName,
                 printRun: card.printRun,
                 parallelOfId: card.parallelOfId,
-              })),
-            };
-          },
-        );
-        const releases = await loadSeriesReleases(prisma, detail.id);
-        return { ...detail, releases };
-      }),
+              }));
+              return {
+                ...toSeriesMeta(series, stamped),
+                cards,
+                baseCardCount: cards.filter((card) => card.parallelOfId == null).length,
+              };
+            },
+          );
+          const releases = await loadSeriesReleases(prisma, detail.id);
+          return { ...detail, releases };
+        }),
     });
   }
 }

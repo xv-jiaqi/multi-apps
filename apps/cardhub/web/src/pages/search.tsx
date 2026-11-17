@@ -79,17 +79,19 @@ function Field({
 
 function SearchSkeleton() {
   return (
-    <ul className={`${RESULT_LIST_CLASS} animate-pulse motion-reduce:animate-none`}>
-      {Array.from({ length: 3 }, (_, index) => (
-        <li key={index} className="flex items-center gap-4 p-4">
-          <span className="aspect-[63/88] w-10 shrink-0 rounded-sm bg-neutral-200" />
-          <span className="min-w-0 flex-1 space-y-2">
-            <span className="block h-4 w-40 rounded-sm bg-neutral-200" />
-            <span className="block h-3 w-24 rounded-sm bg-neutral-200" />
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="min-h-svh">
+      <ul className={`${RESULT_LIST_CLASS} animate-pulse motion-reduce:animate-none`}>
+        {Array.from({ length: 3 }, (_, index) => (
+          <li key={index} className="flex items-center gap-4 p-4">
+            <span className="aspect-[63/88] w-10 shrink-0 rounded-sm bg-neutral-200" />
+            <span className="min-w-0 flex-1 space-y-2">
+              <span className="block h-4 w-40 rounded-sm bg-neutral-200" />
+              <span className="block h-3 w-24 rounded-sm bg-neutral-200" />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

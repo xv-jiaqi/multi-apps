@@ -26,6 +26,13 @@ describe('parseSeriesListParams', () => {
     expect(parsed.replace).toBe(true);
   });
 
+  it('keeps a subset query while the subset list is not loaded yet', () => {
+    const parsed = parseSeriesListParams(new URLSearchParams('subset=base&page=2'), null);
+    expect(parsed.state.subset).toBe('base');
+    expect(parsed.state.page).toBe(2);
+    expect(parsed.replace).toBe(false);
+  });
+
   it('keeps a real filter and a positive page', () => {
     const parsed = parseSeriesListParams(
       new URLSearchParams('q=龙&subset=base&rarity=rare&sort=name&page=2'),

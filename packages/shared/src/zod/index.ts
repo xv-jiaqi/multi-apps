@@ -419,6 +419,13 @@ export const seriesListInput = paginationSchema.extend({
 });
 export type SeriesListInput = z.infer<typeof seriesListInput>;
 
+export const seriesBySlugInput = z.object({
+  slug: slugSchema,
+  /** When omitted or true, the nested `cards` list is included. Web passes false. */
+  includeCards: z.boolean().optional(),
+});
+export type SeriesBySlugInput = z.infer<typeof seriesBySlugInput>;
+
 /** Checklist order. `number` compares the printed card number, not the slug. */
 export const CARD_SERIES_LIST_SORT_VALUES = ['number', 'name', 'rarity', 'created'] as const;
 export type CardSeriesListSort = (typeof CARD_SERIES_LIST_SORT_VALUES)[number];

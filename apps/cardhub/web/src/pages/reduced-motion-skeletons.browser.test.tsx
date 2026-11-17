@@ -44,6 +44,9 @@ vi.mock('../lib/trpc', () => ({
       },
     },
     cards: {
+      listBySeries: {
+        useQuery: () => loadingQuery,
+      },
       bySlug: {
         useQuery: () => ({
           ...loadingQuery,
@@ -119,6 +122,6 @@ describe('skeleton motion under prefers-reduced-motion', () => {
 
     expect(window.matchMedia('(prefers-reduced-motion: reduce)').matches).toBe(true);
     const names = animationNames(document.body);
-    expect(names).toEqual(['none', 'none', 'none', 'none', 'none', 'none']);
+    expect(names).toEqual(['none', 'none', 'none', 'none', 'none', 'none', 'none', 'none']);
   });
 });
