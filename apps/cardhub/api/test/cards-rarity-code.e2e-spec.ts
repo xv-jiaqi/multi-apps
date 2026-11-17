@@ -125,6 +125,7 @@ describe('cards.listBySeries rarityCode (CH-239 / AC7-7)', () => {
   const suffix = `${Date.now().toString(36)}${randomUUID().slice(0, 8)}`.replace(/[^a-z0-9]/g, '');
   const seriesSlug = `rc30-${suffix}`.slice(0, 64);
   const plainSlug = `rcplain-${suffix}`.slice(0, 64);
+  const parallelSlug = `rcpar-${suffix}`.slice(0, 64);
   const fixture = thirtiethCards();
 
   beforeAll(async () => {
@@ -170,11 +171,50 @@ describe('cards.listBySeries rarityCode (CH-239 / AC7-7)', () => {
         seriesId: plain.id,
       })),
     });
+
+    // 需求 v1.1: `SSR` is printed only on a parallel; `C` and `R` are on base cards.
+    const withParallel = await prisma.series.create({
+      data: { slug: parallelSlug, title: '平行码' },
+    });
+    const parBase = await prisma.card.create({
+      data: {
+        slug: `rcpar-001-${suffix}`.slice(0, 64),
+        name: '基础一',
+        rarity: 'common',
+        cardNumber: '001',
+        attributes: { 稀有度: 'C' },
+        seriesId: withParallel.id,
+      },
+    });
+    await prisma.card.create({
+      data: {
+        slug: `rcpar-002-${suffix}`.slice(0, 64),
+        name: '基础二',
+        rarity: 'rare',
+        cardNumber: '002',
+        attributes: { 稀有度: 'R' },
+        seriesId: withParallel.id,
+      },
+    });
+    await prisma.card.create({
+      data: {
+        slug: `rcpar-001p-${suffix}`.slice(0, 64),
+        name: '基础一',
+        rarity: 'epic',
+        cardNumber: '001',
+        attributes: { 稀有度: 'SSR' },
+        seriesId: withParallel.id,
+        parallelOfId: parBase.id,
+        parallelName: '闪卡',
+      },
+    });
   });
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.series.deleteMany({ where: { slug: { in: [seriesSlug, plainSlug] } } });
+      await prisma.series.deleteMany({
+        where: { slug: { in: [seriesSlug, plainSlug, parallelSlug] } },
+      });
     }
     await app?.close();
   });
@@ -206,6 +246,7 @@ describe('cards.listBySeries rarityCode (CH-239 / AC7-7)', () => {
     );
     expect(body.seriesTotal).toBe(176);
     expect(body.rarityCodes).toEqual(THIRTIETH_CODES);
+    expect(body.baseRarityCodes).toEqual(THIRTIETH_CODES);
   });
 
   it('keeps rarityCodes fixed across filters and returns every item rarityCode', async () => {
@@ -263,7 +304,36 @@ describe('cards.listBySeries rarityCode (CH-239 / AC7-7)', () => {
     expect(response.status).toBe(200);
     const body = resultData(response.body);
     expect(body.rarityCodes).toEqual([]);
+    expect(body.baseRarityCodes).toEqual([]);
     expect(listedCards(response.body).map((card) => card.rarityCode)).toEqual([null, null]);
+  });
+
+  it('returns baseRarityCodes without the parallel-only code; rarityCodes stays whole (需求 v1.1)', async () => {
+    for (const input of [{}, { includeParallels: true }, { rarityCode: 'C' }]) {
+      const response = await list({ seriesSlug: parallelSlug, ...input });
+      expect(response.status).toBe(200);
+      expect(resultData(response.body).rarityCodes).toEqual(['C', 'SSR', 'R']);
+      expect(resultData(response.body).baseRarityCodes).toEqual(['C', 'R']);
+    }
+
+    // Old link: parallel-only code with parallels off is an empty list, not an error.
+    const stale = await list({ seriesSlug: parallelSlug, rarityCode: 'SSR' });
+    expect(stale.status).toBe(200);
+    expect(resultData(stale.body).total).toBe(0);
+    expect(resultData(stale.body).items).toEqual([]);
+
+    const shown = await list({
+      seriesSlug: parallelSlug,
+      rarityCode: 'SSR',
+      includeParallels: true,
+    });
+    expect(resultData(shown.body).total).toBe(1);
+    expect(listedCards(shown.body)[0]).toMatchObject({ rarityCode: 'SSR', cardNumber: '001' });
+
+    const cached = await app
+      .get(RedisService)
+      .client.get(cardsListBySeriesCacheKey({ seriesSlug: parallelSlug }));
+    expect(cached).toContain('"baseRarityCodes":["C","R"]');
   });
 
   it('caches each rarityCode under its own key with the new fields', async () => {

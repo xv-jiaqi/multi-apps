@@ -543,6 +543,7 @@ describe('CardsRouter.listBySeries', () => {
       ]) {
         const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', ...input });
         expect(page.rarityCodes).toEqual(ALL_CODES);
+        expect(page.baseRarityCodes).toEqual(ALL_CODES);
       }
     });
 
@@ -591,12 +592,31 @@ describe('CardsRouter.listBySeries', () => {
       expect(conflicting.total).toBe(0);
     });
 
-    it('hides parallels by default, but their codes stay in rarityCodes', async () => {
-      const cards = [codeRow('001', 'C'), codeRow('001', 'S', { parallelOfId: 'id-001' })];
+    it('adds baseRarityCodes without parallel-only codes; rarityCodes stays whole (需求 v1.1)', async () => {
+      const cards = [
+        codeRow('002', 'R', { parallelOfId: 'id-002' }),
+        codeRow('001', 'C'),
+        codeRow('001', 'S', { parallelOfId: 'id-001' }),
+        codeRow('002', 'R'),
+        codeRow('000', 'R', { parallelOfId: 'id-000' }),
+      ];
       const { caller } = load(cards);
-      const hidden = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'S' });
-      expect(hidden.total).toBe(0);
-      expect(hidden.rarityCodes).toEqual(['C', 'S']);
+      for (const input of [
+        {},
+        { includeParallels: true },
+        { rarityCode: 'C' },
+        { rarityCode: 'S', includeParallels: true },
+        { subsetSlug: 'special' },
+      ]) {
+        const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', ...input });
+        // R first appears on parallel 000, so it leads both lists.
+        expect(page.rarityCodes).toEqual(['R', 'C', 'S']);
+        expect(page.baseRarityCodes).toEqual(['R', 'C']);
+      }
+      // Old link: parallel-only code with parallels off is an empty list, not an error.
+      const stale = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'S' });
+      expect(stale.total).toBe(0);
+      expect(stale.items).toEqual([]);
       const shown = await caller.listBySeries({
         seriesSlug: 'ptcg-sc-30th',
         rarityCode: 'S',
@@ -610,6 +630,7 @@ describe('CardsRouter.listBySeries', () => {
       const { caller } = load([codeRow('1', undefined), codeRow('2', '  ')]);
       const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th' });
       expect(page.rarityCodes).toEqual([]);
+      expect(page.baseRarityCodes).toEqual([]);
       expect(page.total).toBe(2);
       expect(page.items.map((item) => item.rarityCode)).toEqual([null, null]);
     });
