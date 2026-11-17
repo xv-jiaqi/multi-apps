@@ -48,6 +48,7 @@ import {
   seriesListSearch,
   type SeriesListState,
 } from '../lib/series-list-params';
+import { seriesCardListInput } from '../lib/series-detail-queries';
 import { useDebounced } from '../lib/use-debounced';
 import { trpc } from '../lib/trpc';
 
@@ -277,19 +278,9 @@ export const SeriesCardList = observer(function SeriesCardList({
     );
   }, [debounced, setSearchParams]);
 
-  const list = trpc.cards.listBySeries.useQuery(
-    {
-      seriesSlug,
-      page: state.page,
-      pageSize: SERIES_LIST_PAGE_SIZE,
-      ...(state.q ? { q: state.q } : {}),
-      ...(state.subset ? { subsetSlug: state.subset } : {}),
-      ...(state.rarity ? { rarity: state.rarity } : {}),
-      ...(state.sort !== 'number' ? { sort: state.sort } : {}),
-      ...(state.parallels ? { includeParallels: true } : {}),
-    },
-    { placeholderData: keepPreviousData },
-  );
+  const list = trpc.cards.listBySeries.useQuery(seriesCardListInput(seriesSlug, state), {
+    placeholderData: keepPreviousData,
+  });
   const listView = queryFallback(list);
   useFocusOnRecovery(listView, titleRef);
 

@@ -9,6 +9,7 @@ import {
   isChunkLoadError,
 } from './components/error-boundary';
 import { CardDetailSkeleton } from './components/card-detail-skeleton';
+import { SeriesDetailPrefetch } from './components/series-detail-prefetch';
 import { RouteErrorFallback } from './components/route-error';
 import { captureSentryException } from './lib/sentry';
 import { HomePage } from './pages/home';
@@ -203,7 +204,12 @@ export const appRoutes: RouteObject[] = [
       { path: '/calendar', element: lazyPage('/calendar', <CalendarPage />) },
       {
         path: '/series/:seriesSlug',
-        element: lazyPage('/series/:seriesSlug', <SeriesDetailPage />),
+        element: (
+          <>
+            <SeriesDetailPrefetch />
+            {lazyPage('/series/:seriesSlug', <SeriesDetailPage />)}
+          </>
+        ),
       },
       {
         path: '/cards/:cardSlug',
