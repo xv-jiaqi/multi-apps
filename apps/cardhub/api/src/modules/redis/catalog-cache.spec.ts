@@ -92,6 +92,7 @@ describe('catalog cache keys', () => {
         seriesSlug: 'celestial-dawn',
         q: undefined,
         rarity: undefined,
+        rarityCode: undefined,
         subsetSlug: undefined,
         sort: 'number',
         page: 1,
@@ -101,7 +102,7 @@ describe('catalog cache keys', () => {
     expect(defaults.startsWith('cardhub:cache:v1:')).toBe(true);
     expect(defaults).toContain('cards.listBySeries:series=celestial-dawn&');
     expect(defaults).toContain(
-      'q=&rarity=&subset=&sort=number&page=1&pageSize=60&includeParallels=0',
+      'q=&rarity=&subset=&sort=number&page=1&pageSize=60&includeParallels=0&rarityCode=',
     );
     expect(
       cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', includeParallels: false }),
@@ -113,6 +114,7 @@ describe('catalog cache keys', () => {
     const varied = [
       { q: '龙' },
       { rarity: 'rare' },
+      { rarityCode: 'SAR' },
       { subsetSlug: 'base' },
       { sort: 'name' },
       { page: 2 },
@@ -129,6 +131,16 @@ describe('catalog cache keys', () => {
     );
     expect(cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', q: 'a&b' })).not.toContain(
       'q=a&b',
+    );
+    // CH-239: symbol and Chinese codes are encoded, so they cannot split the key.
+    expect(
+      cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', rarityCode: '★★★' }),
+    ).toContain(`&rarityCode=${encodeURIComponent('★★★')}`);
+    expect(
+      cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', rarityCode: 'A&page=2' }),
+    ).toContain('&rarityCode=A%26page%3D2');
+    expect(cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', rarityCode: 'AR' })).not.toBe(
+      cardsListBySeriesCacheKey({ seriesSlug: 'celestial-dawn', rarityCode: 'SAR' }),
     );
   });
 });
