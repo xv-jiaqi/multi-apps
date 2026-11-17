@@ -8,19 +8,17 @@ const appRoot = path.resolve(__dirname, '..');
 const distDir = path.resolve(process.env.CARDHUB_WEB_DIST ?? path.join(appRoot, 'dist'));
 const reportPath = path.join(distDir, 'first-load-js.json');
 
-// Spec CH-242 v1.0 42-1 estimates. The check records them but does not fail
-// the build when they are missed: on f8c0f21 the leftover first-load graph is
-// the shell (React, Sentry, react-router, MobX, Zod, i18n, tRPC, header
-// combobox), which series and search pages actually use. See the JSON report.
-const SPEC_DECODED_MAX = 900_000;
-const SPEC_GZIP_MAX = 260_000;
+// Spec CH-242 v1.1 42-1 limits.
+const SPEC_DECODED_MAX = 1_050_000;
+const SPEC_GZIP_MAX = 320_000;
 
-// Regression ceilings from the CH-242 after-build on f8c0f21, plus ~5%.
+// Regression ceilings from the CH-242 after-build on f8c0f21, plus a small
+// margin, capped at the v1.1 42-1 limits.
 // Search first-load was 970,509 / 297,932 (gzip-6); series 1,017,218 / 312,959.
 const SEARCH_DECODED_MAX = 1_020_000;
-const SERIES_DECODED_MAX = 1_070_000;
+const SERIES_DECODED_MAX = 1_050_000;
 const SEARCH_GZIP_MAX = 315_000;
-const SERIES_GZIP_MAX = 330_000;
+const SERIES_GZIP_MAX = 320_000;
 
 function listJs(dir) {
   if (!existsSync(dir)) return [];
