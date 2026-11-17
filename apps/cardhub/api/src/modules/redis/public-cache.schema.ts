@@ -94,6 +94,8 @@ export const cardsListBySeriesSchema = z.object({
   attributeLabels: z.record(z.string(), attributeLabelSchema),
   /** CH-239. Required for the same reason as `items[].rarityCode`. */
   rarityCodes: z.array(z.string()),
+  /** CH-239 需求 v1.1: codes on base cards, `rarityCodes` order. Required like `rarityCodes`. */
+  baseRarityCodes: z.array(z.string()),
 });
 
 export const cardBySlugSchema = z.object({
