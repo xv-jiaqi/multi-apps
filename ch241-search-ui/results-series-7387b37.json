@@ -1,0 +1,73 @@
+{
+ "sha": "unknown",
+ "results": [
+  {
+   "file": "series-pagination_1440_zh.png",
+   "case": "series-pagination",
+   "width": 1440,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n分类\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n收录 192 张卡牌\n\n发售于 2025年1月17日\n\n搜索本系列\n子集\n全部\n稀有度\n全部\n排序\n卡号\n本系列卡牌\n\n共 192 张\n\n上一页\n1\n2\n…\n4\n下一页\n妙\n#001妙蛙种子\nC\nseries.rarityCode.named\n妙\n#002妙蛙草\nU\nseries.rarityCode.named\n妙\n#003妙蛙花ex\nRR\nseries.rarityCode.named\n小\n#004小火龙\nC\nseries.rarityCode.named\n火\n#005火恐龙\nU\nseries.rarityCode.named\n喷\n#006喷火龙ex\nRR\nseries.rarityCode.named\n杰\n#007杰尼龟\nC\nseries.rarityCode.named\n卡\n#008卡咪龟\nU\nseries.rarityCode.named\n水\n#009水箭龟ex\nRR\nseries.rarityCode.named\n绿\n#010绿毛虫\nC\nseries.rarityCode.named\n铁\n#011铁甲蛹\nC\nseries.rarityCode.named\n巴\n#012巴大蝶\nU\nseries.rarityCode.named\n独\n#013独角虫\nC\nseries.rarityCode.named\n铁\n#014铁壳蛹\nC\nseries.rarityCode.named\n大\n#015大针蜂\nR\nseries.rarityCode.named\n波\n#016波波\nC\nseries.rarityCode.named\n比\n#017比比鸟\nC\nseries.rarityCode.named\n大\n#018大比鸟\nU\nseries.rarityCode.named\n小\n#019小拉达\nC\nseries.rarityCode.named\n拉\n#020拉达\nU\nseries.rarityCode.named\n烈\n#021烈雀\nC\nseries.rarityCode.named\n大\n#022大嘴雀\nU\nseries.rarityCode.named\n阿\n#023阿柏蛇\nC\nseries.rarityCode.named\n阿\n#024阿柏怪ex\nRR\nseries.rarityCode.named\n皮\n#025皮卡丘\nC\nseries.rarityCode.named\n雷\n#026雷丘\nR\nseries.rarityCode.named\n穿\n#027穿山鼠\nC\nseries.rarityCode.named\n穿\n#028穿山王\nU\nseries.rarityCode.named\n尼\n#029尼多兰\nC\nseries.rarityCode.named\n尼\n#030尼多娜\nU\nseries.rarityCode.named\n尼\n#031尼多后\nU\nseries.rarityCode.named\n尼\n#032尼多朗\nC\nseries.rarityCode.named\n尼\n#033尼多力诺\nU\nseries.rarityCode.named\n尼\n#034尼多王\nR\nseries.rarityCode.named\n皮\n#035皮皮\nC\nseries.rarityCode.named\n皮\n#036皮可西\nU\nseries.rarityCode.named\n六\n#037六尾\nC\nseries.rarityCode.named\n九\n#038九尾ex\nRR\nseries.rarityCode.named\n胖\n#039胖丁\nC\nseries.rarityCode.named\n胖\n#040胖可丁ex\nRR\nseries.rarityCode.named\n超\n#041超音蝠\nC\nseries.rarityCode.named\n大\n#042大嘴蝠\nU\nseries.rarityCode.named\n走\n#043走路草\nC\nseries.rarityCode.named\n臭\n#044臭臭花\nU\nseries.rarityCode.named\n霸\n#045霸王花\nR\nseries.rarityCode.named\n派\n#046派拉斯\nC\nseries.rarityCode.named\n派\n#047派拉斯特\nU\nseries.rarityCode.named\n毛\n#048毛球\nC\nseries.rarityCode.named\n摩\n#049摩鲁蛾\nU\nseries.rarityCode.named\n地\n#050地鼠\nC\nseries.rarityCode.named\n三\n#051三地鼠\nU\nseries.rarityCode.named\n喵\n#052喵喵\nC\nseries.rarityCode.named\n猫\n#053猫老大\nU\nseries.rarityCode.named\n可\n#054可达鸭\nC\nseries.rarityCode.named\n哥\n#055哥达鸭\nU\nseries.rarityCode.named\n猴\n#056猴怪\nC\nseries.rarityCode.named\n火\n#057火暴猴\nU\nseries.rarityCode.named\n卡\n#058卡蒂狗\nC\nseries.rarityCode.named\n风\n#059风速狗\nU\nseries.rarityCode.named\n蚊\n#060蚊香蝌蚪\nC\nseries.rarityCode.named\n上一页\n1\n2\n…\n4\n下一页\n系列评论\n\n登录后即可发表评论\n\n还没有评论，来抢沙发吧",
+   "axe": []
+  },
+  {
+   "file": "series-pagination_1440_en.png",
+   "case": "series-pagination",
+   "width": 1440,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nCategories\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n192 CARDS INSIDE\n\nReleased Jan 17, 2025\n\nSearch this set\nSubset\nAll\nRarity\nAll\nSort\nNumber\nCards in this series\n\n192 cards\n\nPrevious\n1\n2\n…\n4\nNext\n妙\n#001妙蛙种子\nC\nseries.rarityCode.named\n妙\n#002妙蛙草\nU\nseries.rarityCode.named\n妙\n#003妙蛙花ex\nRR\nseries.rarityCode.named\n小\n#004小火龙\nC\nseries.rarityCode.named\n火\n#005火恐龙\nU\nseries.rarityCode.named\n喷\n#006喷火龙ex\nRR\nseries.rarityCode.named\n杰\n#007杰尼龟\nC\nseries.rarityCode.named\n卡\n#008卡咪龟\nU\nseries.rarityCode.named\n水\n#009水箭龟ex\nRR\nseries.rarityCode.named\n绿\n#010绿毛虫\nC\nseries.rarityCode.named\n铁\n#011铁甲蛹\nC\nseries.rarityCode.named\n巴\n#012巴大蝶\nU\nseries.rarityCode.named\n独\n#013独角虫\nC\nseries.rarityCode.named\n铁\n#014铁壳蛹\nC\nseries.rarityCode.named\n大\n#015大针蜂\nR\nseries.rarityCode.named\n波\n#016波波\nC\nseries.rarityCode.named\n比\n#017比比鸟\nC\nseries.rarityCode.named\n大\n#018大比鸟\nU\nseries.rarityCode.named\n小\n#019小拉达\nC\nseries.rarityCode.named\n拉\n#020拉达\nU\nseries.rarityCode.named\n烈\n#021烈雀\nC\nseries.rarityCode.named\n大\n#022大嘴雀\nU\nseries.rarityCode.named\n阿\n#023阿柏蛇\nC\nseries.rarityCode.named\n阿\n#024阿柏怪ex\nRR\nseries.rarityCode.named\n皮\n#025皮卡丘\nC\nseries.rarityCode.named\n雷\n#026雷丘\nR\nseries.rarityCode.named\n穿\n#027穿山鼠\nC\nseries.rarityCode.named\n穿\n#028穿山王\nU\nseries.rarityCode.named\n尼\n#029尼多兰\nC\nseries.rarityCode.named\n尼\n#030尼多娜\nU\nseries.rarityCode.named\n尼\n#031尼多后\nU\nseries.rarityCode.named\n尼\n#032尼多朗\nC\nseries.rarityCode.named\n尼\n#033尼多力诺\nU\nseries.rarityCode.named\n尼\n#034尼多王\nR\nseries.rarityCode.named\n皮\n#035皮皮\nC\nseries.rarityCode.named\n皮\n#036皮可西\nU\nseries.rarityCode.named\n六\n#037六尾\nC\nseries.rarityCode.named\n九\n#038九尾ex\nRR\nseries.rarityCode.named\n胖\n#039胖丁\nC\nseries.rarityCode.named\n胖\n#040胖可丁ex\nRR\nseries.rarityCode.named\n超\n#041超音蝠\nC\nseries.rarityCode.named\n大\n#042大嘴蝠\nU\nseries.rarityCode.named\n走\n#043走路草\nC\nseries.rarityCode.named\n臭\n#044臭臭花\nU\nseries.rarityCode.named\n霸\n#045霸王花\nR\nseries.rarityCode.named\n派\n#046派拉斯\nC\nseries.rarityCode.named\n派\n#047派拉斯特\nU\nseries.rarityCode.named\n毛\n#048毛球\nC\nseries.rarityCode.named\n摩\n#049摩鲁蛾\nU\nseries.rarityCode.named\n地\n#050地鼠\nC\nseries.rarityCode.named\n三\n#051三地鼠\nU\nseries.rarityCode.named\n喵\n#052喵喵\nC\nseries.rarityCode.named\n猫\n#053猫老大\nU\nseries.rarityCode.named\n可\n#054可达鸭\nC\nseries.rarityCode.named\n哥\n#055哥达鸭\nU\nseries.rarityCode.named\n猴\n#056猴怪\nC\nseries.rarityCode.named\n火\n#057火暴猴\nU\nseries.rarityCode.named\n卡\n#058卡蒂狗\nC\nseries.rarityCode.named\n风\n#059风速狗\nU\nseries.rarityCode.named\n蚊\n#060蚊香蝌蚪\nC\nseries.rarityCode.named\nPrevious\n1\n2\n…\n4\nNext\nSeries comments\n\nSign in to leave a comment\n\nNo comments yet — be the first to chime in",
+   "axe": []
+  },
+  {
+   "file": "series-pagination_375_zh.png",
+   "case": "series-pagination",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n分类\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n收录 192 张卡牌\n\n发售于 2025年1月17日\n\n搜索本系列\n\n共 192 张\n\n筛选\n本系列卡牌\n上一页\n1\n2\n…\n4\n下一页\n妙\n#001妙蛙种子\nC\nseries.rarityCode.named\n妙\n#002妙蛙草\nU\nseries.rarityCode.named\n妙\n#003妙蛙花ex\nRR\nseries.rarityCode.named\n小\n#004小火龙\nC\nseries.rarityCode.named\n火\n#005火恐龙\nU\nseries.rarityCode.named\n喷\n#006喷火龙ex\nRR\nseries.rarityCode.named\n杰\n#007杰尼龟\nC\nseries.rarityCode.named\n卡\n#008卡咪龟\nU\nseries.rarityCode.named\n水\n#009水箭龟ex\nRR\nseries.rarityCode.named\n绿\n#010绿毛虫\nC\nseries.rarityCode.named\n铁\n#011铁甲蛹\nC\nseries.rarityCode.named\n巴\n#012巴大蝶\nU\nseries.rarityCode.named\n独\n#013独角虫\nC\nseries.rarityCode.named\n铁\n#014铁壳蛹\nC\nseries.rarityCode.named\n大\n#015大针蜂\nR\nseries.rarityCode.named\n波\n#016波波\nC\nseries.rarityCode.named\n比\n#017比比鸟\nC\nseries.rarityCode.named\n大\n#018大比鸟\nU\nseries.rarityCode.named\n小\n#019小拉达\nC\nseries.rarityCode.named\n拉\n#020拉达\nU\nseries.rarityCode.named\n烈\n#021烈雀\nC\nseries.rarityCode.named\n大\n#022大嘴雀\nU\nseries.rarityCode.named\n阿\n#023阿柏蛇\nC\nseries.rarityCode.named\n阿\n#024阿柏怪ex\nRR\nseries.rarityCode.named\n皮\n#025皮卡丘\nC\nseries.rarityCode.named\n雷\n#026雷丘\nR\nseries.rarityCode.named\n穿\n#027穿山鼠\nC\nseries.rarityCode.named\n穿\n#028穿山王\nU\nseries.rarityCode.named\n尼\n#029尼多兰\nC\nseries.rarityCode.named\n尼\n#030尼多娜\nU\nseries.rarityCode.named\n尼\n#031尼多后\nU\nseries.rarityCode.named\n尼\n#032尼多朗\nC\nseries.rarityCode.named\n尼\n#033尼多力诺\nU\nseries.rarityCode.named\n尼\n#034尼多王\nR\nseries.rarityCode.named\n皮\n#035皮皮\nC\nseries.rarityCode.named\n皮\n#036皮可西\nU\nseries.rarityCode.named\n六\n#037六尾\nC\nseries.rarityCode.named\n九\n#038九尾ex\nRR\nseries.rarityCode.named\n胖\n#039胖丁\nC\nseries.rarityCode.named\n胖\n#040胖可丁ex\nRR\nseries.rarityCode.named\n超\n#041超音蝠\nC\nseries.rarityCode.named\n大\n#042大嘴蝠\nU\nseries.rarityCode.named\n走\n#043走路草\nC\nseries.rarityCode.named\n臭\n#044臭臭花\nU\nseries.rarityCode.named\n霸\n#045霸王花\nR\nseries.rarityCode.named\n派\n#046派拉斯\nC\nseries.rarityCode.named\n派\n#047派拉斯特\nU\nseries.rarityCode.named\n毛\n#048毛球\nC\nseries.rarityCode.named\n摩\n#049摩鲁蛾\nU\nseries.rarityCode.named\n地\n#050地鼠\nC\nseries.rarityCode.named\n三\n#051三地鼠\nU\nseries.rarityCode.named\n喵\n#052喵喵\nC\nseries.rarityCode.named\n猫\n#053猫老大\nU\nseries.rarityCode.named\n可\n#054可达鸭\nC\nseries.rarityCode.named\n哥\n#055哥达鸭\nU\nseries.rarityCode.named\n猴\n#056猴怪\nC\nseries.rarityCode.named\n火\n#057火暴猴\nU\nseries.rarityCode.named\n卡\n#058卡蒂狗\nC\nseries.rarityCode.named\n风\n#059风速狗\nU\nseries.rarityCode.named\n蚊\n#060蚊香蝌蚪\nC\nseries.rarityCode.named\n上一页\n1\n2\n…\n4\n下一页\n系列评论\n\n登录后即可发表评论\n\n还没有评论，来抢沙发吧",
+   "axe": []
+  },
+  {
+   "file": "series-pagination_375_en.png",
+   "case": "series-pagination",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nCategories\n/\n宝可梦简中\n/\n收集啦151\n宝可梦简中\n收集啦151\n\n宝可梦卡牌简体中文版补充包，2025 年 1 月 17 日发售，收录 192 张。\n\n192 CARDS INSIDE\n\nReleased Jan 17, 2025\n\nSearch this set\n\n192 cards\n\nFilters\nCards in this series\nPrevious\n1\n2\n…\n4\nNext\n妙\n#001妙蛙种子\nC\nseries.rarityCode.named\n妙\n#002妙蛙草\nU\nseries.rarityCode.named\n妙\n#003妙蛙花ex\nRR\nseries.rarityCode.named\n小\n#004小火龙\nC\nseries.rarityCode.named\n火\n#005火恐龙\nU\nseries.rarityCode.named\n喷\n#006喷火龙ex\nRR\nseries.rarityCode.named\n杰\n#007杰尼龟\nC\nseries.rarityCode.named\n卡\n#008卡咪龟\nU\nseries.rarityCode.named\n水\n#009水箭龟ex\nRR\nseries.rarityCode.named\n绿\n#010绿毛虫\nC\nseries.rarityCode.named\n铁\n#011铁甲蛹\nC\nseries.rarityCode.named\n巴\n#012巴大蝶\nU\nseries.rarityCode.named\n独\n#013独角虫\nC\nseries.rarityCode.named\n铁\n#014铁壳蛹\nC\nseries.rarityCode.named\n大\n#015大针蜂\nR\nseries.rarityCode.named\n波\n#016波波\nC\nseries.rarityCode.named\n比\n#017比比鸟\nC\nseries.rarityCode.named\n大\n#018大比鸟\nU\nseries.rarityCode.named\n小\n#019小拉达\nC\nseries.rarityCode.named\n拉\n#020拉达\nU\nseries.rarityCode.named\n烈\n#021烈雀\nC\nseries.rarityCode.named\n大\n#022大嘴雀\nU\nseries.rarityCode.named\n阿\n#023阿柏蛇\nC\nseries.rarityCode.named\n阿\n#024阿柏怪ex\nRR\nseries.rarityCode.named\n皮\n#025皮卡丘\nC\nseries.rarityCode.named\n雷\n#026雷丘\nR\nseries.rarityCode.named\n穿\n#027穿山鼠\nC\nseries.rarityCode.named\n穿\n#028穿山王\nU\nseries.rarityCode.named\n尼\n#029尼多兰\nC\nseries.rarityCode.named\n尼\n#030尼多娜\nU\nseries.rarityCode.named\n尼\n#031尼多后\nU\nseries.rarityCode.named\n尼\n#032尼多朗\nC\nseries.rarityCode.named\n尼\n#033尼多力诺\nU\nseries.rarityCode.named\n尼\n#034尼多王\nR\nseries.rarityCode.named\n皮\n#035皮皮\nC\nseries.rarityCode.named\n皮\n#036皮可西\nU\nseries.rarityCode.named\n六\n#037六尾\nC\nseries.rarityCode.named\n九\n#038九尾ex\nRR\nseries.rarityCode.named\n胖\n#039胖丁\nC\nseries.rarityCode.named\n胖\n#040胖可丁ex\nRR\nseries.rarityCode.named\n超\n#041超音蝠\nC\nseries.rarityCode.named\n大\n#042大嘴蝠\nU\nseries.rarityCode.named\n走\n#043走路草\nC\nseries.rarityCode.named\n臭\n#044臭臭花\nU\nseries.rarityCode.named\n霸\n#045霸王花\nR\nseries.rarityCode.named\n派\n#046派拉斯\nC\nseries.rarityCode.named\n派\n#047派拉斯特\nU\nseries.rarityCode.named\n毛\n#048毛球\nC\nseries.rarityCode.named\n摩\n#049摩鲁蛾\nU\nseries.rarityCode.named\n地\n#050地鼠\nC\nseries.rarityCode.named\n三\n#051三地鼠\nU\nseries.rarityCode.named\n喵\n#052喵喵\nC\nseries.rarityCode.named\n猫\n#053猫老大\nU\nseries.rarityCode.named\n可\n#054可达鸭\nC\nseries.rarityCode.named\n哥\n#055哥达鸭\nU\nseries.rarityCode.named\n猴\n#056猴怪\nC\nseries.rarityCode.named\n火\n#057火暴猴\nU\nseries.rarityCode.named\n卡\n#058卡蒂狗\nC\nseries.rarityCode.named\n风\n#059风速狗\nU\nseries.rarityCode.named\n蚊\n#060蚊香蝌蚪\nC\nseries.rarityCode.named\nPrevious\n1\n2\n…\n4\nNext\nSeries comments\n\nSign in to leave a comment\n\nNo comments yet — be the first to chime in",
+   "axe": []
+  }
+ ]
+}
