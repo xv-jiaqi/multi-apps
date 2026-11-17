@@ -59,6 +59,12 @@ export interface ImportRowResult {
     slug: string | null;
     name: string | null;
     seriesSlug?: string | null;
+    /** Present only on series rows (CH-238). Absent = omitted; "" / null = will clear. */
+    categorySlug?: string | null;
+    releaseDate?: string | null;
+    /** Present only on card rows (CH-238). Absent = omitted; "" / null = will clear. */
+    subsetSlug?: string | null;
+    cardNumber?: string | null;
   };
   status: ImportStatus;
   errors: Array<{ path: string; code: string; message?: string }>;

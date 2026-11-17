@@ -53,6 +53,79 @@ const RESULT_KEY: Record<ImportStatus, string> = {
   error: 'admin.import.error',
 };
 
+const TAXONOMY_FIELDS = ['categorySlug', 'releaseDate', 'subsetSlug', 'cardNumber'] as const;
+type TaxonomyField = (typeof TAXONOMY_FIELDS)[number];
+
+const TAXONOMY_COL_KEY: Record<TaxonomyField, string> = {
+  categorySlug: 'admin.import.colCategory',
+  releaseDate: 'admin.import.colReleaseDate',
+  subsetSlug: 'admin.import.colSubset',
+  cardNumber: 'admin.import.colCardNumber',
+};
+
+function taxonomyFieldsFor(type: ImportRowResult['row']['type']): readonly TaxonomyField[] {
+  return type === 'series' ? ['categorySlug', 'releaseDate'] : ['subsetSlug', 'cardNumber'];
+}
+
+function isTaxonomyApplicable(type: ImportRowResult['row']['type'], field: TaxonomyField): boolean {
+  return taxonomyFieldsFor(type).includes(field);
+}
+
+function taxonomyValue(
+  row: ImportRowResult['row'],
+  field: TaxonomyField,
+): string | null | undefined {
+  switch (field) {
+    case 'categorySlug':
+      return row.categorySlug;
+    case 'releaseDate':
+      return row.releaseDate;
+    case 'subsetSlug':
+      return row.subsetSlug;
+    case 'cardNumber':
+      return row.cardNumber;
+    default: {
+      const _exhaustive: never = field;
+      return _exhaustive;
+    }
+  }
+}
+
+/**
+ * CH-238 §2-3: absent key = omitted (keep stored), "" / null = will clear,
+ * otherwise the file value (including invalid strings shown as written).
+ */
+function ImportTaxonomyValue({
+  value,
+  label,
+}: {
+  value: string | null | undefined;
+  label: (key: string) => string;
+}) {
+  if (value === undefined) {
+    return <span className="text-muted">{label('admin.import.omitted')}</span>;
+  }
+  if (value === '' || value === null) {
+    return <span className="text-danger">{label('admin.import.willClear')}</span>;
+  }
+  return <span className="font-mono wrap-anywhere">{value}</span>;
+}
+
+function ImportTaxonomyCell({
+  applicable,
+  value,
+  label,
+}: {
+  applicable: boolean;
+  value: string | null | undefined;
+  label: (key: string) => string;
+}) {
+  if (!applicable) {
+    return <span className="sr-only">{label('admin.import.notApplicable')}</span>;
+  }
+  return <ImportTaxonomyValue value={value} label={label} />;
+}
+
 /**
  * One import error. Parallel fields keep the CH-213 §16 label form. Every other
  * field uses CH-107 §7.4: `{field}：copy` on the first line, the full path below.
@@ -504,63 +577,132 @@ const CatalogImportBody = observer(function CatalogImportBody() {
                 ]}
               />
             ) : null}
-            <AdminTable caption={tt('admin.import.caption')} labelledBy="import-preview-title">
-              <AdminTableHead>
-                <AdminTh>{tt('admin.import.colRow')}</AdminTh>
-                <AdminTh>{tt('admin.import.colKind')}</AdminTh>
-                <AdminTh>{tt('admin.col.slug')}</AdminTh>
-                <AdminTh>{tt('admin.col.name')}</AdminTh>
-                <AdminTh>{tt('admin.import.colResult')}</AdminTh>
-                <AdminTh className="hidden sm:table-cell">{tt('admin.import.colProblem')}</AdminTh>
-              </AdminTableHead>
-              <tbody className="divide-y divide-neutral-200">
+            <div className="hidden sm:block">
+              <AdminTable caption={tt('admin.import.caption')} labelledBy="import-preview-title">
+                <AdminTableHead>
+                  <AdminTh>{tt('admin.import.colRow')}</AdminTh>
+                  <AdminTh>{tt('admin.import.colKind')}</AdminTh>
+                  <AdminTh>{tt('admin.col.slug')}</AdminTh>
+                  <AdminTh>{tt('admin.col.name')}</AdminTh>
+                  {TAXONOMY_FIELDS.map((field) => (
+                    <AdminTh key={field} className="hidden min-w-32 sm:table-cell">
+                      {tt(TAXONOMY_COL_KEY[field])}
+                    </AdminTh>
+                  ))}
+                  <AdminTh>{tt('admin.import.colResult')}</AdminTh>
+                  <AdminTh className="hidden sm:table-cell">
+                    {tt('admin.import.colProblem')}
+                  </AdminTh>
+                </AdminTableHead>
+                <tbody className="divide-y divide-neutral-200">
+                  {visibleRows.map((row) => {
+                    const names = displayImportNames(preview.data, row.row, row.errors);
+                    return (
+                      <tr
+                        key={row.row.row}
+                        className={row.status === 'error' ? 'bg-danger-soft/50' : undefined}
+                      >
+                        <td className="whitespace-nowrap px-3 py-2 align-top tabular-nums text-muted">
+                          {row.row.row}
+                        </td>
+                        <td
+                          className={`whitespace-nowrap px-3 py-2 align-top ${row.row.type === 'card' ? 'pl-6' : ''}`}
+                        >
+                          {row.row.type === 'series'
+                            ? tt('admin.import.kindSeries')
+                            : tt('admin.import.kindCard')}
+                        </td>
+                        <td className="px-3 py-2 align-top font-mono text-xs text-neutral-600 wrap-anywhere">
+                          {names.slug}
+                        </td>
+                        <td className="min-w-24 px-3 py-2 align-top font-medium text-neutral-900 wrap-anywhere">
+                          {names.name}
+                        </td>
+                        {TAXONOMY_FIELDS.map((field) => (
+                          <td
+                            key={field}
+                            className="hidden min-w-32 px-3 py-2 align-top sm:table-cell"
+                          >
+                            <ImportTaxonomyCell
+                              applicable={isTaxonomyApplicable(row.row.type, field)}
+                              value={taxonomyValue(row.row, field)}
+                              label={tt}
+                            />
+                          </td>
+                        ))}
+                        <td className="whitespace-nowrap px-3 py-2 align-top">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RESULT_CLASS[row.status]}`}
+                          >
+                            {tt(RESULT_KEY[row.status])}
+                          </span>
+                        </td>
+                        <td className="hidden px-3 py-2 align-top text-xs text-danger sm:table-cell">
+                          {orderImportErrors(row.errors).map((error) => (
+                            <p key={`${error.path}-${error.code}`}>
+                              <ImportProblem
+                                data={preview.data}
+                                path={error.path}
+                                code={error.code}
+                                message={error.message}
+                              />
+                            </p>
+                          ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </AdminTable>
+            </div>
+            <section
+              aria-labelledby="import-preview-title"
+              className="max-w-full space-y-2 sm:hidden"
+            >
+              <ol className="max-w-full space-y-2">
                 {visibleRows.map((row) => {
                   const names = displayImportNames(preview.data, row.row, row.errors);
+                  const kind =
+                    row.row.type === 'series'
+                      ? tt('admin.import.kindSeries')
+                      : tt('admin.import.kindCard');
                   return (
-                    <tr
+                    <li
                       key={row.row.row}
-                      className={row.status === 'error' ? 'bg-danger-soft/50' : undefined}
+                      className={
+                        row.status === 'error'
+                          ? 'max-w-full rounded-md border border-danger-border bg-danger-soft/50 p-3 text-xs'
+                          : 'max-w-full rounded-md border border-neutral-200 bg-card p-3 text-xs'
+                      }
                     >
-                      <td className="whitespace-nowrap px-3 py-2 align-top tabular-nums text-muted">
-                        {row.row.row}
-                      </td>
-                      <td
-                        className={`whitespace-nowrap px-3 py-2 align-top ${row.row.type === 'card' ? 'pl-6' : ''}`}
-                      >
-                        {row.row.type === 'series'
-                          ? tt('admin.import.kindSeries')
-                          : tt('admin.import.kindCard')}
-                      </td>
-                      <td className="px-3 py-2 align-top font-mono text-xs text-neutral-600 wrap-anywhere">
-                        {names.slug}
-                      </td>
-                      <td className="min-w-24 px-3 py-2 align-top font-medium text-neutral-900 wrap-anywhere">
-                        {names.name}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 align-top">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RESULT_CLASS[row.status]}`}
-                        >
-                          {tt(RESULT_KEY[row.status])}
-                        </span>
-                      </td>
-                      <td className="hidden px-3 py-2 align-top text-xs text-danger sm:table-cell">
-                        {orderImportErrors(row.errors).map((error) => (
-                          <p key={`${error.path}-${error.code}`}>
-                            <ImportProblem
-                              data={preview.data}
-                              path={error.path}
-                              code={error.code}
-                              message={error.message}
-                            />
-                          </p>
+                      <p>
+                        {tt('admin.import.rowRef', { row: row.row.row })} · {kind} ·{' '}
+                        <span className="font-mono wrap-anywhere">{names.slug}</span>
+                      </p>
+                      <p className="wrap-anywhere">{names.name}</p>
+                      <dl className="mt-2 space-y-1">
+                        {taxonomyFieldsFor(row.row.type).map((field) => (
+                          <div key={field}>
+                            <dt className="text-muted">{tt(TAXONOMY_COL_KEY[field])}</dt>
+                            <dd>
+                              <ImportTaxonomyValue
+                                value={taxonomyValue(row.row, field)}
+                                label={tt}
+                              />
+                            </dd>
+                          </div>
                         ))}
-                      </td>
-                    </tr>
+                      </dl>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RESULT_CLASS[row.status]}`}
+                      >
+                        {tt(RESULT_KEY[row.status])}
+                      </span>
+                    </li>
                   );
                 })}
-              </tbody>
-            </AdminTable>
+              </ol>
+            </section>
             <div className="space-y-2">
               {/* CH-107 §7.3：按钮在左、提示在右，同一时间只有一条提示，按钮 describedby 指向它。 */}
               <div className="flex flex-wrap items-center gap-3">

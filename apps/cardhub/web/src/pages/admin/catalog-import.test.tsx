@@ -47,7 +47,17 @@ vi.mock('../../lib/trpc', () => ({
 }));
 
 import { CatalogImportPage } from './catalog-import';
-import { AC62_IMPORT, AC62_ROWS, AC73_IMPORT, AC73_ROWS } from './catalog-import-fixture';
+import {
+  AC62_IMPORT,
+  AC62_ROWS,
+  AC73_IMPORT,
+  AC73_ROWS,
+  CH238_IMPORT,
+  CH238_LONG_CARD_NUMBER,
+  CH238_LONG_SLUG,
+  CH238_LONG_SUBSET,
+  CH238_ROWS,
+} from './catalog-import-fixture';
 
 function row(
   partial: Partial<ImportRowResult> &
@@ -61,6 +71,10 @@ function row(
       slug: partial.row?.slug ?? 'celestial-dawn',
       name: partial.row?.name ?? '天穹黎明',
       seriesSlug: partial.row?.seriesSlug,
+      categorySlug: partial.row?.categorySlug,
+      releaseDate: partial.row?.releaseDate,
+      subsetSlug: partial.row?.subsetSlug,
+      cardNumber: partial.row?.cardNumber,
     },
     status: partial.status,
     errors: partial.errors ?? [],
@@ -169,12 +183,12 @@ describe('catalog import', () => {
     await user.paste('[]');
     await user.click(screen.getByRole('button', { name: '预览' }));
 
-    expect(screen.getByText('错误')).toBeInTheDocument();
-    expect(screen.queryByText('新增')).not.toBeInTheDocument();
-    expect(screen.queryByText('无变化')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: '只看错误' })).toBeChecked();
-    // 375 的问题清单在 jsdom 里也渲染（没有 CSS），问题列断言限定在表格内。
+    // 375 的问题清单和预览卡片在 jsdom 里也渲染（没有 CSS），chip 和问题列断言限定在表格内。
     const table = screen.getByRole('table');
+    expect(within(table).getByText('错误')).toBeInTheDocument();
+    expect(within(table).queryByText('新增')).not.toBeInTheDocument();
+    expect(within(table).queryByText('无变化')).not.toBeInTheDocument();
     expect(within(table).getByText('series[0].cards[2].rarity')).toBeInTheDocument();
     expect(
       within(table).getByText(/必须是 common、rare、epic、legendary 之一/),
@@ -183,10 +197,10 @@ describe('catalog import', () => {
     expect(screen.getByText('有 1 处错误，修正后才能导入')).toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: '全部' }));
-    expect(screen.getByText('新增')).toBeInTheDocument();
-    expect(screen.getByText('更新')).toBeInTheDocument();
-    expect(screen.getByText('无变化')).toBeInTheDocument();
-    expect(screen.getByText('错误')).toBeInTheDocument();
+    expect(within(table).getByText('新增')).toBeInTheDocument();
+    expect(within(table).getByText('更新')).toBeInTheDocument();
+    expect(within(table).getByText('无变化')).toBeInTheDocument();
+    expect(within(table).getByText('错误')).toBeInTheDocument();
 
     await user.type(screen.getByRole('textbox', { name: 'JSON 内容' }), ' ');
     expect(screen.getByText('内容已修改，请重新预览')).toBeInTheDocument();
@@ -966,5 +980,274 @@ describe('catalog import subset limit (CH-107 v4.2 §7.4, §7.8; AC7-3)', () => 
     const table = await screen.findByRole('table');
     expect(table.textContent).not.toContain(zhCopy);
     expect(table.textContent).not.toContain('TOO_MANY_SUBSETS');
+  });
+});
+
+describe('catalog import taxonomy columns (CH-238 §3, §4, §7, §10)', () => {
+  async function previewCh238(locale: 'zh-CN' | 'en-US') {
+    rootStore.locale.setLocale(locale);
+    importImpl.current = async () => CH238_ROWS;
+    const user = userEvent.setup();
+    renderPage();
+    const box = screen.getByRole('textbox', { name: locale === 'zh-CN' ? 'JSON 内容' : 'JSON' });
+    await user.click(box);
+    await user.paste(JSON.stringify(CH238_IMPORT));
+    await user.click(screen.getByRole('button', { name: locale === 'zh-CN' ? '预览' : 'Preview' }));
+    const table = await screen.findByRole('table');
+    // Default filter is errors-only when a row has an error; show every row.
+    await user.click(screen.getByRole('radio', { name: locale === 'zh-CN' ? '全部' : 'All' }));
+    return { user, table, cards: previewCardSection(locale) };
+  }
+
+  function previewCardSection(locale: 'zh-CN' | 'en-US'): HTMLElement {
+    const name = locale === 'zh-CN' ? '预览结果' : 'Preview results';
+    const section = screen
+      .getAllByRole('region', { name })
+      .find((node) => node.tagName === 'SECTION' && node.className.includes('sm:hidden'));
+    if (!section) throw new Error('missing 375 card section');
+    return section;
+  }
+
+  function previewCards(cards: HTMLElement): HTMLElement {
+    const list = cards.querySelector('ol');
+    if (!list) throw new Error('missing card list');
+    return list;
+  }
+
+  function exactText(expected: string) {
+    return (_content: string, node: Element | null) =>
+      Boolean(node && node.children.length === 0 && node.textContent === expected);
+  }
+  function at<T>(items: readonly T[], index: number): T {
+    const item = items[index];
+    if (item === undefined) throw new Error(`missing item ${index}`);
+    return item;
+  }
+
+  it('shows ten columns in order and the ptcg-sc-30th values in Chinese', async () => {
+    const { table } = await previewCh238('zh-CN');
+    const headers = within(table)
+      .getAllByRole('columnheader')
+      .map((node) => node.textContent);
+    expect(headers).toEqual([
+      '行',
+      '类型',
+      'slug',
+      '名称',
+      '品类',
+      '发售日期',
+      '子集',
+      '卡号',
+      '结果',
+      '问题',
+    ]);
+    expect(within(table).getByRole('columnheader', { name: '品类' })).toHaveClass(
+      'hidden',
+      'min-w-32',
+      'sm:table-cell',
+    );
+    expect(within(table).getByRole('columnheader', { name: '发售日期' })).toHaveClass(
+      'hidden',
+      'min-w-32',
+      'sm:table-cell',
+    );
+    expect(within(table).getByRole('columnheader', { name: '子集' })).toHaveClass(
+      'hidden',
+      'min-w-32',
+      'sm:table-cell',
+    );
+    expect(within(table).getByRole('columnheader', { name: '卡号' })).toHaveClass(
+      'hidden',
+      'min-w-32',
+      'sm:table-cell',
+    );
+
+    const rows = within(table).getAllByRole('row');
+    // header + 5 body rows
+    expect(rows).toHaveLength(6);
+    expect(at(rows, 1)).toHaveTextContent('ptcg-sc');
+    expect(at(rows, 1)).toHaveTextContent('2026-09-16');
+    expect(within(at(rows, 1)).getByText('ptcg-sc')).toHaveClass('font-mono', 'wrap-anywhere');
+    expect(within(at(rows, 1)).getByText('2026-09-16')).toHaveClass('font-mono', 'wrap-anywhere');
+    expect(at(rows, 2)).toHaveTextContent('main');
+    expect(at(rows, 2)).toHaveTextContent('001');
+  });
+
+  it('shows English headers and the three value states in the table', async () => {
+    const { table } = await previewCh238('en-US');
+    const headers = within(table)
+      .getAllByRole('columnheader')
+      .map((node) => node.textContent);
+    expect(headers).toEqual([
+      'Row',
+      'Type',
+      'Slug',
+      'Name',
+      'Category',
+      'Release date',
+      'Subset',
+      'Card number',
+      'Result',
+      'Problem',
+    ]);
+
+    const rows = within(table).getAllByRole('row');
+    // Row 3: category value, release date omitted. Subset/card number not applicable.
+    expect(within(at(rows, 3)).getByText('Omitted (kept)')).toHaveClass('text-muted');
+    expect(within(at(rows, 3)).queryByText('Will clear')).not.toBeInTheDocument();
+    const notApplicable = within(at(rows, 3)).getAllByText('Not applicable');
+    expect(notApplicable).toHaveLength(2);
+    for (const node of notApplicable) {
+      expect(node).toHaveClass('sr-only');
+    }
+    expect(within(at(rows, 3)).queryByText('Omitted (kept)', { exact: true })).toBeTruthy();
+    // N/A cells are not labelled "Omitted (kept)"
+    expect(at(notApplicable, 0).textContent).toBe('Not applicable');
+
+    // Row 4: card number will clear, subset has a value
+    expect(within(at(rows, 4)).getByText('Will clear')).toHaveClass('text-danger');
+    expect(within(at(rows, 4)).getByText('main')).toHaveClass('font-mono', 'wrap-anywhere');
+
+    // Row 5: long values shown in full, not truncated
+    expect(within(at(rows, 5)).getByText(CH238_LONG_SUBSET)).toHaveClass(
+      'font-mono',
+      'wrap-anywhere',
+    );
+    expect(within(at(rows, 5)).getByText(CH238_LONG_CARD_NUMBER)).toHaveClass(
+      'font-mono',
+      'wrap-anywhere',
+    );
+    expect(within(at(rows, 5)).getByText(CH238_LONG_SLUG)).toBeInTheDocument();
+    expect(at(rows, 5).textContent).not.toContain('…');
+    expect(at(rows, 5).textContent).not.toContain('Omitted (kept)');
+  });
+
+  it('renders 375 cards for visible rows with only applicable fields, never repeating the problem copy', async () => {
+    const { table, cards, user } = await previewCh238('zh-CN');
+    expect(cards).toHaveClass('max-w-full', 'space-y-2', 'sm:hidden');
+    const list = previewCards(cards);
+    const items = within(list).getAllByRole('listitem');
+    expect(items).toHaveLength(5);
+
+    expect(at(items, 0)).toHaveTextContent('第 1 行 · 系列 · ptcg-sc-30th');
+    expect(at(items, 0)).toHaveTextContent('30周年庆典');
+    expect(at(items, 0)).toHaveTextContent('品类');
+    expect(at(items, 0)).toHaveTextContent('ptcg-sc');
+    expect(at(items, 0)).toHaveTextContent('发售日期');
+    expect(at(items, 0)).toHaveTextContent('2026-09-16');
+    expect(at(items, 0)).not.toHaveTextContent('子集');
+    expect(at(items, 0)).not.toHaveTextContent('卡号');
+    expect(at(items, 0)).not.toHaveTextContent('不适用');
+    expect(at(items, 0)).not.toHaveTextContent('省略（保留）');
+    expect(at(items, 0)).toHaveTextContent('更新');
+    expect(at(items, 0)).toHaveClass(
+      'max-w-full',
+      'rounded-md',
+      'border',
+      'border-neutral-200',
+      'bg-card',
+      'p-3',
+      'text-xs',
+    );
+
+    expect(at(items, 1)).toHaveTextContent('第 2 行 · 卡牌 · ptcg-sc-30th-001');
+    expect(at(items, 1)).toHaveTextContent('蛋蛋');
+    expect(at(items, 1)).toHaveTextContent('子集');
+    expect(at(items, 1)).toHaveTextContent('main');
+    expect(at(items, 1)).toHaveTextContent('卡号');
+    expect(at(items, 1)).toHaveTextContent('001');
+    expect(at(items, 1)).not.toHaveTextContent('品类');
+    expect(at(items, 1)).not.toHaveTextContent('发售日期');
+
+    expect(at(items, 2)).toHaveTextContent('省略（保留）');
+    expect(within(at(items, 2)).getByText('省略（保留）')).toHaveClass('text-muted');
+    expect(at(items, 2)).not.toHaveTextContent('将清空');
+    expect(at(items, 2)).not.toHaveTextContent('不适用');
+
+    expect(at(items, 3)).toHaveTextContent('将清空');
+    expect(within(at(items, 3)).getByText('将清空')).toHaveClass('text-danger');
+
+    expect(at(items, 4)).toHaveTextContent(CH238_LONG_SLUG);
+    expect(at(items, 4)).toHaveTextContent(CH238_LONG_SUBSET);
+    expect(at(items, 4)).toHaveTextContent(CH238_LONG_CARD_NUMBER);
+    expect(at(items, 4)).toHaveClass('border-danger-border', 'bg-danger-soft/50');
+    expect(at(items, 4)).toHaveTextContent('错误');
+    // Cards do not repeat the problem body (that stays in the problem list).
+    expect(at(items, 4)).not.toHaveTextContent('series[2].cards[1].cardNumber');
+    expect(at(items, 4).textContent ?? '').not.toMatch(/卡号「/);
+
+    // Errors-only filter applies to both the table and the cards.
+    await user.click(screen.getByRole('radio', { name: '只看错误' }));
+    const errorRows = within(table).getAllByRole('row');
+    expect(errorRows).toHaveLength(2); // header + row 5
+    expect(at(errorRows, 1)).toHaveTextContent(CH238_LONG_SLUG);
+    const errorCards = within(previewCards(cards)).getAllByRole('listitem');
+    expect(errorCards).toHaveLength(1);
+    expect(at(errorCards, 0)).toHaveTextContent(CH238_LONG_SLUG);
+    // Problem list still lists every error, independent of the filter.
+    expect(screen.getByRole('region', { name: '需要修改的 1 处' })).toBeInTheDocument();
+  });
+
+  it('shows an invalid date and a whitespace slug as the file value, not as will-clear', async () => {
+    rootStore.locale.setLocale('zh-CN');
+    importImpl.current = async () => [
+      {
+        row: {
+          row: 1,
+          type: 'series',
+          slug: 'bad-date',
+          name: '日期不存在',
+          categorySlug: '   ',
+          releaseDate: '2026-02-30',
+        },
+        status: 'error',
+        errors: [
+          { path: 'series[0].categorySlug', code: 'SLUG_FORMAT' },
+          { path: 'series[0].releaseDate', code: 'INVALID_DATE' },
+        ],
+      },
+      {
+        row: {
+          row: 2,
+          type: 'card',
+          slug: 'blank-number',
+          name: '空白卡号',
+          seriesSlug: 'bad-date',
+          subsetSlug: '  ',
+          cardNumber: '',
+        },
+        status: 'error',
+        errors: [{ path: 'series[0].cards[0].subsetSlug', code: 'SLUG_FORMAT' }],
+      },
+    ];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste('[]');
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    const table = await screen.findByRole('table');
+    await user.click(screen.getByRole('radio', { name: '全部' }));
+    const rows = within(table).getAllByRole('row');
+    // Whitespace categorySlug is returned as written and shown as a value, not "将清空".
+    expect(within(at(rows, 1)).getByText(exactText('   '))).toHaveClass(
+      'font-mono',
+      'wrap-anywhere',
+    );
+    expect(within(at(rows, 1)).getByText('2026-02-30')).toHaveClass('font-mono', 'wrap-anywhere');
+    expect(within(at(rows, 1)).queryByText('将清空')).not.toBeInTheDocument();
+    // cardNumber "" is will-clear; whitespace subsetSlug is shown as written.
+    expect(within(at(rows, 2)).getByText(exactText('  '))).toHaveClass(
+      'font-mono',
+      'wrap-anywhere',
+    );
+    expect(within(at(rows, 2)).getByText('将清空')).toHaveClass('text-danger');
+  });
+
+  it('does not render the table or the cards before a preview, and keeps the empty status', async () => {
+    renderPage();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '预览结果' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 });
