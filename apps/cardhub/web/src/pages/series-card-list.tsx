@@ -534,8 +534,10 @@ export const SeriesCardList = observer(function SeriesCardList({
                     )
                   }
                 >
-                  <SelectTrigger id={rarityId} className="w-full min-w-0 overflow-hidden">
-                    {/* Children keep a selected parallel-only code visible while it is not offered (§2). */}
+                  <SelectTrigger id={rarityId} className="w-full min-w-0 overflow-hidden *:min-w-0">
+                    {/* Children keep a selected parallel-only code visible while it is not offered (§2).
+                        Radix drops className on SelectValue, so `*:min-w-0` lets its span shrink: a 10-character
+                        code truncates and the chevron stays inside (§3 v1.3). */}
                     <SelectValue>
                       <span className="block min-w-0 truncate">
                         {state.rarityCode ? (

@@ -166,7 +166,7 @@ beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
 });
 
-describe('SeriesCardList official rarity code (Spec CH-239 v1.2)', () => {
+describe('SeriesCardList official rarity code (Spec CH-239 v1.3)', () => {
   it('replaces the 4-tier filter with base-card codes while parallels are off (§1 §3)', async () => {
     const user = userEvent.setup();
     renderList('?rarity=legendary');
@@ -302,5 +302,28 @@ describe('SeriesCardList official rarity code (Spec CH-239 v1.2)', () => {
     const listbox = await openRarity(user, 'Rarity');
     expect(optionTexts(listbox)).toEqual(['All', 'Unmarked', 'Circle mark']);
     expect(screen.getByTitle('Unmarked')).toBeInTheDocument();
+  });
+
+  it('keeps a 10-character code whole in the DOM but lets the trigger value shrink and truncate (§3 §10-10)', async () => {
+    const user = userEvent.setup();
+    const long = '超级稀有特别插画平行';
+    harness.cards = [tile('1', 'C'), tile('2', long)];
+    harness.rarityCodes = ['C', long];
+    harness.baseRarityCodes = ['C', long];
+    renderList(`?rarityCode=${encodeURIComponent(long)}`);
+    await waitFor(() => expect(search()).toBe(`?rarityCode=${long}`));
+    const trigger = rarityTrigger();
+    // The value span is a flex item of the trigger: without min-w-0 on it (`*:min-w-0`) it cannot
+    // shrink and pushes the chevron out of the box.
+    expect(trigger).toHaveClass('min-w-0', 'overflow-hidden', '*:min-w-0');
+    expect(trigger.querySelector('span > span')).toHaveClass('block', 'min-w-0', 'truncate');
+    expect(trigger.lastElementChild).toHaveClass('shrink-0');
+    // Truncation is visual only: the accessible value is the full code, no hand-written ellipsis.
+    expect(spoken(trigger)).toBe(long);
+    expect(trigger.textContent).not.toContain('…');
+    const listbox = await openRarity(user);
+    const option = within(listbox).getByRole('option', { name: long });
+    expect(option).toHaveClass('whitespace-normal', 'wrap-anywhere');
+    expect(spoken(option)).toBe(long);
   });
 });
