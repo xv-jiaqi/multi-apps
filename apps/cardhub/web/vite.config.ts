@@ -4,6 +4,17 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+// Force the ESM entry. @repo/shared is published as CJS, and a default
+// `require('zod')` otherwise pulls zod's CJS build, which eagerly loads every
+// locale and also duplicates the ESM copy already used by other packages.
+const zodEsmEntry = path.join(path.dirname(require.resolve('zod/package.json')), 'index.js');
+// Point the web bundler at the TypeScript sources so unused CJS barrel
+// re-exports (admin schemas, catalog-import, …) can be tree-shaken. The API
+// still consumes the CJS `dist` build.
+const sharedSrcEntry = path.resolve(__dirname, '../../../packages/shared/src/index.ts');
 
 const enableVisualizer = process.env.BUNDLE_VISUALIZE === '1';
 
@@ -35,9 +46,11 @@ export default defineConfig({
       : null,
   ].filter(Boolean),
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, 'src') },
+      { find: /^zod$/, replacement: zodEsmEntry },
+      { find: /^@repo\/shared$/, replacement: sharedSrcEntry },
+    ],
   },
   server: {
     port: 5173,
@@ -51,9 +64,10 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   },
-  // The shared packages (@repo/*) ship as CommonJS so the NestJS API can
-  // require() them directly. Forcing Vite to pre-bundle them lets us keep the
-  // CJS output while still exposing named ES exports to the browser.
+  // Most shared packages (@repo/*) ship as CommonJS so the NestJS API can
+  // require() them directly. @repo/shared is aliased to its TypeScript
+  // sources above so the web build can tree-shake the barrel. Other
+  // packages are still pre-bundled from CJS to expose named ES exports.
   optimizeDeps: {
     include: [
       '@repo/shared',
