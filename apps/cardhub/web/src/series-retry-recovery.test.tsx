@@ -64,12 +64,6 @@ describe('series page recovers after an outage with one retry', () => {
       { timeout: 8000 },
     );
     await new Promise((r) => setTimeout(r, 300));
-    console.log(
-      'BEFORE_RETRY h1=',
-      screen.queryByRole('heading', { level: 1 })?.textContent,
-      'buttons=',
-      screen.queryAllByRole('button', { name: /重试/ }).length,
-    );
     const retry = screen.getAllByRole('button', { name: /重试/ })[0]!;
     healthy = true;
     fireEvent.click(retry);
@@ -78,9 +72,6 @@ describe('series page recovers after an outage with one retry', () => {
       { timeout: 4000 },
     );
     await new Promise((r) => setTimeout(r, 1500));
-    console.log('CALLS', JSON.stringify(calls));
-    console.log('CARD_LINK', !!screen.queryByRole('link', { name: /阿响的凯罗斯/ }));
-    console.log('RETRY_BUTTONS', screen.queryAllByRole('button', { name: /重试/ }).length);
     expect(screen.queryByRole('link', { name: /阿响的凯罗斯/ })).toBeInTheDocument();
   }, 20000);
 });
