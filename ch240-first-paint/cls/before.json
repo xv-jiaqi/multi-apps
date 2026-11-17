@@ -1,0 +1,38 @@
+{
+ "before_1440x900": {
+  "cls_sum": 0.2053,
+  "shifts": [
+   {
+    "v": 0.2053,
+    "t": 2775,
+    "src": [
+     "FOOTER#.app-safe-x app-safe-bottom mx-auto w-full max-w-6xl border-t border-neutral-200  {\"x\":144,\"y\":668.578125,\"width\":1152,\"height\":231.421875,\"top\":668.578125,\"right\":1296,\"bottom\":900,\"left\":144}->{\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}"
+    ]
+   }
+  ]
+ },
+ "before_1350x940": {
+  "cls_sum": 0.2151,
+  "shifts": [
+   {
+    "v": 0.2151,
+    "t": 2642,
+    "src": [
+     "FOOTER#.app-safe-x app-safe-bottom mx-auto w-full max-w-6xl border-t border-neutral-200  {\"x\":99,\"y\":668.578125,\"width\":1152,\"height\":237,\"top\":668.578125,\"right\":1251,\"bottom\":905.578125,\"left\":99}->{\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}"
+    ]
+   }
+  ]
+ },
+ "before_375x812": {
+  "cls_sum": 0.0382,
+  "shifts": [
+   {
+    "v": 0.0382,
+    "t": 2657,
+    "src": [
+     "FOOTER#.app-safe-x app-safe-bottom mx-auto w-full max-w-6xl border-t border-neutral-200  {\"x\":0,\"y\":780.578125,\"width\":375,\"height\":31.421875,\"top\":780.578125,\"right\":375,\"bottom\":812,\"left\":0}->{\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}"
+    ]
+   }
+  ]
+ }
+}

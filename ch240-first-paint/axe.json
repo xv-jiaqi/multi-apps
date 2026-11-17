@@ -1,0 +1,242 @@
+{
+ "search-success_1440_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-success_375_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-success_1440_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-success_375_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-empty_1440_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-empty_375_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-empty_1440_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-empty_375_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-error_1440_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-error_375_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-error_1440_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "search-error_375_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 1
+   }
+  ]
+ },
+ "series-success_1440_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-success_375_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-success_1440_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-success_375_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-error_1440_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-error_375_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-error_1440_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-error_375_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-not-found_1440_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-not-found_375_zh": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-not-found_1440_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ },
+ "series-not-found_375_en": {
+  "violations": [],
+  "passes": 26,
+  "incomplete": [
+   {
+    "id": "color-contrast",
+    "nodes": 8
+   }
+  ]
+ }
+}
