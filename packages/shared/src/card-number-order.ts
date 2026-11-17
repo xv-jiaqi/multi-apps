@@ -71,3 +71,42 @@ export function compareCardNumbers(
   if (byRest !== 0) return byRest;
   return compareText(a.raw, b.raw);
 }
+
+export type SubsetPlacedCardNumber = {
+  cardNumber: string | null | undefined;
+  /** The card's subset `sortOrder`; null or undefined when it has no subset. */
+  subsetSortOrder: number | null | undefined;
+};
+
+function compareSubsetOrder(left: number | null | undefined, right: number | null | undefined) {
+  const a = typeof left === 'number' ? left : null;
+  const b = typeof right === 'number' ? right : null;
+  if (a === b) return 0;
+  if (a === null) return 1;
+  if (b === null) return -1;
+  return a - b;
+}
+
+/**
+ * CH-237. Same as `compareCardNumbers`, except two card numbers without
+ * digits (the `text` group, such as `R` or `GRA`) first compare by their
+ * subset `sortOrder`, ascending; one without a subset sorts after one with a
+ * subset. Numbered and empty card numbers ignore the subset, so a series
+ * without text card numbers keeps exactly the `compareCardNumbers` order.
+ */
+export function compareCardNumbersInSubsets({
+  left,
+  right,
+}: {
+  left: SubsetPlacedCardNumber;
+  right: SubsetPlacedCardNumber;
+}): number {
+  if (
+    cardNumberKey(left.cardNumber).group === 'text' &&
+    cardNumberKey(right.cardNumber).group === 'text'
+  ) {
+    const bySubset = compareSubsetOrder(left.subsetSortOrder, right.subsetSortOrder);
+    if (bySubset !== 0) return bySubset;
+  }
+  return compareCardNumbers(left.cardNumber, right.cardNumber);
+}
