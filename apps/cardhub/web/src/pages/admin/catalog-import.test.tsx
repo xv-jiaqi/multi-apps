@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { CARD_NUMBER_MAX, CATALOG_IMPORT_MAX_ROWS } from '@repo/shared';
+import { CARD_NUMBER_MAX, CATALOG_IMPORT_MAX_ROWS, SUBSETS_PER_SERIES_MAX } from '@repo/shared';
 import { rootStore } from '../../stores/root-store';
 import type { ImportRowResult } from '../../components/admin/catalog-utils';
 
@@ -47,7 +47,7 @@ vi.mock('../../lib/trpc', () => ({
 }));
 
 import { CatalogImportPage } from './catalog-import';
-import { AC62_IMPORT, AC62_ROWS } from './catalog-import-fixture';
+import { AC62_IMPORT, AC62_ROWS, AC73_IMPORT, AC73_ROWS } from './catalog-import-fixture';
 
 function row(
   partial: Partial<ImportRowResult> &
@@ -877,5 +877,94 @@ describe('catalog import taxonomy errors (CH-107 v4.1 §7.4–§7.8)', () => {
     expect(enText).toContain('"name": "Promos"');
     expect(enText).toContain('"subsetSlug": "base"');
     expect(screen.getByText(/A subset's kind is BASE or INSERT\./)).toBeInTheDocument();
+  });
+});
+
+describe('catalog import subset limit (CH-107 v4.2 §7.4, §7.8; AC7-3)', () => {
+  const zhCopy = `一个系列最多 ${SUBSETS_PER_SERIES_MAX} 个子集，已存的和本文件列出的都算。删到 ${SUBSETS_PER_SERIES_MAX} 个以内。`;
+  const enCopy = `A series can have at most ${SUBSETS_PER_SERIES_MAX} subsets, including ones already saved and ones listed in this file. Remove extras until the total is ${SUBSETS_PER_SERIES_MAX} or fewer.`;
+
+  async function previewAc73({ locale }: { locale: 'zh-CN' | 'en-US' }) {
+    rootStore.locale.setLocale(locale);
+    importImpl.current = async () => AC73_ROWS;
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(
+      screen.getByRole('textbox', { name: locale === 'zh-CN' ? 'JSON 内容' : 'JSON' }),
+    );
+    await user.paste(JSON.stringify(AC73_IMPORT));
+    await user.click(screen.getByRole('button', { name: locale === 'zh-CN' ? '预览' : 'Preview' }));
+    return { user, table: await screen.findByRole('table') };
+  }
+
+  it('shows the Chinese copy on the series row with field and path, never the code, and blocks import', async () => {
+    const { table } = await previewAc73({ locale: 'zh-CN' });
+    expect(table.textContent).toContain(`subsets：${zhCopy}`);
+    expect(within(table).getByText('series[1].subsets')).toHaveClass(
+      'font-mono',
+      'text-xs',
+      'text-muted',
+      'wrap-anywhere',
+    );
+    const seriesRow = within(table).getByText('subsets-21').closest('tr');
+    if (!seriesRow) throw new Error('missing series row');
+    expect(within(seriesRow).getByText('错误')).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('TOO_MANY_SUBSETS');
+    expect(document.body.textContent).not.toContain('出错了');
+    expect(screen.getByText('有 1 处错误，修正后才能导入')).toHaveAttribute('id', 'import-blocked');
+    expect(screen.getByRole('button', { name: '导入' })).toBeDisabled();
+  });
+
+  it('shows the English copy in the 375 problem list and blocks import', async () => {
+    await previewAc73({ locale: 'en-US' });
+    const section = screen.getByRole('region', { name: '1 problem to fix' });
+    const items = within(section).getAllByRole('listitem');
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent('Row 2 · Series · subsets-21');
+    expect(items[0]).toHaveTextContent(`subsets: ${enCopy}`);
+    expect(items[0]).toHaveTextContent('series[1].subsets');
+    expect(document.body.textContent).not.toContain('TOO_MANY_SUBSETS');
+    expect(document.body.textContent).not.toContain('Something went wrong');
+    expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
+  });
+
+  it('uses the same copy when a forced commit is rejected with the error', async () => {
+    rootStore.locale.setLocale('zh-CN');
+    importImpl.current = async (input) => {
+      if (!input.dryRun) {
+        throw {
+          message: '导入数据校验失败',
+          data: { code: 'BAD_REQUEST', adminCatalogError: { rows: [AC73_ROWS[1]] } },
+        };
+      }
+      return [AC73_ROWS[0]];
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste(JSON.stringify(AC73_IMPORT));
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    await user.click(screen.getByRole('button', { name: '导入' }));
+    await user.click(screen.getByRole('button', { name: '确认导入' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('导入失败，没有任何记录被修改');
+    expect(alert).toHaveTextContent(zhCopy);
+    expect(alert).toHaveTextContent('series[1].subsets');
+    expect(alert).not.toHaveTextContent('TOO_MANY_SUBSETS');
+  });
+
+  it('keeps the generic copy for TOO_MANY_SUBSETS on a path other than subsets', async () => {
+    rootStore.locale.setLocale('zh-CN');
+    importImpl.current = async () => [
+      { ...AC73_ROWS[1], errors: [{ path: 'series[1]', code: 'TOO_MANY_SUBSETS' }] },
+    ];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('textbox', { name: 'JSON 内容' }));
+    await user.paste(JSON.stringify(AC73_IMPORT));
+    await user.click(screen.getByRole('button', { name: '预览' }));
+    const table = await screen.findByRole('table');
+    expect(table.textContent).not.toContain(zhCopy);
+    expect(table.textContent).not.toContain('TOO_MANY_SUBSETS');
   });
 });
