@@ -147,4 +147,15 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
 add_header Content-Security-Policy "${csp}" always;
 EOF
+
+  # CH-240: the HTML response tells the browser to open the API connection
+  # while the JS bundle downloads. Only `location /` includes this file.
+  # Anything other than a plain scheme://host[:port] gets no hint.
+  preconnect_file=${CARDHUB_PRECONNECT_HEADERS_FILE:-$(dirname "$headers_file")/api-preconnect.inc}
+  preconnect_origin=$(printf '%s' "$TRPC_URL_VALUE" | sed -E 's#^(https?://[^/]+).*#\1#')
+  if printf '%s' "$preconnect_origin" | grep -Eq '^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$'; then
+    printf 'add_header Link "<%s>; rel=preconnect; crossorigin" always;\n' "$preconnect_origin" > "$preconnect_file"
+  else
+    : > "$preconnect_file"
+  fi
 fi

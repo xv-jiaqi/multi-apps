@@ -132,6 +132,21 @@ else
   echo "OK nginx include"
 fi
 
+# CH-240: `location /` adds the API preconnect Link header. Any add_header in a
+# location drops the server-level ones, so it must repeat them.
+spa_block="$(awk '/^[[:space:]]*location \/ [{]/{c=1} c{print} c&&/[}]/{exit}' "${nginx}")"
+for want in \
+  'include /etc/nginx/conf.d/security-headers.inc;' \
+  'include /etc/nginx/conf.d/api-preconnect.inc;' \
+  'add_header Cache-Control "no-cache" always;'; do
+  if ! grep -qF "${want}" <<< "${spa_block}"; then
+    echo "FAIL nginx-spa.conf location / is missing: ${want}" >&2
+    failed=1
+  else
+    echo "OK nginx location / ${want}"
+  fi
+done
+
 caddy_bin="${CADDY_BIN:-}"
 if [ -z "${caddy_bin}" ] && command -v caddy >/dev/null 2>&1; then
   caddy_bin="$(command -v caddy)"

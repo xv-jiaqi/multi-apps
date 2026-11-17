@@ -16,6 +16,7 @@ import { trpc } from '../lib/trpc';
 import { useArtImage } from '../components/artwork';
 import { cn } from '@repo/ui-web';
 import { formatCatalogDate } from '../lib/catalog-taxonomy';
+import { seriesDetailInput } from '../lib/series-detail-queries';
 import { gradientFor } from '../lib/gradients';
 import { SeriesCardList } from './series-card-list';
 
@@ -101,10 +102,12 @@ export const SeriesDetailPage = observer(function SeriesDetailPage() {
   const { seriesSlug = '' } = useParams<{ seriesSlug: string }>();
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
-  const query = trpc.series.bySlug.useQuery(
-    { slug: seriesSlug, includeCards: false },
-    { enabled: !!seriesSlug },
-  );
+  // retryOnMount: false — SeriesDetailPrefetch has already fetched (and, for
+  // a 5xx, retried) this query. A NOT_FOUND it got stays final (cut-6 AC6-11).
+  const query = trpc.series.bySlug.useQuery(seriesDetailInput(seriesSlug), {
+    enabled: !!seriesSlug,
+    retryOnMount: false,
+  });
   const view = queryFallback(query);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const retryRef = useRef<HTMLButtonElement>(null);
