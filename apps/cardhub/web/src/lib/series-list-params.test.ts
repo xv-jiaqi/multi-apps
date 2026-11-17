@@ -8,6 +8,110 @@ import {
 
 const subsets = new Set(['base', 'insert']);
 
+describe('parseSeriesListParams rarityCode (Spec CH-239 v1.2 §1 §2)', () => {
+  const codes = ['C', 'R', 'RR', '无标记', 'AR', 'SAR', 'FUR'];
+
+  it('keeps a well-formed code while rarityCodes is unknown and passes it on', () => {
+    const parsed = parseSeriesListParams(
+      new URLSearchParams('rarityCode=sar&rarity=epic'),
+      subsets,
+    );
+    expect(parsed.state.rarityCode).toBe('sar');
+    expect(parsed.state.rarity).toBe('epic');
+    expect(parsed.replace).toBe(false);
+  });
+
+  it('drops a blank or over-long code at once, counting code points', () => {
+    for (const raw of ['%20%20', '', 'ABCDEFGHIJK', encodeURIComponent('稀'.repeat(11))]) {
+      const parsed = parseSeriesListParams(
+        new URLSearchParams(`rarityCode=${raw}&page=2`),
+        subsets,
+      );
+      expect(parsed.state.rarityCode).toBeNull();
+      expect(parsed.search).toBe('page=2');
+      expect(parsed.replace).toBe(true);
+    }
+    const astral = parseSeriesListParams(
+      new URLSearchParams({ rarityCode: '🂡'.repeat(10) }),
+      subsets,
+    );
+    expect(astral.state.rarityCode).toBe('🂡'.repeat(10));
+    expect(astral.replace).toBe(false);
+  });
+
+  it('trims the code in the URL', () => {
+    const parsed = parseSeriesListParams(
+      new URLSearchParams({ rarityCode: ' SAR ' }),
+      subsets,
+      codes,
+    );
+    expect(parsed.state.rarityCode).toBe('SAR');
+    expect(parsed.search).toBe('rarityCode=SAR');
+    expect(parsed.replace).toBe(true);
+  });
+
+  it('matches case-sensitively and drops a code the series does not have', () => {
+    for (const raw of ['sar', 'XYZ', 'Sar']) {
+      const parsed = parseSeriesListParams(
+        new URLSearchParams({ rarityCode: raw, sort: 'name' }),
+        subsets,
+        codes,
+      );
+      expect(parsed.state.rarityCode).toBeNull();
+      expect(parsed.search).toBe('sort=name');
+      expect(parsed.replace).toBe(true);
+    }
+  });
+
+  it('keeps a code from the full list even if it is not offered right now', () => {
+    // A parallel-only code is in the full rarityCodes; the page decides offers.
+    const parsed = parseSeriesListParams(
+      new URLSearchParams({ rarityCode: 'SSR', parallels: '1' }),
+      subsets,
+      ['C', 'SSR'],
+    );
+    expect(parsed.state.rarityCode).toBe('SSR');
+    expect(parsed.replace).toBe(false);
+  });
+
+  it('drops the 4-tier rarity once the series has official codes', () => {
+    const parsed = parseSeriesListParams(
+      new URLSearchParams({ rarity: 'legendary', rarityCode: 'SAR' }),
+      subsets,
+      codes,
+    );
+    expect(parsed.state.rarity).toBeNull();
+    expect(parsed.state.rarityCode).toBe('SAR');
+    expect(parsed.search).toBe('rarityCode=SAR');
+    expect(parsed.replace).toBe(true);
+  });
+
+  it('drops rarityCode and keeps the 4-tier rarity when the series has no codes', () => {
+    const parsed = parseSeriesListParams(
+      new URLSearchParams({ rarity: 'rare', rarityCode: 'SAR' }),
+      subsets,
+      [],
+    );
+    expect(parsed.state.rarity).toBe('rare');
+    expect(parsed.state.rarityCode).toBeNull();
+    expect(parsed.search).toBe('rarity=rare');
+  });
+
+  it('writes symbol and Chinese codes through URLSearchParams', () => {
+    const search = seriesListSearch({
+      q: '',
+      subset: null,
+      rarity: null,
+      rarityCode: '★★★',
+      sort: 'number',
+      page: 1,
+      parallels: false,
+    });
+    expect(search).toBe(`rarityCode=${encodeURIComponent('★★★')}`);
+    expect(new URLSearchParams(search).get('rarityCode')).toBe('★★★');
+  });
+});
+
 describe('parseSeriesListParams', () => {
   it('omits defaults and drops unknown values', () => {
     const parsed = parseSeriesListParams(
@@ -18,6 +122,7 @@ describe('parseSeriesListParams', () => {
       q: '',
       subset: null,
       rarity: null,
+      rarityCode: null,
       sort: 'number',
       page: 1,
       parallels: false,
@@ -43,6 +148,7 @@ describe('parseSeriesListParams', () => {
       q: '龙',
       subset: 'base',
       rarity: 'rare',
+      rarityCode: null,
       sort: 'name',
       page: 2,
       parallels: false,

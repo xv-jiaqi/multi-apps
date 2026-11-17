@@ -16,6 +16,7 @@ export function seriesCardListInput(seriesSlug: string, state: SeriesListState) 
     ...(state.q ? { q: state.q } : {}),
     ...(state.subset ? { subsetSlug: state.subset } : {}),
     ...(state.rarity ? { rarity: state.rarity } : {}),
+    ...(state.rarityCode ? { rarityCode: state.rarityCode } : {}),
     ...(state.sort !== 'number' ? { sort: state.sort } : {}),
     ...(state.parallels ? { includeParallels: true } : {}),
   };

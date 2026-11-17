@@ -1,4 +1,5 @@
 import {
+  CARD_RARITY_CODE_MAX,
   CARD_RARITY_VALUES,
   CARD_SERIES_LIST_PAGE_MAX,
   CARD_SERIES_LIST_QUERY_MAX,
@@ -17,6 +18,8 @@ export type SeriesListState = {
   q: string;
   subset: string | null;
   rarity: CardRarity | null;
+  /** CH-239: official rarity code, exact and case-sensitive. */
+  rarityCode: string | null;
   sort: CardSeriesListSort;
   page: number;
   /** `parallels=1` only. Any other value is removed from the URL. */
@@ -44,9 +47,15 @@ function pageWithinLimit(raw: string): number {
   return parsed;
 }
 
+/**
+ * `rarityCodes` is the series' full code list (Spec CH-239 §2), or null while
+ * the list has not answered yet. Codes that are only on parallels stay valid
+ * here; whether they are offered is the page's call (§3).
+ */
 export function parseSeriesListParams(
   search: URLSearchParams,
   subsetSlugs: ReadonlySet<string> | null,
+  rarityCodes: readonly string[] | null = null,
 ): { state: SeriesListState; search: string; replace: boolean } {
   const next = new URLSearchParams(search);
   const original = next.toString();
@@ -67,11 +76,28 @@ export function parseSeriesListParams(
     else next.delete('subset');
   }
 
+  const hasOfficialCodes = rarityCodes !== null && rarityCodes.length > 0;
   const rawRarity = next.get('rarity');
   let rarity: CardRarity | null = null;
   if (rawRarity !== null) {
-    if (isRarity(rawRarity)) rarity = rawRarity;
+    // §1: with official codes the 4-tier filter is not rendered or sent.
+    if (isRarity(rawRarity) && !hasOfficialCodes) rarity = rawRarity;
     else next.delete('rarity');
+  }
+
+  const rawRarityCode = next.get('rarityCode');
+  let rarityCode: string | null = null;
+  if (rawRarityCode !== null) {
+    const trimmed = rawRarityCode.trim();
+    const length = [...trimmed].length;
+    const wellFormed = length > 0 && length <= CARD_RARITY_CODE_MAX;
+    // §2: malformed goes at once; an unknown code goes once the full list is in.
+    if (!wellFormed || (rarityCodes !== null && !rarityCodes.includes(trimmed))) {
+      next.delete('rarityCode');
+    } else {
+      rarityCode = trimmed;
+      if (rawRarityCode !== trimmed) next.set('rarityCode', trimmed);
+    }
   }
 
   let sort: CardSeriesListSort = 'number';
@@ -105,7 +131,7 @@ export function parseSeriesListParams(
 
   const cleaned = next.toString();
   return {
-    state: { q, subset, rarity, sort, page, parallels },
+    state: { q, subset, rarity, rarityCode, sort, page, parallels },
     search: cleaned,
     replace: cleaned !== original,
   };
@@ -116,12 +142,14 @@ export function seriesListSearch(state: SeriesListState, current?: URLSearchPara
   next.delete('q');
   next.delete('subset');
   next.delete('rarity');
+  next.delete('rarityCode');
   next.delete('sort');
   next.delete('page');
   next.delete('parallels');
   if (state.q) next.set('q', state.q);
   if (state.subset) next.set('subset', state.subset);
   if (state.rarity) next.set('rarity', state.rarity);
+  if (state.rarityCode) next.set('rarityCode', state.rarityCode);
   if (state.sort !== 'number') next.set('sort', state.sort);
   if (state.page > 1) next.set('page', String(state.page));
   if (state.parallels) next.set('parallels', '1');

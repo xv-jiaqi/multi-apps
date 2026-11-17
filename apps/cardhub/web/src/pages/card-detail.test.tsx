@@ -33,7 +33,7 @@ const card = {
   seriesSlug: 'celestial-dawn',
   seriesTitle: '天穹黎明',
   cardNumber: null as string | null,
-  attributes: { Cost: '3', attack: 2 },
+  attributes: { Cost: '3', attack: 2 } as Record<string, string | number>,
   printRun: null as number | null,
   parallelName: null as string | null,
   isParallel: false,
@@ -169,6 +169,7 @@ beforeEach(() => {
   rootStore.locale.setLocale('zh-CN');
   rootStore.session.signOut();
   card.description = '黎明降临。';
+  card.attributes = { Cost: '3', attack: 2 };
   card.cardNumber = null;
   card.printRun = null;
   card.parallelName = null;
@@ -423,6 +424,36 @@ describe('card detail meta description', () => {
     expect(attack.className).not.toContain('uppercase');
     expect(attack.className).not.toContain('neutral-500');
     expect(screen.getByText('Cost')).toBeInTheDocument();
+  });
+
+  it('shows the official code badge by the title and keeps the 稀有度 row (Spec CH-239 §4-1)', () => {
+    card.attributes = { 稀有度: ' SAR ', attack: 2 };
+    showCard();
+    renderCard();
+    const heading = screen.getByRole('heading', { level: 1, name: '极光骑士' });
+    expect(heading).toHaveClass('min-w-0', 'wrap-anywhere');
+    const badge = screen.getByTitle('SAR');
+    expect(badge).toHaveClass('bg-neutral-100', 'text-neutral-600', 'shrink-0');
+    expect(heading.parentElement).toContainElement(badge);
+    expect(within(badge).getByText('稀有度码 SAR')).toHaveClass('sr-only');
+    expect(screen.queryByText('稀有')).toBeNull();
+    const row = screen.getByText('稀有度', { selector: 'dt' });
+    expect(row.nextElementSibling?.textContent).toBe(' SAR ');
+  });
+
+  it('reads a symbol code by name and keeps the 4-tier badge when there is no code', () => {
+    rootStore.locale.setLocale('en-US');
+    card.attributes = { 稀有度: '★★★' };
+    showCard();
+    const view = renderCard();
+    const badge = screen.getByTitle('★★★');
+    expect(within(badge).getByText('Three stars')).toHaveClass('sr-only');
+    view.unmount();
+    card.attributes = { 稀有度: '   ' };
+    showCard();
+    renderCard();
+    expect(screen.queryByTitle('   ')).toBeNull();
+    expect(screen.getByText('Rare')).toBeInTheDocument();
   });
 
   it('uses the English attribute label', () => {
