@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareCardNumbers } from './card-number-order';
+import { compareCardNumbers, compareCardNumbersInSubsets } from './card-number-order';
 
 const NUMBER_ORDER = [
   '001',
@@ -69,5 +69,86 @@ describe('compareCardNumbers', () => {
     const power = `1${'0'.repeat(40)}`;
     expect(compareCardNumbers(nines, power)).toBeLessThan(0);
     expect(compareCardNumbers(power, nines)).toBeGreaterThan(0);
+  });
+});
+
+type Placed = { id: string; cardNumber: string | null; subsetSortOrder: number | null };
+
+function sortPlaced(rows: readonly Placed[]): string[] {
+  return [...rows]
+    .sort((left, right) => compareCardNumbersInSubsets({ left, right }))
+    .map((row) => row.id);
+}
+
+describe('compareCardNumbersInSubsets', () => {
+  it('orders cards without digits by subset sortOrder before the text compare', () => {
+    const rows: Placed[] = [
+      { id: 'GRA', cardNumber: 'GRA', subsetSortOrder: 3 },
+      { id: 'R', cardNumber: 'R', subsetSortOrder: 2 },
+      { id: 'DAR', cardNumber: 'DAR', subsetSortOrder: 3 },
+      { id: 'G', cardNumber: 'G', subsetSortOrder: 2 },
+      { id: 'B', cardNumber: 'B', subsetSortOrder: 2 },
+      { id: '10', cardNumber: '010', subsetSortOrder: 1 },
+      { id: '2', cardNumber: '002', subsetSortOrder: 0 },
+    ];
+    expect(sortPlaced(rows)).toEqual(['2', '10', 'B', 'G', 'R', 'DAR', 'GRA']);
+  });
+
+  it('keeps the text compare inside one subset', () => {
+    const rows: Placed[] = ['WAT', 'FIG', 'MET', 'FIR'].map((value) => ({
+      id: value,
+      cardNumber: value,
+      subsetSortOrder: 3,
+    }));
+    expect(sortPlaced(rows)).toEqual(['FIG', 'FIR', 'MET', 'WAT']);
+  });
+
+  it('puts text card numbers without a subset after those with one, before blanks', () => {
+    const rows: Placed[] = [
+      { id: 'blank', cardNumber: '  ', subsetSortOrder: 0 },
+      { id: 'A-none', cardNumber: 'A', subsetSortOrder: null },
+      { id: 'Z-high', cardNumber: 'Z', subsetSortOrder: 99 },
+      { id: 'PROMO-none', cardNumber: 'PROMO', subsetSortOrder: null },
+      { id: 'M-low', cardNumber: 'M', subsetSortOrder: 0 },
+      { id: '1-none', cardNumber: '1', subsetSortOrder: null },
+    ];
+    expect(sortPlaced(rows)).toEqual([
+      '1-none',
+      'M-low',
+      'Z-high',
+      'A-none',
+      'PROMO-none',
+      'blank',
+    ]);
+  });
+
+  it('matches compareCardNumbers whenever no card number lacks digits', () => {
+    // Deterministic LCG so a failure is reproducible.
+    let state = 0x2377;
+    const next = (limit: number) => {
+      state = (state * 1103515245 + 12345) % 2147483648;
+      return state % limit;
+    };
+    const shapes = [
+      (n: number) => String(n).padStart(3, '0'),
+      (n: number) => String(n),
+      (n: number) => `${n}/165`,
+      (n: number) => `TG${n}`,
+      (n: number) => `${n}a`,
+      () => '',
+      () => '   ',
+    ];
+    const pick = (): Placed => ({
+      id: '',
+      cardNumber: next(10) === 0 ? null : (shapes[next(shapes.length)] ?? String)(next(300)),
+      subsetSortOrder: next(4) === 0 ? null : next(5),
+    });
+    for (let round = 0; round < 5000; round += 1) {
+      const left = pick();
+      const right = pick();
+      expect(Math.sign(compareCardNumbersInSubsets({ left, right }))).toBe(
+        Math.sign(compareCardNumbers(left.cardNumber, right.cardNumber)),
+      );
+    }
   });
 });
