@@ -251,6 +251,8 @@ Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web �
 
 CH-234（cut-6 In-1）：导入 JSON 补齐品类、发售日期、子集和卡号。系列行可带 `categorySlug`（已有品类的 slug）、`releaseDate`（`YYYY-MM-DD`，必须是真实日期）、`subsets[]`（每项 `slug`、`name`、`kind`（`BASE` / `INSERT`）、可选 `sortOrder`，按 `seriesId+slug` 新增或更新；文件里没列的子集不动，省略 `sortOrder` 时新建为 0、更新不改）。卡牌行可带 `cardNumber`（trim 后最多 20 字）、`subsetSlug`（本系列已有的子集，或本文件该系列 `subsets` 里的子集）。这些字段省略就不改已存值，空串清空，只有空白的 `releaseDate` 和 `cardNumber` 去掉空白后同样按空串清空；所以旧格式 JSON 重导是「无变化」。只认上面列出的键和原有键，其他键（如 `cardNo`、`body`）报 `UNKNOWN_FIELD`，`path` 以字段名结尾。错误码：品类不存在 `CATEGORY_NOT_FOUND`，子集不存在 `SUBSET_NOT_FOUND`，卡号超长 `TOO_LONG`，日期不合法 `INVALID_DATE`，类型不对 `INVALID_TYPE`，slug 格式 `SLUG_FORMAT`；子集自身出错（`kind` 不合法 `INVALID_TYPE`、同系列重复 slug `SLUG_DUPLICATE_IN_FILE`）挂在系列行上。每个系列最多 20 个子集（`SUBSETS_PER_SERIES_MAX`，库里已有的加上本文件新增的，同 slug 只算一次），超出时整行报 `TOO_MANY_SUBSETS`（`path` 是 `series[i].subsets`），预览和导入都拦。服务端只返回 `{ path, code }`，文案里的 `{value}`、`{length}`、`{max}` 由前端按 `path` 从提交的 JSON 取（CH-107 §7.4）。有任何错误行时 `dryRun:false` 返回 400，整批不写。行数上限 500 只数系列和卡牌，子集不计。
 
+CH-238（cut-7 AC7-5）：预览和导入返回的每行 `row` 多带四个可选字段，tRPC 只加不改。系列行带 `categorySlug`、`releaseDate`，卡牌行带 `subsetSlug`、`cardNumber`，不适用的字段不返回。文件省略某键时该字段不出现（undefined，不回填库里的已存值），表示「保留」。空串返回 `""`，表示「清空」；`releaseDate` 和 `cardNumber` 只有空白时也返回 `""`（CH-236）；卡号内部按 null 存，返回时也给 `""`。其他情况返回 trim 后将写入的值。值没通过校验（如 `2026-02-30`、超长卡号、只有空白的 `categorySlug` / `subsetSlug` 报 `SLUG_FORMAT`）时原样返回文件里的字符串，错误照常挂在该行。键的值不是字符串时不返回该字段，该行报 `INVALID_TYPE`。`dryRun:false` 出错时 400 里的 `rows` 带同样的字段。
+
 另有 NestJS REST 端点 `GET /health`（不经过 tRPC，跳过全局 Throttler）。
 
 ### 5.1 产品指标（`admin.metrics`）

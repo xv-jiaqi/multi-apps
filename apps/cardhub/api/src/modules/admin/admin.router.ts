@@ -57,6 +57,18 @@ export interface ImportRowSummary {
   slug: string | null;
   name: string | null;
   seriesSlug?: string | null;
+  /**
+   * Taxonomy fields as the file gives them (CH-238), series rows only for
+   * `categorySlug` / `releaseDate`, card rows only for `subsetSlug` / `cardNumber`.
+   * Absent: the file omits the key, so the stored value stays.
+   * `""`: empty or whitespace-only after trim, so the stored value is cleared.
+   * Otherwise the trimmed value that will be written, or the file string as
+   * written when it fails validation (the row then carries the error).
+   */
+  categorySlug?: string;
+  releaseDate?: string;
+  subsetSlug?: string;
+  cardNumber?: string;
 }
 
 export interface ImportRowError {
@@ -362,6 +374,46 @@ function readImportParallel(
   return fields;
 }
 
+type ImportTaxonomyKey = 'categorySlug' | 'releaseDate' | 'subsetSlug' | 'cardNumber';
+const SERIES_PREVIEW_KEYS: readonly ImportTaxonomyKey[] = ['categorySlug', 'releaseDate'];
+const CARD_PREVIEW_KEYS: readonly ImportTaxonomyKey[] = ['subsetSlug', 'cardNumber'];
+
+/**
+ * Preview value for one taxonomy key: undefined when the key is omitted or not a
+ * string, the normalized value when it passed (`null` clear → `""`), else the
+ * file string as written.
+ */
+function previewTaxonomyValue({
+  raw,
+  key,
+  normalized,
+}: {
+  raw: Record<string, unknown>;
+  key: ImportTaxonomyKey;
+  normalized: string | null | undefined;
+}): string | undefined {
+  const value = raw[key];
+  if (typeof value !== 'string') return undefined;
+  if (normalized === undefined) return value;
+  return normalized ?? '';
+}
+
+function assignPreviewTaxonomy({
+  row,
+  raw,
+  normalized,
+}: {
+  row: ImportRowSummary;
+  raw: Record<string, unknown>;
+  normalized: Partial<Record<ImportTaxonomyKey, string | null>>;
+}): void {
+  const keys = row.type === 'series' ? SERIES_PREVIEW_KEYS : CARD_PREVIEW_KEYS;
+  for (const key of keys) {
+    const value = previewTaxonomyValue({ raw, key, normalized: normalized[key] });
+    if (value !== undefined) row[key] = value;
+  }
+}
+
 function normalizeImport(data: unknown): NormalizedImport {
   const results: ImportRowResult[] = [];
   const normalizedSeries: NormalizedSeries[] = [];
@@ -425,6 +477,9 @@ function normalizeImport(data: unknown): NormalizedImport {
     const taxonomy: SeriesTaxonomyFields = isPlainObject(rawSeries)
       ? readSeriesTaxonomy(rawSeries, seriesPath, errors)
       : { subsets: [] };
+    if (isPlainObject(rawSeries)) {
+      assignPreviewTaxonomy({ row, raw: rawSeries, normalized: taxonomy });
+    }
 
     if (errors.length === 0 && typeof slug === 'string' && typeof title === 'string') {
       seenSeriesSlugs.add(slug);
@@ -514,6 +569,9 @@ function normalizeImport(data: unknown): NormalizedImport {
       const cardTaxonomy: CardTaxonomyFields = isPlainObject(rawCard)
         ? readCardTaxonomy(rawCard, cardPath, cardErrors)
         : {};
+      if (isPlainObject(rawCard)) {
+        assignPreviewTaxonomy({ row: cardRow, raw: rawCard, normalized: cardTaxonomy });
+      }
 
       const parallel = isPlainObject(rawCard)
         ? readImportParallel(rawCard, cardPath, cardErrors)
