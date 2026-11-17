@@ -285,6 +285,22 @@ Cardhub Images run for that exact commit has succeeded, then reads the
 going, or pushed again later; the artifact is the manifest that run actually
 pushed.
 
+After that push, and before the digest file is uploaded, the same job
+pulls `image@digest` and starts it. Nothing in that step pushes or
+retags. The API container gets a `JWT_SECRET` from `openssl rand -hex 32`
+in the job, plus the job's Postgres 16 and Redis 7 services. Migrations
+run in a one-shot container, the same way compose does, and the API
+process does not receive `MIGRATE_DATABASE_URL`. Within 60 seconds
+`/health` must be HTTP 200 with `status` ok and both `db` and `redis`
+true. The web container gets a dummy `TRPC_URL` and must return 200 for
+`/` and for a hashed `/assets/` file. Failure prints `docker logs` and
+fails the job, so the digest artifact is not uploaded. Deploy then
+refuses the run and does not fall back to the tag. The tags themselves
+are already pushed; deploy does not pull them. CI's `API image build`
+and `Web image build` jobs boot the image they just loaded, under those
+same check names, so a broken image fails the required check before
+Images runs.
+
 The newest Images run for that SHA is the one that counts. If it is still
 in progress, failed, or missing, resolution exits and the VPS is not
 contacted. A later failure wins over an older success for the same SHA:
