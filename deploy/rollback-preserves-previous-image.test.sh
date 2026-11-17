@@ -295,6 +295,12 @@ cat > "${state}/previous-images.env" <<EOF
 PREVIOUS_API_TAG=sha-${TRUE_PREV}
 PREVIOUS_WEB_TAG=sha-${TRUE_PREV}
 EOF
+mkdir -p "${lab}/production/.deploy-state"
+cat > "${lab}/production/.deploy-state/previous-images.env" <<EOF
+PREVIOUS_API_TAG=sha-${TRUE_PREV}
+PREVIOUS_WEB_TAG=sha-${TRUE_PREV}
+EOF
+printf '# keep-count=1\n%s\n' "${TRUE_PREV}" > "${lab}/.main-shas"
 
 unset PASSWORD_PREHASH_WRITE
 unset WEB_SENTRY_DSN

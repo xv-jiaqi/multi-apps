@@ -19,6 +19,10 @@
 #   CARDHUB_IMAGE_DIGEST_CMD receives "<image>" "<tag>" and prints a digest,
 #   or exits non-zero when the manifest is missing. Used only for the
 #   tag fallback.
+#
+# An artifact digest is not checked against GHCR here. deploy.yml runs
+# verify-image-digests.sh (docker buildx imagetools inspect of image@digest)
+# after this script and before any VPS step.
 set -euo pipefail
 
 expected_sha="${DEPLOY_EXPECTED_SHA:-}"

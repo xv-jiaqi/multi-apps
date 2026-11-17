@@ -87,6 +87,8 @@ run_case() {
   local forced_rc="${3:-}"
   local previous="${4:-absent}"
   local pull_rc="${5:-}"
+  local pull_not_found_times="${6:-}"
+  local pull_error="${7:-}"
   local work docker_log script_log script_rc
   work="$(mktemp -d)"
   docker_log="${work}/docker.log"
@@ -108,8 +110,25 @@ printf '\n' >> "${log}"
 cmd="$1"
 shift || true
 
-if [ "${cmd}" = "pull" ] && [ -n "${DOCKER_STUB_PULL_RC:-}" ]; then
-  exit "${DOCKER_STUB_PULL_RC}"
+if [ "${cmd}" = "pull" ]; then
+  n=0
+  if [ -f "${state}/pull-count" ]; then
+    n="$(cat "${state}/pull-count")"
+  fi
+  n=$((n + 1))
+  printf '%s\n' "${n}" > "${state}/pull-count"
+  if [ -n "${DOCKER_STUB_PULL_NOT_FOUND_TIMES:-}" ] && [ "${n}" -le "${DOCKER_STUB_PULL_NOT_FOUND_TIMES}" ]; then
+    if [ -n "${DOCKER_STUB_PULL_ERROR:-}" ]; then
+      printf '%s\n' "${DOCKER_STUB_PULL_ERROR}" >&2
+    else
+      printf '%s\n' 'failed to resolve reference "ghcr.io/xv-jiaqi/cardhub-api@sha256:1111111111111111111111111111111111111111111111111111111111111111": not found' >&2
+    fi
+    exit 1
+  fi
+  if [ -n "${DOCKER_STUB_PULL_RC:-}" ]; then
+    exit "${DOCKER_STUB_PULL_RC}"
+  fi
+  exit 0
 fi
 if [ "${cmd}" = "image" ]; then
   fmt=""
@@ -141,7 +160,7 @@ if [ "${cmd}" = "image" ]; then
   exit 0
 fi
 
-if [ "${cmd}" = "network" ] || [ "${cmd}" = "pull" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ] || [ "${cmd}" = "tag" ]; then
+if [ "${cmd}" = "network" ] || [ "${cmd}" = "ps" ] || [ "${cmd}" = "logs" ] || [ "${cmd}" = "rm" ] || [ "${cmd}" = "stop" ] || [ "${cmd}" = "tag" ]; then
   exit 0
 fi
 
@@ -322,8 +341,11 @@ EOF
     DOCKER_STUB_PREV_WEB_DIGEST="${prev_web_digest}" \
     API_IMAGE_DIGEST="${api_digest}" \
     WEB_IMAGE_DIGEST="${web_digest}" \
+    CARDHUB_IMAGE_PULL_BACKOFF_SECONDS="0 0 0" \
     ${forced_rc:+DOCKER_STUB_ENTRYPOINT_RC="${forced_rc}"} \
     ${pull_rc:+DOCKER_STUB_PULL_RC="${pull_rc}"} \
+    ${pull_not_found_times:+DOCKER_STUB_PULL_NOT_FOUND_TIMES="${pull_not_found_times}"} \
+    ${pull_error:+DOCKER_STUB_PULL_ERROR="${pull_error}"} \
     bash "${deploy_script}" staging "${tag}" "${sha}" > "${script_log}" 2>&1 || script_rc=$?
 
   CASE_RC="${script_rc}"
@@ -380,10 +402,62 @@ run_case complete "" 1
 assert "complete docker rc 1 names the status" "$(grep -q 'entrypoint probe exited 1' "${CASE_LOG}" && echo 0 || echo 1)"
 assert_stopped "complete docker rc 1"
 
-# Image pull fails before the probe.
+# Image pull fails before the probe. Empty stderr is not a resolve error,
+# so it is not retried.
 run_case complete "" "" absent 1
 assert "image pull failure aborts" "$(grep -q 'Failed to pull' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "image pull failure is a single attempt" "$(
+  n="$(awk '$1 == "pull" { c++ } END { print c + 0 }' "${CASE_DOCKER}")"
+  [ "${n}" -eq 1 ] && echo 0 || echo 1
+)"
 assert_stopped "image pull failure"
+
+count_pulls() {
+  local digest="$1"
+  awk -v digest="${digest}" '$1 == "pull" && index($0, digest) { c++ } END { print c + 0 }' "${CASE_DOCKER}"
+}
+
+# First api pull is "not found". The second attempt succeeds, then web pulls.
+run_case complete "" "" absent "" 1
+assert "pull retry on the second attempt exits 0" "$([ "${CASE_RC}" -eq 0 ] && echo 0 || echo 1)"
+assert "pull retry on the second attempt pulled api twice" "$(
+  [ "$(count_pulls "${api_digest}")" -eq 2 ] && echo 0 || echo 1
+)"
+assert "pull retry on the second attempt pulled web once" "$(
+  [ "$(count_pulls "${web_digest}")" -eq 1 ] && echo 0 || echo 1
+)"
+assert "pull retry on the second attempt logged one retry" "$(
+  n="$(awk 'index($0, "Retrying pull of") { c++ } END { print c + 0 }' "${CASE_LOG}")"
+  [ "${n}" -eq 1 ] && echo 0 || echo 1
+)"
+assert "pull retry on the second attempt did not fail the pull" "$(
+  grep -q 'Failed to pull' "${CASE_LOG}" && echo 1 || echo 0
+)"
+
+# Every attempt is "not found". Stop before rollback is armed.
+run_case complete "" "" absent "" 9
+assert "pull retry exhaustion names the failure" "$(grep -q 'Failed to pull' "${CASE_LOG}" && grep -q 'the running API was not replaced' "${CASE_LOG}" && echo 0 || echo 1)"
+assert "pull retry exhaustion tried api three times" "$(
+  [ "$(count_pulls "${api_digest}")" -eq 3 ] && echo 0 || echo 1
+)"
+assert "pull retry exhaustion did not pull web" "$(
+  [ "$(count_pulls "${web_digest}")" -eq 0 ] && echo 0 || echo 1
+)"
+assert_stopped "pull retry exhaustion"
+
+# "command not found" is not a registry miss. One attempt, then stop.
+run_case complete "" "" absent "" 9 "docker: command not found"
+assert "command not found is a single pull" "$(
+  [ "$(count_pulls "${api_digest}")" -eq 1 ] && echo 0 || echo 1
+)"
+assert_stopped "command not found"
+
+# GHCR 503 is retried like not-found.
+run_case complete "" "" absent "" 9 "503 Service Unavailable"
+assert "http 503 retries api three times" "$(
+  [ "$(count_pulls "${api_digest}")" -eq 3 ] && echo 0 || echo 1
+)"
+assert_stopped "http 503"
 
 # Dangling symlinks exist. They are not an old image.
 run_case dangling ""
@@ -428,6 +502,12 @@ assert "previous tag is recorded" "$(grep -qx "PREVIOUS_API_TAG=${prev_tag}" "${
 run_case complete "" "" inspect-error
 assert "inspect error names the failure" "$(grep -q 'docker inspect of the previous api container exited 1' "${CASE_LOG}" && echo 0 || echo 1)"
 assert_stopped "inspect error"
+
+assert "digest pull defaults to 3 attempts and 5 15 30 backoff" "$(
+  grep -F -q 'CARDHUB_IMAGE_PULL_ATTEMPTS:-3' "${deploy_script}" \
+    && grep -F -q 'CARDHUB_IMAGE_PULL_BACKOFF_SECONDS:-5 15 30' "${deploy_script}" \
+    && echo 0 || echo 1
+)"
 
 if [ "${failed}" -ne 0 ]; then
   echo "entrypoint probe tests failed" >&2
