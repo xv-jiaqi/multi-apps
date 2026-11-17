@@ -58,6 +58,8 @@ export const seriesBySlugSchema = z.object({
       parallelOfId: z.string().nullable(),
     }),
   ),
+  // Number of cards in the series whose parallelOfId is null (base cards).
+  baseCardCount: z.number().int().nonnegative(),
 });
 
 const attributeLabelSchema = z.object({

@@ -46,7 +46,7 @@ function pageWithinLimit(raw: string): number {
 
 export function parseSeriesListParams(
   search: URLSearchParams,
-  subsetSlugs: ReadonlySet<string>,
+  subsetSlugs: ReadonlySet<string> | null,
 ): { state: SeriesListState; search: string; replace: boolean } {
   const next = new URLSearchParams(search);
   const original = next.toString();
@@ -62,7 +62,8 @@ export function parseSeriesListParams(
   const rawSubset = next.get('subset');
   let subset: string | null = null;
   if (rawSubset !== null) {
-    if (subsetSlugs.has(rawSubset)) subset = rawSubset;
+    if (subsetSlugs === null) subset = rawSubset;
+    else if (subsetSlugs.has(rawSubset)) subset = rawSubset;
     else next.delete('subset');
   }
 

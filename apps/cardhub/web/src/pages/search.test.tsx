@@ -566,7 +566,9 @@ describe('SearchPage', () => {
     harness.mode = 'loading';
     renderSearch('?q=极光');
 
-    expect(document.querySelector('.animate-pulse')).toBeTruthy();
+    const pulse = document.querySelector('.animate-pulse');
+    expect(pulse).toBeTruthy();
+    expect(pulse?.parentElement).toHaveClass('min-h-svh');
     expect(screen.queryByText('极光骑士')).not.toBeInTheDocument();
   });
 

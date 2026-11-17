@@ -28,6 +28,7 @@ const series = {
   title: '天穹黎明',
   description: '黎明。',
   coverUrl: null,
+  baseCardCount: 1,
   cards: [
     {
       slug: 'aurora-knight',
@@ -356,27 +357,17 @@ describe('series detail meta description', () => {
   }
 
   it('counts only base cards in the hero and the description', () => {
-    const previous = series.cards;
-    series.cards = [
-      { slug: 'base-a', name: '基础甲', rarity: 'rare', imageUrl: null, parallelOfId: null },
-      { slug: 'base-b', name: '基础乙', rarity: 'common', imageUrl: null, parallelOfId: null },
-      ...Array.from({ length: 6 }, (_, index) => ({
-        slug: `parallel-${index}`,
-        name: '平行',
-        rarity: 'rare',
-        imageUrl: null,
-        parallelOfId: 'base-a',
-      })),
-    ];
+    const previous = series.baseCardCount;
+    series.baseCardCount = 2;
     showSeries();
     renderSeries();
     expect(screen.getByText('收录 2 张卡牌')).toBeInTheDocument();
-    expect(screen.queryByText('收录 8 张卡牌')).not.toBeInTheDocument();
+    expect(screen.queryByText('收录 1 张卡牌')).not.toBeInTheDocument();
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
       'content',
       expect.stringContaining('共 2 张卡牌'),
     );
-    series.cards = previous;
+    series.baseCardCount = previous;
   });
 
   it('describes the loaded series in Chinese and English', () => {
@@ -425,7 +416,7 @@ describe('series comments frame (CH-206 v1.4 §9)', () => {
     expect(card?.className).not.toMatch(/backdrop-blur|bg-card\//);
   });
 
-  it('paints the loading skeleton tiles plain white', () => {
+  it('keeps the loading hero opaque and mounts the card list before bySlug resolves', () => {
     seriesQuery.isLoading = true;
     seriesQuery.isPending = true;
     seriesQuery.isFetching = true;
@@ -433,12 +424,10 @@ describe('series comments frame (CH-206 v1.4 §9)', () => {
     seriesQuery.error = null;
     seriesQuery.errorUpdateCount = 0;
     renderSeries();
-    const tiles = [...document.querySelectorAll('.h-64.animate-pulse')];
-    expect(tiles).toHaveLength(4);
-    for (const tile of tiles) {
-      expect(tile).toHaveClass('bg-card');
-      expect(tile.className).not.toMatch(/bg-card\/|backdrop-blur/);
-    }
+    const hero = document.querySelector('.h-48.animate-pulse');
+    expect(hero).toHaveClass('bg-neutral-200');
+    expect(hero?.className).not.toMatch(/bg-neutral-200\/|backdrop-blur/);
+    expect(screen.getByRole('heading', { name: '本系列卡牌' })).toBeInTheDocument();
   });
 
   it('paints the loading hero block opaque neutral-200', () => {
