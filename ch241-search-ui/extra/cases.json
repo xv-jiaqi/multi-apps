@@ -1,0 +1,36 @@
+{
+ "base": "http://localhost:5241",
+ "api": "http://localhost:4241",
+ "viewports": [
+  375
+ ],
+ "langs": [
+  "zh",
+  "en"
+ ],
+ "cases": [
+  {
+   "name": "search-151-subset",
+   "path": "/search?q=%E7%9A%AE%E5%8D%A1%E4%B8%98%20s%3Aptcg-sc-151",
+   "wait_for": "main a[href^='/cards/']",
+   "wait_ms": 1500
+  },
+  {
+   "name": "series-csv10-jump5",
+   "path": "/series/ptcg-sc-csv10",
+   "wait_for": "nav[aria-label='顶部分页'], nav[aria-label='Top pagination']",
+   "wait_ms": 1500,
+   "click": {
+    "zh": "nav[aria-label='顶部分页'] a[aria-label='第 5 页']",
+    "en": "nav[aria-label='Top pagination'] a[aria-label='Page 5']"
+   },
+   "after_click_ms": 2500
+  },
+  {
+   "name": "search-many-pages",
+   "path": "/search?q=ex%20-%E7%9A%AE%E5%8D%A1%E4%B8%98",
+   "wait_for": "main a[href^='/cards/']",
+   "wait_ms": 1500
+  }
+ ]
+}

@@ -1,0 +1,107 @@
+{
+ "sha": "unknown",
+ "results": [
+  {
+   "file": "search-151-subset_375_zh.png",
+   "case": "search-151-subset",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n收集啦151\n清除筛选\n\n找到 5 张卡牌、0 个系列\n\n卡牌（5）\n皮卡丘\n#025 · 收录卡\n收集啦151\n普通\n皮卡丘\n#170 · 编号外\n收集啦151\n史诗\n皮卡丘\n#171 · 编号外\n收集啦151\n史诗\n皮卡丘\n#172 · 编号外\n收集啦151\n史诗\n皮卡丘\n#173 · 编号外\n收集啦151\n史诗",
+   "axe": []
+  },
+  {
+   "file": "search-151-subset_375_en.png",
+   "case": "search-151-subset",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\n收集啦151\nClear filters\n\n5 results. Found 5 cards and 0 series.\n\nCards (5)\n皮卡丘\n#025 · 收录卡\n收集啦151\nCommon\n皮卡丘\n#170 · 编号外\n收集啦151\nEpic\n皮卡丘\n#171 · 编号外\n收集啦151\nEpic\n皮卡丘\n#172 · 编号外\n收集啦151\nEpic\n皮卡丘\n#173 · 编号外\n收集啦151\nEpic",
+   "axe": []
+  },
+  {
+   "file": "series-csv10-jump5_375_zh.png",
+   "case": "series-csv10-jump5",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "H2#cards-title 本系列卡牌",
+   "text": "首页\n/\n分类\n/\n宝可梦简中\n/\n共逐荣光\n宝可梦简中\n共逐荣光\n\n宝可梦卡牌简体中文版补充包，2026 年 7 月 16 日发售，收录 287 张。\n\n收录 287 张卡牌\n\n发售于 2026年7月16日\n\n搜索本系列\n\n共 287 张\n\n筛选\n本系列卡牌\n上一页\n1\n…\n4\n5\n下一页\n竹\n#241竹兰的烈咬陆鲨ex\n史诗\n象\n#242象牙猪ex\n史诗\n火\n#243火箭队的尼多王ex\n史诗\n火\n#244火箭队的叉字蝠ex\n史诗\nN\n#245N的索罗亚克ex\n史诗\n派\n#246派帕的獒教父ex\n史诗\n赫\n#247赫普的苍响ex\n史诗\n暴\n#248暴飞龙ex\n史诗\n火\n#249火箭队的猫老大ex\n史诗\n土\n#250土龙节节ex\n史诗\n艾\n#251艾莉丝的斗志\n史诗\nM\n#252MC的热场\n史诗\n可\n#253可怕的哥哥\n史诗\n裁\n#254裁判\n史诗\n小\n#255小刚的发掘\n史诗\n阿\n#256阿响的冒险\n史诗\n火\n#257火箭队的雅典娜\n史诗\n火\n#258火箭队的阿波罗\n史诗\n火\n#259火箭队的坂木\n史诗\n火\n#260火箭队的拉姆达\n史诗\n火\n#261火箭队的兰斯\n史诗\n远\n#262远古巨蜓ex\n传说\n火\n#263火箭队的火焰鸟ex\n传说\n阿\n#264阿响的凤王ex\n传说\n波\n#265波尔凯尼恩ex\n传说\n奇\n#266奇树的电肚蛙ex\n传说\n莉\n#267莉莉艾的皮皮ex\n传说\n火\n#268火箭队的超梦ex\n传说\n竹\n#269竹兰的烈咬陆鲨ex\n传说\n火\n#270火箭队的尼多王ex\n传说\n火\n#271火箭队的叉字蝠ex\n传说\nN\n#272N的索罗亚克ex\n传说\n派\n#273派帕的獒教父ex\n传说\n赫\n#274赫普的苍响ex\n传说\n暴\n#275暴飞龙ex\n传说\n小\n#276小刚的发掘\n传说\n阿\n#277阿响的冒险\n传说\n火\n#278火箭队的雅典娜\n传说\n火\n#279火箭队的坂木\n传说\n阿\n#280阿响的凤王ex\n传说\n奇\n#281奇树的电肚蛙ex\n传说\n火\n#282火箭队的超梦ex\n传说\n竹\n#283竹兰的烈咬陆鲨ex\n传说\n火\n#284火箭队的叉字蝠ex\n传说\nN\n#285N的索罗亚克ex\n传说\n酿\n#286酿光市\n传说\n尖\n#287尖钉能量\n传说\n上一页\n1\n…\n4\n5\n下一页\n系列评论\n\n登录后即可发表评论\n\n还没有评论，来抢沙发吧",
+   "axe": []
+  },
+  {
+   "file": "series-csv10-jump5_375_en.png",
+   "case": "series-csv10-jump5",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "H2#cards-title Cards in this series",
+   "text": "Home\n/\nCategories\n/\n宝可梦简中\n/\n共逐荣光\n宝可梦简中\n共逐荣光\n\n宝可梦卡牌简体中文版补充包，2026 年 7 月 16 日发售，收录 287 张。\n\n287 CARDS INSIDE\n\nReleased Jul 16, 2026\n\nSearch this set\n\n287 cards\n\nFilters\nCards in this series\nPrevious\n1\n…\n4\n5\nNext\n竹\n#241竹兰的烈咬陆鲨ex\nEpic\n象\n#242象牙猪ex\nEpic\n火\n#243火箭队的尼多王ex\nEpic\n火\n#244火箭队的叉字蝠ex\nEpic\nN\n#245N的索罗亚克ex\nEpic\n派\n#246派帕的獒教父ex\nEpic\n赫\n#247赫普的苍响ex\nEpic\n暴\n#248暴飞龙ex\nEpic\n火\n#249火箭队的猫老大ex\nEpic\n土\n#250土龙节节ex\nEpic\n艾\n#251艾莉丝的斗志\nEpic\nM\n#252MC的热场\nEpic\n可\n#253可怕的哥哥\nEpic\n裁\n#254裁判\nEpic\n小\n#255小刚的发掘\nEpic\n阿\n#256阿响的冒险\nEpic\n火\n#257火箭队的雅典娜\nEpic\n火\n#258火箭队的阿波罗\nEpic\n火\n#259火箭队的坂木\nEpic\n火\n#260火箭队的拉姆达\nEpic\n火\n#261火箭队的兰斯\nEpic\n远\n#262远古巨蜓ex\nLegendary\n火\n#263火箭队的火焰鸟ex\nLegendary\n阿\n#264阿响的凤王ex\nLegendary\n波\n#265波尔凯尼恩ex\nLegendary\n奇\n#266奇树的电肚蛙ex\nLegendary\n莉\n#267莉莉艾的皮皮ex\nLegendary\n火\n#268火箭队的超梦ex\nLegendary\n竹\n#269竹兰的烈咬陆鲨ex\nLegendary\n火\n#270火箭队的尼多王ex\nLegendary\n火\n#271火箭队的叉字蝠ex\nLegendary\nN\n#272N的索罗亚克ex\nLegendary\n派\n#273派帕的獒教父ex\nLegendary\n赫\n#274赫普的苍响ex\nLegendary\n暴\n#275暴飞龙ex\nLegendary\n小\n#276小刚的发掘\nLegendary\n阿\n#277阿响的冒险\nLegendary\n火\n#278火箭队的雅典娜\nLegendary\n火\n#279火箭队的坂木\nLegendary\n阿\n#280阿响的凤王ex\nLegendary\n奇\n#281奇树的电肚蛙ex\nLegendary\n火\n#282火箭队的超梦ex\nLegendary\n竹\n#283竹兰的烈咬陆鲨ex\nLegendary\n火\n#284火箭队的叉字蝠ex\nLegendary\nN\n#285N的索罗亚克ex\nLegendary\n酿\n#286酿光市\nLegendary\n尖\n#287尖钉能量\nLegendary\nPrevious\n1\n…\n4\n5\nNext\nSeries comments\n\nSign in to leave a comment\n\nNo comments yet — be the first to chime in",
+   "axe": []
+  },
+  {
+   "file": "search-many-pages_375_zh.png",
+   "case": "search-many-pages",
+   "width": 375,
+   "lang": "zh",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY 跳到主内容CCardhub首页分类系列发售日历论坛交易EN登",
+   "text": "首页\n/\n搜索\n搜索\n\n试试：\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: 稀有度，s: 系列，c: 卡号，y: 发售年，OR 表示或者，- 表示排除。像 025、25-07 这样的数字卡号可以直接输入，字母卡号请用 c:。\n\n稀有度\n不限\n系列\n不限\n\n找到 157 张卡牌、0 个系列\n\n卡牌（157）\n上一页\n1\n2\n…\n6\n下一页\n君主蛇ex\n#003 · 收录卡\n黑雷奔流\n稀有\n酋雷姆ex\n#031 · 收录卡\n黑雷奔流\n稀有\n捷克罗姆ex\n#037 · 收录卡\n黑雷奔流\n稀有\n美洛耶塔ex\n#047 · 收录卡\n黑雷奔流\n稀有\n龙头地鼠ex\n#049 · 收录卡\n黑雷奔流\n稀有\n盖诺赛克特ex\n#069 · 收录卡\n黑雷奔流\n稀有\n君主蛇ex\n#159 · 编号外\n黑雷奔流\n史诗\n酋雷姆ex\n#160 · 编号外\n黑雷奔流\n史诗\n捷克罗姆ex\n#161 · 编号外\n黑雷奔流\n史诗\n美洛耶塔ex\n#162 · 编号外\n黑雷奔流\n史诗\n龙头地鼠ex\n#163 · 编号外\n黑雷奔流\n史诗\n盖诺赛克特ex\n#164 · 编号外\n黑雷奔流\n史诗\n君主蛇ex\n#167 · 编号外\n黑雷奔流\n传说\n酋雷姆ex\n#168 · 编号外\n黑雷奔流\n传说\n捷克罗姆ex\n#169 · 编号外\n黑雷奔流\n传说\n美洛耶塔ex\n#170 · 编号外\n黑雷奔流\n传说\n龙头地鼠ex\n#171 · 编号外\n黑雷奔流\n传说\n盖诺赛克特ex\n#172 · 编号外\n黑雷奔流\n传说\n捷克罗姆ex\n#174 · 编号外\n黑雷奔流\n传说\n风妖精ex\n#005 · 收录卡\n白焰迸涌\n稀有\n莱希拉姆ex\n#017 · 收录卡\n白焰迸涌\n稀有\n凯路迪欧ex\n#027 · 收录卡\n白焰迸涌\n稀有\n胖嘟嘟ex\n#042 · 收录卡\n白焰迸涌\n稀有\n三首恶龙ex\n#062 · 收录卡\n白焰迸涌\n稀有\n爆炸头水牛ex\n#075 · 收录卡\n白焰迸涌\n稀有\n风妖精ex\n#159 · 编号外\n白焰迸涌\n史诗\n莱希拉姆ex\n#160 · 编号外\n白焰迸涌\n史诗\n凯路迪欧ex\n#161 · 编号外\n白焰迸涌\n史诗\n胖嘟嘟ex\n#162 · 编号外\n白焰迸涌\n史诗\n三首恶龙ex\n#163 · 编号外\n白焰迸涌\n史诗\n上一页\n1\n2\n…\n6\n下一页",
+   "axe": []
+  },
+  {
+   "file": "search-many-pages_375_en.png",
+   "case": "search-many-pages",
+   "width": 375,
+   "lang": "en",
+   "target_ms": 0,
+   "actual_ms": 0,
+   "overflow": {
+    "page_ok": true,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "clipped": []
+   },
+   "active": "BODY Skip to main contentCCardhubHo",
+   "text": "Home\n/\nSearch\nSearch\n\nTry:\n皮卡丘\n025\nc:025 s:ptcg-sc-151\n皮卡丘 OR 喷火龙\nex -皮卡丘\n\nr: rarity, s: series, c: card number, y: release year, OR for either, - to exclude. Type a numeric card number like 025 or 25-07 directly. Use c: for a letter card number.\n\nRarity\nAny\nSeries\nAny\n\n157 results. Found 157 cards and 0 series.\n\nCards (157)\nPrevious\n1\n2\n…\n6\nNext\n君主蛇ex\n#003 · 收录卡\n黑雷奔流\nRare\n酋雷姆ex\n#031 · 收录卡\n黑雷奔流\nRare\n捷克罗姆ex\n#037 · 收录卡\n黑雷奔流\nRare\n美洛耶塔ex\n#047 · 收录卡\n黑雷奔流\nRare\n龙头地鼠ex\n#049 · 收录卡\n黑雷奔流\nRare\n盖诺赛克特ex\n#069 · 收录卡\n黑雷奔流\nRare\n君主蛇ex\n#159 · 编号外\n黑雷奔流\nEpic\n酋雷姆ex\n#160 · 编号外\n黑雷奔流\nEpic\n捷克罗姆ex\n#161 · 编号外\n黑雷奔流\nEpic\n美洛耶塔ex\n#162 · 编号外\n黑雷奔流\nEpic\n龙头地鼠ex\n#163 · 编号外\n黑雷奔流\nEpic\n盖诺赛克特ex\n#164 · 编号外\n黑雷奔流\nEpic\n君主蛇ex\n#167 · 编号外\n黑雷奔流\nLegendary\n酋雷姆ex\n#168 · 编号外\n黑雷奔流\nLegendary\n捷克罗姆ex\n#169 · 编号外\n黑雷奔流\nLegendary\n美洛耶塔ex\n#170 · 编号外\n黑雷奔流\nLegendary\n龙头地鼠ex\n#171 · 编号外\n黑雷奔流\nLegendary\n盖诺赛克特ex\n#172 · 编号外\n黑雷奔流\nLegendary\n捷克罗姆ex\n#174 · 编号外\n黑雷奔流\nLegendary\n风妖精ex\n#005 · 收录卡\n白焰迸涌\nRare\n莱希拉姆ex\n#017 · 收录卡\n白焰迸涌\nRare\n凯路迪欧ex\n#027 · 收录卡\n白焰迸涌\nRare\n胖嘟嘟ex\n#042 · 收录卡\n白焰迸涌\nRare\n三首恶龙ex\n#062 · 收录卡\n白焰迸涌\nRare\n爆炸头水牛ex\n#075 · 收录卡\n白焰迸涌\nRare\n风妖精ex\n#159 · 编号外\n白焰迸涌\nEpic\n莱希拉姆ex\n#160 · 编号外\n白焰迸涌\nEpic\n凯路迪欧ex\n#161 · 编号外\n白焰迸涌\nEpic\n胖嘟嘟ex\n#162 · 编号外\n白焰迸涌\nEpic\n三首恶龙ex\n#163 · 编号外\n白焰迸涌\nEpic\nPrevious\n1\n2\n…\n6\nNext",
+   "axe": []
+  }
+ ]
+}
