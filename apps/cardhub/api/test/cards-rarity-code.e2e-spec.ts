@@ -246,6 +246,7 @@ describe('cards.listBySeries rarityCode (CH-239 / AC7-7)', () => {
     );
     expect(body.seriesTotal).toBe(176);
     expect(body.rarityCodes).toEqual(THIRTIETH_CODES);
+    expect(body.baseRarityCodes).toEqual(THIRTIETH_CODES);
   });
 
   it('keeps rarityCodes fixed across filters and returns every item rarityCode', async () => {
@@ -303,23 +304,23 @@ describe('cards.listBySeries rarityCode (CH-239 / AC7-7)', () => {
     expect(response.status).toBe(200);
     const body = resultData(response.body);
     expect(body.rarityCodes).toEqual([]);
+    expect(body.baseRarityCodes).toEqual([]);
     expect(listedCards(response.body).map((card) => card.rarityCode)).toEqual([null, null]);
   });
 
-  it('lists a parallel-only code only when includeParallels is on (需求 v1.1)', async () => {
-    const off = await list({ seriesSlug: parallelSlug });
-    expect(off.status).toBe(200);
-    expect(resultData(off.body).rarityCodes).toEqual(['C', 'R']);
-
-    const on = await list({ seriesSlug: parallelSlug, includeParallels: true });
-    expect(resultData(on.body).rarityCodes).toEqual(['C', 'SSR', 'R']);
+  it('returns baseRarityCodes without the parallel-only code; rarityCodes stays whole (需求 v1.1)', async () => {
+    for (const input of [{}, { includeParallels: true }, { rarityCode: 'C' }]) {
+      const response = await list({ seriesSlug: parallelSlug, ...input });
+      expect(response.status).toBe(200);
+      expect(resultData(response.body).rarityCodes).toEqual(['C', 'SSR', 'R']);
+      expect(resultData(response.body).baseRarityCodes).toEqual(['C', 'R']);
+    }
 
     // Old link: parallel-only code with parallels off is an empty list, not an error.
     const stale = await list({ seriesSlug: parallelSlug, rarityCode: 'SSR' });
     expect(stale.status).toBe(200);
     expect(resultData(stale.body).total).toBe(0);
     expect(resultData(stale.body).items).toEqual([]);
-    expect(resultData(stale.body).rarityCodes).toEqual(['C', 'R']);
 
     const shown = await list({
       seriesSlug: parallelSlug,
@@ -329,14 +330,10 @@ describe('cards.listBySeries rarityCode (CH-239 / AC7-7)', () => {
     expect(resultData(shown.body).total).toBe(1);
     expect(listedCards(shown.body)[0]).toMatchObject({ rarityCode: 'SSR', cardNumber: '001' });
 
-    // The two lists live under different cache keys.
-    expect(cardsListBySeriesCacheKey({ seriesSlug: parallelSlug })).not.toBe(
-      cardsListBySeriesCacheKey({ seriesSlug: parallelSlug, includeParallels: true }),
-    );
-    const cachedOff = await app
+    const cached = await app
       .get(RedisService)
       .client.get(cardsListBySeriesCacheKey({ seriesSlug: parallelSlug }));
-    expect(cachedOff).toContain('"rarityCodes":["C","R"]');
+    expect(cached).toContain('"baseRarityCodes":["C","R"]');
   });
 
   it('caches each rarityCode under its own key with the new fields', async () => {

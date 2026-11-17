@@ -59,14 +59,21 @@ export type CardsListBySeriesResult = {
   sort: CardsListBySeriesInput['sort'];
   attributeLabels: ReturnType<typeof cardAttributeLabels>;
   /**
-   * CH-239: every official rarity code in the series, in the order each first
-   * appears under `sort=number`. With `includeParallels` off only base cards
-   * count, so a code printed only on parallels is not offered (需求 v1.1).
-   * Other filters and paging do not change it. Empty when no card has `attributes.稀有度`. Codes longer
+   * CH-239: every official rarity code in the series (base and parallels),
+   * in the order each first appears under `sort=number`. Filters and paging
+   * do not change it. Empty when no card has `attributes.稀有度`. Codes longer
    * than the `rarityCode` input limit are left out because no filter can
    * select them.
    */
   rarityCodes: string[];
+  /**
+   * CH-239 需求 v1.1 / Spec v1.2 §3: the codes printed on at least one base
+   * card (`parallelOfId` null), in `rarityCodes` order. The page offers these
+   * while 「显示平行版本」 is off; a code in `rarityCodes` but not here is
+   * printed only on parallels. Filters, including `includeParallels`, and
+   * paging do not change it.
+   */
+  baseRarityCodes: string[];
 };
 
 /**
@@ -107,17 +114,24 @@ function toListItem(card: ListedCardRow): CardsListBySeriesItem {
   };
 }
 
-function seriesRarityCodes(cards: readonly ListedCardRow[], includeParallels: boolean): string[] {
+function seriesRarityCodes(cards: readonly ListedCardRow[]): string[] {
   const codes = new Set<string>();
-  const counted = includeParallels ? cards : cards.filter((card) => card.parallelOfId == null);
-  const byNumber = [...counted].sort((left, right) =>
-    compareSeriesListCards('number', left, right),
-  );
+  const byNumber = [...cards].sort((left, right) => compareSeriesListCards('number', left, right));
   for (const card of byNumber) {
     const code = cardRarityCode(card.attributes);
     if (code !== null && isSelectableCardRarityCode(code)) codes.add(code);
   }
   return [...codes];
+}
+
+function baseRarityCodes(cards: readonly ListedCardRow[], ordered: readonly string[]): string[] {
+  const onBase = new Set<string>();
+  for (const card of cards) {
+    if (card.parallelOfId != null) continue;
+    const code = cardRarityCode(card.attributes);
+    if (code !== null) onBase.add(code);
+  }
+  return ordered.filter((code) => onBase.has(code));
 }
 
 function matchesFilters(card: ListedCardRow, input: CardsListBySeriesInput): boolean {
@@ -174,6 +188,7 @@ export async function loadCardsBySeries(
     compareSeriesListCards(input.sort, left, right),
   );
   const start = (input.page - 1) * input.pageSize;
+  const rarityCodes = seriesRarityCodes(series.cards);
   return {
     items: sorted.slice(start, start + input.pageSize).map(toListItem),
     page: input.page,
@@ -185,6 +200,7 @@ export async function loadCardsBySeries(
     attributeLabels: cardAttributeLabels(
       sorted.flatMap((card) => Object.keys(flatCardAttributes(card.attributes) ?? {})),
     ),
-    rarityCodes: seriesRarityCodes(series.cards, input.includeParallels),
+    rarityCodes,
+    baseRarityCodes: baseRarityCodes(series.cards, rarityCodes),
   };
 }

@@ -543,6 +543,7 @@ describe('CardsRouter.listBySeries', () => {
       ]) {
         const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', ...input });
         expect(page.rarityCodes).toEqual(ALL_CODES);
+        expect(page.baseRarityCodes).toEqual(ALL_CODES);
       }
     });
 
@@ -591,42 +592,45 @@ describe('CardsRouter.listBySeries', () => {
       expect(conflicting.total).toBe(0);
     });
 
-    it('lists parallel-only codes only when includeParallels is on (需求 v1.1)', async () => {
+    it('adds baseRarityCodes without parallel-only codes; rarityCodes stays whole (需求 v1.1)', async () => {
       const cards = [
         codeRow('002', 'R', { parallelOfId: 'id-002' }),
         codeRow('001', 'C'),
         codeRow('001', 'S', { parallelOfId: 'id-001' }),
         codeRow('002', 'R'),
+        codeRow('000', 'R', { parallelOfId: 'id-000' }),
       ];
       const { caller } = load(cards);
-      const hidden = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th' });
-      expect(hidden.rarityCodes).toEqual(['C', 'R']);
-      // An old link with a parallel-only code and parallels off: empty, no error.
+      for (const input of [
+        {},
+        { includeParallels: true },
+        { rarityCode: 'C' },
+        { rarityCode: 'S', includeParallels: true },
+        { subsetSlug: 'special' },
+      ]) {
+        const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', ...input });
+        // R first appears on parallel 000, so it leads both lists.
+        expect(page.rarityCodes).toEqual(['R', 'C', 'S']);
+        expect(page.baseRarityCodes).toEqual(['R', 'C']);
+      }
+      // Old link: parallel-only code with parallels off is an empty list, not an error.
       const stale = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th', rarityCode: 'S' });
       expect(stale.total).toBe(0);
       expect(stale.items).toEqual([]);
-      expect(stale.rarityCodes).toEqual(['C', 'R']);
       const shown = await caller.listBySeries({
         seriesSlug: 'ptcg-sc-30th',
         rarityCode: 'S',
         includeParallels: true,
       });
-      expect(shown.rarityCodes).toEqual(['C', 'S', 'R']);
       expect(shown.items.map((item) => item.slug)).toEqual(['ptcg-sc-30th-001-p']);
       expect(shown.items[0]?.isParallel).toBe(true);
-      // Other filters still do not change the list.
-      const filtered = await caller.listBySeries({
-        seriesSlug: 'ptcg-sc-30th',
-        rarityCode: 'C',
-        includeParallels: true,
-      });
-      expect(filtered.rarityCodes).toEqual(['C', 'S', 'R']);
     });
 
     it('returns an empty rarityCodes for a series without official codes', async () => {
       const { caller } = load([codeRow('1', undefined), codeRow('2', '  ')]);
       const page = await caller.listBySeries({ seriesSlug: 'ptcg-sc-30th' });
       expect(page.rarityCodes).toEqual([]);
+      expect(page.baseRarityCodes).toEqual([]);
       expect(page.total).toBe(2);
       expect(page.items.map((item) => item.rarityCode)).toEqual([null, null]);
     });
