@@ -218,4 +218,64 @@ describe('password reset API', () => {
     expect(reused.status).toBe(400);
     expect(appCode(reused.body)).toBe(APP_ERROR_CODES.RESET_TOKEN_INVALID);
   });
+
+  it('lets only one concurrent reset succeed for the same token', async () => {
+    process.env.MAIL_PROVIDER = 'memory';
+    const identity = nextIdentity('race');
+    const registered = await register(app, identity);
+    const requested = await request(app.getHttpServer())
+      .post('/trpc/auth.requestPasswordReset')
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', identity.ip)
+      .send({ email: identity.email });
+    expect(requested.status).toBe(200);
+    const plaintext = memoryPasswordResetMails()[0]?.token;
+    expect(typeof plaintext).toBe('string');
+    if (typeof plaintext !== 'string') throw new Error('expected a token');
+
+    const passwordA = 'correct-horse-a';
+    const passwordB = 'correct-horse-b';
+    const attempts = await Promise.all([
+      request(app.getHttpServer())
+        .post('/trpc/auth.resetPassword')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', identity.ip)
+        .send({ token: plaintext, newPassword: passwordA }),
+      request(app.getHttpServer())
+        .post('/trpc/auth.resetPassword')
+        .set('Content-Type', 'application/json')
+        .set('X-Forwarded-For', identity.ip)
+        .send({ token: plaintext, newPassword: passwordB }),
+    ]);
+    const succeeded = attempts.filter((response) => response.status === 200);
+    const rejected = attempts.filter((response) => response.status === 400);
+    expect(succeeded).toHaveLength(1);
+    expect(resultData(succeeded[0].body)).toEqual({ ok: true });
+    expect(rejected).toHaveLength(1);
+    expect(appCode(rejected[0].body)).toBe(APP_ERROR_CODES.RESET_TOKEN_INVALID);
+
+    const winner = attempts[0].status === 200 ? passwordA : passwordB;
+    const loser = attempts[0].status === 200 ? passwordB : passwordA;
+    const won = await request(app.getHttpServer())
+      .post('/trpc/auth.login')
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', identity.ip)
+      .send({ identifier: identity.username, password: winner });
+    const lost = await request(app.getHttpServer())
+      .post('/trpc/auth.login')
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', identity.ip)
+      .send({ identifier: identity.username, password: loser });
+    const oldPassword = await request(app.getHttpServer())
+      .post('/trpc/auth.login')
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', identity.ip)
+      .send({ identifier: identity.username, password: identity.password });
+    expect(won.status).toBe(200);
+    expect(lost.status).toBe(401);
+    expect(oldPassword.status).toBe(401);
+
+    const row = await prisma.passwordResetToken.findFirst({ where: { userId: registered.id } });
+    expect(row?.usedAt).toEqual(expect.any(Date));
+  });
 });

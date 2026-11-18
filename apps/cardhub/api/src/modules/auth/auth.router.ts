@@ -319,12 +319,24 @@ export class AuthRouter {
       resetPassword: t.procedure.input(resetPasswordInput).mutation(async ({ input }) => {
         const tokenHash = hashPasswordResetToken(input.token);
         const hashed = await hashPassword(input.newPassword, { prehash: prehashWrite });
+        const claimedAt = now();
         await prisma.$transaction(async (tx) => {
+          const claimed = await tx.passwordResetToken.updateMany({
+            where: {
+              tokenHash,
+              usedAt: null,
+              expiresAt: { gt: claimedAt },
+            },
+            data: { usedAt: claimedAt },
+          });
+          if (claimed.count !== 1) {
+            throw resetTokenInvalid();
+          }
           const row = await tx.passwordResetToken.findUnique({
             where: { tokenHash },
-            select: { id: true, userId: true, expiresAt: true, usedAt: true },
+            select: { userId: true },
           });
-          if (!row || row.usedAt || row.expiresAt.getTime() <= now().getTime()) {
+          if (!row) {
             throw resetTokenInvalid();
           }
           await tx.user.update({
@@ -334,10 +346,6 @@ export class AuthRouter {
               tokenVersion: { increment: 1 },
               passwordChangeRecommended: false,
             },
-          });
-          await tx.passwordResetToken.update({
-            where: { id: row.id },
-            data: { usedAt: now() },
           });
         });
         return { ok: true };

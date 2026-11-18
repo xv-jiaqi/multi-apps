@@ -32,6 +32,7 @@ type MockPrismaResetToken = {
   findUnique: jest.Mock;
   create: jest.Mock;
   update: jest.Mock;
+  updateMany: jest.Mock;
 };
 
 function makeRouter(
@@ -51,6 +52,7 @@ function makeRouter(
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   };
   const tx = { user: userMock, passwordResetToken: resetTokenMock };
   const prisma = {
@@ -609,9 +611,8 @@ describe('AuthRouter.requestPasswordReset', () => {
 describe('AuthRouter.resetPassword', () => {
   const token = 'plain-reset-token';
   const tokenHash = hashPasswordResetToken(token);
-  const future = new Date('2026-11-18T04:15:00.000Z');
 
-  it('rejects a missing, used, or expired token with the same appCode', async () => {
+  it('rejects a token when updateMany claims no unused, unexpired row', async () => {
     const now = new Date('2026-11-18T04:10:00.000Z');
     const { caller, resetTokenMock, userMock, auth } = makeRouter(
       null,
@@ -620,7 +621,7 @@ describe('AuthRouter.resetPassword', () => {
       { now: () => now },
     );
 
-    resetTokenMock.findUnique.mockResolvedValueOnce(null);
+    resetTokenMock.updateMany.mockResolvedValueOnce({ count: 0 });
     await expect(
       caller.resetPassword({ token, newPassword: 'new-password' }),
     ).rejects.toMatchObject({
@@ -628,38 +629,16 @@ describe('AuthRouter.resetPassword', () => {
       cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
     });
 
-    resetTokenMock.findUnique.mockResolvedValueOnce({
-      id: 't1',
-      userId: 'u1',
-      expiresAt: future,
-      usedAt: now,
+    expect(resetTokenMock.updateMany).toHaveBeenCalledWith({
+      where: { tokenHash, usedAt: null, expiresAt: { gt: now } },
+      data: { usedAt: now },
     });
-    await expect(
-      caller.resetPassword({ token, newPassword: 'new-password' }),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
-    });
-
-    resetTokenMock.findUnique.mockResolvedValueOnce({
-      id: 't1',
-      userId: 'u1',
-      expiresAt: now,
-      usedAt: null,
-    });
-    await expect(
-      caller.resetPassword({ token, newPassword: 'new-password' }),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
-    });
-
+    expect(resetTokenMock.findUnique).not.toHaveBeenCalled();
     expect(userMock.update).not.toHaveBeenCalled();
-    expect(resetTokenMock.update).not.toHaveBeenCalled();
     expect(auth.sign).not.toHaveBeenCalled();
   });
 
-  it('updates the password, marks the token used, and does not issue a JWT', async () => {
+  it('treats a second updateMany count of 0 as an invalid token', async () => {
     const now = new Date('2026-11-18T04:10:00.000Z');
     const { caller, resetTokenMock, userMock, auth } = makeRouter(
       null,
@@ -667,22 +646,58 @@ describe('AuthRouter.resetPassword', () => {
       {} as TrpcContext['req'],
       { now: () => now },
     );
-    resetTokenMock.findUnique.mockResolvedValueOnce({
-      id: 't1',
-      userId: 'u1',
-      expiresAt: future,
-      usedAt: null,
+    let claims = 0;
+    resetTokenMock.updateMany.mockImplementation(async () => {
+      claims += 1;
+      return { count: claims === 1 ? 1 : 0 };
     });
+    resetTokenMock.findUnique.mockResolvedValue({ userId: 'u1' });
+    userMock.update.mockResolvedValue({ id: 'u1' });
+
+    const results = await Promise.allSettled([
+      caller.resetPassword({ token, newPassword: 'new-password-a' }),
+      caller.resetPassword({ token, newPassword: 'new-password-b' }),
+    ]);
+    const fulfilled = results.filter((result) => result.status === 'fulfilled');
+    const rejected = results.filter((result) => result.status === 'rejected');
+    expect(fulfilled).toHaveLength(1);
+    expect(fulfilled[0]).toMatchObject({ status: 'fulfilled', value: { ok: true } });
+    expect(rejected).toHaveLength(1);
+    if (rejected[0]?.status !== 'rejected') {
+      throw new Error('expected one reset to fail');
+    }
+    expect(rejected[0].reason).toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
+    });
+    expect(resetTokenMock.updateMany).toHaveBeenCalledTimes(2);
+    expect(userMock.update).toHaveBeenCalledTimes(1);
+    expect(auth.sign).not.toHaveBeenCalled();
+  });
+
+  it('updates the password after a successful claim and does not issue a JWT', async () => {
+    const now = new Date('2026-11-18T04:10:00.000Z');
+    const { caller, resetTokenMock, userMock, auth } = makeRouter(
+      null,
+      false,
+      {} as TrpcContext['req'],
+      { now: () => now },
+    );
+    resetTokenMock.updateMany.mockResolvedValueOnce({ count: 1 });
+    resetTokenMock.findUnique.mockResolvedValueOnce({ userId: 'u1' });
     userMock.update.mockResolvedValueOnce({ id: 'u1' });
-    resetTokenMock.update.mockResolvedValueOnce({ id: 't1' });
 
     await expect(caller.resetPassword({ token, newPassword: 'new-password' })).resolves.toEqual({
       ok: true,
     });
 
+    expect(resetTokenMock.updateMany).toHaveBeenCalledWith({
+      where: { tokenHash, usedAt: null, expiresAt: { gt: now } },
+      data: { usedAt: now },
+    });
     expect(resetTokenMock.findUnique).toHaveBeenCalledWith({
       where: { tokenHash },
-      select: { id: true, userId: true, expiresAt: true, usedAt: true },
+      select: { userId: true },
     });
     const userUpdate = userMock.update.mock.calls[0]?.[0];
     expect(userUpdate.where).toEqual({ id: 'u1' });
@@ -690,10 +705,27 @@ describe('AuthRouter.resetPassword', () => {
     expect(userUpdate.data.passwordChangeRecommended).toBe(false);
     expect(userUpdate.data.password).not.toBe('new-password');
     expect(userUpdate.data.password.startsWith('$2')).toBe(true);
-    expect(resetTokenMock.update).toHaveBeenCalledWith({
-      where: { id: 't1' },
-      data: { usedAt: now },
+    expect(auth.sign).not.toHaveBeenCalled();
+  });
+
+  it('rejects the token if the claimed row disappears before the password update', async () => {
+    const now = new Date('2026-11-18T04:10:00.000Z');
+    const { caller, resetTokenMock, userMock, auth } = makeRouter(
+      null,
+      false,
+      {} as TrpcContext['req'],
+      { now: () => now },
+    );
+    resetTokenMock.updateMany.mockResolvedValueOnce({ count: 1 });
+    resetTokenMock.findUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      caller.resetPassword({ token, newPassword: 'new-password' }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
     });
+    expect(userMock.update).not.toHaveBeenCalled();
     expect(auth.sign).not.toHaveBeenCalled();
   });
 });
