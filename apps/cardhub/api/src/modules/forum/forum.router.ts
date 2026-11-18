@@ -25,6 +25,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ContentSecurityService } from '../content-security/content-security.service';
 import {
   isVisibleOnSurface,
+  mergeSafetyStatus,
   publicSafetyWhere,
   resolveContentSurface,
   toSafetyStatusDto,
@@ -239,7 +240,7 @@ export class ForumRouter {
         const actorId = ctx.user.sub;
         const existing = await prisma.topic.findUnique({
           where: { id: input.id },
-          select: { id: true, userId: true, createdAt: true },
+          select: { id: true, userId: true, createdAt: true, safetyStatus: true },
         });
         if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
         if (existing.userId !== actorId) {
@@ -263,7 +264,7 @@ export class ForumRouter {
             title: input.title,
             body: input.body,
             editedAt: new Date(),
-            safetyStatus: decision.safetyStatus,
+            safetyStatus: mergeSafetyStatus(existing.safetyStatus, decision.safetyStatus),
           },
           include: {
             user: { select: { id: true, username: true } },

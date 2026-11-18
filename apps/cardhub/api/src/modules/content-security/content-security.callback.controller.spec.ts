@@ -25,12 +25,12 @@ describe('callbackAuthorized', () => {
     ).toBe(false);
   });
 
-  it('allows unauthenticated mock callbacks when credentials are absent', () => {
+  it('rejects callbacks when the token is empty, even without credentials', () => {
     expect(
       callbackAuthorized({
         env: { callbackToken: '', credentialsConfigured: false },
         headerToken: undefined,
       }),
-    ).toBe(true);
+    ).toBe(false);
   });
 });

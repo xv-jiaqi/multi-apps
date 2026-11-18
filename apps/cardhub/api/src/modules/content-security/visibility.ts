@@ -114,3 +114,21 @@ export function publicSafetySql(args: {
   }
   return Prisma.sql`${status} IN ('PASS', 'UNCHECKED')`;
 }
+
+/**
+ * Keep the stricter of the previous row status and this write's decision.
+ * REVIEW/RISKY must not fall through to UNCHECKED or PASS when an edit
+ * cannot be re-checked (no credentials / no openid); that would publish
+ * previously held content on the web list. UNCHECKED may be promoted to
+ * PASS after a real check (spec: 补检通过). PASS may fall back to
+ * UNCHECKED when this edit could not be checked.
+ */
+export function mergeSafetyStatus(
+  previous: ContentSafetyStatusName | undefined,
+  next: ContentSafetyStatusName,
+): ContentSafetyStatusName {
+  if (previous === 'RISKY') return 'RISKY';
+  if (next === 'RISKY') return 'RISKY';
+  if (previous === 'REVIEW') return 'REVIEW';
+  return next;
+}

@@ -59,10 +59,9 @@ export function callbackAuthorized(args: {
   env: { callbackToken: string; credentialsConfigured: boolean };
   headerToken: string | undefined;
 }): boolean {
-  if (args.env.callbackToken) {
-    return args.headerToken === args.env.callbackToken;
-  }
-  // Credentials without a callback token must not accept unauthenticated
-  // callbacks. Test / unconfigured environments may call the service directly.
-  return !args.env.credentialsConfigured;
+  // An empty token must never authorize the HTTP callback, even when
+  // WeChat credentials are absent. Tests and unconfigured environments
+  // call the service directly instead of posting without a secret.
+  if (!args.env.callbackToken) return false;
+  return args.headerToken === args.env.callbackToken;
 }

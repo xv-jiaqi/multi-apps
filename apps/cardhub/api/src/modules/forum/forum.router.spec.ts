@@ -377,4 +377,39 @@ describe('ForumRouter content safety (CH-248)', () => {
       }).topics.bySlug({ slug: 'sample-topic', surface: 'miniapp' }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
+
+  it.each(['REVIEW', 'RISKY'] as const)(
+    'does not publish a %s topic as unchecked when an edit cannot be re-checked',
+    async (previous) => {
+      const { caller, topicFindUnique, topicUpdate } = makeRouter();
+      topicFindUnique.mockResolvedValueOnce({
+        id: 't-held',
+        userId: 'u-alice',
+        createdAt: new Date(),
+        safetyStatus: previous,
+      });
+      topicUpdate.mockResolvedValueOnce(
+        makeTopicRow({
+          id: 't-held',
+          title: 'edited title',
+          body: 'edited body',
+          editedAt: new Date('2026-05-01T00:01:00Z'),
+        }),
+      );
+
+      await caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).topics.update({
+        id: '11111111-1111-4111-a111-111111111111',
+        title: 'edited title',
+        body: 'edited body',
+      });
+
+      expect(topicUpdate.mock.calls[0]?.[0].data.safetyStatus).toBe(previous);
+    },
+  );
 });

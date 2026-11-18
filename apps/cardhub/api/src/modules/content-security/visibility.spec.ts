@@ -1,4 +1,9 @@
-import { isVisibleOnSurface, publicSafetyWhere, resolveContentSurface } from './visibility';
+import {
+  isVisibleOnSurface,
+  mergeSafetyStatus,
+  publicSafetyWhere,
+  resolveContentSurface,
+} from './visibility';
 
 describe('resolveContentSurface', () => {
   it('defaults omitted surface to web', () => {
@@ -46,6 +51,35 @@ describe('isVisibleOnSurface', () => {
       isVisibleOnSurface({
         surface: 'web',
         status: 'REVIEW',
+        authorId: 'u1',
+        viewerId: 'u2',
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('mergeSafetyStatus', () => {
+  it('keeps review and risky when a later eval returns unchecked or pass', () => {
+    expect(mergeSafetyStatus('REVIEW', 'UNCHECKED')).toBe('REVIEW');
+    expect(mergeSafetyStatus('REVIEW', 'PASS')).toBe('REVIEW');
+    expect(mergeSafetyStatus('RISKY', 'UNCHECKED')).toBe('RISKY');
+    expect(mergeSafetyStatus('RISKY', 'PASS')).toBe('RISKY');
+    expect(mergeSafetyStatus('REVIEW', 'RISKY')).toBe('RISKY');
+  });
+
+  it('lets unchecked be promoted after a real pass, and pass fall back when unchecked', () => {
+    expect(mergeSafetyStatus('UNCHECKED', 'PASS')).toBe('PASS');
+    expect(mergeSafetyStatus('PASS', 'UNCHECKED')).toBe('UNCHECKED');
+    expect(mergeSafetyStatus('PASS', 'REVIEW')).toBe('REVIEW');
+    expect(mergeSafetyStatus(undefined, 'UNCHECKED')).toBe('UNCHECKED');
+  });
+
+  it('does not make a review topic web-public after an unchecked merge', () => {
+    const status = mergeSafetyStatus('REVIEW', 'UNCHECKED');
+    expect(
+      isVisibleOnSurface({
+        surface: 'web',
+        status,
         authorId: 'u1',
         viewerId: 'u2',
       }),
