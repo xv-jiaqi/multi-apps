@@ -31,19 +31,19 @@ import {
 } from '../../components/admin/catalog-utils';
 import { useAdminNotice } from '../../components/admin/use-admin-notice';
 import { trpc } from '../../lib/trpc';
+import {
+  useSeriesDetailCardList,
+  type SeriesDetailCard,
+} from '../../lib/use-series-detail-card-list';
 import { useStores } from '../../stores/root-store';
 
 const COLUMNS = 5;
 
-interface PublicCard {
-  id: string;
-  slug: string;
-  name: string;
-  rarity: string;
-  imageUrl: string | null;
-  parallelName?: string | null;
-  printRun?: number | null;
-  parallelOfId?: string | null;
+function catalogRarity(value: string | null): 'common' | 'rare' | 'epic' | 'legendary' {
+  if (value === 'common' || value === 'rare' || value === 'epic' || value === 'legendary') {
+    return value;
+  }
+  return 'common';
 }
 
 export const CatalogSeriesDetailPage = observer(function CatalogSeriesDetailPage() {
@@ -70,7 +70,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
   const { notice, setNotice, statusRef } = useAdminNotice();
   const utils = trpc.useUtils();
   const seriesQuery = trpc.admin.series.list.useQuery();
-  const cardsQuery = trpc.series.bySlug.useQuery({ slug }, { enabled: Boolean(slug) });
+  const { items: listedCards, query: cardsQuery } = useSeriesDetailCardList(slug);
   const remove = trpc.admin.cards.delete.useMutation();
   const [filter, setFilter] = useState('');
   const [confirmingSlug, setConfirmingSlug] = useState<string | null>(null);
@@ -84,8 +84,8 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
     (item) => item.slug === slug,
   );
   const cards = useMemo(
-    () => ((cardsQuery.data?.cards ?? []) as PublicCard[]).filter((card) => !hidden.has(card.slug)),
-    [cardsQuery.data?.cards, hidden],
+    () => listedCards.filter((card) => !hidden.has(card.slug)),
+    [listedCards, hidden],
   );
   const queryText = filter.trim().toLowerCase();
   const visible = cards.filter(
@@ -111,7 +111,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
   const seriesName = series?.title ?? slug;
   const title = tt('admin.cards.caption', { series: seriesName });
 
-  const confirmDelete = async (card: PublicCard, reason?: string) => {
+  const confirmDelete = async (card: SeriesDetailCard, reason?: string) => {
     setRowError(null);
     setPendingSlug(card.slug);
     try {
@@ -120,6 +120,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
       setConfirmingSlug(null);
       setNotice(tt('admin.cards.deleted', { name: card.name }));
       void utils.admin.series.list.invalidate();
+      void utils.cards.listBySeries.invalidate();
       void utils.series.bySlug.invalidate({ slug });
     } catch (error) {
       if (isAccessRevoked(error)) {
@@ -251,11 +252,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
               ) : (
                 visible.map((card) => {
                   const confirming = confirmingSlug === card.slug;
-                  const rarity = (['common', 'rare', 'epic', 'legendary'] as const).includes(
-                    card.rarity as 'common',
-                  )
-                    ? (card.rarity as 'common' | 'rare' | 'epic' | 'legendary')
-                    : 'common';
+                  const rarity = catalogRarity(card.rarity);
                   return (
                     <Fragment key={card.slug}>
                       <tr className="hover:bg-neutral-50">
@@ -276,7 +273,7 @@ const CatalogSeriesDetailBody = observer(function CatalogSeriesDetailBody() {
                             locale={locale.locale}
                             parallelName={card.parallelName}
                             printRun={card.printRun}
-                            isParallel={card.parallelOfId != null}
+                            isParallel={card.isParallel}
                             className="mt-2 flex max-w-full min-w-0 flex-wrap gap-1"
                           />
                         </th>
