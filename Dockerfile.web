@@ -41,14 +41,29 @@ ARG BUILDTIME_VITE_SENTRY_DSN=
 ARG BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE=0.1
 ENV VITE_TRPC_URL=${BUILDTIME_VITE_TRPC_URL} \
     VITE_SENTRY_DSN=${BUILDTIME_VITE_SENTRY_DSN} \
-    VITE_SENTRY_TRACES_SAMPLE_RATE=${BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE}
+    VITE_SENTRY_TRACES_SAMPLE_RATE=${BUILDTIME_VITE_SENTRY_TRACES_SAMPLE_RATE} \
+    CARDHUB_WEB_SOURCEMAP=hidden
 
 # @repo/trpc-contract lists @cardhub/api as a devDependency (AppRouter types),
 # so `turbo run build --filter=@cardhub/web` still schedules @cardhub/api#build.
 # Prisma Client must exist before Nest/tsc can compile the API — same as
 # Dockerfile.api / CI (prisma generate does not need DATABASE_URL).
+# Hidden source maps stay in this stage for CI to export and upload to Sentry
+# (CH-247). They are deleted in dist-runtime before the runner copies dist.
 RUN pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:generate \
   && pnpm turbo run build --filter=@cardhub/web
+
+############################
+# Stage 2b — dist without maps (what the runner serves)
+############################
+FROM builder AS dist-runtime
+RUN find /repo/apps/cardhub/web/dist -type f -name '*.map' -delete
+
+############################
+# Stage 2c — JS + maps for CI upload only. Not pushed, not served.
+############################
+FROM scratch AS sourcemaps
+COPY --from=builder /repo/apps/cardhub/web/dist /dist
 
 ############################
 # Stage 3 — nginx serve
@@ -62,7 +77,7 @@ COPY --from=builder /repo/apps/cardhub/web/nginx-spa.conf /etc/nginx/conf.d/card
 COPY --from=builder /repo/apps/cardhub/web/docker-entrypoint.d/10-cardhub-runtime-config.sh /docker-entrypoint.d/10-cardhub-runtime-config.sh
 RUN chmod +x /docker-entrypoint.d/10-cardhub-runtime-config.sh
 
-COPY --from=builder /repo/apps/cardhub/web/dist /usr/share/nginx/html
+COPY --from=dist-runtime /repo/apps/cardhub/web/dist /usr/share/nginx/html
 
 ENV GIT_SHA=${GIT_SHA}
 ENV BUILD_TIME=${BUILD_TIME}
