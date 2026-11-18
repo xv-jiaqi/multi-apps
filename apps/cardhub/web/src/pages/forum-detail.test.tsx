@@ -301,7 +301,7 @@ beforeEach(() => {
   });
   createReplyMutate.mockReset();
   createReplyMutate.mockImplementation((_input, handlers) => {
-    const created = {
+    const created: ReplyFixture = {
       id: 'reply-new',
       body: 'new reply',
       createdAt: '2026-05-01T00:50:00.000Z',
@@ -769,7 +769,7 @@ describe('ForumDetailPage replies pagination', () => {
 
   it('visibly highlights a newly posted reply after it becomes visible', async () => {
     rootStore.session.signIn('jwt.token', { id: 'user-current', username: 'alice' });
-    const newReply = {
+    const newReply: ReplyFixture = {
       id: 'reply-new',
       body: 'new highlighted reply',
       createdAt: '2026-05-01T00:30:00.000Z',
