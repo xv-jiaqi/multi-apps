@@ -1036,6 +1036,31 @@ gzip -dc /opt/cardhub/backups/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz 
     'PGPASSWORD="$POSTGRES_PASSWORD" psql -w -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
+### API password-reset mail (CH-246)
+
+`auth.requestPasswordReset` and `auth.resetPassword` are in the API. This cut
+does not send real mail. The api service reads these placeholders from the
+app env file (also listed in `deploy/docker-compose.yml`; an env-file line
+alone never reaches the container):
+
+```dotenv
+MAIL_PROVIDER=
+RESEND_API_KEY=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+```
+
+Leave them empty until D4 picks a provider. If `MAIL_PROVIDER` is missing,
+blank, or an explicit off value (`off`, `none`, `false`, `0`), or if the
+chosen provider's required variables are missing, the request procedure
+returns tRPC `PRECONDITION_FAILED` with `appCode` `MAIL_NOT_CONFIGURED` and
+does not write a token. Setting `MAIL_PROVIDER=resend` plus `RESEND_API_KEY`,
+or `MAIL_PROVIDER=smtp` plus `SMTP_HOST`, `SMTP_PORT`, and `SMTP_FROM`, is
+treated as configured, but send is not wired and returns `NOT_IMPLEMENTED`.
+
 ### Off-site OSS copy (required)
 
 After a local dump is finalized and before local retention pruning, the backup

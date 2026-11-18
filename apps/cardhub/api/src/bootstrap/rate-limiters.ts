@@ -3,7 +3,7 @@ import { createHmac, randomUUID } from 'node:crypto';
 import type { Request, RequestHandler, Response } from 'express';
 import rateLimit, { ipKeyGenerator, MemoryStore, type Store } from 'express-rate-limit';
 import { RedisStore, type RedisReply } from 'rate-limit-redis';
-import { APP_ERROR_CODES, loginInput, t } from '@repo/shared';
+import { APP_ERROR_CODES, loginInput, requestPasswordResetInput, t } from '@repo/shared';
 
 type TrpcCallRequest = {
   path?: string;
@@ -62,7 +62,13 @@ const urlDoesNotInclude =
  * Procedures the auth IP limiter counts. A batch with more than one of these
  * is rejected before any procedure runs.
  */
-const AUTH_WRITE_PROCEDURES = new Set(['auth.register', 'auth.login', 'auth.changePassword']);
+const AUTH_WRITE_PROCEDURES = new Set([
+  'auth.register',
+  'auth.login',
+  'auth.changePassword',
+  'auth.requestPasswordReset',
+  'auth.resetPassword',
+]);
 
 /**
  * Same-tick query batch measured on the authenticated /me page:
@@ -229,11 +235,12 @@ function trpcRateLimitHandler(layer: RateLimitLayer, name: RateLimitName) {
 // its own prefix. When Redis errors, a write falls back to a process-local
 // counter with the same limit instead of being allowed through.
 //
-// Login has a second bucket keyed by a hash of the normalized identifier.
-// The window matches authMutation (60s, 10). There is no lock longer than
-// that window. A successful login below the limit deletes the key. The
-// limiter runs before the procedure, so the request that crosses the limit
-// is 429 before the password is checked.
+// Login and requestPasswordReset share a second bucket keyed by a hash of
+// the normalized identifier / email. The window matches authMutation
+// (60s, 10). There is no lock longer than that window. A successful login
+// below the limit deletes the login key. The limiter runs before the
+// procedure, so the request that crosses the limit is 429 before the
+// password is checked or a reset token is written.
 //
 // Why per-route limiters instead of a single global one: each mutation has
 // a different abuse profile — login attempts deserve a 1-minute window
@@ -469,12 +476,21 @@ export function readAuthAccount(
 ): string | undefined {
   const parsed = parseTrpcProcedures(req);
   if (!parsed.ok) return undefined;
-  const index = parsed.procedures.indexOf('auth.login');
-  if (index < 0) return undefined;
-  const login = loginInput.safeParse(trpcProcedureInput(req.body, index, parsed.batch));
-  if (!login.success) return undefined;
-  const normalized = normalizeAuthAccount(login.data.identifier);
-  return normalized.length > 0 ? normalized : undefined;
+  const loginIndex = parsed.procedures.indexOf('auth.login');
+  if (loginIndex >= 0) {
+    const login = loginInput.safeParse(trpcProcedureInput(req.body, loginIndex, parsed.batch));
+    if (login.success) {
+      const normalized = normalizeAuthAccount(login.data.identifier);
+      if (normalized.length > 0) return normalized;
+    }
+  }
+  const resetIndex = parsed.procedures.indexOf('auth.requestPasswordReset');
+  if (resetIndex < 0) return undefined;
+  const reset = requestPasswordResetInput.safeParse(
+    trpcProcedureInput(req.body, resetIndex, parsed.batch),
+  );
+  if (!reset.success) return undefined;
+  return reset.data.email;
 }
 
 export const CLEAR_LOGIN_ACCOUNT_LIMIT = 'clearLoginAccountLimit';
