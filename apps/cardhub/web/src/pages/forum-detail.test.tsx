@@ -26,6 +26,7 @@ interface ReplyFixture {
   body: string;
   createdAt: string;
   author: { id: string; username: string };
+  safetyStatus: 'pass' | 'review' | 'risky' | 'unchecked';
 }
 
 function makeReply(index: number): ReplyFixture {
@@ -34,6 +35,7 @@ function makeReply(index: number): ReplyFixture {
     body: `Reply ${index}`,
     createdAt: `2026-05-01T00:${String(index).padStart(2, '0')}:00.000Z`,
     author: { id: `user-${index}`, username: `user${index}` },
+    safetyStatus: 'pass',
   };
 }
 
