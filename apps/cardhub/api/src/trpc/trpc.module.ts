@@ -16,6 +16,7 @@ import { AdminModule } from '../modules/admin/admin.module';
 import { CollectionModule } from '../modules/collection/collection.module';
 import { NotificationsModule } from '../modules/notifications/notifications.module';
 import { ReleasesModule } from '../modules/releases/releases.module';
+import { UploadsModule } from '../modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ReleasesModule } from '../modules/releases/releases.module';
     CollectionModule,
     NotificationsModule,
     ReleasesModule,
+    UploadsModule,
   ],
   providers: [TrpcService],
   exports: [TrpcService],

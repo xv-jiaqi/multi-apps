@@ -27,18 +27,19 @@ export type RateLimitName =
   | 'forumReplyCreate'
   | 'listingPublish'
   | 'reportCreate'
-  | 'collectionUpsert';
+  | 'collectionUpsert'
+  | 'uploadCreatePresignedPut';
 
-/** The six write limiters. Each has a per-user layer and an IP fallback layer. */
+/** Write limiters. Each has a per-user layer and an IP fallback layer. */
 export type WriteRateLimitName = Exclude<RateLimitName, 'authMutation'>;
 
 /**
- * createApp `rateLimitOverrides`: the per-user layer for the six writes, and
+ * createApp `rateLimitOverrides`: the per-user layer for the write procedures, and
  * the IP + account buckets for authMutation (which has no user layer).
  */
 export type RateLimitOverrides = Partial<Record<RateLimitName, Partial<RateLimitOverrideConfig>>>;
 
-/** createApp `ipRateLimitOverrides`: the IP fallback layer of the six writes. */
+/** createApp `ipRateLimitOverrides`: the IP fallback layer of the write procedures. */
 export type IpRateLimitOverrides = Partial<
   Record<WriteRateLimitName, Partial<RateLimitOverrideConfig>>
 >;
@@ -218,7 +219,7 @@ function trpcRateLimitHandler(layer: RateLimitLayer, name: RateLimitName) {
 
 // tRPC procedures live behind Express middleware, so NestJS guards / the
 // ThrottlerGuard do not intercept them. Reads (queries) stay un-throttled.
-// The six writes have two layers (CH-227 §2):
+// The write procedures have two layers (CH-227 §2):
 // - user layer: a tRPC middleware after activeUserProcedure / authedProcedure
 //   and before `.input()`, keyed by userId. Every call counts, one per batch
 //   slot, including calls that then fail input validation. A 401 or a ban is
@@ -490,6 +491,7 @@ export const WRITE_RATE_LIMIT_NAMES: readonly WriteRateLimitName[] = [
   'listingPublish',
   'reportCreate',
   'collectionUpsert',
+  'uploadCreatePresignedPut',
 ];
 
 /** Per-user quota of each write (CH-227 §1). One count per tRPC call. */
@@ -500,6 +502,7 @@ export const userRateLimitConfigs: Record<WriteRateLimitName, RateLimitWindow> =
   listingPublish: { windowMs: 60 * 60_000, limit: 10 },
   reportCreate: { windowMs: 60 * 60_000, limit: 20 },
   collectionUpsert: { windowMs: 60_000, limit: 60 },
+  uploadCreatePresignedPut: { windowMs: 60_000, limit: 10 },
 };
 
 /**
@@ -534,6 +537,7 @@ export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> 
   listingPublish: ipFallback('listingPublish', 'listings.publish'),
   reportCreate: ipFallback('reportCreate', 'reports.create'),
   collectionUpsert: ipFallback('collectionUpsert', 'collection.upsert'),
+  uploadCreatePresignedPut: ipFallback('uploadCreatePresignedPut', 'uploads.createPresignedPut'),
 };
 
 export function createRateLimiters(
@@ -650,7 +654,7 @@ function initStore(store: Store, window: RateLimitWindow): void {
 }
 
 /**
- * Per-user layer of the six writes (CH-227 27-B). Same Redis store and memory
+ * Per-user layer of the write procedures (CH-227 27-B). Same Redis store and memory
  * fallback as the IP layer: replicas share one counter, and a Redis error
  * counts in process instead of letting the call through. A key lives for one
  * fixed window (PX windowMs set on the first hit).
