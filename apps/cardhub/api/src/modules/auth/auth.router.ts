@@ -2,7 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import * as Sentry from '@sentry/node';
 import { z } from 'zod';
-import { APP_ERROR_CODES, changePasswordInput, loginInput, registerInput } from '@repo/shared';
+import {
+  APP_ERROR_CODES,
+  changePasswordInput,
+  loginInput,
+  registerInput,
+  requestPasswordResetInput,
+  resetPasswordInput,
+  t,
+} from '@repo/shared';
 import { passwordPrehashWriteEnabled } from '../../config/env.validation';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,6 +26,46 @@ import {
   type ClearLoginAccountLimit,
 } from '../../bootstrap/rate-limiters';
 import type { TrpcContext } from '../../trpc/context';
+import { isMailConfigured } from './mail.config';
+import { resolvePasswordResetMailer, type PasswordResetMailer } from './password-reset-mailer';
+import {
+  createPasswordResetToken,
+  hashPasswordResetToken,
+  passwordResetExpiresAt,
+} from './password-reset-token';
+
+type EnvMap = Readonly<Record<string, string | undefined>>;
+
+export type AuthRouterDeps = {
+  env?: () => EnvMap;
+  mailer?: PasswordResetMailer;
+  now?: () => Date;
+  newToken?: () => string;
+};
+
+function mailNotConfigured(): TRPCError {
+  return new TRPCError({
+    code: 'PRECONDITION_FAILED',
+    message: t('zh-CN', 'error.app.MAIL_NOT_CONFIGURED'),
+    cause: { appCode: APP_ERROR_CODES.MAIL_NOT_CONFIGURED },
+  });
+}
+
+function mailNotImplemented(): TRPCError {
+  return new TRPCError({
+    code: 'NOT_IMPLEMENTED',
+    message: t('zh-CN', 'error.app.NOT_IMPLEMENTED'),
+    cause: { appCode: APP_ERROR_CODES.NOT_IMPLEMENTED },
+  });
+}
+
+function resetTokenInvalid(): TRPCError {
+  return new TRPCError({
+    code: 'BAD_REQUEST',
+    message: t('zh-CN', 'error.app.RESET_TOKEN_INVALID'),
+    cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
+  });
+}
 
 function sessionRejected(): TRPCError {
   return new TRPCError({
@@ -49,10 +97,13 @@ export class AuthRouter {
     }
   }
 
-  build() {
+  build(deps: AuthRouterDeps = {}) {
     const t = this.t;
     const prisma = this.prisma;
     const auth = this.auth;
+    const env = deps.env ?? (() => process.env);
+    const now = deps.now ?? (() => new Date());
+    const newToken = deps.newToken ?? createPasswordResetToken;
     // Read at router build (process start), not from the ConfigModule snapshot.
     // forRoot() validates once per process; tests start a second app after
     // flipping PASSWORD_PREHASH_WRITE.
@@ -233,6 +284,64 @@ export class AuthRouter {
             bannedAt: user.bannedAt ? user.bannedAt.toISOString() : null,
           };
         }),
+
+      requestPasswordReset: t.procedure
+        .input(requestPasswordResetInput)
+        .mutation(async ({ input }) => {
+          const mailEnv = env();
+          if (!isMailConfigured(mailEnv)) {
+            throw mailNotConfigured();
+          }
+          const mailer = resolvePasswordResetMailer(mailEnv, deps.mailer);
+          if (!mailer) {
+            throw mailNotImplemented();
+          }
+          const user = await prisma.user.findUnique({
+            where: { email: input.email },
+            select: { id: true, email: true },
+          });
+          if (!user) {
+            return { ok: true };
+          }
+          const token = newToken();
+          const expiresAt = passwordResetExpiresAt(now());
+          await prisma.passwordResetToken.create({
+            data: {
+              userId: user.id,
+              tokenHash: hashPasswordResetToken(token),
+              expiresAt,
+            },
+          });
+          await mailer.sendPasswordReset({ to: user.email, token, expiresAt });
+          return { ok: true };
+        }),
+
+      resetPassword: t.procedure.input(resetPasswordInput).mutation(async ({ input }) => {
+        const tokenHash = hashPasswordResetToken(input.token);
+        const hashed = await hashPassword(input.newPassword, { prehash: prehashWrite });
+        await prisma.$transaction(async (tx) => {
+          const row = await tx.passwordResetToken.findUnique({
+            where: { tokenHash },
+            select: { id: true, userId: true, expiresAt: true, usedAt: true },
+          });
+          if (!row || row.usedAt || row.expiresAt.getTime() <= now().getTime()) {
+            throw resetTokenInvalid();
+          }
+          await tx.user.update({
+            where: { id: row.userId },
+            data: {
+              password: hashed,
+              tokenVersion: { increment: 1 },
+              passwordChangeRecommended: false,
+            },
+          });
+          await tx.passwordResetToken.update({
+            where: { id: row.id },
+            data: { usedAt: now() },
+          });
+        });
+        return { ok: true };
+      }),
     });
   }
 }

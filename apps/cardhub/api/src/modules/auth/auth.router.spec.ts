@@ -4,7 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { APP_ERROR_CODES } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import type { TrpcContext } from '../../trpc/context';
-import { AuthRouter } from './auth.router';
+import { AuthRouter, type AuthRouterDeps } from './auth.router';
+import { hashPasswordResetToken } from './password-reset-token';
 import { BCRYPT_ROUNDS, DUMMY_PASSWORD_HASH } from './password-hash';
 import type { AuthService } from './auth.service';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -27,10 +28,17 @@ type MockPrismaUser = {
   updateMany: jest.Mock;
 };
 
+type MockPrismaResetToken = {
+  findUnique: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+};
+
 function makeRouter(
   user: TrpcContext['user'] = null,
   prehashWrite = false,
   req: TrpcContext['req'] = {} as TrpcContext['req'],
+  deps: AuthRouterDeps = {},
 ) {
   const userMock: MockPrismaUser = {
     findFirst: jest.fn(),
@@ -39,7 +47,17 @@ function makeRouter(
     update: jest.fn(),
     updateMany: jest.fn().mockResolvedValue({ count: 1 }),
   };
-  const prisma = { user: userMock } as unknown as PrismaService;
+  const resetTokenMock: MockPrismaResetToken = {
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  };
+  const tx = { user: userMock, passwordResetToken: resetTokenMock };
+  const prisma = {
+    user: userMock,
+    passwordResetToken: resetTokenMock,
+    $transaction: jest.fn(async (work: (client: typeof tx) => Promise<unknown>) => work(tx)),
+  } as unknown as PrismaService;
 
   const auth = {
     sign: jest.fn().mockReturnValue('signed.jwt.token'),
@@ -49,7 +67,7 @@ function makeRouter(
   const previous = process.env.PASSWORD_PREHASH_WRITE;
   process.env.PASSWORD_PREHASH_WRITE = prehashWrite ? 'true' : 'false';
   const router = new AuthRouter(new TrpcBase(), prisma, auth);
-  const caller = router.build().createCaller({
+  const caller = router.build(deps).createCaller({
     req,
     res: {} as never,
     user,
@@ -60,7 +78,7 @@ function makeRouter(
     process.env.PASSWORD_PREHASH_WRITE = previous;
   }
 
-  return { caller, userMock, auth };
+  return { caller, userMock, resetTokenMock, auth, prisma };
 }
 
 const signedInUser = {
@@ -500,5 +518,182 @@ describe('AuthRouter.signOutAll', () => {
     const { caller, userMock } = makeRouter();
     await expect(caller.signOutAll()).rejects.toBeInstanceOf(TRPCError);
     expect(userMock.update).not.toHaveBeenCalled();
+  });
+});
+
+const configuredMailEnv = {
+  MAIL_PROVIDER: 'resend',
+  RESEND_API_KEY: 're_test',
+};
+
+describe('AuthRouter.requestPasswordReset', () => {
+  it('fails with MAIL_NOT_CONFIGURED and writes no token when mail is off', async () => {
+    const { caller, resetTokenMock, userMock } = makeRouter(null, false, {} as TrpcContext['req'], {
+      env: () => ({}),
+    });
+
+    await expect(caller.requestPasswordReset({ email: 'a@b.co' })).rejects.toMatchObject({
+      code: 'PRECONDITION_FAILED',
+      cause: { appCode: APP_ERROR_CODES.MAIL_NOT_CONFIGURED },
+    });
+    expect(resetTokenMock.create).not.toHaveBeenCalled();
+    expect(userMock.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('returns ok and writes no token when mail is configured and the email is unknown', async () => {
+    const mailer = { sendPasswordReset: jest.fn() };
+    const { caller, resetTokenMock, userMock } = makeRouter(null, false, {} as TrpcContext['req'], {
+      env: () => configuredMailEnv,
+      mailer,
+    });
+    userMock.findUnique.mockResolvedValueOnce(null);
+
+    await expect(caller.requestPasswordReset({ email: '  Nobody@Cardhub.test ' })).resolves.toEqual(
+      {
+        ok: true,
+      },
+    );
+    expect(userMock.findUnique).toHaveBeenCalledWith({
+      where: { email: 'nobody@cardhub.test' },
+      select: { id: true, email: true },
+    });
+    expect(resetTokenMock.create).not.toHaveBeenCalled();
+    expect(mailer.sendPasswordReset).not.toHaveBeenCalled();
+  });
+
+  it('stores a hash, not the plaintext token, and mails the plaintext when the user exists', async () => {
+    const mailer = { sendPasswordReset: jest.fn().mockResolvedValue(undefined) };
+    const now = new Date('2026-11-18T04:00:00.000Z');
+    const { caller, resetTokenMock, userMock } = makeRouter(null, false, {} as TrpcContext['req'], {
+      env: () => configuredMailEnv,
+      mailer,
+      now: () => now,
+      newToken: () => 'plain-reset-token',
+    });
+    userMock.findUnique.mockResolvedValueOnce({ id: 'u1', email: 'alice@cardhub.test' });
+    resetTokenMock.create.mockResolvedValueOnce({ id: 't1' });
+
+    await expect(caller.requestPasswordReset({ email: 'alice@cardhub.test' })).resolves.toEqual({
+      ok: true,
+    });
+
+    const created = resetTokenMock.create.mock.calls[0]?.[0];
+    expect(created.data.userId).toBe('u1');
+    expect(created.data.tokenHash).toBe(hashPasswordResetToken('plain-reset-token'));
+    expect(created.data.tokenHash).not.toBe('plain-reset-token');
+    expect(JSON.stringify(created)).not.toContain('plain-reset-token');
+    expect(created.data.expiresAt).toEqual(new Date('2026-11-18T04:15:00.000Z'));
+    expect(mailer.sendPasswordReset).toHaveBeenCalledWith({
+      to: 'alice@cardhub.test',
+      token: 'plain-reset-token',
+      expiresAt: created.data.expiresAt,
+    });
+  });
+
+  it('does not write a token when mail is marked configured but sending is not wired', async () => {
+    const { caller, resetTokenMock, userMock } = makeRouter(null, false, {} as TrpcContext['req'], {
+      env: () => configuredMailEnv,
+    });
+
+    await expect(
+      caller.requestPasswordReset({ email: 'alice@cardhub.test' }),
+    ).rejects.toMatchObject({
+      code: 'NOT_IMPLEMENTED',
+      cause: { appCode: APP_ERROR_CODES.NOT_IMPLEMENTED },
+    });
+    expect(resetTokenMock.create).not.toHaveBeenCalled();
+    expect(userMock.findUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthRouter.resetPassword', () => {
+  const token = 'plain-reset-token';
+  const tokenHash = hashPasswordResetToken(token);
+  const future = new Date('2026-11-18T04:15:00.000Z');
+
+  it('rejects a missing, used, or expired token with the same appCode', async () => {
+    const now = new Date('2026-11-18T04:10:00.000Z');
+    const { caller, resetTokenMock, userMock, auth } = makeRouter(
+      null,
+      false,
+      {} as TrpcContext['req'],
+      { now: () => now },
+    );
+
+    resetTokenMock.findUnique.mockResolvedValueOnce(null);
+    await expect(
+      caller.resetPassword({ token, newPassword: 'new-password' }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
+    });
+
+    resetTokenMock.findUnique.mockResolvedValueOnce({
+      id: 't1',
+      userId: 'u1',
+      expiresAt: future,
+      usedAt: now,
+    });
+    await expect(
+      caller.resetPassword({ token, newPassword: 'new-password' }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
+    });
+
+    resetTokenMock.findUnique.mockResolvedValueOnce({
+      id: 't1',
+      userId: 'u1',
+      expiresAt: now,
+      usedAt: null,
+    });
+    await expect(
+      caller.resetPassword({ token, newPassword: 'new-password' }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.RESET_TOKEN_INVALID },
+    });
+
+    expect(userMock.update).not.toHaveBeenCalled();
+    expect(resetTokenMock.update).not.toHaveBeenCalled();
+    expect(auth.sign).not.toHaveBeenCalled();
+  });
+
+  it('updates the password, marks the token used, and does not issue a JWT', async () => {
+    const now = new Date('2026-11-18T04:10:00.000Z');
+    const { caller, resetTokenMock, userMock, auth } = makeRouter(
+      null,
+      false,
+      {} as TrpcContext['req'],
+      { now: () => now },
+    );
+    resetTokenMock.findUnique.mockResolvedValueOnce({
+      id: 't1',
+      userId: 'u1',
+      expiresAt: future,
+      usedAt: null,
+    });
+    userMock.update.mockResolvedValueOnce({ id: 'u1' });
+    resetTokenMock.update.mockResolvedValueOnce({ id: 't1' });
+
+    await expect(caller.resetPassword({ token, newPassword: 'new-password' })).resolves.toEqual({
+      ok: true,
+    });
+
+    expect(resetTokenMock.findUnique).toHaveBeenCalledWith({
+      where: { tokenHash },
+      select: { id: true, userId: true, expiresAt: true, usedAt: true },
+    });
+    const userUpdate = userMock.update.mock.calls[0]?.[0];
+    expect(userUpdate.where).toEqual({ id: 'u1' });
+    expect(userUpdate.data.tokenVersion).toEqual({ increment: 1 });
+    expect(userUpdate.data.passwordChangeRecommended).toBe(false);
+    expect(userUpdate.data.password).not.toBe('new-password');
+    expect(userUpdate.data.password.startsWith('$2')).toBe(true);
+    expect(resetTokenMock.update).toHaveBeenCalledWith({
+      where: { id: 't1' },
+      data: { usedAt: now },
+    });
+    expect(auth.sign).not.toHaveBeenCalled();
   });
 });
