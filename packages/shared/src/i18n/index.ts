@@ -242,6 +242,7 @@ const zhCN: Dictionary = {
   'comment.deletedWithReplies_one': '评论和 {count} 条回复已删除',
   'comment.deletedWithReplies_other': '评论和 {count} 条回复已删除',
   'error.app.COMMENT_PARENT_GONE': '这条评论已被删除，无法回复',
+  'error.app.UPLOADS_NOT_CONFIGURED': '上传未配置，请稍后再试或联系管理员',
   'auth.register.title': '创建账户',
   'auth.register.subtitle': '加入 Cardhub 社区，参与卡牌讨论',
   'auth.login.title': '登录',
@@ -1314,6 +1315,8 @@ const enUS: Dictionary = {
   'comment.deletedWithReplies_one': 'Comment and {count} reply deleted',
   'comment.deletedWithReplies_other': 'Comment and {count} replies deleted',
   'error.app.COMMENT_PARENT_GONE': "This comment was removed, so you can't reply.",
+  'error.app.UPLOADS_NOT_CONFIGURED':
+    'Uploads are not configured. Try again later or contact an administrator.',
   'auth.register.title': 'Create account',
   'auth.register.subtitle': 'Join the Cardhub community and discuss cards',
   'auth.login.title': 'Sign in',

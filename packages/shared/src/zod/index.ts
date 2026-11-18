@@ -722,3 +722,17 @@ export type {
   ReleaseUpdateInput,
   ReleasesListInput,
 } from './release';
+
+export {
+  UPLOAD_CONTENT_TYPES,
+  UPLOAD_PURPOSES,
+  UPLOAD_SIZE_MAX,
+  createPresignedPutInput,
+  createPresignedPutResult,
+} from './uploads';
+export type {
+  CreatePresignedPutInput,
+  CreatePresignedPutResult,
+  UploadContentType,
+  UploadPurpose,
+} from './uploads';

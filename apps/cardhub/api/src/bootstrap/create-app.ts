@@ -38,9 +38,9 @@ import {
 } from './rate-limiters';
 
 export type CreateAppOptions = {
-  /** Per-user layer of the six writes, plus the authMutation IP and account buckets. */
+  /** Per-user layer of the write procedures, plus the authMutation IP and account buckets. */
   rateLimitOverrides?: RateLimitOverrides;
-  /** IP fallback layer of the six writes (default: user limit x 10). */
+  /** IP fallback layer of the write procedures (default: user limit x 10). */
   ipRateLimitOverrides?: IpRateLimitOverrides;
   /** Overrides the Redis key prefix. Tests pass one prefix to share a bucket. */
   rateLimitPrefix?: string;
