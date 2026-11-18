@@ -49,6 +49,10 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // Hidden maps for Sentry upload (CH-247). JS has no sourceMappingURL.
+    // Dockerfile.web sets CARDHUB_WEB_SOURCEMAP=hidden in the builder and
+    // strips *.map before the runner image.
+    sourcemap: process.env.CARDHUB_WEB_SOURCEMAP === 'hidden' ? 'hidden' : false,
   },
   // The shared packages (@repo/*) ship as CommonJS so the NestJS API can
   // require() them directly. Forcing Vite to pre-bundle them lets us keep the
