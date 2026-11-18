@@ -1,6 +1,7 @@
 import { APP_ERROR_CODES } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { ReportsRouter } from './reports.router';
+import { stubContentSecurity } from '../content-security/content-security.test-stub';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { TrpcContext } from '../../trpc/context';
 
@@ -53,7 +54,7 @@ function makeRouter() {
     $queryRaw: jest.fn().mockResolvedValue([{ lock_timeout: '0' }]),
   } as unknown as PrismaService;
 
-  const router = new ReportsRouter(new TrpcBase(), prisma);
+  const router = new ReportsRouter(new TrpcBase(), prisma, stubContentSecurity());
   const built = router.build();
 
   function caller(user: TrpcContext['user']) {

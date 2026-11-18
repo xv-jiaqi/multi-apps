@@ -607,7 +607,7 @@ CH-211 以及图中没有画出的其余 P3 任务没有强依赖，可在空档
 
 - 新增页面：论坛列表 / 详情 / 发帖，交易列表 / 发布，举报（ActionSheet + 表单）；增加 tabBar（首页 / 论坛 / 交易 / 我的）。每个页面目录要有 `index.tsx`、`index.config.ts`、`index.scss`（见 handoff §6.16）。
 - 同步 CH-105 真实图片渲染：小程序用 Taro `Image` 接入真实图片，并复用 `resolveArtwork` 做 https 判断与坏链回退渐变。
-- 同步清单：Web / Tauri 已改用 `topics.list.excerpt` 渲染列表摘要；小程序接入论坛并不再依赖 `topics.list.body` 后，删除 `topics.list` 输出里的 `body` 字段。
+- 同步清单：Web / Tauri 已改用 `topics.list.excerpt` 渲染列表摘要；`topics.list` 已去掉 `body`（CH-248），详情仍走 `topics.bySlug`。
 - 🔶 **D6 小程序 Markdown 渲染**（默认方案）：先按纯文本显示并保留换行；如需富文本，再评估在小程序运行时可用的 Markdown → 安全 HTML 方案配合 `RichText`。
 - 同步 CH-002 的评论删除、CH-003 的回帖翻页、CH-104 的卡名展示。品相等新字段在小程序上可以只读显示，不要求把 Web 的全部筛选搬过来。
 - 本卡不包含资讯、发售日历、收藏进度、平行版本和价格图。那些页面留在各自的任务里。

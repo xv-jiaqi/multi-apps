@@ -2,6 +2,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { listingPublishInput } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { ListingsRouter } from './listings.router';
+import { stubContentSecurity } from '../content-security/content-security.test-stub';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { TrpcContext } from '../../trpc/context';
 
@@ -34,7 +35,7 @@ function makeRouter() {
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
-  const router = new ListingsRouter(new TrpcBase(), prisma);
+  const router = new ListingsRouter(new TrpcBase(), prisma, stubContentSecurity());
   const built = router.build();
 
   function caller(user: TrpcContext['user']) {
@@ -74,6 +75,7 @@ function listingRow(overrides: Record<string, unknown> = {}) {
     language: null,
     variantNote: null,
     status: 'OPEN',
+    safetyStatus: 'UNCHECKED',
     createdAt: new Date('2026-05-01T00:00:00Z'),
     updatedAt: new Date('2026-05-01T00:00:00Z'),
     user: { id: 'u-alice', username: 'alice' },
@@ -155,6 +157,7 @@ describe('ListingsRouter.publish', () => {
         condition: data.condition,
         language: data.language,
         variantNote: data.variantNote,
+        safetyStatus: data.safetyStatus,
         status: 'OPEN',
         createdAt: new Date('2026-05-01T00:00:00Z'),
         updatedAt: new Date('2026-05-01T00:00:00Z'),
@@ -506,7 +509,11 @@ describe('ListingsRouter.byCard', () => {
 
     await caller(null).byCard({ cardSlug: 'aurora-knight', limit: 5 });
     const args = listingFindMany.mock.calls[0]?.[0];
-    expect(args.where).toEqual({ cardSlug: 'aurora-knight', status: 'OPEN' });
+    expect(args.where).toEqual({
+      cardSlug: 'aurora-knight',
+      status: 'OPEN',
+      AND: [{ safetyStatus: { in: ['PASS', 'UNCHECKED'] } }],
+    });
     expect(args.take).toBe(5);
   });
 });

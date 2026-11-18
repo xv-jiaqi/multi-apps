@@ -4,13 +4,14 @@ import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
-  cursorPaginationInput,
   forumRepliesListInput,
   markdownToPlainText,
   optionalDeleteReason,
   replyCreateInput,
   slugify,
+  topicBySlugInput,
   topicCreateInput,
+  topicListInput,
   topicSetPinnedInput,
   topicUpdateInput,
 } from '@repo/shared';
@@ -21,6 +22,14 @@ import { notificationExcerpt } from '../notifications/plan';
 import { contentMayNotify, notifyAfterCommit, notifyContent } from '../notifications/notify';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { ContentSecurityService } from '../content-security/content-security.service';
+import {
+  isVisibleOnSurface,
+  publicSafetyWhere,
+  resolveContentSurface,
+  toSafetyStatusDto,
+  type ContentSafetyStatusName,
+} from '../content-security/visibility';
 
 // 5-minute window matches plan §M6 + handoff doc. Stored as ms so we can
 // reuse it from tests without re-parsing strings.
@@ -35,7 +44,7 @@ const SLUG_RETRY_LIMIT = 5;
  */
 async function createTopicWithUniqueSlug(
   prisma: PrismaService,
-  data: { title: string; body: string; userId: string },
+  data: { title: string; body: string; userId: string; safetyStatus: ContentSafetyStatusName },
 ) {
   let lastError: unknown;
   for (let attempt = 0; attempt < SLUG_RETRY_LIMIT; attempt += 1) {
@@ -47,6 +56,7 @@ async function createTopicWithUniqueSlug(
           title: data.title,
           body: data.body,
           userId: data.userId,
+          safetyStatus: data.safetyStatus,
         },
         include: { user: { select: { id: true, username: true } } },
       });
@@ -77,12 +87,11 @@ type ReplyWithAuthor = Prisma.ReplyGetPayload<{
   include: { user: { select: { id: true; username: true } } };
 }>;
 
-function mapTopicSummary(topic: TopicSummaryPayload) {
+function mapTopicListItem(topic: TopicSummaryPayload) {
   return {
     id: topic.id,
     slug: topic.slug,
     title: topic.title,
-    body: topic.body,
     excerpt: markdownToPlainText(topic.body, 120),
     pinned: topic.pinned,
     editedAt: topic.editedAt?.toISOString() ?? null,
@@ -90,6 +99,14 @@ function mapTopicSummary(topic: TopicSummaryPayload) {
     updatedAt: topic.updatedAt.toISOString(),
     author: topic.user,
     replyCount: topic._count?.replies ?? 0,
+    safetyStatus: toSafetyStatusDto(topic.safetyStatus),
+  };
+}
+
+function mapTopicDetail(topic: TopicSummaryPayload) {
+  return {
+    ...mapTopicListItem(topic),
+    body: topic.body,
   };
 }
 
@@ -98,6 +115,7 @@ export class ForumRouter {
   constructor(
     private readonly t: TrpcBase,
     private readonly prisma: PrismaService,
+    private readonly contentSecurity: ContentSecurityService,
   ) {}
 
   build() {
@@ -106,12 +124,15 @@ export class ForumRouter {
     const topicCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('forumTopicCreate'));
     const replyCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('forumReplyCreate'));
     const prisma = this.prisma;
+    const contentSecurity = this.contentSecurity;
 
     const topics = t.router({
-      list: t.procedure.input(cursorPaginationInput).query(async ({ input }) => {
+      list: t.procedure.input(topicListInput).query(async ({ ctx, input }) => {
         // Cursor pagination keyed on (pinned desc, createdAt desc, id desc)
         // so pinned topics float without the client doing a second sort.
+        const surface = resolveContentSurface(input.surface);
         const items = await prisma.topic.findMany({
+          where: publicSafetyWhere({ surface, viewerId: ctx.user?.sub }),
           take: input.limit + 1,
           orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
           ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
@@ -123,56 +144,79 @@ export class ForumRouter {
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
         return {
-          items: sliced.map(mapTopicSummary),
+          items: sliced.map(mapTopicListItem),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),
 
-      bySlug: t.procedure
-        .input(z.object({ slug: z.string().min(1).max(96) }))
-        .query(async ({ input }) => {
-          const topic = await prisma.topic.findUnique({
-            where: { slug: input.slug },
-            include: {
-              user: { select: { id: true, username: true } },
-              _count: { select: { replies: true } },
-            },
-          });
-          if (!topic) {
-            throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
-          }
-          // Inline the first page of replies so /forum/:slug renders in
-          // a single roundtrip; further pages stream via replies.list.
-          const initialReplies = await prisma.reply.findMany({
-            where: { topicId: topic.id },
-            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-            take: 21,
-            include: { user: { select: { id: true, username: true } } },
-          });
-          const hasMore = initialReplies.length > 20;
-          const sliced = hasMore ? initialReplies.slice(0, 20) : initialReplies;
-          const editableUntil = new Date(topic.createdAt.getTime() + EDIT_WINDOW_MS);
-          return {
-            ...mapTopicSummary(topic),
-            editableUntil: editableUntil.toISOString(),
-            serverNow: new Date().toISOString(),
-            replies: sliced.map((r: ReplyWithAuthor) => ({
-              id: r.id,
-              body: r.body,
-              createdAt: r.createdAt.toISOString(),
-              author: r.user,
-            })),
-            replyNextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
-          };
-        }),
+      bySlug: t.procedure.input(topicBySlugInput).query(async ({ ctx, input }) => {
+        const topic = await prisma.topic.findUnique({
+          where: { slug: input.slug },
+          include: {
+            user: { select: { id: true, username: true } },
+            _count: { select: { replies: true } },
+          },
+        });
+        const surface = resolveContentSurface(input.surface);
+        if (
+          !topic ||
+          !isVisibleOnSurface({
+            surface,
+            status: topic.safetyStatus,
+            authorId: topic.userId,
+            viewerId: ctx.user?.sub,
+          })
+        ) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
+        }
+        // Inline the first page of replies so /forum/:slug renders in
+        // a single roundtrip; further pages stream via replies.list.
+        const replySafety = publicSafetyWhere({ surface, viewerId: ctx.user?.sub });
+        const initialReplies = await prisma.reply.findMany({
+          where: { topicId: topic.id, AND: [replySafety] },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          take: 21,
+          include: { user: { select: { id: true, username: true } } },
+        });
+        const hasMore = initialReplies.length > 20;
+        const sliced = hasMore ? initialReplies.slice(0, 20) : initialReplies;
+        const editableUntil = new Date(topic.createdAt.getTime() + EDIT_WINDOW_MS);
+        return {
+          ...mapTopicDetail(topic),
+          editableUntil: editableUntil.toISOString(),
+          serverNow: new Date().toISOString(),
+          replies: sliced.map((r: ReplyWithAuthor) => ({
+            id: r.id,
+            body: r.body,
+            createdAt: r.createdAt.toISOString(),
+            author: r.user,
+            safetyStatus: toSafetyStatusDto(r.safetyStatus),
+          })),
+          replyNextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
+        };
+      }),
 
       create: topicCreateProcedure.input(topicCreateInput).mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const actorId = ctx.user.sub;
+        const decision = await contentSecurity.evaluateWrite({
+          actorId,
+          scene: 3,
+          texts: [input.title, input.body],
+          targetType: 'TOPIC',
+        });
         const created = await createTopicWithUniqueSlug(prisma, {
           title: input.title,
           body: input.body,
           userId: actorId,
+          safetyStatus: decision.safetyStatus,
+        });
+        await contentSecurity.finalizeWrite({
+          decision,
+          actorId,
+          targetType: 'TOPIC',
+          targetId: created.id,
+          scene: 3,
         });
         if (contentMayNotify(created.body, null, actorId)) {
           await notifyAfterCommit(() =>
@@ -187,7 +231,7 @@ export class ForumRouter {
             }),
           );
         }
-        return mapTopicSummary({ ...created, _count: { replies: 0 } });
+        return mapTopicDetail({ ...created, _count: { replies: 0 } });
       }),
 
       update: t.activeUserProcedure.input(topicUpdateInput).mutation(async ({ ctx, input }) => {
@@ -207,13 +251,31 @@ export class ForumRouter {
             message: '话题发布超过 5 分钟后无法编辑，可考虑删除后重新发布',
           });
         }
+        const decision = await contentSecurity.evaluateWrite({
+          actorId,
+          scene: 3,
+          texts: [input.title, input.body],
+          targetType: 'TOPIC',
+        });
         const updated = await prisma.topic.update({
           where: { id: input.id },
-          data: { title: input.title, body: input.body, editedAt: new Date() },
+          data: {
+            title: input.title,
+            body: input.body,
+            editedAt: new Date(),
+            safetyStatus: decision.safetyStatus,
+          },
           include: {
             user: { select: { id: true, username: true } },
             _count: { select: { replies: true } },
           },
+        });
+        await contentSecurity.finalizeWrite({
+          decision,
+          actorId,
+          targetType: 'TOPIC',
+          targetId: updated.id,
+          scene: 3,
         });
         await notifyAfterCommit(() =>
           notifyContent(prisma, {
@@ -227,7 +289,7 @@ export class ForumRouter {
             dedupeMentions: true,
           }),
         );
-        return mapTopicSummary(updated);
+        return mapTopicDetail(updated);
       }),
 
       setPinned: t.authedProcedure.input(topicSetPinnedInput).mutation(async ({ ctx, input }) => {
@@ -252,7 +314,7 @@ export class ForumRouter {
             _count: { select: { replies: true } },
           },
         });
-        return mapTopicSummary(updated);
+        return mapTopicDetail(updated);
       }),
 
       delete: t.authedProcedure
@@ -299,8 +361,10 @@ export class ForumRouter {
     });
 
     const replies = t.router({
-      list: t.procedure.input(forumRepliesListInput).query(async ({ input }) => {
+      list: t.procedure.input(forumRepliesListInput).query(async ({ ctx, input }) => {
         const include = { user: { select: { id: true, username: true } } };
+        const surface = resolveContentSurface(input.surface);
+        const safety = publicSafetyWhere({ surface, viewerId: ctx.user?.sub });
         const mapPage = (rows: ReplyWithAuthor[]) => {
           const hasMore = rows.length > input.limit;
           const sliced = hasMore ? rows.slice(0, input.limit) : rows;
@@ -310,6 +374,7 @@ export class ForumRouter {
               body: r.body,
               createdAt: r.createdAt.toISOString(),
               author: r.user,
+              safetyStatus: toSafetyStatusDto(r.safetyStatus),
             })),
             nextCursor: hasMore ? (sliced.at(-1)?.id ?? null) : null,
           };
@@ -317,21 +382,26 @@ export class ForumRouter {
 
         if (input.aroundId) {
           const target = await prisma.reply.findFirst({
-            where: { id: input.aroundId, topicId: input.topicId },
+            where: { id: input.aroundId, topicId: input.topicId, AND: [safety] },
             select: { id: true, createdAt: true },
           });
           if (!target) return { items: [], nextCursor: null };
           const before = await prisma.reply.count({
             where: {
               topicId: input.topicId,
-              OR: [
-                { createdAt: { lt: target.createdAt } },
-                { AND: [{ createdAt: target.createdAt }, { id: { lt: target.id } }] },
+              AND: [
+                safety,
+                {
+                  OR: [
+                    { createdAt: { lt: target.createdAt } },
+                    { AND: [{ createdAt: target.createdAt }, { id: { lt: target.id } }] },
+                  ],
+                },
               ],
             },
           });
           const rows = await prisma.reply.findMany({
-            where: { topicId: input.topicId },
+            where: { topicId: input.topicId, AND: [safety] },
             orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
             skip: aroundPageSkip(before, input.limit),
             take: input.limit + 1,
@@ -341,7 +411,7 @@ export class ForumRouter {
         }
 
         const items = await prisma.reply.findMany({
-          where: { topicId: input.topicId },
+          where: { topicId: input.topicId, AND: [safety] },
           take: input.limit + 1,
           orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
           ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
@@ -358,9 +428,27 @@ export class ForumRouter {
         });
         if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
         const actorId = ctx.user.sub;
+        const decision = await contentSecurity.evaluateWrite({
+          actorId,
+          scene: 3,
+          texts: [input.body],
+          targetType: 'REPLY',
+        });
         const created = await prisma.reply.create({
-          data: { topicId: topic.id, userId: actorId, body: input.body },
+          data: {
+            topicId: topic.id,
+            userId: actorId,
+            body: input.body,
+            safetyStatus: decision.safetyStatus,
+          },
           include: { user: { select: { id: true, username: true } } },
+        });
+        await contentSecurity.finalizeWrite({
+          decision,
+          actorId,
+          targetType: 'REPLY',
+          targetId: created.id,
+          scene: 3,
         });
         await notifyAfterCommit(() =>
           notifyContent(prisma, {
@@ -378,6 +466,7 @@ export class ForumRouter {
           body: created.body,
           createdAt: created.createdAt.toISOString(),
           author: created.user,
+          safetyStatus: toSafetyStatusDto(created.safetyStatus),
         };
       }),
 
