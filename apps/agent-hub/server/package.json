@@ -23,7 +23,7 @@
     "express": "^5.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "ws": "^8.18.3",
+    "ws": "^8.23.0",
     "zod": "^4.6.6"
   },
   "devDependencies": {
