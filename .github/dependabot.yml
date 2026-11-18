@@ -9,6 +9,10 @@ updates:
     versioning-strategy: increase
     commit-message:
       prefix: 'chore(deps)'
+    ignore:
+      # prettier 3.10.1 会重排 17 个已有源文件的格式，不能在本批依赖升级里顺手改业务代码。
+      - dependency-name: 'prettier'
+        versions: ['3.10.1']
     groups:
       # Bundle minor + patch upgrades into a single PR per ecosystem so the
       # weekly noise stays manageable. Major bumps stay individual so they
