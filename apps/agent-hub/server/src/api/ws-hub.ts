@@ -1,10 +1,13 @@
 import type { IncomingMessage, Server as HttpServer } from 'node:http';
+import type { Duplex } from 'node:stream';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { WS_CLOSE_CODES, wsClientMessageSchema, type Scope } from '@agent-hub/contract';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { AuthService } from '../auth/auth.service';
 import type { Principal } from '../auth/principal';
 import { parseBearer } from '../auth/tokens';
+import { Lifecycle } from '../lifecycle';
+import { HUB_UI_ORIGINS, isAllowedHost } from './http-pipeline';
 
 interface ClientState {
   ws: WebSocket;
@@ -12,29 +15,44 @@ interface ClientState {
   authTimer: NodeJS.Timeout | null;
 }
 
+function rejectUpgrade(socket: Duplex, status: number, reason: string): void {
+  socket.write(`HTTP/1.1 ${status} ${reason}\r\nConnection: close\r\n\r\n`);
+  socket.destroy();
+}
+
 /**
  * PR1 最小 WebSocket：鉴权 + 吊销时 4401 断开。订阅/事件推送留给后续步骤。
+ * upgrade 按 local-api §6.1：Host / Origin / 停机与 HTTP 一致。
  */
 @Injectable()
 export class WsHub implements OnModuleDestroy {
   private wss: WebSocketServer | null = null;
   private readonly clients = new Set<ClientState>();
-  private unsubscribe: (() => void) | null = null;
 
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly lifecycle: Lifecycle,
+  ) {}
 
   attach(server: HttpServer, port: number): void {
-    this.wss = new WebSocketServer({ noServer: true });
+    this.wss = new WebSocketServer({ noServer: true, maxPayload: 64 * 1024 });
     server.on('upgrade', (req, socket, head) => {
-      const host = req.headers.host;
-      if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) {
-        socket.write('HTTP/1.1 421 Misdirected Request\r\nConnection: close\r\n\r\n');
-        socket.destroy();
+      const url = new URL(req.url ?? '/', `http://${req.headers.host ?? '127.0.0.1'}`);
+      if (url.pathname !== '/api/v1/ws') {
+        rejectUpgrade(socket, 404, 'Not Found');
         return;
       }
-      const url = new URL(req.url ?? '/', `http://${host}`);
-      if (url.pathname !== '/api/v1/ws') {
-        socket.destroy();
+      if (!isAllowedHost(req.headers.host, port)) {
+        rejectUpgrade(socket, 421, 'Misdirected Request');
+        return;
+      }
+      const origin = req.headers.origin;
+      if (origin !== undefined && !HUB_UI_ORIGINS.includes(origin)) {
+        rejectUpgrade(socket, 403, 'Forbidden');
+        return;
+      }
+      if (this.lifecycle.isShuttingDown()) {
+        rejectUpgrade(socket, 503, 'Service Unavailable');
         return;
       }
       this.wss!.handleUpgrade(req, socket, head, (ws) => {
@@ -116,7 +134,6 @@ export class WsHub implements OnModuleDestroy {
       });
     });
 
-    this.unsubscribe = () => undefined;
     this.auth.events.on('tokenChanged', this.onTokenChanged);
   }
 

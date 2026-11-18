@@ -15,7 +15,7 @@ HTTP 401
 HTTP 200
 
 ### GET /api/v1/me (bridge token)
-{"kind":"bridge","tokenId":"04a5b327-8fc6-433e-a62a-b5551ecc8d81","scopes":["tasks:read","tasks:write"],"admin":false}
+{"kind":"bridge","tokenId":"2be426da-38d0-4176-8aa6-c068dea9c02e","scopes":["tasks:read","tasks:write"],"admin":false}
 HTTP 200
 
 ### Host: evil.example → health
@@ -26,9 +26,13 @@ HTTP 421
 {"error":{"code":"ORIGIN_FORBIDDEN","message":"不允许该来源访问"}}
 HTTP 403
 
+### WS upgrade Origin: https://evil.example
+HTTP/1.1 403 Forbidden
+
+
 ### PRAGMA user_version
 [Object: null prototype] { user_version: 1 }
 ### permissions
-700 /tmp/ah-evidence-7L6n
-600 /tmp/ah-evidence-7L6n/bridge-token
-644 /tmp/ah-evidence-7L6n/hub.db
+700 /tmp/ah-evidence-OzMy
+600 /tmp/ah-evidence-OzMy/bridge-token
+600 /tmp/ah-evidence-OzMy/hub.db

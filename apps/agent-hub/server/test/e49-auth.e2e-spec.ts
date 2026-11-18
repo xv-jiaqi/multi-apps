@@ -122,6 +122,29 @@ describe('E49 Host / Origin / token', () => {
     expect(denied.body.error.code).toBe('ADMIN_ONLY');
   });
 
+  it('E49 WS illegal Origin → upgrade 403', async () => {
+    const status = await new Promise<number>((resolve, reject) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/api/v1/ws`, {
+        headers: {
+          Host: `127.0.0.1:${port}`,
+          Origin: 'https://evil.example',
+        },
+      });
+      ws.on('open', () => {
+        ws.close();
+        reject(new Error('WS should not open with evil Origin'));
+      });
+      ws.on('unexpected-response', (_req, res) => {
+        resolve(res.statusCode ?? 0);
+      });
+      ws.on('error', () => {
+        // some clients only emit error; treat as rejection if no open
+      });
+      setTimeout(() => reject(new Error('WS origin reject timeout')), 5000);
+    });
+    expect(status).toBe(403);
+  });
+
   it('E49 revoked token → 401; WS closes 4401', async () => {
     const created = await request(app.getHttpServer())
       .post('/api/v1/tokens')
