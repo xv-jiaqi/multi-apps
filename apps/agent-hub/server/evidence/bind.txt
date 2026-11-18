@@ -1,0 +1,3 @@
+=== ss -ltnp :47821 ===
+LISTEN 0      511        127.0.0.1:47821      0.0.0.0:*    users:(("MainThread",pid=686538,fd=24))                                     
+=== note: only 127.0.0.1, not 0.0.0.0 ===

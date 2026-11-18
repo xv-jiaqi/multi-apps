@@ -1,0 +1,44 @@
+{
+  "name": "@agent-hub/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent Hub 本机侧车：NestJS 11 + node:sqlite，只监听 127.0.0.1。",
+  "main": "./dist/main.js",
+  "scripts": {
+    "prebuild": "pnpm --filter @agent-hub/contract run build",
+    "build": "nest build",
+    "start": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node dist/main.js",
+    "dev": "AGENT_HUB_DEV=1 NODE_OPTIONS=--disable-warning=ExperimentalWarning nest start --watch --preserveWatchOutput",
+    "lint": "eslint .",
+    "pretypecheck": "pnpm --filter @agent-hub/contract run build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "pretest": "pnpm --filter @agent-hub/contract run build",
+    "test": "NODE_OPTIONS=--disable-warning=ExperimentalWarning jest"
+  },
+  "dependencies": {
+    "@agent-hub/contract": "workspace:*",
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/platform-express": "^11.1.19",
+    "express": "^5.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "ws": "^8.18.3",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.1.19",
+    "@repo/config-ts": "workspace:*",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.6.0",
+    "@types/supertest": "^7.2.0",
+    "@types/ws": "^8.18.1",
+    "jest": "^30.3.0",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.9",
+    "typescript": "^6.0.3"
+  }
+}

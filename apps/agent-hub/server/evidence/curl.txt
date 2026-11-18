@@ -1,0 +1,34 @@
+### GET /api/v1/health (no token)
+{"app":"agent-hub","version":"0.1.0"}
+HTTP 200
+
+### GET /api/v1/me (no token)
+{"error":{"code":"UNAUTHORIZED","message":"缺少 token，或 token 无效、已吊销"}}
+HTTP 401
+
+### GET /api/v1/me (bad token)
+{"error":{"code":"UNAUTHORIZED","message":"缺少 token，或 token 无效、已吊销"}}
+HTTP 401
+
+### GET /api/v1/me (ui token)
+{"kind":"ui","tokenId":null,"scopes":["tasks:read","tasks:write","approvals:decide"],"admin":true}
+HTTP 200
+
+### GET /api/v1/me (bridge token)
+{"kind":"bridge","tokenId":"04a5b327-8fc6-433e-a62a-b5551ecc8d81","scopes":["tasks:read","tasks:write"],"admin":false}
+HTTP 200
+
+### Host: evil.example → health
+{"error":{"code":"HOST_FORBIDDEN","message":"只接受 127.0.0.1 或 localhost 访问"}}
+HTTP 421
+
+### Origin: https://evil.example → me
+{"error":{"code":"ORIGIN_FORBIDDEN","message":"不允许该来源访问"}}
+HTTP 403
+
+### PRAGMA user_version
+[Object: null prototype] { user_version: 1 }
+### permissions
+700 /tmp/ah-evidence-7L6n
+600 /tmp/ah-evidence-7L6n/bridge-token
+644 /tmp/ah-evidence-7L6n/hub.db
