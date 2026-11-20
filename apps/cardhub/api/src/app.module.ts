@@ -9,6 +9,7 @@ import { HealthModule } from './modules/health/health.module';
 import { SeoModule } from './modules/seo/seo.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TrpcModule } from './trpc/trpc.module';
+import { ContentSecurityModule } from './modules/content-security/content-security.module';
 import { validateEnv } from './config/env.validation';
 import { appLogStream, createHttpLoggerOptions } from './bootstrap/http-logger';
 
@@ -41,6 +42,7 @@ import { appLogStream, createHttpLoggerOptions } from './bootstrap/http-logger';
     AuthModule,
     HealthModule,
     SeoModule,
+    ContentSecurityModule,
     TrpcModule,
   ],
   providers: [

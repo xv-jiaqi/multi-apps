@@ -138,4 +138,23 @@ describe('validateEnv', () => {
       }),
     ).toThrow(PUBLIC_WEB_ORIGIN_ERROR);
   });
+
+  it('rejects production startup when the content-security test switch is set', () => {
+    expect(() =>
+      validateEnv({
+        ...VALID_PRODUCTION_ENV,
+        PUBLIC_WEB_ORIGIN: 'https://card-hub.app',
+        CONTENT_SECURITY_TEST_RESULT: 'pass',
+      }),
+    ).toThrow('CONTENT_SECURITY_TEST_RESULT must not be set when NODE_ENV=production');
+  });
+
+  it('allows a content-security test switch outside production', () => {
+    expect(() =>
+      validateEnv({
+        NODE_ENV: 'test',
+        CONTENT_SECURITY_TEST_RESULT: 'review',
+      }),
+    ).not.toThrow();
+  });
 });
