@@ -11,6 +11,8 @@
 # GET / must carry the API preconnect Link, a Content-Security-Policy,
 # and Cache-Control: no-cache. The hashed asset must be immutable and
 # must not have a Link header (only location / includes the preconnect).
+# GET /config.js must be 200, Cache-Control: no-store, and must not have
+# a Link header (the preconnect include is only on location /).
 # GET <hashed-asset>.map must be 404. When WEB_CONTAINER is set, the
 # image must not contain any *.map files under the nginx html root.
 
@@ -114,17 +116,33 @@ if [ "$code" != "200" ]; then
   exit 1
 fi
 
+
+if ! code=$(curl -fsS -D "${tmpdir}/config.headers" -o "${tmpdir}/config.body" -w '%{http_code}' \
+  --max-time 10 "${base}/config.js" 2>"${tmpdir}/config.err"); then
+  echo "GET /config.js failed (last HTTP status: ${code:-none})" >&2
+  if [ -s "${tmpdir}/config.err" ]; then
+    cat "${tmpdir}/config.err" >&2
+  fi
+  exit 1
+fi
+if [ "$code" != "200" ]; then
+  echo "GET /config.js returned ${code}, expected 200" >&2
+  exit 1
+fi
+
 python3 - "${tmpdir}/index.html" "${tmpdir}/asset.body" "${tmpdir}/index.headers" \
-  "${tmpdir}/asset.headers" "$asset" <<'PY'
+  "${tmpdir}/asset.headers" "$asset" "${tmpdir}/config.headers" "${tmpdir}/config.body" <<'PY'
 import pathlib
 import re
 import sys
 
-index_path, asset_body_path, index_header_path, asset_header_path, asset_url = sys.argv[1:6]
+index_path, asset_body_path, index_header_path, asset_header_path, asset_url, config_header_path, config_body_path = sys.argv[1:8]
 index = pathlib.Path(index_path).read_bytes()
 body = pathlib.Path(asset_body_path).read_bytes()
 index_header_text = pathlib.Path(index_header_path).read_text(encoding="utf-8", errors="replace")
 asset_header_text = pathlib.Path(asset_header_path).read_text(encoding="utf-8", errors="replace")
+config_header_text = pathlib.Path(config_header_path).read_text(encoding="utf-8", errors="replace")
+config_body = pathlib.Path(config_body_path).read_bytes()
 
 errors = []
 
@@ -188,6 +206,7 @@ def csp_sources(csp, directive):
 
 index_headers = parse_headers(index_header_text)
 asset_headers = parse_headers(asset_header_text)
+config_headers = parse_headers(config_header_text)
 
 if not body:
     errors.append(f"GET {asset_url} returned an empty body")
@@ -249,6 +268,21 @@ if asset_headers.get("link"):
         f"GET {asset_url} must not have a Link header, got: {joined(asset_headers, 'link')}"
     )
 
+config_cc = first(config_headers, "cache-control")
+if not has_cache_token(config_cc, "no-store"):
+    shown = config_cc or "(missing)"
+    errors.append(f"GET /config.js Cache-Control is {shown}, expected no-store")
+
+if config_headers.get("link"):
+    errors.append(
+        f"GET /config.js must not have a Link header, got: {joined(config_headers, 'link')}"
+    )
+
+if not config_body:
+    errors.append("GET /config.js returned an empty body")
+if config_body.lstrip().lower().startswith((b"<!doctype html", b"<html")):
+    errors.append("GET /config.js returned the SPA document, not the runtime config")
+
 if errors:
     print("\n".join(errors), file=sys.stderr)
     sys.exit(1)
@@ -263,6 +297,8 @@ print(f"  GET / Content-Security-Policy: {csp}")
 print(f"  GET / Cache-Control: {index_cc}")
 print(f"  GET {asset_url} Cache-Control: {asset_cc}")
 print(f"  GET {asset_url} has no Link header")
+print(f"  GET /config.js Cache-Control: {config_cc}")
+print("  GET /config.js has no Link header")
 PY
 
 map_path="${asset}.map"

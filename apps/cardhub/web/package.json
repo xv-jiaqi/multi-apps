@@ -12,7 +12,7 @@
     "preview": "vite preview --port 5173",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run && vitest run --config vitest.browser.config.ts",
+    "test": "vitest run && vitest run --config vitest.browser.config.ts && node scripts/check-first-load-js.test.mjs",
     "test:cov": "vitest run --coverage",
     "check:first-load-js": "node scripts/check-first-load-js.mjs"
   },
