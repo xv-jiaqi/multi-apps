@@ -423,6 +423,7 @@ describe('CommentsRouter replies', () => {
         createdAt: new Date('2026-05-03T01:00:00Z'),
         userId: '33333333-3333-4333-8333-333333333333',
         username: 'bob',
+        safetyStatus: 'PASS',
       },
       {
         id: '44444444-4444-4444-8444-444444444444',
@@ -431,6 +432,7 @@ describe('CommentsRouter replies', () => {
         createdAt: new Date('2026-05-03T02:00:00Z'),
         userId: '55555555-5555-4555-8555-555555555555',
         username: 'cara',
+        safetyStatus: 'PASS',
       },
       {
         id: '66666666-6666-4666-8666-666666666666',
@@ -439,6 +441,7 @@ describe('CommentsRouter replies', () => {
         createdAt: new Date('2026-05-03T03:00:00Z'),
         userId: '33333333-3333-4333-8333-333333333333',
         username: 'bob',
+        safetyStatus: 'PASS',
       },
     ]);
     commentGroupBy.mockResolvedValueOnce([
@@ -660,5 +663,73 @@ describe('CommentsRouter replies', () => {
       parentId,
       safetyStatus: 'UNCHECKED',
     });
+  });
+});
+
+describe('CommentsRouter.listForCard preview safetyStatus', () => {
+  const aliceId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const bobId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const parentId = '11111111-1111-4111-8111-111111111111';
+  const aliceReplyId = '22222222-2222-4222-8222-222222222222';
+  const bobReplyId = '44444444-4444-4444-8444-444444444444';
+
+  async function listAs(user: { sub: string; username: string } | null) {
+    const { caller, cardFindUnique, commentFindMany, commentGroupBy, queryRaw } = makeRouter();
+    cardFindUnique.mockResolvedValueOnce({ id: 'card-1' });
+    commentFindMany.mockResolvedValueOnce([
+      {
+        id: parentId,
+        content: 'top',
+        createdAt: new Date('2026-05-03T00:00:00Z'),
+        user: { id: 'u1', username: 'owner' },
+      },
+    ]);
+    queryRaw.mockResolvedValueOnce([
+      {
+        id: aliceReplyId,
+        parentId,
+        content: 'alice review',
+        createdAt: new Date('2026-05-03T01:00:00Z'),
+        userId: aliceId,
+        username: 'alice',
+        safetyStatus: 'REVIEW',
+      },
+      {
+        id: bobReplyId,
+        parentId,
+        content: 'bob pass',
+        createdAt: new Date('2026-05-03T02:00:00Z'),
+        userId: bobId,
+        username: 'bob',
+        safetyStatus: 'PASS',
+      },
+    ]);
+    commentGroupBy.mockResolvedValueOnce([{ parentId, _count: { _all: 2 } }]);
+    const ctxUser = user
+      ? {
+          sub: user.sub,
+          username: user.username,
+          role: 'user' as const,
+          tokenVersion: 0,
+          bannedAt: null,
+        }
+      : null;
+    return caller(ctxUser).listForCard({ cardSlug: 'aurora-knight' });
+  }
+
+  it('includes safetyStatus on preview replies only for the author', async () => {
+    const asAlice = await listAs({ sub: aliceId, username: 'alice' });
+    const aliceView = asAlice[0]?.replies ?? [];
+    expect(aliceView.find((reply) => reply.id === aliceReplyId)?.safetyStatus).toBe('review');
+    expect(aliceView.find((reply) => reply.id === bobReplyId)?.safetyStatus).toBeUndefined();
+
+    const asBob = await listAs({ sub: bobId, username: 'bob' });
+    const bobView = asBob[0]?.replies ?? [];
+    expect(bobView.find((reply) => reply.id === aliceReplyId)?.safetyStatus).toBeUndefined();
+    expect(bobView.find((reply) => reply.id === bobReplyId)?.safetyStatus).toBe('pass');
+
+    const asGuest = await listAs(null);
+    const guestView = asGuest[0]?.replies ?? [];
+    expect(guestView.every((reply) => reply.safetyStatus === undefined)).toBe(true);
   });
 });

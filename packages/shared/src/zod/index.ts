@@ -125,6 +125,28 @@ export const commentRepliesListInput = z.object({
 });
 export type CommentRepliesListInput = z.infer<typeof commentRepliesListInput>;
 
+export const commentSafetyStatusDtoSchema = z.enum([
+  'pass',
+  'unchecked',
+  'review',
+  'risky',
+  'blocked',
+]);
+
+/** Preview reply on comments.listForCard / listForSeries. safetyStatus is author-only. */
+export const commentReplyPreviewSchema = z.object({
+  id: z.string().uuid(),
+  content: z.string(),
+  createdAt: z.string(),
+  user: z.object({
+    id: z.string().uuid(),
+    username: z.string().min(1),
+  }),
+  safetyStatus: commentSafetyStatusDtoSchema.optional(),
+});
+export type CommentReplyPreview = z.infer<typeof commentReplyPreviewSchema>;
+export type CommentSafetyStatusDto = z.infer<typeof commentSafetyStatusDtoSchema>;
+
 /** Blank after trim, or only the prefilled `@username`, is not a reply. */
 export function isBlankReplyContent(content: string, prefillUsernames: readonly string[]): boolean {
   const trimmed = content.trim();

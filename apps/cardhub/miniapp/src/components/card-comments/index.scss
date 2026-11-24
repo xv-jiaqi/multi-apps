@@ -54,12 +54,22 @@
   gap: $spacing-sm;
 }
 
+taro-button-core.card-comment__action,
+.card-comment__action[type='default'],
 .card-comment__action {
   display: flex;
   align-items: center;
   min-height: 88rpx;
+  padding: 0;
   font-size: 28rpx;
+  line-height: 1.4;
   color: $color-brand-600;
+  background-color: transparent;
+  border: none;
+
+  &::after {
+    border: none;
+  }
 }
 
 .card-comment__action--disabled {
@@ -131,4 +141,20 @@
 
 .notice-banner__text {
   font-size: 28rpx;
+}
+
+.card-comment__error {
+  margin-top: $spacing-sm;
+  padding: $spacing-md;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: $radius-md;
+}
+
+.card-comment__error-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: $color-red-700;
+  word-break: break-word;
 }

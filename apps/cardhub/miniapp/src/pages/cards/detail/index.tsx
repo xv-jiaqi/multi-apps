@@ -227,7 +227,7 @@ export default observer(function CardDetailPage() {
                       <Text className="comment-form__error-text">{commentError.text}</Text>
                     </View>
                   ) : null}
-                  <View className="comment-form__footer">
+                  <View className="comment-form__footer" data-toast-avoid>
                     <Text className="card-detail-page__meta comment-form__count">
                       {commentContent.length} / 500
                     </Text>
@@ -276,11 +276,15 @@ export default observer(function CardDetailPage() {
                 <CardCommentsList
                   comments={commentsView.data}
                   hiddenIds={hiddenCommentIds}
-                  onHide={(id) => {
+                  onHide={async (id) => {
                     setHiddenCommentIds((prev) => new Set(prev).add(id));
-                    void loadComments({ fresh: true, keepDataOnError: true }).catch(() => {
+                    try {
+                      await loadComments({ fresh: true, keepDataOnError: true });
+                      return 'refreshed';
+                    } catch {
                       toast.show(tt('comment.deletedRefreshFailed'));
-                    });
+                      return 'stale';
+                    }
                   }}
                   onNotice={(kind, noticeText) =>
                     setThreadNotice({ id: nextNoticeId(), kind, text: noticeText })

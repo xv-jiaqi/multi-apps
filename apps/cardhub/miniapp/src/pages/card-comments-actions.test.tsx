@@ -3,7 +3,7 @@
  * Card-comment delete confirmation, listReplies load-more guard, report
  * submit-once, surface, and the useDidShow refresh after returning from login.
  */
-import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tarojs/components', () => import('../test-stubs/taro-dom'));
@@ -13,6 +13,7 @@ const lifecycle = vi.hoisted(() => ({ didShow: null as null | (() => void) }));
 const taro = vi.hoisted(() => ({
   showToast: vi.fn(async () => undefined),
   showActionSheet: vi.fn(async () => ({ tapIndex: 0 })),
+  getEnv: vi.fn(() => 'WEB'),
   setNavigationBarTitle: vi.fn(async () => undefined),
   navigateTo: vi.fn(async () => undefined),
   redirectTo: vi.fn(async () => undefined),
@@ -170,6 +171,7 @@ beforeEach(() => {
   api.listReplies.mockResolvedValue({ items: extraReplies, nextCursor: null });
   api.commentDelete.mockResolvedValue({ ok: true });
   api.reportCreate.mockResolvedValue({ ok: true });
+  taro.getEnv.mockReturnValue('WEB');
   taro.showActionSheet.mockImplementation(
     async (opts?: { success?: (r: { tapIndex: number }) => void }) => {
       opts?.success?.({ tapIndex: 0 });
@@ -181,6 +183,19 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
 });
+
+function trpcErr(data: Record<string, unknown>) {
+  const error = new Error('request failed');
+  Object.defineProperty(error, 'data', { value: data, enumerable: true });
+  return error;
+}
+
+async function refreshComments() {
+  await act(async () => {
+    lifecycle.didShow?.();
+    lifecycle.didShow?.();
+  });
+}
 
 describe('listForCard / listReplies surface', () => {
   it('sends surface miniapp on the card comment list and on load more', async () => {
@@ -297,6 +312,7 @@ describe('delete confirmation', () => {
         (el.textContent || '').includes('已删除，列表暂未更新'),
       );
       expect(toast).toBeTruthy();
+      expect(container.textContent).not.toContain('评论已删除');
     });
   });
 
@@ -334,19 +350,21 @@ describe('report entry', () => {
     expect(triggers[0]!.textContent).toBe('举报');
   });
 
-  it('opens the in-page form after ActionSheet and sends one report for two submits', async () => {
+  it('opens the in-page form with a radiogroup on H5 and sends one report for two submits', async () => {
     const pending = deferred<unknown>();
     api.reportCreate.mockReturnValue(pending.promise);
     const { container } = await mountList();
     act(() => {
       (container.querySelector('.report-entry__trigger') as HTMLElement).click();
     });
-    expect(taro.showActionSheet).toHaveBeenCalledTimes(1);
-    const firstSheet = taro.showActionSheet.mock.calls[0] as unknown as
-      | [{ itemList: string[] }]
-      | undefined;
-    expect(firstSheet?.[0].itemList).toHaveLength(5);
+    expect(taro.showActionSheet).not.toHaveBeenCalled();
     await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+    const group = container.querySelector('[role="radiogroup"]');
+    expect(group).not.toBeNull();
+    const radios = container.querySelectorAll('.report-entry__reason-option');
+    expect(radios.length).toBe(5);
+    expect(radios[0]!.getAttribute('aria-checked')).toBe('true');
+    expect(radios[0]!.textContent).toBe('垃圾广告');
     const submit = container.querySelector(
       '.report-entry__form button.primary-button',
     ) as HTMLButtonElement;
@@ -384,6 +402,109 @@ describe('report entry', () => {
     expect(taro.showActionSheet).not.toHaveBeenCalled();
     expect(taro.navigateTo).toHaveBeenCalled();
   });
+
+  it('shows report.submitFailed when create returns 400, 413 or 500', async () => {
+    const { container } = await mountList();
+    for (const data of [
+      { code: 'BAD_REQUEST', httpStatus: 400 },
+      { code: 'PAYLOAD_TOO_LARGE', httpStatus: 413 },
+      { code: 'INTERNAL_SERVER_ERROR', httpStatus: 500 },
+    ]) {
+      api.reportCreate.mockRejectedValueOnce(trpcErr(data));
+      act(() => {
+        (container.querySelector('.report-entry__trigger') as HTMLElement).click();
+      });
+      await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+      const submit = container.querySelector(
+        '.report-entry__form button.primary-button',
+      ) as HTMLButtonElement;
+      await act(async () => {
+        submit.click();
+      });
+      await waitFor(() => expect(container.textContent).toContain('提交失败，请重试'));
+      const cancel = container.querySelector('.report-entry__cancel') as HTMLElement;
+      act(() => {
+        cancel.click();
+      });
+    }
+  });
+
+  it('counts the preset reason toward the 500-character limit', async () => {
+    const { container } = await mountList();
+    act(() => {
+      (container.querySelector('.report-entry__trigger') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+    const count = container.querySelector('.report-entry__count') as HTMLElement;
+    // 垃圾广告 = 4
+    expect(count.textContent?.replace(/\s/g, '')).toBe('4/500');
+    const textarea = container.querySelector('.report-entry__textarea') as HTMLTextAreaElement;
+    act(() => {
+      fireEvent.change(textarea, { target: { value: '补充' } });
+    });
+    // 垃圾广告 + newline + 补充 = 7
+    expect(container.querySelector('.report-entry__count')?.textContent?.replace(/\s/g, '')).toBe(
+      '7/500',
+    );
+  });
+
+  it('associates the details label with the textarea via aria-labelledby', async () => {
+    const { container } = await mountList();
+    act(() => {
+      (container.querySelector('.report-entry__trigger') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+    const textarea = container.querySelector('.report-entry__textarea') as HTMLTextAreaElement;
+    const labelledBy = textarea.getAttribute('aria-labelledby');
+    expect(labelledBy).toBeTruthy();
+    const label = container.querySelector(`#${labelledBy}`);
+    expect(label?.textContent).toBe('补充说明');
+  });
+
+  it('moves focus into the form, and back to Report after Escape or cancel', async () => {
+    const { container } = await mountList();
+    const trigger = container.querySelector('.report-entry__trigger') as HTMLButtonElement;
+    act(() => {
+      trigger.focus();
+      trigger.click();
+    });
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+    expect(container.querySelector('.report-entry__form')?.contains(document.activeElement)).toBe(
+      true,
+    );
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).toBeNull());
+    expect(document.activeElement).toBe(container.querySelector('.report-entry__trigger'));
+
+    act(() => {
+      (container.querySelector('.report-entry__trigger') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+    act(() => {
+      (container.querySelector('.report-entry__cancel') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).toBeNull());
+    expect(document.activeElement).toBe(container.querySelector('.report-entry__trigger'));
+  });
+
+  it('uses ActionSheet on the native surface, then a read-only reason', async () => {
+    taro.getEnv.mockReturnValue('WEAPP');
+    const { container } = await mountList();
+    act(() => {
+      (container.querySelector('.report-entry__trigger') as HTMLElement).click();
+    });
+    expect(taro.showActionSheet).toHaveBeenCalledTimes(1);
+    const firstSheet = taro.showActionSheet.mock.calls[0] as unknown as
+      | [{ itemList: string[] }]
+      | undefined;
+    expect(firstSheet?.[0].itemList).toHaveLength(5);
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+    expect(container.querySelector('[role="radiogroup"]')).toBeNull();
+    expect(container.querySelector('.report-entry__reason-text')?.textContent).toBe('垃圾广告');
+    taro.getEnv.mockReturnValue('WEB');
+  });
 });
 
 describe('useDidShow comment refresh', () => {
@@ -400,5 +521,224 @@ describe('useDidShow comment refresh', () => {
       lifecycle.didShow?.();
     });
     await waitFor(() => expect(api.listForCard).toHaveBeenCalledTimes(afterMount + 1));
+  });
+});
+
+describe('listReplies reset after comment refresh', () => {
+  it('drops stale loaded replies when a refresh shifts the preview (no duplicate, correct remaining)', async () => {
+    const { container } = await mountList([other]);
+    const more = container.querySelector('.card-comment__more') as HTMLButtonElement;
+    await act(async () => {
+      more.click();
+    });
+    await waitFor(() => expect(container.textContent).toContain('第四条回复'));
+    expect(container.textContent).toContain('第五条回复');
+
+    const shifted = {
+      ...other,
+      replies: [
+        other.replies[1]!,
+        other.replies[2]!,
+        {
+          id: extraReplies[0]!.id,
+          content: extraReplies[0]!.content,
+          createdAt: extraReplies[0]!.createdAt,
+          user: extraReplies[0]!.user,
+        },
+      ],
+      replyCount: 4,
+      repliesNextCursor: extraReplies[0]!.id,
+    };
+    api.listForCard.mockResolvedValue([shifted]);
+    await refreshComments();
+    await waitFor(() => {
+      const text = container.textContent ?? '';
+      expect(text.split('第四条回复').length - 1).toBe(1);
+      expect(text).not.toContain('第五条回复');
+      expect(text).toContain('展开其余 1 条回复');
+    });
+  });
+
+  it('shows load-more when a refresh newly returns a replies cursor', async () => {
+    const three = { ...other, replyCount: 3, repliesNextCursor: null };
+    const { container } = await mountList([three]);
+    expect(container.querySelector('.card-comment__more')).toBeNull();
+
+    api.listForCard.mockResolvedValue([
+      {
+        ...three,
+        replyCount: 6,
+        repliesNextCursor: three.replies[2]!.id,
+      },
+    ]);
+    await refreshComments();
+    await waitFor(() => {
+      expect(container.textContent).toContain('展开其余 3 条回复');
+    });
+  });
+});
+
+describe('preview reply pending-review tag', () => {
+  it('shows the under-review tag when a preview reply has safetyStatus review', async () => {
+    const preview = {
+      ...other,
+      replies: [
+        { ...other.replies[0], user: { id: 'u1', username: 'alice' }, safetyStatus: 'review' },
+        other.replies[1]!,
+        other.replies[2]!,
+      ],
+    };
+    const { container } = await mountList([preview]);
+    expect(container.textContent).toContain('审核中');
+  });
+});
+
+describe('delete 404 and 401', () => {
+  it('hides the comment when delete returns NOT_FOUND', async () => {
+    api.commentDelete.mockRejectedValue(trpcErr({ code: 'NOT_FOUND' }));
+    const { container } = await mountList();
+    const deleteButtons = Array.from(container.querySelectorAll('.card-comment__action')).filter(
+      (el) => (el.textContent || '').includes('删除'),
+    );
+    act(() => {
+      (deleteButtons[0] as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
+    const confirm = Array.from(
+      container.querySelectorAll('.card-comment__confirm .card-comment__action'),
+    ).find((el) => (el.textContent || '').includes('删除')) as HTMLElement;
+    await act(async () => {
+      confirm.click();
+    });
+    await waitFor(() => expect(container.textContent).not.toContain('我的评论'));
+    expect(container.textContent).not.toContain('删除失败');
+    expect(container.querySelector('.notice-banner--error')).toBeNull();
+  });
+
+  it('goes to login when delete returns UNAUTHORIZED', async () => {
+    api.commentDelete.mockRejectedValue(trpcErr({ code: 'UNAUTHORIZED' }));
+    const { container } = await mountList();
+    const deleteButtons = Array.from(container.querySelectorAll('.card-comment__action')).filter(
+      (el) => (el.textContent || '').includes('删除'),
+    );
+    act(() => {
+      (deleteButtons[0] as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
+    const confirm = Array.from(
+      container.querySelectorAll('.card-comment__confirm .card-comment__action'),
+    ).find((el) => (el.textContent || '').includes('删除')) as HTMLElement;
+    await act(async () => {
+      confirm.click();
+    });
+    await waitFor(() =>
+      expect(taro.navigateTo).toHaveBeenCalledWith({ url: '/pages/auth/login/index' }),
+    );
+  });
+});
+
+describe('delete failure', () => {
+  async function confirmDelete(container: HTMLElement) {
+    const deleteBtn = Array.from(container.querySelectorAll('.card-comment__action')).find((el) =>
+      (el.textContent || '').includes('删除'),
+    ) as HTMLElement;
+    act(() => {
+      deleteBtn.click();
+    });
+    await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
+    const confirm = Array.from(
+      container.querySelectorAll('.card-comment__confirm .card-comment__action'),
+    ).find((el) => (el.textContent || '').includes('删除')) as HTMLElement;
+    await act(async () => {
+      confirm.click();
+    });
+    return deleteBtn;
+  }
+
+  it('closes the confirm bar, focuses Delete, and shows a red box on the comment', async () => {
+    api.commentDelete.mockRejectedValue(
+      trpcErr({ code: 'INTERNAL_SERVER_ERROR', httpStatus: 500 }),
+    );
+    const { container } = await mountList();
+    const deleteBtn = await confirmDelete(container);
+    await waitFor(() => expect(container.querySelector('.card-comment__error')).not.toBeNull());
+    expect(container.querySelector('.card-comment__confirm')).toBeNull();
+    expect(container.querySelector('.card-comment__error')?.textContent).toBe('删除失败，请重试');
+    expect(container.querySelector('.notice-banner--error')).toBeNull();
+    expect(document.activeElement).toBe(deleteBtn);
+  });
+
+  it('uses commentDeleteForbidden for FORBIDDEN', async () => {
+    api.commentDelete.mockRejectedValue(trpcErr({ code: 'FORBIDDEN' }));
+    const { container } = await mountList();
+    await confirmDelete(container);
+    await waitFor(() =>
+      expect(container.querySelector('.card-comment__error')?.textContent).toBe(
+        '你没有权限删除这条评论',
+      ),
+    );
+    expect(container.querySelector('.card-comment__confirm')).toBeNull();
+  });
+});
+
+describe('action buttons', () => {
+  it('exposes delete, report, confirm and cancel as buttons with accessible names', async () => {
+    const { container } = await mountList();
+    const report = container.querySelector('.report-entry__trigger') as HTMLElement;
+    expect(report.getAttribute('role') === 'button' || report.tagName === 'BUTTON').toBe(true);
+    expect(report.getAttribute('aria-label') || report.textContent || '').toContain('举报');
+
+    const deleteBtn = Array.from(container.querySelectorAll('.card-comment__action')).find((el) =>
+      (el.textContent || '').includes('删除'),
+    ) as HTMLElement;
+    expect(deleteBtn.getAttribute('role') === 'button' || deleteBtn.tagName === 'BUTTON').toBe(
+      true,
+    );
+    expect(
+      (deleteBtn.getAttribute('aria-label') || deleteBtn.textContent || '').length,
+    ).toBeGreaterThan(0);
+
+    act(() => {
+      deleteBtn.click();
+    });
+    await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
+    const confirmButtons = Array.from(
+      container.querySelectorAll('.card-comment__confirm .card-comment__action'),
+    );
+    expect(confirmButtons.length).toBe(2);
+    for (const el of confirmButtons) {
+      expect(el.getAttribute('role') === 'button' || el.tagName === 'BUTTON').toBe(true);
+      expect((el as HTMLElement).tabIndex).toBe(0);
+    }
+    expect(report.tabIndex).toBe(0);
+    expect(deleteBtn.tabIndex).toBe(0);
+    expect(
+      container.querySelector('.card-comment__confirm')?.contains(document.activeElement),
+    ).toBe(true);
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).toBeNull());
+    expect(document.activeElement).toBe(deleteBtn);
+  });
+
+  it('opens the confirm bar with Enter and Space on Delete', async () => {
+    const { container } = await mountList();
+    const deleteBtn = Array.from(container.querySelectorAll('.card-comment__action')).find((el) =>
+      (el.textContent || '').includes('删除'),
+    ) as HTMLElement;
+    act(() => {
+      fireEvent.keyDown(deleteBtn, { key: 'Enter' });
+    });
+    await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).toBeNull());
+    act(() => {
+      fireEvent.keyDown(deleteBtn, { key: ' ' });
+    });
+    await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
   });
 });

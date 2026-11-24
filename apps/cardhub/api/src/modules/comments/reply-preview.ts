@@ -14,6 +14,7 @@ const replyPreviewSchema = z.object({
   parentId: z.string().uuid(),
   userId: z.string().uuid(),
   username: z.string().min(1),
+  safetyStatus: z.enum(['UNCHECKED', 'REVIEW', 'PASS', 'RISKY']),
 });
 
 export type ReplyPreview = z.infer<typeof replyPreviewSchema>;
@@ -39,10 +40,11 @@ export function replyPreviewSql(
       reply."createdAt" AS "createdAt",
       reply."parentId" AS "parentId",
       usr.id AS "userId",
-      usr.username
+      usr.username,
+      reply."safetyStatus" AS "safetyStatus"
     FROM unnest(ARRAY[${Prisma.join(parentIds)}]::text[]) AS parent(id)
     JOIN LATERAL (
-      SELECT id, content, "createdAt", "userId", "parentId"
+      SELECT id, content, "createdAt", "userId", "parentId", "safetyStatus"
       FROM comments
       WHERE "parentId" = parent.id
         AND ${safety}

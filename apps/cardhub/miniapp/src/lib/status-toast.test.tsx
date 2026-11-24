@@ -12,20 +12,14 @@ vi.mock('@tarojs/taro', () => ({ default: taro, ...taro }));
 vi.mock('@tarojs/components', () => import('../test-stubs/taro-dom'));
 
 import { StatusToast } from '../components/status-toast';
-import { STATUS_TOAST_DURATION_MS, resetQueuedStatusToast, useStatusToast } from './status-toast';
+import { STATUS_TOAST_DURATION_MS, useStatusToast } from './status-toast';
 
-function Probe({ persist }: { persist?: boolean }) {
+function Probe() {
   const toast = useStatusToast();
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => toast.show('hello', persist ? { persistAcrossPages: true } : undefined)}
-      >
+      <button type="button" onClick={() => toast.show('hello')}>
         show
-      </button>
-      <button type="button" onClick={() => toast.consumeQueued()}>
-        consume
       </button>
       <StatusToast notice={toast.notice} />
     </div>
@@ -34,7 +28,6 @@ function Probe({ persist }: { persist?: boolean }) {
 
 afterEach(() => {
   cleanup();
-  resetQueuedStatusToast();
   taro.showToast.mockReset();
   taro.getEnv.mockReturnValue('WEB');
   vi.useRealTimers();
@@ -67,19 +60,5 @@ describe('useStatusToast', () => {
     });
     expect(taro.showToast).toHaveBeenCalledWith({ title: 'hello', icon: 'none', duration: 3000 });
     expect(screen.queryByRole('status')).toBeNull();
-  });
-
-  it('queues the message when leaving the page so the next page can show it', () => {
-    render(<Probe persist />);
-    act(() => {
-      screen.getByText('show').click();
-    });
-    expect(screen.queryByRole('status')).toBeNull();
-    cleanup();
-    const next = render(<Probe />);
-    act(() => {
-      next.getByText('consume').click();
-    });
-    expect(next.getByRole('status').textContent).toBe('hello');
   });
 });

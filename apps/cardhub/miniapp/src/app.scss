@@ -20,6 +20,7 @@ taro-button-core.primary-button,
   line-height: 1.4;
   color: $color-white;
   background-color: $color-brand-600;
+  border: none;
   border-radius: $radius-md;
 
   &::after {
@@ -58,6 +59,11 @@ taro-button-core.primary-button.primary-button--disabled,
   text-align: center;
   background-color: $color-neutral-900;
   border-radius: $radius-md;
+}
+
+.miniapp-status-toast--bottom {
+  top: auto;
+  bottom: $spacing-md;
 }
 
 .miniapp-status-toast__text {
