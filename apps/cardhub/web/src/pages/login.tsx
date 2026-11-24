@@ -46,9 +46,11 @@ export const LoginPage = observer(function LoginPage() {
   // { state: { from: location } }) so we can restore them post-login.
   const redirectTo = resolvePostAuthRedirect(location.state);
 
+  const utils = trpc.useUtils();
   const mutation = trpc.auth.login.useMutation({
     onSuccess(data) {
       session.signIn(data.token, data.user);
+      void utils.listings.invalidate();
       navigate(redirectTo, { replace: true });
     },
     onError(err) {
@@ -145,7 +147,11 @@ export const LoginPage = observer(function LoginPage() {
               </Button>
 
               <p className="text-center text-xs text-muted">
-                <Link to="/register" className="text-link hover:underline">
+                <Link
+                  to="/register"
+                  state={{ from: redirectTo }}
+                  className="text-link hover:underline"
+                >
                   {tt('auth.actions.toRegister')}
                 </Link>
               </p>

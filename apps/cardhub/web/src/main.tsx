@@ -10,6 +10,7 @@ import {
   readSentryEnvironment,
   readSentryRelease,
 } from './lib/sentry';
+import { listenForCrossTabSessionChanges } from './lib/session-cross-tab';
 import { TrpcProvider } from './lib/trpc';
 import './styles/globals.css';
 
@@ -25,6 +26,8 @@ if (sentryDsn) {
     tracesSampleRate: Number(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
   });
 }
+
+listenForCrossTabSessionChanges();
 
 const container = document.getElementById('root');
 if (!container) {

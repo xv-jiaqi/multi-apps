@@ -9,6 +9,7 @@ import { rootStore } from '../stores/root-store';
 import '../styles/globals.css';
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     search: {
       global: {

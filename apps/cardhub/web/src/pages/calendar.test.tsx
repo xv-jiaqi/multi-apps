@@ -55,6 +55,7 @@ vi.mock('../lib/shanghai-date', () => ({
 }));
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     releases: {
       list: {

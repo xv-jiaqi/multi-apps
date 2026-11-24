@@ -148,5 +148,8 @@ describe('resolvePostAuthRedirect', () => {
     expect(resolvePostAuthRedirect('/trade?card=foo%23bar')).toBe('/trade?card=foo%23bar');
     expect(resolvePostAuthRedirect('/trade?card=100%25')).toBe('/trade?card=100%25');
     expect(resolvePostAuthRedirect('/trade?card=a%2Bb')).toBe('/trade?card=a%2Bb');
+    expect(resolvePostAuthRedirect({ from: '/trade?kind=SELL&sort=price_asc' })).toBe(
+      '/trade?kind=SELL&sort=price_asc',
+    );
   });
 });

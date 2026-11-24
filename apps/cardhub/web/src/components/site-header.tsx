@@ -5,6 +5,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { APP_NAME, t } from '@repo/shared';
 import { discardAllForumDrafts } from '../lib/forum-draft';
 import { clearNotificationCache } from '../lib/notification-cache';
+import { clearActiveQueryClient } from '../lib/trpc';
 import { useStores } from '../stores/root-store';
 import { HeaderSearch } from './header-search';
 import { NotificationBell, NotificationUnreadProvider } from './notification-unread';
@@ -180,6 +181,7 @@ export const SiteHeader = observer(function SiteHeader() {
     clearNotificationCache();
     discardAllForumDrafts();
     session.signOut();
+    clearActiveQueryClient();
     closeMenu();
     navigate('/');
   };

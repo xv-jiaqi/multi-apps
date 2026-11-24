@@ -90,6 +90,7 @@ const categoriesState = queryState({ items: [] });
 const releasesState = queryState({ absent: true, items: [] });
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     search: {
       global: {

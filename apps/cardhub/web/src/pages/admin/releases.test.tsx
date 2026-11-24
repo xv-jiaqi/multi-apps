@@ -25,6 +25,7 @@ const list = {
 const remove = vi.fn();
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       admin: { releases: { list: { invalidate: vi.fn() } } },

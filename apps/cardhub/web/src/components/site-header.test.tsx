@@ -13,6 +13,7 @@ vi.mock('../lib/notification-cache', () => ({
 }));
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     search: {
       global: {

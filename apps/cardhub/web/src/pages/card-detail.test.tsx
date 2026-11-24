@@ -89,6 +89,7 @@ const idleQuery = {
 };
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       comments: {
