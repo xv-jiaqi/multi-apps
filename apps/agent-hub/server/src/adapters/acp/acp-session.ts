@@ -10,7 +10,6 @@ import {
   JsonRpcClosedError,
   JsonRpcError,
   JsonRpcTimeoutError,
-  type JsonRpcConnection,
   type JsonRpcId,
 } from '../jsonrpc/connection';
 import { SHUTDOWN_TERMINATE } from '../process/supervisor';

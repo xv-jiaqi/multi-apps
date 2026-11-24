@@ -38,6 +38,14 @@ export default [
     ],
   },
   {
+    // Nest 的依赖注入靠 emitDecoratorMetadata：构造函数参数的类型在运行时要用到，不能改成 import type。
+    // 告诉 typescript-eslint 这一点，consistent-type-imports 就不会误报这些导入（PR3 待办 7）。
+    files: ['apps/agent-hub/server/**/*.ts'],
+    languageOptions: {
+      parserOptions: { emitDecoratorMetadata: true, experimentalDecorators: true },
+    },
+  },
+  {
     files: ['apps/agent-hub/web/src/**/*.{ts,tsx}'],
     ignores: ['apps/agent-hub/web/src/components/hub-dialog.tsx'],
     rules: {

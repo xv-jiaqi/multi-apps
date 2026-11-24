@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- 证据脚本，结果直接打印成 Markdown 表 */
 // 用真实 codex-cli 0.164.0 验证 shell_environment_policy 会不会剥掉守卫变量，以及 thread/start 的 config 覆盖能否救回。
 // 不需要登录：thread/shellCommand 在本机直接跑命令。
 import { spawn } from 'node:child_process';
