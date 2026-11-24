@@ -111,6 +111,32 @@ const DEFAULT_AVOID = '[data-toast-avoid]';
 const DEFAULT_INSET = 16;
 const DEFAULT_TOAST_HEIGHT = 48;
 
+function rectOf(node: Element): Rect {
+  const r = node.getBoundingClientRect();
+  return { x: r.x, y: r.y, width: r.width, height: r.height };
+}
+
+/** Avoid boxes plus the focused control, unless it already sits inside one. */
+export function collectStatusToastAvoidRects(avoidSelector: string = DEFAULT_AVOID): Rect[] {
+  if (typeof document === 'undefined') return [];
+  const avoid = [...document.querySelectorAll(avoidSelector)]
+    .map(rectOf)
+    .filter((box) => box.width > 0 && box.height > 0);
+  const active = document.activeElement;
+  if (
+    !(active instanceof HTMLElement) ||
+    active === document.body ||
+    active === document.documentElement ||
+    active.closest('.miniapp-status-toast') ||
+    active.closest(avoidSelector)
+  ) {
+    return avoid;
+  }
+  const focused = rectOf(active);
+  if (focused.width > 0 && focused.height > 0) avoid.push(focused);
+  return avoid;
+}
+
 /** Measure avoid boxes and pick top vs bottom while a toast is visible. */
 export function useStatusToastPlacement(
   notice: Notice<{ text: string }> | null,
@@ -132,26 +158,26 @@ export function useStatusToastPlacement(
         toastBox && toastBox.width > 0
           ? toastBox.width
           : Math.max(0, window.innerWidth - inset * 2);
-      const avoid = [...document.querySelectorAll(avoidSelector)].map((node) => {
-        const r = node.getBoundingClientRect();
-        return { x: r.x, y: r.y, width: r.width, height: r.height };
-      });
       setPlacement(
         pickStatusToastPlacement({
           viewport: { width: window.innerWidth, height: window.innerHeight },
           toastSize: { width, height, inset },
-          avoid,
+          avoid: collectStatusToastAvoidRects(avoidSelector),
         }),
       );
     };
     update();
     window.addEventListener('scroll', update, true);
     window.addEventListener('resize', update);
+    document.addEventListener('focusin', update);
+    document.addEventListener('focusout', update);
     const observer = new MutationObserver(update);
     observer.observe(document.body, { childList: true, subtree: true });
     return () => {
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
+      document.removeEventListener('focusin', update);
+      document.removeEventListener('focusout', update);
       observer.disconnect();
     };
   }, [notice, avoidSelector]);

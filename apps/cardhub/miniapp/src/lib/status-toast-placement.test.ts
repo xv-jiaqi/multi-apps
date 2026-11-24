@@ -64,4 +64,14 @@ describe('pickStatusToastPlacement', () => {
       }),
     ).toEqual({ top: 80 });
   });
+
+  it('yields below a focused breadcrumb when the bottom slot also has a control', () => {
+    expect(
+      pickStatusToastPlacement({
+        viewport,
+        toastSize,
+        avoid: [box(16, 16, 24, 19), box(16, 748, 343, 44)],
+      }),
+    ).toEqual({ top: 51 });
+  });
 });

@@ -18,7 +18,10 @@ export function StatusToast({
       key={notice.id}
       className={`miniapp-status-toast${placement === 'bottom' ? ' miniapp-status-toast--bottom' : ''}`}
       ariaRole="status"
-      style={shifted ? { top: `${placement.top}px`, bottom: 'auto' } : undefined}
+      style={{
+        pointerEvents: 'none',
+        ...(shifted ? { top: `${placement.top}px`, bottom: 'auto' } : {}),
+      }}
     >
       <Text className="miniapp-status-toast__text">{notice.text}</Text>
     </View>
