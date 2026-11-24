@@ -14,6 +14,7 @@ import { HubConfigService } from '../../src/config/config.service';
 import { migrate } from '../../src/db/migrations';
 import { Db } from '../../src/db/sqlite';
 import { Lifecycle } from '../../src/lifecycle';
+import { listeningPort } from './ports';
 
 export const FAKE_CODEX = join(__dirname, '..', 'fakes', 'fake-codex.mjs');
 export const FAKE_ACP = join(__dirname, '..', 'fakes', 'fake-acp.mjs');
@@ -121,17 +122,31 @@ export async function startHub(
   );
   app.setGlobalPrefix('api/v1');
   const lifecycle = app.get(Lifecycle);
-  const port = 48100 + Math.floor(Math.random() * 800);
+  // 端口交给系统分配（listen(0)），并行套件不会撞端口。Host 校验按实际端口，所以 deps.port 是 getter，
+  // 中间件在 listen 之前挂上、请求到来时才读。
+  let port = 0;
   for (const mw of httpPipeline({
-    port,
+    get port() {
+      return port;
+    },
     isShuttingDown: () => lifecycle.isShuttingDown(),
     authenticate: (t) => auth.authenticate(t),
     takeRateToken: (id) => auth.takeRateToken(id),
   })) {
     app.use(mw);
   }
-  await app.listen(port, '127.0.0.1');
+  try {
+    await app.listen(0, '127.0.0.1');
+  } catch (e) {
+    // 起不来时把已经打开的东西关掉，否则 jest worker 退不干净，还会把真正的错误淹掉。
+    await app.close().catch(() => undefined);
+    db.close();
+    rmSync(root, { recursive: true, force: true });
+    throw e;
+  }
+  port = listeningPort(app.getHttpServer());
   app.get(WsHub).attach(app.getHttpServer(), port);
+  let closed = false;
   return {
     app,
     port,
@@ -141,7 +156,10 @@ export async function startHub(
     repo,
     paths,
     db,
+    /** 可以重复调用：afterEach 里关上一个测试留下的 hub 时，不会因为重复关闭报 “database is not open”。 */
     async close() {
+      if (closed) return;
+      closed = true;
       await lifecycle.shutdown();
       await app.close();
       db.close();

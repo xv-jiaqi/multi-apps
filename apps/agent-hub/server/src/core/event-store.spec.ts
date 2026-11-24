@@ -661,7 +661,7 @@ describe('EventStore', () => {
       const rep = (u: string, n: number) => u.repeat(Math.ceil(n / u.length)).slice(0, n);
       /** [完整写法, 必须消失的正文]，长度随机。 */
       const genSecret = (): [string, string] => {
-        switch (int(0, 7)) {
+        switch (int(0, 9)) {
           case 0: {
             const b = `${rep('Qw9', 42)}Q`;
             return [`ahu_${b}`, b];
@@ -692,6 +692,27 @@ describe('EventStore', () => {
             // 紧贴字母数字的 URL 凭据（xhttps://u:p@h），不能依赖 \b。
             const b = rep('Pw8', int(10, 120));
             return [`x${pick(['https', 'http'])}://deploy:${b}@git.example.com/r.git`, b];
+          }
+          case 8: {
+            // 紧贴字母数字的令牌（abcghp_…、xxxeyJ…）：开头不要求 \b。
+            const glue = pick(['abc', 'x', 'key', 'Z9', 'tok_']);
+            const [prefix, b] = pick<[string, string]>([
+              ['ahu_', `${rep('Qw9', 42)}Q`],
+              ['github_pat_', rep('Ab3', int(20, 120))],
+              ['ghp_', rep('Zq9', int(20, 90))],
+              ['xoxb-', rep('12ab', int(10, 60))],
+              ['AKIA', rep('QW3RTY7UIOP2ASDF', 16)],
+              [
+                'eyJ',
+                `${rep('Hh1', int(8, 60))}.${rep('Pp2', int(8, 200))}.${rep('Sg3', int(8, 80))}`,
+              ],
+            ]);
+            return [`${glue}${prefix}${b}`, b];
+          }
+          case 9: {
+            // URL 编码之后的 sk-（key%3Dsk-…）：前面是 %XX，也要打码。
+            const b = rep('Ab3', int(20, 120));
+            return [`key%3Dsk-${b}`, b];
           }
           default: {
             const b = rep('Pw8', int(10, 120));
