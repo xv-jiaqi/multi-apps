@@ -1,9 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import { pageCursorPaginationInput } from '@repo/shared';
+import { myContentPageInput, userMeInput, type ContentSurface } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  authorSafetyStatus,
+  blockedSafetyStatus,
+  ownerSafetyWhere,
+  resolveContentSurface,
+  resolveSafetyView,
+} from '../content-security/visibility';
+
+type OwnerVisibility = { viewerId: string; surface: ContentSurface };
 
 type MyTopicRow = Prisma.TopicGetPayload<{
   include: { _count: { select: { replies: true } } };
@@ -16,12 +25,71 @@ type MyCommentRow = Prisma.CommentGetPayload<{
   };
 }>;
 
-function mapMyComment(comment: MyCommentRow) {
+/**
+ * "My" lists show every row to its author and nothing to anyone else
+ * (`scope: 'owner'`). A RISKY row keeps only `safetyStatus: 'blocked'`;
+ * its text fields become '' because they are required strings in the
+ * existing contract. Returns [] for a row the viewer may not see.
+ */
+function mapMyTopic(topic: MyTopicRow, visibility: OwnerVisibility) {
+  const view = resolveSafetyView({
+    scope: 'owner',
+    surface: visibility.surface,
+    status: topic.safetyStatus,
+    authorId: topic.userId,
+    viewerId: visibility.viewerId,
+  });
+  if (view.kind === 'hidden') return [];
   const base = {
-    id: comment.id,
-    body: comment.content,
-    createdAt: comment.createdAt.toISOString(),
+    id: topic.id,
+    // The slug still routes the author to the blocked detail view. It holds
+    // only the ASCII part of the title (see `slugify`).
+    slug: topic.slug,
+    createdAt: topic.createdAt.toISOString(),
   };
+  if (view.kind === 'blocked') {
+    return [{ ...base, title: '', replyCount: 0, safetyStatus: blockedSafetyStatus() }];
+  }
+  return [
+    {
+      ...base,
+      title: topic.title,
+      replyCount: topic._count.replies,
+      safetyStatus: authorSafetyStatus(view.safetyStatus),
+    },
+  ];
+}
+
+function mapMyComment(comment: MyCommentRow, visibility: OwnerVisibility) {
+  const view = resolveSafetyView({
+    scope: 'owner',
+    surface: visibility.surface,
+    status: comment.safetyStatus,
+    authorId: comment.userId,
+    viewerId: visibility.viewerId,
+  });
+  if (view.kind === 'hidden') return [];
+  return [mapMyCommentTarget(comment, view)];
+}
+
+function mapMyCommentTarget(
+  comment: MyCommentRow,
+  view: Exclude<ReturnType<typeof resolveSafetyView>, { kind: 'hidden' }>,
+) {
+  const base =
+    view.kind === 'blocked'
+      ? {
+          id: comment.id,
+          body: '',
+          createdAt: comment.createdAt.toISOString(),
+          safetyStatus: blockedSafetyStatus(),
+        }
+      : {
+          id: comment.id,
+          body: comment.content,
+          createdAt: comment.createdAt.toISOString(),
+          safetyStatus: authorSafetyStatus(view.safetyStatus),
+        };
   if (comment.card) {
     return {
       ...base,
@@ -64,7 +132,7 @@ export class UsersRouter {
     const prisma = this.prisma;
 
     return t.router({
-      me: t.authedProcedure.query(async ({ ctx }) => {
+      me: t.authedProcedure.input(userMeInput).query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const user = await prisma.user.findUnique({
           where: { id: ctx.user.sub },
@@ -72,13 +140,17 @@ export class UsersRouter {
         });
         if (!user) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
+        // Same filter as listings.mine / myTopics / myComments, so a count
+        // never includes rows the matching "my" list leaves out (web: RISKY).
+        const surface = resolveContentSurface(input?.surface, ctx.surfaceHeader);
+        const own = { userId: user.id, ...ownerSafetyWhere({ surface }) };
         const [listingCount, listingTotalCount, topicCount, replyCount, commentCount] =
           await Promise.all([
-            prisma.listing.count({ where: { userId: user.id, status: 'OPEN' } }),
-            prisma.listing.count({ where: { userId: user.id } }),
-            prisma.topic.count({ where: { userId: user.id } }),
-            prisma.reply.count({ where: { userId: user.id } }),
-            prisma.comment.count({ where: { userId: user.id } }),
+            prisma.listing.count({ where: { ...own, status: 'OPEN' } }),
+            prisma.listing.count({ where: own }),
+            prisma.topic.count({ where: own }),
+            prisma.reply.count({ where: own }),
+            prisma.comment.count({ where: own }),
           ]);
 
         return {
@@ -95,11 +167,12 @@ export class UsersRouter {
         };
       }),
 
-      myTopics: t.authedProcedure.input(pageCursorPaginationInput).query(async ({ ctx, input }) => {
+      myTopics: t.authedProcedure.input(myContentPageInput).query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
         const pageCursor = input.pageCursor ?? input.cursor;
         const items = await prisma.topic.findMany({
-          where: { userId: ctx.user.sub },
+          where: { userId: ctx.user.sub, ...ownerSafetyWhere({ surface }) },
           take: input.limit + 1,
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
           ...(pageCursor ? { cursor: { id: pageCursor }, skip: 1 } : {}),
@@ -107,40 +180,35 @@ export class UsersRouter {
         });
         const hasMore = items.length > input.limit;
         const sliced = hasMore ? items.slice(0, input.limit) : items;
+        const visibility = { viewerId: ctx.user.sub, surface };
         return {
-          items: sliced.map((topic: MyTopicRow) => ({
-            id: topic.id,
-            slug: topic.slug,
-            title: topic.title,
-            replyCount: topic._count.replies,
-            createdAt: topic.createdAt.toISOString(),
-          })),
+          items: sliced.flatMap((topic: MyTopicRow) => mapMyTopic(topic, visibility)),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),
 
-      myComments: t.authedProcedure
-        .input(pageCursorPaginationInput)
-        .query(async ({ ctx, input }) => {
-          if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
-          const pageCursor = input.pageCursor ?? input.cursor;
-          const items = await prisma.comment.findMany({
-            where: { userId: ctx.user.sub },
-            take: input.limit + 1,
-            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-            ...(pageCursor ? { cursor: { id: pageCursor }, skip: 1 } : {}),
-            include: {
-              card: { select: { slug: true, name: true, imageUrl: true } },
-              series: { select: { slug: true, title: true } },
-            },
-          });
-          const hasMore = items.length > input.limit;
-          const sliced = hasMore ? items.slice(0, input.limit) : items;
-          return {
-            items: sliced.map(mapMyComment),
-            nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
-          };
-        }),
+      myComments: t.authedProcedure.input(myContentPageInput).query(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
+        const pageCursor = input.pageCursor ?? input.cursor;
+        const items = await prisma.comment.findMany({
+          where: { userId: ctx.user.sub, ...ownerSafetyWhere({ surface }) },
+          take: input.limit + 1,
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          ...(pageCursor ? { cursor: { id: pageCursor }, skip: 1 } : {}),
+          include: {
+            card: { select: { slug: true, name: true, imageUrl: true } },
+            series: { select: { slug: true, title: true } },
+          },
+        });
+        const hasMore = items.length > input.limit;
+        const sliced = hasMore ? items.slice(0, input.limit) : items;
+        const visibility = { viewerId: ctx.user.sub, surface };
+        return {
+          items: sliced.flatMap((comment: MyCommentRow) => mapMyComment(comment, visibility)),
+          nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
+        };
+      }),
     });
   }
 }

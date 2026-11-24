@@ -15,3 +15,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+# Local redis-server snapshots; never ship them in an image.
+**/*.rdb
+**/appendonly*.aof
+**/appendonlydir

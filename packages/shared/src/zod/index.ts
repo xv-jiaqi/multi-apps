@@ -109,6 +109,11 @@ const cursorPageLimit = z
 export const CONTENT_SURFACE_VALUES = ['web', 'miniapp'] as const;
 export type ContentSurface = (typeof CONTENT_SURFACE_VALUES)[number];
 export const contentSurfaceSchema = z.enum(CONTENT_SURFACE_VALUES);
+/**
+ * Request header naming the client surface. The miniapp tRPC client sets it
+ * on every request; the api applies it when `input.surface` is omitted.
+ */
+export const CONTENT_SURFACE_HEADER = 'x-cardhub-surface';
 
 export const commentRepliesListInput = z.object({
   parentId: z.string().uuid(),
@@ -196,7 +201,9 @@ export const topicBySlugInput = z.object({
 export type TopicBySlugInput = z.infer<typeof topicBySlugInput>;
 
 /** Own notifications, newest first. `limit` stays on the shared 1–50 cursor cap. */
-export const notificationListInput = cursorPaginationInput;
+export const notificationListInput = cursorPaginationInput.extend({
+  surface: contentSurfaceSchema.optional(),
+});
 export type NotificationListInput = z.infer<typeof notificationListInput>;
 
 export const notificationMarkReadInput = z.object({
@@ -218,6 +225,16 @@ export const pageCursorPaginationInput = z.object({
   limit: cursorPageLimit,
 });
 export type PageCursorPaginationInput = z.infer<typeof pageCursorPaginationInput>;
+
+/** `users.myTopics` / `users.myComments`: page input plus the optional surface. */
+/** users.me: optional so existing callers that send no input keep working. */
+export const userMeInput = z.object({ surface: contentSurfaceSchema.optional() }).optional();
+export type UserMeInput = z.infer<typeof userMeInput>;
+
+export const myContentPageInput = pageCursorPaginationInput.extend({
+  surface: contentSurfaceSchema.optional(),
+});
+export type MyContentPageInput = z.infer<typeof myContentPageInput>;
 
 // M7 — Trade listings + reports.
 export const LISTING_KIND_VALUES = ['SELL', 'BUY'] as const;
@@ -334,6 +351,7 @@ export type ListingListInput = z.infer<typeof listingListInput>;
 
 export const listingMineInput = pageCursorPaginationInput.extend({
   cursor: cursorSchema.optional(),
+  surface: contentSurfaceSchema.optional(),
 });
 export type ListingMineInput = z.infer<typeof listingMineInput>;
 

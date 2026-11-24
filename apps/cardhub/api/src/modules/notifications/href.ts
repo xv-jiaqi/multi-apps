@@ -1,3 +1,5 @@
+import type { ContentSurface } from '@repo/shared';
+import { notificationTargetVisible } from '../content-security/visibility';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { NotificationTarget } from './plan';
 
@@ -61,12 +63,17 @@ function hrefKey(targetType: NotificationTarget, targetId: string): string {
 }
 
 /**
- * One lookup per target kind on the page. Missing rows stay out of the map,
- * so the caller returns href null after a delete.
+ * One lookup per target kind on the page (no N+1). A target that is missing,
+ * or that `notificationTargetVisible` withholds on this surface (the target
+ * itself, the topic of a reply, or the parent of a comment reply), stays out
+ * of the map. The caller then returns href null and no excerpt, so stored
+ * snapshots written before a target turned RISKY or REVIEW are closed at
+ * read time.
  */
 export async function liveHrefMap(
   prisma: PrismaService,
   rows: readonly HrefRow[],
+  surface: ContentSurface,
 ): Promise<Map<string, LiveTarget>> {
   const replyIds = idsFor(rows, 'REPLY');
   const commentIds = idsFor(rows, 'COMMENT');
@@ -77,7 +84,11 @@ export async function liveHrefMap(
       ? Promise.resolve([])
       : prisma.reply.findMany({
           where: { id: { in: replyIds } },
-          select: { id: true, topic: { select: { slug: true } } },
+          select: {
+            id: true,
+            safetyStatus: true,
+            topic: { select: { slug: true, safetyStatus: true } },
+          },
         }),
     commentIds.length === 0
       ? Promise.resolve([])
@@ -86,6 +97,8 @@ export async function liveHrefMap(
           select: {
             id: true,
             parentId: true,
+            safetyStatus: true,
+            parent: { select: { safetyStatus: true } },
             card: { select: { slug: true } },
             series: { select: { slug: true } },
           },
@@ -94,22 +107,28 @@ export async function liveHrefMap(
       ? Promise.resolve([])
       : prisma.topic.findMany({
           where: { id: { in: topicIds } },
-          select: { id: true, slug: true },
+          select: { id: true, slug: true, safetyStatus: true },
         }),
     listingIds.length === 0
       ? Promise.resolve([])
       : prisma.listing.findMany({
           where: { id: { in: listingIds } },
-          select: { id: true, cardSlug: true },
+          select: { id: true, cardSlug: true, safetyStatus: true },
         }),
   ]);
 
+  const visible = (...statuses: Parameters<typeof notificationTargetVisible>[0]['status'][]) =>
+    statuses.every((status) => notificationTargetVisible({ surface, status }));
+
   const map = new Map<string, LiveTarget>();
   for (const reply of replies) {
+    if (!visible(reply.safetyStatus, reply.topic.safetyStatus)) continue;
     const href = forumReplyHref(reply.topic.slug, reply.id);
     if (href) map.set(hrefKey('REPLY', reply.id), { href });
   }
   for (const comment of comments) {
+    const parentStatus = comment.parent ? [comment.parent.safetyStatus] : [];
+    if (!visible(comment.safetyStatus, ...parentStatus)) continue;
     const href = comment.card
       ? commentHref('card', comment.card.slug, comment.id, comment.parentId)
       : comment.series
@@ -120,10 +139,12 @@ export async function liveHrefMap(
     map.set(hrefKey('COMMENT', comment.id), parentId ? { href, parentId } : { href });
   }
   for (const topic of topics) {
+    if (!visible(topic.safetyStatus)) continue;
     const href = forumTopicHref(topic.slug);
     if (href) map.set(hrefKey('TOPIC', topic.id), { href });
   }
   for (const listing of listings) {
+    if (!visible(listing.safetyStatus)) continue;
     const href = listingHref(listing.cardSlug);
     if (href) map.set(hrefKey('LISTING', listing.id), { href });
   }
@@ -139,4 +160,16 @@ export function parentIdFor(
   row: HrefRow,
 ): string | undefined {
   return map.get(hrefKey(row.targetType, row.targetId))?.parentId;
+}
+
+/**
+ * Stored excerpt, only while the target is live and visible (it has an href).
+ * A missing or withheld target returns '' so a snapshot frozen before the
+ * target turned RISKY / REVIEW, or before it was removed, never leaks.
+ */
+export function excerptFor(
+  map: ReadonlyMap<string, LiveTarget>,
+  row: HrefRow & { excerpt: string },
+): string {
+  return map.has(hrefKey(row.targetType, row.targetId)) ? row.excerpt : '';
 }
