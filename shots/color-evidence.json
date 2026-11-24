@@ -1,5 +1,5 @@
 {
-  "headSha": "fc20abcb954b4e6de31d1e46c4b4fc18afb17f1e",
+  "headSha": "99a3bc96df6416bedd7cc50f01d4459b46ae48fb",
   "probes": [
     {
       "viewport": 375,
@@ -7,6 +7,7 @@
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ aurora-knight",
       "name": "comments-loading-zh",
       "pixelColors": [],
@@ -19,6 +20,7 @@
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ aurora-knight\n卡牌加载失败\n重试",
       "name": "comments-error-zh",
       "pixelColors": [],
@@ -44,6 +46,7 @@
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n还没有评论，来抢沙发吧",
       "name": "comments-empty-zh",
       "pixelColors": [
@@ -109,6 +112,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-success-zh",
       "pixelColors": [
@@ -214,6 +218,7 @@
           "className": "card-comment__confirm"
         }
       ],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除\n删除这条评论？\n删除\n取消",
       "name": "comments-delete-confirm-zh",
       "pixelColors": [
@@ -278,6 +283,112 @@
           "state": "disabled",
           "box": {
             "x": 68.71875,
+            "y": 167.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)"
+        }
+      ],
+      "buttonAssertFailures": [],
+      "more": [
+        {
+          "sel": ".card-comment__more",
+          "label": "展开其余 2 条回复",
+          "box": {
+            "x": 41,
+            "y": 718.734375,
+            "width": 293,
+            "height": 44
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__more"
+        }
+      ],
+      "confirm": [],
+      "toast": [
+        {
+          "sel": ".miniapp-status-toast",
+          "label": "已删除，列表暂未更新",
+          "box": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 48
+          },
+          "computedBg": "rgb(23, 23, 23)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "miniapp-status-toast"
+        }
+      ],
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n评论已删除\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n已删除，列表暂未更新",
+      "name": "comments-delete-refresh-failed-zh",
+      "pixelColors": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 378,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            },
+            "fill": {
+              "x": 161,
+              "y": 378,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "morePixels": [
+        {
+          "label": "展开其余 2 条回复",
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 1481,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
+            },
+            "fill": {
+              "x": 106,
+              "y": 1481,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
+            }
+          }
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-refresh-failed-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "buttons": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
             "y": 272.09375,
             "width": 274.28125,
             "height": 44
@@ -304,6 +415,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n取消",
       "name": "comments-report-sheet-zh",
       "pixelColors": [
@@ -407,6 +519,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n补充说明\n0 / 500\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-report-form-zh",
       "pixelColors": [
@@ -534,6 +647,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n补充说明\n0 / 500\n内容未通过审核，没有发布。\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-report-blocked-zh",
       "pixelColors": [
@@ -649,6 +763,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n加载中…\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-load-more-loading-zh",
       "pixelColors": [
@@ -711,6 +826,7 @@
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ aurora-knight",
       "name": "comments-loading-en",
       "pixelColors": [],
@@ -723,6 +839,7 @@
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ aurora-knight\nCouldn't load this card\nRetry",
       "name": "comments-error-en",
       "pixelColors": [],
@@ -748,6 +865,7 @@
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\nNo comments yet — be the first to chime in",
       "name": "comments-empty-en",
       "pixelColors": [
@@ -813,6 +931,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-success-en",
       "pixelColors": [
@@ -918,6 +1037,7 @@
           "className": "card-comment__confirm"
         }
       ],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete\nDelete this comment?\nDelete\nCancel",
       "name": "comments-delete-confirm-en",
       "pixelColors": [
@@ -982,6 +1102,112 @@
           "state": "disabled",
           "box": {
             "x": 68.71875,
+            "y": 167.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)"
+        }
+      ],
+      "buttonAssertFailures": [],
+      "more": [
+        {
+          "sel": ".card-comment__more",
+          "label": "Show 2 more replies",
+          "box": {
+            "x": 41,
+            "y": 718.734375,
+            "width": 293,
+            "height": 44
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__more"
+        }
+      ],
+      "confirm": [],
+      "toast": [
+        {
+          "sel": ".miniapp-status-toast",
+          "label": "Deleted. The list hasn't refreshed yet.",
+          "box": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 48
+          },
+          "computedBg": "rgb(23, 23, 23)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "miniapp-status-toast"
+        }
+      ],
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\nComment deleted\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\nDeleted. The list hasn't refreshed yet.",
+      "name": "comments-delete-refresh-failed-en",
+      "pixelColors": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 378,
+              "r": 82,
+              "g": 82,
+              "b": 82,
+              "hex": "#525252"
+            },
+            "fill": {
+              "x": 161,
+              "y": 378,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "morePixels": [
+        {
+          "label": "Show 2 more replies",
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 1481,
+              "r": 118,
+              "g": 157,
+              "b": 242,
+              "hex": "#769df2"
+            },
+            "fill": {
+              "x": 106,
+              "y": 1481,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
+            }
+          }
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-refresh-failed-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "buttons": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
             "y": 272.09375,
             "width": 274.28125,
             "height": 44
@@ -1008,6 +1234,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\n取消",
       "name": "comments-report-sheet-en",
       "pixelColors": [
@@ -1111,6 +1338,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nMore details\n0 / 500\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-report-form-en",
       "pixelColors": [
@@ -1238,6 +1466,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nMore details\n0 / 500\nThis didn't pass review and wasn't published.\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-report-blocked-en",
       "pixelColors": [
@@ -1353,6 +1582,7 @@
         }
       ],
       "confirm": [],
+      "toast": [],
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nLoading…\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-load-more-loading-en",
       "pixelColors": [
