@@ -1,0 +1,107 @@
+{
+  "title": "Disabled PrimaryButton must not fire extra auth requests",
+  "method": "Click submit once (request hung), then click the disabled button 3 more times with force:true.",
+  "results": [
+    {
+      "name": "login-submit-clicks-zh",
+      "proc": "auth.login",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795540616752,
+          "method": "POST",
+          "proc": "auth.login",
+          "url": "http://127.0.0.1:4999/trpc/auth.login"
+        }
+      ],
+      "ui": {
+        "text": "提交中…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301a/shots-click-guard/login-submit-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "register-submit-clicks-zh",
+      "proc": "auth.register",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795540619791,
+          "method": "POST",
+          "proc": "auth.register",
+          "url": "http://127.0.0.1:4999/trpc/auth.register"
+        }
+      ],
+      "ui": {
+        "text": "提交中…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301a/shots-click-guard/register-submit-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "login-submit-clicks-en",
+      "proc": "auth.login",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795540622809,
+          "method": "POST",
+          "proc": "auth.login",
+          "url": "http://127.0.0.1:4999/trpc/auth.login"
+        }
+      ],
+      "ui": {
+        "text": "Submitting…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301a/shots-click-guard/login-submit-clicks-en-375.png",
+      "ok": true
+    },
+    {
+      "name": "register-submit-clicks-en",
+      "proc": "auth.register",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795540625807,
+          "method": "POST",
+          "proc": "auth.register",
+          "url": "http://127.0.0.1:4999/trpc/auth.register"
+        }
+      ],
+      "ui": {
+        "text": "Submitting…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301a/shots-click-guard/register-submit-clicks-en-375.png",
+      "ok": true
+    }
+  ],
+  "allOk": true
+}
