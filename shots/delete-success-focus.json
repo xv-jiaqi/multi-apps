@@ -1,0 +1,336 @@
+{
+  "failures": [],
+  "results": [
+    {
+      "name": "success-next-report",
+      "ok": true,
+      "samples": [
+        {
+          "ms": 50,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 300,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 800,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 1200,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        }
+      ],
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-delete-success-next-zh-375.png"
+    },
+    {
+      "name": "success-prev-report",
+      "ok": true,
+      "samples": [
+        {
+          "ms": 50,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 300,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 800,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 1200,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        }
+      ],
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-delete-success-prev-zh-375.png"
+    },
+    {
+      "name": "success-empty-heading",
+      "ok": true,
+      "samples": [
+        {
+          "ms": 50,
+          "tag": "TARO-TEXT-CORE",
+          "className": "card-detail-page__comments-title",
+          "name": "评论区",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": false,
+          "isHeading": true,
+          "reportId": null,
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 300,
+          "tag": "TARO-TEXT-CORE",
+          "className": "card-detail-page__comments-title",
+          "name": "评论区",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": false,
+          "isHeading": true,
+          "reportId": null,
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 800,
+          "tag": "TARO-TEXT-CORE",
+          "className": "card-detail-page__comments-title",
+          "name": "评论区",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": false,
+          "isHeading": true,
+          "reportId": null,
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 1200,
+          "tag": "TARO-TEXT-CORE",
+          "className": "card-detail-page__comments-title",
+          "name": "评论区",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": false,
+          "isHeading": true,
+          "reportId": null,
+          "triggerId": null,
+          "inConfirm": false
+        }
+      ],
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-delete-success-empty-zh-375.png"
+    },
+    {
+      "name": "not-found-next-report",
+      "ok": true,
+      "samples": [
+        {
+          "ms": 50,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 300,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 800,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        },
+        {
+          "ms": 1200,
+          "tag": "BUTTON",
+          "className": "report-entry__trigger",
+          "name": "举报",
+          "isBody": false,
+          "isTrigger": false,
+          "isReport": true,
+          "isHeading": false,
+          "reportId": "00000000-0000-4000-8000-0000000000a1",
+          "triggerId": null,
+          "inConfirm": false
+        }
+      ],
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-delete-404-next-zh-375.png"
+    },
+    {
+      "name": "regression-quick-cancel",
+      "ok": true,
+      "clickedAfter": 93,
+      "at500": {
+        "tag": "BUTTON",
+        "className": "card-comment__action",
+        "name": "删除 @alice 的评论",
+        "isBody": false,
+        "isTrigger": true,
+        "isReport": false,
+        "isHeading": false,
+        "reportId": null,
+        "triggerId": "00000000-0000-4000-8000-0000000000a2",
+        "inConfirm": false
+      }
+    },
+    {
+      "name": "regression-quick-esc",
+      "ok": true,
+      "pressedAfter": 65,
+      "at500": {
+        "tag": "BUTTON",
+        "className": "card-comment__action",
+        "name": "删除 @alice 的评论",
+        "isBody": false,
+        "isTrigger": true,
+        "isReport": false,
+        "isHeading": false,
+        "reportId": null,
+        "triggerId": "00000000-0000-4000-8000-0000000000a2",
+        "inConfirm": false
+      }
+    },
+    {
+      "name": "regression-delete-fail",
+      "ok": true,
+      "samples": [
+        {
+          "ms": 50,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "isBody": false,
+          "isTrigger": true,
+          "isReport": false,
+          "isHeading": false,
+          "reportId": null,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2",
+          "inConfirm": false
+        },
+        {
+          "ms": 300,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "isBody": false,
+          "isTrigger": true,
+          "isReport": false,
+          "isHeading": false,
+          "reportId": null,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2",
+          "inConfirm": false
+        },
+        {
+          "ms": 800,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "isBody": false,
+          "isTrigger": true,
+          "isReport": false,
+          "isHeading": false,
+          "reportId": null,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2",
+          "inConfirm": false
+        },
+        {
+          "ms": 1200,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "isBody": false,
+          "isTrigger": true,
+          "isReport": false,
+          "isHeading": false,
+          "reportId": null,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2",
+          "inConfirm": false
+        }
+      ],
+      "box": "删除失败，请重试",
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-deletefail-focus-zh-375.png"
+    }
+  ],
+  "headSha": "6df1196d0e97104a5a388d9c1e7bdbaff0a09071"
+}
