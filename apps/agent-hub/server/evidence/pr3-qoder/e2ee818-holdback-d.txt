@@ -1,0 +1,24 @@
+# 2026-11-25 00:45:05 CST 剧本 d  commit=e2ee818  侧车=node dist/main.js  假 Qoder=test/fakes/fake-acp.mjs
+task=403451dd-ce6c-42a8-b462-562db08311f5
+wait: {"reached": true}
+
+## 从 hub.db 取落库事件检查（/tmp/ah-hb-old-d/home/hub.db）
+  原文 seq=6 tool.output.delta/t1-tool-d1 完整含 pem（单条 redact 后：仍在！）
+LEAK seq=6 tool.output.delta 单条含 pem 片段 Kq7Kq7Kq
+  原文 seq=9 tool.output.delta/t1-tool-d2 完整含 urlpw（单条 redact 后：仍在！）
+LEAK seq=9 tool.output.delta 单条含 urlpw 片段 Pw8Pw8Pw
+events=15 各类型条数={"task.status":3,"session.started":1,"turn.started":1,"tool.started":2,"tool.output.delta":2,"tool.completed":2,"message.delta":1,"message.completed":1,"diff.updated":1,"turn.completed":1}
+LEAK tool.output.delta/t1-tool-d1 整路拼接含 pem 片段 Kq7Kq7Kq
+  tool.output.delta/t1-tool-d1: 1 条，单条脱敏后拼接 392 字符，truncated 标记=false，结尾 …"q7Kq7Kq7Kq7Kq7Kq7Kq7Kq7K\\nKq7Kq7Kq7Kq7Kq7Kq7Kq7Kq7Kq7Kq7Kq7Kq"
+LEAK tool.output.delta/t1-tool-d2 整路拼接含 urlpw 片段 Pw8Pw8Pw
+  tool.output.delta/t1-tool-d2: 1 条，单条脱敏后拼接 144 字符，truncated 标记=false，结尾 …"w8Pw8Pw8Pw8Pw8Pw8Pw8Pw8Pw8Pw8@git.example.com/r.git (fetch)\\n"
+  message.delta/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  message.completed/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+RESULT 4 处泄漏
+check-db exit=1
+
+## 桥接 REST /events 同样检查（全部事件的 JSON 里找片段）
+LEAK bridge pem Kq7Kq7Kq
+LEAK bridge urlpw Pw8Pw8Pw
+bridge 有泄漏
+## 侧车 SIGTERM exit=0

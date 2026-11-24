@@ -1,0 +1,34 @@
+# 2026-11-25 00:49:10 CST 剧本 b  commit=37aa133  侧车=node dist/main.js  假 Qoder=test/fakes/fake-acp.mjs
+task=5ecbabba-f03b-4603-940f-aad0903fc2ca
+wait: {"reached": true}
+
+## 从 hub.db 取落库事件检查（/tmp/ah-hb-04-holdback-b/home/hub.db）
+  原文 seq=26 tool.output.delta/t1-tool-A 完整含 jwt（单条 redact 后：已脱敏）
+events=65 各类型条数={"task.status":3,"session.started":1,"turn.started":1,"tool.started":18,"tool.output.delta":19,"notice":1,"tool.completed":18,"message.delta":1,"message.completed":1,"diff.updated":1,"turn.completed":1}
+  tool.output.delta/t1-tool-A: 2 条，单条脱敏后拼接 20 字符，truncated 标记=false，结尾 …"env: JWT=«已脱敏» done\\n"
+  tool.output.delta/t1-tool-cmd0: 1 条，单条脱敏后拼接 0 字符，truncated 标记=true，结尾 …""
+  tool.output.delta/t1-tool-cmd1: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd2: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd3: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd4: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd5: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd6: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd7: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd8: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd9: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd10: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd11: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd12: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd13: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd14: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd15: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  tool.output.delta/t1-tool-cmd16: 1 条，单条脱敏后拼接 64000 字符，truncated 标记=false，结尾 …"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  message.delta/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  message.completed/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  notice seq=25 OUTPUT_OMITTED: 这一段输出里有无法安全切开的超长内容，为了不切开可能的密钥，剩下的输出已省略（t1-tool-cmd0）
+RESULT 没有任何密钥片段（单条 / 相邻拼接 / 整路拼接）
+check-db exit=0
+
+## 桥接 REST /events 同样检查（全部事件的 JSON 里找片段）
+bridge 响应里没有任何密钥片段
+## 侧车 SIGTERM exit=0
