@@ -38,4 +38,21 @@ describe('E47 redact', () => {
     const once = redact(`ahb_${'c'.repeat(43)}`);
     expect(redact(once)).toBe(MASK);
   });
+
+  it('Authorization: Basic / token 后面的凭据也打码（curl -v -u 的输出，审查 6041423500 第 2 条）', () => {
+    const b64 = Buffer.from(['deploy', 'Sup3rS3cretPw'].join(':')).toString('base64');
+    for (const line of [
+      `> Authorization: Basic ${b64}`,
+      `> authorization: basic ${b64}`,
+      `Proxy-Authorization: Basic ${b64}`,
+      `Authorization: Token ${b64}`,
+      `x-access-token: token ${b64}`,
+    ]) {
+      const out = redact(line);
+      expect(out).not.toContain(b64);
+      expect(out).not.toContain(b64.slice(0, 8));
+      expect(out).toContain(MASK);
+    }
+    expect(redact(`Authorization: Basic ${b64}`)).toBe(`Authorization: ${MASK}`);
+  });
 });

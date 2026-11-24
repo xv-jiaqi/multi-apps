@@ -142,4 +142,46 @@ describe('secret-holdback', () => {
     expect(emit + hold).toBe(emoji);
     expect(emit.length % 2).toBe(0);
   });
+
+  describe('PR3 回归（审查 6041423500 第 1、5 条）', () => {
+    /** 只看密钥：拼回原文 + 逐块脱敏后没有 body 的任何 8 字符片段。 */
+    function noLeak(chunks: string[], body: string): void {
+      const pieces = stream(chunks);
+      expect(pieces.join('')).toBe(chunks.join(''));
+      for (const piece of pieces.map(redact))
+        for (let i = 0; i + 8 <= body.length; i++)
+          if (piece.includes(body.slice(i, i + 8)))
+            expect(piece).not.toContain(body.slice(i, i + 8));
+    }
+
+    it('超过 64 KiB 的无空白文本（紧凑 JSON）后面跟密钥：强切点附近逐位都不切开密钥', () => {
+      const body = rep('Jx5', 14);
+      const json = `{"blob":"${rep('a', 70_000)}","key":"${['sk', body].join('-')}","pad":"${rep('b', 200)}"}`;
+      const k = json.indexOf('sk-');
+      for (let p = k; p <= k + body.length + HOLDBACK_CHARS + 8; p++) {
+        noLeak([json.slice(0, p), json.slice(p)], body);
+      }
+    });
+
+    it('超长无空白文本里的 JWT / ahu_ token 也不被强切', () => {
+      for (const [secret, body] of [
+        [
+          `eyJ${rep('Aa1', 4)}.${rep('Bb2', 6)}.${rep('Cc3', 6)}`,
+          `${rep('Bb2', 6)}.${rep('Cc3', 6)}`,
+        ],
+        [`ahu_${rep('Hh7', 14)}q`, `${rep('Hh7', 14)}q`],
+      ] as const) {
+        const t = `${rep('z', MAX_HOLD_CHARS + 10)},${secret},${rep('t', 200)}`;
+        const k = t.indexOf(secret);
+        for (let p = k; p <= k + secret.length + HOLDBACK_CHARS + 4; p++)
+          noLeak([t.slice(0, p), t.slice(p)], body);
+      }
+    });
+
+    it('Authorization: 后面隔了 300 个空白再跟 token：每个切点都不漏', () => {
+      const body = rep('Tk3', 10);
+      const t = `${rep('x ', 40)}Authorization:${rep(' ', 300)}Bearer ${body}\nnext\n`;
+      for (let p = 0; p <= t.length; p++) noLeak([t.slice(0, p), t.slice(p)], body);
+    });
+  });
 });

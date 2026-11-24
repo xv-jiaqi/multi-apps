@@ -9,13 +9,18 @@
  * 2. 不在“Authorization: Bearer ”这类前缀之后：这个模式本身含空白，前缀和 token 必须在同一块。
  * 3. 不在 PEM 块里（BEGIN 到 END 行之间，或 END 还没来）：BEGIN…END 跨多行，整块要在同一块里。
  * 4. 离末尾至少 HOLDBACK_CHARS 个字符：见下面常量的依据。
- * 只有在单段无空白文本或未闭合 PEM 超过 MAX_HOLD_CHARS 时才强行切（残余风险，见 security.md §8）。
+ * 5. 不落在 redact.ts 任何一条规则在整段文字上的匹配里（REDACT_RULES）：落进去就退到匹配开头。
+ * 单段无空白文本超过 MAX_HOLD_CHARS 时才在离末尾 HOLDBACK_CHARS 处强行切，强切点同样经过 2、5 两步，
+ * 所以已经成形的密钥不会被切开（审查 6041423500 第 1 条）。只有超过 MAX_HOLD_CHARS 的未闭合 PEM 块会被切开，
+ * 那不可能是真实私钥（见 security.md §8）。
  */
+
+import { REDACT_RULES } from '../common/redact';
 
 /**
  * redact.ts 里各模式最短匹配的长度，取最大值作为扣留窗口的下限：
  * ahu_/ahb_ token 4+43=47；github_pat_ 11+20=31；JWT 3+8+1+8+1+8=29；gh?_ 4+20=24；
- * sk- 3+20=23；"x-access-token: bearer " 23；AKIA 4+16=20；xox?- 5+10=15。
+ * sk- 3+20=23；AKIA 4+16=20；xox?- 5+10=15。认证头的前缀另有第 2 步保护，不占窗口。
  * 最长 47，取 64（2 的幂、留出余量）。末尾 64 个字符内开始的任何密钥都不会被提前下发。
  */
 export const HOLDBACK_CHARS = 64;
@@ -26,9 +31,46 @@ export const MAX_HOLD_CHARS = 64 * 1024;
 /** “-----BEGIN”本身不含空白，不会被切开；只要后面还没有完整的 END 行，就算没闭合（END 行写了一半也算）。 */
 const PEM_BEGIN = /-----BEGIN/g;
 const PEM_END = /-----END [A-Z0-9 ]*-----/;
-/** redact.ts 中含空白的头部模式的前缀：切点不能紧跟在它后面。 */
-const HEADER_PREFIX = /(?:authorization|x-access-token)\s*(?:[:=]\s*(?:bearer\s*)?)?$/i;
 const WS = /\s/;
+const HEADER_NAME = /(?:authorization|x-access-token)$/i;
+const SCHEME = /(?:^|\s)(?:bearer|basic|token)$/i;
+
+/**
+ * emit 是否以认证头的前缀结尾（`Authorization`、`Authorization:`、`Authorization:   Basic   ` 等，空白多长都算）。
+ * 是的话返回前缀开头的位置。逐段 trimEnd，不用回看窗口（审查 6041423500 第 5 条）。
+ */
+function headerPrefixStart(emit: string): number {
+  const name = (s: string) => {
+    const tail = s.slice(-14);
+    const m = HEADER_NAME.exec(tail);
+    return m ? s.length - tail.length + m.index : -1;
+  };
+  let e = emit.trimEnd();
+  const direct = name(e);
+  if (direct >= 0) return direct;
+  const scheme = SCHEME.exec(e.slice(-7));
+  if (scheme) e = e.slice(0, e.length - scheme[0].trimStart().length).trimEnd();
+  if (!/[:=]$/.test(e)) return -1;
+  return name(e.slice(0, -1).trimEnd());
+}
+
+/** 把切点移出 redact 规则在整段文字上的任何匹配（匹配之间可能嵌套，所以重复到不再变）。 */
+function outOfMatches(text: string, cut: number): number {
+  for (let moved = true; moved && cut > 0; ) {
+    moved = false;
+    for (const { re } of REDACT_RULES) {
+      for (const m of text.matchAll(re)) {
+        if (m.index >= cut) break;
+        if (m.index + m[0].length > cut) {
+          cut = m.index;
+          moved = true;
+          break;
+        }
+      }
+    }
+  }
+  return cut;
+}
 
 /**
  * 把 text 分成现在可以下发的 emit 和需要扣住的 hold（emit + hold === text）。
@@ -58,9 +100,13 @@ export function splitForRedaction(text: string, final = false): { emit: string; 
     else if (text.length <= MAX_HOLD_CHARS) cut = 0;
   }
 
-  // 2. 不切在 Authorization / x-access-token 前缀之后。
-  const header = HEADER_PREFIX.exec(text.slice(Math.max(0, cut - 256), cut));
-  if (header && header[0].length > 0) cut -= header[0].length;
+  // 2 和 5 交替做到不再移动：认证头前缀之后不切；切点不落在任何脱敏匹配里。
+  for (let prev = -1; prev !== cut && cut > 0; ) {
+    prev = cut;
+    const header = headerPrefixStart(text.slice(0, cut));
+    if (header >= 0) cut = header;
+    cut = outOfMatches(text, cut);
+  }
 
   // 强行切时别切开代理对。
   if (cut > 0 && /[\uD800-\uDBFF]/.test(text[cut - 1]!)) cut--;
