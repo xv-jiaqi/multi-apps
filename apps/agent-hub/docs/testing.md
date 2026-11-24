@@ -291,9 +291,37 @@ PR3（Qoder）新增的自动化用例：
 | 桌面壳       | [desktop-shell.md](desktop-shell.md) §10 全部，外加 E63–E67                                                                                              |
 | 安全         | [security.md](security.md) §10 全部                                                                                                                      |
 | Codex        | 健康为 `ready`；模型列表与 ChatGPT 应用里的一致；只读任务出结果；一次审批（批准与拒绝各一次）；停止本轮；侧车重启后恢复；`threadSource: "user"` 的可见性 |
-| Qoder        | 同 Codex 的前五项；任务结束、闲置超时后进程不在；只读任务的模式守卫生效（D37、D38）                                                                      |
+| Qoder        | 同 Codex 的前五项；任务结束、闲置超时后进程不在；只读任务的模式守卫生效（D37、D38）。用 §7.1 的脚本                                                      |
 | AoneD        | 打开页面、复制提示词、轮询看到新提交、点完成本轮、本地 diff 正确；GitHub 上没有新分支                                                                    |
 | 本地郎端到端 | 本地郎经 API 派任务 → `wait` → 取结果与 diff；Hub 里看到实时输出；审批只能在 Hub 里做                                                                    |
 | 录制夹具     | 新验收过的 Agent 版本，按 §3.2 录制至少“正常一轮”和“一次审批”两个夹具                                                                                    |
+
+### 7.1 真实 Qoder 验收（正式开放 Qoder 前必须做）
+
+PR3 的 Qoder 适配只用假 Agent（`test/fakes/fake-acp.mjs`，帧照 1.1.80 实测）和未登录的真 `qodercli` 验证过；登录状态下的完整一轮还没有人跑过（[adapter-acp.md](adapter-acp.md) §10 “待人工”那一行）。在**装好并已登录** Qoder CLI 的机器上（owner 的 Mac）执行：
+
+```sh
+pnpm --filter @agent-hub/server build
+cd apps/agent-hub/server
+node scripts/qoder-acceptance/run.mjs ./qoder-acceptance.txt      # 约 5 分钟，会消耗少量 Qoder 额度
+```
+
+脚本自己起一个临时侧车（临时 `AGENT_HUB_HOME`、临时 git 仓库、系统分配的端口），不动本机正在用的 Hub，也不替用户登录：未登录时第 1 步就停下，提示去终端运行 `qodercli` 登录。输出里的 token 已打码，跑完把输出文件贴进 PR，并把 adapter-acp.md §10 那一行改成“已验证”和日期。
+
+| 步骤 | 内容                                                                                               | 判定                                            |
+| ---- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| A1   | `GET /agents`：qoder 为 `ready`，`version` 在 `verifiedVersions` 里                                | 自动                                            |
+| A2   | 会话之后的 `capabilities`：模型列表与推理档位                                                      | 人工：和 Qoder 客户端里的列表对一下             |
+| A3   | 只读任务（列出根目录文件）出结果                                                                   | 自动                                            |
+| A3b  | 模式守卫（D37、D38）：会话显式切到 `default`；Qoder 设置里默认模式是 `yolo` 时出现 `MODE_RESTORED` | 人工：建议把 Qoder 默认模式设成 `yolo` 再跑一次 |
+| A4   | 追问运行 `git log --oneline -1`：出现**命令**审批，批准一次，回复里有提交                          | 自动（没有命令审批时为 CHECK）                  |
+| A5   | 追问修改 README 第一行：出现修改审批，拒绝；`git status --porcelain` 为空                          | 自动                                            |
+| A6   | 追问时切到另一个模型和最高推理档位；任务上的 `model` / `reasoningEffort` 随之变化                  | 自动；另在 Qoder 侧确认实际生效                 |
+| A7   | 长输出时 `POST /tasks/:id/cancel`，这一轮结束                                                      | 自动                                            |
+| A8   | SIGTERM 侧车再启动，追问同一任务：`session.started.resumed` 为 `true`，回复记得第一轮              | 自动 + 人工看回复                               |
+| A9   | `idleTimeoutMinutes: 1`，等 80 秒：侧车下没有 `qodercli` 子进程                                    | 自动                                            |
+| A10  | 桥接 token 读到的事件里没有 Hub token                                                              | 自动                                            |
+
+脚本也能用假 Agent 演练（不需要 Qoder 账号，只验证脚本本身）：`FAKE_ACP_SCENARIO=<剧本> QODER_CMD=$PWD/test/fakes/fake-acp.mjs QODER_ARGS= QODER_ENV_PASSTHROUGH=FAKE_ACP_SCENARIO ACC_IDLE_WAIT_SEC=5 node scripts/qoder-acceptance/run.mjs`。假 Agent 只回放固定剧本，A5、A9 在演练里失败是预期的。
 
 Rust 只要求 `cargo check` 通过。不在 CI 里编译桌面壳。
