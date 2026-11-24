@@ -90,6 +90,8 @@ export class SitemapService {
       loadRows((cursor) =>
         this.prisma.topic.findMany({
           select: { id: true, slug: true, updatedAt: true },
+          // Web sitemap follows the default web list: PASS and UNCHECKED only.
+          where: { safetyStatus: { in: ['PASS', 'UNCHECKED'] } },
           orderBy: { id: 'asc' },
           take: SITEMAP_PAGE_SIZE,
           ...(cursor === undefined ? {} : { cursor: { id: cursor }, skip: 1 }),

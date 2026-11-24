@@ -2,6 +2,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { APP_ERROR_CODES } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { CommentsRouter } from './comments.router';
+import { stubContentSecurity } from '../content-security/content-security.test-stub';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { TrpcContext } from '../../trpc/context';
 
@@ -41,7 +42,7 @@ function makeRouter() {
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
-  const router = new CommentsRouter(new TrpcBase(), prisma);
+  const router = new CommentsRouter(new TrpcBase(), prisma, stubContentSecurity());
   const built = router.build();
 
   function caller(user: TrpcContext['user']) {
@@ -79,6 +80,7 @@ describe('CommentsRouter.listForCard', () => {
         content: 'hi',
         createdAt: new Date('2026-05-01T00:00:00Z'),
         user: { id: 'u1', username: 'alice' },
+        safetyStatus: 'UNCHECKED',
       },
     ]);
 
@@ -89,6 +91,7 @@ describe('CommentsRouter.listForCard', () => {
         content: 'hi',
         createdAt: '2026-05-01T00:00:00.000Z',
         user: { id: 'u1', username: 'alice' },
+        safetyStatus: 'unchecked',
         replyCount: 0,
         replies: [],
         repliesNextCursor: null,
@@ -98,7 +101,11 @@ describe('CommentsRouter.listForCard', () => {
       { createdAt: 'desc' },
       { id: 'desc' },
     ]);
-    expect(commentFindMany.mock.calls[0]?.[0]?.where).toEqual({ cardId: 'card-1', parentId: null });
+    expect(commentFindMany.mock.calls[0]?.[0]?.where).toEqual({
+      cardId: 'card-1',
+      parentId: null,
+      AND: [{ safetyStatus: { in: ['PASS', 'UNCHECKED'] } }],
+    });
   });
 
   it('returns NOT_FOUND when the card slug is unknown', async () => {
@@ -121,6 +128,7 @@ describe('CommentsRouter.listForSeries', () => {
         content: 'great set',
         createdAt: new Date('2026-05-02T00:00:00Z'),
         user: { id: 'u1', username: 'alice' },
+        safetyStatus: 'UNCHECKED',
       },
     ]);
 
@@ -131,13 +139,18 @@ describe('CommentsRouter.listForSeries', () => {
         content: 'great set',
         createdAt: '2026-05-02T00:00:00.000Z',
         user: { id: 'u1', username: 'alice' },
+        safetyStatus: 'unchecked',
         replyCount: 0,
         replies: [],
         repliesNextCursor: null,
       },
     ]);
     expect(commentFindMany.mock.calls[0]?.[0]).toEqual({
-      where: { seriesId: 'series-1', parentId: null },
+      where: {
+        seriesId: 'series-1',
+        parentId: null,
+        AND: [{ safetyStatus: { in: ['PASS', 'UNCHECKED'] } }],
+      },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 50,
       include: { user: { select: { id: true, username: true } } },
@@ -173,6 +186,7 @@ describe('CommentsRouter.create', () => {
       content: 'great card',
       createdAt: new Date('2026-05-01T00:00:00Z'),
       user: { id: 'u-alice', username: 'alice' },
+      safetyStatus: 'UNCHECKED',
     });
 
     const result = await caller({
@@ -191,12 +205,14 @@ describe('CommentsRouter.create', () => {
       content: 'great card',
       createdAt: '2026-05-01T00:00:00.000Z',
       user: { id: 'u-alice', username: 'alice' },
+      safetyStatus: 'unchecked',
     });
     const createArgs = commentCreate.mock.calls[0]?.[0]?.data;
     expect(createArgs).toEqual({
       content: 'great card',
       cardId: 'card-1',
       userId: 'u-alice',
+      safetyStatus: 'UNCHECKED',
     });
   });
 
@@ -234,6 +250,7 @@ describe('CommentsRouter.createForSeries', () => {
       content: 'great series',
       createdAt: new Date('2026-05-02T00:00:00Z'),
       user: { id: 'u-alice', username: 'alice' },
+      safetyStatus: 'UNCHECKED',
     });
 
     const result = await caller({
@@ -252,11 +269,13 @@ describe('CommentsRouter.createForSeries', () => {
       content: 'great series',
       createdAt: '2026-05-02T00:00:00.000Z',
       user: { id: 'u-alice', username: 'alice' },
+      safetyStatus: 'unchecked',
     });
     expect(commentCreate.mock.calls[0]?.[0]?.data).toEqual({
       content: 'great series',
       seriesId: 'series-1',
       userId: 'u-alice',
+      safetyStatus: 'UNCHECKED',
     });
   });
 
@@ -453,12 +472,14 @@ describe('CommentsRouter replies', () => {
         content: 'fourth',
         createdAt: new Date('2026-05-03T04:00:00Z'),
         user: { id: 'u3', username: 'cara' },
+        safetyStatus: 'UNCHECKED',
       },
       {
         id: '55555555-5555-4555-8555-555555555555',
         content: 'fifth',
         createdAt: new Date('2026-05-03T05:00:00Z'),
         user: { id: 'u2', username: 'bob' },
+        safetyStatus: 'UNCHECKED',
       },
     ]);
 
@@ -470,13 +491,14 @@ describe('CommentsRouter replies', () => {
           content: 'fourth',
           createdAt: '2026-05-03T04:00:00.000Z',
           user: { id: 'u3', username: 'cara' },
+          safetyStatus: 'unchecked',
         },
       ],
       nextCursor: nextId,
     });
     expect(commentFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { parentId },
+        where: { parentId, AND: [{ safetyStatus: { in: ['PASS', 'UNCHECKED'] } }] },
         cursor: { id: cursor },
         skip: 1,
         take: 2,
@@ -516,6 +538,7 @@ describe('CommentsRouter replies', () => {
       content: '@bob looks good',
       createdAt: new Date('2026-05-03T06:00:00Z'),
       user: { id: 'u-alice', username: 'alice' },
+      safetyStatus: 'UNCHECKED',
     });
 
     await caller(alice).create({
@@ -528,6 +551,7 @@ describe('CommentsRouter replies', () => {
       cardId: 'card-1',
       userId: 'u-alice',
       parentId,
+      safetyStatus: 'UNCHECKED',
     });
 
     commentFindUnique.mockResolvedValueOnce({
@@ -616,6 +640,7 @@ describe('CommentsRouter replies', () => {
       content: 'nice set',
       createdAt: new Date('2026-05-03T07:00:00Z'),
       user: { id: 'u-alice', username: 'alice' },
+      safetyStatus: 'UNCHECKED',
     });
 
     await caller(alice).createForSeries({
@@ -628,6 +653,7 @@ describe('CommentsRouter replies', () => {
       seriesId: 'series-1',
       userId: 'u-alice',
       parentId,
+      safetyStatus: 'UNCHECKED',
     });
   });
 });

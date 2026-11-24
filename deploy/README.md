@@ -956,6 +956,13 @@ the previous API keeps serving after `prisma migrate deploy` has committed, so
 the migration itself has to stay compatible with that previous release. See
 "Schema compatibility" above.
 
+The content-safety migration (`20261118140000_add_content_safety`) is
+expand-only: new columns have defaults, and a previous SHA still runs. After
+rollback, that older API ignores `safetyStatus`, so rows already marked
+`REVIEW` or `RISKY` show up again on the public web list. Do not roll back
+across this migration while those rows exist unless that exposure is
+accepted, or re-hide them first.
+
 ## Database roles
 
 The API must not connect as the Postgres superuser. The cutover, grants, and
