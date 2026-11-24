@@ -1,0 +1,1017 @@
+# 2026-11-24 23:23:13 CST 假 Qoder（test/fakes/fake-acp.mjs，剧本 normal，帧照 Qoder CLI 1.1.80 实测）  commit=0ceb78c  侧车=node dist/main.js
+## stdout (ready line)
+{"event":"ready","port":47821,"uiToken":"<redacted>","version":"0.1.0","pid":54480}
+## listening sockets（ss -ltnp）
+LISTEN 0      511        127.0.0.1:47821      0.0.0.0:*    users:(("MainThread",pid=54480,fd=24))  
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/agents -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "items": [
+        {
+            "id": "qoder",
+            "displayName": "Qoder",
+            "kind": "acp",
+            "profile": "qoder",
+            "enabled": true,
+            "health": {
+                "status": "ready",
+                "version": "1.1.80",
+                "versionVerified": true,
+                "executablePath": "/workspace/wt-agent-hub-pr3/apps/agent-hub/server/test/fakes/fake-acp.mjs"
+            },
+            "capabilities": {
+                "models": [
+                    {
+                        "id": "auto",
+                        "label": "Auto",
+                        "isDefault": true,
+                        "reasoningEfforts": [
+                            {
+                                "id": "low",
+                                "label": "低"
+                            },
+                            {
+                                "id": "medium",
+                                "label": "中"
+                            },
+                            {
+                                "id": "high",
+                                "label": "高"
+                            }
+                        ],
+                        "defaultReasoningEffort": "medium"
+                    },
+                    {
+                        "id": "performance",
+                        "label": "Performance",
+                        "isDefault": false,
+                        "reasoningEfforts": [
+                            {
+                                "id": "low",
+                                "label": "低"
+                            },
+                            {
+                                "id": "medium",
+                                "label": "中"
+                            },
+                            {
+                                "id": "high",
+                                "label": "高"
+                            }
+                        ],
+                        "defaultReasoningEffort": "medium"
+                    }
+                ],
+                "modelsSource": "session",
+                "sandbox": false,
+                "resume": true,
+                "userVisibleSessions": false,
+                "workspaces": [
+                    "in_place",
+                    "worktree"
+                ],
+                "fetchedAt": "2026-11-24T15:23:13.170Z"
+            },
+            "maxConcurrentTasks": 1,
+            "runningTasks": 0,
+            "queuedTasks": 0
+        }
+    ]
+}
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/tasks -H 'Authorization: Bearer <bridgeToken>' -d '{"agentId":"qoder","prompt":"看看健康检查接口能不能通，只读。"}'
+{
+    "task": {
+        "id": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+        "shortId": "26ab13d8",
+        "title": "看看健康检查接口能不能通，只读。",
+        "agentId": "qoder",
+        "adapterKind": "acp",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "source": "bridge",
+        "sourceTokenId": "63916024-0d32-44b9-8dbe-7e4b15475340",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": null,
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": null,
+        "remoteUrl": null,
+        "status": "preparing",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 1,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T15:23:13.407Z",
+        "updatedAt": "2026-11-24T15:23:13.409Z",
+        "startedAt": null,
+        "endedAt": null,
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "turn": {
+        "id": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+        "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+        "index": 1,
+        "prompt": "看看健康检查接口能不能通，只读。",
+        "model": null,
+        "reasoningEffort": null,
+        "status": "pending",
+        "stopReason": null,
+        "error": null,
+        "nativeTurnId": null,
+        "turnStats": null,
+        "taskStats": null,
+        "patchTruncated": false,
+        "usage": null,
+        "finalMessage": null,
+        "createdAt": "2026-11-24T15:23:13.407Z",
+        "startedAt": null,
+        "endedAt": null
+    },
+    "replayed": false
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/approvals?status=pending&taskId=26ab13d8-8555-4575-8e7e-ec69c03aca2b -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "items": [
+        {
+            "id": "apr_d7fce04ad8ddb481d655e99366d5d8be",
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "kind": "command",
+            "title": "执行命令：curl -sv -u demo:hunter2 https://api.example/health",
+            "command": "curl -sv -u demo:hunter2 https://api.example/health",
+            "cwd": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+            "paths": null,
+            "reason": null,
+            "detail": {
+                "toolCall": {
+                    "toolCallId": "call_1",
+                    "kind": "execute",
+                    "title": "curl -sv -u demo:hunter2 https://api.example/health",
+                    "rawInput": {
+                        "command": "curl -sv -u demo:hunter2 https://api.example/health"
+                    }
+                },
+                "options": [
+                    {
+                        "optionId": "proceed_once",
+                        "name": "Yes",
+                        "kind": "allow_once"
+                    },
+                    {
+                        "optionId": "cancel",
+                        "name": "No",
+                        "kind": "reject_once"
+                    }
+                ]
+            },
+            "options": [
+                "allow_once",
+                "reject",
+                "cancel_turn"
+            ],
+            "status": "pending",
+            "decision": null,
+            "decidedBy": null,
+            "decidedByTokenId": null,
+            "note": null,
+            "createdAt": "2026-11-24T15:23:13.502Z",
+            "expiresAt": "2026-11-24T16:23:13.502Z",
+            "resolvedAt": null
+        }
+    ]
+}
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/approvals/apr_d7fce04ad8ddb481d655e99366d5d8be/decision -H 'Authorization: Bearer <uiToken>' -d '{"decision":"allow_once"}'
+{
+    "id": "apr_d7fce04ad8ddb481d655e99366d5d8be",
+    "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+    "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+    "kind": "command",
+    "title": "执行命令：curl -sv -u demo:hunter2 https://api.example/health",
+    "command": "curl -sv -u demo:hunter2 https://api.example/health",
+    "cwd": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+    "paths": null,
+    "reason": null,
+    "detail": {
+        "toolCall": {
+            "toolCallId": "call_1",
+            "kind": "execute",
+            "title": "curl -sv -u demo:hunter2 https://api.example/health",
+            "rawInput": {
+                "command": "curl -sv -u demo:hunter2 https://api.example/health"
+            }
+        },
+        "options": [
+            {
+                "optionId": "proceed_once",
+                "name": "Yes",
+                "kind": "allow_once"
+            },
+            {
+                "optionId": "cancel",
+                "name": "No",
+                "kind": "reject_once"
+            }
+        ]
+    },
+    "options": [
+        "allow_once",
+        "reject",
+        "cancel_turn"
+    ],
+    "status": "approved",
+    "decision": "allow_once",
+    "decidedBy": "ui",
+    "decidedByTokenId": null,
+    "note": null,
+    "createdAt": "2026-11-24T15:23:13.502Z",
+    "expiresAt": "2026-11-24T16:23:13.502Z",
+    "resolvedAt": "2026-11-24T15:23:13.655Z"
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/26ab13d8-8555-4575-8e7e-ec69c03aca2b/wait?until=turn_end&timeoutSec=30 -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "reached": true,
+    "task": {
+        "id": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+        "shortId": "26ab13d8",
+        "title": "看看健康检查接口能不能通，只读。",
+        "agentId": "qoder",
+        "adapterKind": "acp",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "source": "bridge",
+        "sourceTokenId": "63916024-0d32-44b9-8dbe-7e4b15475340",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": "0ceb78ceda1d3895e9cf9f1af46e643cb34d86b9",
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": "sess-54569",
+        "remoteUrl": null,
+        "status": "completed",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 20,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T15:23:13.407Z",
+        "updatedAt": "2026-11-24T15:23:13.985Z",
+        "startedAt": "2026-11-24T15:23:13.498Z",
+        "endedAt": "2026-11-24T15:23:13.985Z",
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "lastSeq": 20
+}
+
+# 桥接 token 读事件：curl -v -u 带出的 Authorization: Basic 已脱敏（审查 6041423500 第 2 条）
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/26ab13d8-8555-4575-8e7e-ec69c03aca2b/events?limit=500 -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "events": [
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 1,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.409Z",
+            "event": {
+                "type": "task.status",
+                "from": "queued",
+                "to": "preparing"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 2,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.481Z",
+            "event": {
+                "type": "session.started",
+                "nativeSessionId": "sess-54569",
+                "model": "auto",
+                "resumed": false
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 3,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.498Z",
+            "event": {
+                "type": "task.status",
+                "from": "preparing",
+                "to": "running"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 4,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.498Z",
+            "event": {
+                "type": "turn.started",
+                "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+                "index": 1,
+                "prompt": "看看健康检查接口能不能通，只读。",
+                "model": null,
+                "reasoningEffort": null
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 5,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.501Z",
+            "event": {
+                "type": "reasoning.delta",
+                "itemId": "t1-think-1",
+                "text": "先确认健康检查接口能不能通。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 6,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.501Z",
+            "event": {
+                "type": "reasoning.completed",
+                "itemId": "t1-think-1",
+                "text": "先确认健康检查接口能不能通。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 7,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.501Z",
+            "event": {
+                "type": "message.delta",
+                "itemId": "t1-msg-2",
+                "text": "我先用 curl 看一下健康检查接口。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 8,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.501Z",
+            "event": {
+                "type": "message.completed",
+                "itemId": "t1-msg-2",
+                "text": "我先用 curl 看一下健康检查接口。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 9,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.501Z",
+            "event": {
+                "type": "tool.started",
+                "itemId": "t1-tool-call_1",
+                "toolKind": "command",
+                "title": "执行命令：curl -sv -u demo:hunter2 https://api.example/health",
+                "command": "curl -sv -u demo:hunter2 https://api.example/health"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 10,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.502Z",
+            "event": {
+                "type": "approval.requested",
+                "approval": {
+                    "id": "apr_d7fce04ad8ddb481d655e99366d5d8be",
+                    "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+                    "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+                    "kind": "command",
+                    "title": "执行命令：curl -sv -u demo:hunter2 https://api.example/health",
+                    "command": "curl -sv -u demo:hunter2 https://api.example/health",
+                    "cwd": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+                    "paths": null,
+                    "reason": null,
+                    "detail": {
+                        "toolCall": {
+                            "toolCallId": "call_1",
+                            "kind": "execute",
+                            "title": "curl -sv -u demo:hunter2 https://api.example/health",
+                            "rawInput": {
+                                "command": "curl -sv -u demo:hunter2 https://api.example/health"
+                            }
+                        },
+                        "options": [
+                            {
+                                "optionId": "proceed_once",
+                                "name": "Yes",
+                                "kind": "allow_once"
+                            },
+                            {
+                                "optionId": "cancel",
+                                "name": "No",
+                                "kind": "reject_once"
+                            }
+                        ]
+                    },
+                    "options": [
+                        "allow_once",
+                        "reject",
+                        "cancel_turn"
+                    ],
+                    "status": "pending",
+                    "decision": null,
+                    "decidedBy": null,
+                    "decidedByTokenId": null,
+                    "note": null,
+                    "createdAt": "2026-11-24T15:23:13.502Z",
+                    "expiresAt": "2026-11-24T16:23:13.502Z",
+                    "resolvedAt": null
+                }
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 11,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.656Z",
+            "event": {
+                "type": "approval.resolved",
+                "approvalId": "apr_d7fce04ad8ddb481d655e99366d5d8be",
+                "status": "approved",
+                "decision": "allow_once",
+                "decidedBy": "ui"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 12,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.958Z",
+            "event": {
+                "type": "tool.output.delta",
+                "itemId": "t1-tool-call_1",
+                "text": "> GET /health HTTP/1.1\n> Host: api.example\n> Authorization: «已脱敏»\n> User-Agent: curl/8.5.0\n>\n< HTTP/1.1 200 OK\n{\"ok\":true}\n"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 13,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.958Z",
+            "event": {
+                "type": "tool.completed",
+                "itemId": "t1-tool-call_1",
+                "status": "completed"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 14,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.959Z",
+            "event": {
+                "type": "plan.updated",
+                "explanation": null,
+                "entries": [
+                    {
+                        "step": "检查健康接口",
+                        "status": "completed"
+                    }
+                ]
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 15,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.959Z",
+            "event": {
+                "type": "usage.updated",
+                "usage": {
+                    "totalTokens": 3200,
+                    "contextWindow": 200000
+                }
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 16,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.959Z",
+            "event": {
+                "type": "message.delta",
+                "itemId": "t1-msg-3",
+                "text": "接口返回 200，`{\"ok\":true}`。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 17,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.959Z",
+            "event": {
+                "type": "message.completed",
+                "itemId": "t1-msg-3",
+                "text": "接口返回 200，`{\"ok\":true}`。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 18,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.984Z",
+            "event": {
+                "type": "diff.updated",
+                "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+                "scope": "turn_end",
+                "task": {
+                    "filesChanged": 0,
+                    "insertions": 0,
+                    "deletions": 0,
+                    "files": []
+                },
+                "turn": {
+                    "filesChanged": 0,
+                    "insertions": 0,
+                    "deletions": 0,
+                    "files": []
+                },
+                "patchTruncated": false
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 19,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.985Z",
+            "event": {
+                "type": "turn.completed",
+                "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+                "index": 1,
+                "status": "completed",
+                "stopReason": "end_turn"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 20,
+            "turnId": "42d32d0b-329e-4a61-99d9-d4134dc7ceca",
+            "ts": "2026-11-24T15:23:13.985Z",
+            "event": {
+                "type": "task.status",
+                "from": "running",
+                "to": "completed"
+            }
+        }
+    ],
+    "lastSeq": 20,
+    "hasMore": false
+}
+
+# 同一段工具输出，UI token 看到原文（本机用户自己的输出）：
+> GET /health HTTP/1.1
+> Host: api.example
+> Authorization: Basic ZGVtbzpodW50ZXIy
+> User-Agent: curl/8.5.0
+>
+< HTTP/1.1 200 OK
+{"ok":true}
+
+
+# 追问：修改 README 的审批被拒（Qoder 的 cancel 选项）；Agent 自己切到 yolo，Hub 切回 default
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/tasks/26ab13d8-8555-4575-8e7e-ec69c03aca2b/turns -H 'Authorization: Bearer <bridgeToken>' -d '{"prompt":"顺手把 README 改一下"}'
+{
+    "task": {
+        "id": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+        "shortId": "26ab13d8",
+        "title": "看看健康检查接口能不能通，只读。",
+        "agentId": "qoder",
+        "adapterKind": "acp",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "source": "bridge",
+        "sourceTokenId": "63916024-0d32-44b9-8dbe-7e4b15475340",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": "0ceb78ceda1d3895e9cf9f1af46e643cb34d86b9",
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": "sess-54569",
+        "remoteUrl": null,
+        "status": "preparing",
+        "pendingApprovals": 0,
+        "turnCount": 2,
+        "lastEventSeq": 22,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T15:23:13.407Z",
+        "updatedAt": "2026-11-24T15:23:14.078Z",
+        "startedAt": "2026-11-24T15:23:13.498Z",
+        "endedAt": null,
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "turn": {
+        "id": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+        "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+        "index": 2,
+        "prompt": "顺手把 README 改一下",
+        "model": null,
+        "reasoningEffort": null,
+        "status": "pending",
+        "stopReason": null,
+        "error": null,
+        "nativeTurnId": null,
+        "turnStats": null,
+        "taskStats": null,
+        "patchTruncated": false,
+        "usage": null,
+        "finalMessage": null,
+        "createdAt": "2026-11-24T15:23:14.077Z",
+        "startedAt": null,
+        "endedAt": null
+    },
+    "replayed": false
+}
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/approvals/apr_4f4e55cca5f38d454fed2da69cdc43d5/decision -H 'Authorization: Bearer <uiToken>' -d '{"decision":"reject"}'
+{
+    "id": "apr_4f4e55cca5f38d454fed2da69cdc43d5",
+    "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+    "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+    "kind": "file_change",
+    "title": "修改：Edit README.md",
+    "command": null,
+    "cwd": null,
+    "paths": [
+        "README.md"
+    ],
+    "reason": null,
+    "detail": {
+        "toolCall": {
+            "toolCallId": "call_2",
+            "kind": "edit",
+            "title": "Edit README.md",
+            "locations": [
+                {
+                    "path": "README.md"
+                }
+            ]
+        },
+        "options": [
+            {
+                "optionId": "proceed_once",
+                "name": "Yes",
+                "kind": "allow_once"
+            },
+            {
+                "optionId": "proceed_always",
+                "name": "Yes, always",
+                "kind": "allow_always"
+            },
+            {
+                "optionId": "cancel",
+                "name": "No",
+                "kind": "reject_once"
+            }
+        ]
+    },
+    "options": [
+        "allow_once",
+        "reject",
+        "cancel_turn"
+    ],
+    "status": "rejected",
+    "decision": "reject",
+    "decidedBy": "ui",
+    "decidedByTokenId": null,
+    "note": null,
+    "createdAt": "2026-11-24T15:23:14.098Z",
+    "expiresAt": "2026-11-24T16:23:14.098Z",
+    "resolvedAt": "2026-11-24T15:23:14.123Z"
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/26ab13d8-8555-4575-8e7e-ec69c03aca2b/wait?until=turn_end&timeoutSec=30 -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "reached": true,
+    "task": {
+        "id": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+        "shortId": "26ab13d8",
+        "title": "看看健康检查接口能不能通，只读。",
+        "agentId": "qoder",
+        "adapterKind": "acp",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "source": "bridge",
+        "sourceTokenId": "63916024-0d32-44b9-8dbe-7e4b15475340",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": "0ceb78ceda1d3895e9cf9f1af46e643cb34d86b9",
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": "sess-54569",
+        "remoteUrl": null,
+        "status": "completed",
+        "pendingApprovals": 0,
+        "turnCount": 2,
+        "lastEventSeq": 34,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T15:23:13.407Z",
+        "updatedAt": "2026-11-24T15:23:14.442Z",
+        "startedAt": "2026-11-24T15:23:13.498Z",
+        "endedAt": "2026-11-24T15:23:14.442Z",
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "lastSeq": 34
+}
+
+# 第 2 轮的事件（seq > 20 的部分）：
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/26ab13d8-8555-4575-8e7e-ec69c03aca2b/events?afterSeq=20&limit=500 -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "events": [
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 21,
+            "turnId": null,
+            "ts": "2026-11-24T15:23:14.078Z",
+            "event": {
+                "type": "task.status",
+                "from": "completed",
+                "to": "queued"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 22,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.078Z",
+            "event": {
+                "type": "task.status",
+                "from": "queued",
+                "to": "preparing"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 23,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.096Z",
+            "event": {
+                "type": "task.status",
+                "from": "preparing",
+                "to": "running"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 24,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.097Z",
+            "event": {
+                "type": "turn.started",
+                "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+                "index": 2,
+                "prompt": "顺手把 README 改一下",
+                "model": null,
+                "reasoningEffort": null
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 25,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.098Z",
+            "event": {
+                "type": "tool.started",
+                "itemId": "t2-tool-call_2",
+                "toolKind": "edit",
+                "title": "修改：Edit README.md",
+                "paths": [
+                    "README.md"
+                ]
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 26,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.098Z",
+            "event": {
+                "type": "approval.requested",
+                "approval": {
+                    "id": "apr_4f4e55cca5f38d454fed2da69cdc43d5",
+                    "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+                    "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+                    "kind": "file_change",
+                    "title": "修改：Edit README.md",
+                    "command": null,
+                    "cwd": null,
+                    "paths": [
+                        "README.md"
+                    ],
+                    "reason": null,
+                    "detail": {
+                        "toolCall": {
+                            "toolCallId": "call_2",
+                            "kind": "edit",
+                            "title": "Edit README.md",
+                            "locations": [
+                                {
+                                    "path": "README.md"
+                                }
+                            ]
+                        },
+                        "options": [
+                            {
+                                "optionId": "proceed_once",
+                                "name": "Yes",
+                                "kind": "allow_once"
+                            },
+                            {
+                                "optionId": "proceed_always",
+                                "name": "Yes, always",
+                                "kind": "allow_always"
+                            },
+                            {
+                                "optionId": "cancel",
+                                "name": "No",
+                                "kind": "reject_once"
+                            }
+                        ]
+                    },
+                    "options": [
+                        "allow_once",
+                        "reject",
+                        "cancel_turn"
+                    ],
+                    "status": "pending",
+                    "decision": null,
+                    "decidedBy": null,
+                    "decidedByTokenId": null,
+                    "note": null,
+                    "createdAt": "2026-11-24T15:23:14.098Z",
+                    "expiresAt": "2026-11-24T16:23:14.098Z",
+                    "resolvedAt": null
+                }
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 27,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.123Z",
+            "event": {
+                "type": "approval.resolved",
+                "approvalId": "apr_4f4e55cca5f38d454fed2da69cdc43d5",
+                "status": "rejected",
+                "decision": "reject",
+                "decidedBy": "ui"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 28,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.124Z",
+            "event": {
+                "type": "tool.completed",
+                "itemId": "t2-tool-call_2",
+                "status": "declined"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 29,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.126Z",
+            "event": {
+                "type": "notice",
+                "level": "warning",
+                "code": "MODE_RESTORED",
+                "message": "Qoder 切换到了“yolo”模式，Hub 已切回“default”"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 30,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.426Z",
+            "event": {
+                "type": "message.delta",
+                "itemId": "t2-msg-1",
+                "text": "好的，不改 README。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 31,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.426Z",
+            "event": {
+                "type": "message.completed",
+                "itemId": "t2-msg-1",
+                "text": "好的，不改 README。"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 32,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.442Z",
+            "event": {
+                "type": "diff.updated",
+                "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+                "scope": "turn_end",
+                "task": {
+                    "filesChanged": 0,
+                    "insertions": 0,
+                    "deletions": 0,
+                    "files": []
+                },
+                "turn": {
+                    "filesChanged": 0,
+                    "insertions": 0,
+                    "deletions": 0,
+                    "files": []
+                },
+                "patchTruncated": false
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 33,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.442Z",
+            "event": {
+                "type": "turn.completed",
+                "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+                "index": 2,
+                "status": "completed",
+                "stopReason": "end_turn"
+            }
+        },
+        {
+            "taskId": "26ab13d8-8555-4575-8e7e-ec69c03aca2b",
+            "seq": 34,
+            "turnId": "f25cb370-1428-4573-b18e-ff1ad6a9c92f",
+            "ts": "2026-11-24T15:23:14.442Z",
+            "event": {
+                "type": "task.status",
+                "from": "running",
+                "to": "completed"
+            }
+        }
+    ],
+    "lastSeq": 34,
+    "hasMore": false
+}
+
+$ git -C <repo> status --porcelain
+
+# Hub 发给假 Qoder 的请求与回复（<-，fake-acp 的帧日志；只列方法与关键参数）
+<- initialize {"protocolVersion": 1, "clientCapabilities": {"fs": {"readTextFile": false, "writeTextFile": false}, "terminal": false, "session": {"notices": {}}}}
+<- session/new {"cwd": "/tmp/ah-ev3-01-fake-qoder-dispatch/home/probe"}
+<- session/close {"sessionId": "sess-54525"}
+<- initialize {"protocolVersion": 1, "clientCapabilities": {"fs": {"readTextFile": false, "writeTextFile": false}, "terminal": false, "session": {"notices": {}}}}
+<- session/new {"cwd": "/tmp/ah-ev3-01-fake-qoder-dispatch/repo"}
+<- session/set_config_option {"sessionId": "sess-54569", "configId": "mode", "value": "default"}
+<- session/prompt {"sessionId": "sess-54569", "prompt": "看看健康检查接口能不能通，只读。"}
+<- 回复 perm-1 {"outcome": {"outcome": "selected", "optionId": "proceed_once"}}
+<- session/prompt {"sessionId": "sess-54569", "prompt": "顺手把 README 改一下"}
+<- 回复 perm-2 {"outcome": {"outcome": "selected", "optionId": "cancel"}}
+<- session/set_config_option {"sessionId": "sess-54569", "configId": "mode", "value": "default"}
+
+## SIGTERM
+exit=0
+## stderr
+## 侧车退出后还活着的 fake-acp 进程数：0
