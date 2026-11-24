@@ -1,0 +1,25 @@
+# 2026-11-24 21:27:00 CST 桥接 REST 脱敏 / diff 截断 / 审计实测（真实侧车 node dist/main.js，假 app-server）
+# 剧本：命令输出、写入文件、最终消息里都带假密钥 OPENAI_API_KEY=sk-A…(40) aws=AKIAB…(16)；另写 3 个各约 224 KB 的文件（diff 约 680 KB）
+bridge GET /tasks/:id/events             HTTP 200  bytes=3976    原文 sk-=0 AKIA=0  «已脱敏»=6
+ui     GET /tasks/:id/events             HTTP 200  bytes=4087    原文 sk-=3 AKIA=3  «已脱敏»=0
+bridge GET /tasks/:id/result             HTTP 200  bytes=839     原文 sk-=0 AKIA=0  «已脱敏»=2
+ui     GET /tasks/:id/result             HTTP 200  bytes=876     原文 sk-=1 AKIA=1  «已脱敏»=0
+bridge GET /tasks/:id/diff               HTTP 200  bytes=449082  原文 sk-=0 AKIA=0  «已脱敏»=2  truncated=True patchBytes=448483
+ui     GET /tasks/:id/diff               HTTP 200  bytes=673279  原文 sk-=1 AKIA=1  «已脱敏»=0  truncated=False patchBytes=672670
+bridge GET /tasks/:id/diff?format=patch  HTTP 200  bytes=448483  原文 sk-=0 AKIA=0  «已脱敏»=2  X-Agent-Hub-Truncated=true
+ui     GET /tasks/:id/diff?format=patch  HTTP 200  bytes=672670  原文 sk-=1 AKIA=1  «已脱敏»=0  X-Agent-Hub-Truncated=false
+
+## 桥接方 diff 补丁里的密钥行：
+7:+OPENAI_API_KEY=«已脱敏» aws=«已脱敏»
+
+## 桥接方 diff 补丁包含的文件（按文件边界截断，big3.txt 被截掉）：
+diff --git a/a-secrets.env b/a-secrets.env
+diff --git a/big1.txt b/big1.txt
+diff --git a/big2.txt b/big2.txt
+
+## audit_log 里的 bridge.diff_read（只记桥接 token 的读取）：
+bridge:<tokenId> bridge.diff_read {"scope":"task","format":"json","bytes":448483,"truncated":true}
+bridge:<tokenId> bridge.diff_read {"scope":"task","format":"patch","bytes":448483,"truncated":true}
+bridge:<tokenId> bridge.diff_read {"scope":"task","format":"patch","bytes":448483,"truncated":true}
+bridge:<tokenId> bridge.diff_read {"scope":"task","format":"patch","bytes":448483,"truncated":true}
+（后两条 patch 读取来自上面两次 grep 用的 curl，也是桥接 token；UI token 的 4 次读取没有记审计。）

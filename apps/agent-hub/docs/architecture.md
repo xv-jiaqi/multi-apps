@@ -220,6 +220,7 @@ stateDiagram-v2
    - 与缓冲区最后一条的 `(type, itemId)` 相同就把文本拼接上去，否则追加为新的一条（保持原始顺序）；
    - 满 **200 ms**（从缓冲区由空变非空时计时）或累计 **16 KB** 时整体刷出；
    - **任何非增量事件到来之前，先把该任务的缓冲区刷出**。这样 `tool.started` 不会排到它之前那段消息文字的前面。
+   - **尾部扣留**（`server/src/core/secret-holdback.ts`）：刷出时每一路输出（任务 + 事件类型 + `itemId`）末尾可能是半个密钥的部分先不落库，拼到这一路的下一块前面再切。切点只落在空白之后、离末尾至少 `HOLDBACK_CHARS`（64，大于 [security.md](security.md) §5 各模式最短匹配的最大值 47）个字符、不在 `Authorization: Bearer ` 这类前缀后面、不在 PEM 块中间。这样每个密钥都完整落在同一条增量事件里，对单条事件脱敏（[local-api.md](local-api.md) §3.4）就不会漏。这一路结束时整段放出：同一 `itemId` 的 `message.completed` / `reasoning.completed` / `tool.completed`、`turn.completed`、轮后收尾、任务进入终态、截断标记之前、进程退出（`flushAll`）。Hub UI 拼起来的文字与原来逐字相同，只是每行末尾最多 64 个字符要等下一块或这一路结束才出现。
 3. **落库**：每条事件在一个事务里执行 `UPDATE tasks SET last_event_seq = last_event_seq + 1 … RETURNING last_event_seq` 拿到 `seq`，再 `INSERT INTO events`。同一任务内 `seq` 严格递增；保留策略删除旧增量后**允许出现空号**，客户端只依赖“递增”，不依赖“连续”。
 4. **先落库，再广播**：事务提交后才交给 `EventBus`。订阅者收到的每条事件都能用 `afterSeq` 重新取到。
 5. **单个工具的输出上限 1 MB**：同一 `itemId` 累计落库的 `tool.output.delta` 文本超过 1 MB 后，后续增量丢弃，只追加一次 `{ type: 'tool.output.delta', text: '', truncated: true }`。

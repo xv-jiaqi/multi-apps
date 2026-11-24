@@ -519,7 +519,7 @@ export function requestHash(method: string, routeKey: string, body: unknown): st
 
 ### 3.4 返回给桥接方的内容：脱敏与截断
 
-- **脱敏**：`BridgeRedactInterceptor`（全局）把返回给桥接 token 的响应里每一个字符串值过一遍 `redact()`（[security.md](security.md) §6），包括提示词、消息、工具输出、命令、审批详情、错误信息、diff 补丁；WebSocket 消息同样处理（§6）。Hub UI 拿到的是原文。
+- **脱敏**：`BridgeRedactInterceptor`（全局）把返回给桥接 token 的响应里每一个字符串值过一遍 `redact()`（[security.md](security.md) §6），包括提示词、消息、工具输出、命令、审批详情、错误信息、diff 补丁；WebSocket 消息同样处理（§6）。Hub UI 拿到的是原文。增量事件（`message.delta` 等）逐条脱敏，事件管线保证同一个密钥不会被切进两条增量（[architecture.md](architecture.md) §6 第 2 步），REST `/events`、WebSocket 实时推送和回放都一样。
 - **diff 截断**：桥接方读取补丁时先脱敏，再按文件边界截断到 `security.maxBridgeDiffBytes`（默认 512 KB，UTF-8 字节数），被截断时 JSON 里 `truncated: true`、`format=patch` 时响应头 `X-Agent-Hub-Truncated: true`（D46）。
 - **审计**：桥接 token 每次读 diff 记一条 `bridge.diff_read`（[data-model.md](data-model.md) §7）。
 - 工具输出在落库时已经按单个工具 1 MB 截断（[architecture.md](architecture.md) §6），事件接口不再另外截断。
@@ -1394,7 +1394,7 @@ Idempotency-Key: conv_7f3a:msg_12
 
 ### 6.3 回放与衔接
 
-带 `afterSeq` 订阅 `task` 时，先订阅实时事件并缓冲，再分页从库里回放 `seq > afterSeq` 的事件，最后输出缓冲里更新的部分；之后直接转发。按 `seq` 去重，衔接处不重不漏。断线后客户端用最后收到的 `seq` 重新订阅即可。实时流与库里是同一份已合并的事件（[architecture.md](architecture.md) §6），回放与实时看到的内容一致。
+带 `afterSeq` 订阅 `task` 时，先订阅实时事件（回放期间不缓存），再分页从库里回放 `seq > afterSeq` 的事件（逐条等写完），然后同步补齐回放期间落库的事件并切到跟随；之后直接转发。按 `seq` 去重，衔接处不重不漏。断线后客户端用最后收到的 `seq` 重新订阅即可。实时流与库里是同一份已合并的事件（[architecture.md](architecture.md) §6），回放与实时看到的内容一致。
 
 ```ts
 // server/src/api/ws/replay.ts
@@ -1410,9 +1410,15 @@ export interface EventFeed {
 const PAGE = 500;
 
 /**
- * 先订阅实时事件并缓冲，再分页回放库里 seq > afterSeq 的事件，最后输出缓冲里更新的部分，
- * 之后直接转发。按 seq 去重，衔接处不重不漏。
- * send 在数据写入 socket 后 resolve（背压），连接断开时也要 resolve，不能 reject。
+ * 先订阅（回放期间只占位、不缓存），再分页回放库里 seq > afterSeq 的事件，然后同步补齐回放期间
+ * 落库的事件并切到跟随，之后直接转发。补齐与切换之间没有 await，按 seq 去重，衔接处不重不漏。
+ *
+ * - 回放：逐条等 send 写完再发下一条。历史在库里，按客户端的速度补，不占内存也不占待发送额度，
+ *   断线重连补大量历史时不会被误判为慢消费者。
+ * - 跟随：send 立即把消息交给 socket（ws 自己保证顺序），不串成 Promise 链。积压留在 socket 上，
+ *   调用方按待发送字节数判断慢消费者并以 4008 关闭（§6.4）。
+ *
+ * send 在数据写出后 resolve；连接断开时也要 resolve，不能 reject。
  */
 export async function replayThenFollow(
   feed: EventFeed,
@@ -1422,28 +1428,35 @@ export async function replayThenFollow(
   signal: AbortSignal,
 ): Promise<() => void> {
   let lastSent = afterSeq;
-  let buffered: HubEventEnvelope[] | null = [];
+  let following = false;
   let tail: Promise<void> = Promise.resolve();
   const push = (env: HubEventEnvelope): void => {
     if (env.seq <= lastSent) return;
     lastSent = env.seq;
-    tail = tail.then(() => send(env));
+    tail = send(env);
   };
+  // 回放期间到达的事件已经在库里（先落库后广播），由下面的补齐读出来，这里不缓存。
   const unsubscribe = feed.subscribe(taskId, (env) => {
-    if (buffered) buffered.push(env);
-    else push(env);
+    if (following) push(env);
   });
   try {
     for (;;) {
       if (signal.aborted) break;
       const page = feed.list(taskId, lastSent, PAGE);
-      for (const env of page) push(env);
-      await tail;
+      for (const env of page) {
+        if (signal.aborted) break;
+        push(env);
+        await tail;
+      }
       if (page.length < PAGE) break;
     }
-    const pending = buffered;
-    buffered = null;
-    for (const env of pending) push(env);
+    // 补齐并切到跟随：同步完成，中间没有新事件能插进来。
+    while (!signal.aborted) {
+      const page = feed.list(taskId, lastSent, PAGE);
+      for (const env of page) push(env);
+      if (page.length < PAGE) break;
+    }
+    following = true;
   } catch (err) {
     unsubscribe();
     throw err;
@@ -1452,12 +1465,12 @@ export async function replayThenFollow(
 }
 ```
 
-`send` 的实现：`new Promise((resolve) => ws.send(JSON.stringify(msg), () => resolve()))`，出错也 resolve。`unsubscribe` 或连接关闭时调用 `AbortController.abort()` 并执行返回的取消函数。
+`send` 的实现：先按 §6.4 检查待发送数据（未触发写回调的字节数与 `ws.bufferedAmount` 取大者，加上这条），超限以 `4008` 关闭；否则 `new Promise((resolve) => ws.send(JSON.stringify(msg), () => resolve()))`，出错或连接关闭也 resolve。`send` 不能串成 Promise 链：积压必须留在 socket 缓冲里，慢消费者检查才看得到。`unsubscribe` 或连接关闭时调用 `AbortController.abort()` 并执行返回的取消函数。
 
 ### 6.4 心跳、背压与关闭
 
 - 服务端每 **20 秒**发一次 WebSocket ping 帧，**60 秒**内没收到 pong 就 `terminate()`。
-- 每次发送前检查 `ws.bufferedAmount`，超过 **8 MB** → 以 `4008` 关闭（消费太慢）；客户端应带 `afterSeq` 按 1、2、5、10 秒重连，之后保持 10 秒，不立即重连。
+- 每次发送前检查待发送数据（已交给 `ws.send` 但写回调未触发的字节数与 `ws.bufferedAmount` 取大者，再加上这条消息），超过 **8 MB** → 以 `4008` 关闭（消费太慢）；客户端应带 `afterSeq` 按 1、2、5、10 秒重连，之后保持 10 秒，不立即重连。
 - 侧车停机时所有连接以 `1001` 关闭。
 
 | 关闭码 | 常量                           | 含义                                          | 客户端应当                         |
