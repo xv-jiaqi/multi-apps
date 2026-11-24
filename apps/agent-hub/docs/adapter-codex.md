@@ -97,15 +97,15 @@
 
 ### 4.1 `startSession(params, sink)`
 
-| 步骤 | 动作                                                                                                                                                                                              | 失败                                                                                                |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| 1    | `ensureProcess()`。                                                                                                                                                                               | 原样抛出 `AgentFailure`                                                                             |
-| 2    | `account/read`：`account === null && requiresOpenaiAuth` → 上报健康 `auth_required`，**不建 thread**（D32）。                                                                                     | `AGENT_AUTH_REQUIRED`：“Codex 未登录或登录已过期：请在 ChatGPT 应用或终端里执行 codex login 后重试” |
-| 3a   | 新建：`thread/start { cwd, approvalPolicy: "on-request", sandbox, serviceName: "agent_hub", developerInstructions: CODEX_DEVELOPER_INSTRUCTIONS }`，`userVisible` 时再加 `threadSource: "user"`。 | JSON-RPC 错误 → `AGENT_PROTOCOL_ERROR`（`detail` 带 `code`、`message`）                             |
-| 3b   | 恢复（`resumeNativeSessionId` 有值）：`thread/resume { threadId, cwd, approvalPolicy: "on-request", sandbox, developerInstructions, excludeTurns: true }`。                                       | JSON-RPC 错误 → `SESSION_NOT_RESUMABLE`：“Codex 无法恢复会话：<message>”                            |
-| 4    | 用响应里的 `thread.id` 建 `CodexSession`，放进 `sessions`。                                                                                                                                       | —                                                                                                   |
-| 5    | `params.signal` 已中止 → `thread/unsubscribe`（忽略错误），移出 `sessions`，抛错（接口 §6.1 规则 2）。                                                                                            | —                                                                                                   |
-| 6    | `sink.emit({ type: 'session.started', nativeSessionId: thread.id, model: response.model, resumed })`；健康不是 `ready` 时上报 `ready`。                                                           | —                                                                                                   |
+| 步骤 | 动作                                                                                                                                                                                                                                             | 失败                                                                                                |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| 1    | `ensureProcess()`。                                                                                                                                                                                                                              | 原样抛出 `AgentFailure`                                                                             |
+| 2    | `account/read`：`account === null && requiresOpenaiAuth` → 上报健康 `auth_required`，**不建 thread**（D32）。                                                                                                                                    | `AGENT_AUTH_REQUIRED`：“Codex 未登录或登录已过期：请在 ChatGPT 应用或终端里执行 codex login 后重试” |
+| 3a   | 新建：`thread/start { cwd, approvalPolicy: "on-request", sandbox, serviceName: "agent_hub", developerInstructions: CODEX_DEVELOPER_INSTRUCTIONS, config: codexConfigOverrides(deps.agentEnv()) }`，`userVisible` 时再加 `threadSource: "user"`。 | JSON-RPC 错误 → `AGENT_PROTOCOL_ERROR`（`detail` 带 `code`、`message`）                             |
+| 3b   | 恢复（`resumeNativeSessionId` 有值）：`thread/resume { threadId, cwd, approvalPolicy: "on-request", sandbox, developerInstructions, excludeTurns: true, config }`（`config` 同 3a）。                                                            | JSON-RPC 错误 → `SESSION_NOT_RESUMABLE`：“Codex 无法恢复会话：<message>”                            |
+| 4    | 用响应里的 `thread.id` 建 `CodexSession`，放进 `sessions`。                                                                                                                                                                                      | —                                                                                                   |
+| 5    | `params.signal` 已中止 → `thread/unsubscribe`（忽略错误），移出 `sessions`，抛错（接口 §6.1 规则 2）。                                                                                                                                           | —                                                                                                   |
+| 6    | `sink.emit({ type: 'session.started', nativeSessionId: thread.id, model: response.model, resumed })`；健康不是 `ready` 时上报 `ready`。                                                                                                          | —                                                                                                   |
 
 - 第 1–3 步任何一步遇到请求超时 → `AGENT_PROTOCOL_ERROR`；遇到连接关闭 → `AGENT_PROCESS_EXITED`（任务记 `failed`，接口 §4）。
 - `sandbox` 取 `sandboxFor(mode, cwd).sandbox`。恢复时也要传 `sandbox` 和 `developerInstructions`：恢复后的 thread 不一定沿用旧值。
@@ -120,6 +120,7 @@
 
 - 网络每轮都显式关闭（D30）：Agent 需要联网时会发权限申请，由人审批（§6）。
 - `developerInstructions` = `CODEX_DEVELOPER_INSTRUCTIONS`（§9）：不推送、不改 remote、不碰凭据文件。这只是提示，真正的防线是推送守卫（[security.md](security.md) §3）。
+- `config`（PR3）：用户 `~/.codex/config.toml` 里的 `shell_environment_policy` 会把推送守卫的环境变量从 Agent 跑的命令里剥掉。`codexConfigOverrides()`（§9）用点分键逐个 `set` 回 `GUARD_ENV_KEYS`，并把 `include_only` 设成 `[]`（实测它在 `set` 之后过滤），其余 policy 设置不动（[security.md](security.md) §3.2）。
 - Hub 不传 `danger-full-access`，也不提供任何改沙箱的入口。实测：传错 `sandbox` 值时 Codex 返回 `-32600`。
 
 ### 4.3 每轮的模型与推理档位
@@ -248,6 +249,7 @@ Codex 的子 Agent（`collabAgentToolCall`）会建自己的 thread，那些 thr
  * 只包含 Hub 发出的请求、Hub 处理的通知与服务端请求；字段名、取值与线上完全一致。
  * 线上的帧不带 "jsonrpc" 字段。
  */
+import type { JsonValue } from '@agent-hub/contract';
 
 export const CODEX_VERIFIED_VERSIONS = ['0.164.0'] as const;
 
@@ -334,6 +336,8 @@ export interface ThreadStartParams {
   developerInstructions: string;
   /** D31：userVisible 时为 "user"，否则不带这个字段。 */
   threadSource?: string;
+  /** 覆盖 config.toml 的键（点分路径），见 mapping.ts 的 codexConfigOverrides。 */
+  config?: Record<string, JsonValue> | null;
 }
 
 export interface ThreadResumeParams {
@@ -344,6 +348,7 @@ export interface ThreadResumeParams {
   developerInstructions: string;
   /** 不要整段历史，历史在 Hub 自己的事件库里。 */
   excludeTurns: boolean;
+  config?: Record<string, JsonValue> | null;
 }
 
 export interface CodexThread {
@@ -602,6 +607,7 @@ export interface LegacyApprovalResponse {
 // server/src/adapters/codex/mapping.ts
 import {
   reasoningEffortLabel,
+  type JsonValue,
   type AgentError,
   type AgentEvent,
   type ApprovalDecision,
@@ -609,6 +615,7 @@ import {
   type TaskMode,
   type UsageInfo,
 } from '@agent-hub/contract';
+import { GUARD_ENV_KEYS } from '../../workspace/agent-env';
 import { agentError, toJsonValue, type ApprovalRequestInput, type TurnResult } from '../types';
 import type {
   ApprovalDecisionWire,
@@ -630,6 +637,23 @@ import type {
 export const CODEX_DEVELOPER_INSTRUCTIONS =
   '你在 Agent Hub 派发的任务中运行。不要执行 git push，不要修改 git remote 配置，' +
   '不要读取或输出凭据文件（例如 ~/.ssh、~/.netrc、.env）。';
+
+/**
+ * thread/start、thread/resume 的 config 覆盖（PR3 待办 5，security.md §3.2）：用户的 ~/.codex/config.toml
+ * 若设了 shell_environment_policy（inherit = "none"、exclude、include_only），Agent 跑的命令里会丢掉
+ * git 推送守卫的环境变量。这里把守卫变量逐个 set 回去，并清掉 include_only。
+ * 实测 codex-cli 0.164.0（evidence/pr3-qoder/codex-env-policy.md）：inherit = "none" / "core"、
+ * exclude 会剥掉守卫变量，set 能盖回来；include_only 却在 set 之后过滤，只 set 不够，必须同时清掉。
+ * 键用点分路径，只覆盖这几个子键，不动用户 policy 的其余设置。
+ */
+export function codexConfigOverrides(env: Record<string, string>): Record<string, JsonValue> {
+  const config: Record<string, JsonValue> = { 'shell_environment_policy.include_only': [] };
+  for (const key of GUARD_ENV_KEYS) {
+    const value = env[key];
+    if (value !== undefined) config[`shell_environment_policy.set.${key}`] = value;
+  }
+  return config;
+}
 
 export const ALL_DECISIONS: ApprovalDecision[] = [
   'allow_once',
