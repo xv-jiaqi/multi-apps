@@ -12,8 +12,12 @@ function domProps(props: AnyProps): Record<string, unknown> {
   for (const [key, value] of Object.entries(props)) {
     if (key === 'className' || key === 'style' || key === 'onClick' || key === 'disabled') {
       out[key] = value;
-    } else if (key === 'aria-disabled' || key === 'ariaRole') {
+    } else if (key === 'aria-disabled' || key === 'aria-pressed' || key === 'ariaRole') {
       out[key === 'ariaRole' ? 'role' : key] = value;
+    } else if (key === 'ariaPressed') {
+      out['aria-pressed'] = value;
+    } else if (key === 'maxlength') {
+      out.maxLength = value;
     }
   }
   return out;
@@ -51,3 +55,7 @@ export const Input = field('input');
 export const Textarea = field('textarea');
 export type ButtonProps = Record<string, unknown>;
 export type InputProps = Record<string, unknown>;
+
+export function Picker(props: AnyProps) {
+  return createElement('div', domProps(props), props.children);
+}

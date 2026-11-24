@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow, useRouter } from '@tarojs/taro';
 import { Button, Input, Picker, ScrollView, Text, Textarea, View } from '@tarojs/components';
@@ -21,9 +21,13 @@ import {
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { mutationErrorMessage, readTrpcErrorCodes } from '../../../lib/load-error';
-import { goLoginIfUnauthorized, goToLogin, redirectToLogin } from '../../../lib/auth-redirect';
+import { goLoginIfUnauthorized, goToLogin } from '../../../lib/auth-redirect';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { usePendingSubmit } from '../../../lib/use-pending-submit';
+import { markListNeedsRefresh } from '../../../lib/list-refresh';
+import { isPublicSafetyStatus, SUBMITTED_FOR_REVIEW_KEY } from '../../../lib/post-safety';
+import { useStatusToast } from '../../../lib/status-toast';
+import { StatusToast } from '../../../components/status-toast';
 import { ArtworkMini } from '../../../components/artwork-mini';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import './index.scss';
@@ -39,6 +43,7 @@ type FieldErrors = {
   language?: string;
   imageUrls?: string;
   contact?: string;
+  note?: string;
 };
 
 const CONDITION_OPTIONS: Array<ListingCondition | ''> = ['', ...LISTING_CONDITION_VALUES];
@@ -79,18 +84,25 @@ export default observer(function TradePublishPage() {
   const [language, setLanguage] = useState<ListingLanguage | ''>('');
   const [variantNote, setVariantNote] = useState('');
   const [contact, setContact] = useState('');
+  const [note, setNote] = useState('');
   const [imageText, setImageText] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<Notice<{ text: string }> | null>(null);
   const [prefillFailed, setPrefillFailed] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(Boolean(prefillSlug));
   const submit = usePendingSubmit();
+  const toast = useStatusToast();
+  const loginRedirected = useRef(false);
 
   useDidShow(() => {
     void Taro.setNavigationBarTitle({ title: tt('trade.publish.title') });
-    // Direct / shared entry: replace this page once so backing out of login
-    // cannot bounce back here and stack another login (CH-301 §2 v1.4).
-    if (!session.isAuthenticated) redirectToLogin();
+    // Unsigned entry: jump to login once with navigateTo so a successful
+    // login can come back here (card-detail "发布意向" continues). A ref
+    // stops a back-without-login loop. Fallback CTA remains below.
+    if (!session.isAuthenticated && !loginRedirected.current) {
+      loginRedirected.current = true;
+      goToLogin();
+    }
   });
 
   useEffect(() => {
@@ -169,6 +181,9 @@ export default observer(function TradePublishPage() {
     if (contact.trim().length < 2 || contact.trim().length > 200) {
       errors.contact = tt('trade.publish.error.contact');
     }
+    if (note.trim().length > 500) {
+      errors.note = tt('trade.publish.error.note');
+    }
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -185,6 +200,7 @@ export default observer(function TradePublishPage() {
       currency,
       imageUrls: images.urls,
       contact: contact.trim(),
+      note: note.trim() || undefined,
       condition: condition || undefined,
       language: language || undefined,
       variantNote: variantNote.trim() || undefined,
@@ -206,6 +222,7 @@ export default observer(function TradePublishPage() {
               ? tt('trade.publish.error.imageUrl')
               : tt('trade.publish.error.imageTooLong');
       } else if (path === 'contact') mapped.contact = tt('trade.publish.error.contact');
+      else if (path === 'note') mapped.note = tt('trade.publish.error.note');
       else if (path === 'cardSlug') mapped.card = tt('trade.publish.error.cardRequired');
       else showFormError(tt('error.app.UNKNOWN'));
       setFieldErrors(mapped);
@@ -213,9 +230,15 @@ export default observer(function TradePublishPage() {
     }
     if (!submit.begin()) return;
     try {
-      await trpc.listings.publish.mutate(parsed.data);
+      const created = await trpc.listings.publish.mutate(parsed.data);
+      markListNeedsRefresh('trade');
+      if (!isPublicSafetyStatus(created.safetyStatus)) {
+        toast.show(tt(SUBMITTED_FOR_REVIEW_KEY), { persistAcrossPages: true });
+      } else {
+        toast.show(tt('trade.publish.success'), { persistAcrossPages: true });
+      }
       // Trade list is a tab page: WeChat rejects redirectTo onto a tab.
-      // switchTab also pops the publish page, which is the intent of §1.
+      // switchTab also pops the publish page, which is the intent of §1 / §3 v1.5.
       void Taro.switchTab({ url: '/pages/trade/list/index' });
     } catch (error) {
       if (goLoginIfUnauthorized(error)) return;
@@ -479,9 +502,23 @@ export default observer(function TradePublishPage() {
                 disabled={submit.pending ? true : undefined}
                 onInput={(event) => setContact(event.detail.value)}
               />
-              <Text className="trade-form__hint">{tt('trade.publish.contactHintSignedIn')}</Text>
               {fieldErrors.contact ? (
                 <Text className="trade-select__error">{fieldErrors.contact}</Text>
+              ) : null}
+            </View>
+
+            <View className="trade-form__section">
+              <Text className="trade-form__label">{tt('trade.publish.note')}</Text>
+              <Textarea
+                className={`trade-form__textarea${fieldErrors.note ? ' trade-form__textarea--error' : ''}`}
+                value={note}
+                maxlength={500}
+                disabled={submit.pending ? true : undefined}
+                onInput={(event) => setNote(event.detail.value)}
+              />
+              <Text className="trade-form__count">{note.length} / 500</Text>
+              {fieldErrors.note ? (
+                <Text className="trade-select__error">{fieldErrors.note}</Text>
               ) : null}
             </View>
 
@@ -491,6 +528,9 @@ export default observer(function TradePublishPage() {
                 className={`trade-form__textarea${fieldErrors.imageUrls ? ' trade-form__textarea--error' : ''}`}
                 value={imageText}
                 placeholder={tt('trade.publish.imageUrlsHint')}
+                maxlength={
+                  LISTING_IMAGE_MAX_COUNT * LISTING_IMAGE_URL_MAX + (LISTING_IMAGE_MAX_COUNT - 1)
+                }
                 disabled={submit.pending ? true : undefined}
                 onInput={(event) => setImageText(event.detail.value)}
               />
@@ -522,6 +562,7 @@ export default observer(function TradePublishPage() {
             <Text className="trade-login__text">{tt('trade.list.loginToPublish')}</Text>
           </Link>
         )}
+        <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>
   );

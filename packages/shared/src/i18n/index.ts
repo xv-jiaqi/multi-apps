@@ -466,6 +466,7 @@ const zhCN: Dictionary = {
   'trade.publish.error.imageTooLong': '图片链接最长 2048 个字符',
   'trade.publish.error.priceTooLong': '价格最长 64 个字符',
   'trade.publish.error.contact': '联系方式需要 2–200 个字',
+  'trade.publish.error.note': '备注最多 500 个字',
   'trade.publish.rateLimited': '发布太频繁，请稍后再试',
   'trade.publish.disclaimer':
     'Cardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。',
@@ -1070,12 +1071,14 @@ const zhCN: Dictionary = {
   'report.submitFailed': '提交失败，请重试',
   'content.blocked': '内容未通过审核，没有发布。',
   'content.pendingReview': '审核中',
+  'content.submittedForReview': '已提交，审核通过后显示。',
   'tab.home': '首页',
   'tab.forum': '论坛',
   'tab.trade': '交易',
   'tab.me': '我的',
   'forum.list.loadFailed': '论坛加载失败',
   'trade.list.loadFailed': '交易意向加载失败',
+  'trade.publish.success': '意向已发布',
 };
 
 const enUS: Dictionary = {
@@ -1572,6 +1575,7 @@ const enUS: Dictionary = {
   'trade.publish.error.imageTooLong': 'Image links can be at most 2048 characters',
   'trade.publish.error.priceTooLong': 'Price can be at most 64 characters',
   'trade.publish.error.contact': 'Contact must be 2–200 characters',
+  'trade.publish.error.note': 'Use at most 500 characters for the notes.',
   'trade.publish.rateLimited': 'Too many listings. Try again later.',
   'trade.publish.disclaimer':
     'Cardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.',
@@ -2202,12 +2206,14 @@ const enUS: Dictionary = {
   'report.submitFailed': "Couldn't submit. Try again.",
   'content.blocked': "This didn't pass review and wasn't published.",
   'content.pendingReview': 'Under review',
+  'content.submittedForReview': "Submitted. It'll show after review.",
   'tab.home': 'Home',
   'tab.forum': 'Forum',
   'tab.trade': 'Trade',
   'tab.me': 'Me',
   'forum.list.loadFailed': "Couldn't load topics",
   'trade.list.loadFailed': "Couldn't load listings",
+  'trade.publish.success': 'Listing posted',
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {

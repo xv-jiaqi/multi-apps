@@ -1,23 +1,14 @@
 @import '@repo/design-tokens/taro.scss';
 
 .listing-row {
-  display: flex;
   margin-bottom: $spacing-sm;
   padding: $spacing-sm;
-  overflow: hidden;
   background-color: $color-white;
   border: 2rpx solid $color-neutral-300;
   border-radius: $radius-lg;
 }
 
-.listing-row__thumb {
-  flex-shrink: 0;
-  width: 126rpx;
-}
-
 .listing-row__body {
-  flex: 1;
-  margin-left: $spacing-sm;
   min-width: 0;
 }
 
@@ -32,24 +23,27 @@
   background-color: $color-neutral-100;
   border-radius: $radius-sm;
   vertical-align: middle;
+  word-break: break-all;
 }
 
 .listing-row__title {
   font-size: 30rpx;
   font-weight: 600;
   color: $color-neutral-900;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .listing-row__meta,
 .listing-row__contact,
-.listing-row__price {
+.listing-row__price,
+.listing-row__note-label,
+.listing-row__note-body {
   display: block;
   margin-top: $spacing-xs;
   font-size: 24rpx;
   line-height: 1.5;
   color: $color-neutral-600;
-  word-break: break-word;
+  word-break: break-all;
 }
 
 .listing-row__price {
@@ -67,6 +61,12 @@
   background-color: $color-neutral-100;
   border-radius: $radius-sm;
   vertical-align: middle;
+  word-break: break-all;
+}
+
+.listing-row__thumb {
+  width: 126rpx;
+  margin-top: $spacing-xs;
 }
 
 .listing-row__photos {
@@ -94,5 +94,29 @@
   line-height: 1.3;
   color: $color-neutral-600;
   text-align: center;
-  word-break: break-word;
+  word-break: break-all;
+}
+
+.listing-row__signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin-top: $spacing-xs;
+  background-color: $color-neutral-100;
+  border-radius: $radius-md;
+}
+
+.listing-row__signin-text {
+  font-size: 28rpx;
+  color: $color-brand-600;
+}
+
+.listing-row__note-label {
+  font-weight: 600;
+  color: $color-neutral-900;
+}
+
+.listing-row__note-body {
+  white-space: pre-wrap;
 }

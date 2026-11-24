@@ -2,6 +2,7 @@
 
 .trade-page {
   height: 100vh;
+  overflow: hidden;
   background-color: $color-page;
 }
 
@@ -38,16 +39,22 @@
 
 .trade-filters {
   display: flex;
+  align-items: flex-start;
   gap: $spacing-xs;
   margin-bottom: $spacing-md;
 }
 
+taro-button-core.trade-filters__chip,
+.trade-filters__chip[type='default'],
 .trade-filters__chip {
   display: flex;
   flex: 1;
   align-items: center;
   justify-content: center;
+  height: 88rpx;
   min-height: 88rpx;
+  margin: 0;
+  margin-top: 0;
   padding: 0 $spacing-sm;
   font-size: 28rpx;
   line-height: 1.2;
@@ -58,6 +65,11 @@
 
   &::after {
     border: none;
+  }
+
+  & + .trade-filters__chip,
+  & + taro-button-core.trade-filters__chip {
+    margin-top: 0;
   }
 }
 
@@ -305,4 +317,11 @@
 .trade-card-preview__thumb {
   flex-shrink: 0;
   width: 96rpx;
+}
+
+.trade-form__count {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
 }

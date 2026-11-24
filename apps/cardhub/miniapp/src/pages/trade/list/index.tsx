@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import Taro, { useDidShow } from '@tarojs/taro';
+import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro';
 import { Button, ScrollView, Text, View, type ButtonProps } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, PrimaryButton, Skeleton } from '@repo/ui-mini';
 import { t, type ListingKind } from '@repo/shared';
@@ -11,31 +11,64 @@ import { resolveBlockView } from '../../../lib/block-view';
 import { useBlock } from '../../../lib/use-block';
 import { goToLogin } from '../../../lib/auth-redirect';
 import { createLoadMoreGuard } from '../../../lib/load-more-guard';
+import { consumeListNeedsRefresh } from '../../../lib/list-refresh';
+import { useScrollRestore } from '../../../lib/scroll-restore';
+import {
+  forgetListSession,
+  readListSession,
+  rememberListSession,
+  writeListScroll,
+  type ListSessionKey,
+} from '../../../lib/list-session';
+import { useStatusToast } from '../../../lib/status-toast';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
+import { StatusToast } from '../../../components/status-toast';
 import { ListingRow, type ListingItem } from '../../../components/listing-row';
 import './index.scss';
 
-type ListingListPage = Awaited<ReturnType<typeof trpc.listings.list.query>>;
+type ListingListPage = Awaited<ReturnType<typeof trpc.listings.list.query>> & {
+  filterKind: ListingKind | undefined;
+};
 
 const PAGE_SIZE = 20;
+
+function tradeSessionKey(kind: ListingKind | undefined): ListSessionKey {
+  return `trade:${kind ?? 'all'}`;
+}
 
 export default observer(function TradeListPage() {
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [kind, setKind] = useState<ListingKind | undefined>(undefined);
+  const sessionKey = tradeSessionKey(kind);
+  const cached = readListSession<ListingListPage, ListingItem>(sessionKey, session.isAuthenticated);
+  const toast = useStatusToast();
+  const scroll = useScrollRestore('.trade-page', sessionKey);
+  const firstShow = useRef(true);
+  const lastAuth = useRef(session.isAuthenticated);
+  const skipKindEffect = useRef(Boolean(cached));
 
-  const { state, load } = useBlock<ListingListPage>(() =>
-    trpc.listings.list.query({ surface: 'miniapp', limit: PAGE_SIZE, kind }),
-  );
+  const { state, load } = useBlock<ListingListPage>(async () => {
+    const requested = kind;
+    const page = await trpc.listings.list.query({
+      surface: 'miniapp',
+      limit: PAGE_SIZE,
+      kind: requested,
+    });
+    return { ...page, filterKind: requested };
+  }, cached?.data);
+  const dataRef = useRef(state.data);
+  dataRef.current = state.data;
 
-  const [extra, setExtra] = useState<ListingItem[]>([]);
-  const [moreCursor, setMoreCursor] = useState<string | null>(null);
+  const [extra, setExtra] = useState<ListingItem[]>(() => cached?.extra ?? []);
+  const [moreCursor, setMoreCursor] = useState<string | null>(() => cached?.moreCursor ?? null);
   const [moreLoading, setMoreLoading] = useState(false);
   const [moreFailed, setMoreFailed] = useState<Notice<{ text: string }> | null>(null);
   const moreGuard = useRef(createLoadMoreGuard());
 
   const resetPaging = () => {
+    scroll.reset();
     moreGuard.current.invalidate();
     setExtra([]);
     setMoreCursor(null);
@@ -43,29 +76,86 @@ export default observer(function TradeListPage() {
     setMoreLoading(false);
   };
 
-  useEffect(() => {
+  const resetAndLoad = (keepDataOnError = false) => {
     resetPaging();
+    forgetListSession(sessionKey);
+    return load({ fresh: true, keepDataOnError }).catch(() => {
+      toast.show(tt('trade.list.loadFailed'));
+    });
+  };
+
+  useEffect(() => {
+    if (skipKindEffect.current) {
+      skipKindEffect.current = false;
+      return;
+    }
+    resetPaging();
+    forgetListSession(sessionKey);
     void load({ fresh: true });
   }, [load, kind]);
 
   useDidShow(() => {
     applyTabBarLabels();
     void Taro.setNavigationBarTitle({ title: tt('trade.list.title') });
-    resetPaging();
-    void load({ fresh: true });
+    toast.consumeQueued();
+    const authChanged = lastAuth.current !== session.isAuthenticated;
+    lastAuth.current = session.isAuthenticated;
+    if (firstShow.current) {
+      firstShow.current = false;
+      if (cached) scroll.restore();
+      return;
+    }
+    if (consumeListNeedsRefresh('trade') || authChanged) {
+      void resetAndLoad(Boolean(dataRef.current));
+    } else {
+      scroll.restore();
+    }
   });
 
+  useEffect(() => {
+    if (!state.data || state.loading) return;
+    rememberListSession(sessionKey, {
+      data: state.data,
+      extra,
+      moreCursor,
+      scrollTop: scroll.scrollTop,
+      auth: session.isAuthenticated,
+    });
+  }, [
+    sessionKey,
+    state.data,
+    state.loading,
+    extra,
+    moreCursor,
+    scroll.scrollTop,
+    session.isAuthenticated,
+  ]);
+
+  usePullDownRefresh(() => {
+    void Promise.resolve(resetAndLoad()).finally(() => {
+      void Taro.stopPullDownRefresh();
+    });
+  });
+
+  const staleFilter = Boolean(state.data && state.data.filterKind !== kind);
   const view = resolveBlockView({
     state,
     isEmpty: (data) => data.items.length === 0,
   });
-  const firstItems = view.kind === 'success' ? view.data.items : [];
+  const showItems = view.kind === 'success' && !staleFilter;
+  const firstItems = showItems && view.kind === 'success' ? view.data.items : [];
   const items = [...firstItems, ...extra];
   const nextCursor =
-    extra.length > 0 ? moreCursor : view.kind === 'success' ? view.data.nextCursor : null;
+    state.loading || staleFilter
+      ? null
+      : extra.length > 0
+        ? moreCursor
+        : showItems && view.kind === 'success'
+          ? view.data.nextCursor
+          : null;
 
   const loadMore = async () => {
-    if (!nextCursor) return;
+    if (!nextCursor || state.loading) return;
     const token = moreGuard.current.tryStart();
     if (token === null) return;
     setMoreLoading(true);
@@ -90,6 +180,10 @@ export default observer(function TradeListPage() {
   };
 
   const onPublish = () => {
+    if (typeof document !== 'undefined') {
+      const el = document.querySelector('.trade-page') as HTMLElement | null;
+      if (el) writeListScroll(sessionKey, el.scrollTop);
+    }
     if (!session.isAuthenticated) {
       goToLogin();
       return;
@@ -104,8 +198,15 @@ export default observer(function TradeListPage() {
       { id: 'BUY', label: tt('trade.list.kindBuy'), value: 'BUY' },
     ];
 
+  const showLoading = view.kind === 'loading' || (state.loading && staleFilter);
+
   return (
-    <ScrollView scrollY className="trade-page">
+    <ScrollView
+      scrollY
+      scrollTop={scroll.scrollTop}
+      onScroll={scroll.onScroll}
+      className="trade-page"
+    >
       <View className="trade-page__body">
         <BreadcrumbsMini
           items={[
@@ -131,6 +232,10 @@ export default observer(function TradeListPage() {
                 className={`trade-filters__chip${active ? ' trade-filters__chip--active' : ''}`}
                 hoverClass="none"
                 onClick={() => setKind(filter.value)}
+                {...({
+                  ariaPressed: active,
+                  'aria-pressed': active,
+                } as ButtonProps)}
               >
                 {filter.label}
               </Button>
@@ -138,9 +243,9 @@ export default observer(function TradeListPage() {
           })}
         </View>
 
-        {view.kind === 'loading' ? <Skeleton /> : null}
+        {showLoading ? <Skeleton /> : null}
 
-        {view.kind === 'failed' ? (
+        {view.kind === 'failed' && !state.data ? (
           <ErrorBoxMini
             key={view.noticeId}
             title={tt('trade.list.loadFailed')}
@@ -152,19 +257,20 @@ export default observer(function TradeListPage() {
         ) : null}
 
         {view.kind === 'notFound' ? <Empty title={tt('state.notFound')} /> : null}
-        {view.kind === 'empty' ? <Empty title={tt('trade.list.empty')} /> : null}
+        {!staleFilter && view.kind === 'empty' ? <Empty title={tt('trade.list.empty')} /> : null}
 
-        {view.kind === 'success' ? (
+        {!staleFilter && view.kind === 'success' ? (
           <View>
             {items.map((listing) => (
               <ListingRow key={listing.id} listing={listing} locale={locale.locale} />
             ))}
-            {nextCursor ? (
+            {nextCursor && !moreFailed ? (
               <Button
-                className={`trade-page__more${moreLoading ? ' trade-page__more--disabled' : ''}`}
+                className={`trade-page__more${moreLoading || state.loading ? ' trade-page__more--disabled' : ''}`}
                 hoverClass="none"
-                {...(moreLoading
+                {...(moreLoading || state.loading
                   ? ({
+                      disabled: true,
                       ariaDisabled: true,
                       'aria-disabled': true,
                     } as ButtonProps)
@@ -185,6 +291,7 @@ export default observer(function TradeListPage() {
             ) : null}
           </View>
         ) : null}
+        <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>
   );

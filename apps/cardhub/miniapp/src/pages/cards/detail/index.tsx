@@ -230,8 +230,10 @@ export default observer(function CardDetailPage() {
                   className="trade-links__item"
                   onClick={() => {
                     const url = `/pages/trade/publish/index?cardSlug=${encodeURIComponent(slug)}`;
-                    if (session.isAuthenticated) void Taro.navigateTo({ url });
-                    else void Taro.navigateTo({ url: '/pages/auth/login/index' });
+                    // Always open publish; the publish page jumps to login
+                    // once and returns here after sign-in so the user can
+                    // continue without clicking again.
+                    void Taro.navigateTo({ url });
                   }}
                 >
                   {tt('trade.detail.byCardPublish')}

@@ -16,8 +16,14 @@ const Taro = {
   setStorageSync: () => undefined,
   removeStorageSync: () => undefined,
   request: noop,
+  getEnv: () => 'WEB',
+  ENV_TYPE: { WEB: 'WEB', WEAPP: 'WEAPP' },
+  stopPullDownRefresh: noop,
 };
 export function useRouter() {
   return { params: {} as Record<string, string | undefined> };
 }
 export default Taro;
+
+export function useDidShow(_cb: () => void) {}
+export function usePullDownRefresh(_cb: () => void) {}
