@@ -44,7 +44,8 @@ type ListingCardSummary = {
  */
 function mapListing(
   row: ListingWithUser,
-  cardsBySlug: Map<string, ListingCardSummary> = new Map(),
+  cardsBySlug: Map<string, ListingCardSummary>,
+  revealContact: boolean,
 ) {
   return {
     id: row.id,
@@ -54,7 +55,7 @@ function mapListing(
     price: row.price === null ? null : row.price.toFixed(2),
     currency: row.currency,
     imageUrls: row.imageUrls,
-    contact: row.contact,
+    contact: revealContact ? row.contact : null,
     note: row.note,
     condition: row.condition,
     language: row.language,
@@ -70,8 +71,9 @@ function mapListing(
 /**
  * `listings.mine` row. Same shape as `mapListing`; the author's own RISKY
  * listing keeps only the status: checked text (contact, note, variant note)
- * and image URLs are withheld. `contact` is a required string in the
- * existing contract, so it becomes '' instead of being dropped. Returns
+ * and image URLs are withheld. Public `list` / `byCard` may return
+ * `contact: null` for anonymous callers; the author's own withheld row
+ * still uses '' so "我的意向" does not show a sign-in link. Returns
  * an empty array for a row the viewer may not see (fail-closed; the query
  * already filters on the author, so this is a second line of defence).
  */
@@ -90,7 +92,10 @@ function mapOwnListing(
   if (view.kind === 'hidden') return [];
   if (view.kind === 'visible') {
     return [
-      { ...mapListing(row, cardsBySlug), safetyStatus: authorSafetyStatus(view.safetyStatus) },
+      {
+        ...mapListing(row, cardsBySlug, true),
+        safetyStatus: authorSafetyStatus(view.safetyStatus),
+      },
     ];
   }
   // Field by field (no spread) so a new text field cannot leak by default.
@@ -221,7 +226,9 @@ export class ListingsRouter {
           sliced.map((row) => row.cardSlug),
         );
         return {
-          items: sliced.map((row: ListingWithUser) => mapListing(row, cardsBySlug)),
+          items: sliced.map((row: ListingWithUser) =>
+            mapListing(row, cardsBySlug, Boolean(ctx.user)),
+          ),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),
@@ -257,7 +264,9 @@ export class ListingsRouter {
             prisma,
             items.map((row) => row.cardSlug),
           );
-          return items.map((row: ListingWithUser) => mapListing(row, cardsBySlug));
+          return items.map((row: ListingWithUser) =>
+            mapListing(row, cardsBySlug, Boolean(ctx.user)),
+          );
         }),
 
       mine: t.authedProcedure.input(listingMineInput).query(async ({ ctx, input }) => {
@@ -335,7 +344,7 @@ export class ListingsRouter {
           scene: 4,
         });
         const cardsBySlug = await loadListingCards(prisma, [created.cardSlug]);
-        return mapListing(created, cardsBySlug);
+        return mapListing(created, cardsBySlug, true);
       }),
 
       close: t.authedProcedure

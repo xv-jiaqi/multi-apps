@@ -28,6 +28,7 @@ vi.mock('../lib/trpc', () => ({
   trpc: {
     useUtils: () => ({
       forum: { topics: { list: { invalidate: vi.fn() } } },
+      listings: { invalidate: vi.fn() },
     }),
     search: { global: { useQuery: idleQuery } },
     auth: {

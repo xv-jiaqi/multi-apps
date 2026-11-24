@@ -2,7 +2,7 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { rootStore } from '../stores/root-store';
 
 const INJECTED = 'QA-INJECTED-xyz';
@@ -31,7 +31,7 @@ const listing = {
   condition: null,
   language: null,
   variantNote: null,
-  contact: 'wechat',
+  contact: 'wechat' as string | null,
   seller: { id: 'seller-1', username: 'ada' },
 };
 
@@ -72,6 +72,7 @@ vi.mock('../lib/trpc', () => ({
   },
 }));
 
+import { CONTACT_SIGN_IN_LINK_CLASS } from './contact-sign-in-link';
 import { ListingsForCard } from './listings-for-card';
 
 function useListingQuery() {
@@ -198,5 +199,54 @@ describe('listings for a card', () => {
       expect(document.activeElement).toHaveTextContent('该卡暂无交易意向');
     });
     expect(document.activeElement?.tagName).toBe('P');
+  });
+});
+
+function FromProbe() {
+  const location = useLocation();
+  const from =
+    location.state && typeof location.state === 'object' && 'from' in location.state
+      ? String((location.state as { from?: unknown }).from ?? '')
+      : '';
+  return <output aria-label="from">{from}</output>;
+}
+
+describe('listings for a card contact visibility (CH-250)', () => {
+  it('shows a wrapping sign-in link when contact is null', async () => {
+    const user = userEvent.setup();
+    listingQuery.data = [{ ...listing, contact: null }];
+    listingQuery.dataUpdatedAt = 1;
+    render(
+      <MemoryRouter initialEntries={['/cards/aurora-knight']}>
+        <Routes>
+          <Route path="/cards/:slug" element={<ListingsForCard cardSlug="aurora-knight" />} />
+          <Route path="/login" element={<FromProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole('link', { name: '登录后查看联系方式' });
+    expect(link).toHaveClass(...CONTACT_SIGN_IN_LINK_CLASS.split(' '));
+    expect(link.closest('p')).toHaveClass('wrap-anywhere');
+    expect(link.closest('p')).not.toHaveClass('truncate');
+    expect(screen.queryByText('wechat')).not.toBeInTheDocument();
+    await user.click(link);
+    expect(screen.getByLabelText('from')).toHaveTextContent('/cards/aurora-knight');
+  });
+
+  it('keeps truncate when contact is present and omits the value when it is blank', () => {
+    listingQuery.data = [{ ...listing, contact: 'wechat' }];
+    listingQuery.dataUpdatedAt = 1;
+    const shown = renderListings();
+    expect(screen.getByText(/wechat/)).toBeInTheDocument();
+    expect(screen.getByText(/@ada/).closest('p')).toHaveClass('truncate');
+    shown.unmount();
+
+    listingQuery.data = [{ ...listing, contact: '   ' }];
+    listingQuery.dataUpdatedAt = 1;
+    renderListings();
+    expect(screen.getByText('@ada')).toBeInTheDocument();
+    expect(screen.queryByText('·')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '登录后查看联系方式' })).not.toBeInTheDocument();
   });
 });

@@ -39,6 +39,9 @@ function setPasswordPending(pending: boolean) {
 vi.mock('../lib/trpc', () => ({
   clearActiveQueryClient: () => clearActiveQueryClient(),
   trpc: {
+    useUtils: () => ({
+      listings: { invalidate: vi.fn() },
+    }),
     auth: {
       changePassword: {
         useMutation: (options: typeof passwordHandlers) => {

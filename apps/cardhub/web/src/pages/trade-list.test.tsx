@@ -2,9 +2,10 @@ import { APP_ERROR_CODES } from '@repo/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useSearchParams } from 'react-router';
 import type * as TrpcModule from '../lib/trpc';
 import { rootStore } from '../stores/root-store';
+import { CONTACT_SIGN_IN_LINK_CLASS } from '../components/contact-sign-in-link';
 import { TradeListPage } from './trade-list';
 
 if (!HTMLElement.prototype.scrollIntoView) {
@@ -599,5 +600,84 @@ describe('TradeListPage price filters', () => {
     renderTrade();
     expect(screen.getByText('极光骑士')).toBeInTheDocument();
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
+  });
+});
+
+function FromProbe() {
+  const location = useLocation();
+  const from =
+    location.state && typeof location.state === 'object' && 'from' in location.state
+      ? String((location.state as { from?: unknown }).from ?? '')
+      : '';
+  return <output aria-label="from">{from}</output>;
+}
+
+describe('TradeListPage contact and login return path (CH-250)', () => {
+  beforeEach(() => {
+    listHarness.inputs.length = 0;
+    listHarness.options.length = 0;
+    listHarness.items = [];
+    listHarness.isError = false;
+    listHarness.isLoading = false;
+    listHarness.isFetching = false;
+    listHarness.errorMessage = 'network down';
+    listHarness.errorCode = null;
+    listHarness.refetch.mockClear();
+    rootStore.session.signOut();
+    rootStore.locale.setLocale('zh-CN');
+  });
+
+  it('shows a sign-in link with the comment-section styles when contact is null', async () => {
+    const user = userEvent.setup();
+    listHarness.items = [{ ...listingWithPhoto([]), contact: null }];
+    render(
+      <MemoryRouter initialEntries={['/trade?kind=SELL&sort=price_asc']}>
+        <Routes>
+          <Route path="/trade" element={<TradeListPage />} />
+          <Route path="/login" element={<FromProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole('link', { name: '登录后查看联系方式' });
+    expect(link).toHaveClass(...CONTACT_SIGN_IN_LINK_CLASS.split(' '));
+    expect(link.closest('dd')).not.toHaveClass('font-mono', 'text-neutral-800');
+    expect(screen.queryByText('qa')).not.toBeInTheDocument();
+    await user.click(link);
+    expect(screen.getByLabelText('from')).toHaveTextContent('/trade?kind=SELL&sort=price_asc');
+  });
+
+  it('wraps the original contact in a mono span and shows a dash for a blank value', () => {
+    listHarness.items = [{ ...listingWithPhoto([]), contact: 'wechat: alice' }];
+    const shown = render(
+      <MemoryRouter initialEntries={['/trade']}>
+        <Routes>
+          <Route path="/trade" element={<TradeListPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const value = screen.getByText('wechat: alice');
+    expect(value.tagName).toBe('SPAN');
+    expect(value).toHaveClass('font-mono', 'text-neutral-800');
+    shown.unmount();
+
+    listHarness.items = [{ ...listingWithPhoto([]), contact: '   ' }];
+    renderTrade();
+    expect(screen.getByText('-')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '登录后查看联系方式' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the current filters on the login-to-publish return path', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/trade?kind=SELL&sort=price_asc']}>
+        <Routes>
+          <Route path="/trade" element={<TradeListPage />} />
+          <Route path="/login" element={<FromProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('link', { name: '登录后即可发布意向' }));
+    expect(screen.getByLabelText('from')).toHaveTextContent('/trade?kind=SELL&sort=price_asc');
   });
 });

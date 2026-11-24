@@ -6,6 +6,9 @@ import { rootStore } from '../stores/root-store';
 
 vi.mock('../lib/trpc', () => ({
   trpc: {
+    useUtils: () => ({
+      listings: { invalidate: vi.fn() },
+    }),
     auth: {
       register: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       login: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
