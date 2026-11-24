@@ -1,0 +1,255 @@
+import { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import Taro, { useDidShow, useRouter } from '@tarojs/taro';
+import { ScrollView, View, Text, Textarea, Button } from '@tarojs/components';
+import { BreadcrumbsMini, Empty, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import { APP_ERROR_CODES, fieldErrorMessage, replyCreateInput, t } from '@repo/shared';
+import { trpc } from '../../../lib/trpc';
+import { useStores } from '../../../stores/root-store';
+import { resolveBlockView } from '../../../lib/block-view';
+import { LocalNotFoundError, mutationErrorMessage } from '../../../lib/load-error';
+import { useBlock } from '../../../lib/use-block';
+import { goLoginIfUnauthorized, goToLogin } from '../../../lib/auth-redirect';
+import { formatDateTime } from '../../../lib/format-datetime';
+import { nextNoticeId, type Notice } from '../../../lib/notice';
+import { stripMarkdownKeepNewlines } from '../../../lib/plain-text';
+import { usePendingSubmit } from '../../../lib/use-pending-submit';
+import { ErrorBoxMini } from '../../../components/error-box-mini';
+import './index.scss';
+
+type TopicDetail = Awaited<ReturnType<typeof trpc.forum.topics.bySlug.query>>;
+type ReplyItem = TopicDetail['replies'][number];
+
+const PAGE_SIZE = 20;
+
+export default observer(function ForumDetailPage() {
+  const router = useRouter();
+  const slug = (router.params.slug ?? '').toString();
+  const { locale, session } = useStores();
+  const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
+
+  const { state, load } = useBlock<TopicDetail>(async () => {
+    if (!slug) throw new LocalNotFoundError('missing slug');
+    const topic = await trpc.forum.topics.bySlug.query({ slug, surface: 'miniapp' });
+    const navTitle =
+      topic.safetyStatus === 'blocked' || !topic.title ? tt('forum.list.title') : topic.title;
+    void Taro.setNavigationBarTitle({ title: navTitle });
+    return topic;
+  });
+
+  const [extraReplies, setExtraReplies] = useState<ReplyItem[]>([]);
+  const [moreCursor, setMoreCursor] = useState<string | null>(null);
+  const [moreLoading, setMoreLoading] = useState(false);
+  const [moreFailed, setMoreFailed] = useState<Notice<{ text: string }> | null>(null);
+
+  const [replyBody, setReplyBody] = useState('');
+  const [replyError, setReplyError] = useState<Notice<{ text: string }> | null>(null);
+  const submit = usePendingSubmit();
+
+  useEffect(() => {
+    setExtraReplies([]);
+    setMoreCursor(null);
+    setMoreFailed(null);
+    setReplyBody('');
+    setReplyError(null);
+    void load();
+  }, [slug, load]);
+
+  useDidShow(() => {
+    const topic = state.data;
+    if (!topic) return;
+    const navTitle =
+      topic.safetyStatus === 'blocked' || !topic.title ? tt('forum.list.title') : topic.title;
+    void Taro.setNavigationBarTitle({ title: navTitle });
+  });
+
+  const view = resolveBlockView({ state, isEmpty: () => false });
+  const topic = view.kind === 'success' ? view.data : null;
+  const blocked = topic?.safetyStatus === 'blocked';
+  const firstReplies = topic && !blocked ? topic.replies : [];
+  const replies = [...firstReplies, ...extraReplies];
+  const nextCursor =
+    extraReplies.length > 0 ? moreCursor : topic && !blocked ? topic.replyNextCursor : null;
+
+  const loadMore = async () => {
+    if (!topic || !nextCursor || moreLoading || blocked) return;
+    setMoreLoading(true);
+    setMoreFailed(null);
+    try {
+      const page = await trpc.forum.replies.list.query({
+        topicId: topic.id,
+        cursor: nextCursor,
+        limit: PAGE_SIZE,
+        surface: 'miniapp',
+      });
+      setExtraReplies((current) => [...current, ...page.items]);
+      setMoreCursor(page.nextCursor);
+    } catch {
+      setMoreFailed({ id: nextNoticeId(), text: tt('forum.detail.loadMoreFailed') });
+    } finally {
+      setMoreLoading(false);
+    }
+  };
+
+  const showReplyError = (text: string) => setReplyError({ id: nextNoticeId(), text });
+
+  const submitReply = async () => {
+    if (submit.pending || blocked || !topic) return;
+    setReplyError(null);
+    const parsed = replyCreateInput.safeParse({ topicId: topic.id, body: replyBody });
+    if (!parsed.success) {
+      showReplyError(fieldErrorMessage(locale.locale, parsed.error.issues[0]?.message));
+      return;
+    }
+    if (!session.isAuthenticated) {
+      goToLogin();
+      return;
+    }
+    if (!submit.begin()) return;
+    try {
+      await trpc.forum.replies.create.mutate(parsed.data);
+      setReplyBody('');
+      setExtraReplies([]);
+      setMoreCursor(null);
+      await load();
+    } catch (error) {
+      if (goLoginIfUnauthorized(error)) return;
+      showReplyError(
+        mutationErrorMessage({
+          locale: locale.locale,
+          error,
+          copy: { [APP_ERROR_CODES.CONTENT_BLOCKED]: tt('content.blocked') },
+        }),
+      );
+    } finally {
+      submit.end();
+    }
+  };
+
+  const crumbTitle = blocked || !topic?.title ? tt('forum.list.title') : topic.title;
+
+  return (
+    <ScrollView scrollY className="forum-page">
+      <View className="forum-page__body">
+        <BreadcrumbsMini
+          items={[
+            { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
+            { label: tt('forum.list.title'), to: '/pages/forum/list/index', mode: 'switchTab' },
+            { label: crumbTitle },
+          ]}
+        />
+
+        {view.kind === 'loading' ? <Skeleton /> : null}
+
+        {view.kind === 'failed' ? (
+          <ErrorBoxMini
+            key={view.noticeId}
+            title={tt('forum.list.loadFailed')}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+            retrying={view.retrying}
+            onRetry={() => void load()}
+          />
+        ) : null}
+
+        {view.kind === 'notFound' ? <Empty title={tt('state.notFound')} /> : null}
+
+        {topic && blocked ? (
+          <View className="forum-blocked" ariaRole="alert">
+            <Text className="forum-blocked__text">{tt('content.blocked')}</Text>
+          </View>
+        ) : null}
+
+        {topic && !blocked ? (
+          <View>
+            <Text className="forum-topic-title">{topic.title}</Text>
+            {topic.safetyStatus === 'review' ? (
+              <Text className="forum-review-tag">{tt('content.pendingReview')}</Text>
+            ) : null}
+            <Text className="forum-topic-meta">
+              {topic.author.username} · {formatDateTime(topic.createdAt, locale.locale)}
+            </Text>
+            <Text className="forum-body">{stripMarkdownKeepNewlines(topic.body)}</Text>
+
+            <Text className="forum-section-title">
+              {tt('forum.detail.repliesTitle', { count: topic.replyCount })}
+            </Text>
+
+            {replies.length === 0 ? <Empty title={tt('forum.detail.noReplies')} /> : null}
+
+            {replies.map((reply) => (
+              <View key={reply.id} className="forum-reply">
+                <Text className="forum-reply__meta">
+                  {reply.author.username} · {formatDateTime(reply.createdAt, locale.locale)}
+                  {reply.safetyStatus === 'review' ? (
+                    <Text className="forum-review-tag">{tt('content.pendingReview')}</Text>
+                  ) : null}
+                </Text>
+                <Text className="forum-body">{stripMarkdownKeepNewlines(reply.body)}</Text>
+              </View>
+            ))}
+
+            {nextCursor ? (
+              <Button
+                className="forum-page__more"
+                hoverClass="none"
+                disabled={moreLoading ? true : undefined}
+                onClick={moreLoading ? undefined : () => void loadMore()}
+              >
+                {moreLoading ? tt('state.loading') : tt('forum.detail.loadMoreReplies')}
+              </Button>
+            ) : replies.length > 0 ? (
+              <Text className="forum-card__meta">{tt('forum.detail.allRepliesShown')}</Text>
+            ) : null}
+
+            {moreFailed ? (
+              <ErrorBoxMini
+                key={moreFailed.id}
+                title={moreFailed.text}
+                retryLabel={tt('state.retry')}
+                retryingLabel={tt('state.retrying')}
+                retrying={moreLoading}
+                onRetry={() => void loadMore()}
+              />
+            ) : null}
+
+            {session.isAuthenticated ? (
+              <View className="forum-page__header">
+                <Text className="forum-section-title">{tt('forum.detail.replyLabel')}</Text>
+                <Textarea
+                  className="forum-form__input"
+                  value={replyBody}
+                  placeholder={tt('forum.detail.replyPlaceholder')}
+                  maxlength={5000}
+                  disabled={submit.pending ? true : undefined}
+                  onInput={(event) => setReplyBody(event.detail.value)}
+                />
+                {replyError ? (
+                  <View key={replyError.id} className="forum-form__error" ariaRole="alert">
+                    <Text className="forum-form__error-text">{replyError.text}</Text>
+                  </View>
+                ) : null}
+                <View className="forum-form__footer">
+                  <Text className="forum-form__count">{replyBody.length} / 5000</Text>
+                  <PrimaryButton
+                    label={
+                      submit.pending
+                        ? tt('forum.detail.replySubmitting')
+                        : tt('forum.detail.replySubmit')
+                    }
+                    disabled={submit.pending}
+                    onClick={() => void submitReply()}
+                  />
+                </View>
+              </View>
+            ) : (
+              <View className="forum-login" onClick={goToLogin}>
+                <Text>{tt('forum.detail.loginToReply')}</Text>
+              </View>
+            )}
+          </View>
+        ) : null}
+      </View>
+    </ScrollView>
+  );
+});

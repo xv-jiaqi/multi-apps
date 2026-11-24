@@ -121,11 +121,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: $spacing-sm;
   margin-top: $spacing-sm;
 }
 
 .comment-form__count {
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .comment-login {
