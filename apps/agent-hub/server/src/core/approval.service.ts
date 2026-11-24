@@ -55,7 +55,9 @@ export class ApprovalService {
       detail:
         input.detail === undefined ? undefined : JSON.parse(redact(JSON.stringify(input.detail))),
     };
-    this.events.flush(taskId);
+    // 审批卡片出现前，把消息与推理扣住的尾巴放出来（审查 6041423500 第 3 条）：Agent 在等人，
+    // 这些文字在审批结束前不会再有下文，人要看到完整的说明才好做决定。工具输出照旧扣着。
+    this.events.flush(taskId, 'text');
     const env = this.db.tx(() => {
       this.repo.insertApproval({
         id,

@@ -10,10 +10,11 @@ import {
   DELTA_FLUSH_BYTES,
   DELTA_FLUSH_MS,
   EventStore,
+  MAX_TASK_HOLD_CHARS,
   TOOL_OUTPUT_CAP_BYTES,
 } from './event-store';
 import { redact } from '../common/redact';
-import { HOLDBACK_CHARS } from './secret-holdback';
+import { HOLDBACK_CHARS, MAX_HOLD_CHARS } from './secret-holdback';
 
 function insertTask(db: Db, id: string): void {
   const now = new Date().toISOString();
@@ -248,7 +249,95 @@ describe('EventStore', () => {
           .slice(0, -1)
           .map((e) => e.text)
           .join(''),
-      ).toBe('x'.repeat(TOOL_OUTPUT_CAP_BYTES - 10) + ' last');
+      ).toBe('x'.repeat(TOOL_OUTPUT_CAP_BYTES - 10) + ' last' + 'y'.repeat(5)); // 截到正好 1 MB（PR3）
+    });
+  });
+
+  describe('PR3（审查 6041423500 第 3、4 条，PR3 待办 4）', () => {
+    const out = (text: string, itemId = 'cmd') => ({
+      type: 'tool.output.delta' as const,
+      itemId,
+      text,
+    });
+    const toolText = (itemId = 'cmd') =>
+      published
+        .map((e) => e.event as { type: string; itemId?: string; text?: string })
+        .filter((e) => e.type === 'tool.output.delta' && e.itemId === itemId)
+        .map((e) => e.text)
+        .join('');
+
+    it('越过 1 MB 的那一块截到正好剩余的额度，再记 truncated', () => {
+      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 10)));
+      store.append(T, null, out('abcdefghij' + 'klmno'));
+      store.flush(T, 'all');
+      expect(Buffer.byteLength(toolText(), 'utf8')).toBe(TOOL_OUTPUT_CAP_BYTES);
+      expect(toolText().endsWith('abcdefghij')).toBe(true);
+      expect(published.at(-1)!.event).toMatchObject({ truncated: true });
+    });
+
+    it('截断不切开 UTF-8 字符与代理对', () => {
+      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 5), 'a'));
+      store.append(T, null, out('中中中', 'a')); // 每个 3 字节，只放得下 1 个
+      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 6), 'b'));
+      store.append(T, null, out('😀😀', 'b')); // 每个 4 字节（2 个 UTF-16 单元），只放得下 1 个
+      store.flush(T, 'all');
+      expect(toolText('a').endsWith('y中')).toBe(true);
+      expect(Buffer.byteLength(toolText('a'), 'utf8')).toBe(TOOL_OUTPUT_CAP_BYTES - 2);
+      expect(toolText('b').endsWith('y😀')).toBe(true);
+      expect(toolText('b')).not.toMatch(/[\uD800-\uDBFF]$/);
+    });
+
+    it('截断点落在密钥中间时退到密钥前，不留下半个密钥', () => {
+      const key = 'sk-' + 'A1b2C3d4E5'.repeat(4);
+      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 20) + ' '));
+      store.append(T, null, out(`${key} tail`));
+      store.flush(T, 'all');
+      expect(toolText().endsWith(' ')).toBe(true);
+      expect(toolText()).not.toContain('sk-');
+      expect(published.at(-1)!.event).toMatchObject({ truncated: true });
+    });
+
+    it("flush(taskId, 'text') 放出消息与推理扣住的尾巴，工具输出照旧扣着", () => {
+      const tail = '请确认是否执行：rm -rf build';
+      store.append(T, null, { type: 'message.delta', itemId: 'm1', text: tail });
+      store.append(T, null, { type: 'reasoning.delta', itemId: 'r1', text: 'thinking about it' });
+      store.append(T, null, out('partial-output-without-newline'));
+      store.flush(T);
+      store.flush(T, 'text');
+      const texts = published.map((e) => e.event as { type: string; text?: string });
+      expect(
+        texts
+          .filter((e) => e.type === 'message.delta')
+          .map((e) => e.text)
+          .join(''),
+      ).toBe(tail);
+      expect(
+        texts
+          .filter((e) => e.type === 'reasoning.delta')
+          .map((e) => e.text)
+          .join(''),
+      ).toBe('thinking about it');
+      expect(toolText()).toBe('');
+      store.flush(T, 'all');
+      expect(toolText()).toBe('partial-output-without-newline');
+    });
+
+    it('一个任务扣住的合计超过上限时，从最久没更新的那一路开始整段放出', () => {
+      const per = MAX_HOLD_CHARS - 1024; // 无空白，单路整段扣住
+      const n = Math.floor((1024 * 1024) / per) + 3;
+      for (let i = 0; i < n; i++) {
+        store.append(T, null, out(String.fromCharCode(97 + (i % 26)).repeat(per), `cmd${i}`));
+        store.flush(T);
+      }
+      const released = published
+        .map((e) => e.event as { itemId: string; text: string })
+        .filter((e) => e.text);
+      // 合计上限之内：最旧的几路整段放出，按先后顺序。
+      expect(released.map((e) => e.itemId)).toEqual(['cmd0', 'cmd1', 'cmd2']);
+      expect(released.every((e) => e.text.length === per)).toBe(true);
+      store.flush(T, 'all');
+      expect(published.filter((e) => (e.event as { text: string }).text)).toHaveLength(n);
+      expect(MAX_TASK_HOLD_CHARS).toBe(1024 * 1024);
     });
   });
 });

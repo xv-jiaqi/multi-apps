@@ -73,6 +73,21 @@ function outOfMatches(text: string, cut: number): number {
 }
 
 /**
+ * 规则 2 和 5 交替做到不再移动：认证头前缀之后不切；切点不落在任何脱敏匹配里。
+ * text 要包含切点之后的文字（匹配是在整段上找的）；返回值 ≤ cut。
+ * EventStore 截断工具输出（1 MB 上限）时也用它定截断点。
+ */
+export function guardCut(text: string, cut: number): number {
+  for (let prev = -1; prev !== cut && cut > 0; ) {
+    prev = cut;
+    const header = headerPrefixStart(text.slice(0, cut));
+    if (header >= 0) cut = header;
+    cut = outOfMatches(text, cut);
+  }
+  return Math.max(cut, 0);
+}
+
+/**
  * 把 text 分成现在可以下发的 emit 和需要扣住的 hold（emit + hold === text）。
  * final=true（这一路输出结束）时全部下发。
  */
@@ -100,13 +115,7 @@ export function splitForRedaction(text: string, final = false): { emit: string; 
     else if (text.length <= MAX_HOLD_CHARS) cut = 0;
   }
 
-  // 2 和 5 交替做到不再移动：认证头前缀之后不切；切点不落在任何脱敏匹配里。
-  for (let prev = -1; prev !== cut && cut > 0; ) {
-    prev = cut;
-    const header = headerPrefixStart(text.slice(0, cut));
-    if (header >= 0) cut = header;
-    cut = outOfMatches(text, cut);
-  }
+  cut = guardCut(text, cut);
 
   // 强行切时别切开代理对。
   if (cut > 0 && /[\uD800-\uDBFF]/.test(text[cut - 1]!)) cut--;

@@ -9,19 +9,29 @@ import { HUB_DB } from '../common/tokens';
 import { EventsRepo } from '../db/repositories/events.repo';
 import type { Db } from '../db/sqlite';
 import { EventBus } from './event-bus';
-import { splitForRedaction } from './secret-holdback';
+import { guardCut, splitForRedaction } from './secret-holdback';
 
 export const DELTA_FLUSH_MS = 200;
 export const DELTA_FLUSH_BYTES = 16 * 1024;
 export const TOOL_OUTPUT_CAP_BYTES = 1024 * 1024;
+/**
+ * 一个任务所有输出流扣住的尾巴合计最多这么多字符（审查 6041423500 第 4 条）。单路最多扣 64 KiB
+ * （MAX_HOLD_CHARS），路数却没有上限；超过时从最久没更新的那一路开始整段放出。
+ */
+export const MAX_TASK_HOLD_CHARS = 1024 * 1024;
 
 interface Pending {
   turnId: string | null;
   event: DeltaEvent;
 }
 
-/** 结束哪些输出流：'all' = 本任务全部；字符串 = 这个 itemId 的各路输出。 */
-export type StreamEnd = 'all' | string;
+/**
+ * 结束哪些输出流：'all' = 本任务全部；'text' = 本任务的消息与推理（不含工具输出）；
+ * 其他字符串 = 这个 itemId 的各路输出。
+ */
+export type StreamEnd = 'all' | 'text' | string;
+
+const TEXT_DELTAS = new Set(['message.delta', 'reasoning.delta']);
 
 /** 这些事件表示对应 itemId 的输出已写完，扣住的尾巴可以放出来。 */
 const ITEM_END_EVENTS = new Set(['message.completed', 'reasoning.completed', 'tool.completed']);
@@ -113,7 +123,8 @@ export class EventStore {
       held = new Map();
       this.holds.set(taskId, held);
     }
-    const ends = (ev: DeltaEvent) => end === 'all' || end === ev.itemId;
+    const ends = (ev: DeltaEvent) =>
+      end === 'all' || end === ev.itemId || (end === 'text' && TEXT_DELTAS.has(ev.type));
     const out: Pending[] = [];
     const emit = (p: Pending) => {
       if (p.event.text !== '' || ('truncated' in p.event && p.event.truncated)) out.push(p);
@@ -141,6 +152,15 @@ export class EventStore {
       held.delete(key);
       emit(p);
     }
+    // 合计上限：Map 按最近一次扣住的先后排序，最前面的是最久没更新的。
+    let total = 0;
+    for (const p of held.values()) total += p.event.text.length;
+    for (const [key, p] of held) {
+      if (total <= MAX_TASK_HOLD_CHARS) break;
+      held.delete(key);
+      total -= p.event.text.length;
+      emit(p);
+    }
     if (held.size === 0) this.holds.delete(taskId);
     return out;
   }
@@ -152,12 +172,15 @@ export class EventStore {
   }
 
   private bufferDelta(taskId: string, turnId: string | null, event: DeltaEvent): void {
-    let ev = event;
-    if (ev.type === 'tool.output.delta') {
-      const capped = this.capToolOutput(taskId, ev);
-      if (!capped) return;
-      ev = capped;
+    if (event.type === 'tool.output.delta') {
+      for (const ev of this.capToolOutput(taskId, turnId, event))
+        this.pushDelta(taskId, turnId, ev);
+      return;
     }
+    this.pushDelta(taskId, turnId, event);
+  }
+
+  private pushDelta(taskId: string, turnId: string | null, ev: DeltaEvent): void {
     let buf = this.buffers.get(taskId);
     if (!buf) {
       buf = { items: [], bytes: 0, timer: null };
@@ -183,23 +206,63 @@ export class EventStore {
     buf.timer ??= setTimeout(() => this.flush(taskId), DELTA_FLUSH_MS);
   }
 
+  /**
+   * 每个工具 item 的输出最多落库 TOOL_OUTPUT_CAP_BYTES（UTF-8 字节）。越界的那一块截到正好剩余的额度
+   * （不切开 UTF-8 字符和代理对；截断点落在密钥中间时退到密钥前，guardCut），再跟一条 truncated 标记，
+   * 之后的输出丢弃。
+   */
   private capToolOutput(
     taskId: string,
+    turnId: string | null,
     ev: Extract<DeltaEvent, { type: 'tool.output.delta' }>,
-  ): DeltaEvent | null {
+  ): DeltaEvent[] {
     let perTask = this.toolBytes.get(taskId);
     if (!perTask) {
       perTask = new Map();
       this.toolBytes.set(taskId, perTask);
     }
     const used = perTask.get(ev.itemId) ?? 0;
-    if (used < 0) return null;
+    if (used < 0) return [];
     const size = Buffer.byteLength(ev.text, 'utf8');
-    if (used + size > TOOL_OUTPUT_CAP_BYTES) {
-      perTask.set(ev.itemId, -1);
-      return { type: 'tool.output.delta', itemId: ev.itemId, text: '', truncated: true };
+    if (used + size <= TOOL_OUTPUT_CAP_BYTES) {
+      perTask.set(ev.itemId, used + size);
+      return [ev];
     }
-    perTask.set(ev.itemId, used + size);
-    return ev;
+    perTask.set(ev.itemId, -1);
+    const marker: DeltaEvent = {
+      type: 'tool.output.delta',
+      itemId: ev.itemId,
+      text: '',
+      truncated: true,
+    };
+    const keep = prefixWithinBytes(ev.text, TOOL_OUTPUT_CAP_BYTES - used);
+    // 匹配要连同还没落库的同一路文字（扣住的尾巴 + 缓冲里的增量）一起找，密钥可能从前面开始。
+    const before = this.pendingText(taskId, turnId, ev.itemId);
+    const cut = guardCut(before + ev.text, before.length + keep) - before.length;
+    if (cut <= 0) return [marker];
+    return [{ ...ev, text: ev.text.slice(0, cut) }, marker];
   }
+
+  /** 这一路工具输出还没落库的文字：扣住的尾巴 + 缓冲里的增量。 */
+  private pendingText(taskId: string, turnId: string | null, itemId: string): string {
+    const held = this.holds.get(taskId)?.get(`tool.output.delta\u0000${itemId}`);
+    let text = held && held.turnId === turnId ? held.event.text : '';
+    for (const p of this.buffers.get(taskId)?.items ?? []) {
+      if (p.event.type === 'tool.output.delta' && p.event.itemId === itemId) text += p.event.text;
+    }
+    return text;
+  }
+}
+
+/** text 的最长前缀，UTF-8 不超过 maxBytes 字节；按码点切，不会切开代理对。 */
+function prefixWithinBytes(text: string, maxBytes: number): number {
+  let bytes = 0;
+  let i = 0;
+  for (const ch of text) {
+    const b = Buffer.byteLength(ch, 'utf8');
+    if (bytes + b > maxBytes) break;
+    bytes += b;
+    i += ch.length;
+  }
+  return i;
 }

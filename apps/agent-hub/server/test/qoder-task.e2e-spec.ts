@@ -12,6 +12,7 @@ import type {
   TaskWithTurnResponse,
   WaitResponse,
 } from '@agent-hub/contract';
+import { EventStore } from '../src/core/event-store';
 import { api, startHub, waitAgentReady, type TestHub } from './helpers/hub';
 import { QODER_INIT, QODER_OPTIONS, msg, qoderConfig } from './helpers/qoder-scenario';
 
@@ -336,6 +337,13 @@ describe('Qoder（ACP）', () => {
       `/approvals?taskId=${taskId}`,
     );
     expect(approvals.body.items.filter((a) => a.status === 'pending')).toHaveLength(0);
+    // PR3 待办 1：任务进入终态后 EventStore 不再留着它的计数与扣留。
+    const store = hub.app.get(EventStore) as unknown as {
+      toolBytes: Map<string, unknown>;
+      holds: Map<string, unknown>;
+    };
+    expect(store.toolBytes.has(taskId)).toBe(false);
+    expect(store.holds.has(taskId)).toBe(false);
   });
 
   it('进程退出后追问：新进程 session/resume 恢复同一会话；只读任务写文件 → READ_ONLY_VIOLATION', async () => {
