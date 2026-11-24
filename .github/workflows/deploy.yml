@@ -67,7 +67,7 @@ jobs:
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
       DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           # Full history so the ancestor check in resolve-deploy-inputs.sh
@@ -198,7 +198,7 @@ jobs:
       DEPLOY_IMAGE_TAG: ${{ needs.edge.outputs.image_tag }}
       DEPLOY_EXPECTED_SHA: ${{ needs.edge.outputs.expected_sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           # Same full history as the edge job: this job also refuses when

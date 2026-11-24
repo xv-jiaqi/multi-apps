@@ -52,7 +52,7 @@ jobs:
       CORS_ORIGIN: http://localhost:5173
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Validate Cardhub deploy compose
         run: |
@@ -173,7 +173,7 @@ jobs:
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -206,7 +206,7 @@ jobs:
     name: Deploy script tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Caddy 2.11.7
         run: |
@@ -251,7 +251,7 @@ jobs:
     # Run in parallel with verify; failure here is informational but should
     # block merges on truly high-severity advisories.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -306,7 +306,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set build time
         id: build-time
@@ -417,7 +417,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set build time
         id: build-time
