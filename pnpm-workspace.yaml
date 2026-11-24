@@ -27,6 +27,9 @@ overrides:
   # The previous override ^2.3.0 still resolved to 2.4.0, inside >=2.0.0 <2.5.0.
   multer: '^2.5.0'
   proxy-addr: '^2.0.8'
+  # GHSA-7589-6fvf-x4pw: ReDoS in effect Schema.TemplateLiteral compiled regex.
+  # prisma 6.19.3 → @prisma/config still depends on effect 3.21.0; patched is >=3.22.1.
+  effect: '^3.22.1'
 
 # All ignored advisories live in transitive deps of @cardhub/miniapp's
 # Taro 4.2 build toolchain (swiper/lodash-es/fast-uri inside @tarojs/*
