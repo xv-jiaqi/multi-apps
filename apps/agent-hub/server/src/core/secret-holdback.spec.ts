@@ -188,6 +188,20 @@ describe('secret-holdback', () => {
       const t = `${rep('x ', 40)}Authorization:${rep(' ', 300)}Bearer ${body}\nnext\n`;
       for (let p = 0; p <= t.length; p++) noLeak([t.slice(0, p), t.slice(p)], body);
     });
+
+    // scheme 紧贴冒号（authorization:bearer）时，原来的 SCHEME 要求前面是空白，认不出前缀；
+    // 后面再跟 ≥64 个空白、token 下一块才到，就会把前缀放出去（#319 审查 6044795708 非阻塞 ①）。
+    it.each([
+      ['authorization:bearer', 'authorization:bearer'],
+      ['Authorization=Basic', 'Authorization=Basic'],
+      ['x-access-token:token', 'x-access-token:token'],
+    ])('%s 后跟 100 个空白、token 下一块才到：不漏', (_n, head) => {
+      const body = rep('Tk7', 10);
+      const t = `${rep('x ', 40)}${head}${rep(' ', 100)}${body}\nnext\n`;
+      const cut = t.indexOf(body);
+      noLeak([t.slice(0, cut), t.slice(cut)], body);
+      for (let p = 0; p <= t.length; p++) noLeak([t.slice(0, p), t.slice(p)], body);
+    });
   });
 
   describe('线性时间（#315 之后自查）', () => {

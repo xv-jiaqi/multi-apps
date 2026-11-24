@@ -40,7 +40,8 @@ const PEM_END = /-----END [A-Z0-9 ]*-----/;
 const PEM_END_AT = /-----END [A-Z0-9 ]*-----/y;
 const WS = /\s/;
 const HEADER_NAME = /(?:authorization|x-access-token)$/i;
-const SCHEME = /(?:^|\s)(?:bearer|basic|token)$/i;
+// scheme 前面可以是空白，也可以紧贴冒号 / 等号（authorization:bearer），见审查 6044795708 非阻塞 ①。
+const SCHEME = /(?:^|[\s:=])(bearer|basic|token)$/i;
 
 /**
  * 每条令牌规则的“还没写完”版本：字面前缀 + 末尾一段属于该规则字符集的字符（不限长度、不要求词边界）。
@@ -134,7 +135,7 @@ function headerPrefixStart(emit: string): number {
   const direct = name(e);
   if (direct >= 0) return direct;
   const scheme = SCHEME.exec(e.slice(-7));
-  if (scheme) e = e.slice(0, e.length - scheme[0].trimStart().length).trimEnd();
+  if (scheme) e = e.slice(0, e.length - (scheme[1] ?? '').length).trimEnd();
   if (!/[:=]$/.test(e)) return -1;
   return name(e.slice(0, -1).trimEnd());
 }

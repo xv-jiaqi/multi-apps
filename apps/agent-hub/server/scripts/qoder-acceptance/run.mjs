@@ -35,7 +35,7 @@ const OUT =
   process.argv[2] ?? join(SRV, `qoder-acceptance-${new Date().toISOString().slice(0, 10)}.txt`);
 const red = (s) =>
   String(s)
-    .replace(/\b(ahu|ahb|aht)_[A-Za-z0-9_-]{20,}/g, '$1_<redacted>')
+    .replace(/(ahu|ahb|aht)_[A-Za-z0-9_-]{20,}/g, '$1_<redacted>')
     .replace(/"uiToken":"[^"]*"/g, '"uiToken":"<redacted>"');
 writeFileSync(OUT, '');
 const log = (...a) => {
@@ -373,7 +373,7 @@ try {
 
   // A10 桥接方看到的输出里没有 Hub token
   const all = (await api('GET', `/tasks/${taskId}/events?limit=1000`)).text;
-  step('A10 桥接响应里没有 Hub token', /\bah[ub]_[A-Za-z0-9_-]{43}/.test(all) ? 'FAIL' : 'PASS');
+  step('A10 桥接响应里没有 Hub token', /ah[ub]_[A-Za-z0-9_-]{43}/.test(all) ? 'FAIL' : 'PASS');
 } catch (e) {
   if (e.message !== 'stop') step('脚本异常', 'FAIL', e.stack ?? String(e));
 } finally {

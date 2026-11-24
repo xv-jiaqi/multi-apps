@@ -9,13 +9,17 @@ import { api, startHub, type TestHub } from './helpers/hub';
 describe('测试侧车端口', () => {
   const hubs: TestHub[] = [];
   afterAll(async () => {
-    for (const h of hubs) await h.close();
+    await Promise.allSettled(hubs.map((h) => h.close()));
   });
 
   it('并行起 6 台：端口由系统分配、互不相同，/health 正常；close 可重复调用', async () => {
-    hubs.push(
-      ...(await Promise.all(Array.from({ length: 6 }, () => startHub('codex-readonly-demo')))),
+    // allSettled：有一台起不来时，已经起来的也都进 hubs，由 afterAll 关掉（#319 审查非阻塞 ②）。
+    const settled = await Promise.allSettled(
+      Array.from({ length: 6 }, () => startHub('codex-readonly-demo')),
     );
+    for (const r of settled) if (r.status === 'fulfilled') hubs.push(r.value);
+    const failed = settled.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+    if (failed) throw failed.reason;
     const ports = hubs.map((h) => h.port);
     expect(new Set(ports).size).toBe(ports.length);
     for (const h of hubs) {
