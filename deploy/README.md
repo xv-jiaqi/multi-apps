@@ -878,8 +878,9 @@ if set and it fails, it triggers the same rollback path and exits non-zero.
 The web container receives runtime `TRPC_URL` and optional browser Sentry
 settings (`WEB_SENTRY_DSN`, `SENTRY_ENVIRONMENT`, and the image `GIT_SHA`) via
 the nginx entrypoint. The generated `/config.js` is uncached and validated at
-container startup; a missing or malformed `TRPC_URL` makes the web container
-exit instead of silently falling back to another API URL. The production web
+container startup; a missing required field or malformed value makes the web
+container exit and names the field (for example `TRPC_URL`) instead of
+silently falling back to another API URL. The production web
 image still does not ship source maps, and nginx answers `/assets/*.map`
 with 404. CI uploads maps to Sentry when `SENTRY_AUTH_TOKEN` is set, and
 skips without failing when it is not. See "Sentry source maps" below.

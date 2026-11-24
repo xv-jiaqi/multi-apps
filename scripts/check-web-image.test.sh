@@ -59,6 +59,18 @@ class Handler(BaseHTTPRequestHandler):
                 headers["Cache-Control"] = "public, max-age=3600"
             self._send(200, "text/html", body, headers)
             return
+        if path == "/config.js":
+            if mode == "no-config":
+                self._send(404, "text/plain", b"missing")
+                return
+            body = b'window.__CARDHUB_CONFIG__ = {\n  TRPC_URL: "http://127.0.0.1:4000/trpc"\n};\n'
+            headers = {"Cache-Control": "no-store"}
+            if mode == "config-cached":
+                headers["Cache-Control"] = "no-cache"
+            elif mode == "config-link":
+                headers["Link"] = INDEX_LINK
+            self._send(200, "application/javascript", body, headers)
+            return
         if path == "/assets/index-Ab12cd.js.map":
             if mode == "map-200":
                 self._send(200, "application/json", b"{}")
@@ -158,6 +170,8 @@ for needle in \
   "GET / Cache-Control: no-cache" \
   "GET /assets/index-Ab12cd.js Cache-Control: public, max-age=31536000, immutable" \
   "GET /assets/index-Ab12cd.js has no Link header" \
+  "GET /config.js Cache-Control: no-store" \
+  "GET /config.js has no Link header" \
   "GET /assets/index-Ab12cd.js.map returned 404"
 do
   if ! grep -qF "$needle" "${work}/out"; then
@@ -167,7 +181,7 @@ do
   fi
 done
 stop_server
-echo "OK web image serves / and /assets/ with headers"
+echo "OK web image serves /, /assets/, and /config.js with headers"
 
 expect_fail no-asset "no hashed /assets/ URL"
 expect_fail asset-404 "GET /assets/index-Ab12cd.js failed"
@@ -180,6 +194,9 @@ expect_fail link-csp-mismatch "is not in Content-Security-Policy connect-src"
 expect_fail index-cached "GET / Cache-Control is public, max-age=3600, expected no-cache"
 expect_fail asset-mutable "GET /assets/index-Ab12cd.js Cache-Control is public, max-age=3600, expected immutable"
 expect_fail asset-link "must not have a Link header"
+expect_fail no-config "GET /config.js failed"
+expect_fail config-cached "GET /config.js Cache-Control is no-cache, expected no-store"
+expect_fail config-link "GET /config.js must not have a Link header"
 expect_fail map-200 "GET /assets/index-Ab12cd.js.map returned 200, expected 404"
 
 set +e

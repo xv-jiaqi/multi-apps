@@ -72,13 +72,7 @@ export default defineConfig({
   // sources above so the web build can tree-shake the barrel. Other
   // packages are still pre-bundled from CJS to expose named ES exports.
   optimizeDeps: {
-    include: [
-      '@repo/shared',
-      '@repo/stores',
-      '@repo/trpc-contract',
-      '@repo/design-tokens',
-      '@repo/ui-web',
-    ],
+    include: ['@repo/stores', '@repo/trpc-contract', '@repo/design-tokens', '@repo/ui-web'],
   },
   test: {
     environment: 'jsdom',

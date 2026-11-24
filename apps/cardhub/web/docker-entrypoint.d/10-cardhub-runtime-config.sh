@@ -47,6 +47,23 @@ write_config_pair() {
   printf '  %s: "%s"' "$key" "$(escape_js_string "$value")" >> "$CONFIG_FILE"
 }
 
+
+validate_written_config() {
+  if [ ! -f "$CONFIG_FILE" ]; then
+    echo "ERROR: config.js is missing required field TRPC_URL." >&2
+    exit 1
+  fi
+  if ! grep -Eq '^[[:space:]]*TRPC_URL: "' "$CONFIG_FILE"; then
+    echo "ERROR: config.js is missing required field TRPC_URL." >&2
+    exit 1
+  fi
+  written_trpc=$(sed -n 's/^[[:space:]]*TRPC_URL: "\(.*\)".*/\1/p' "$CONFIG_FILE")
+  if ! printf '%s' "$written_trpc" | grep -Eq '^https?://[^[:space:]"\\;'"'"']+/trpc$'; then
+    echo "ERROR: config.js field TRPC_URL has an invalid format." >&2
+    exit 1
+  fi
+}
+
 reject_control_chars "TRPC_URL" "$TRPC_URL_VALUE"
 
 if ! printf '%s' "$TRPC_URL_VALUE" | grep -Eq '^https?://[^[:space:]"\\;'"'"']+/trpc$'; then
@@ -109,6 +126,8 @@ if [ -n "$GIT_SHA_VALUE" ] && [ "$GIT_SHA_VALUE" != unknown ]; then
 fi
 
 printf '\n};\n' >> "$CONFIG_FILE"
+
+validate_written_config
 
 if [ -n "$PUBLIC_WEB_ORIGIN_VALUE" ]; then
   printf '%s\n' \
