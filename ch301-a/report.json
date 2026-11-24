@@ -45,15 +45,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "浏览系列",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "搜索卡牌",
         "fontPx": 15,
@@ -69,15 +60,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "搜索卡牌",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -93,6 +75,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -175,15 +158,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "浏览系列",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "搜索卡牌",
         "fontPx": 15,
@@ -199,15 +173,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "搜索卡牌",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -228,6 +193,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -319,15 +285,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "浏览系列",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "搜索卡牌",
         "fontPx": 15,
@@ -343,15 +300,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "搜索卡牌",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -372,6 +320,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -470,15 +419,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "浏览系列",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "搜索卡牌",
         "fontPx": 15,
@@ -494,15 +434,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "搜索卡牌",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -518,6 +449,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -635,15 +567,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "浏览系列",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "搜索卡牌",
         "fontPx": 15,
@@ -659,15 +582,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "搜索卡牌",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -688,6 +602,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -732,6 +647,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -793,6 +709,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -837,6 +754,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -899,6 +817,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -925,6 +844,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -973,6 +893,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -1000,6 +921,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -1056,6 +978,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -1119,6 +1042,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -1146,6 +1070,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -1194,6 +1119,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -1221,6 +1147,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -1302,6 +1229,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -1402,6 +1330,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -1509,6 +1438,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -1550,6 +1480,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
     "bodyText": "首页\n/ 搜索\n搜索\n搜索卡牌或系列…",
     "axe": {
@@ -1588,6 +1519,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"aurora\",\"limit\":30}"
     ],
@@ -1647,6 +1579,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"aurora\",\"limit\":30}"
     ],
@@ -1693,6 +1626,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"zzz\",\"limit\":30}"
     ],
@@ -1747,6 +1681,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"aurora\",\"limit\":30}"
     ],
@@ -1799,6 +1734,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
     "bodyText": "我的\n登录\n注册\n\n首页\n\n我的",
     "axe": {
@@ -1854,6 +1790,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
     "bodyText": "我的\n你已登录为 @alice_long_username_for_wrap\n退出登录\n\n首页\n\n我的",
     "axe": {
@@ -1917,15 +1854,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "登录",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -1941,6 +1869,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "auth.login"
     ],
@@ -1966,6 +1895,66 @@
             ],
             [
               "taro-view-core:nth-child(3)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "login-disabled-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "欢迎回来",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "还没有账户？立即注册",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "提交中…",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "buttonAssertFailures": [],
+    "requests": [],
+    "bodyText": "首页\n/ 登录\n登录\n欢迎回来\n邮箱或用户名\n密码\n提交中…\n还没有账户？立即注册",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
             ]
           ]
         }
@@ -2008,11 +1997,62 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "buttonAssertFailures": [],
+    "requests": [],
+    "bodyText": "首页\n/ 创建账户\n创建账户\n加入 Cardhub 社区，参与卡牌讨论\n邮箱\n用户名\n密码\n注册\n已有账户？去登录",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "register-disabled-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "加入 Cardhub 社区，参与卡牌讨论",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "已有账户？去登录",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
       },
       {
         "cls": "primary-button",
         "state": "disabled",
-        "text": "注册",
+        "text": "提交中…",
         "fontPx": 15,
         "fg": "rgb(82, 82, 82)",
         "bg": "rgb(245, 245, 245)",
@@ -2032,8 +2072,9 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
-    "bodyText": "首页\n/ 创建账户\n创建账户\n加入 Cardhub 社区，参与卡牌讨论\n邮箱\n用户名\n密码\n注册\n已有账户？去登录",
+    "bodyText": "首页\n/ 创建账户\n创建账户\n加入 Cardhub 社区，参与卡牌讨论\n邮箱\n用户名\n密码\n提交中…\n已有账户？去登录",
     "axe": {
       "violations": [
         {
@@ -2127,6 +2168,102 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 273.5
+      }
+    ],
+    "alerts": 0,
+    "buttonAssertFailures": [],
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士，守护天穹的第一道光。\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n10 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n@carol\n2026/11/21 17:30:00\nGreat art, solid stats for a 4-cost.",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comment-disabled-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "所属系列 ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__author",
+        "text": "@bob",
+        "fontPx": 12,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__content",
+        "text": "这张卡的画面太好看了！",
+        "fontPx": 13,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
       },
       {
         "cls": "primary-button",
@@ -2147,15 +2284,16 @@
       {
         "cls": "primary-button",
         "h": 44,
-        "w": 273.5
+        "w": 278.5
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
     ],
-    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士，守护天穹的第一道光。\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n10 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n@carol\n2026/11/21 17:30:00\nGreat art, solid stats for a 4-cost.",
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士，守护天穹的第一道光。\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n@carol\n2026/11/21 17:30:00\nGreat art, solid stats for a 4-cost.",
     "axe": {
       "violations": [
         {
@@ -2217,15 +2355,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "Browse series",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "Search cards",
         "fontPx": 15,
@@ -2241,15 +2370,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "Search cards",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -2265,6 +2385,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -2347,15 +2468,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "Browse series",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "Search cards",
         "fontPx": 15,
@@ -2371,15 +2483,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "Search cards",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -2400,6 +2503,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -2491,15 +2595,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "Browse series",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "Search cards",
         "fontPx": 15,
@@ -2515,15 +2610,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "Search cards",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -2544,6 +2630,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -2642,15 +2729,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "Browse series",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "Search cards",
         "fontPx": 15,
@@ -2666,15 +2744,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "Search cards",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -2690,6 +2759,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -2807,15 +2877,6 @@
       },
       {
         "cls": "primary-button",
-        "state": "disabled",
-        "text": "Browse series",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
-      },
-      {
-        "cls": "primary-button",
         "state": "rest",
         "text": "Search cards",
         "fontPx": 15,
@@ -2831,15 +2892,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "Search cards",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -2860,6 +2912,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":10}"
     ],
@@ -2904,6 +2957,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -2965,6 +3019,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -3009,6 +3064,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -3071,6 +3127,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.list {\"page\":1,\"pageSize\":50}"
     ],
@@ -3097,6 +3154,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -3145,6 +3203,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -3172,6 +3231,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -3228,6 +3288,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -3291,6 +3352,7 @@
     ],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
       "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
@@ -3318,6 +3380,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -3366,6 +3429,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -3393,6 +3457,7 @@
     "contrast": [],
     "targets": [],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -3474,6 +3539,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -3574,6 +3640,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -3681,6 +3748,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
@@ -3722,6 +3790,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
     "bodyText": "Home\n/ Search\nSearch\nSearch cards or series…",
     "axe": {
@@ -3760,6 +3829,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"aurora\",\"limit\":30}"
     ],
@@ -3819,6 +3889,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"aurora\",\"limit\":30}"
     ],
@@ -3865,6 +3936,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"zzz\",\"limit\":30}"
     ],
@@ -3919,6 +3991,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.search {\"q\":\"aurora\",\"limit\":30}"
     ],
@@ -3971,6 +4044,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
     "bodyText": "Me\nSign in\nSign up\n\nHome\n\nMe",
     "axe": {
@@ -4026,6 +4100,7 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
     "bodyText": "Me\nSigned in as @alice_long_username_for_wrap\nSign out\n\nHome\n\nMe",
     "axe": {
@@ -4089,15 +4164,6 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
-      },
-      {
-        "cls": "primary-button",
-        "state": "disabled",
-        "text": "Sign in",
-        "fontPx": 15,
-        "fg": "rgb(82, 82, 82)",
-        "bg": "rgb(245, 245, 245)",
-        "ratio": 7.17
       }
     ],
     "targets": [
@@ -4113,6 +4179,7 @@
       }
     ],
     "alerts": 1,
+    "buttonAssertFailures": [],
     "requests": [
       "auth.login"
     ],
@@ -4138,6 +4205,66 @@
             ],
             [
               "taro-view-core:nth-child(3)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "login-disabled-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "Welcome back",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "New here? Create an acco",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Submitting…",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "buttonAssertFailures": [],
+    "requests": [],
+    "bodyText": "Home\n/ Sign in\nSign in\nWelcome back\nEMAIL OR USERNAME\nPASSWORD\nSubmitting…\nNew here? Create an account",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
             ]
           ]
         }
@@ -4180,11 +4307,62 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "buttonAssertFailures": [],
+    "requests": [],
+    "bodyText": "Home\n/ Create account\nCreate account\nJoin the Cardhub community and discuss cards\nEMAIL\nUSERNAME\nPASSWORD\nSign up\nAlready have an account? Sign in",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "register-disabled-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "Join the Cardhub communi",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "Already have an account?",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
       },
       {
         "cls": "primary-button",
         "state": "disabled",
-        "text": "Sign up",
+        "text": "Submitting…",
         "fontPx": 15,
         "fg": "rgb(82, 82, 82)",
         "bg": "rgb(245, 245, 245)",
@@ -4204,8 +4382,9 @@
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [],
-    "bodyText": "Home\n/ Create account\nCreate account\nJoin the Cardhub community and discuss cards\nEMAIL\nUSERNAME\nPASSWORD\nSign up\nAlready have an account? Sign in",
+    "bodyText": "Home\n/ Create account\nCreate account\nJoin the Cardhub community and discuss cards\nEMAIL\nUSERNAME\nPASSWORD\nSubmitting…\nAlready have an account? Sign in",
     "axe": {
       "violations": [
         {
@@ -4299,6 +4478,102 @@
         "fg": "rgb(255, 255, 255)",
         "bg": "rgb(29, 78, 216)",
         "ratio": 6.7
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 273.5
+      }
+    ],
+    "alerts": 0,
+    "buttonAssertFailures": [],
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士，守护天穹的第一道光。\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n10 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\n@carol\n11/21/2026, 5:30:00 PM\nGreat art, solid stats for a 4-cost.",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comment-disabled-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "Series ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__author",
+        "text": "@bob",
+        "fontPx": 12,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__content",
+        "text": "这张卡的画面太好看了！",
+        "fontPx": 13,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
       },
       {
         "cls": "primary-button",
@@ -4319,15 +4594,16 @@
       {
         "cls": "primary-button",
         "h": 44,
-        "w": 273.5
+        "w": 278.5
       }
     ],
     "alerts": 0,
+    "buttonAssertFailures": [],
     "requests": [
       "cards.bySlug {\"slug\":\"aurora-knight\"}",
       "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
     ],
-    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士，守护天穹的第一道光。\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n10 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\n@carol\n11/21/2026, 5:30:00 PM\nGreat art, solid stats for a 4-cost.",
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士，守护天穹的第一道光。\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\n@carol\n11/21/2026, 5:30:00 PM\nGreat art, solid stats for a 4-cost.",
     "axe": {
       "violations": [
         {
