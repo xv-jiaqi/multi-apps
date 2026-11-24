@@ -262,6 +262,44 @@ describe('delete confirmation', () => {
     );
   });
 
+  it('keeps the remaining comments and shows a status toast when delete succeeds but the refresh fails', async () => {
+    const { container } = await mountList();
+    const refresh = deferred<unknown>();
+    api.listForCard.mockReset();
+    api.listForCard.mockReturnValue(refresh.promise);
+
+    const deleteButtons = Array.from(container.querySelectorAll('.card-comment__action')).filter(
+      (el) => el.textContent === '删除',
+    );
+    act(() => {
+      (deleteButtons[0] as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
+    const confirm = Array.from(
+      container.querySelectorAll('.card-comment__confirm .card-comment__action'),
+    ).find((el) => el.textContent === '删除') as HTMLElement;
+    await act(async () => {
+      confirm.click();
+    });
+    await waitFor(() => expect(api.commentDelete).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      refresh.reject(new Error('refresh failed'));
+      await refresh.promise.catch(() => undefined);
+    });
+
+    await waitFor(() => {
+      expect(container.textContent).toContain('别人的评论');
+      expect(container.textContent).not.toContain('我的评论');
+      expect(container.textContent).not.toContain('评论加载失败');
+      expect(container.querySelector('.error-box-mini')).toBeNull();
+      const toast = Array.from(container.querySelectorAll('[role="status"]')).find((el) =>
+        (el.textContent || '').includes('已删除，列表暂未更新'),
+      );
+      expect(toast).toBeTruthy();
+    });
+  });
+
   it("lets an admin delete someone else's comment after confirming", async () => {
     stores.session.isAdmin = true;
     const { container } = await mountList([other]);

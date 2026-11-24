@@ -22,6 +22,8 @@ import { useBlock } from '../../../lib/use-block';
 import { ArtworkMini } from '../../../components/artwork-mini';
 import { CardCommentsList, NoticeBanner } from '../../../components/card-comments';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
+import { StatusToast } from '../../../components/status-toast';
+import { useStatusToast } from '../../../lib/status-toast';
 import './index.scss';
 
 type CardBySlugResult = Awaited<ReturnType<typeof trpc.cards.bySlug.query>>;
@@ -42,6 +44,7 @@ export default observer(function CardDetailPage() {
   const slug = (router.params.slug ?? '').toString();
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
+  const toast = useStatusToast();
 
   const cardBlock = useBlock<CardBySlugResult>(async () => {
     if (!slug) throw new LocalNotFoundError('missing slug');
@@ -275,7 +278,9 @@ export default observer(function CardDetailPage() {
                   hiddenIds={hiddenCommentIds}
                   onHide={(id) => {
                     setHiddenCommentIds((prev) => new Set(prev).add(id));
-                    void loadComments({ fresh: true });
+                    void loadComments({ fresh: true, keepDataOnError: true }).catch(() => {
+                      toast.show(tt('comment.deletedRefreshFailed'));
+                    });
                   }}
                   onNotice={(kind, noticeText) =>
                     setThreadNotice({ id: nextNoticeId(), kind, text: noticeText })
@@ -285,6 +290,7 @@ export default observer(function CardDetailPage() {
             </SectionCard>
           </View>
         )}
+        <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>
   );
