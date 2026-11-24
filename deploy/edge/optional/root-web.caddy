@@ -1,4 +1,8 @@
 {$ROOT_WEB_DOMAINS:http://root-web-disabled.invalid} {
+	encode {
+		zstd better
+		gzip 9
+	}
 	import cardhub_access_log
 	import cardhub_web_headers
 	import cardhub_sitemap {$ENV_NAME}-api:4000

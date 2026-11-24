@@ -22,6 +22,7 @@ module.exports = {
         'ci',
         'docs',
         'deps',
+        'agent-hub',
       ],
     ],
   },

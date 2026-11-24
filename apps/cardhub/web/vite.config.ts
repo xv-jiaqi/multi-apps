@@ -49,7 +49,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
   },
   // The shared packages (@repo/*) ship as CommonJS so the NestJS API can
   // require() them directly. Forcing Vite to pre-bundle them lets us keep the

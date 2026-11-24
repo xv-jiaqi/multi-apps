@@ -34,7 +34,8 @@
     "seed:demo": "pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run seed:demo",
     "db:studio": "pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:studio",
     "prepare": "husky",
-    "check:ch305-colors": "node scripts/check-ch305-hardcoded-colors.mjs"
+    "check:ch305-colors": "node scripts/check-ch305-hardcoded-colors.mjs",
+    "dev:agent-hub": "pnpm --filter @agent-hub/server --fail-if-no-match exec pnpm run dev"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
