@@ -13,6 +13,8 @@
 # must not have a Link header (only location / includes the preconnect).
 # GET /config.js must be 200, Cache-Control: no-store, and must not have
 # a Link header (the preconnect include is only on location /).
+# GET <hashed-asset>.map must be 404. When WEB_CONTAINER is set, the
+# image must not contain any *.map files under the nginx html root.
 
 set -euo pipefail
 
@@ -298,3 +300,39 @@ print(f"  GET {asset_url} has no Link header")
 print(f"  GET /config.js Cache-Control: {config_cc}")
 print("  GET /config.js has no Link header")
 PY
+
+map_path="${asset}.map"
+if ! code=$(curl -sS -D "${tmpdir}/map.headers" -o "${tmpdir}/map.body" -w '%{http_code}' \
+  --max-time 10 "${base}${map_path}" 2>"${tmpdir}/map.err"); then
+  echo "GET ${map_path} failed (last HTTP status: ${code:-none})" >&2
+  if [ -s "${tmpdir}/map.err" ]; then
+    cat "${tmpdir}/map.err" >&2
+  fi
+  exit 1
+fi
+if [ "$code" != "404" ]; then
+  echo "GET ${map_path} returned ${code}, expected 404" >&2
+  exit 1
+fi
+echo "GET ${map_path} returned 404"
+
+if [ -n "${WEB_CONTAINER:-}" ]; then
+  maps=""
+  if ! maps=$(docker exec "$WEB_CONTAINER" sh -c 'find /usr/share/nginx/html -type f -name "*.map" -print' \
+    2>"${tmpdir}/maps.err"); then
+    if ! maps=$(sudo docker exec "$WEB_CONTAINER" sh -c 'find /usr/share/nginx/html -type f -name "*.map" -print' \
+      2>"${tmpdir}/maps.err"); then
+      echo "could not list source maps inside ${WEB_CONTAINER}" >&2
+      if [ -s "${tmpdir}/maps.err" ]; then
+        cat "${tmpdir}/maps.err" >&2
+      fi
+      exit 1
+    fi
+  fi
+  if [ -n "${maps}" ]; then
+    echo "web image contains source maps (must be stripped before the runner stage):" >&2
+    printf '%s\n' "${maps}" >&2
+    exit 1
+  fi
+  echo "web image has no *.map files"
+fi

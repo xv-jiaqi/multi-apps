@@ -197,6 +197,8 @@ API 端 [main.ts](../../apps/cardhub/api/src/main.ts) 与 Web 端 [main.tsx](../
 
 真实 DSN 不要写进仓库。API 的 DSN 放在 VPS 的 `/opt/cardhub/<environment>/<environment>.env` 的 `SENTRY_DSN`；Web 的 DSN 放在同一 env 文件的 `WEB_SENTRY_DSN`。Web Docker 入口脚本会把 `WEB_SENTRY_DSN`、`SENTRY_ENVIRONMENT` 和镜像 `GIT_SHA` 写入运行时 `/config.js`，因此同一个 Web 镜像可同时用于 staging 和 production。`VITE_SENTRY_DSN` 仅保留给非容器静态构建 fallback，不用于 Docker 部署。
 
+Web source map 上传（CH-247）走仓库级 GitHub Actions secret `SENTRY_AUTH_TOKEN` 和变量 `SENTRY_ORG` / `SENTRY_PROJECT`（可选 `SENTRY_URL`），由 JQ-Boss 配置。DSN 不是 auth token，token 不得写入镜像或 `/config.js`。Release 名是构建时的 git SHA，与 `/config.js` 的 `GIT_SHA` 及 Web SDK `release` 对齐。无 token 时脚本跳过并退出 0；上传失败则作业失败。运行镜像仍不含 `*.map`，nginx 对 `/assets/*.map` 返回 404。
+
 ### 6.14 tRPC URL 解析（Web / Tauri）
 
 [apps/cardhub/web/src/lib/trpc.tsx](../../apps/cardhub/web/src/lib/trpc.tsx) 的 `resolveTrpcUrl()` 按以下顺序决策，越具体的分支越靠前：

@@ -71,6 +71,12 @@ class Handler(BaseHTTPRequestHandler):
                 headers["Link"] = INDEX_LINK
             self._send(200, "application/javascript", body, headers)
             return
+        if path == "/assets/index-Ab12cd.js.map":
+            if mode == "map-200":
+                self._send(200, "application/json", b"{}")
+                return
+            self._send(404, "text/plain", b"no")
+            return
         if path == "/assets/index-Ab12cd.js":
             if mode == "asset-404":
                 self._send(404, "text/plain", b"missing")
@@ -165,7 +171,8 @@ for needle in \
   "GET /assets/index-Ab12cd.js Cache-Control: public, max-age=31536000, immutable" \
   "GET /assets/index-Ab12cd.js has no Link header" \
   "GET /config.js Cache-Control: no-store" \
-  "GET /config.js has no Link header"
+  "GET /config.js has no Link header" \
+  "GET /assets/index-Ab12cd.js.map returned 404"
 do
   if ! grep -qF "$needle" "${work}/out"; then
     echo "expected passing output to contain: ${needle}" >&2
@@ -190,6 +197,7 @@ expect_fail asset-link "must not have a Link header"
 expect_fail no-config "GET /config.js failed"
 expect_fail config-cached "GET /config.js Cache-Control is no-cache, expected no-store"
 expect_fail config-link "GET /config.js must not have a Link header"
+expect_fail map-200 "GET /assets/index-Ab12cd.js.map returned 200, expected 404"
 
 set +e
 BOOT_TIMEOUT=2 WEB_BASE_URL="http://127.0.0.1:1" bash "$script" >"${work}/out" 2>"${work}/err"

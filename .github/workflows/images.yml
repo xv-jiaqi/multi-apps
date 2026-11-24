@@ -172,6 +172,45 @@ jobs:
               bash scripts/check-web-image.sh
           fi
 
+      # Export JS + maps from the web builder (same GIT_SHA as the pushed
+      # image) and upload when SENTRY_AUTH_TOKEN is set. Runs before the
+      # digest artifact is published so a failed upload does not become
+      # the deployable SHA. Unset token still exits 0 (CH-247).
+      # JQ-Boss configures repo secret SENTRY_AUTH_TOKEN and repo variables
+      # SENTRY_ORG / SENTRY_PROJECT (optional SENTRY_URL). DSN ≠ auth token.
+      - name: Export Web source maps
+        if: matrix.name == 'web'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.web
+          target: sourcemaps
+          push: false
+          provenance: false
+          outputs: type=local,dest=${{ runner.temp }}/web-sourcemaps
+          build-args: |
+            GIT_SHA=${{ github.event.workflow_run.head_sha }}
+            BUILD_TIME=${{ steps.build-time.outputs.value }}
+          cache-from: type=gha,scope=web
+
+      - name: Upload Sentry source maps
+        if: matrix.name == 'web'
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ vars.SENTRY_URL }}
+          SENTRY_RELEASE: ${{ github.event.workflow_run.head_sha }}
+          SENTRY_DIST_DIR: ${{ runner.temp }}/web-sourcemaps/dist
+        run: |
+          set -euo pipefail
+          if [ -n "${SENTRY_AUTH_TOKEN:-}" ]; then
+            dest="${RUNNER_TEMP}/sentry-cli-bin"
+            bash apps/cardhub/web/scripts/install-sentry-cli.sh "$dest"
+            export PATH="${dest}:${PATH}"
+          fi
+          bash apps/cardhub/web/scripts/upload-sentry-sourcemaps.sh
+
       # The tag can move again after this step. Deploy reads this file from
       # the successful run and pulls image@digest, not the tag.
       - name: Record image digest
