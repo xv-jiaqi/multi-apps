@@ -1,7 +1,7 @@
 {
-  "headSha": "32549bfe495d0f9d02197725c912b1f5dca0e17c",
+  "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988",
   "failed": 0,
-  "shots": 42,
+  "shots": 48,
   "report": [
     {
       "viewport": 375,
@@ -2254,6 +2254,36 @@
         "forum.topics.bySlug"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-login-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "name": "h5-primary-before-login-zh",
+      "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988"
+    },
+    {
+      "viewport": 375,
+      "name": "h5-primary-after-login-zh",
+      "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988"
+    },
+    {
+      "viewport": 375,
+      "name": "card-comment-success-toast-zh",
+      "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988"
+    },
+    {
+      "viewport": 375,
+      "name": "card-comment-pending-toast-zh",
+      "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988"
+    },
+    {
+      "viewport": 375,
+      "name": "card-comment-success-toast-en",
+      "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988"
+    },
+    {
+      "viewport": 375,
+      "name": "card-comment-pending-toast-en",
+      "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988"
     }
   ]
 }

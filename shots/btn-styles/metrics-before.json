@@ -1,0 +1,148 @@
+{
+  "tag": "before",
+  "base": "http://127.0.0.1:5190/",
+  "pages": {
+    "login-375": [
+      {
+        "text": "登录",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 76,
+        "h": 44,
+        "fontSize": "20px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "login-1440": [
+      {
+        "text": "登录",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 148,
+        "h": 88,
+        "fontSize": "40px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "register-375": [
+      {
+        "text": "注册",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 76,
+        "h": 44,
+        "fontSize": "20px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "register-1440": [
+      {
+        "text": "注册",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 148,
+        "h": 88,
+        "fontSize": "40px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "home-375": [
+      {
+        "text": "浏览系列",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 116,
+        "h": 44,
+        "fontSize": "20px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      },
+      {
+        "text": "搜索卡牌",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 116,
+        "h": 44,
+        "fontSize": "20px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "home-1440": [
+      {
+        "text": "浏览系列",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 228,
+        "h": 88,
+        "fontSize": "40px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      },
+      {
+        "text": "搜索卡牌",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 228,
+        "h": 88,
+        "fontSize": "40px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "card-detail-375": [],
+    "card-detail-1440": [],
+    "error-retry-375": [
+      {
+        "text": "重试",
+        "tag": "BUTTON",
+        "className": "h5-focusable error-box-mini__retry",
+        "w": 88,
+        "h": 44,
+        "fontSize": "14px",
+        "border": "1px solid rgb(252, 165, 165)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "error-retry-1440": [
+      {
+        "text": "重试",
+        "tag": "BUTTON",
+        "className": "h5-focusable error-box-mini__retry",
+        "w": 176,
+        "h": 88,
+        "fontSize": "28px",
+        "border": "2px solid rgb(252, 165, 165)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "forum-new-375": [
+      {
+        "text": "发布话题",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 116,
+        "h": 44,
+        "fontSize": "20px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ],
+    "forum-new-1440": [
+      {
+        "text": "发布话题",
+        "tag": "BUTTON",
+        "className": "h5-focusable primary-button",
+        "w": 228,
+        "h": 88,
+        "fontSize": "40px",
+        "border": "2px outset rgb(0, 0, 0)",
+        "boxSizing": "border-box"
+      }
+    ]
+  }
+}

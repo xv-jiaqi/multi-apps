@@ -1,0 +1,65 @@
+{
+  "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988",
+  "cases": [
+    {
+      "name": "card-comment-success-toast",
+      "locale": "zh-CN",
+      "text": "评论成功",
+      "expect": "评论成功",
+      "ok": true,
+      "role": "status",
+      "box": {
+        "x": 16,
+        "y": 16,
+        "width": 343,
+        "height": 48
+      },
+      "file": "/workspace/xiangzi-notes/ch301b/shots-block-after/card-comment-success-toast-zh-375.png"
+    },
+    {
+      "name": "card-comment-pending-toast",
+      "locale": "zh-CN",
+      "text": "已提交，审核通过后显示。",
+      "expect": "已提交，审核通过后显示。",
+      "ok": true,
+      "role": "status",
+      "box": {
+        "x": 16,
+        "y": 16,
+        "width": 343,
+        "height": 48
+      },
+      "file": "/workspace/xiangzi-notes/ch301b/shots-block-after/card-comment-pending-toast-zh-375.png"
+    },
+    {
+      "name": "card-comment-success-toast",
+      "locale": "en-US",
+      "text": "Comment posted",
+      "expect": "Comment posted",
+      "ok": true,
+      "role": "status",
+      "box": {
+        "x": 16,
+        "y": 16,
+        "width": 343,
+        "height": 48
+      },
+      "file": "/workspace/xiangzi-notes/ch301b/shots-block-after/card-comment-success-toast-en-375.png"
+    },
+    {
+      "name": "card-comment-pending-toast",
+      "locale": "en-US",
+      "text": "Submitted. It'll show after review.",
+      "expect": "Submitted. It'll show after review.",
+      "ok": true,
+      "role": "status",
+      "box": {
+        "x": 16,
+        "y": 16,
+        "width": 343,
+        "height": 48
+      },
+      "file": "/workspace/xiangzi-notes/ch301b/shots-block-after/card-comment-pending-toast-en-375.png"
+    }
+  ]
+}
