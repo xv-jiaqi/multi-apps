@@ -1,0 +1,56 @@
+{
+  "title": "Trade publish submit sends one request despite extra clicks",
+  "method": "Click submit once (request hung), then click the disabled button 3 more times with force:true.",
+  "headSha": "a0d7df086e1114f80e5e8f65e95155dc344a721a",
+  "results": [
+    {
+      "name": "trade-publish-submit-clicks",
+      "locale": "zh-CN",
+      "proc": "listings.publish",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795545250543,
+          "method": "POST",
+          "proc": "listings.publish",
+          "url": "http://127.0.0.1:4999/trpc/listings.publish"
+        }
+      ],
+      "ui": {
+        "text": "正在发布意向…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots-clicks/trade-publish-submit-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "trade-publish-submit-clicks",
+      "locale": "en-US",
+      "proc": "listings.publish",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795545254154,
+          "method": "POST",
+          "proc": "listings.publish",
+          "url": "http://127.0.0.1:4999/trpc/listings.publish"
+        }
+      ],
+      "ui": {
+        "text": "Posting…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots-clicks/trade-publish-submit-clicks-en-375.png",
+      "ok": true
+    }
+  ],
+  "allOk": true
+}

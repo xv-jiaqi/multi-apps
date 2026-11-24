@@ -1,0 +1,1617 @@
+{
+  "headSha": "a0d7df086e1114f80e5e8f65e95155dc344a721a",
+  "failed": 0,
+  "shots": 26,
+  "report": [
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 交易意向板\n交易意向板\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。\n发布意向\n全部\n出\n求\n\n首页\n\n交易\n\n我的",
+      "name": "trade-list-loading-zh",
+      "pixelColors": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-loading-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "首页\n/ 交易意向板\n交易意向板\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。\n发布意向\n全部\n出\n求\n交易意向加载失败\n重试\n\n首页\n\n交易\n\n我的",
+      "name": "trade-list-error-zh",
+      "pixelColors": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-error-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 交易意向板\n交易意向板\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。\n发布意向\n全部\n出\n求\n暂无交易意向\n\n首页\n\n交易\n\n我的",
+      "name": "trade-list-empty-zh",
+      "pixelColors": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-empty-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 交易意向板\n交易意向板\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。\n发布意向\n全部\n出\n求\n出Aurora Knight审核中\nCelestial Dawn 天穹黎明 · 近全新 · 中文 · 闪卡\n128.00 CNY\n图片 2\n联系方式 · 微信 wx-alice\n求Aurora Knight\nCelestial Dawn 天穹黎明 · 轻微使用 · 英文\n面议\n联系方式 · QQ 10001\n出卡牌已下架\n10.00 USD\n登录后查看联系方式\n\n首页\n\n交易\n\n我的",
+      "name": "trade-list-success-zh",
+      "pixelColors": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-success-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "登录",
+          "state": "rest",
+          "box": {
+            "x": 32,
+            "y": 294.453125,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 登录\n登录\n欢迎回来\n邮箱或用户名\n密码\n登录\n还没有账户？立即注册",
+      "name": "trade-publish-guest-zh",
+      "pixelColors": [
+        {
+          "label": "登录",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 633,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 88,
+              "y": 633,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-guest-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 1030.03125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1030.03125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 交易意向板\n/ 发布交易意向\n发布交易意向\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。\n意向类型\n想出（卖）\n想求（买）\n卡牌\nAurora Knight\nCelestial Dawn 天穹黎明\n更换\n价格（可空）\n货币\nCNY\n品相\n不填写\n语言\n不填写\n版本备注（可选）\n联系方式（微信 / QQ / 邮箱…）\n只有登录用户能看到联系方式\n实物图链接（可选）\n发布意向\n取消",
+      "name": "trade-publish-form-zh",
+      "pixelColors": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2104,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2104,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-form-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 1054.828125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1054.828125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 交易意向板\n/ 发布交易意向\n发布交易意向\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。\n意向类型\n想出（卖）\n想求（买）\n卡牌\nAurora Knight\nCelestial Dawn 天穹黎明\n更换\n价格（可空）\n货币\nCNY\n品相\n不填写\n语言\n不填写\n版本备注（可选）\n联系方式（微信 / QQ / 邮箱…）\n只有登录用户能看到联系方式\n联系方式需要 2–200 个字\n实物图链接（可选）\n发布意向\n取消",
+      "name": "trade-publish-errors-zh",
+      "pixelColors": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2154,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2154,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-errors-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 1080.828125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1080.828125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "首页\n/ 交易意向板\n/ 发布交易意向\n发布交易意向\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。\n意向类型\n想出（卖）\n想求（买）\n卡牌\nAurora Knight\nCelestial Dawn 天穹黎明\n更换\n价格（可空）\n货币\nCNY\n品相\n不填写\n语言\n不填写\n版本备注（可选）\n联系方式（微信 / QQ / 邮箱…）\n只有登录用户能看到联系方式\n实物图链接（可选）\n内容未通过审核，请修改后再提交\n发布意向\n取消",
+      "name": "trade-publish-blocked-zh",
+      "pixelColors": [
+        {
+          "label": "发布意向",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2206,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2206,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "listings.publish"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-blocked-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "正在发布意向…",
+          "state": "disabled",
+          "box": {
+            "x": 16,
+            "y": 1030.03125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1030.03125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 交易意向板\n/ 发布交易意向\n发布交易意向\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。\n意向类型\n想出（卖）\n想求（买）\n卡牌\nAurora Knight\nCelestial Dawn 天穹黎明\n更换\n价格（可空）\n货币\nCNY\n品相\n不填写\n语言\n不填写\n版本备注（可选）\n联系方式（微信 / QQ / 邮箱…）\n只有登录用户能看到联系方式\n实物图链接（可选）\n正在发布意向…\n取消",
+      "name": "trade-publish-disabled-zh",
+      "pixelColors": [
+        {
+          "label": "正在发布意向…",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2104,
+              "r": 124,
+              "g": 124,
+              "b": 124,
+              "hex": "#7c7c7c"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2104,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-disabled-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1061.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1061.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n该卡的交易意向\n交易意向板\n发布意向\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！",
+      "name": "card-listings-loading-zh",
+      "pixelColors": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2166,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2166,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-loading-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1144.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1144.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n该卡的交易意向\n交易意向加载失败\n重试\n交易意向板\n发布意向\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！",
+      "name": "card-listings-error-zh",
+      "pixelColors": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2332,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2332,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-error-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1134.6875,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1134.6875,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n该卡的交易意向\n该卡暂无交易意向\n交易意向板\n发布意向\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！",
+      "name": "card-listings-empty-zh",
+      "pixelColors": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2313,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2313,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-empty-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1365.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1365.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n该卡的交易意向\n出Aurora Knight审核中\nCelestial Dawn 天穹黎明 · 近全新 · 中文 · 闪卡\n128.00 CNY\n图片 2\n联系方式 · 微信 wx-alice\n求Aurora Knight\nCelestial Dawn 天穹黎明 · 轻微使用 · 英文\n面议\n联系方式 · QQ 10001\n交易意向板\n发布意向\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！",
+      "name": "card-listings-success-zh",
+      "pixelColors": [
+        {
+          "label": "发布评论",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2774,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2774,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-success-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Trade board\nTrade board\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently.\nPost listing\nAll\nSell\nBuy\n\nHome\n\nTrade\n\nMe",
+      "name": "trade-list-loading-en",
+      "pixelColors": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 138,
+              "g": 171,
+              "b": 244,
+              "hex": "#8aabf4"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-loading-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "Home\n/ Trade board\nTrade board\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently.\nPost listing\nAll\nSell\nBuy\nCouldn't load listings\nRetry\n\nHome\n\nTrade\n\nMe",
+      "name": "trade-list-error-en",
+      "pixelColors": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 138,
+              "g": 171,
+              "b": 244,
+              "hex": "#8aabf4"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-error-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Trade board\nTrade board\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently.\nPost listing\nAll\nSell\nBuy\nNo listings yet\n\nHome\n\nTrade\n\nMe",
+      "name": "trade-list-empty-en",
+      "pixelColors": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 138,
+              "g": 171,
+              "b": 244,
+              "hex": "#8aabf4"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-empty-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 179.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Trade board\nTrade board\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently.\nPost listing\nAll\nSell\nBuy\nSellAurora KnightUnder review\nCelestial Dawn 天穹黎明 · Near mint · Chinese · 闪卡\n128.00 CNY\nPhoto 2\nContact · 微信 wx-alice\nBuyAurora Knight\nCelestial Dawn 天穹黎明 · Lightly played · English\nNegotiable\nContact · QQ 10001\nSellCard removed\n10.00 USD\nSign in to see contact info\n\nHome\n\nTrade\n\nMe",
+      "name": "trade-list-success-en",
+      "pixelColors": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 402,
+              "r": 138,
+              "g": 171,
+              "b": 244,
+              "hex": "#8aabf4"
+            },
+            "fill": {
+              "x": 56,
+              "y": 402,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "listings.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-success-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Sign in",
+          "state": "rest",
+          "box": {
+            "x": 32,
+            "y": 294.453125,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Sign in\nSign in\nWelcome back\nEMAIL OR USERNAME\nPASSWORD\nSign in\nNew here? Create an account",
+      "name": "trade-publish-guest-en",
+      "pixelColors": [
+        {
+          "label": "Sign in",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 633,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
+            },
+            "fill": {
+              "x": 88,
+              "y": 633,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-guest-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 1062.03125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1062.03125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Trade board\n/ Publish a listing\nPublish a listing\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.\nListing type\nSelling\nBuying\nCard\nAurora Knight\nCelestial Dawn 天穹黎明\nChange\nPrice (optional)\nCurrency\nCNY\nCondition\nNot specified\nLanguage\nNot specified\nEdition note (optional)\nContact info (WeChat / QQ / email…)\nOnly signed-in users can see this\nPhoto links (optional)\nPost listing\nCancel",
+      "name": "trade-publish-form-en",
+      "pixelColors": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2168,
+              "r": 138,
+              "g": 171,
+              "b": 244,
+              "hex": "#8aabf4"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2168,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-form-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 1086.828125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1086.828125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Trade board\n/ Publish a listing\nPublish a listing\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.\nListing type\nSelling\nBuying\nCard\nAurora Knight\nCelestial Dawn 天穹黎明\nChange\nPrice (optional)\nCurrency\nCNY\nCondition\nNot specified\nLanguage\nNot specified\nEdition note (optional)\nContact info (WeChat / QQ / email…)\nOnly signed-in users can see this\nContact must be 2–200 characters\nPhoto links (optional)\nPost listing\nCancel",
+      "name": "trade-publish-errors-en",
+      "pixelColors": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2218,
+              "r": 138,
+              "g": 171,
+              "b": 244,
+              "hex": "#8aabf4"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2218,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-errors-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 1112.828125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1112.828125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "Home\n/ Trade board\n/ Publish a listing\nPublish a listing\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.\nListing type\nSelling\nBuying\nCard\nAurora Knight\nCelestial Dawn 天穹黎明\nChange\nPrice (optional)\nCurrency\nCNY\nCondition\nNot specified\nLanguage\nNot specified\nEdition note (optional)\nContact info (WeChat / QQ / email…)\nOnly signed-in users can see this\nPhoto links (optional)\nThis didn't pass review. Edit and try again.\nPost listing\nCancel",
+      "name": "trade-publish-blocked-en",
+      "pixelColors": [
+        {
+          "label": "Post listing",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2270,
+              "r": 138,
+              "g": 171,
+              "b": 244,
+              "hex": "#8aabf4"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2270,
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "listings.publish"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-blocked-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Posting…",
+          "state": "disabled",
+          "box": {
+            "x": 16,
+            "y": 1062.03125,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "trade-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 1062.03125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Trade board\n/ Publish a listing\nPublish a listing\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.\nListing type\nSelling\nBuying\nCard\nAurora Knight\nCelestial Dawn 天穹黎明\nChange\nPrice (optional)\nCurrency\nCNY\nCondition\nNot specified\nLanguage\nNot specified\nEdition note (optional)\nContact info (WeChat / QQ / email…)\nOnly signed-in users can see this\nPhoto links (optional)\nPosting…\nCancel",
+      "name": "trade-publish-disabled-en",
+      "pixelColors": [
+        {
+          "label": "Posting…",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 375,
+              "y": 2168,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            },
+            "fill": {
+              "x": 56,
+              "y": 2168,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-publish-disabled-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1061.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1061.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nListings for this card\nTrade board\nPublish a listing\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！",
+      "name": "card-listings-loading-en",
+      "pixelColors": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2166,
+              "r": 82,
+              "g": 82,
+              "b": 82,
+              "hex": "#525252"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2166,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-loading-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1144.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1144.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nListings for this card\nCouldn't load listings\nRetry\nTrade board\nPublish a listing\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！",
+      "name": "card-listings-error-en",
+      "pixelColors": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2332,
+              "r": 82,
+              "g": 82,
+              "b": 82,
+              "hex": "#525252"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2332,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-error-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1134.6875,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1134.6875,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nListings for this card\nNo listings for this card yet\nTrade board\nPublish a listing\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！",
+      "name": "card-listings-empty-en",
+      "pixelColors": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2313,
+              "r": 82,
+              "g": 82,
+              "b": 82,
+              "hex": "#525252"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2313,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-empty-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "box": {
+            "x": 68.71875,
+            "y": 1365.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "normal",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 1365.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nListings for this card\nSellAurora KnightUnder review\nCelestial Dawn 天穹黎明 · Near mint · Chinese · 闪卡\n128.00 CNY\nPhoto 2\nContact · 微信 wx-alice\nBuyAurora Knight\nCelestial Dawn 天穹黎明 · Lightly played · English\nNegotiable\nContact · QQ 10001\nTrade board\nPublish a listing\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！",
+      "name": "card-listings-success-en",
+      "pixelColors": [
+        {
+          "label": "Post comment",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "center": {
+              "x": 412,
+              "y": 2774,
+              "r": 82,
+              "g": 82,
+              "b": 82,
+              "hex": "#525252"
+            },
+            "fill": {
+              "x": 161,
+              "y": 2774,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
+            }
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard",
+        "listings.byCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301c/shots/card-listings-success-en-375.png"
+    }
+  ]
+}
