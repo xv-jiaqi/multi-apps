@@ -102,7 +102,11 @@ async function advanceNotifications() {
     } else if (step.writeRaw) {
       process.stdout.write(step.writeRaw);
     } else if (step.writeFile) {
-      writeFileSync(resolve(threadCwd, step.writeFile), step.content ?? '');
+      // repeat：把 content 重复 n 次（造大文件，测 diff 截断）。
+      writeFileSync(
+        resolve(threadCwd, step.writeFile),
+        (step.content ?? '').repeat(step.repeat ?? 1),
+      );
     } else if (step.sleepMs) {
       stepIndex += 1;
       await new Promise((r) => setTimeout(r, step.sleepMs));

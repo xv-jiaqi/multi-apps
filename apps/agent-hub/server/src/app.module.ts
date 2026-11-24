@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AccessGuard } from './api/access';
+import { BridgeRedactInterceptor } from './api/bridge-output';
 import { ApiErrorFilter } from './api/error.filter';
 import { HealthController } from './api/health.controller';
 import { MeController } from './api/me.controller';
@@ -92,6 +93,8 @@ export class AppModule {
         HubRuntime,
         WsHub,
         { provide: APP_GUARD, useClass: AccessGuard },
+        // local-api.md §3.4：返回给桥接 token 的每个字符串都过 redact()。
+        { provide: APP_INTERCEPTOR, useClass: BridgeRedactInterceptor },
         {
           provide: APP_FILTER,
           useFactory: (logger: HubLogger) =>

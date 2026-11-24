@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from '../../src/app.module';
@@ -16,8 +16,9 @@ import { Db } from '../../src/db/sqlite';
 import { Lifecycle } from '../../src/lifecycle';
 
 export const FAKE_CODEX = join(__dirname, '..', 'fakes', 'fake-codex.mjs');
+/** 剧本名（test/fakes/scenarios 下）或绝对路径（测试临时生成的剧本）。 */
 export const scenarioPath = (name: string) =>
-  join(__dirname, '..', 'fakes', 'scenarios', `${name}.json`);
+  isAbsolute(name) ? name : join(__dirname, '..', 'fakes', 'scenarios', `${name}.json`);
 
 export interface TestHub {
   app: NestExpressApplication;
@@ -27,6 +28,7 @@ export interface TestHub {
   bridgeToken: string;
   repo: string;
   paths: HubPaths;
+  db: Db;
   close(): Promise<void>;
 }
 
@@ -55,7 +57,10 @@ export function makeRepo(root: string): string {
 }
 
 /** 起一个完整的侧车（Nest + WS），Codex 指向假 app-server。 */
-export async function startHub(scenario: string): Promise<TestHub> {
+export async function startHub(
+  scenario: string,
+  opts: { security?: Record<string, unknown> } = {},
+): Promise<TestHub> {
   const root = mkdtempSync(join(tmpdir(), 'ah-codex-'));
   const home = join(root, 'home');
   mkdirSync(home, { recursive: true });
@@ -78,6 +83,7 @@ export async function startHub(scenario: string): Promise<TestHub> {
       ],
       repos: [{ id: 'demo', name: 'demo', path: repo }],
       defaultRepoId: 'demo',
+      ...(opts.security ? { security: opts.security } : {}),
     }),
   );
   const logger = new HubLogger(paths);
@@ -114,6 +120,7 @@ export async function startHub(scenario: string): Promise<TestHub> {
     bridgeToken,
     repo,
     paths,
+    db,
     async close() {
       await lifecycle.shutdown();
       await app.close();

@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   HttpCode,
+  Inject,
   Param,
   Post,
   Query,
@@ -31,6 +32,11 @@ import {
 } from '@agent-hub/contract';
 import type { Request, Response } from 'express';
 import { getPrincipal } from '../auth/principal';
+import { redact } from '../common/redact';
+import { HUB_DB } from '../common/tokens';
+import { HubConfigService } from '../config/config.service';
+import { appendAudit } from '../db/repositories/audit.repo';
+import type { Db } from '../db/sqlite';
 import { EventBus } from '../core/event-bus';
 import { EventStore } from '../core/event-store';
 import { TaskRunner } from '../core/task-runner';
@@ -39,6 +45,7 @@ import { taskToDto, type TaskRow } from '../db/repositories/tasks.repo';
 import { Lifecycle } from '../lifecycle';
 import { Scopes } from './access';
 import { ApiError, parseInput } from './api-error';
+import { truncatePatch } from './bridge-output';
 
 function idemKey(raw: string | undefined): string | null {
   if (raw === undefined) return null;
@@ -72,6 +79,8 @@ export class TasksController {
     private readonly events: EventStore,
     private readonly bus: EventBus,
     private readonly lifecycle: Lifecycle,
+    private readonly config: HubConfigService,
+    @Inject(HUB_DB) private readonly db: Db,
   ) {}
 
   @Post()
@@ -187,6 +196,7 @@ export class TasksController {
   @Scopes('tasks:read')
   async diff(
     @Param('id') id: string,
+    @Req() req: Request,
     @Query() query: unknown,
     @Res({ passthrough: true }) res: Response,
   ): Promise<DiffDto | string> {
@@ -226,6 +236,26 @@ export class TasksController {
         patch: isTask ? turn.task_patch : turn.turn_patch,
         truncated: turn.patch_truncated === 1,
       };
+    }
+    const principal = getPrincipal(req);
+    if (principal.kind === 'bridge') {
+      // local-api.md §3.4 / D46：桥接方先脱敏，再按文件边界截断到 maxBridgeDiffBytes，并记审计。
+      const cut = truncatePatch(
+        redact(dto.patch ?? ''),
+        this.config.get().security.maxBridgeDiffBytes,
+      );
+      dto = { ...dto, patch: cut.patch, truncated: dto.truncated || cut.truncated };
+      appendAudit(this.db, {
+        actor: `bridge:${principal.tokenId}`,
+        action: 'bridge.diff_read',
+        taskId: task.id,
+        detail: {
+          scope: dto.scope,
+          format: q.format,
+          bytes: Buffer.byteLength(dto.patch ?? '', 'utf8'),
+          truncated: dto.truncated,
+        },
+      });
     }
     if (q.format === 'patch') {
       res.setHeader('Content-Type', 'text/x-diff; charset=utf-8');

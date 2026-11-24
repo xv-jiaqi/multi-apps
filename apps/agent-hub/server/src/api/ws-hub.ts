@@ -32,6 +32,10 @@ interface ClientState {
   authTimer: NodeJS.Timeout | null;
   subs: Map<string, { topic: 'tasks' | 'task'; off: () => void }>;
   lastPong: number;
+  /** 已交给 ws.send、写回调还没触发的字节数（含 ws 内部队列和 socket 缓冲）。 */
+  pendingBytes: number;
+  /** 未触发的写回调；连接关闭时统一 resolve，回放不会卡住。 */
+  pendingResolvers: Set<() => void>;
 }
 
 function rejectUpgrade(socket: Duplex, status: number, reason: string): void {
@@ -46,6 +50,8 @@ export class WsHub implements OnModuleDestroy {
   private readonly clients = new Set<ClientState>();
   private pingTimer: NodeJS.Timeout | null = null;
   private busSubs: Array<{ unsubscribe(): void }> = [];
+  /** 待发送数据上限（§6.4，默认 8 MB）；测试调小（testing.md E53）。 */
+  slowConsumerBytes = SLOW_CONSUMER_BYTES;
 
   constructor(
     private readonly auth: AuthService,
@@ -102,6 +108,8 @@ export class WsHub implements OnModuleDestroy {
       authTimer: null,
       subs: new Map(),
       lastPong: Date.now(),
+      pendingBytes: 0,
+      pendingResolvers: new Set(),
     };
     this.clients.add(state);
     ws.on('pong', () => (state.lastPong = Date.now()));
@@ -216,25 +224,37 @@ export class WsHub implements OnModuleDestroy {
     }
   }
 
-  private encode(state: ClientState, msg: WsServerMessage): string | null {
-    if (state.ws.readyState !== state.ws.OPEN) return null;
-    if (state.ws.bufferedAmount > SLOW_CONSUMER_BYTES) {
-      this.close(state, WS_CLOSE_CODES.SLOW_CONSUMER, 'slow consumer');
-      return null;
-    }
+  /**
+   * 编码并交给 socket。待发送数据（未写完的字节与 bufferedAmount 取大者，再加上这条）超过
+   * slowConsumerBytes 时以 4008 关闭（§6.4）。返回的 Promise 在写出或连接关闭时 resolve。
+   */
+  private sendAsync(state: ClientState, msg: WsServerMessage): Promise<void> {
+    if (state.ws.readyState !== state.ws.OPEN) return Promise.resolve();
     const body = state.principal?.kind === 'bridge' ? mapStrings(msg, redact) : msg;
-    return JSON.stringify(body);
+    const text = JSON.stringify(body);
+    const bytes = Buffer.byteLength(text, 'utf8');
+    const queued = Math.max(state.pendingBytes, state.ws.bufferedAmount);
+    if (queued + bytes > this.slowConsumerBytes) {
+      this.close(state, WS_CLOSE_CODES.SLOW_CONSUMER, 'slow consumer');
+      return Promise.resolve();
+    }
+    state.pendingBytes += bytes;
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (): void => {
+        if (done) return;
+        done = true;
+        state.pendingBytes -= bytes;
+        state.pendingResolvers.delete(finish);
+        resolve();
+      };
+      state.pendingResolvers.add(finish);
+      state.ws.send(text, finish);
+    });
   }
 
   private send(state: ClientState, msg: WsServerMessage): void {
-    const text = this.encode(state, msg);
-    if (text !== null) state.ws.send(text);
-  }
-
-  private sendAsync(state: ClientState, msg: WsServerMessage): Promise<void> {
-    const text = this.encode(state, msg);
-    if (text === null) return Promise.resolve();
-    return new Promise((resolve) => state.ws.send(text, () => resolve()));
+    void this.sendAsync(state, msg);
   }
 
   private close(state: ClientState, code: number, reason: string): void {
@@ -243,6 +263,7 @@ export class WsHub implements OnModuleDestroy {
   }
 
   private cleanup(state: ClientState): void {
+    for (const finish of [...state.pendingResolvers]) finish();
     if (state.authTimer) clearTimeout(state.authTimer);
     for (const sub of state.subs.values()) sub.off();
     state.subs.clear();
