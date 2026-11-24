@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { AgentCapabilities, AgentConfig, AgentDto, AgentHealth } from '@agent-hub/contract';
+import { AcpAdapter } from '../adapters/acp/acp-adapter';
 import { CodexAdapter } from '../adapters/codex/codex-adapter';
 import type { AdapterDeps, AgentAdapter, ProcessSupervisor } from '../adapters/types';
 import type { HubLogger } from '../common/logger';
@@ -8,7 +9,6 @@ import { HubConfigService } from '../config/config.service';
 import { SERVER_VERSION } from '../version';
 import type { GitGuard } from '../workspace/git-guard';
 import { HUB_PATHS, type HubPaths } from '../common/paths';
-import { join } from 'node:path';
 
 interface Entry {
   config: AgentConfig;
@@ -17,7 +17,10 @@ interface Entry {
   caps: AgentCapabilities | null;
 }
 
-/** 按 config.agents 建适配器。本期只有 Codex；ACP（PR3）与网页 Agent 报 unavailable。 */
+/**
+ * 按 config.agents 建适配器：Codex，ACP 的 qoder profile（PR3）。
+ * 其他 ACP profile（claude-code / gemini / generic）与网页 Agent 本版本还没接入，报 unavailable。
+ */
 @Injectable()
 export class AdapterRegistry {
   private readonly entries = new Map<string, Entry>();
@@ -43,11 +46,16 @@ export class AdapterRegistry {
       };
       if (!agent.enabled) entry.health = { status: 'disabled' };
       else if (agent.kind === 'codex') entry.adapter = new CodexAdapter(agent, this.depsFor(entry));
+      else if (agent.kind === 'acp' && agent.profile === 'qoder')
+        entry.adapter = new AcpAdapter(agent, this.depsFor(entry));
       else {
         entry.health = {
           status: 'unavailable',
           code: 'AGENT_DISABLED',
-          message: agent.kind === 'acp' ? '本版本尚未接入 ACP 适配器' : '本版本尚未接入网页 Agent',
+          message:
+            agent.kind === 'acp'
+              ? `本版本的 ACP 适配器只接入了 Qoder，还不支持 profile“${agent.profile}”`
+              : '本版本尚未接入网页 Agent',
         };
       }
       this.entries.set(agent.id, entry);
@@ -113,7 +121,7 @@ export class AdapterRegistry {
       agentEnv: () => this.guard.agentEnv(entry.config.envPassthrough),
       now: () => new Date(),
       hubVersion: SERVER_VERSION,
-      probeCwd: join(this.paths.home, 'probe'),
+      probeCwd: this.paths.probe,
     };
   }
 }

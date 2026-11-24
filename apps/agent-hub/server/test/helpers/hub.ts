@@ -16,6 +16,7 @@ import { Db } from '../../src/db/sqlite';
 import { Lifecycle } from '../../src/lifecycle';
 
 export const FAKE_CODEX = join(__dirname, '..', 'fakes', 'fake-codex.mjs');
+export const FAKE_ACP = join(__dirname, '..', 'fakes', 'fake-acp.mjs');
 /** 剧本名（test/fakes/scenarios 下）或绝对路径（测试临时生成的剧本）。 */
 export const scenarioPath = (name: string) =>
   isAbsolute(name) ? name : join(__dirname, '..', 'fakes', 'scenarios', `${name}.json`);
@@ -56,10 +57,14 @@ export function makeRepo(root: string): string {
   return repo;
 }
 
-/** 起一个完整的侧车（Nest + WS），Codex 指向假 app-server。 */
+/** 起一个完整的侧车（Nest + WS），Codex 指向假 app-server；可选再配一个指向假 ACP Agent 的 Qoder。 */
 export async function startHub(
   scenario: string,
-  opts: { security?: Record<string, unknown> } = {},
+  opts: {
+    security?: Record<string, unknown>;
+    /** 配一个 Qoder（kind acp，profile qoder），命令是 fake-acp.mjs，剧本是这个绝对路径。 */
+    acpScenario?: string;
+  } = {},
 ): Promise<TestHub> {
   const root = mkdtempSync(join(tmpdir(), 'ah-codex-'));
   const home = join(root, 'home');
@@ -67,7 +72,9 @@ export async function startHub(
   const repo = makeRepo(root);
   process.env.AGENT_HUB_HOME = home;
   process.env.FAKE_SCENARIO = scenarioPath(scenario);
+  if (opts.acpScenario) process.env.FAKE_ACP_SCENARIO = opts.acpScenario;
   const paths = resolvePaths(process.env);
+  mkdirSync(paths.probe, { recursive: true });
   writeFileSync(
     paths.config,
     JSON.stringify({
@@ -80,6 +87,19 @@ export async function startHub(
           args: [],
           envPassthrough: ['FAKE_SCENARIO'],
         },
+        ...(opts.acpScenario
+          ? [
+              {
+                id: 'qoder',
+                kind: 'acp',
+                profile: 'qoder',
+                displayName: 'Qoder',
+                command: FAKE_ACP,
+                args: [],
+                envPassthrough: ['FAKE_ACP_SCENARIO'],
+              },
+            ]
+          : []),
       ],
       repos: [{ id: 'demo', name: 'demo', path: repo }],
       defaultRepoId: 'demo',
@@ -149,16 +169,20 @@ export async function api<T = unknown>(
   return { status: res.status, body: (text ? JSON.parse(text) : undefined) as T };
 }
 
-/** 等 probe 完成（Agent 健康变为 ready）。 */
-export async function waitAgentReady(hub: TestHub): Promise<void> {
+/** 等 probe 完成（Agent 健康变为 status，默认 ready）。 */
+export async function waitAgentReady(
+  hub: TestHub,
+  agentId = 'codex',
+  status = 'ready',
+): Promise<void> {
   for (let i = 0; i < 100; i++) {
     const r = await api<{ items: { id: string; health: { status: string } }[] }>(
       hub,
       'GET',
       '/agents',
     );
-    if (r.body.items.find((a) => a.id === 'codex')?.health.status === 'ready') return;
+    if (r.body.items.find((a) => a.id === agentId)?.health.status === status) return;
     await new Promise((res) => setTimeout(res, 50));
   }
-  throw new Error('codex agent not ready');
+  throw new Error(`${agentId} agent not ${status}`);
 }
