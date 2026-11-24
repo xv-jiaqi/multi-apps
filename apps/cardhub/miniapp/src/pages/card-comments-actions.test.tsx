@@ -134,6 +134,17 @@ const mine = {
   safetyStatus: 'review',
 };
 
+const peer = {
+  id: '00000000-0000-4000-8000-0000000000a3',
+  content: '另一条别人的评论',
+  user: { id: 'u2', username: 'bob' },
+  createdAt: '2026-11-25T00:04:30.000Z',
+  replies: [],
+  replyCount: 0,
+  repliesNextCursor: null,
+  safetyStatus: 'pass',
+};
+
 const extraReplies = [
   {
     id: '00000000-0000-4000-8000-0000000000b4',
@@ -154,7 +165,9 @@ const extraReplies = [
 async function mountList(comments: unknown[] = [other, mine]) {
   api.listForCard.mockResolvedValue(comments);
   const view = render(<CardDetailPage />);
-  await waitFor(() => expect(view.container.textContent).toContain('别人的评论'));
+  const marker =
+    comments.length > 0 ? String((comments[0] as { content: string }).content) : '评论区';
+  await waitFor(() => expect(view.container.textContent).toContain(marker));
   return view;
 }
 
@@ -845,6 +858,75 @@ describe('confirm bar restores focus to Delete after close', () => {
     await waitFor(() => {
       expect(container.querySelector('.card-comment__error')?.textContent).toBe('删除失败，请重试');
       expect(document.activeElement).toBe(deleteBtn);
+    });
+  });
+});
+
+describe('delete success and 404 restore focus off the dying thread', () => {
+  async function confirmAndSubmitDelete(container: HTMLElement) {
+    const deleteBtn = firstDeleteTrigger(container);
+    act(() => {
+      deleteBtn.click();
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).not.toBeNull());
+    await act(async () => {
+      (container.querySelector('[data-confirm-action="delete"]') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).toBeNull());
+  }
+
+  it('moves focus to the next comment Report when one exists', async () => {
+    const { container } = await mountList([mine, peer]);
+    await confirmAndSubmitDelete(container);
+    await waitFor(() => expect(container.textContent).not.toContain('我的评论'));
+    simulateTaroBlurToBody();
+    await waitFor(() => {
+      const target = container.querySelector(`[data-report-trigger="${peer.id}"]`) as HTMLElement;
+      expect(target).not.toBeNull();
+      expect(document.activeElement).toBe(target);
+      expect(document.activeElement).not.toBe(document.body);
+    });
+  });
+
+  it('moves focus to the previous comment Report when there is no next Report', async () => {
+    const { container } = await mountList([peer, mine]);
+    await confirmAndSubmitDelete(container);
+    await waitFor(() => expect(container.textContent).not.toContain('我的评论'));
+    simulateTaroBlurToBody();
+    await waitFor(() => {
+      const target = container.querySelector(`[data-report-trigger="${peer.id}"]`) as HTMLElement;
+      expect(target).not.toBeNull();
+      expect(document.activeElement).toBe(target);
+      expect(document.activeElement).not.toBe(document.body);
+    });
+  });
+
+  it('moves focus to the list heading when the list is empty after the delete', async () => {
+    const { container } = await mountList([mine]);
+    api.listForCard.mockResolvedValue([]);
+    await confirmAndSubmitDelete(container);
+    await waitFor(() => expect(container.textContent).toContain('评论区'));
+    simulateTaroBlurToBody();
+    await waitFor(() => {
+      const heading = container.querySelector('[data-comments-heading]') as HTMLElement;
+      expect(heading).not.toBeNull();
+      expect(heading.tabIndex).toBe(-1);
+      expect(document.activeElement).toBe(heading);
+      expect(document.activeElement).not.toBe(document.body);
+    });
+  });
+
+  it('restores the same way when delete returns NOT_FOUND', async () => {
+    api.commentDelete.mockRejectedValue(trpcErr({ code: 'NOT_FOUND' }));
+    const { container } = await mountList([mine, peer]);
+    await confirmAndSubmitDelete(container);
+    await waitFor(() => expect(container.textContent).not.toContain('我的评论'));
+    simulateTaroBlurToBody();
+    await waitFor(() => {
+      const target = container.querySelector(`[data-report-trigger="${peer.id}"]`) as HTMLElement;
+      expect(target).not.toBeNull();
+      expect(document.activeElement).toBe(target);
+      expect(document.activeElement).not.toBe(document.body);
     });
   });
 });

@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Text, View } from '@tarojs/components';
 import { t, type Locale } from '@repo/shared';
 import { trpc } from '../../lib/trpc';
@@ -11,6 +19,8 @@ import { nextNoticeId, type Notice } from '../../lib/notice';
 import { ErrorBoxMini } from '../error-box-mini';
 import { ReportEntry } from '../report-entry';
 import { FocusableButton, focusWhenSettled } from '../focusable-button';
+import { resolveFocusAfterCommentHide } from '../../lib/comment-hide-focus';
+
 import './index.scss';
 
 export type CardComment = Awaited<ReturnType<typeof trpc.comments.listForCard.query>>[number];
@@ -43,9 +53,33 @@ export interface CardCommentsListProps {
   onNotice: (kind: 'success' | 'error', text: string) => void;
 }
 
+type ScheduleFocus = (getEl: () => HTMLElement | null) => void;
+
+const CommentsFocusContext = createContext<ScheduleFocus>(() => undefined);
+
+/** Stays mounted around the comments section (including empty/error) so success/404 focus can land after a thread unmounts. */
+export function CommentsFocusRoot({ children }: { children: ReactNode }) {
+  const pending = useRef<(() => HTMLElement | null) | null>(null);
+  const [token, setToken] = useState(0);
+  const scheduleFocus: ScheduleFocus = (getEl) => {
+    pending.current = getEl;
+    setToken((n) => n + 1);
+  };
+  useLayoutEffect(() => {
+    if (typeof document === 'undefined') return;
+    const getEl = pending.current;
+    if (!getEl) return;
+    pending.current = null;
+    return focusWhenSettled(getEl);
+  }, [token]);
+  return (
+    <CommentsFocusContext.Provider value={scheduleFocus}>{children}</CommentsFocusContext.Provider>
+  );
+}
+
 export function CardCommentsList({ comments, hiddenIds, onHide, onNotice }: CardCommentsListProps) {
   return (
-    <View {...({ 'data-comments-heading': 'true', tabIndex: -1 } as Record<string, unknown>)}>
+    <View>
       {comments
         .filter((comment) => !hiddenIds.has(comment.id))
         .map((comment) => (
@@ -83,6 +117,7 @@ function CommentThread({
   const guard = useRef(createLoadMoreGuard());
   const deleting = usePendingSubmit();
   const restoreFocusTo = useRef<(() => HTMLElement | null) | null>(null);
+  const scheduleFocus = useContext(CommentsFocusContext);
 
   const previewKey = `${comment.replyCount}|${comment.repliesNextCursor ?? ''}|${comment.replies
     .map((reply) => reply.id)
@@ -181,15 +216,10 @@ function CommentThread({
           : tt('card.detail.commentDeleted');
     const finishHide = async () => {
       const hiddenId = confirm.id;
+      // Capture the surviving target before onHide unmounts this thread.
+      scheduleFocus(resolveFocusAfterCommentHide(hiddenId));
       const result = await onHide(hiddenId);
       if (result !== 'stale') onNotice('success', successText);
-      restoreFocusTo.current = () => {
-        const row = document.querySelector<HTMLElement>(
-          `.card-comment [data-delete-trigger]:not([data-delete-trigger="${hiddenId}"]), .card-comment [data-report-trigger]`,
-        );
-        if (row) return row;
-        return document.querySelector<HTMLElement>('[data-comments-heading]');
-      };
       setConfirm(null);
     };
     try {

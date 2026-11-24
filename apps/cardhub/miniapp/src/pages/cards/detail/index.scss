@@ -166,3 +166,11 @@
   color: $color-neutral-900;
   word-break: break-word;
 }
+
+.card-detail-page__comments-title {
+  display: block;
+  margin-bottom: $spacing-sm;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+}

@@ -20,7 +20,11 @@ import { LocalNotFoundError, mutationErrorMessage } from '../../../lib/load-erro
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useBlock } from '../../../lib/use-block';
 import { ArtworkMini } from '../../../components/artwork-mini';
-import { CardCommentsList, NoticeBanner } from '../../../components/card-comments';
+import {
+  CardCommentsList,
+  CommentsFocusRoot,
+  NoticeBanner,
+} from '../../../components/card-comments';
 import { FORM_ROOT_ID } from '../../../components/report-entry';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import { StatusToast } from '../../../components/status-toast';
@@ -213,86 +217,99 @@ export default observer(function CardDetailPage() {
 
             <View className="card-detail-page__gap" />
 
-            <SectionCard title={tt('card.detail.commentsTitle')}>
-              {session.isAuthenticated ? (
-                <View className="comment-form">
-                  <Textarea
-                    className="comment-form__input"
-                    value={commentContent}
-                    placeholder={tt('card.detail.commentPlaceholder')}
-                    maxlength={500}
-                    onInput={(e) => setCommentContent(e.detail.value)}
-                  />
-                  {commentError ? (
-                    <View key={commentError.id} className="comment-form__error" ariaRole="alert">
-                      <Text className="comment-form__error-text">{commentError.text}</Text>
-                    </View>
-                  ) : null}
-                  <View className="comment-form__footer" data-toast-avoid>
-                    <Text className="card-detail-page__meta comment-form__count">
-                      {commentContent.length} / 500
-                    </Text>
-                    <PrimaryButton
-                      label={
-                        submitting
-                          ? tt('card.detail.commentSubmitting')
-                          : tt('card.detail.commentSubmit')
-                      }
-                      disabled={submitting || !commentContent.trim()}
-                      onClick={submitComment}
+            <CommentsFocusRoot>
+              <SectionCard>
+                <Text
+                  className="card-detail-page__comments-title"
+                  {...({ 'data-comments-heading': 'true', tabIndex: -1 } as Record<
+                    string,
+                    unknown
+                  >)}
+                >
+                  {tt('card.detail.commentsTitle')}
+                </Text>
+                {session.isAuthenticated ? (
+                  <View className="comment-form">
+                    <Textarea
+                      className="comment-form__input"
+                      value={commentContent}
+                      placeholder={tt('card.detail.commentPlaceholder')}
+                      maxlength={500}
+                      onInput={(e) => setCommentContent(e.detail.value)}
                     />
+                    {commentError ? (
+                      <View key={commentError.id} className="comment-form__error" ariaRole="alert">
+                        <Text className="comment-form__error-text">{commentError.text}</Text>
+                      </View>
+                    ) : null}
+                    <View className="comment-form__footer" data-toast-avoid>
+                      <Text className="card-detail-page__meta comment-form__count">
+                        {commentContent.length} / 500
+                      </Text>
+                      <PrimaryButton
+                        label={
+                          submitting
+                            ? tt('card.detail.commentSubmitting')
+                            : tt('card.detail.commentSubmit')
+                        }
+                        disabled={submitting || !commentContent.trim()}
+                        onClick={submitComment}
+                      />
+                    </View>
                   </View>
-                </View>
-              ) : (
-                <Link to="/pages/auth/login/index" className="comment-login">
-                  <Text className="card-detail-page__link">{tt('card.detail.loginToComment')}</Text>
-                </Link>
-              )}
+                ) : (
+                  <Link to="/pages/auth/login/index" className="comment-login">
+                    <Text className="card-detail-page__link">
+                      {tt('card.detail.loginToComment')}
+                    </Text>
+                  </Link>
+                )}
 
-              {threadNotice ? (
-                <NoticeBanner
-                  id={threadNotice.id}
-                  kind={threadNotice.kind}
-                  text={threadNotice.text}
-                />
-              ) : null}
+                {threadNotice ? (
+                  <NoticeBanner
+                    id={threadNotice.id}
+                    kind={threadNotice.kind}
+                    text={threadNotice.text}
+                  />
+                ) : null}
 
-              {commentsView.kind === 'failed' ? (
-                <ErrorBoxMini
-                  key={commentsView.noticeId}
-                  title={tt('card.detail.commentsLoadFailed')}
-                  retryLabel={tt('state.retry')}
-                  retryingLabel={tt('state.retrying')}
-                  retrying={commentsView.retrying}
-                  onRetry={() => void loadComments()}
-                />
-              ) : commentsView.kind === 'loading' ? (
-                <View>
-                  <Skeleton height="120rpx" />
-                  <Skeleton height="120rpx" />
-                </View>
-              ) : commentsView.kind === 'empty' || commentsView.kind === 'notFound' ? (
-                <Empty title={tt('card.detail.commentEmpty')} />
-              ) : (
-                <CardCommentsList
-                  comments={commentsView.data}
-                  hiddenIds={hiddenCommentIds}
-                  onHide={async (id) => {
-                    setHiddenCommentIds((prev) => new Set(prev).add(id));
-                    try {
-                      await loadComments({ fresh: true, keepDataOnError: true });
-                      return 'refreshed';
-                    } catch {
-                      toast.show(tt('comment.deletedRefreshFailed'));
-                      return 'stale';
+                {commentsView.kind === 'failed' ? (
+                  <ErrorBoxMini
+                    key={commentsView.noticeId}
+                    title={tt('card.detail.commentsLoadFailed')}
+                    retryLabel={tt('state.retry')}
+                    retryingLabel={tt('state.retrying')}
+                    retrying={commentsView.retrying}
+                    onRetry={() => void loadComments()}
+                  />
+                ) : commentsView.kind === 'loading' ? (
+                  <View>
+                    <Skeleton height="120rpx" />
+                    <Skeleton height="120rpx" />
+                  </View>
+                ) : commentsView.kind === 'empty' || commentsView.kind === 'notFound' ? (
+                  <Empty title={tt('card.detail.commentEmpty')} />
+                ) : (
+                  <CardCommentsList
+                    comments={commentsView.data}
+                    hiddenIds={hiddenCommentIds}
+                    onHide={async (id) => {
+                      setHiddenCommentIds((prev) => new Set(prev).add(id));
+                      try {
+                        await loadComments({ fresh: true, keepDataOnError: true });
+                        return 'refreshed';
+                      } catch {
+                        toast.show(tt('comment.deletedRefreshFailed'));
+                        return 'stale';
+                      }
+                    }}
+                    onNotice={(kind, noticeText) =>
+                      setThreadNotice({ id: nextNoticeId(), kind, text: noticeText })
                     }
-                  }}
-                  onNotice={(kind, noticeText) =>
-                    setThreadNotice({ id: nextNoticeId(), kind, text: noticeText })
-                  }
-                />
-              )}
-            </SectionCard>
+                  />
+                )}
+              </SectionCard>
+            </CommentsFocusRoot>
           </View>
         )}
         <View id={FORM_ROOT_ID} />
