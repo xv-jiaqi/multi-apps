@@ -35,7 +35,6 @@ export default observer(function LoginPage() {
       );
       return;
     }
-    if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     try {
