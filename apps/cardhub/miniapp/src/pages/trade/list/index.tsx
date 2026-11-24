@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro';
-import { Button, ScrollView, Text, View, type ButtonProps } from '@tarojs/components';
-import { BreadcrumbsMini, Empty, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import { ScrollView, Text, View } from '@tarojs/components';
+import { BreadcrumbsMini, Empty, FocusableButton, PrimaryButton, Skeleton } from '@repo/ui-mini';
 import { t, type ListingKind } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { applyTabBarLabels } from '../../../lib/apply-tab-bar-labels';
@@ -227,18 +227,16 @@ export default observer(function TradeListPage() {
           {filters.map((filter) => {
             const active = kind === filter.value;
             return (
-              <Button
+              <FocusableButton
                 key={filter.id}
                 className={`trade-filters__chip${active ? ' trade-filters__chip--active' : ''}`}
                 hoverClass="none"
                 onClick={() => setKind(filter.value)}
-                {...({
-                  ariaPressed: active,
-                  'aria-pressed': active,
-                } as ButtonProps)}
+                ariaPressed={active}
+                aria-pressed={active}
               >
                 {filter.label}
-              </Button>
+              </FocusableButton>
             );
           })}
         </View>
@@ -265,19 +263,14 @@ export default observer(function TradeListPage() {
               <ListingRow key={listing.id} listing={listing} locale={locale.locale} />
             ))}
             {nextCursor && !moreFailed ? (
-              <Button
+              <FocusableButton
                 className={`trade-page__more${moreLoading || state.loading ? ' trade-page__more--disabled' : ''}`}
                 hoverClass="none"
-                {...(moreLoading || state.loading
-                  ? ({
-                      disabled: true,
-                      ariaDisabled: true,
-                      'aria-disabled': true,
-                    } as ButtonProps)
-                  : { onClick: () => void loadMore() })}
+                disabled={moreLoading || state.loading ? true : undefined}
+                onClick={moreLoading || state.loading ? undefined : () => void loadMore()}
               >
                 {moreLoading ? tt('state.loading') : tt('trade.list.loadMore')}
-              </Button>
+              </FocusableButton>
             ) : null}
             {moreFailed ? (
               <ErrorBoxMini

@@ -315,6 +315,11 @@ describe('trade publish safety, note, and limits', () => {
     const noteArea = areas.find((el) => el.getAttribute('maxlength') === '500');
     expect(imageArea).toBeTruthy();
     expect(noteArea).toBeTruthy();
+    expect(screen.getByText('联系方式请填在『联系方式』栏')).toBeTruthy();
+    const hint = document.getElementById('trade-publish-note-hint');
+    expect(hint).toBeTruthy();
+    expect(hint?.className).toContain('trade-form__hint');
+    expect(noteArea?.getAttribute('aria-describedby')).toBe('trade-publish-note-hint');
   });
 
   it('navigates to login only once when opened while signed out', async () => {
@@ -333,7 +338,7 @@ describe('trade publish safety, note, and limits', () => {
   });
 });
 
-describe('listing row (CH-301 §3 v1.5)', () => {
+describe('listing row (CH-301 §3 v1.9)', () => {
   it('shows a login link when contact is null and keeps note line breaks', () => {
     const row = listing(1);
     const view = render(
@@ -356,5 +361,27 @@ describe('listing row (CH-301 §3 v1.5)', () => {
     expect(view.container.textContent).toContain('审核中');
     const link = view.container.querySelector('a, [href], .listing-row__signin');
     expect(link).toBeTruthy();
+  });
+
+  it('hides the note row and its label when note is null or only whitespace', () => {
+    for (const note of [null, '', '   ', '\n\t']) {
+      const view = render(
+        <ListingRow
+          listing={
+            {
+              ...listing(2),
+              contact: null as unknown as string,
+              note: note as unknown as string,
+            } as ListingItem
+          }
+          locale="zh-CN"
+        />,
+      );
+      expect(view.container.textContent).toContain('登录后查看联系方式');
+      expect(view.container.textContent).not.toContain('备注');
+      expect(view.container.querySelectorAll('.listing-row__signin').length).toBe(1);
+      expect(view.container.querySelector('.listing-row__note')).toBeNull();
+      view.unmount();
+    }
   });
 });

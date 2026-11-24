@@ -226,18 +226,12 @@ export default observer(function CardDetailPage() {
                 <Link to="/pages/trade/list/index" mode="switchTab" className="trade-links__item">
                   <Text className="trade-links__item">{tt('trade.list.title')}</Text>
                 </Link>
-                <Text
+                <Link
+                  to={`/pages/trade/publish/index?cardSlug=${encodeURIComponent(slug)}`}
                   className="trade-links__item"
-                  onClick={() => {
-                    const url = `/pages/trade/publish/index?cardSlug=${encodeURIComponent(slug)}`;
-                    // Always open publish; the publish page jumps to login
-                    // once and returns here after sign-in so the user can
-                    // continue without clicking again.
-                    void Taro.navigateTo({ url });
-                  }}
                 >
                   {tt('trade.detail.byCardPublish')}
-                </Text>
+                </Link>
               </View>
             </SectionCard>
 

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow, useRouter } from '@tarojs/taro';
-import { Button, Input, Picker, ScrollView, Text, Textarea, View } from '@tarojs/components';
-import { BreadcrumbsMini, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import { Input, Picker, ScrollView, Text, Textarea, View } from '@tarojs/components';
+import { BreadcrumbsMini, FocusableButton, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
 import {
   APP_ERROR_CODES,
   LISTING_CONDITION_VALUES,
@@ -291,20 +291,24 @@ export default observer(function TradePublishPage() {
             <View className="trade-form__section">
               <Text className="trade-form__label">{tt('trade.publish.kind')}</Text>
               <View className="trade-kind">
-                <Button
+                <FocusableButton
                   className={`trade-kind__btn${kind === 'SELL' ? ' trade-kind__btn--active' : ''}`}
                   hoverClass="none"
+                  ariaPressed={kind === 'SELL'}
+                  aria-pressed={kind === 'SELL'}
                   onClick={() => setKind('SELL')}
                 >
                   {tt('trade.publish.kindSell')}
-                </Button>
-                <Button
+                </FocusableButton>
+                <FocusableButton
                   className={`trade-kind__btn${kind === 'BUY' ? ' trade-kind__btn--active' : ''}`}
                   hoverClass="none"
+                  ariaPressed={kind === 'BUY'}
+                  aria-pressed={kind === 'BUY'}
                   onClick={() => setKind('BUY')}
                 >
                   {tt('trade.publish.kindBuy')}
-                </Button>
+                </FocusableButton>
               </View>
             </View>
 
@@ -326,15 +330,16 @@ export default observer(function TradePublishPage() {
                     <Text className="trade-card-preview__name">{selectedCard.name}</Text>
                     <Text className="trade-card-preview__series">{selectedCard.seriesTitle}</Text>
                   </View>
-                  <Text
+                  <FocusableButton
                     className="trade-card-preview__change"
+                    hoverClass="none"
                     onClick={() => {
                       setSelectedCard(null);
                       setCardQuery('');
                     }}
                   >
                     {tt('trade.publish.cardChange')}
-                  </Text>
+                  </FocusableButton>
                 </View>
               ) : (
                 <View>
@@ -358,9 +363,10 @@ export default observer(function TradePublishPage() {
                     />
                   ) : null}
                   {cardHits.map((hit) => (
-                    <View
+                    <FocusableButton
                       key={hit.slug}
                       className="trade-search-hit"
+                      hoverClass="none"
                       onClick={() => {
                         setSelectedCard({
                           slug: hit.slug,
@@ -385,7 +391,7 @@ export default observer(function TradePublishPage() {
                         {hit.name}
                         {hit.seriesTitle ? ` · ${hit.seriesTitle}` : ''}
                       </Text>
-                    </View>
+                    </FocusableButton>
                   ))}
                 </View>
               )}
@@ -514,8 +520,13 @@ export default observer(function TradePublishPage() {
                 value={note}
                 maxlength={500}
                 disabled={submit.pending ? true : undefined}
+                aria-describedby="trade-publish-note-hint"
+                nativeProps={{ 'aria-describedby': 'trade-publish-note-hint' }}
                 onInput={(event) => setNote(event.detail.value)}
               />
+              <Text id="trade-publish-note-hint" className="trade-form__hint">
+                {tt('trade.publish.noteHint')}
+              </Text>
               <Text className="trade-form__count">{note.length} / 500</Text>
               {fieldErrors.note ? (
                 <Text className="trade-select__error">{fieldErrors.note}</Text>

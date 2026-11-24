@@ -85,7 +85,7 @@ export function ListingRow({ listing, locale }: { listing: ListingItem; locale: 
             {tt('trade.list.contact')} · {listing.contact}
           </Text>
         ) : null}
-        {listing.note ? (
+        {listing.note && listing.note.trim() ? (
           <View className="listing-row__note">
             <Text className="listing-row__note-label">{tt('trade.list.note')}</Text>
             <Text className="listing-row__note-body">{listing.note}</Text>

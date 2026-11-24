@@ -70,7 +70,12 @@ describe('PrimaryButton (CH-301 §5)', () => {
       path.resolve(srcDir, '../../../../packages/ui-mini/src/components/primary-button.tsx'),
       'utf8',
     );
-    expect(button).toMatch(/type="default"/);
+    const focusable = readFileSync(
+      path.resolve(srcDir, '../../../../packages/ui-mini/src/components/focusable-button.tsx'),
+      'utf8',
+    );
+    expect(focusable).toMatch(/type="default"/);
+    expect(focusable).toMatch(/type="button"/);
     expect(button.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/type=["']primary["']/);
     expect(button).toContain("className={['primary-button'");
 
