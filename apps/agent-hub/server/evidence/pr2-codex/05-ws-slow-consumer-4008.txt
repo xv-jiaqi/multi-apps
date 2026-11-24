@@ -1,0 +1,10 @@
+# 2026-11-24 21:26:56 CST 慢消费者实测（E53，真实侧车 node dist/main.js，默认阈值 8 MB，假 app-server 跑 40 条各 1 MB 输出的命令）
+# 脚本：客户端订阅 task 后暂停读 socket，任务结束后恢复读取；然后带 afterSeq 重连
+[+   11ms] WS ready（UI token）
+[+  212ms] POST /tasks → f8b944db；订阅 task 后客户端暂停读 socket
+[+13683ms] 任务结束：共 127 条事件，工具输出 40.0 MB
+[+13683ms] 客户端恢复读取
+[+13706ms] 连接关闭：code=4008 reason=slow consumer；关闭前收到 8 条，最后 seq=8
+[+14745ms] afterSeq=8 重连：补到 119 条；合计 127/127，seq 连续不重不漏=true
+client exit=0
+sidecar RSS after test: 209 MB

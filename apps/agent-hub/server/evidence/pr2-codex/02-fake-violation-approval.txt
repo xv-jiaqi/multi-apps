@@ -1,0 +1,559 @@
+# 2026-11-24 20:37:48 CST scenario=codex-readonly-violation  commit=a3e1208
+## stdout (ready line)
+{"event":"ready","port":47821,"uiToken":"<redacted>","version":"0.1.0","pid":791148}
+## stderr
+## listening sockets of sidecar + its children (lsof 不在本机，用 ss -ltnp 代替)
+$ ss -ltnp | grep pid=791148 (and descendants 791173)
+LISTEN 0      511        127.0.0.1:47821      0.0.0.0:*    users:(("MainThread",pid=791148,fd=24))  
+## all LISTEN sockets on box port 47821:
+State  Recv-Q Send-Q Local Address:Port  Peer Address:Port
+LISTEN 0      511        127.0.0.1:47821      0.0.0.0:*   
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/agents 
+{
+    "items": [
+        {
+            "id": "codex",
+            "displayName": "Codex (fake app-server)",
+            "kind": "codex",
+            "profile": null,
+            "enabled": true,
+            "health": {
+                "status": "ready",
+                "version": "0.164.0",
+                "versionVerified": true,
+                "executablePath": "/workspace/wt-agent-hub-pr2/apps/agent-hub/server/test/fakes/fake-codex.mjs"
+            },
+            "capabilities": {
+                "models": [
+                    {
+                        "id": "gpt-5.1-codex",
+                        "label": "GPT-5.1 Codex",
+                        "description": "fake",
+                        "isDefault": true,
+                        "reasoningEfforts": [
+                            {
+                                "id": "medium",
+                                "label": "中",
+                                "description": "medium"
+                            },
+                            {
+                                "id": "high",
+                                "label": "高",
+                                "description": "high"
+                            }
+                        ],
+                        "defaultReasoningEffort": "medium"
+                    }
+                ],
+                "modelsSource": "agent",
+                "sandbox": true,
+                "resume": true,
+                "userVisibleSessions": true,
+                "workspaces": [
+                    "in_place",
+                    "worktree"
+                ],
+                "fetchedAt": "2026-11-24T12:37:48.089Z"
+            },
+            "maxConcurrentTasks": 1,
+            "runningTasks": 0,
+            "queuedTasks": 0
+        }
+    ]
+}
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/tasks -d '{"agentId":"codex","prompt":"看看最近 3 个提交，只读，不要改文件。"}'
+{
+    "task": {
+        "id": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+        "shortId": "8dbb6bc9",
+        "title": "看看最近 3 个提交，只读，不要改文件。",
+        "agentId": "codex",
+        "adapterKind": "codex",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev-02-fake-violation-approval/multi-apps",
+        "source": "bridge",
+        "sourceTokenId": "60884f6d-9121-4ee6-8c30-1f98355bd798",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev-02-fake-violation-approval/multi-apps",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": null,
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": null,
+        "remoteUrl": null,
+        "status": "preparing",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 1,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T12:37:58.812Z",
+        "updatedAt": "2026-11-24T12:37:58.813Z",
+        "startedAt": null,
+        "endedAt": null,
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "turn": {
+        "id": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+        "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+        "index": 1,
+        "prompt": "看看最近 3 个提交，只读，不要改文件。",
+        "model": null,
+        "reasoningEffort": null,
+        "status": "pending",
+        "stopReason": null,
+        "error": null,
+        "nativeTurnId": null,
+        "turnStats": null,
+        "taskStats": null,
+        "patchTruncated": false,
+        "usage": null,
+        "finalMessage": null,
+        "createdAt": "2026-11-24T12:37:58.812Z",
+        "startedAt": null,
+        "endedAt": null
+    },
+    "replayed": false
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/approvals?status=pending&taskId=8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41 
+{
+    "items": [
+        {
+            "id": "apr_94a9a057dd00cbeaa2bf625e8ff9af6b",
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "kind": "file_change",
+            "title": "修改文件",
+            "command": null,
+            "cwd": null,
+            "paths": null,
+            "reason": "想写一份笔记",
+            "detail": {
+                "threadId": "thread_fake_1",
+                "turnId": "turn_fake_1",
+                "itemId": "fc_1",
+                "reason": "想写一份笔记"
+            },
+            "options": [
+                "allow_once",
+                "allow_for_session",
+                "reject",
+                "cancel_turn"
+            ],
+            "status": "pending",
+            "decision": null,
+            "decidedBy": null,
+            "decidedByTokenId": null,
+            "note": null,
+            "createdAt": "2026-11-24T12:37:58.849Z",
+            "expiresAt": "2026-11-24T13:37:58.849Z",
+            "resolvedAt": null
+        }
+    ]
+}
+
+# 审批需要 approvals:decide scope（bridge token 没有，见下一条 403），用 UI token 决定：
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/approvals/apr_94a9a057dd00cbeaa2bf625e8ff9af6b/decision -d '{"decision":"allow_once"}'
+{
+    "error": {
+        "code": "FORBIDDEN_SCOPE",
+        "message": "token 缺少 scope：approvals:decide",
+        "details": {
+            "required": [
+                "approvals:decide"
+            ]
+        }
+    }
+}
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/approvals/apr_94a9a057dd00cbeaa2bf625e8ff9af6b/decision -H 'Authorization: Bearer <uiToken>' -d '{"decision":"allow_once"}'
+{
+    "id": "apr_94a9a057dd00cbeaa2bf625e8ff9af6b",
+    "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+    "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+    "kind": "file_change",
+    "title": "修改文件",
+    "command": null,
+    "cwd": null,
+    "paths": null,
+    "reason": "想写一份笔记",
+    "detail": {
+        "threadId": "thread_fake_1",
+        "turnId": "turn_fake_1",
+        "itemId": "fc_1",
+        "reason": "想写一份笔记"
+    },
+    "options": [
+        "allow_once",
+        "allow_for_session",
+        "reject",
+        "cancel_turn"
+    ],
+    "status": "approved",
+    "decision": "allow_once",
+    "decidedBy": "ui",
+    "decidedByTokenId": null,
+    "note": null,
+    "createdAt": "2026-11-24T12:37:58.849Z",
+    "expiresAt": "2026-11-24T13:37:58.849Z",
+    "resolvedAt": "2026-11-24T12:37:58.943Z"
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41/wait?until=turn_end&timeoutSec=30 
+{
+    "reached": true,
+    "task": {
+        "id": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+        "shortId": "8dbb6bc9",
+        "title": "看看最近 3 个提交，只读，不要改文件。",
+        "agentId": "codex",
+        "adapterKind": "codex",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev-02-fake-violation-approval/multi-apps",
+        "source": "bridge",
+        "sourceTokenId": "60884f6d-9121-4ee6-8c30-1f98355bd798",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev-02-fake-violation-approval/multi-apps",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": "a3e12089a5528b1f967934f5ba62a1a7bd633e2a",
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": "thread_fake_1",
+        "remoteUrl": null,
+        "status": "completed",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 12,
+        "lastError": null,
+        "readOnlyViolation": true,
+        "createdAt": "2026-11-24T12:37:58.812Z",
+        "updatedAt": "2026-11-24T12:37:58.976Z",
+        "startedAt": "2026-11-24T12:37:58.847Z",
+        "endedAt": "2026-11-24T12:37:58.976Z",
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "lastSeq": 12
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41/events 
+{
+    "events": [
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 1,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.814Z",
+            "event": {
+                "type": "task.status",
+                "from": "queued",
+                "to": "preparing"
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 2,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.836Z",
+            "event": {
+                "type": "session.started",
+                "nativeSessionId": "thread_fake_1",
+                "model": "gpt-5.1-codex",
+                "resumed": false
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 3,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.848Z",
+            "event": {
+                "type": "task.status",
+                "from": "preparing",
+                "to": "running"
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 4,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.848Z",
+            "event": {
+                "type": "turn.started",
+                "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+                "index": 1,
+                "prompt": "看看最近 3 个提交，只读，不要改文件。",
+                "model": null,
+                "reasoningEffort": null
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 5,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.850Z",
+            "event": {
+                "type": "approval.requested",
+                "approval": {
+                    "id": "apr_94a9a057dd00cbeaa2bf625e8ff9af6b",
+                    "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+                    "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+                    "kind": "file_change",
+                    "title": "修改文件",
+                    "command": null,
+                    "cwd": null,
+                    "paths": null,
+                    "reason": "想写一份笔记",
+                    "detail": {
+                        "threadId": "thread_fake_1",
+                        "turnId": "turn_fake_1",
+                        "itemId": "fc_1",
+                        "reason": "想写一份笔记"
+                    },
+                    "options": [
+                        "allow_once",
+                        "allow_for_session",
+                        "reject",
+                        "cancel_turn"
+                    ],
+                    "status": "pending",
+                    "decision": null,
+                    "decidedBy": null,
+                    "decidedByTokenId": null,
+                    "note": null,
+                    "createdAt": "2026-11-24T12:37:58.849Z",
+                    "expiresAt": "2026-11-24T13:37:58.849Z",
+                    "resolvedAt": null
+                }
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 6,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.943Z",
+            "event": {
+                "type": "approval.resolved",
+                "approvalId": "apr_94a9a057dd00cbeaa2bf625e8ff9af6b",
+                "status": "approved",
+                "decision": "allow_once",
+                "decidedBy": "ui"
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 7,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.945Z",
+            "event": {
+                "type": "message.delta",
+                "itemId": "msg_1",
+                "text": "写了一个文件。"
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 8,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.945Z",
+            "event": {
+                "type": "message.completed",
+                "itemId": "msg_1",
+                "text": "写了一个文件。"
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 9,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.976Z",
+            "event": {
+                "type": "diff.updated",
+                "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+                "scope": "turn_end",
+                "task": {
+                    "filesChanged": 2,
+                    "insertions": 2,
+                    "deletions": 0,
+                    "files": [
+                        {
+                            "path": "NOTES.md",
+                            "oldPath": null,
+                            "status": "added",
+                            "insertions": 1,
+                            "deletions": 0,
+                            "binary": false
+                        },
+                        {
+                            "path": "OOPS.txt",
+                            "oldPath": null,
+                            "status": "added",
+                            "insertions": 1,
+                            "deletions": 0,
+                            "binary": false
+                        }
+                    ]
+                },
+                "turn": {
+                    "filesChanged": 2,
+                    "insertions": 2,
+                    "deletions": 0,
+                    "files": [
+                        {
+                            "path": "NOTES.md",
+                            "oldPath": null,
+                            "status": "added",
+                            "insertions": 1,
+                            "deletions": 0,
+                            "binary": false
+                        },
+                        {
+                            "path": "OOPS.txt",
+                            "oldPath": null,
+                            "status": "added",
+                            "insertions": 1,
+                            "deletions": 0,
+                            "binary": false
+                        }
+                    ]
+                },
+                "patchTruncated": false
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 10,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.976Z",
+            "event": {
+                "type": "notice",
+                "level": "error",
+                "code": "READ_ONLY_VIOLATION",
+                "message": "只读任务的工作区在本轮有改动"
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 11,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.976Z",
+            "event": {
+                "type": "turn.completed",
+                "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+                "index": 1,
+                "status": "completed",
+                "stopReason": "end_turn"
+            }
+        },
+        {
+            "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+            "seq": 12,
+            "turnId": "eaf48a56-cc77-4942-93f5-e687c3da2176",
+            "ts": "2026-11-24T12:37:58.976Z",
+            "event": {
+                "type": "task.status",
+                "from": "running",
+                "to": "completed"
+            }
+        }
+    ],
+    "lastSeq": 12,
+    "hasMore": false
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41/result 
+{
+    "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+    "shortId": "8dbb6bc9",
+    "status": "completed",
+    "turn": {
+        "index": 1,
+        "status": "completed",
+        "stopReason": "end_turn",
+        "error": null,
+        "finalMessage": "写了一个文件。",
+        "usage": null
+    },
+    "diff": {
+        "turnIndex": 1,
+        "stats": {
+            "filesChanged": 2,
+            "insertions": 2,
+            "deletions": 0,
+            "files": [
+                {
+                    "path": "NOTES.md",
+                    "oldPath": null,
+                    "status": "added",
+                    "insertions": 1,
+                    "deletions": 0,
+                    "binary": false
+                },
+                {
+                    "path": "OOPS.txt",
+                    "oldPath": null,
+                    "status": "added",
+                    "insertions": 1,
+                    "deletions": 0,
+                    "binary": false
+                }
+            ]
+        },
+        "patchTruncated": false
+    },
+    "pendingApprovals": 0,
+    "readOnlyViolation": true,
+    "endedAt": "2026-11-24T12:37:58.976Z"
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41/diff 
+{
+    "taskId": "8dbb6bc9-5b34-451c-9ecb-4ea9b8311a41",
+    "scope": "task",
+    "turnIndex": 1,
+    "live": false,
+    "stats": {
+        "filesChanged": 2,
+        "insertions": 2,
+        "deletions": 0,
+        "files": [
+            {
+                "path": "NOTES.md",
+                "oldPath": null,
+                "status": "added",
+                "insertions": 1,
+                "deletions": 0,
+                "binary": false
+            },
+            {
+                "path": "OOPS.txt",
+                "oldPath": null,
+                "status": "added",
+                "insertions": 1,
+                "deletions": 0,
+                "binary": false
+            }
+        ]
+    },
+    "patch": "diff --git a/NOTES.md b/NOTES.md\nnew file mode 100644\nindex 0000000..2029946\n--- /dev/null\n+++ b/NOTES.md\n@@ -0,0 +1 @@\n+agent wrote this\ndiff --git a/OOPS.txt b/OOPS.txt\nnew file mode 100644\nindex 0000000..dd95fcb\n--- /dev/null\n+++ b/OOPS.txt\n@@ -0,0 +1 @@\n+sandbox escape simulated\n",
+    "truncated": false
+}
+
+$ git -C <repo> status --porcelain
+?? NOTES.md
+?? OOPS.txt
+exit=0
+## stderr after SIGTERM

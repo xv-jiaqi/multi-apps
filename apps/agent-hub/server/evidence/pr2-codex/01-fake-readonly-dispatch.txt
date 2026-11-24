@@ -1,0 +1,423 @@
+# 2026-11-24 20:35:14 CST scenario=codex-readonly-demo  commit=a3e1208
+## stdout (ready line)
+{"event":"ready","port":47821,"uiToken":"<redacted>","version":"0.1.0","pid":788584}
+## stderr
+## listening sockets of sidecar + its children (lsof 不在本机，用 ss -ltnp 代替)
+$ ss -ltnp | grep pid=788584 (and descendants 788606)
+LISTEN 0      511        127.0.0.1:47821      0.0.0.0:*    users:(("MainThread",pid=788584,fd=24))  
+## all LISTEN sockets on box port 47821:
+State  Recv-Q Send-Q Local Address:Port  Peer Address:Port
+LISTEN 0      511        127.0.0.1:47821      0.0.0.0:*   
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/agents 
+{
+    "items": [
+        {
+            "id": "codex",
+            "displayName": "Codex (fake app-server)",
+            "kind": "codex",
+            "profile": null,
+            "enabled": true,
+            "health": {
+                "status": "ready",
+                "version": "0.164.0",
+                "versionVerified": true,
+                "executablePath": "/workspace/wt-agent-hub-pr2/apps/agent-hub/server/test/fakes/fake-codex.mjs"
+            },
+            "capabilities": {
+                "models": [
+                    {
+                        "id": "gpt-5.1-codex",
+                        "label": "GPT-5.1 Codex",
+                        "description": "fake",
+                        "isDefault": true,
+                        "reasoningEfforts": [
+                            {
+                                "id": "medium",
+                                "label": "中",
+                                "description": "medium"
+                            },
+                            {
+                                "id": "high",
+                                "label": "高",
+                                "description": "high"
+                            }
+                        ],
+                        "defaultReasoningEffort": "medium"
+                    }
+                ],
+                "modelsSource": "agent",
+                "sandbox": true,
+                "resume": true,
+                "userVisibleSessions": true,
+                "workspaces": [
+                    "in_place",
+                    "worktree"
+                ],
+                "fetchedAt": "2026-11-24T12:35:14.386Z"
+            },
+            "maxConcurrentTasks": 1,
+            "runningTasks": 0,
+            "queuedTasks": 0
+        }
+    ]
+}
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/tasks -d '{"agentId":"codex","prompt":"看看最近 3 个提交，只读，不要改文件。"}'
+{
+    "task": {
+        "id": "f47c1201-c07f-4155-806c-de36a4712da9",
+        "shortId": "f47c1201",
+        "title": "看看最近 3 个提交，只读，不要改文件。",
+        "agentId": "codex",
+        "adapterKind": "codex",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev-01-fake-readonly-dispatch/multi-apps",
+        "source": "bridge",
+        "sourceTokenId": "2a0fa592-0e4a-4769-abac-964a69fed8c0",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev-01-fake-readonly-dispatch/multi-apps",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": null,
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": null,
+        "remoteUrl": null,
+        "status": "preparing",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 1,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T12:35:25.128Z",
+        "updatedAt": "2026-11-24T12:35:25.130Z",
+        "startedAt": null,
+        "endedAt": null,
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "turn": {
+        "id": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+        "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+        "index": 1,
+        "prompt": "看看最近 3 个提交，只读，不要改文件。",
+        "model": null,
+        "reasoningEffort": null,
+        "status": "pending",
+        "stopReason": null,
+        "error": null,
+        "nativeTurnId": null,
+        "turnStats": null,
+        "taskStats": null,
+        "patchTruncated": false,
+        "usage": null,
+        "finalMessage": null,
+        "createdAt": "2026-11-24T12:35:25.128Z",
+        "startedAt": null,
+        "endedAt": null
+    },
+    "replayed": false
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/f47c1201-c07f-4155-806c-de36a4712da9/wait?until=turn_end&timeoutSec=30 
+{
+    "reached": true,
+    "task": {
+        "id": "f47c1201-c07f-4155-806c-de36a4712da9",
+        "shortId": "f47c1201",
+        "title": "看看最近 3 个提交，只读，不要改文件。",
+        "agentId": "codex",
+        "adapterKind": "codex",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev-01-fake-readonly-dispatch/multi-apps",
+        "source": "bridge",
+        "sourceTokenId": "2a0fa592-0e4a-4769-abac-964a69fed8c0",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev-01-fake-readonly-dispatch/multi-apps",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": "a3e12089a5528b1f967934f5ba62a1a7bd633e2a",
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": "thread_fake_1",
+        "remoteUrl": null,
+        "status": "completed",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 15,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T12:35:25.128Z",
+        "updatedAt": "2026-11-24T12:35:25.284Z",
+        "startedAt": "2026-11-24T12:35:25.163Z",
+        "endedAt": "2026-11-24T12:35:25.284Z",
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "lastSeq": 15
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/f47c1201-c07f-4155-806c-de36a4712da9/events 
+{
+    "events": [
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 1,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.130Z",
+            "event": {
+                "type": "task.status",
+                "from": "queued",
+                "to": "preparing"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 2,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.152Z",
+            "event": {
+                "type": "session.started",
+                "nativeSessionId": "thread_fake_1",
+                "model": "gpt-5.1-codex",
+                "resumed": false
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 3,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.164Z",
+            "event": {
+                "type": "task.status",
+                "from": "preparing",
+                "to": "running"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 4,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.164Z",
+            "event": {
+                "type": "turn.started",
+                "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+                "index": 1,
+                "prompt": "看看最近 3 个提交，只读，不要改文件。",
+                "model": null,
+                "reasoningEffort": null
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 5,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.165Z",
+            "event": {
+                "type": "reasoning.delta",
+                "itemId": "rs_1",
+                "text": "先看一下最近的提交。"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 6,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.165Z",
+            "event": {
+                "type": "reasoning.completed",
+                "itemId": "rs_1",
+                "text": "先看一下最近的提交。"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 7,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.166Z",
+            "event": {
+                "type": "tool.started",
+                "itemId": "cmd_1",
+                "toolKind": "command",
+                "title": "执行命令",
+                "command": "git log -3 --oneline",
+                "cwd": "/tmp/ah-ev-01-fake-readonly-dispatch/multi-apps"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 8,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.168Z",
+            "event": {
+                "type": "tool.output.delta",
+                "itemId": "cmd_1",
+                "text": "a3e1208 Merge remote-tracking branch 'origin/main' into xiangzi/agent-hub-codex\n608785a feat(agent-hub): 侧车骨架 + SQLite + 鉴权（#307）\n47e01f3 fix(agent-hub): ws upgrade 校验 origin/停机，hub.db 0600 证据\n"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 9,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.168Z",
+            "event": {
+                "type": "tool.completed",
+                "itemId": "cmd_1",
+                "status": "completed",
+                "exitCode": 0,
+                "durationMs": 3
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 10,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.269Z",
+            "event": {
+                "type": "message.delta",
+                "itemId": "msg_1",
+                "text": "最近 3 个提交见上。这是只读任务，没有改动任何文件。"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 11,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.269Z",
+            "event": {
+                "type": "message.completed",
+                "itemId": "msg_1",
+                "text": "最近 3 个提交见上。这是只读任务，没有改动任何文件。"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 12,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.269Z",
+            "event": {
+                "type": "usage.updated",
+                "usage": {
+                    "inputTokens": 1000,
+                    "cachedInputTokens": 0,
+                    "outputTokens": 234,
+                    "reasoningOutputTokens": 20,
+                    "totalTokens": 1234,
+                    "contextWindow": 200000
+                }
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 13,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.284Z",
+            "event": {
+                "type": "diff.updated",
+                "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+                "scope": "turn_end",
+                "task": {
+                    "filesChanged": 0,
+                    "insertions": 0,
+                    "deletions": 0,
+                    "files": []
+                },
+                "turn": {
+                    "filesChanged": 0,
+                    "insertions": 0,
+                    "deletions": 0,
+                    "files": []
+                },
+                "patchTruncated": false
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 14,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.284Z",
+            "event": {
+                "type": "turn.completed",
+                "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+                "index": 1,
+                "status": "completed",
+                "stopReason": "end_turn"
+            }
+        },
+        {
+            "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+            "seq": 15,
+            "turnId": "00f28cd1-ab7f-4a48-a839-df4767f3e5c2",
+            "ts": "2026-11-24T12:35:25.284Z",
+            "event": {
+                "type": "task.status",
+                "from": "running",
+                "to": "completed"
+            }
+        }
+    ],
+    "lastSeq": 15,
+    "hasMore": false
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/f47c1201-c07f-4155-806c-de36a4712da9/result 
+{
+    "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+    "shortId": "f47c1201",
+    "status": "completed",
+    "turn": {
+        "index": 1,
+        "status": "completed",
+        "stopReason": "end_turn",
+        "error": null,
+        "finalMessage": "最近 3 个提交见上。这是只读任务，没有改动任何文件。",
+        "usage": {
+            "inputTokens": 1000,
+            "cachedInputTokens": 0,
+            "outputTokens": 234,
+            "reasoningOutputTokens": 20,
+            "totalTokens": 1234,
+            "contextWindow": 200000
+        }
+    },
+    "diff": {
+        "turnIndex": 1,
+        "stats": {
+            "filesChanged": 0,
+            "insertions": 0,
+            "deletions": 0,
+            "files": []
+        },
+        "patchTruncated": false
+    },
+    "pendingApprovals": 0,
+    "readOnlyViolation": false,
+    "endedAt": "2026-11-24T12:35:25.284Z"
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/f47c1201-c07f-4155-806c-de36a4712da9/diff 
+{
+    "taskId": "f47c1201-c07f-4155-806c-de36a4712da9",
+    "scope": "task",
+    "turnIndex": 1,
+    "live": false,
+    "stats": {
+        "filesChanged": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "files": []
+    },
+    "patch": "",
+    "truncated": false
+}
+
+$ git -C <repo> status --porcelain
+exit=0
+## stderr after SIGTERM
