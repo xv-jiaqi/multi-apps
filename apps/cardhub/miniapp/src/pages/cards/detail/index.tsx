@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useRouter } from '@tarojs/taro';
 import { ScrollView, View, Text, Textarea } from '@tarojs/components';
@@ -60,6 +60,7 @@ export default observer(function CardDetailPage() {
   const [commentContent, setCommentContent] = useState('');
   const [commentError, setCommentError] = useState<Notice<{ text: string }> | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     void loadCard();
@@ -69,6 +70,7 @@ export default observer(function CardDetailPage() {
   const showCommentError = (text: string) => setCommentError({ id: nextNoticeId(), text });
 
   const submitComment = async () => {
+    if (submitting || submittingRef.current) return;
     setCommentError(null);
     const parsed = commentInput.safeParse({ cardSlug: slug, content: commentContent });
     if (!parsed.success) {
@@ -79,6 +81,8 @@ export default observer(function CardDetailPage() {
       showCommentError(tt('card.detail.loginToComment'));
       return;
     }
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       await trpc.comments.create.mutate(parsed.data);
@@ -94,6 +98,7 @@ export default observer(function CardDetailPage() {
         }),
       );
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -201,7 +206,9 @@ export default observer(function CardDetailPage() {
                     </View>
                   ) : null}
                   <View className="comment-form__footer">
-                    <Text className="card-detail-page__meta">{commentContent.length} / 500</Text>
+                    <Text className="card-detail-page__meta comment-form__count">
+                      {commentContent.length} / 500
+                    </Text>
                     <PrimaryButton
                       label={
                         submitting

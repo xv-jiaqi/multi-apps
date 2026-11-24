@@ -42,4 +42,22 @@ describe('PrimaryButton disabled prop (CH-301 §5 / Taro H5)', () => {
     expect(code).toMatch(/\.button-disabled/);
     expect(code).not.toMatch(/primary-button[^\n{]*\[disabled\]/);
   });
+
+  it('does not pass onClick and sets aria-disabled when disabled is true', () => {
+    const onClick = vi.fn();
+    const el = PrimaryButton({ label: '登录', disabled: true, onClick });
+    expect(el.props.onClick).toBeUndefined();
+    const aria = el.props.ariaDisabled ?? el.props['aria-disabled'];
+    expect(aria === true || aria === 'true').toBe(true);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('passes onClick and does not set aria-disabled when enabled', () => {
+    const onClick = vi.fn();
+    const el = PrimaryButton({ label: '登录', disabled: false, onClick });
+    expect(el.props.onClick).toBeTypeOf('function');
+    el.props.onClick();
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(el.props.ariaDisabled ?? el.props['aria-disabled']).toBeFalsy();
+  });
 });

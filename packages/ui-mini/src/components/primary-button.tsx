@@ -15,12 +15,17 @@ export interface PrimaryButtonProps extends ButtonProps {
  * Taro H5 writes `disabled="false"` when the prop is the boolean `false`,
  * and CSS `[disabled]` still matches that attribute. Only pass `disabled`
  * when it is true, and hang the disabled styles on a class.
+ *
+ * Taro H5 also still fires `onClick` on a disabled button. Do not pass
+ * `onClick` while disabled, and set `aria-disabled` so assistive tech
+ * matches the visual state.
  */
 export function PrimaryButton({
   label,
   className,
   hoverClass,
   disabled,
+  onClick,
   ...rest
 }: PrimaryButtonProps) {
   const isDisabled = Boolean(disabled);
@@ -32,7 +37,17 @@ export function PrimaryButton({
         .join(' ')}
       hoverClass={hoverClass ?? 'primary-button--pressed'}
       type="default"
-      {...(isDisabled ? { disabled: true } : {})}
+      {...(isDisabled
+        ? ({
+            disabled: true,
+            // Taro ButtonProps typings omit aria-disabled; both forms so H5
+            // and assistive tech can see the state.
+            ariaDisabled: true,
+            'aria-disabled': true,
+          } as ButtonProps)
+        : onClick
+          ? { onClick }
+          : {})}
     >
       {label}
     </Button>

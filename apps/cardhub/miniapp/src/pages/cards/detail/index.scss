@@ -124,6 +124,10 @@
   margin-top: $spacing-sm;
 }
 
+.comment-form__count {
+  white-space: nowrap;
+}
+
 .comment-login {
   display: flex;
   align-items: center;

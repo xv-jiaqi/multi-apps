@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro from '@tarojs/taro';
 import { ScrollView, View, Text } from '@tarojs/components';
@@ -21,8 +21,10 @@ export default observer(function LoginPage() {
   const setError = (text: string | null) =>
     setErrorNotice(text === null ? null : { id: nextNoticeId(), text });
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   const submit = async () => {
+    if (submitting || submittingRef.current) return;
     setError(null);
     const parsed = loginInput.safeParse({ identifier, password });
     if (!parsed.success) {
@@ -33,6 +35,8 @@ export default observer(function LoginPage() {
       );
       return;
     }
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       const { token, user } = await trpc.auth.login.mutate(parsed.data);
@@ -48,6 +52,7 @@ export default observer(function LoginPage() {
         }),
       );
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
