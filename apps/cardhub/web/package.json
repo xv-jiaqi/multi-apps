@@ -6,14 +6,13 @@
   "description": "Cardhub Web frontend (Vite + React 19 + shadcn/ui + MobX + SWR + tRPC).",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b tsconfig.build.json --noEmit && vite build && pnpm check:brand-css && pnpm check:page-gutter-css && pnpm check:first-load-js && pnpm check:first-load-isolation",
+    "build": "tsc -b tsconfig.build.json --noEmit && vite build && pnpm check:brand-css && pnpm check:page-gutter-css && pnpm check:first-load-js",
     "check:brand-css": "node scripts/check-brand-css.mjs",
     "check:page-gutter-css": "node scripts/check-page-gutter-css.mjs",
-    "check:first-load-isolation": "node scripts/check-first-load-isolation.mjs",
     "preview": "vite preview --port 5173",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run && vitest run --config vitest.browser.config.ts && node scripts/check-first-load-isolation.test.mjs",
+    "test": "vitest run && vitest run --config vitest.browser.config.ts && node scripts/check-first-load-js.test.mjs",
     "test:cov": "vitest run --coverage",
     "check:first-load-js": "node scripts/check-first-load-js.mjs"
   },

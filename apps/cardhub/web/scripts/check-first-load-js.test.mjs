@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { checkFirstLoadIsolation } from './check-first-load-isolation.mjs';
+import { checkFirstLoadJs } from './check-first-load-js.mjs';
 
-const scriptPath = fileURLToPath(new URL('./check-first-load-isolation.mjs', import.meta.url));
+const scriptPath = fileURLToPath(new URL('./check-first-load-js.mjs', import.meta.url));
 
 function writeDist(files) {
-  const dir = mkdtempSync(path.join(tmpdir(), 'cardhub-first-load-isolation-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'cardhub-first-load-js-'));
   mkdirSync(path.join(dir, 'assets'));
   for (const [relative, contents] of Object.entries(files)) {
     writeFileSync(path.join(dir, relative), contents);
@@ -36,7 +36,7 @@ function assert(condition, message) {
 
 const passingDir = writeDist(isolatedPages());
 try {
-  const passed = checkFirstLoadIsolation(passingDir);
+  const passed = checkFirstLoadJs(passingDir);
   assert(passed.ok, `expected isolation to pass, got: ${passed.failures.join('; ')}`);
 } finally {
   rmSync(passingDir, { recursive: true, force: true });
@@ -46,7 +46,7 @@ const leaking = isolatedPages();
 leaking['assets/search-ccc.js'] = 'import "./series-detail-ddd.js"; export const searchPage = 1;';
 const leakingDir = writeDist(leaking);
 try {
-  const failed = checkFirstLoadIsolation(leakingDir);
+  const failed = checkFirstLoadJs(leakingDir);
   assert(!failed.ok, 'expected isolation to fail when search imports series-detail');
   assert(
     failed.failures.some((item) => item.includes('series-detail-ddd.js')),
@@ -62,9 +62,11 @@ try {
     (cli.stderr ?? '').includes('series-detail-ddd.js'),
     `expected CLI stderr to name the leaked chunk, got: ${cli.stderr}`,
   );
-  console.info(
-    'check-first-load-isolation: fail-closed when search first-load includes series-detail',
+  assert(
+    (cli.stderr ?? '').includes('check-first-load-js:'),
+    `expected CLI stderr to use the check-first-load-js prefix, got: ${cli.stderr}`,
   );
+  console.info('check-first-load-js: fail-closed when search first-load includes series-detail');
   console.info(cli.stderr.trim());
 } finally {
   rmSync(leakingDir, { recursive: true, force: true });
@@ -74,7 +76,7 @@ const reverse = isolatedPages();
 reverse['assets/series-detail-ddd.js'] = 'import "./search-ccc.js"; export const seriesPage = 1;';
 const reverseDir = writeDist(reverse);
 try {
-  const failed = checkFirstLoadIsolation(reverseDir);
+  const failed = checkFirstLoadJs(reverseDir);
   assert(!failed.ok, 'expected isolation to fail when series imports search');
   assert(
     failed.failures.some((item) => item.includes('search-ccc.js')),
@@ -84,4 +86,4 @@ try {
   rmSync(reverseDir, { recursive: true, force: true });
 }
 
-console.info('check-first-load-isolation tests passed');
+console.info('check-first-load-js isolation tests passed');
