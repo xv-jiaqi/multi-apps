@@ -1,0 +1,19 @@
+{
+  "unsignedHasContact": {
+    "trade-zh-1440": false,
+    "card-zh-1440": false,
+    "trade-en-1440": false,
+    "card-en-1440": false,
+    "trade-zh-375": false,
+    "card-zh-375": false,
+    "trade-en-375": false,
+    "card-en-375": false
+  },
+  "signedHasContact": {
+    "trade-zh-1440": true,
+    "trade-en-1440": true,
+    "trade-zh-375": true,
+    "trade-en-375": true
+  },
+  "axe": []
+}
