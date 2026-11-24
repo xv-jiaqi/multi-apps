@@ -2,6 +2,7 @@ export {
   FocusableButton,
   isMiniappWebEnv,
   activateOnEnterOrSpace,
+  nativeAriaProps,
 } from './components/focusable-button';
 export type { FocusableButtonProps } from './components/focusable-button';
 export { PrimaryButton } from './components/primary-button';
@@ -18,6 +19,7 @@ export { Skeleton } from './components/skeleton';
 export type { SkeletonProps } from './components/skeleton';
 export { Link } from './components/link';
 export type { LinkProps, LinkMode } from './components/link';
+export { hashHref } from './components/link';
 export { BreadcrumbsMini } from './components/breadcrumbs-mini';
 export type { BreadcrumbsMiniProps, BreadcrumbItem } from './components/breadcrumbs-mini';
 export { rpxStyle, rpxValue } from './rpx';

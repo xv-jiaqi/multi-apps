@@ -73,4 +73,27 @@ describe('H5 focusable controls (CH-301 §5)', () => {
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalled();
   });
+
+  it('forwards kebab-case aria-checked, aria-label, id and style onto the native button', () => {
+    const view = render(
+      <FocusableButton
+        id="reason-sell"
+        style={{ marginTop: 8 }}
+        {...{ 'aria-checked': true, 'aria-label': '出' }}
+      >
+        出
+      </FocusableButton>,
+    );
+    const button = view.container.querySelector('button') as HTMLButtonElement;
+    expect(button.getAttribute('id')).toBe('reason-sell');
+    expect(button.getAttribute('aria-checked')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe('出');
+    expect(button.style.marginTop).toBe('8px');
+  });
+
+  it('uses a hash href on H5 so a new tab does not 404', () => {
+    const view = render(<Link to="/pages/forum/new/index">发帖</Link>);
+    const link = view.container.querySelector('a.h5-focusable-link') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('#/pages/forum/new/index');
+  });
 });

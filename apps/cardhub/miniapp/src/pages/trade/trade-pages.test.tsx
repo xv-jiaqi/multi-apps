@@ -65,6 +65,7 @@ const stores = vi.hoisted(() => ({
   session: {
     token: 'session-token',
     isAuthenticated: true,
+    user: { id: 'alice', username: 'alice' } as { id: string; username: string } | null,
   },
 }));
 
@@ -128,7 +129,10 @@ async function showList() {
 afterEach(() => {
   cleanup();
   lifecycle.didShow = undefined;
+  lifecycle.cardSlug = 'aurora-knight';
   stores.session.isAuthenticated = true;
+  stores.session.user = { id: 'alice', username: 'alice' };
+  stores.session.token = 'session-token';
   resetListRefreshFlags();
   forgetAllListSessions();
   resetQueuedStatusToast();
@@ -136,6 +140,8 @@ afterEach(() => {
 
 beforeEach(() => {
   stores.session.isAuthenticated = true;
+  stores.session.user = { id: 'alice', username: 'alice' };
+  stores.session.token = 'session-token';
   api.list.mockReset();
   api.publish.mockReset();
   api.search.mockReset();
@@ -324,6 +330,7 @@ describe('trade publish safety, note, and limits', () => {
 
   it('navigates to login only once when opened while signed out', async () => {
     stores.session.isAuthenticated = false;
+    stores.session.user = null;
     render(<TradePublishPage />);
     await act(async () => {
       lifecycle.didShow?.();
@@ -383,5 +390,134 @@ describe('listing row (CH-301 §3 v1.9)', () => {
       expect(view.container.querySelector('.listing-row__note')).toBeNull();
       view.unmount();
     }
+  });
+});
+
+describe('trade list account switch and publish a11y', () => {
+  it("does not reuse the previous user's pending listings after an account switch", async () => {
+    api.list.mockResolvedValueOnce({
+      items: [
+        {
+          ...listing(1),
+          safetyStatus: 'review' as const,
+          seller: { id: 'alice', username: 'alice' },
+        },
+      ],
+      nextCursor: null,
+    });
+    const first = await showList();
+    await screen.findByText('卡1');
+    expect(screen.getByText('审核中')).toBeTruthy();
+    expect(api.list).toHaveBeenCalledTimes(1);
+    first.unmount();
+
+    stores.session.user = { id: 'bob', username: 'bob' };
+    api.list.mockResolvedValueOnce({ items: [listing(8)], nextCursor: null });
+    await showList();
+    await screen.findByText('卡8');
+    expect(screen.queryByText('卡1')).toBeNull();
+    expect(api.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('refetches and drops the cached list after sign-out', async () => {
+    api.list.mockResolvedValueOnce({
+      items: [{ ...listing(1), safetyStatus: 'review' as const }],
+      nextCursor: null,
+    });
+    const first = await showList();
+    await screen.findByText('卡1');
+    first.unmount();
+
+    stores.session.isAuthenticated = false;
+    stores.session.user = null;
+    api.list.mockResolvedValueOnce({ items: [listing(3)], nextCursor: null });
+    await showList();
+    await screen.findByText('卡3');
+    expect(screen.queryByText('卡1')).toBeNull();
+    expect(api.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the publish button locked after a successful post so a second click does not publish again', async () => {
+    api.publish.mockResolvedValue({ id: 'new', safetyStatus: 'unchecked' });
+    render(<TradePublishPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    await screen.findByText('极光骑士');
+    const inputs = Array.from(document.querySelectorAll('input')) as HTMLInputElement[];
+    const contact = inputs.find((el) => el.getAttribute('maxlength') === '200');
+    fireEvent.change(contact!, { target: { value: 'wx: me' } });
+    const submit = document.querySelector('button.primary-button') as HTMLButtonElement;
+    await act(async () => {
+      submit.click();
+    });
+    await waitFor(() => expect(api.publish).toHaveBeenCalledTimes(1));
+    expect(submit.disabled || submit.getAttribute('aria-disabled') === 'true').toBe(true);
+    await act(async () => {
+      submit.click();
+    });
+    expect(api.publish).toHaveBeenCalledTimes(1);
+  });
+
+  it('associates price, contact, note, card search, variant note and images with visible labels', async () => {
+    lifecycle.cardSlug = '';
+    api.bySlug.mockReset();
+    render(<TradePublishPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+
+    const labelled = (labelId: string, tag: 'input' | 'textarea') => {
+      const label = document.getElementById(labelId);
+      expect(label, labelId).toBeTruthy();
+      const control = document.querySelector(`${tag}[aria-labelledby="${labelId}"]`);
+      expect(control, `${tag} for ${labelId}`).toBeTruthy();
+      return control as HTMLElement;
+    };
+
+    labelled('trade-publish-card-label', 'input');
+    labelled('trade-publish-price-label', 'input');
+    labelled('trade-publish-variant-label', 'input');
+    labelled('trade-publish-contact-label', 'input');
+    const note = labelled('trade-publish-note-label', 'textarea');
+    expect(note.getAttribute('aria-describedby')).toContain('trade-publish-note-hint');
+    labelled('trade-publish-images-label', 'textarea');
+
+    const price = document.querySelector(
+      'input[aria-labelledby="trade-publish-price-label"]',
+    ) as HTMLInputElement;
+    fireEvent.change(price, { target: { value: 'not-a-price' } });
+    const contact = document.querySelector(
+      'input[aria-labelledby="trade-publish-contact-label"]',
+    ) as HTMLInputElement;
+    fireEvent.change(contact, { target: { value: 'x' } });
+    const submit = document.querySelector('button.primary-button') as HTMLButtonElement;
+    await act(async () => {
+      submit.click();
+    });
+    await waitFor(() =>
+      expect(document.getElementById('trade-publish-contact-error')).toBeTruthy(),
+    );
+    expect(
+      document
+        .querySelector('input[aria-labelledby="trade-publish-contact-label"]')
+        ?.getAttribute('aria-describedby'),
+    ).toBe('trade-publish-contact-error');
+    lifecycle.cardSlug = 'aurora-knight';
+  });
+
+  it('has no axe label violations on the publish form controls', async () => {
+    const axe = await import('axe-core');
+    lifecycle.cardSlug = '';
+    api.bySlug.mockReset();
+    const view = render(<TradePublishPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    const results = await axe.default.run(view.container, {
+      runOnly: { type: 'rule', values: ['label', 'label-title-only', 'aria-input-field-name'] },
+    });
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+    lifecycle.cardSlug = 'aurora-knight';
   });
 });

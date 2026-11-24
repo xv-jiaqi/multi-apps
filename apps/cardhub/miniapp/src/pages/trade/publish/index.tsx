@@ -65,6 +65,18 @@ function parseImageLines(raw: string): { urls: string[]; errorKey?: string } {
   return { urls };
 }
 
+function controlA11y(labelId: string, describedIds: Array<string | undefined> = []) {
+  const describedby = describedIds.filter((id): id is string => Boolean(id)).join(' ') || undefined;
+  return {
+    'aria-labelledby': labelId,
+    ...(describedby ? { 'aria-describedby': describedby } : {}),
+    nativeProps: {
+      'aria-labelledby': labelId,
+      ...(describedby ? { 'aria-describedby': describedby } : {}),
+    },
+  };
+}
+
 export default observer(function TradePublishPage() {
   const router = useRouter();
   const prefillSlug = (router.params.cardSlug ?? '').toString();
@@ -229,6 +241,7 @@ export default observer(function TradePublishPage() {
       return;
     }
     if (!submit.begin()) return;
+    let leaveLocked = false;
     try {
       const created = await trpc.listings.publish.mutate(parsed.data);
       markListNeedsRefresh('trade');
@@ -239,6 +252,7 @@ export default observer(function TradePublishPage() {
       }
       // Trade list is a tab page: WeChat rejects redirectTo onto a tab.
       // switchTab also pops the publish page, which is the intent of §1 / §3 v1.5.
+      leaveLocked = true;
       void Taro.switchTab({ url: '/pages/trade/list/index' });
     } catch (error) {
       if (goLoginIfUnauthorized(error)) return;
@@ -258,7 +272,7 @@ export default observer(function TradePublishPage() {
         }),
       );
     } finally {
-      submit.end();
+      if (!leaveLocked) submit.end();
     }
   };
 
@@ -313,7 +327,9 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text className="trade-form__label">{tt('trade.publish.card')}</Text>
+              <Text id="trade-publish-card-label" className="trade-form__label">
+                {tt('trade.publish.card')}
+              </Text>
               {prefillLoading ? <Skeleton /> : null}
               {selectedCard ? (
                 <View className="trade-card-preview">
@@ -348,6 +364,9 @@ export default observer(function TradePublishPage() {
                     value={cardQuery}
                     placeholder={tt('trade.publish.cardPlaceholder')}
                     disabled={submit.pending ? true : undefined}
+                    {...controlA11y('trade-publish-card-label', [
+                      fieldErrors.card ? 'trade-publish-card-error' : undefined,
+                    ])}
                     onInput={(event) => setCardQuery(event.detail.value)}
                   />
                   {cardSearching ? (
@@ -396,7 +415,9 @@ export default observer(function TradePublishPage() {
                 </View>
               )}
               {fieldErrors.card ? (
-                <Text className="trade-select__error">{fieldErrors.card}</Text>
+                <Text id="trade-publish-card-error" className="trade-select__error">
+                  {fieldErrors.card}
+                </Text>
               ) : null}
               {prefillFailed ? (
                 <Text className="trade-select__error">{tt('trade.publish.cardNotFound')}</Text>
@@ -404,16 +425,23 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text className="trade-form__label">{tt('trade.publish.price')}</Text>
+              <Text id="trade-publish-price-label" className="trade-form__label">
+                {tt('trade.publish.price')}
+              </Text>
               <Input
                 className={`trade-form__input${fieldErrors.price ? ' trade-form__input--error' : ''}`}
                 value={price}
                 type="digit"
                 disabled={submit.pending ? true : undefined}
+                {...controlA11y('trade-publish-price-label', [
+                  fieldErrors.price ? 'trade-publish-price-error' : undefined,
+                ])}
                 onInput={(event) => setPrice(event.detail.value)}
               />
               {fieldErrors.price ? (
-                <Text className="trade-select__error">{fieldErrors.price}</Text>
+                <Text id="trade-publish-price-error" className="trade-select__error">
+                  {fieldErrors.price}
+                </Text>
               ) : null}
             </View>
 
@@ -488,40 +516,54 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text className="trade-form__label">{tt('trade.publish.variantNote')}</Text>
+              <Text id="trade-publish-variant-label" className="trade-form__label">
+                {tt('trade.publish.variantNote')}
+              </Text>
               <Input
                 className="trade-form__input"
                 value={variantNote}
                 placeholder={tt('trade.publish.variantNotePlaceholder')}
                 maxlength={40}
                 disabled={submit.pending ? true : undefined}
+                {...controlA11y('trade-publish-variant-label')}
                 onInput={(event) => setVariantNote(event.detail.value)}
               />
             </View>
 
             <View className="trade-form__section">
-              <Text className="trade-form__label">{tt('trade.publish.contact')}</Text>
+              <Text id="trade-publish-contact-label" className="trade-form__label">
+                {tt('trade.publish.contact')}
+              </Text>
               <Input
                 className={`trade-form__input${fieldErrors.contact ? ' trade-form__input--error' : ''}`}
                 value={contact}
                 maxlength={200}
                 disabled={submit.pending ? true : undefined}
+                {...controlA11y('trade-publish-contact-label', [
+                  fieldErrors.contact ? 'trade-publish-contact-error' : undefined,
+                ])}
                 onInput={(event) => setContact(event.detail.value)}
               />
               {fieldErrors.contact ? (
-                <Text className="trade-select__error">{fieldErrors.contact}</Text>
+                <Text id="trade-publish-contact-error" className="trade-select__error">
+                  {fieldErrors.contact}
+                </Text>
               ) : null}
             </View>
 
             <View className="trade-form__section">
-              <Text className="trade-form__label">{tt('trade.publish.note')}</Text>
+              <Text id="trade-publish-note-label" className="trade-form__label">
+                {tt('trade.publish.note')}
+              </Text>
               <Textarea
                 className={`trade-form__textarea${fieldErrors.note ? ' trade-form__textarea--error' : ''}`}
                 value={note}
                 maxlength={500}
                 disabled={submit.pending ? true : undefined}
-                aria-describedby="trade-publish-note-hint"
-                nativeProps={{ 'aria-describedby': 'trade-publish-note-hint' }}
+                {...controlA11y('trade-publish-note-label', [
+                  'trade-publish-note-hint',
+                  fieldErrors.note ? 'trade-publish-note-error' : undefined,
+                ])}
                 onInput={(event) => setNote(event.detail.value)}
               />
               <Text id="trade-publish-note-hint" className="trade-form__hint">
@@ -529,12 +571,16 @@ export default observer(function TradePublishPage() {
               </Text>
               <Text className="trade-form__count">{note.length} / 500</Text>
               {fieldErrors.note ? (
-                <Text className="trade-select__error">{fieldErrors.note}</Text>
+                <Text id="trade-publish-note-error" className="trade-select__error">
+                  {fieldErrors.note}
+                </Text>
               ) : null}
             </View>
 
             <View className="trade-form__section">
-              <Text className="trade-form__label">{tt('trade.publish.imageUrls')}</Text>
+              <Text id="trade-publish-images-label" className="trade-form__label">
+                {tt('trade.publish.imageUrls')}
+              </Text>
               <Textarea
                 className={`trade-form__textarea${fieldErrors.imageUrls ? ' trade-form__textarea--error' : ''}`}
                 value={imageText}
@@ -543,10 +589,15 @@ export default observer(function TradePublishPage() {
                   LISTING_IMAGE_MAX_COUNT * LISTING_IMAGE_URL_MAX + (LISTING_IMAGE_MAX_COUNT - 1)
                 }
                 disabled={submit.pending ? true : undefined}
+                {...controlA11y('trade-publish-images-label', [
+                  fieldErrors.imageUrls ? 'trade-publish-images-error' : undefined,
+                ])}
                 onInput={(event) => setImageText(event.detail.value)}
               />
               {fieldErrors.imageUrls ? (
-                <Text className="trade-select__error">{fieldErrors.imageUrls}</Text>
+                <Text id="trade-publish-images-error" className="trade-select__error">
+                  {fieldErrors.imageUrls}
+                </Text>
               ) : null}
             </View>
 

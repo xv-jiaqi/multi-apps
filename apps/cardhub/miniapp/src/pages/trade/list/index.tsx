@@ -15,6 +15,7 @@ import { consumeListNeedsRefresh } from '../../../lib/list-refresh';
 import { useScrollRestore } from '../../../lib/scroll-restore';
 import {
   forgetListSession,
+  listAuthKey,
   readListSession,
   rememberListSession,
   writeListScroll,
@@ -42,11 +43,12 @@ export default observer(function TradeListPage() {
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
   const [kind, setKind] = useState<ListingKind | undefined>(undefined);
   const sessionKey = tradeSessionKey(kind);
-  const cached = readListSession<ListingListPage, ListingItem>(sessionKey, session.isAuthenticated);
+  const authKey = listAuthKey(session);
+  const cached = readListSession<ListingListPage, ListingItem>(sessionKey, authKey);
   const toast = useStatusToast();
   const scroll = useScrollRestore('.trade-page', sessionKey);
   const firstShow = useRef(true);
-  const lastAuth = useRef(session.isAuthenticated);
+  const lastAuth = useRef(authKey);
   const skipKindEffect = useRef(Boolean(cached));
 
   const { state, load } = useBlock<ListingListPage>(async () => {
@@ -98,8 +100,8 @@ export default observer(function TradeListPage() {
     applyTabBarLabels();
     void Taro.setNavigationBarTitle({ title: tt('trade.list.title') });
     toast.consumeQueued();
-    const authChanged = lastAuth.current !== session.isAuthenticated;
-    lastAuth.current = session.isAuthenticated;
+    const authChanged = lastAuth.current !== authKey;
+    lastAuth.current = authKey;
     if (firstShow.current) {
       firstShow.current = false;
       if (cached) scroll.restore();
@@ -119,17 +121,9 @@ export default observer(function TradeListPage() {
       extra,
       moreCursor,
       scrollTop: scroll.scrollTop,
-      auth: session.isAuthenticated,
+      auth: authKey,
     });
-  }, [
-    sessionKey,
-    state.data,
-    state.loading,
-    extra,
-    moreCursor,
-    scroll.scrollTop,
-    session.isAuthenticated,
-  ]);
+  }, [sessionKey, state.data, state.loading, extra, moreCursor, scroll.scrollTop, authKey]);
 
   usePullDownRefresh(() => {
     void Promise.resolve(resetAndLoad()).finally(() => {

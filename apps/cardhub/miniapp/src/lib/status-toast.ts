@@ -32,6 +32,9 @@ export function isWebEnv(): boolean {
  * current page, pass `persistAcrossPages` so the next page can show
  * the H5 node; weapp still uses Taro.showToast which survives navigation.
  */
+type LiveDisplay = (text: string) => void;
+let liveDisplay: LiveDisplay | null = null;
+
 export function announceStatusToast(
   text: string,
   options?: { persistAcrossPages?: boolean },
@@ -43,6 +46,10 @@ export function announceStatusToast(
   }
   if (options?.persistAcrossPages) {
     enqueueStatusToast(text);
+    return;
+  }
+  if (liveDisplay) {
+    liveDisplay(text);
     return;
   }
   enqueueStatusToast(text);
@@ -89,6 +96,13 @@ export function useStatusToast(): {
     const text = consumeQueuedStatusToast();
     if (text) display(text);
   };
+
+  useEffect(() => {
+    liveDisplay = display;
+    return () => {
+      if (liveDisplay === display) liveDisplay = null;
+    };
+  });
 
   useEffect(() => () => clearTimer(), []);
 

@@ -12,7 +12,12 @@ vi.mock('@tarojs/taro', () => ({ default: taro, ...taro }));
 vi.mock('@tarojs/components', () => import('../test-stubs/taro-dom'));
 
 import { StatusToast } from '../components/status-toast';
-import { STATUS_TOAST_DURATION_MS, resetQueuedStatusToast, useStatusToast } from './status-toast';
+import {
+  announceStatusToast,
+  STATUS_TOAST_DURATION_MS,
+  resetQueuedStatusToast,
+  useStatusToast,
+} from './status-toast';
 
 function Probe({ persist }: { persist?: boolean }) {
   const toast = useStatusToast();
@@ -81,5 +86,13 @@ describe('useStatusToast', () => {
       next.getByText('consume').click();
     });
     expect(next.getByRole('status').textContent).toBe('hello');
+  });
+
+  it('displays a non-persist announceStatusToast when a hook is mounted', () => {
+    render(<Probe />);
+    act(() => {
+      announceStatusToast('from-announce');
+    });
+    expect(screen.getByRole('status').textContent).toBe('from-announce');
   });
 });
