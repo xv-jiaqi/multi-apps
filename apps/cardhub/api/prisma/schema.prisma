@@ -31,6 +31,9 @@ model User {
   // Old servers ignore the column. Ban is a status, not a role.
   bannedAt   DateTime?
   bannedById String?
+  // Reserved for CH-310 email verification. This cut does not read or write it.
+  // Old servers ignore the column.
+  emailVerifiedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // WeChat mini program openid for msgSecCheck / mediaCheckAsync. Null until
@@ -54,10 +57,27 @@ model User {
   notificationsActed    Notification[] @relation("NotificationActor")
   bannedBy   User?  @relation("UserBannedBy", fields: [bannedById], references: [id], onDelete: SetNull)
   bannedUsers User[] @relation("UserBannedBy")
+  passwordResetTokens PasswordResetToken[]
   contentSafetyChecks ContentSafetyCheck[]
 
   @@index([bannedAt])
   @@map("users")
+}
+
+// One-time password-reset tokens. Only the hash is stored. Old servers
+// ignore the table.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("password_reset_tokens")
 }
 
 model Category {

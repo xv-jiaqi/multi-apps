@@ -72,6 +72,16 @@ describe('field error codes', () => {
     );
     expect(t('en-US', 'error.app.TOO_MANY_REQUESTS')).toBe('Too many actions. Try again later.');
     expect(t('zh-CN', 'error.app.TOO_MANY_REQUESTS')).toBe('操作太频繁，请稍后再试');
+    expect(t('zh-CN', 'error.app.MAIL_NOT_CONFIGURED')).toBe(
+      '邮件服务未配置，请稍后再试或联系管理员',
+    );
+    expect(t('en-US', 'error.app.MAIL_NOT_CONFIGURED')).toBe(
+      'Mail is not configured. Try again later or contact an administrator.',
+    );
+    expect(t('zh-CN', 'error.app.RESET_TOKEN_INVALID')).toBe('重置链接无效或已过期，请重新申请');
+    expect(t('en-US', 'error.app.RESET_TOKEN_INVALID')).toBe(
+      'This reset link is invalid or has expired. Request a new one.',
+    );
     expect(t('zh-CN', 'error.app.UPLOADS_NOT_CONFIGURED')).toBe(
       '上传未配置，请稍后再试或联系管理员',
     );
@@ -88,6 +98,18 @@ describe('app error copy', () => {
     expect(appErrorMessage('zh-CN', 'VALIDATION')).toBe('填写的内容不符合要求，请修改后再试');
     expect(appErrorMessage('en-US', 'VALIDATION')).toBe(
       'Some fields need to be changed before you can continue.',
+    );
+    expect(appErrorMessage('zh-CN', 'MAIL_NOT_CONFIGURED')).toBe(
+      '邮件服务未配置，请稍后再试或联系管理员',
+    );
+    expect(appErrorMessage('en-US', 'MAIL_NOT_CONFIGURED')).toBe(
+      'Mail is not configured. Try again later or contact an administrator.',
+    );
+    expect(appErrorMessage('zh-CN', 'RESET_TOKEN_INVALID')).toBe(
+      '重置链接无效或已过期，请重新申请',
+    );
+    expect(appErrorMessage('en-US', 'RESET_TOKEN_INVALID')).toBe(
+      'This reset link is invalid or has expired. Request a new one.',
     );
     expect(appErrorMessage('zh-CN', 'UPLOADS_NOT_CONFIGURED')).toBe(
       '上传未配置，请稍后再试或联系管理员',

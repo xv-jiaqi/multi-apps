@@ -974,6 +974,8 @@ const zhCN: Dictionary = {
   'error.app.CLIENT_CLOSED_REQUEST': '请求已取消',
   'error.app.WRONG_PASSWORD': '当前密码不正确',
   'error.app.SAME_PASSWORD': '新密码不能和当前密码相同',
+  'error.app.MAIL_NOT_CONFIGURED': '邮件服务未配置，请稍后再试或联系管理员',
+  'error.app.RESET_TOKEN_INVALID': '重置链接无效或已过期，请重新申请',
   'error.app.USER_BANNED': '你的账号已被封禁，这次操作没有完成。',
   'error.app.CANNOT_BAN_ADMIN': '不能封禁管理员',
   'error.app.CANNOT_BAN_SELF': '不能封禁自己',
@@ -2087,6 +2089,9 @@ const enUS: Dictionary = {
   'error.app.CLIENT_CLOSED_REQUEST': 'The request was cancelled.',
   'error.app.WRONG_PASSWORD': 'The current password is incorrect.',
   'error.app.SAME_PASSWORD': 'The new password must be different from the current one.',
+  'error.app.MAIL_NOT_CONFIGURED':
+    'Mail is not configured. Try again later or contact an administrator.',
+  'error.app.RESET_TOKEN_INVALID': 'This reset link is invalid or has expired. Request a new one.',
   'error.app.USER_BANNED': "Your account is banned. This action wasn't completed.",
   'error.app.CANNOT_BAN_ADMIN': "Admins can't be banned",
   'error.app.CANNOT_BAN_SELF': "You can't ban yourself",
