@@ -1,13 +1,25 @@
 {
-  "headSha": "99a3bc96df6416bedd7cc50f01d4459b46ae48fb",
+  "headSha": "7b4efe4bc8e8ae105f83c355b0f1bdff00e372c7",
   "probes": [
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [],
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
       "toast": [],
+      "avoid": [],
+      "count": [],
+      "submit": [],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "首页\n/ 系列\n/ aurora-knight",
       "name": "comments-loading-zh",
       "pixelColors": [],
@@ -15,12 +27,24 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-loading-zh-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [],
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
       "toast": [],
+      "avoid": [],
+      "count": [],
+      "submit": [],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "首页\n/ 系列\n/ aurora-knight\n卡牌加载失败\n重试",
       "name": "comments-error-zh",
       "pixelColors": [],
@@ -28,7 +52,12 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-error-zh-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
@@ -47,6 +76,58 @@
       "more": [],
       "confirm": [],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 865.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 853.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n还没有评论，来抢沙发吧",
       "name": "comments-empty-zh",
       "pixelColors": [
@@ -79,7 +160,12 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-empty-zh-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
@@ -113,6 +199,58 @@
       ],
       "confirm": [],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 865.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 853.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-success-zh",
       "pixelColors": [
@@ -170,7 +308,12 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-success-zh-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
@@ -219,6 +362,58 @@
         }
       ],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 62.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 74.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 62.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除\n删除这条评论？\n删除\n取消",
       "name": "comments-delete-confirm-zh",
       "pixelColors": [
@@ -276,14 +471,19 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-confirm-zh-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 167.09375,
+            "y": 216.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -298,7 +498,7 @@
           "label": "展开其余 2 条回复",
           "box": {
             "x": 41,
-            "y": 718.734375,
+            "y": 719.34375,
             "width": 293,
             "height": 44
           },
@@ -325,7 +525,59 @@
           "className": "miniapp-status-toast"
         }
       ],
-      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n评论已删除\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n已删除，列表暂未更新",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 216.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 228.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 216.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "miniapp-status-toast",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n已删除，列表暂未更新",
       "name": "comments-delete-refresh-failed-zh",
       "pixelColors": [
         {
@@ -336,7 +588,7 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 378,
+              "y": 476,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -344,7 +596,7 @@
             },
             "fill": {
               "x": 161,
-              "y": 378,
+              "y": 476,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -362,7 +614,7 @@
           "pixel": {
             "center": {
               "x": 375,
-              "y": 1481,
+              "y": 1483,
               "r": 255,
               "g": 255,
               "b": 255,
@@ -370,7 +622,7 @@
             },
             "fill": {
               "x": 106,
-              "y": 1481,
+              "y": 1483,
               "r": 255,
               "g": 255,
               "b": 255,
@@ -382,14 +634,19 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-refresh-failed-zh-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 272.09375,
+            "y": 20.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -398,26 +655,78 @@
         }
       ],
       "buttonAssertFailures": [],
-      "more": [
+      "more": [],
+      "confirm": [],
+      "toast": [
         {
-          "sel": ".card-comment__more",
-          "label": "展开其余 2 条回复",
+          "sel": ".miniapp-status-toast",
+          "label": "已删除，列表暂未更新",
           "box": {
-            "x": 41,
-            "y": 775.34375,
-            "width": 293,
-            "height": 44
+            "x": 16,
+            "y": 748,
+            "width": 343,
+            "height": 48
           },
-          "computedBg": "rgb(255, 255, 255)",
-          "computedFg": "rgb(37, 99, 235)",
+          "computedBg": "rgb(23, 23, 23)",
+          "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
-          "className": "card-comment__more"
+          "className": "miniapp-status-toast miniapp-status-toast--bottom"
         }
       ],
-      "confirm": [],
-      "toast": [],
-      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n取消",
-      "name": "comments-report-sheet-zh",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 20.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 32.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 20.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "miniapp-status-toast miniapp-status-toast--bottom",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:10:00\n评论内容 2，用来把表单顶到视口下方，便于滚动测量。评论内容 2，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 3，用来把表单顶到视口下方，便于滚动测量。评论内容 3，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 4，用来把表单顶到视口下方，便于滚动测量。评论内容 4，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 5，用来把表单顶到视口下方，便于滚动测量。评论内容 5，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 6，用来把表单顶到视口下方，便于滚动测量。评论内容 6，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 7，用来把表单顶到视口下方，便于滚动测量。评论内容 7，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 8，用来把表单顶到视口下方，便于滚动测量。评论内容 8，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 9，用来把表单顶到视口下方，便于滚动测量。评论内容 9，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 10，用来把表单顶到视口下方，便于滚动测量。评论内容 10，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 11，用来把表单顶到视口下方，便于滚动测量。评论内容 11，用来把表单顶到视口下方，便于滚动测量。\n举报\n@bob\n2026/11/20 16:10:00\n评论内容 12，用来把表单顶到视口下方，便于滚动测量。评论内容 12，用来把表单顶到视口下方，便于滚动测量。\n举报\n已删除，列表暂未更新",
+      "name": "comments-delete-refresh-failed-scrolled-zh",
       "pixelColors": [
         {
           "label": "发布评论",
@@ -427,61 +736,46 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 588,
-              "r": 98,
-              "g": 98,
-              "b": 98,
-              "hex": "#626262"
+              "y": 84,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
             },
             "fill": {
               "x": 161,
-              "y": 588,
-              "r": 98,
-              "g": 98,
-              "b": 98,
-              "hex": "#626262"
+              "y": 84,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
             }
           }
         }
       ],
-      "morePixels": [
-        {
-          "label": "展开其余 2 条回复",
-          "computedBg": "rgb(255, 255, 255)",
-          "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
-          "pixel": {
-            "center": {
-              "x": 375,
-              "y": 1595,
-              "r": 252,
-              "g": 252,
-              "b": 253,
-              "hex": "#fcfcfd"
-            },
-            "fill": {
-              "x": 106,
-              "y": 1595,
-              "r": 252,
-              "g": 252,
-              "b": 253,
-              "hex": "#fcfcfd"
-            }
-          }
-        }
-      ],
-      "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-report-sheet-zh-375.png",
-      "actionSheet": "open"
+      "morePixels": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-refresh-failed-scrolled-zh-375.png",
+      "actionSheet": {
+        "ok": true,
+        "used": "card-detail-page taro-scroll-view__scroll-y",
+        "footerY": 20.09375,
+        "footerHeight": 44
+      }
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 272.09375,
+            "y": 69.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -493,7 +787,7 @@
           "state": "rest",
           "box": {
             "x": 58,
-            "y": 726.34375,
+            "y": 699.34375,
             "width": 210,
             "height": 44
           },
@@ -508,7 +802,7 @@
           "label": "展开其余 2 条回复",
           "box": {
             "x": 41,
-            "y": 1186.90625,
+            "y": 1159.90625,
             "width": 293,
             "height": 44
           },
@@ -520,7 +814,59 @@
       ],
       "confirm": [],
       "toast": [],
-      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n补充说明\n0 / 500\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 69.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 81.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 69.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补充说明\n4 / 500\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-report-form-zh",
       "pixelColors": [
         {
@@ -531,7 +877,7 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 588,
+              "y": 182,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -539,7 +885,7 @@
             },
             "fill": {
               "x": 161,
-              "y": 588,
+              "y": 182,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -555,7 +901,7 @@
           "pixel": {
             "center": {
               "x": 326,
-              "y": 1497,
+              "y": 1443,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -563,7 +909,7 @@
             },
             "fill": {
               "x": 140,
-              "y": 1497,
+              "y": 1443,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -582,34 +928,39 @@
             "center": {
               "x": 375,
               "y": 1623,
-              "r": 255,
-              "g": 255,
-              "b": 255,
-              "hex": "#ffffff"
+              "r": 212,
+              "g": 212,
+              "b": 212,
+              "hex": "#d4d4d4"
             },
             "fill": {
               "x": 106,
               "y": 1623,
-              "r": 255,
-              "g": 255,
-              "b": 255,
-              "hex": "#ffffff"
+              "r": 212,
+              "g": 212,
+              "b": 212,
+              "hex": "#d4d4d4"
             }
           }
         }
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-report-form-zh-375.png",
-      "actionSheet": ".taro-actionsheet__cell[data-tap-index]"
+      "actionSheet": "radiogroup"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 272.09375,
+            "y": 69.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -621,7 +972,7 @@
           "state": "rest",
           "box": {
             "x": 58,
-            "y": 784.34375,
+            "y": 757.34375,
             "width": 216,
             "height": 44
           },
@@ -636,7 +987,7 @@
           "label": "展开其余 2 条回复",
           "box": {
             "x": 41,
-            "y": 1244.90625,
+            "y": 1217.90625,
             "width": 293,
             "height": 44
           },
@@ -648,7 +999,59 @@
       ],
       "confirm": [],
       "toast": [],
-      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n补充说明\n0 / 500\n内容未通过审核，没有发布。\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 69.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 81.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 69.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补充说明\n4 / 500\n内容未通过审核，没有发布。\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-report-blocked-zh",
       "pixelColors": [
         {
@@ -659,7 +1062,7 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 588,
+              "y": 182,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -667,7 +1070,7 @@
             },
             "fill": {
               "x": 161,
-              "y": 588,
+              "y": 182,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -683,7 +1086,7 @@
           "pixel": {
             "center": {
               "x": 332,
-              "y": 1613,
+              "y": 1559,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -691,7 +1094,7 @@
             },
             "fill": {
               "x": 140,
-              "y": 1613,
+              "y": 1559,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -727,10 +1130,15 @@
         }
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-report-blocked-zh-375.png",
-      "actionSheet": ".taro-actionsheet__cell[data-tap-index]"
+      "actionSheet": "radiogroup"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "发布评论",
@@ -764,6 +1172,58 @@
       ],
       "confirm": [],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\n发布评论",
+          "box": {
+            "x": 32,
+            "y": 103.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 115.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "发布评论",
+          "box": {
+            "x": 68.71875,
+            "y": 103.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n加载中…\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
       "name": "comments-load-more-loading-zh",
       "pixelColors": [
@@ -821,12 +1281,24 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-load-more-loading-zh-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [],
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
       "toast": [],
+      "avoid": [],
+      "count": [],
+      "submit": [],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "Home\n/ Series\n/ aurora-knight",
       "name": "comments-loading-en",
       "pixelColors": [],
@@ -834,12 +1306,24 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-loading-en-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [],
       "buttonAssertFailures": [],
       "more": [],
       "confirm": [],
       "toast": [],
+      "avoid": [],
+      "count": [],
+      "submit": [],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "Home\n/ Series\n/ aurora-knight\nCouldn't load this card\nRetry",
       "name": "comments-error-en",
       "pixelColors": [],
@@ -847,7 +1331,12 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-error-en-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
@@ -866,6 +1355,58 @@
       "more": [],
       "confirm": [],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 865.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 853.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\nNo comments yet — be the first to chime in",
       "name": "comments-empty-en",
       "pixelColors": [
@@ -898,7 +1439,12 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-empty-en-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
@@ -932,6 +1478,58 @@
       ],
       "confirm": [],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 865.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 853.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-success-en",
       "pixelColors": [
@@ -989,7 +1587,12 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-success-en-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
@@ -1038,6 +1641,58 @@
         }
       ],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 62.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 74.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 62.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete\nDelete this comment?\nDelete\nCancel",
       "name": "comments-delete-confirm-en",
       "pixelColors": [
@@ -1095,14 +1750,19 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-confirm-en-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 167.09375,
+            "y": 216.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -1117,7 +1777,7 @@
           "label": "Show 2 more replies",
           "box": {
             "x": 41,
-            "y": 718.734375,
+            "y": 719.34375,
             "width": 293,
             "height": 44
           },
@@ -1144,7 +1804,59 @@
           "className": "miniapp-status-toast"
         }
       ],
-      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\nComment deleted\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\nDeleted. The list hasn't refreshed yet.",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 216.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 228.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 216.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "miniapp-status-toast",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\nDeleted. The list hasn't refreshed yet.",
       "name": "comments-delete-refresh-failed-en",
       "pixelColors": [
         {
@@ -1155,7 +1867,7 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 378,
+              "y": 476,
               "r": 82,
               "g": 82,
               "b": 82,
@@ -1163,7 +1875,7 @@
             },
             "fill": {
               "x": 161,
-              "y": 378,
+              "y": 476,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -1181,7 +1893,7 @@
           "pixel": {
             "center": {
               "x": 375,
-              "y": 1481,
+              "y": 1483,
               "r": 118,
               "g": 157,
               "b": 242,
@@ -1189,7 +1901,7 @@
             },
             "fill": {
               "x": 106,
-              "y": 1481,
+              "y": 1483,
               "r": 255,
               "g": 255,
               "b": 255,
@@ -1201,14 +1913,19 @@
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-refresh-failed-en-375.png"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 272.09375,
+            "y": 20.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -1217,26 +1934,78 @@
         }
       ],
       "buttonAssertFailures": [],
-      "more": [
+      "more": [],
+      "confirm": [],
+      "toast": [
         {
-          "sel": ".card-comment__more",
-          "label": "Show 2 more replies",
+          "sel": ".miniapp-status-toast",
+          "label": "Deleted. The list hasn't refreshed yet.",
           "box": {
-            "x": 41,
-            "y": 775.34375,
-            "width": 293,
-            "height": 44
+            "x": 16,
+            "y": 748,
+            "width": 343,
+            "height": 48
           },
-          "computedBg": "rgb(255, 255, 255)",
-          "computedFg": "rgb(37, 99, 235)",
+          "computedBg": "rgb(23, 23, 23)",
+          "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
-          "className": "card-comment__more"
+          "className": "miniapp-status-toast miniapp-status-toast--bottom"
         }
       ],
-      "confirm": [],
-      "toast": [],
-      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\n取消",
-      "name": "comments-report-sheet-en",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 20.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 32.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 20.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "miniapp-status-toast miniapp-status-toast--bottom",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 2，用来把表单顶到视口下方，便于滚动测量。评论内容 2，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 3，用来把表单顶到视口下方，便于滚动测量。评论内容 3，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 4，用来把表单顶到视口下方，便于滚动测量。评论内容 4，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 5，用来把表单顶到视口下方，便于滚动测量。评论内容 5，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 6，用来把表单顶到视口下方，便于滚动测量。评论内容 6，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 7，用来把表单顶到视口下方，便于滚动测量。评论内容 7，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 8，用来把表单顶到视口下方，便于滚动测量。评论内容 8，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 9，用来把表单顶到视口下方，便于滚动测量。评论内容 9，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 10，用来把表单顶到视口下方，便于滚动测量。评论内容 10，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 11，用来把表单顶到视口下方，便于滚动测量。评论内容 11，用来把表单顶到视口下方，便于滚动测量。\nReport\n@bob\n11/20/2026, 4:10:00 PM\n评论内容 12，用来把表单顶到视口下方，便于滚动测量。评论内容 12，用来把表单顶到视口下方，便于滚动测量。\nReport\nDeleted. The list hasn't refreshed yet.",
+      "name": "comments-delete-refresh-failed-scrolled-en",
       "pixelColors": [
         {
           "label": "Post comment",
@@ -1246,61 +2015,46 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 588,
-              "r": 32,
-              "g": 32,
-              "b": 32,
-              "hex": "#202020"
+              "y": 84,
+              "r": 82,
+              "g": 82,
+              "b": 82,
+              "hex": "#525252"
             },
             "fill": {
               "x": 161,
-              "y": 588,
-              "r": 98,
-              "g": 98,
-              "b": 98,
-              "hex": "#626262"
+              "y": 84,
+              "r": 245,
+              "g": 245,
+              "b": 245,
+              "hex": "#f5f5f5"
             }
           }
         }
       ],
-      "morePixels": [
-        {
-          "label": "Show 2 more replies",
-          "computedBg": "rgb(255, 255, 255)",
-          "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
-          "pixel": {
-            "center": {
-              "x": 375,
-              "y": 1595,
-              "r": 252,
-              "g": 252,
-              "b": 253,
-              "hex": "#fcfcfd"
-            },
-            "fill": {
-              "x": 106,
-              "y": 1595,
-              "r": 252,
-              "g": 252,
-              "b": 253,
-              "hex": "#fcfcfd"
-            }
-          }
-        }
-      ],
-      "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-report-sheet-en-375.png",
-      "actionSheet": "open"
+      "morePixels": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-delete-refresh-failed-scrolled-en-375.png",
+      "actionSheet": {
+        "ok": true,
+        "used": "card-detail-page taro-scroll-view__scroll-y",
+        "footerY": 20.09375,
+        "footerHeight": 44
+      }
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 272.09375,
+            "y": 69.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -1312,7 +2066,7 @@
           "state": "rest",
           "box": {
             "x": 58,
-            "y": 726.34375,
+            "y": 699.34375,
             "width": 210,
             "height": 44
           },
@@ -1327,7 +2081,7 @@
           "label": "Show 2 more replies",
           "box": {
             "x": 41,
-            "y": 1186.90625,
+            "y": 1159.90625,
             "width": 293,
             "height": 44
           },
@@ -1339,7 +2093,59 @@
       ],
       "confirm": [],
       "toast": [],
-      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nMore details\n0 / 500\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 69.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 81.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 69.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\nMore details\n4 / 500\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-report-form-en",
       "pixelColors": [
         {
@@ -1350,7 +2156,7 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 588,
+              "y": 182,
               "r": 82,
               "g": 82,
               "b": 82,
@@ -1358,7 +2164,7 @@
             },
             "fill": {
               "x": 161,
-              "y": 588,
+              "y": 182,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -1374,7 +2180,7 @@
           "pixel": {
             "center": {
               "x": 326,
-              "y": 1497,
+              "y": 1443,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -1382,7 +2188,7 @@
             },
             "fill": {
               "x": 140,
-              "y": 1497,
+              "y": 1443,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -1401,34 +2207,39 @@
             "center": {
               "x": 375,
               "y": 1623,
-              "r": 255,
-              "g": 255,
-              "b": 255,
-              "hex": "#ffffff"
+              "r": 212,
+              "g": 212,
+              "b": 212,
+              "hex": "#d4d4d4"
             },
             "fill": {
               "x": 106,
               "y": 1623,
-              "r": 255,
-              "g": 255,
-              "b": 255,
-              "hex": "#ffffff"
+              "r": 212,
+              "g": 212,
+              "b": 212,
+              "hex": "#d4d4d4"
             }
           }
         }
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-report-form-en-375.png",
-      "actionSheet": ".taro-actionsheet__cell[data-tap-index]"
+      "actionSheet": "radiogroup"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 272.09375,
+            "y": 69.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -1440,7 +2251,7 @@
           "state": "rest",
           "box": {
             "x": 58,
-            "y": 816.34375,
+            "y": 789.34375,
             "width": 259,
             "height": 44
           },
@@ -1455,7 +2266,7 @@
           "label": "Show 2 more replies",
           "box": {
             "x": 41,
-            "y": 1276.90625,
+            "y": 1249.90625,
             "width": 293,
             "height": 44
           },
@@ -1467,7 +2278,59 @@
       ],
       "confirm": [],
       "toast": [],
-      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nMore details\n0 / 500\nThis didn't pass review and wasn't published.\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 69.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 81.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 69.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\nMore details\n4 / 500\nThis didn't pass review and wasn't published.\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-report-blocked-en",
       "pixelColors": [
         {
@@ -1478,7 +2341,7 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 588,
+              "y": 182,
               "r": 82,
               "g": 82,
               "b": 82,
@@ -1486,7 +2349,7 @@
             },
             "fill": {
               "x": 161,
-              "y": 588,
+              "y": 182,
               "r": 245,
               "g": 245,
               "b": 245,
@@ -1503,18 +2366,18 @@
             "center": {
               "x": 375,
               "y": 1623,
-              "r": 255,
-              "g": 255,
-              "b": 255,
-              "hex": "#ffffff"
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
             },
             "fill": {
               "x": 140,
               "y": 1623,
-              "r": 255,
-              "g": 255,
-              "b": 255,
-              "hex": "#ffffff"
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
             }
           }
         }
@@ -1529,10 +2392,10 @@
             "center": {
               "x": 375,
               "y": 1623,
-              "r": 255,
-              "g": 255,
-              "b": 255,
-              "hex": "#ffffff"
+              "r": 37,
+              "g": 99,
+              "b": 235,
+              "hex": "#2563eb"
             },
             "fill": {
               "x": 106,
@@ -1546,10 +2409,15 @@
         }
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301d/shots/comments-report-blocked-en-375.png",
-      "actionSheet": ".taro-actionsheet__cell[data-tap-index]"
+      "actionSheet": "radiogroup"
     },
     {
-      "viewport": 375,
+      "viewport": {
+        "width": 375,
+        "height": 812,
+        "scrollX": 0,
+        "scrollY": 0
+      },
       "buttons": [
         {
           "label": "Post comment",
@@ -1583,6 +2451,58 @@
       ],
       "confirm": [],
       "toast": [],
+      "avoid": [
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "0 / 500\nPost comment",
+          "box": {
+            "x": 32,
+            "y": 103.09375,
+            "width": 311,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "comment-form__footer"
+        }
+      ],
+      "count": [
+        {
+          "sel": ".comment-form__count",
+          "label": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 115.5,
+            "width": 36.71875,
+            "height": 19.1875
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": null,
+          "className": "card-detail-page__meta comment-form__count"
+        }
+      ],
+      "submit": [
+        {
+          "sel": ".comment-form__footer .primary-button",
+          "label": "Post comment",
+          "box": {
+            "x": 68.71875,
+            "y": 103.09375,
+            "width": 274.28125,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ariaDisabled": "true",
+          "className": "primary-button primary-button--disabled"
+        }
+      ],
+      "toastPlacement": "",
+      "toastOverlapsSubmit": false,
+      "toastOverlapsCount": false,
+      "toastOverlapsAvoid": false,
       "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nLoading…\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
       "name": "comments-load-more-loading-en",
       "pixelColors": [
