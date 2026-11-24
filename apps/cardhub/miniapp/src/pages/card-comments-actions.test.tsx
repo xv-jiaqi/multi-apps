@@ -489,6 +489,44 @@ describe('report entry', () => {
     expect(document.activeElement).toBe(container.querySelector('.report-entry__trigger'));
   });
 
+  it('goes to login when create returns UNAUTHORIZED', async () => {
+    api.reportCreate.mockRejectedValue(trpcErr({ code: 'UNAUTHORIZED' }));
+    const { container } = await mountList();
+    act(() => {
+      (container.querySelector('.report-entry__trigger') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.report-entry__form')).not.toBeNull());
+    const submit = container.querySelector(
+      '.report-entry__form button.primary-button',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      submit.click();
+    });
+    await waitFor(() =>
+      expect(taro.navigateTo).toHaveBeenCalledWith({ url: '/pages/auth/login/index' }),
+    );
+  });
+
+  it('moves the selected reason with arrow keys inside the radiogroup', async () => {
+    const { container } = await mountList();
+    act(() => {
+      (container.querySelector('.report-entry__trigger') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('[role="radiogroup"]')).not.toBeNull());
+    const radios = () =>
+      Array.from(container.querySelectorAll('.report-entry__reason-option')) as HTMLButtonElement[];
+    expect(radios()[0]!.getAttribute('aria-checked')).toBe('true');
+    expect(radios()[0]!.tabIndex).toBe(0);
+    expect(radios()[1]!.tabIndex).toBe(-1);
+    act(() => {
+      fireEvent.keyDown(radios()[0]!, { key: 'ArrowDown' });
+    });
+    await waitFor(() => expect(radios()[1]!.getAttribute('aria-checked')).toBe('true'));
+    expect(radios()[0]!.tabIndex).toBe(-1);
+    expect(radios()[1]!.tabIndex).toBe(0);
+    expect(radios()[1]!.textContent).toBe('违法违规');
+  });
+
   it('uses ActionSheet on the native surface, then a read-only reason', async () => {
     taro.getEnv.mockReturnValue('WEAPP');
     const { container } = await mountList();

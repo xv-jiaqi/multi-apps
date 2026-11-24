@@ -153,3 +153,15 @@ taro-button-core.report-entry__reason-option,
   color: $color-brand-600;
   border-color: $color-brand-600;
 }
+
+.report-entry__form--docked,
+taro-view-core.report-entry__form--docked {
+  position: fixed;
+  right: $spacing-md;
+  bottom: $spacing-md;
+  left: $spacing-md;
+  z-index: 20;
+  max-height: 70vh;
+  overflow: auto;
+  box-sizing: border-box;
+}

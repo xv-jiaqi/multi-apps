@@ -1,74 +1,92 @@
-import { createElement, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { createElement, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Button } from '@tarojs/components';
 import { isWebEnv } from '../../lib/env';
 
 /**
- * Local focusable control for the report / card-comment surfaces in this PR.
- * Does not change `@repo/ui-mini` PrimaryButton or Link (#321 may patch those).
- * Taro H5's `taro-button-core` is often `tabIndex=-1`; on WEB we render a
- * native `<button tabIndex={0}>` so Tab / Enter / Space work.
+ * Local copy of the #321 / #322 `@repo/ui-mini` FocusableButton contract, for
+ * this PR only. After #321 merges we will `git merge origin/main`, delete this
+ * file, and import the shared helper.
+ *
+ * Taro rewrites call-site `ariaLabel` / `ariaChecked` to kebab-case. We pass
+ * native `aria-*`, `role`, `id`, and `style` through to the DOM. No global
+ * `.h5-focusable` class — #321 found `font: inherit` broke primary buttons.
  */
-export function FocusableButton({
-  className,
-  ariaLabel,
-  ariaDisabled,
-  ariaChecked,
-  role = 'button',
-  tabIndex = 0,
-  autoFocus,
-  onClick,
-  children,
-  ...dataAttrs
-}: {
+const CAMEL_TO_KEBAB: Record<string, string> = {
+  ariaPressed: 'aria-pressed',
+  ariaLabel: 'aria-label',
+  ariaChecked: 'aria-checked',
+  ariaDisabled: 'aria-disabled',
+  ariaExpanded: 'aria-expanded',
+  ariaControls: 'aria-controls',
+  ariaDescribedBy: 'aria-describedby',
+  ariaLabelledBy: 'aria-labelledby',
+};
+
+export function nativeAriaProps(rest: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of ['id', 'style', 'role', 'tabIndex']) {
+    if (rest[key] !== undefined) out[key] = rest[key];
+  }
+  for (const [key, value] of Object.entries(rest)) {
+    if (key.startsWith('data-') || key.startsWith('aria-')) out[key] = value;
+  }
+  for (const [camel, kebab] of Object.entries(CAMEL_TO_KEBAB)) {
+    if (out[kebab] === undefined && rest[camel] !== undefined) out[kebab] = rest[camel];
+  }
+  return out;
+}
+
+type FocusableButtonProps = {
   className?: string;
-  ariaLabel?: string;
-  ariaDisabled?: boolean;
-  ariaChecked?: boolean;
+  hoverClass?: string;
   role?: string;
   tabIndex?: number;
-  autoFocus?: boolean;
+  id?: string;
+  style?: CSSProperties;
+  ariaLabel?: string;
+  'aria-label'?: string;
+  ariaDisabled?: boolean | 'true' | 'false';
+  'aria-disabled'?: boolean | 'true' | 'false';
+  ariaChecked?: boolean | 'true' | 'false';
+  'aria-checked'?: boolean | 'true' | 'false';
   onClick?: () => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void;
   children?: ReactNode;
   [dataAttr: `data-${string}`]: string | undefined;
-}) {
-  const ref = useRef<HTMLElement | null>(null);
-  const blocked = Boolean(ariaDisabled);
+};
 
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.tabIndex = tabIndex;
-    if (autoFocus) el.focus();
-  });
+export function FocusableButton({
+  className,
+  hoverClass,
+  onClick,
+  onKeyDown: onKeyDownProp,
+  children,
+  ...rest
+}: FocusableButtonProps) {
+  const forwarded = nativeAriaProps(rest as Record<string, unknown>);
+  const blocked = forwarded['aria-disabled'] === true || forwarded['aria-disabled'] === 'true';
+  const tabIndex = (rest.tabIndex as number | undefined) ?? 0;
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (blocked) return;
-    if (event.key === 'Enter' || event.key === ' ') {
+    onKeyDownProp?.(event);
+    if (event.defaultPrevented || blocked) return;
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
       event.preventDefault();
       onClick?.();
     }
   };
 
   if (isWebEnv()) {
-    const extra: Record<string, string> = {};
-    for (const [key, value] of Object.entries(dataAttrs)) {
-      if (key.startsWith('data-') && value != null) extra[key] = String(value);
-    }
     return createElement(
       'button',
       {
         type: 'button',
         className,
-        tabIndex,
-        role,
-        'aria-label': ariaLabel,
-        'aria-disabled': blocked ? true : undefined,
-        'aria-checked': ariaChecked,
-        autoFocus,
-        ref,
+        tabIndex: blocked ? -1 : tabIndex,
+        ...forwarded,
+        'aria-disabled': blocked ? true : forwarded['aria-disabled'],
         onClick: blocked ? undefined : onClick,
         onKeyDown,
-        ...extra,
       },
       children,
     );
@@ -77,14 +95,59 @@ export function FocusableButton({
   return (
     <Button
       className={className}
-      hoverClass="none"
-      ariaRole={role}
-      ariaLabel={ariaLabel}
+      hoverClass={hoverClass ?? 'none'}
+      {...(forwarded as Record<string, unknown>)}
       onClick={blocked ? undefined : onClick}
     >
       {children}
     </Button>
   );
+}
+
+const HOLD_MS = [0, 16, 50, 100, 200, 400, 500];
+
+/**
+ * Focus, then retry for 500ms. Taro H5 often focuses the control and then
+ * blurs to BODY on the same tick (CH-301 §2 / §4). If focus is still on
+ * BODY within the hold window, put it back.
+ */
+export function focusWhenSettled(getEl: () => HTMLElement | null): () => void {
+  if (typeof document === 'undefined') return () => undefined;
+  let cancelled = false;
+  const started = Date.now();
+  const tryFocus = () => {
+    if (cancelled) return;
+    const el = getEl();
+    if (!el) return;
+    const active = document.activeElement;
+    if (active === el || (active && el.contains(active))) return;
+    const panel = el.closest('.card-comment__confirm, .report-entry__form');
+    if (panel && active && panel.contains(active)) return;
+    if (
+      active &&
+      active !== document.body &&
+      active !== document.documentElement &&
+      Date.now() - started > 80
+    ) {
+      return;
+    }
+    el.focus();
+  };
+  tryFocus();
+  const timers = HOLD_MS.map((ms) => window.setTimeout(tryFocus, ms));
+  const onFocusOut = () => {
+    if (cancelled || Date.now() - started > 500) return;
+    const active = document.activeElement;
+    if (active === document.body || active === document.documentElement || !active) {
+      tryFocus();
+    }
+  };
+  document.addEventListener('focusout', onFocusOut, true);
+  return () => {
+    cancelled = true;
+    timers.forEach((id) => window.clearTimeout(id));
+    document.removeEventListener('focusout', onFocusOut, true);
+  };
 }
 
 export function focusSelector(selector: string): void {

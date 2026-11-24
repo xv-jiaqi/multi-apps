@@ -12,11 +12,13 @@ export function StatusToast({
 }) {
   const placement = useStatusToastPlacement(notice, avoidSelector);
   if (!notice || !isWebEnv()) return null;
+  const shifted = typeof placement === 'object';
   return (
     <View
       key={notice.id}
       className={`miniapp-status-toast${placement === 'bottom' ? ' miniapp-status-toast--bottom' : ''}`}
       ariaRole="status"
+      style={shifted ? { top: `${placement.top}px`, bottom: 'auto' } : undefined}
     >
       <Text className="miniapp-status-toast__text">{notice.text}</Text>
     </View>

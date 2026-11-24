@@ -10,33 +10,69 @@ export const STATUS_TOAST_DURATION_MS = TOAST_MS;
 export type Rect = { x: number; y: number; width: number; height: number };
 
 export function rectsOverlap(a: Rect, b: Rect): boolean {
-  return !(
-    a.x + a.width <= b.x ||
-    b.x + b.width <= a.x ||
-    a.y + a.height <= b.y ||
-    b.y + b.height <= a.y
-  );
+  return overlapArea(a, b) > 0;
+}
+
+export function overlapArea(a: Rect, b: Rect): number {
+  const width = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+  const height = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+  return width > 0 && height > 0 ? width * height : 0;
+}
+
+export type StatusToastPlacement = 'top' | 'bottom' | { top: number };
+
+function slotRect(y: number, toastSize: { width: number; height: number; inset: number }): Rect {
+  return {
+    x: toastSize.inset,
+    y,
+    width: toastSize.width,
+    height: toastSize.height,
+  };
+}
+
+function totalOverlap(slot: Rect, avoid: readonly Rect[]): number {
+  return avoid.reduce((sum, box) => sum + overlapArea(slot, box), 0);
 }
 
 /**
- * Prefer the top of the viewport; if that would cover a control we must
- * keep visible (submit button, character count), place the toast at the
- * bottom instead (CH-301 §2.4 / WCAG 2.4.11).
+ * Prefer the top of the viewport. Check both the top and bottom slots
+ * against controls we must keep visible (submit, count, report form,
+ * report/delete buttons). If both default slots would overlap, try a
+ * mid-viewport slot that covers no avoid box (CH-301 §2.4 / WCAG 2.4.11).
  */
 export function pickStatusToastPlacement(args: {
   viewport: { width: number; height: number };
   toastSize: { width: number; height: number; inset: number };
   avoid: readonly Rect[];
-}): 'top' | 'bottom' {
-  const { toastSize, avoid } = args;
-  const top: Rect = {
-    x: toastSize.inset,
-    y: toastSize.inset,
-    width: toastSize.width,
-    height: toastSize.height,
-  };
-  if (avoid.some((box) => rectsOverlap(top, box))) return 'bottom';
-  return 'top';
+}): StatusToastPlacement {
+  const { viewport, toastSize, avoid } = args;
+  const topY = toastSize.inset;
+  const bottomY = viewport.height - toastSize.inset - toastSize.height;
+  const top = slotRect(topY, toastSize);
+  const bottom = slotRect(bottomY, toastSize);
+  const topArea = totalOverlap(top, avoid);
+  const bottomArea = totalOverlap(bottom, avoid);
+  if (topArea === 0) return 'top';
+  if (bottomArea === 0) return 'bottom';
+
+  const topHits = avoid.filter((box) => overlapArea(top, box) > 0);
+  const belowTop = Math.max(...topHits.map((box) => box.y + box.height)) + toastSize.inset;
+  if (belowTop + toastSize.height + toastSize.inset <= viewport.height) {
+    if (totalOverlap(slotRect(belowTop, toastSize), avoid) === 0) {
+      return { top: belowTop };
+    }
+  }
+
+  const bottomHits = avoid.filter((box) => overlapArea(bottom, box) > 0);
+  const aboveBottom =
+    Math.min(...bottomHits.map((box) => box.y)) - toastSize.inset - toastSize.height;
+  if (aboveBottom >= toastSize.inset) {
+    if (totalOverlap(slotRect(aboveBottom, toastSize), avoid) === 0) {
+      return { top: aboveBottom };
+    }
+  }
+
+  return bottomArea < topArea ? 'bottom' : 'top';
 }
 
 export { isWebEnv };
@@ -79,8 +115,8 @@ const DEFAULT_TOAST_HEIGHT = 48;
 export function useStatusToastPlacement(
   notice: Notice<{ text: string }> | null,
   avoidSelector: string = DEFAULT_AVOID,
-): 'top' | 'bottom' {
-  const [placement, setPlacement] = useState<'top' | 'bottom'>('top');
+): StatusToastPlacement {
+  const [placement, setPlacement] = useState<StatusToastPlacement>('top');
 
   useLayoutEffect(() => {
     if (!notice || !isWebEnv()) {
@@ -111,9 +147,12 @@ export function useStatusToastPlacement(
     update();
     window.addEventListener('scroll', update, true);
     window.addEventListener('resize', update);
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, { childList: true, subtree: true });
     return () => {
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
+      observer.disconnect();
     };
   }, [notice, avoidSelector]);
 

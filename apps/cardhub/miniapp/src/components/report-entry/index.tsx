@@ -1,4 +1,5 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Text, Textarea, View } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import {
@@ -10,12 +11,12 @@ import {
 } from '@repo/shared';
 import { trpc } from '../../lib/trpc';
 import { useStores } from '../../stores/root-store';
-import { goToLogin } from '../../lib/auth-redirect';
+import { goLoginIfUnauthorized, goToLogin } from '../../lib/auth-redirect';
 import { isWebEnv } from '../../lib/env';
 import { readTrpcErrorCodes } from '../../lib/load-error';
 import { nextNoticeId, type Notice } from '../../lib/notice';
 import { usePendingSubmit } from '../../lib/use-pending-submit';
-import { FocusableButton, focusSelector } from '../focusable-button';
+import { FocusableButton, focusSelector, focusWhenSettled } from '../focusable-button';
 import './index.scss';
 
 const REASON_IDS = ['spam', 'illegal', 'harassment', 'misinfo', 'other'] as const;
@@ -24,6 +25,7 @@ export type ReportTargetType = ReportCreateInput['targetType'];
 
 const OTHER_MIN = 4;
 const REASON_MAX = 500;
+const FORM_ROOT_ID = 'report-form-root';
 
 export interface ReportEntryProps {
   targetType: ReportTargetType;
@@ -32,10 +34,37 @@ export interface ReportEntryProps {
   onSuccess?: () => void;
 }
 
+let activeCloser: (() => void) | null = null;
+
+function nextReason(current: ReportReasonId, key: string): ReportReasonId | null {
+  const index = REASON_IDS.indexOf(current);
+  if (key === 'ArrowDown' || key === 'ArrowRight') {
+    return REASON_IDS[(index + 1) % REASON_IDS.length]!;
+  }
+  if (key === 'ArrowUp' || key === 'ArrowLeft') {
+    return REASON_IDS[(index - 1 + REASON_IDS.length) % REASON_IDS.length]!;
+  }
+  return null;
+}
+
+function bindInnerLabel(formId: string, detailLabelId: string): void {
+  if (typeof document === 'undefined') return;
+  const root = document.getElementById(formId);
+  if (!root) return;
+  const label = document.getElementById(detailLabelId);
+  if (label && !label.id) label.id = detailLabelId;
+  const nodes = root.querySelectorAll('textarea, taro-textarea-core, .report-entry__textarea');
+  nodes.forEach((node) => {
+    node.setAttribute('aria-labelledby', detailLabelId);
+    const inner = node instanceof HTMLTextAreaElement ? node : node.querySelector('textarea');
+    if (inner) inner.setAttribute('aria-labelledby', detailLabelId);
+  });
+}
+
 /**
- * CH-301 v1.8 §4 report entry. Native: ActionSheet then an in-page form with
- * the reason read-only. H5: skip ActionSheet, open the in-page form with a
- * radiogroup. No new page and no extra stack entry.
+ * CH-301 v1.9 §4. Native: ActionSheet then an in-page form with the reason
+ * read-only. H5: skip ActionSheet, open a form fixed to the bottom of the
+ * current page, reasons in a radiogroup. No new page and no extra stack entry.
  */
 export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProps) {
   const { locale, session } = useStores();
@@ -48,8 +77,10 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
   const triggerSelector = `[data-report-trigger="${targetId}"]`;
   const formId = `report-form-${targetId}`;
   const detailLabelId = `report-detail-${targetId}`;
+  const openedRef = useRef(false);
 
   const openForm = (reasonId: ReportReasonId) => {
+    activeCloser?.();
     setForm({ reasonId });
     setDetail('');
     setError(null);
@@ -80,29 +111,50 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
     setForm(null);
     setDetail('');
     setError(null);
+    if (activeCloser) activeCloser = null;
     focusSelector(triggerSelector);
   };
 
   useLayoutEffect(() => {
-    if (!form || typeof document === 'undefined') return;
-    const root = document.getElementById(formId);
-    const target = root?.querySelector<HTMLElement>(
-      web ? '.report-entry__reason-option' : 'textarea, .report-entry__textarea, button',
-    );
-    target?.focus();
-    if (typeof root?.scrollIntoView === 'function') root.scrollIntoView({ block: 'nearest' });
+    if (!form) {
+      openedRef.current = false;
+      return;
+    }
+    const close = () => {
+      if (submit.pending) return;
+      setForm(null);
+      setDetail('');
+      setError(null);
+    };
+    activeCloser = close;
+    return () => {
+      if (activeCloser === close) activeCloser = null;
+    };
+  }, [form, submit.pending]);
+
+  useLayoutEffect(() => {
+    if (!form) return;
+    if (openedRef.current) return;
+    openedRef.current = true;
+    const stop = focusWhenSettled(() => {
+      const root = document.getElementById(formId);
+      if (!root) return null;
+      if (web) {
+        return root.querySelector<HTMLElement>(
+          '.report-entry__reason-option[aria-checked="true"], [role="radio"][aria-checked="true"]',
+        );
+      }
+      return root.querySelector<HTMLElement>('textarea, .report-entry__textarea, button');
+    });
+    return stop;
   }, [form, formId, web]);
 
   useLayoutEffect(() => {
-    if (!form || typeof document === 'undefined') return;
-    const label = document.getElementById(detailLabelId);
-    const root = document.getElementById(formId);
-    const area = root?.querySelector('textarea, taro-textarea-core, .report-entry__textarea');
-    if (label && area) {
-      if (!label.id) label.id = detailLabelId;
-      area.setAttribute('aria-labelledby', detailLabelId);
-    }
-  }, [form, formId, detailLabelId]);
+    if (!form) return;
+    bindInnerLabel(formId, detailLabelId);
+    const timer = window.setTimeout(() => bindInnerLabel(formId, detailLabelId), 50);
+    return () => window.clearTimeout(timer);
+  }, [form, formId, detailLabelId, detail]);
 
   useLayoutEffect(() => {
     if (!form || typeof document === 'undefined') return;
@@ -144,9 +196,13 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
       await trpc.reports.create.mutate(parsed.data);
       setForm(null);
       setDetail('');
+      if (activeCloser) activeCloser = null;
       onSuccess?.();
       focusSelector(triggerSelector);
     } catch (err) {
+      if (goLoginIfUnauthorized(err)) {
+        return;
+      }
       const codes = readTrpcErrorCodes(err);
       const app = codes.appCode ?? codes.code;
       const text =
@@ -165,89 +221,122 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
   const used = detail ? preset.length + 1 + detail.length : preset.length;
   const extraMax = Math.max(0, REASON_MAX - preset.length - 1);
 
+  const onReasonKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (!form) return;
+    const next = nextReason(form.reasonId, event.key);
+    if (!next) return;
+    event.preventDefault();
+    setForm({ reasonId: next });
+    window.setTimeout(() => {
+      const root = document.getElementById(formId);
+      root
+        ?.querySelector<HTMLElement>(
+          `.report-entry__reason-option[aria-checked="true"], [role="radio"][aria-checked="true"]`,
+        )
+        ?.focus();
+    }, 0);
+  };
+
+  const formNode = form ? (
+    <View
+      id={formId}
+      className={`report-entry__form${web ? ' report-entry__form--docked' : ''}`}
+      data-toast-avoid="true"
+    >
+      <Text className="report-entry__title">{tt('report.title')}</Text>
+      <Text className="report-entry__label">{tt('report.reasonLabel')}</Text>
+      {web ? (
+        <View
+          className="report-entry__reasons"
+          ariaRole="radiogroup"
+          aria-label={tt('report.reasonLabel')}
+        >
+          {REASON_IDS.map((id) => (
+            <FocusableButton
+              key={id}
+              className={`report-entry__reason-option${
+                form.reasonId === id ? ' report-entry__reason-option--selected' : ''
+              }`}
+              role="radio"
+              tabIndex={form.reasonId === id ? 0 : -1}
+              aria-checked={form.reasonId === id}
+              aria-label={tt(`report.reason.${id}`)}
+              onClick={() => setForm({ reasonId: id })}
+              onKeyDown={onReasonKeyDown}
+            >
+              {tt(`report.reason.${id}`)}
+            </FocusableButton>
+          ))}
+        </View>
+      ) : (
+        <View className="report-entry__reason">
+          <Text className="report-entry__reason-text">{tt(`report.reason.${form.reasonId}`)}</Text>
+        </View>
+      )}
+      <Text id={detailLabelId} className="report-entry__label">
+        {tt('report.detailLabel')}
+      </Text>
+      <Textarea
+        className={`report-entry__textarea${error ? ' report-entry__textarea--error' : ''}`}
+        value={detail}
+        maxlength={extraMax}
+        disabled={submit.pending ? true : undefined}
+        placeholder={tt('report.reasonPlaceholder')}
+        onInput={(event) => setDetail(event.detail.value)}
+        {...({
+          'aria-labelledby': detailLabelId,
+          'data-toast-avoid': 'true',
+          nativeProps: { 'aria-labelledby': detailLabelId },
+        } as Record<string, unknown>)}
+      />
+      <Text className="report-entry__count">
+        {used} / {REASON_MAX}
+      </Text>
+      {error ? (
+        <View key={error.id} className="report-entry__error" ariaRole="alert">
+          <Text className="report-entry__error-text">{error.text}</Text>
+        </View>
+      ) : null}
+      <View className="report-entry__footer" data-toast-avoid>
+        <FocusableButton
+          className={`primary-button${submit.pending ? ' primary-button--disabled' : ''}`}
+          aria-label={submit.pending ? tt('report.submitting') : tt('report.submit')}
+          aria-disabled={submit.pending}
+          onClick={() => void send()}
+        >
+          {submit.pending ? tt('report.submitting') : tt('report.submit')}
+        </FocusableButton>
+        <FocusableButton
+          className={`report-entry__cancel${submit.pending ? ' report-entry__cancel--disabled' : ''}`}
+          aria-label={tt('report.cancel')}
+          aria-disabled={submit.pending}
+          onClick={closeForm}
+        >
+          {tt('report.cancel')}
+        </FocusableButton>
+      </View>
+    </View>
+  ) : null;
+
+  const docked =
+    web && formNode && typeof document !== 'undefined'
+      ? createPortal(formNode, document.getElementById(FORM_ROOT_ID) ?? document.body)
+      : formNode;
+
   return (
     <View className="report-entry">
       <FocusableButton
         className="report-entry__trigger"
-        ariaLabel={tt('report.button')}
+        aria-label={tt('report.button')}
         data-report-trigger={targetId}
+        data-toast-avoid="true"
         onClick={open}
       >
         {tt('report.button')}
       </FocusableButton>
-      {form ? (
-        <View id={formId} className="report-entry__form">
-          <Text className="report-entry__title">{tt('report.title')}</Text>
-          <Text className="report-entry__label">{tt('report.reasonLabel')}</Text>
-          {web ? (
-            <View
-              className="report-entry__reasons"
-              ariaRole="radiogroup"
-              ariaLabel={tt('report.reasonLabel')}
-            >
-              {REASON_IDS.map((id) => (
-                <FocusableButton
-                  key={id}
-                  className={`report-entry__reason-option${
-                    form.reasonId === id ? ' report-entry__reason-option--selected' : ''
-                  }`}
-                  role="radio"
-                  ariaChecked={form.reasonId === id}
-                  ariaLabel={tt(`report.reason.${id}`)}
-                  onClick={() => setForm({ reasonId: id })}
-                >
-                  {tt(`report.reason.${id}`)}
-                </FocusableButton>
-              ))}
-            </View>
-          ) : (
-            <View className="report-entry__reason">
-              <Text className="report-entry__reason-text">
-                {tt(`report.reason.${form.reasonId}`)}
-              </Text>
-            </View>
-          )}
-          <Text id={detailLabelId} className="report-entry__label">
-            {tt('report.detailLabel')}
-          </Text>
-          <Textarea
-            className={`report-entry__textarea${error ? ' report-entry__textarea--error' : ''}`}
-            value={detail}
-            maxlength={extraMax}
-            disabled={submit.pending ? true : undefined}
-            placeholder={tt('report.reasonPlaceholder')}
-            ariaLabel={tt('report.detailLabel')}
-            {...({ 'aria-labelledby': detailLabelId } as Record<string, string>)}
-            onInput={(event) => setDetail(event.detail.value)}
-          />
-          <Text className="report-entry__count">
-            {used} / {REASON_MAX}
-          </Text>
-          {error ? (
-            <View key={error.id} className="report-entry__error" ariaRole="alert">
-              <Text className="report-entry__error-text">{error.text}</Text>
-            </View>
-          ) : null}
-          <View className="report-entry__footer">
-            <FocusableButton
-              className={`primary-button${submit.pending ? ' primary-button--disabled' : ''}`}
-              ariaLabel={submit.pending ? tt('report.submitting') : tt('report.submit')}
-              ariaDisabled={submit.pending}
-              onClick={() => void send()}
-            >
-              {submit.pending ? tt('report.submitting') : tt('report.submit')}
-            </FocusableButton>
-            <FocusableButton
-              className={`report-entry__cancel${submit.pending ? ' report-entry__cancel--disabled' : ''}`}
-              ariaLabel={tt('report.cancel')}
-              ariaDisabled={submit.pending}
-              onClick={closeForm}
-            >
-              {tt('report.cancel')}
-            </FocusableButton>
-          </View>
-        </View>
-      ) : null}
+      {docked}
     </View>
   );
 }
+
+export { FORM_ROOT_ID };

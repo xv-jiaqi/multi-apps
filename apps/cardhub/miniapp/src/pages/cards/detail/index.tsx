@@ -21,6 +21,7 @@ import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useBlock } from '../../../lib/use-block';
 import { ArtworkMini } from '../../../components/artwork-mini';
 import { CardCommentsList, NoticeBanner } from '../../../components/card-comments';
+import { FORM_ROOT_ID } from '../../../components/report-entry';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import { StatusToast } from '../../../components/status-toast';
 import { useStatusToast } from '../../../lib/status-toast';
@@ -294,6 +295,7 @@ export default observer(function CardDetailPage() {
             </SectionCard>
           </View>
         )}
+        <View id={FORM_ROOT_ID} />
         <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>

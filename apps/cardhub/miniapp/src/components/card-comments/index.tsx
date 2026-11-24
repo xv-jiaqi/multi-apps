@@ -10,7 +10,7 @@ import { readTrpcErrorCodes } from '../../lib/load-error';
 import { nextNoticeId, type Notice } from '../../lib/notice';
 import { ErrorBoxMini } from '../error-box-mini';
 import { ReportEntry } from '../report-entry';
-import { FocusableButton, focusSelector } from '../focusable-button';
+import { FocusableButton, focusSelector, focusWhenSettled } from '../focusable-button';
 import './index.scss';
 
 export type CardComment = Awaited<ReturnType<typeof trpc.comments.listForCard.query>>[number];
@@ -45,7 +45,7 @@ export interface CardCommentsListProps {
 
 export function CardCommentsList({ comments, hiddenIds, onHide, onNotice }: CardCommentsListProps) {
   return (
-    <View>
+    <View data-comments-heading tabIndex={-1}>
       {comments
         .filter((comment) => !hiddenIds.has(comment.id))
         .map((comment) => (
@@ -141,17 +141,19 @@ function CommentThread({
 
   useLayoutEffect(() => {
     if (!confirm || typeof document === 'undefined') return;
-    const first = document.querySelector<HTMLElement>(
-      `.card-comment__confirm [data-confirm-action="delete"]`,
+    const stop = focusWhenSettled(() =>
+      document.querySelector<HTMLElement>(`.card-comment__confirm [data-confirm-action="delete"]`),
     );
-    first?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || deleting.pending) return;
       event.preventDefault();
       cancelConfirm();
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      stop();
+      document.removeEventListener('keydown', onKey);
+    };
   }, [confirm, deleting.pending]);
 
   const runDelete = async () => {
@@ -163,9 +165,18 @@ function CommentThread({
           ? tt('comment.deletedWithReplies', { count: confirm.replyCount })
           : tt('card.detail.commentDeleted');
     const finishHide = async () => {
-      const result = await onHide(confirm.id);
+      const hiddenId = confirm.id;
+      const result = await onHide(hiddenId);
       if (result !== 'stale') onNotice('success', successText);
       setConfirm(null);
+      const next = () => {
+        const row = document.querySelector<HTMLElement>(
+          `.card-comment [data-delete-trigger]:not([data-delete-trigger="${hiddenId}"]), .card-comment [data-report-trigger]`,
+        );
+        if (row) return row;
+        return document.querySelector<HTMLElement>('[data-comments-heading]');
+      };
+      focusWhenSettled(next);
     };
     try {
       await trpc.comments.delete.mutate({ id: confirm.id });
@@ -220,8 +231,9 @@ function CommentThread({
         {canDeleteComment ? (
           <FocusableButton
             className="card-comment__action"
-            ariaLabel={tt('card.detail.commentDeleteAria', { user: comment.user.username })}
+            aria-label={tt('card.detail.commentDeleteAria', { user: comment.user.username })}
             data-delete-trigger={comment.id}
+            data-toast-avoid="true"
             onClick={() =>
               confirmDelete({
                 id: comment.id,
@@ -287,8 +299,11 @@ function CommentThread({
                   {canDeleteReply ? (
                     <FocusableButton
                       className="card-comment__action"
-                      ariaLabel={tt('card.detail.commentDeleteAria', { user: reply.user.username })}
+                      aria-label={tt('card.detail.commentDeleteAria', {
+                        user: reply.user.username,
+                      })}
                       data-delete-trigger={reply.id}
+                      data-toast-avoid="true"
                       onClick={() =>
                         confirmDelete({
                           id: reply.id,
@@ -325,7 +340,7 @@ function CommentThread({
       {cursor ? (
         <FocusableButton
           className={`card-comment__more${moreLoading ? ' card-comment__more--disabled' : ''}`}
-          ariaDisabled={moreLoading}
+          aria-disabled={moreLoading}
           onClick={() => void loadMore()}
         >
           {moreLoading ? tt('state.loading') : tt('comment.reply.showMore', { count: remaining })}
@@ -365,8 +380,8 @@ function ConfirmBar({
       <View className="card-comment__confirm-actions">
         <FocusableButton
           className={`card-comment__action${pending ? ' card-comment__action--disabled' : ''}`}
-          ariaLabel={pending ? tt('card.detail.commentDeleting') : tt('card.detail.commentDelete')}
-          ariaDisabled={pending}
+          aria-label={pending ? tt('card.detail.commentDeleting') : tt('card.detail.commentDelete')}
+          aria-disabled={pending}
           data-confirm-action="delete"
           onClick={onConfirm}
         >
@@ -374,8 +389,8 @@ function ConfirmBar({
         </FocusableButton>
         <FocusableButton
           className={`card-comment__action${pending ? ' card-comment__action--disabled' : ''}`}
-          ariaLabel={tt('card.detail.commentDeleteCancel')}
-          ariaDisabled={pending || !onCancel}
+          aria-label={tt('card.detail.commentDeleteCancel')}
+          aria-disabled={pending || !onCancel}
           data-confirm-action="cancel"
           onClick={onCancel}
         >
