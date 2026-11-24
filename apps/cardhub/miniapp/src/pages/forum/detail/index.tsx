@@ -225,13 +225,17 @@ export default observer(function ForumDetailPage() {
 
             {session.isAuthenticated ? (
               <View className="forum-page__header">
-                <Text className="forum-section-title">{tt('forum.detail.replyLabel')}</Text>
+                <Text id="forum-detail-reply-label" className="forum-section-title">
+                  {tt('forum.detail.replyLabel')}
+                </Text>
                 <Textarea
                   className="forum-form__input"
                   value={replyBody}
                   placeholder={tt('forum.detail.replyPlaceholder')}
                   maxlength={5000}
                   disabled={submit.pending ? true : undefined}
+                  ariaLabel={tt('forum.detail.replyLabel')}
+                  nativeProps={{ 'aria-labelledby': 'forum-detail-reply-label' }}
                   onInput={(event) => setReplyBody(event.detail.value)}
                 />
                 {replyError ? (

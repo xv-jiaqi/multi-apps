@@ -74,11 +74,13 @@ taro-text.ui-mini-field__label {
 
 
 // CH-301 §5 v1.8: H5 uses a real <button>/<a> so Tab can focus it.
-// Reset UA chrome; visual styles stay on the existing component classes.
+// Do not use a `button` tag selector: Taro H5 compiles it to
+// `taro-button-core`, which does not match the native <button>.
+// Do not set `font: inherit` here — it has the same specificity as
+// `.primary-button` and would override the 30rpx token size.
 .h5-focusable {
   appearance: none;
   margin: 0;
-  font: inherit;
   cursor: pointer;
 }
 
@@ -86,12 +88,14 @@ taro-text.ui-mini-field__label {
   cursor: default;
 }
 
+.h5-focusable.primary-button {
+  box-sizing: border-box;
+  width: 100%;
+  border: none;
+}
+
 .h5-focusable-link {
   color: inherit;
   text-decoration: none;
   cursor: pointer;
-}
-
-button.primary-button {
-  border: none;
 }

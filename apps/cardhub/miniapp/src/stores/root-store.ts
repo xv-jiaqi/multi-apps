@@ -6,6 +6,7 @@ import {
   type LocaleStorageDriver,
   type SessionStorageDriver,
 } from '@repo/stores';
+import { bindListSessionsToSession } from '../lib/list-session';
 
 const SESSION_KEY = 'cardhub:session';
 const LOCALE_KEY = 'cardhub:locale';
@@ -75,6 +76,10 @@ const taroLocaleStorageDriver: LocaleStorageDriver = {
 export class RootStore {
   readonly locale = new LocaleStore(taroLocaleStorageDriver);
   readonly session = new SessionStore(taroSessionStorageDriver);
+
+  constructor() {
+    bindListSessionsToSession(this.session);
+  }
 }
 
 export const rootStore = new RootStore();

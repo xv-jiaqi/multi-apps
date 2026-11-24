@@ -50,9 +50,11 @@ export default observer(function ForumNewPage() {
       return;
     }
     if (!submit.begin()) return;
+    let leaveLocked = false;
     try {
       const created = await trpc.forum.topics.create.mutate(parsed.data);
       markListNeedsRefresh('forum');
+      leaveLocked = true;
       if (!isPublicSafetyStatus(created.safetyStatus)) {
         toast.show(tt(SUBMITTED_FOR_REVIEW_KEY), { persistAcrossPages: true });
         leaveToTabPage('/pages/forum/list/index');
@@ -72,7 +74,7 @@ export default observer(function ForumNewPage() {
         }),
       );
     } finally {
-      submit.end();
+      if (!leaveLocked) submit.end();
     }
   };
 

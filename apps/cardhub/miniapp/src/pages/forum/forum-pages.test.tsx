@@ -69,6 +69,7 @@ const stores = vi.hoisted(() => ({
   session: {
     token: 'session-token',
     isAuthenticated: true,
+    user: { id: 'alice', username: 'alice' } as { id: string; username: string } | null,
   },
 }));
 
@@ -145,10 +146,14 @@ afterEach(() => {
   lifecycle.didShow = undefined;
   lifecycle.slug = 'topic-1';
   stores.session.isAuthenticated = true;
+  stores.session.user = { id: 'alice', username: 'alice' };
+  stores.session.token = 'session-token';
 });
 
 beforeEach(() => {
   stores.session.isAuthenticated = true;
+  stores.session.user = { id: 'alice', username: 'alice' };
+  stores.session.token = 'session-token';
   api.listTopics.mockReset();
   api.topicBySlug.mockReset();
   api.listReplies.mockReset();
@@ -554,5 +559,107 @@ describe('forum compose accessibility and list session', () => {
     await showList();
     await screen.findByText('话题 4');
     expect(api.listTopics).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('forum list account switch', () => {
+  it("does not reuse the previous user's pending topics after an account switch", async () => {
+    api.listTopics.mockResolvedValueOnce({
+      items: [topic(1, 'review')],
+      nextCursor: null,
+    });
+    const first = await showList();
+    await screen.findByText('话题 1');
+    expect(screen.getByText('审核中')).toBeTruthy();
+    expect(api.listTopics).toHaveBeenCalledTimes(1);
+    first.unmount();
+
+    stores.session.user = { id: 'bob', username: 'bob' };
+    api.listTopics.mockResolvedValueOnce({
+      items: [topic(8)],
+      nextCursor: null,
+    });
+    await showList();
+    await screen.findByText('话题 8');
+    expect(screen.queryByText('话题 1')).toBeNull();
+    expect(api.listTopics).toHaveBeenCalledTimes(2);
+  });
+
+  it('refetches and drops the cached list after sign-out', async () => {
+    api.listTopics.mockResolvedValueOnce({
+      items: [topic(1, 'review')],
+      nextCursor: null,
+    });
+    const first = await showList();
+    await screen.findByText('话题 1');
+    first.unmount();
+
+    stores.session.isAuthenticated = false;
+    stores.session.user = null;
+    api.listTopics.mockResolvedValueOnce({
+      items: [topic(3)],
+      nextCursor: null,
+    });
+    await showList();
+    await screen.findByText('话题 3');
+    expect(screen.queryByText('话题 1')).toBeNull();
+    expect(api.listTopics).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('forum compose submit lock and reply label', () => {
+  async function fillAndSubmitTopic() {
+    render(<ForumNewPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    fireEvent.change(screen.getByPlaceholderText('一句话概括你想讨论的内容'), {
+      target: { value: '新话题标题' },
+    });
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '新话题正文内容' } });
+    const submit = document.querySelector('button.primary-button') as HTMLButtonElement;
+    await act(async () => {
+      submit.click();
+    });
+    return submit;
+  }
+
+  it('keeps the compose button locked after a successful unchecked create so a second click does not post again', async () => {
+    api.createTopic.mockResolvedValue({ slug: 'new-topic', safetyStatus: 'unchecked' });
+    const submit = await fillAndSubmitTopic();
+    await waitFor(() => expect(api.createTopic).toHaveBeenCalledTimes(1));
+    expect(submit.disabled || submit.getAttribute('aria-disabled') === 'true').toBe(true);
+    await act(async () => {
+      submit.click();
+    });
+    expect(api.createTopic).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the compose button locked after a successful pass create', async () => {
+    api.createTopic.mockResolvedValue({ slug: 'new-topic', safetyStatus: 'pass' });
+    const submit = await fillAndSubmitTopic();
+    await waitFor(() => expect(api.createTopic).toHaveBeenCalledTimes(1));
+    expect(submit.disabled || submit.getAttribute('aria-disabled') === 'true').toBe(true);
+    await act(async () => {
+      submit.click();
+    });
+    expect(api.createTopic).toHaveBeenCalledTimes(1);
+  });
+
+  it('associates the reply textarea with the visible reply label', async () => {
+    api.topicBySlug.mockResolvedValueOnce(detail());
+    render(<ForumDetailPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    await screen.findByText('话题 1');
+    const label = document.getElementById('forum-detail-reply-label');
+    expect(label?.textContent).toMatch(/回复|回帖|Reply/i);
+    const textarea = screen.getByPlaceholderText('说点什么…');
+    expect(
+      textarea.getAttribute('aria-labelledby') === 'forum-detail-reply-label' ||
+        Boolean(textarea.getAttribute('aria-label')),
+    ).toBe(true);
   });
 });

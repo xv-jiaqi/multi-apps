@@ -23,7 +23,12 @@ import { ErrorBoxMini } from '../../../components/error-box-mini';
 import { StatusToast } from '../../../components/status-toast';
 import { consumeListNeedsRefresh } from '../../../lib/list-refresh';
 import { useScrollRestore } from '../../../lib/scroll-restore';
-import { forgetListSession, readListSession, rememberListSession } from '../../../lib/list-session';
+import {
+  forgetListSession,
+  listAuthKey,
+  readListSession,
+  rememberListSession,
+} from '../../../lib/list-session';
 import { useStatusToast } from '../../../lib/status-toast';
 import './index.scss';
 
@@ -35,7 +40,8 @@ const PAGE_SIZE = 20;
 export default observer(function ForumListPage() {
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
-  const cached = readListSession<TopicListPage, TopicListItem>('forum', session.isAuthenticated);
+  const authKey = listAuthKey(session);
+  const cached = readListSession<TopicListPage, TopicListItem>('forum', authKey);
 
   const { state, load } = useBlock<TopicListPage>(
     () => trpc.forum.topics.list.query({ surface: 'miniapp', limit: PAGE_SIZE }),
@@ -45,7 +51,7 @@ export default observer(function ForumListPage() {
   const toast = useStatusToast();
   const scroll = useScrollRestore('.forum-page', 'forum');
   const firstShow = useRef(true);
-  const lastAuth = useRef(session.isAuthenticated);
+  const lastAuth = useRef(authKey);
   const dataRef = useRef(state.data);
   dataRef.current = state.data;
 
@@ -65,8 +71,8 @@ export default observer(function ForumListPage() {
     applyTabBarLabels();
     void Taro.setNavigationBarTitle({ title: tt('forum.list.title') });
     toast.consumeQueued();
-    const authChanged = lastAuth.current !== session.isAuthenticated;
-    lastAuth.current = session.isAuthenticated;
+    const authChanged = lastAuth.current !== authKey;
+    lastAuth.current = authKey;
     const afterSubmit = consumeListNeedsRefresh('forum');
     if (firstShow.current) {
       firstShow.current = false;
@@ -91,16 +97,9 @@ export default observer(function ForumListPage() {
       extra: more.extra,
       moreCursor: more.moreCursor,
       scrollTop: scroll.scrollTop,
-      auth: session.isAuthenticated,
+      auth: authKey,
     });
-  }, [
-    state.data,
-    state.loading,
-    more.extra,
-    more.moreCursor,
-    scroll.scrollTop,
-    session.isAuthenticated,
-  ]);
+  }, [state.data, state.loading, more.extra, more.moreCursor, scroll.scrollTop, authKey]);
 
   usePullDownRefresh(() => {
     void Promise.resolve(resetAndLoad()).finally(() => {

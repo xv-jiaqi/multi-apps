@@ -6,6 +6,13 @@ import { activateOnEnterOrSpace, isMiniappWebEnv } from './focusable-button';
 
 export type LinkMode = 'navigate' | 'redirect' | 'switchTab' | 'back';
 
+/** Taro H5 uses a hash router; a raw `/pages/...` href 404s in a new tab. */
+export function hashHref(to?: string): string {
+  if (!to) return '#';
+  if (to.startsWith('#')) return to;
+  return `#${to.startsWith('/') ? to : `/${to}`}`;
+}
+
 export interface LinkProps {
   to?: string;
   mode?: LinkMode;
@@ -68,7 +75,7 @@ export function Link({
     const onKeyDown = activateOnEnterOrSpace(() => handleActivate(), disabled);
     return (
       <a
-        href={to ?? '#'}
+        href={hashHref(to)}
         role="link"
         className={['h5-focusable-link', className].filter(Boolean).join(' ')}
         style={mergedStyle}
