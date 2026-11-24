@@ -62,6 +62,10 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // Hidden maps for Sentry upload (CH-247). JS has no sourceMappingURL.
+    // Dockerfile.web sets CARDHUB_WEB_SOURCEMAP=hidden in the builder and
+    // strips *.map before the runner image.
+    sourcemap: process.env.CARDHUB_WEB_SOURCEMAP === 'hidden' ? 'hidden' : false,
   },
   // Most shared packages (@repo/*) ship as CommonJS so the NestJS API can
   // require() them directly. @repo/shared is aliased to its TypeScript

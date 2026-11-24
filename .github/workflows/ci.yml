@@ -69,8 +69,10 @@ jobs:
           bash scripts/check-api-health.test.sh
           bash scripts/check-web-image.test.sh
           bash scripts/image-boot-ci.test.sh
+          bash apps/cardhub/web/scripts/upload-sentry-sourcemaps.test.sh
           bash -n deploy/backup.sh deploy/check-backup-log.sh deploy/remote-deploy.sh deploy/resolve-image-digests.sh deploy/db/split-roles.sh deploy/edge/apply-edge-config.sh scripts/check-api-image.sh scripts/check-api-health.sh scripts/check-web-image.sh
           bash -n deploy/verify-image-digests.sh deploy/image-cleanup.sh
+          bash -n apps/cardhub/web/scripts/upload-sentry-sourcemaps.sh apps/cardhub/web/scripts/install-sentry-cli.sh
           sh -n deploy/api-entrypoint.sh deploy/migrate-entrypoint.sh
 
       - name: Install pnpm
@@ -465,3 +467,41 @@ jobs:
           WEB_BASE_URL=http://127.0.0.1:8080 \
             WEB_CONTAINER="$name" \
             bash scripts/check-web-image.sh
+
+      # Hidden maps are generated in the Dockerfile builder and stripped
+      # from the runner. Export the builder dist (JS + maps) from the same
+      # cache and upload to Sentry when SENTRY_AUTH_TOKEN is set. Unset
+      # (PR / fork / secret not configured) must still exit 0 (CH-247).
+      # JQ-Boss configures repo secret SENTRY_AUTH_TOKEN and repo variables
+      # SENTRY_ORG / SENTRY_PROJECT (optional SENTRY_URL). These are not
+      # the public WEB_SENTRY_DSN.
+      - name: Export Web source maps
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.web
+          target: sourcemaps
+          push: false
+          provenance: false
+          outputs: type=local,dest=${{ runner.temp }}/web-sourcemaps
+          build-args: |
+            GIT_SHA=${{ github.event.pull_request.head.sha || github.sha }}
+            BUILD_TIME=${{ steps.build-time.outputs.value }}
+          cache-from: type=gha,scope=web
+
+      - name: Upload Sentry source maps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ vars.SENTRY_URL }}
+          SENTRY_RELEASE: ${{ github.event.pull_request.head.sha || github.sha }}
+          SENTRY_DIST_DIR: ${{ runner.temp }}/web-sourcemaps/dist
+        run: |
+          set -euo pipefail
+          if [ -n "${SENTRY_AUTH_TOKEN:-}" ]; then
+            dest="${RUNNER_TEMP}/sentry-cli-bin"
+            bash apps/cardhub/web/scripts/install-sentry-cli.sh "$dest"
+            export PATH="${dest}:${PATH}"
+          fi
+          bash apps/cardhub/web/scripts/upload-sentry-sourcemaps.sh
