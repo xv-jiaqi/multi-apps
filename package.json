@@ -34,17 +34,18 @@
     "seed:demo": "pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run seed:demo",
     "db:studio": "pnpm --filter @cardhub/api --fail-if-no-match exec pnpm run db:studio",
     "prepare": "husky",
-    "check:ch305-colors": "node scripts/check-ch305-hardcoded-colors.mjs"
+    "check:ch305-colors": "node scripts/check-ch305-hardcoded-colors.mjs",
+    "dev:agent-hub": "pnpm --filter @agent-hub/server --fail-if-no-match exec pnpm run dev"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@repo/config-eslint": "workspace:*",
-    "eslint": "^10.2.1",
+    "eslint": "^10.14.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",
-    "turbo": "^2.9.6",
+    "turbo": "^2.11.11",
     "typescript": "^6.0.3"
   },
   "lint-staged": {

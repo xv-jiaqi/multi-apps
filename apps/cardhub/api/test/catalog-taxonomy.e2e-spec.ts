@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { APP_ERROR_CODES } from '@repo/shared';
+import { qaCardNumber } from './qa-card-number';
 import { createApp } from '../src/bootstrap/create-app';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 
@@ -148,6 +149,7 @@ describe('catalog taxonomy', () => {
     );
     expect(createdSubset.status).toBe(200);
 
+    const cardNumber = qaCardNumber();
     const createdCard = await post(
       'admin.cards.create',
       {
@@ -157,13 +159,13 @@ describe('catalog taxonomy', () => {
         attributes: {},
         seriesSlug,
         subsetSlug,
-        cardNumber: '001',
+        cardNumber,
       },
       adminToken,
     );
     expect(createdCard.status).toBe(200);
     expect(resultData(createdCard.body)).toMatchObject({
-      cardNumber: '001',
+      cardNumber,
       subsetSlug,
     });
 
@@ -203,7 +205,7 @@ describe('catalog taxonomy', () => {
       subsetSlug: string | null;
     }>;
     expect(cards.find((card) => card.slug === cardSlug)).toMatchObject({
-      cardNumber: '001',
+      cardNumber,
       subsetSlug,
     });
 
@@ -325,7 +327,7 @@ describe('catalog taxonomy', () => {
               attributes: {},
               seriesSlug: sourceSlug,
               subsetSlug: 'a-base',
-              cardNumber: '001',
+              cardNumber: qaCardNumber(),
             },
             adminToken,
           )

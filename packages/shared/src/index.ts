@@ -10,3 +10,4 @@ export * from './card-number-normalize';
 export * from './card-attribute-label';
 export * from './print-run';
 export * from './card-rarity-code';
+export * from './series-detail-card-list';

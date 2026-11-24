@@ -18,11 +18,23 @@ const seriesState = {
   refetch: vi.fn(),
 };
 
+const invalidateListBySeries = vi.hoisted(() => vi.fn());
+const invalidateSeriesBySlug = vi.hoisted(() => vi.fn());
+const fetchListBySeries = vi.hoisted(() => vi.fn());
+const listBySeriesCalls = vi.hoisted(() => ({ current: [] as unknown[] }));
+
+function listPage(items: unknown[], total = items.length, pageSize = 100) {
+  return { items, total, page: 1, pageSize, sort: 'created' as const };
+}
+
 const cardsState = {
-  data: { cards: [] } as { cards: unknown[] } | undefined,
+  data: listPage([]) as ReturnType<typeof listPage> | undefined,
   isLoading: false,
   isError: false,
   isFetching: false,
+  isPending: false,
+  errorUpdateCount: 0,
+  dataUpdatedAt: 1,
   error: null as unknown,
   refetch: vi.fn(),
 };
@@ -68,9 +80,19 @@ vi.mock('../../lib/trpc', () => ({
         delete: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
       },
     },
+    cards: {
+      listBySeries: {
+        useQuery: (input: unknown) => {
+          listBySeriesCalls.current.push(input);
+          return cardsState;
+        },
+      },
+    },
     series: {
       bySlug: {
-        useQuery: () => cardsState,
+        useQuery: () => {
+          throw new Error('catalog series detail must not read series.bySlug');
+        },
       },
     },
     search: {
@@ -80,7 +102,13 @@ vi.mock('../../lib/trpc', () => ({
     },
     useUtils: () => ({
       admin: { series: { list: { invalidate: vi.fn() } } },
-      series: { bySlug: { invalidate: vi.fn() } },
+      series: { bySlug: { invalidate: invalidateSeriesBySlug } },
+      cards: {
+        listBySeries: {
+          fetch: (input: unknown) => fetchListBySeries(input),
+          invalidate: invalidateListBySeries,
+        },
+      },
     }),
   },
 }));
@@ -117,10 +145,17 @@ beforeEach(() => {
   seriesState.isLoading = false;
   seriesState.isError = false;
   seriesState.isFetching = false;
-  cardsState.data = { cards: [] };
+  cardsState.data = listPage([]);
   cardsState.isLoading = false;
   cardsState.isError = false;
   cardsState.isFetching = false;
+  cardsState.isPending = false;
+  cardsState.errorUpdateCount = 0;
+  cardsState.dataUpdatedAt = 1;
+  listBySeriesCalls.current = [];
+  fetchListBySeries.mockReset();
+  invalidateListBySeries.mockReset();
+  invalidateSeriesBySlug.mockReset();
 });
 
 describe('catalog series detail title', () => {
@@ -145,40 +180,38 @@ describe('parallel badges', () => {
   const longName = '金箔超长平行名称金箔超长平行名称金箔超长';
 
   beforeEach(() => {
-    cardsState.data = {
-      cards: [
-        {
-          id: 'c1',
-          slug: 'aurora-base',
-          name: '极光骑士',
-          rarity: 'rare',
-          imageUrl: null,
-          parallelName: null,
-          printRun: null,
-          parallelOfId: null,
-        },
-        {
-          id: 'c2',
-          slug: 'aurora-foil',
-          name: '极光骑士',
-          rarity: 'rare',
-          imageUrl: null,
-          parallelName: longName,
-          printRun: 99,
-          parallelOfId: 'c1',
-        },
-        {
-          id: 'c3',
-          slug: 'aurora-plain',
-          name: '素银骑士',
-          rarity: 'common',
-          imageUrl: null,
-          parallelName: '素银',
-          printRun: null,
-          parallelOfId: 'c1',
-        },
-      ],
-    };
+    cardsState.data = listPage([
+      {
+        id: 'c1',
+        slug: 'aurora-base',
+        name: '极光骑士',
+        rarity: 'rare',
+        imageUrl: null,
+        parallelName: null,
+        printRun: null,
+        isParallel: false,
+      },
+      {
+        id: 'c2',
+        slug: 'aurora-foil',
+        name: '极光骑士',
+        rarity: 'rare',
+        imageUrl: null,
+        parallelName: longName,
+        printRun: 99,
+        isParallel: true,
+      },
+      {
+        id: 'c3',
+        slug: 'aurora-plain',
+        name: '素银骑士',
+        rarity: 'common',
+        imageUrl: null,
+        parallelName: '素银',
+        printRun: null,
+        isParallel: true,
+      },
+    ]);
   });
 
   it('shows parallel and limited badges after the name and keeps the columns', () => {
@@ -311,5 +344,133 @@ describe('subset form server validation', () => {
     expect(screen.queryByText('description_too_long')).not.toBeInTheDocument();
     expect(screen.queryByText(/description:/)).not.toBeInTheDocument();
     expect(document.getElementById('subset-name-error')).not.toBeInTheDocument();
+  });
+});
+
+describe('listBySeries cards', () => {
+  const cards = [
+    {
+      id: 'c1',
+      slug: 'aurora-base',
+      name: '极光骑士',
+      rarity: 'rare',
+      imageUrl: null,
+      parallelName: null,
+      printRun: null,
+      isParallel: false,
+    },
+    {
+      id: 'c2',
+      slug: 'aurora-foil',
+      name: '极光骑士',
+      rarity: 'rare',
+      imageUrl: null,
+      parallelName: '金箔',
+      printRun: 99,
+      isParallel: true,
+    },
+    {
+      id: 'c4',
+      slug: 'stone-guard',
+      name: '石卫',
+      rarity: 'common',
+      imageUrl: null,
+      parallelName: null,
+      printRun: null,
+      isParallel: false,
+    },
+  ];
+
+  it('requests includeParallels, created sort, and pageSize 100', () => {
+    cardsState.data = listPage(cards);
+    renderPage();
+    expect(listBySeriesCalls.current[0]).toEqual({
+      seriesSlug: 'forge-of-titans',
+      includeParallels: true,
+      sort: 'created',
+      page: 1,
+      pageSize: 100,
+    });
+  });
+
+  it('filters the stitched rows on the client and keeps the edit link', async () => {
+    const user = userEvent.setup();
+    cardsState.data = listPage(cards);
+    renderPage();
+    expect(screen.getAllByRole('rowheader')).toHaveLength(3);
+    await user.type(screen.getByRole('textbox', { name: '按名称或 slug 筛选' }), '石卫');
+    expect(screen.getAllByRole('rowheader')).toHaveLength(1);
+    expect(screen.getByRole('rowheader', { name: '石卫' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '编辑「石卫」' })).toHaveAttribute(
+      'href',
+      '/admin/catalog/cards/stone-guard/edit',
+    );
+  });
+
+  it('marks parallels from isParallel, not from a missing parallelOfId', () => {
+    cardsState.data = listPage([
+      {
+        id: 'c2',
+        slug: 'aurora-foil',
+        name: '极光骑士',
+        rarity: 'rare',
+        imageUrl: null,
+        parallelName: '金箔',
+        printRun: 99,
+        isParallel: true,
+      },
+    ]);
+    renderPage();
+    expect(screen.getByRole('rowheader')).toHaveTextContent('平行 · 金箔');
+  });
+});
+
+describe('listBySeries pagination', () => {
+  function card(index: number, name: string) {
+    return {
+      id: `c${index}`,
+      slug: `card-${index}`,
+      name,
+      rarity: 'common',
+      imageUrl: null,
+      parallelName: null,
+      printRun: null,
+      isParallel: false,
+    };
+  }
+
+  it('waits for later pages before rendering the table, then shows every row', async () => {
+    const page1 = Array.from({ length: 100 }, (_, index) => card(index, `卡 ${index}`));
+    const page2 = [card(100, '末张卡')];
+    cardsState.data = { items: page1, total: 101, page: 1, pageSize: 100, sort: 'created' };
+    let resolvePage2: (value: unknown) => void = () => {};
+    fetchListBySeries.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePage2 = resolve;
+        }),
+    );
+    renderPage();
+    expect(screen.getByRole('table', { name: '泰坦熔炉 的卡牌' })).toBeInTheDocument();
+    expect(screen.queryByRole('rowheader')).not.toBeInTheDocument();
+    expect(fetchListBySeries).toHaveBeenCalledWith({
+      seriesSlug: 'forge-of-titans',
+      includeParallels: true,
+      sort: 'created',
+      page: 2,
+      pageSize: 100,
+    });
+    resolvePage2({ items: page2, total: 101, page: 2, pageSize: 100, sort: 'created' });
+    expect(await screen.findByRole('rowheader', { name: '末张卡' })).toBeInTheDocument();
+    expect(screen.getAllByRole('rowheader')).toHaveLength(101);
+  });
+
+  it('shows the error box when a later page fails', async () => {
+    const page1 = Array.from({ length: 100 }, (_, index) => card(index, `卡 ${index}`));
+    cardsState.data = { items: page1, total: 150, page: 1, pageSize: 100, sort: 'created' };
+    fetchListBySeries.mockRejectedValue(new Error('page 2 failed'));
+    renderPage();
+    expect(await screen.findByRole('alert')).toHaveTextContent('加载失败');
+    expect(screen.queryByRole('rowheader')).not.toBeInTheDocument();
   });
 });

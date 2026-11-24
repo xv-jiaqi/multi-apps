@@ -64,12 +64,34 @@ require(
         "bash scripts/check-web-image.sh",
     ],
 )
-boot_web = web[web.find("- name: Boot Web image") :]
+# Only the boot step itself must stay secret-free and must not push.
+# Later steps may read SENTRY_AUTH_TOKEN to upload maps (CH-247).
+def first_step(blob, name):
+    start = blob.find(name)
+    if start < 0:
+        sys.exit(f"missing {name!r}")
+    nxt = blob.find("\n      - name:", start + len(name))
+    return blob[start:] if nxt < 0 else blob[start:nxt]
+
+boot_web = first_step(web, "- name: Boot Web image")
 if "secrets." in boot_web or "docker push" in boot_web:
     sys.exit("Web boot step pushes or references secrets")
+require(
+    "ci web sentry upload",
+    web,
+    [
+        "bash scripts/check-web-image.sh",
+        "- name: Export Web source maps",
+        "target: sourcemaps",
+        "- name: Upload Sentry source maps",
+        "secrets.SENTRY_AUTH_TOKEN",
+        "bash apps/cardhub/web/scripts/upload-sentry-sourcemaps.sh",
+    ],
+)
 
 build = between(images, "      - name: Build and push", "      - name: Boot")
-boot = between(images, "      - name: Boot", "      - name: Record image digest")
+boot = between(images, "      - name: Boot", "      - name: Export Web source maps")
+upload = between(images, "      - name: Export Web source maps", "      - name: Record image digest")
 record = between(images, "      - name: Record image digest", "      - name: Upload image digest")
 require(
     "images build",
@@ -94,6 +116,16 @@ require(
 )
 if "docker push" in boot or "secrets." in boot or "push: true" in boot:
     sys.exit("Images boot step must not push or read secrets")
+require(
+    "images sentry upload",
+    upload,
+    [
+        "if: matrix.name == 'web'",
+        "target: sourcemaps",
+        "secrets.SENTRY_AUTH_TOKEN",
+        "bash apps/cardhub/web/scripts/upload-sentry-sourcemaps.sh",
+    ],
+)
 if "image: postgres:16-alpine" not in images or "image: redis:7-alpine" not in images:
     sys.exit("Images job is missing Postgres or Redis services")
 require(
