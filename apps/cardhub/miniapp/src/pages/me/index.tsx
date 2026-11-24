@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { Button, ScrollView, Text, View } from '@tarojs/components';
 import { t } from '@repo/shared';
+import { applyTabBarLabels } from '../../lib/apply-tab-bar-labels';
 import { useStores } from '../../stores/root-store';
 import './index.scss';
 
@@ -15,6 +16,7 @@ export default observer(function MePage() {
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
   useDidShow(() => {
+    applyTabBarLabels();
     void Taro.setNavigationBarTitle({ title: tt('tab.me') });
   });
 

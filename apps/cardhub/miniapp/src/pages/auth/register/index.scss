@@ -11,7 +11,7 @@
 
 .auth-page__subtitle {
   display: block;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
   font-size: 26rpx;
   color: $color-neutral-600;
 }
@@ -21,7 +21,7 @@
   padding: $spacing-sm;
   background-color: $color-red-50;
   border: 2rpx solid $color-red-200;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .auth-page__error-text {

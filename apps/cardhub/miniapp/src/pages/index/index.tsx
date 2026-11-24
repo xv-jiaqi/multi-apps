@@ -5,6 +5,7 @@ import { View, Text, ScrollView } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, Link, PrimaryButton, SectionCard, Skeleton } from '@repo/ui-mini';
 import { APP_NAME, t } from '@repo/shared';
 import { trpc } from '../../lib/trpc';
+import { applyTabBarLabels } from '../../lib/apply-tab-bar-labels';
 import { useStores } from '../../stores/root-store';
 import { resolveBlockView } from '../../lib/block-view';
 import { useBlock } from '../../lib/use-block';
@@ -34,6 +35,7 @@ export default observer(function Index() {
   // Re-pull once the page is shown again, e.g. after the user signs in
   // from a navigated-to subpage and comes back.
   useDidShow(() => {
+    applyTabBarLabels();
     if (!state.loading) void load();
   });
 

@@ -126,7 +126,7 @@ export default observer(function SearchPage() {
         ) : failure ? (
           <ErrorBoxMini
             key={failure.id}
-            title={tt('search.loadFailed')}
+            title={tt('form.searchFailed')}
             retryLabel={tt('state.retry')}
             retryingLabel={tt('state.retrying')}
             retrying={loading}

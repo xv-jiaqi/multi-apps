@@ -1076,8 +1076,6 @@ const zhCN: Dictionary = {
   'tab.me': '我的',
   'forum.list.loadFailed': '论坛加载失败',
   'trade.list.loadFailed': '交易意向加载失败',
-  'series.detail.loadFailed': '系列加载失败',
-  'search.loadFailed': '搜索失败',
 };
 
 const enUS: Dictionary = {
@@ -2210,8 +2208,6 @@ const enUS: Dictionary = {
   'tab.me': 'Me',
   'forum.list.loadFailed': "Couldn't load topics",
   'trade.list.loadFailed': "Couldn't load listings",
-  'series.detail.loadFailed': "Couldn't load this series",
-  'search.loadFailed': "Couldn't load search results",
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {

@@ -21,8 +21,8 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 88rpx;
-  margin-bottom: 24rpx;
-  padding: 20rpx 24rpx;
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm $spacing-md;
   font-size: 28rpx;
   background-color: $color-white;
   border: 2rpx solid $color-neutral-300;
@@ -47,7 +47,7 @@
 .search-result {
   display: flex;
   align-items: center;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
   padding: $spacing-sm;
   background-color: $color-white;
   border: 2rpx solid $color-neutral-100;
@@ -58,13 +58,13 @@
   flex-shrink: 0;
   width: 80rpx;
   overflow: hidden;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .search-result__text {
   flex: 1;
   min-width: 0;
-  margin: 0 20rpx;
+  margin: 0 $spacing-sm;
 }
 
 .search-result__name {

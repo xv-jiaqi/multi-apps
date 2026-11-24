@@ -112,12 +112,14 @@ export default observer(function CardDetailPage() {
           items={[
             { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
             { label: tt('breadcrumb.series'), to: '/pages/series/list/index' },
-            card
-              ? {
-                  label: card.seriesTitle,
-                  to: `/pages/series/detail/index?slug=${card.seriesSlug}`,
-                }
-              : { label: tt('breadcrumb.series') },
+            ...(card
+              ? [
+                  {
+                    label: card.seriesTitle,
+                    to: `/pages/series/detail/index?slug=${card.seriesSlug}`,
+                  },
+                ]
+              : []),
             { label: card?.name ?? slug },
           ]}
         />

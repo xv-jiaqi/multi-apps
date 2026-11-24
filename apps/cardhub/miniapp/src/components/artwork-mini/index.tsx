@@ -40,7 +40,8 @@ export function ArtworkMini({ src, slug, ratio, mode, label, className }: Artwor
           src={view.src}
           mode={mode}
           lazyLoad
-          ariaLabel={label}
+          ariaHidden
+          imgProps={{ alt: '', 'aria-hidden': true }}
           onError={() => setFailedSrc(view.src)}
         />
       ) : null}

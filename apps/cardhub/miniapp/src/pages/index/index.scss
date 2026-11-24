@@ -23,7 +23,7 @@
 
 .home-page__title {
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
   font-size: 48rpx;
   font-weight: 700;
   color: $color-neutral-900;
@@ -69,7 +69,7 @@
 }
 
 .home-featured__text {
-  padding: 24rpx;
+  padding: $spacing-md;
   background-color: $color-white;
 }
 

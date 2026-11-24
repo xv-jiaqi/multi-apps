@@ -78,7 +78,7 @@ export default observer(function SeriesDetailPage() {
         {view.kind === 'failed' ? (
           <ErrorBoxMini
             key={view.noticeId}
-            title={tt('series.detail.loadFailed')}
+            title={tt('home.series.loadFailed')}
             retryLabel={tt('state.retry')}
             retryingLabel={tt('state.retrying')}
             retrying={view.retrying}

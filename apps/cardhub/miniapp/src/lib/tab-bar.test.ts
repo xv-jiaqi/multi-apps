@@ -63,3 +63,36 @@ describe('pages (CH-301 §0)', () => {
     }
   });
 });
+
+describe('PrimaryButton (CH-301 §5)', () => {
+  it('does not use WeChat type="primary", and app.scss colors come from tokens', () => {
+    const button = readFileSync(
+      path.resolve(srcDir, '../../../../packages/ui-mini/src/components/primary-button.tsx'),
+      'utf8',
+    );
+    expect(button).toMatch(/type="default"/);
+    expect(button.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/type=["']primary["']/);
+    expect(button).toContain("className={['primary-button'");
+
+    const scss = readFileSync(path.join(srcDir, 'app.scss'), 'utf8');
+    const rest = /\.primary-button\s*\{([\s\S]*?)\n\}/.exec(scss)?.[1] ?? '';
+    expect(rest).toMatch(/background-color:\s*\$color-brand-600/);
+    expect(rest).toMatch(/color:\s*\$color-white/);
+    expect(scss).toMatch(
+      /\.primary-button--pressed\s*\{[\s\S]*background-color:\s*\$color-brand-700/,
+    );
+    expect(scss).toMatch(
+      /\.primary-button\[disabled\][\s\S]*background-color:\s*\$color-neutral-100/,
+    );
+    expect(scss).toMatch(/\.primary-button\[disabled\][\s\S]*color:\s*\$color-neutral-600/);
+  });
+});
+
+describe('tabBar labels on tab pages (CH-301 §1)', () => {
+  it('home and me call applyTabBarLabels in useDidShow', () => {
+    const home = readFileSync(path.join(srcDir, 'pages/index/index.tsx'), 'utf8');
+    const me = readFileSync(path.join(srcDir, 'pages/me/index.tsx'), 'utf8');
+    expect(home).toMatch(/applyTabBarLabels\(\)/);
+    expect(me).toMatch(/applyTabBarLabels\(\)/);
+  });
+});

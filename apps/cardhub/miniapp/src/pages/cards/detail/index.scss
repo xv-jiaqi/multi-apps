@@ -17,7 +17,7 @@
 .card-hero {
   width: 480rpx;
   max-width: 100%;
-  margin: 0 auto 24rpx;
+  margin: 0 auto $spacing-md;
   overflow: hidden;
   border-radius: $radius-lg;
 }
@@ -27,7 +27,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: $spacing-sm;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .card-detail-page__name {
@@ -70,12 +70,12 @@
 
 .card-attributes__item {
   min-width: 180rpx;
-  margin-right: 24rpx;
+  margin-right: $spacing-md;
 }
 
 .card-attributes__key {
   display: block;
-  margin-bottom: 4rpx;
+  margin-bottom: $spacing-xs;
   font-size: 22rpx;
   letter-spacing: 2rpx;
   text-transform: uppercase;
@@ -90,26 +90,26 @@
 }
 
 .comment-form {
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 
 .comment-form__input {
   box-sizing: border-box;
   width: 100%;
   min-height: 160rpx;
-  padding: 20rpx;
+  padding: $spacing-sm;
   font-size: 26rpx;
   background-color: $color-white;
   border: 2rpx solid $color-neutral-300;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .comment-form__error {
-  margin-top: 12rpx;
+  margin-top: $spacing-sm;
   padding: $spacing-sm;
   background-color: $color-red-50;
   border: 2rpx solid $color-red-200;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .comment-form__error-text {
@@ -129,17 +129,17 @@
   align-items: center;
   justify-content: center;
   min-height: 88rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
   background-color: $color-neutral-100;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .comment-item {
   margin-bottom: $spacing-sm;
-  padding: 20rpx;
+  padding: $spacing-sm;
   background-color: $color-white;
   border: 2rpx solid $color-neutral-100;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .comment-item__meta {

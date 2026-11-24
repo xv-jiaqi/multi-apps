@@ -31,7 +31,7 @@
 // CH-301 §5 C-2: 2:1 band on top without text, white text block below.
 .series-card {
   display: block;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-sm;
   overflow: hidden;
   background-color: $color-white;
   border: 2rpx solid $color-neutral-300;
@@ -39,7 +39,7 @@
 }
 
 .series-card__text {
-  padding: 24rpx;
+  padding: $spacing-md;
   background-color: $color-white;
 }
 
@@ -62,7 +62,7 @@
 
 .series-card__count {
   display: block;
-  margin-top: 12rpx;
+  margin-top: $spacing-sm;
   font-size: 24rpx;
   color: $color-neutral-600;
 }

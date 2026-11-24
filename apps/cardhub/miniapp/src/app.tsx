@@ -1,19 +1,9 @@
 import { useEffect, type PropsWithChildren } from 'react';
 import { reaction } from 'mobx';
 import Taro from '@tarojs/taro';
-import { t } from '@repo/shared';
 import { rootStore, StoreProvider } from './stores/root-store';
-import { TAB_BAR_ITEMS } from './lib/tab-bar';
+import { applyTabBarLabels } from './lib/apply-tab-bar-labels';
 import './app.scss';
-
-function applyTabBarLabels(): void {
-  TAB_BAR_ITEMS.forEach((item, index) => {
-    Taro.setTabBarItem({ index, text: t(rootStore.locale.locale, item.textKey) }).catch(() => {
-      // Not on a tab page yet: the native bar keeps its zh-CN default until
-      // the next locale change or app launch.
-    });
-  });
-}
 
 /**
  * Miniapp entry. Wraps every page with the MobX RootStore provider so pages
