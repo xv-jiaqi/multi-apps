@@ -188,6 +188,37 @@ describe('secret-holdback', () => {
       const t = `${rep('x ', 40)}Authorization:${rep(' ', 300)}Bearer ${body}\nnext\n`;
       for (let p = 0; p <= t.length; p++) noLeak([t.slice(0, p), t.slice(p)], body);
     });
+
+    // scheme 紧贴冒号（authorization:bearer）时，原来的 SCHEME 要求前面是空白，认不出前缀；
+    // 后面再跟 ≥64 个空白、token 下一块才到，就会把前缀放出去（#319 审查 6044795708 非阻塞 ①）。
+    it.each([
+      ['authorization:bearer', 'authorization:bearer'],
+      ['Authorization=Basic', 'Authorization=Basic'],
+      ['x-access-token:token', 'x-access-token:token'],
+    ])('%s 后跟 100 个空白、token 下一块才到：不漏', (_n, head) => {
+      const body = rep('Tk7', 10);
+      const t = `${rep('x ', 40)}${head}${rep(' ', 100)}${body}\nnext\n`;
+      const cut = t.indexOf(body);
+      noLeak([t.slice(0, cut), t.slice(cut)], body);
+      for (let p = 0; p <= t.length; p++) noLeak([t.slice(0, p), t.slice(p)], body);
+    });
+  });
+
+  describe('线性时间（#315 之后自查）', () => {
+    // 原来的 `…\S*$` 正则在 1 MiB 重复的 “authorization:” 上要跑 4 分多钟。
+    it.each([
+      ['authorization:', `${'authorization:'.repeat(75_000)} x`],
+      ['x-access-token=', `${'x-access-token='.repeat(70_000)} x`],
+      ['sk-', `${'sk-'.repeat(350_000)} x`],
+      ['ahu_', `${'ahu_'.repeat(260_000)} x`],
+      ['-----BEGIN', '-----BEGIN '.repeat(95_000)],
+      ['-----END', '-----END A'.repeat(100_000)],
+    ])('%s 重复 1 MiB：splitForRedaction 在 2 秒内返回', (_n, text) => {
+      const t0 = Date.now();
+      splitForRedaction(text, 'continue');
+      splitForRedaction(text, 'truncate', text.length - 100);
+      expect(Date.now() - t0).toBeLessThan(2000);
+    });
   });
 
   describe('长行强切不切开没写完的密钥（审查 6042967785 第 6 条）', () => {
@@ -201,7 +232,7 @@ describe('secret-holdback', () => {
       ['jwt', `eyJ${'Hh1'.repeat(30)}.${'Pp2'.repeat(60)}.${'Sg3'.repeat(20)}`],
       ['url', `https://deploy:${'Pw8'.repeat(40)}@git.example.com/r.git`],
       ['ssh', `ssh://deploy:${'Pw8'.repeat(40)}@git.example.com/r.git`],
-      ['header', `Authorization: Bearer ${'Tk5'.repeat(40)}`],
+      ['header', `Authorization:${' '.repeat(40)}Bearer${' '.repeat(30)}${'Tk5'.repeat(40)}`],
       ['xhttps', `xhttps://deploy:${'Pw8'.repeat(40)}@git.example.com/r.git`],
       ['pem', `-----BEGIN RSA PRIVATE KEY-----\n${'Kq7'.repeat(21)}K\n${'Kq7'.repeat(21)}K`],
     ];
@@ -212,7 +243,12 @@ describe('secret-holdback', () => {
     it.each(tokens)('%s：每个长于 64 的前缀都被认成没写完的密钥', (_n, tok) => {
       const pre = `${'c'.repeat(100)}"`;
       // URL / ssh 到 @ 为止才是密钥部分，过了 @ 就已经成形（由 guardCut 负责）。
-      const end = tok.includes('@') ? tok.indexOf('@') : tok.length;
+      // 认证头写出值以后，当前文字里已经有完整匹配（由 guardCut 负责），这里只查值还没出现的前缀。
+      const end = tok.includes('@')
+        ? tok.indexOf('@')
+        : tok.startsWith('Authorization')
+          ? tok.indexOf('Bearer') + 'Bearer '.length
+          : tok.length;
       for (let k = HOLDBACK_CHARS + 1; k <= end; k++) {
         expect(openSecretStart(pre + tok.slice(0, k))).toBeLessThanOrEqual(pre.length + lead(tok));
       }

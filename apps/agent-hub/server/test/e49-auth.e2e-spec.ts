@@ -15,6 +15,7 @@ import { HubConfigService } from '../src/config/config.service';
 import { migrate } from '../src/db/migrations';
 import { Db } from '../src/db/sqlite';
 import { Lifecycle } from '../src/lifecycle';
+import { listeningPort } from './helpers/ports';
 
 describe('E49 Host / Origin / token', () => {
   let app: NestExpressApplication;
@@ -45,16 +46,19 @@ describe('E49 Host / Origin / token', () => {
     );
     app.setGlobalPrefix('api/v1');
     const lifecycle = app.get(Lifecycle);
-    port = 47821 + Math.floor(Math.random() * 1000);
+    port = 0; // listen(0) 之后填实际端口；deps.port 是 getter，请求到来时才读
     for (const mw of httpPipeline({
-      port,
+      get port() {
+        return port;
+      },
       isShuttingDown: () => lifecycle.isShuttingDown(),
       authenticate: (token) => auth.authenticate(token),
       takeRateToken: (id) => auth.takeRateToken(id),
     })) {
       app.use(mw);
     }
-    await app.listen(port, '127.0.0.1');
+    await app.listen(0, '127.0.0.1');
+    port = listeningPort(app.getHttpServer());
     app.get(WsHub).attach(app.getHttpServer(), port);
   });
 
