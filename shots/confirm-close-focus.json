@@ -1,0 +1,129 @@
+{
+  "failures": [],
+  "results": [
+    {
+      "name": "quick-cancel",
+      "ok": true,
+      "clickedAfter": 72,
+      "at500": {
+        "tag": "BUTTON",
+        "className": "card-comment__action",
+        "name": "删除 @alice 的评论",
+        "inConfirm": false,
+        "isTrigger": true,
+        "isBody": false,
+        "triggerId": "00000000-0000-4000-8000-0000000000a2"
+      },
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-confirm-quick-cancel-zh-375.png"
+    },
+    {
+      "name": "quick-esc",
+      "ok": true,
+      "pressedAfter": 36,
+      "at500": {
+        "tag": "BUTTON",
+        "className": "card-comment__action",
+        "name": "删除 @alice 的评论",
+        "inConfirm": false,
+        "isTrigger": true,
+        "isBody": false,
+        "triggerId": "00000000-0000-4000-8000-0000000000a2"
+      },
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-confirm-quick-esc-zh-375.png"
+    },
+    {
+      "name": "delete-fail",
+      "ok": true,
+      "samples": [
+        {
+          "ms": 50,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "inConfirm": false,
+          "isTrigger": true,
+          "isBody": false,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2"
+        },
+        {
+          "ms": 100,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "inConfirm": false,
+          "isTrigger": true,
+          "isBody": false,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2"
+        },
+        {
+          "ms": 300,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "inConfirm": false,
+          "isTrigger": true,
+          "isBody": false,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2"
+        },
+        {
+          "ms": 500,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "inConfirm": false,
+          "isTrigger": true,
+          "isBody": false,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2"
+        },
+        {
+          "ms": 800,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "inConfirm": false,
+          "isTrigger": true,
+          "isBody": false,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2"
+        },
+        {
+          "ms": 1200,
+          "tag": "BUTTON",
+          "className": "card-comment__action",
+          "name": "删除 @alice 的评论",
+          "inConfirm": false,
+          "isTrigger": true,
+          "isBody": false,
+          "triggerId": "00000000-0000-4000-8000-0000000000a2"
+        }
+      ],
+      "box": {
+        "text": "删除失败，请重试",
+        "role": "alert"
+      },
+      "shot": "/workspace/xiangzi-notes/ch301d/shots/probe-deletefail-focus-zh-375.png"
+    },
+    {
+      "name": "open-still-focuses-confirm",
+      "ok": true,
+      "afterClick": {
+        "tag": "BUTTON",
+        "className": "card-comment__action",
+        "name": "删除",
+        "inConfirm": true,
+        "isTrigger": false,
+        "isBody": false,
+        "triggerId": null
+      },
+      "afterEnter": {
+        "tag": "BUTTON",
+        "className": "card-comment__action",
+        "name": "删除",
+        "inConfirm": true,
+        "isTrigger": false,
+        "isBody": false,
+        "triggerId": null
+      }
+    }
+  ],
+  "headSha": "dd10d9808ac5574659daf6685cb98465f323020b"
+}
