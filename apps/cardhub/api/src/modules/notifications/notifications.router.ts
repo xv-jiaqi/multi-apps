@@ -4,7 +4,8 @@ import { APP_ERROR_CODES, notificationListInput, notificationMarkReadInput } fro
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { decodeNotificationCursor, encodeNotificationCursor } from './cursor';
-import { hrefFor, liveHrefMap, parentIdFor } from './href';
+import { resolveContentSurface } from '../content-security/visibility';
+import { excerptFor, hrefFor, liveHrefMap, parentIdFor } from './href';
 
 function unauthenticated(): TRPCError {
   return new TRPCError({
@@ -60,7 +61,8 @@ export class NotificationsRouter {
         });
         const hasMore = rows.length > input.limit;
         const page = hasMore ? rows.slice(0, input.limit) : rows;
-        const hrefs = await liveHrefMap(prisma, page);
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
+        const hrefs = await liveHrefMap(prisma, page, surface);
         const last = page.at(-1);
         const nextCursor =
           hasMore && last ? encodeNotificationCursor(last.createdAt, last.id) : null;
@@ -79,7 +81,7 @@ export class NotificationsRouter {
               id: row.id,
               type: row.type,
               actor: row.actor ? { username: row.actor.username } : null,
-              excerpt: row.excerpt,
+              excerpt: excerptFor(hrefs, row),
               href: hrefFor(hrefs, row),
               ...(parentId ? { parentId } : {}),
               readAt: isoOrNull(row.readAt),

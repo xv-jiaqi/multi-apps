@@ -69,6 +69,15 @@ const RISKY_MARKERS = [
   RISKY_IMAGE,
 ];
 
+function pickCounts(data: Record<string, unknown>) {
+  return {
+    listingTotalCount: data.listingTotalCount,
+    topicCount: data.topicCount,
+    commentCount: data.commentCount,
+    replyCount: data.replyCount,
+  };
+}
+
 function expectNoRiskyText(body: unknown) {
   const serialized = JSON.stringify(body);
   for (const marker of RISKY_MARKERS) expect(serialized).not.toContain(marker);
@@ -637,6 +646,73 @@ describe('author-only safety view', () => {
       );
       expect(mine.status).toBe(200);
       expect(await prisma.reply.count({ where: { body: `别人回审核中的话题 ${RUN}` } })).toBe(0);
+    });
+  });
+
+  describe('users.me counts match the "my" lists on each surface', () => {
+    async function me(input: unknown, surfaceHeader?: string) {
+      let req = request(app.getHttpServer())
+        .get(
+          input === undefined
+            ? '/trpc/users.me'
+            : `/trpc/users.me?input=${encodeURIComponent(JSON.stringify(input))}`,
+        )
+        .set('Authorization', `Bearer ${author.token}`);
+      if (surfaceHeader !== undefined) req = req.set('x-cardhub-surface', surfaceHeader);
+      const response = await req;
+      expect(response.status).toBe(200);
+      const data = resultData(response.body);
+      if (!isRecord(data)) throw new Error('expected users.me');
+      return data;
+    }
+
+    async function listLength(path: string, surface: 'web' | 'miniapp') {
+      const response = await query(path, { limit: 50, surface }, { token: author.token });
+      expect(response.status).toBe(200);
+      return pageItems(response.body).length;
+    }
+
+    it('counts what listings.mine / myTopics / myComments return', async () => {
+      // A RISKY reply too, so replyCount follows the same rule.
+      await prisma.reply.create({
+        data: {
+          topicId: topicIds.risky,
+          userId: author.id,
+          body: RISKY_REPLY,
+          safetyStatus: 'RISKY',
+        },
+      });
+      const riskyReplies = await prisma.reply.count({
+        where: { userId: author.id, safetyStatus: 'RISKY' },
+      });
+      const allReplies = await prisma.reply.count({ where: { userId: author.id } });
+
+      const cases = [
+        ['web', 'no input', () => me(undefined)],
+        ['web', 'input web', () => me({ surface: 'web' })],
+        ['web', 'header web', () => me(undefined, 'web')],
+        ['miniapp', 'input miniapp', () => me({ surface: 'miniapp' })],
+        ['miniapp', 'header miniapp', () => me(undefined, 'miniapp')],
+        ['miniapp', 'header miniapp + input web', () => me({ surface: 'web' }, 'miniapp')],
+      ] as const;
+      for (const [surface, label, load] of cases) {
+        const counts = await load();
+        const expected = {
+          listingTotalCount: await listLength('listings.mine', surface),
+          topicCount: await listLength('users.myTopics', surface),
+          commentCount: await listLength('users.myComments', surface),
+          replyCount: surface === 'web' ? allReplies - riskyReplies : allReplies,
+        };
+        expect({ label, ...pickCounts(counts) }).toEqual({ label, ...expected });
+      }
+
+      const web = await me(undefined);
+      const mini = await me({ surface: 'miniapp' });
+      expect(Number(mini.topicCount) - Number(web.topicCount)).toBe(1);
+      expect(Number(mini.commentCount) - Number(web.commentCount)).toBe(1);
+      expect(Number(mini.listingTotalCount) - Number(web.listingTotalCount)).toBe(1);
+      expect(Number(mini.listingCount) - Number(web.listingCount)).toBe(1);
+      expect(Number(mini.replyCount) - Number(web.replyCount)).toBe(riskyReplies);
     });
   });
 

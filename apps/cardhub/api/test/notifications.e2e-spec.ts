@@ -636,7 +636,10 @@ describe('notifications', () => {
     const afterDelete = await list(alice.token);
     const hidden = afterDelete.find((item) => item.id === visible?.id);
     expect(hidden?.href).toBeNull();
-    expect(hidden?.excerpt).toBe(`@${aliceIdentity.username} 看这里`);
+    // A missing target no longer returns its frozen excerpt: the target may
+    // have been removed because it was RISKY, and the web row already shows
+    // "target deleted" whenever href is null (notifications.tsx rowText).
+    expect(hidden?.excerpt).toBe('');
     const bobView = await list(bob.token);
     expect(bobView.some((item) => item.id === hidden?.id)).toBe(false);
   });

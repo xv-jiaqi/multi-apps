@@ -1,6 +1,7 @@
 import {
   isVisibleOnSurface,
   mergeSafetyStatus,
+  notificationTargetVisible,
   ownerSafetyWhere,
   publicSafetyWhere,
   resolveContentSurface,
@@ -191,4 +192,22 @@ describe('ownerSafetyWhere', () => {
     expect(ownerSafetyWhere({ surface: 'web' })).toEqual({ safetyStatus: { not: 'RISKY' } });
     expect(ownerSafetyWhere({ surface: 'miniapp' })).toEqual({});
   });
+});
+
+describe('notificationTargetVisible', () => {
+  it.each([
+    ['web', 'PASS', true],
+    ['web', 'UNCHECKED', true],
+    ['web', 'REVIEW', false],
+    ['web', 'RISKY', false],
+    ['miniapp', 'PASS', true],
+    ['miniapp', 'UNCHECKED', false],
+    ['miniapp', 'REVIEW', false],
+    ['miniapp', 'RISKY', false],
+  ] as const)(
+    '%s %s -> %s (no viewer, so the author gets no exception)',
+    (surface, status, expected) => {
+      expect(notificationTargetVisible({ surface, status })).toBe(expected);
+    },
+  );
 });

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import { myContentPageInput, type ContentSurface } from '@repo/shared';
+import { myContentPageInput, userMeInput, type ContentSurface } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -132,7 +132,7 @@ export class UsersRouter {
     const prisma = this.prisma;
 
     return t.router({
-      me: t.authedProcedure.query(async ({ ctx }) => {
+      me: t.authedProcedure.input(userMeInput).query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const user = await prisma.user.findUnique({
           where: { id: ctx.user.sub },
@@ -140,13 +140,17 @@ export class UsersRouter {
         });
         if (!user) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
+        // Same filter as listings.mine / myTopics / myComments, so a count
+        // never includes rows the matching "my" list leaves out (web: RISKY).
+        const surface = resolveContentSurface(input?.surface, ctx.surfaceHeader);
+        const own = { userId: user.id, ...ownerSafetyWhere({ surface }) };
         const [listingCount, listingTotalCount, topicCount, replyCount, commentCount] =
           await Promise.all([
-            prisma.listing.count({ where: { userId: user.id, status: 'OPEN' } }),
-            prisma.listing.count({ where: { userId: user.id } }),
-            prisma.topic.count({ where: { userId: user.id } }),
-            prisma.reply.count({ where: { userId: user.id } }),
-            prisma.comment.count({ where: { userId: user.id } }),
+            prisma.listing.count({ where: { ...own, status: 'OPEN' } }),
+            prisma.listing.count({ where: own }),
+            prisma.topic.count({ where: own }),
+            prisma.reply.count({ where: own }),
+            prisma.comment.count({ where: own }),
           ]);
 
         return {

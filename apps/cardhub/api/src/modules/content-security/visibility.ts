@@ -113,6 +113,29 @@ export function resolveSafetyView(args: {
 }
 
 /**
+ * Whether a notification may carry its stored excerpt and link to a target.
+ * A notification is not an owner view: it goes to the mentioned user, the
+ * topic author, or the content author, so it follows the anonymous public
+ * view of the target on this surface. RISKY and REVIEW (for everyone, author
+ * included) and miniapp UNCHECKED are withheld. Fail-closed by design: no
+ * viewer id is passed, so no row is ever shown because of who reads it.
+ */
+export function notificationTargetVisible(args: {
+  surface: ContentSurface;
+  status: ContentSafetyStatusName;
+}): boolean {
+  return (
+    resolveSafetyView({
+      scope: 'public',
+      surface: args.surface,
+      status: args.status,
+      authorId: '',
+      viewerId: null,
+    }).kind === 'visible'
+  );
+}
+
+/**
  * Extra filter for "my" lists, so a page is not short of rows that
  * `resolveSafetyView` would drop: web leaves RISKY rows out in the query.
  * Keep in step with the RISKY branch of `resolveSafetyView`.

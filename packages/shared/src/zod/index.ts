@@ -201,7 +201,9 @@ export const topicBySlugInput = z.object({
 export type TopicBySlugInput = z.infer<typeof topicBySlugInput>;
 
 /** Own notifications, newest first. `limit` stays on the shared 1–50 cursor cap. */
-export const notificationListInput = cursorPaginationInput;
+export const notificationListInput = cursorPaginationInput.extend({
+  surface: contentSurfaceSchema.optional(),
+});
 export type NotificationListInput = z.infer<typeof notificationListInput>;
 
 export const notificationMarkReadInput = z.object({
@@ -225,6 +227,10 @@ export const pageCursorPaginationInput = z.object({
 export type PageCursorPaginationInput = z.infer<typeof pageCursorPaginationInput>;
 
 /** `users.myTopics` / `users.myComments`: page input plus the optional surface. */
+/** users.me: optional so existing callers that send no input keep working. */
+export const userMeInput = z.object({ surface: contentSurfaceSchema.optional() }).optional();
+export type UserMeInput = z.infer<typeof userMeInput>;
+
 export const myContentPageInput = pageCursorPaginationInput.extend({
   surface: contentSurfaceSchema.optional(),
 });
