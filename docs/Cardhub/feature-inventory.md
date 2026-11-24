@@ -475,6 +475,9 @@ erDiagram
 - 图片（CH-301 §5）：`ArtworkMini` 用 Taro `Image`，经 `resolveArtwork` 只认 `https://`，其余与 `binderror` 回退 `gradientFor(slug)`，加载中底色 `$color-neutral-100`。卡牌详情大图 63:88 `aspectFit`，其余卡图 63:88 `aspectFill`，系列封面与首页精选 2:1 `aspectFill`。首页精选、系列列表、系列详情头图都是「图在上、字在下」，色带上不放字。
 - 错误态（CH-301 §6）：块级失败用 `ErrorBoxMini`（固定 i18n 标题 + 「重试」，进行中「重试中…」，点击区 ≥ 88rpx），`NOT_FOUND` 用 `state.notFound`。页面不展示 `e.message`、状态码或 zod 原文（单测 `no-raw-error-text.test.ts`）。首页统计只在 `series.list` 成功后渲染，不回退「—」。卡牌评论加载失败走红框，不落入空态。
 - 卡牌评论列表请求带 `surface: 'miniapp'`，只返回已过检的评论和自己审核中的评论。系列详情的卡列表来自 `cards.listBySeries`（含平行、按收录时间、`pageSize` 100 拼页），系列头图文走 `series.bySlug({ includeCards:false })`（CH-244）。
+- 卡牌评论可删除（作者和管理员，删除前页内确认；有回复时用 `comment.confirmDeleteWithReplies`）。写操作后 `load({ fresh: true })` 刷新列表；从登录页返回时 `useDidShow` 也会 `load({ fresh: true })` 重拉评论。
+- 卡牌评论回复超过预览条数时用 `comments.listReplies`（`surface: 'miniapp'`，每页 20）底部按钮翻页；加载中 `aria-disabled`，同一次点击不会发出多个相同 cursor 的请求。
+- 他人卡牌评论（含回复）有可复用的举报入口 `ReportEntry`：原生 ActionSheet 五个理由加取消，选完在本页填补充说明后 `reports.create`。自己的内容没有入口。论坛话题/回帖、交易挂牌的入口等对应页面合入后再接。
 
 小程序的 tRPC client 只在 `apps/cardhub/miniapp/src/lib/trpc-client.ts` 构建，每个请求都带请求头 `x-cardhub-surface: miniapp`。api 取显式 `input.surface` 和这个请求头里更严的一个：任一方是 `miniapp` 就按 `miniapp`；请求头存在但值不是 `web` / `miniapp`（含空串、大小写不符、重复）也按 `miniapp`；两者都没有时仍是 `web`。所以公开读接口在小程序上只返回已过检内容和作者自己的 `review`，漏传或写错 `surface` 都不会放宽到 Web 规则。`src/lib/trpc-client.test.ts` 拦截 fetch 断言请求头，并检查 `src` 里只有 `trpc-client.ts` 构建 client、只有 `trpc.ts` 的 fetch 适配调用 `Taro.request`（不许绕过 client 直接请求）。`notifications.list` 的摘要和链接、`users.me` 的计数也按同一个 surface 判断（见接口表）。
 

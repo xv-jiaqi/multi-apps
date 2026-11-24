@@ -13,6 +13,7 @@ vi.mock('@tarojs/components', () => import('../test-stubs/taro-dom'));
 
 const taro = vi.hoisted(() => ({
   showToast: vi.fn(async () => undefined),
+  showActionSheet: vi.fn(async () => ({ tapIndex: 0 })),
   setNavigationBarTitle: vi.fn(async () => undefined),
   navigateTo: vi.fn(async () => undefined),
   redirectTo: vi.fn(async () => undefined),
@@ -27,22 +28,31 @@ vi.mock('@tarojs/taro', () => ({
   default: taro,
   ...taro,
   useRouter: () => ({ params: { slug: 'aurora-knight' } }),
+  // The page also hooks useDidShow. Leave it inert here so the existing
+  // "listForCard after post" counts stay at 2; a dedicated test invokes it.
+  useDidShow: () => undefined,
 }));
 
 const api = vi.hoisted(() => ({
   login: vi.fn(),
   register: vi.fn(),
   commentCreate: vi.fn(),
+  commentDelete: vi.fn(),
   cardBySlug: vi.fn(),
   listForCard: vi.fn(),
+  listReplies: vi.fn(),
+  reportCreate: vi.fn(),
 }));
 vi.mock('../lib/trpc', () => ({
   trpc: {
     auth: { login: { mutate: api.login }, register: { mutate: api.register } },
     comments: {
       create: { mutate: api.commentCreate },
+      delete: { mutate: api.commentDelete },
       listForCard: { query: api.listForCard },
+      listReplies: { query: api.listReplies },
     },
+    reports: { create: { mutate: api.reportCreate } },
     cards: { bySlug: { query: api.cardBySlug } },
   },
 }));
@@ -52,6 +62,8 @@ const stores = vi.hoisted(() => ({
   session: {
     token: 'session-token',
     isAuthenticated: true,
+    isAdmin: false,
+    user: { id: 'u1', username: 'alice', role: 'user' },
     signIn: vi.fn(),
   },
 }));

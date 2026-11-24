@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import Taro, { useRouter } from '@tarojs/taro';
+import Taro, { useDidShow, useRouter } from '@tarojs/taro';
 import { ScrollView, View, Text, Textarea } from '@tarojs/components';
 import {
   BreadcrumbsMini,
@@ -20,6 +20,7 @@ import { LocalNotFoundError, mutationErrorMessage } from '../../../lib/load-erro
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useBlock } from '../../../lib/use-block';
 import { ArtworkMini } from '../../../components/artwork-mini';
+import { CardCommentsList, NoticeBanner } from '../../../components/card-comments';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import './index.scss';
 
@@ -61,11 +62,30 @@ export default observer(function CardDetailPage() {
   const [commentError, setCommentError] = useState<Notice<{ text: string }> | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [hiddenCommentIds, setHiddenCommentIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [threadNotice, setThreadNotice] = useState<Notice<{
+    kind: 'success' | 'error';
+    text: string;
+  }> | null>(null);
+  const skipDidShow = useRef(true);
 
   useEffect(() => {
+    setHiddenCommentIds(new Set());
+    setThreadNotice(null);
     void loadCard();
     void loadComments();
   }, [slug, loadCard, loadComments]);
+
+  // Skip the first onShow (the mount-time useEffect already loaded). Later
+  // appearances — coming back from login — must refresh so a new comment
+  // list is fetched (周扒皮 D follow-up).
+  useDidShow(() => {
+    if (skipDidShow.current) {
+      skipDidShow.current = false;
+      return;
+    }
+    void loadComments({ fresh: true });
+  });
 
   const showCommentError = (text: string) => setCommentError({ id: nextNoticeId(), text });
 
@@ -225,6 +245,14 @@ export default observer(function CardDetailPage() {
                 </Link>
               )}
 
+              {threadNotice ? (
+                <NoticeBanner
+                  id={threadNotice.id}
+                  kind={threadNotice.kind}
+                  text={threadNotice.text}
+                />
+              ) : null}
+
               {commentsView.kind === 'failed' ? (
                 <ErrorBoxMini
                   key={commentsView.noticeId}
@@ -242,19 +270,17 @@ export default observer(function CardDetailPage() {
               ) : commentsView.kind === 'empty' || commentsView.kind === 'notFound' ? (
                 <Empty title={tt('card.detail.commentEmpty')} />
               ) : (
-                <View>
-                  {commentsView.data.map((comment) => (
-                    <View key={comment.id} className="comment-item">
-                      <View className="comment-item__meta">
-                        <Text className="comment-item__author">@{comment.user.username}</Text>
-                        <Text className="card-detail-page__meta">
-                          {new Date(comment.createdAt).toLocaleString(locale.locale)}
-                        </Text>
-                      </View>
-                      <Text className="comment-item__content">{comment.content}</Text>
-                    </View>
-                  ))}
-                </View>
+                <CardCommentsList
+                  comments={commentsView.data}
+                  hiddenIds={hiddenCommentIds}
+                  onHide={(id) => {
+                    setHiddenCommentIds((prev) => new Set(prev).add(id));
+                    void loadComments({ fresh: true });
+                  }}
+                  onNotice={(kind, noticeText) =>
+                    setThreadNotice({ id: nextNoticeId(), kind, text: noticeText })
+                  }
+                />
               )}
             </SectionCard>
           </View>

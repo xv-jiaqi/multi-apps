@@ -5,6 +5,7 @@
 const noop = async () => undefined;
 const Taro = {
   showToast: noop,
+  showActionSheet: noop,
   setNavigationBarTitle: noop,
   navigateTo: noop,
   redirectTo: noop,
@@ -20,4 +21,6 @@ const Taro = {
 export function useRouter() {
   return { params: {} as Record<string, string | undefined> };
 }
+export function useDidShow(_cb: () => void) {}
+
 export default Taro;
