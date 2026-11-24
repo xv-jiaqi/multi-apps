@@ -58,6 +58,7 @@ const listingQuery: {
 };
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     listings: {
       byCard: {

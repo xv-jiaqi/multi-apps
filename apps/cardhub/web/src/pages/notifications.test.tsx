@@ -123,6 +123,7 @@ function row(partial: Partial<Row> & Pick<Row, 'id'>): Row {
 }
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     search: {
       global: {

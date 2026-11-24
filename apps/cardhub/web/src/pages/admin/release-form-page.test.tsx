@@ -9,6 +9,7 @@ import { EditReleasePage, NewReleasePage } from './release-form-page';
 const create = vi.fn();
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       admin: {

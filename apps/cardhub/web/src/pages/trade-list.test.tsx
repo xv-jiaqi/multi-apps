@@ -49,6 +49,7 @@ const listHarness = vi.hoisted(() => ({
 vi.mock('../lib/trpc', async (importOriginal) => {
   const actual = await importOriginal<typeof TrpcModule>();
   return {
+    clearActiveQueryClient: vi.fn(),
     shouldRetryQuery: actual.shouldRetryQuery,
     trpc: {
       useUtils: () => ({

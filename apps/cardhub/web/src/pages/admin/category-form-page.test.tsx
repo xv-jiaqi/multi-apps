@@ -10,6 +10,7 @@ const createImpl: { current: (input: unknown) => Promise<unknown> } = {
 };
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     admin: {
       categories: {

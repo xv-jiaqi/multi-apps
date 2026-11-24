@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { rootStore } from '../stores/root-store';
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       listings: { invalidate: vi.fn() },
