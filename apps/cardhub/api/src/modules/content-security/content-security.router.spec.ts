@@ -17,7 +17,7 @@ function member(overrides: Partial<NonNullable<TrpcContext['user']>> = {}): Trpc
 }
 
 function makeCaller(
-  recordMiniappVisit: (input: { userId: string; code: string }) => Promise<void> = async () =>
+  recordMiniappVisit: (input: { userId: string; code?: string }) => Promise<void> = async () =>
     undefined,
 ) {
   const contentSecurity = stubContentSecurity({
@@ -37,7 +37,7 @@ function makeCaller(
 
 describe('contentSecurity.recordMiniappVisit', () => {
   it('records a visit with the login code and returns only { ok: true }', async () => {
-    const seen: { userId: string; code: string }[] = [];
+    const seen: { userId: string; code?: string }[] = [];
     const { call } = makeCaller(async (input) => {
       seen.push(input);
     });
@@ -73,5 +73,43 @@ describe('contentSecurity.recordMiniappVisit', () => {
     const message = error instanceof Error ? error.message : String(error);
     expect(message).toBe('小程序登录未配置，请稍后再试或联系管理员');
     expect(message).not.toMatch(/WECHAT_|APP_SECRET|openid|session_key|process\.env/i);
+  });
+
+  it('ignores a legacy openid-only payload and does not pass it to the service', async () => {
+    const seen: { userId: string; code?: string }[] = [];
+    const { call, contentSecurity } = makeCaller(async (input) => {
+      seen.push(input);
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: t('zh-CN', 'error.app.VALIDATION'),
+        cause: { appCode: APP_ERROR_CODES.VALIDATION },
+      });
+    });
+    const error = await call(member())
+      .recordMiniappVisit({ openid: 'o-spoofed' })
+      .catch((thrown: unknown) => thrown);
+    expect(error).toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.VALIDATION },
+    });
+    expect(seen).toEqual([{ userId: 'user-1', code: undefined }]);
+    expect(contentSecurity.recordMiniappVisit).toHaveBeenCalledTimes(1);
+    expect(contentSecurity.recordMiniappVisit).toHaveBeenCalledWith({
+      userId: 'user-1',
+      code: undefined,
+    });
+  });
+
+  it('passes only the login code when both fields are present', async () => {
+    const seen: { userId: string; code?: string }[] = [];
+    const { call } = makeCaller(async (input) => {
+      seen.push(input);
+    });
+    const result = await call(member()).recordMiniappVisit({
+      code: 'js-code-1',
+      openid: 'o-spoofed',
+    });
+    expect(result).toEqual({ ok: true });
+    expect(seen).toEqual([{ userId: 'user-1', code: 'js-code-1' }]);
   });
 });

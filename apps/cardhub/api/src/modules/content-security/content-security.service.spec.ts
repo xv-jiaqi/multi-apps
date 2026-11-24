@@ -567,7 +567,7 @@ describe('ContentSecurityService.recordMiniappVisit', () => {
     service.useTestHooks({
       code2Session: async () => {
         calls += 1;
-        return { ok: false, errcode: 40163 };
+        return { ok: false, errcode: 40163, reason: 'invalid' };
       },
       log: (level, message, payload) => {
         logs.push({ level, message, payload });
@@ -594,9 +594,91 @@ describe('ContentSecurityService.recordMiniappVisit', () => {
           event: 'miniapp_code2session_failed',
           userId: 'user-1',
           errcode: 40163,
+          reason: 'invalid',
         },
       },
     ]);
     expect(JSON.stringify(logs)).not.toMatch(/session_key|wx-secret|js-code-1/i);
+  });
+
+  it('ignores a client-supplied openid and does not write when no code is sent', async () => {
+    const { service, prisma } = makeService({ env: configured });
+    let calls = 0;
+    service.useTestHooks({
+      code2Session: async () => {
+        calls += 1;
+        return { ok: true, openid: 'o-from-wechat' };
+      },
+    });
+
+    await expect(service.recordMiniappVisit({ userId: 'user-1' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { appCode: APP_ERROR_CODES.VALIDATION },
+    });
+    expect(calls).toBe(0);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('returns BAD_GATEWAY on a code2Session timeout, does not write, and hides secrets', async () => {
+    const { service, prisma } = makeService({ env: configured });
+    const logs: { level: string; message: string; payload: Record<string, unknown> }[] = [];
+    let calls = 0;
+    service.useTestHooks({
+      code2Session: async () => {
+        calls += 1;
+        return { ok: false, errcode: null, reason: 'timeout' };
+      },
+      log: (level, message, payload) => {
+        logs.push({ level, message, payload });
+      },
+    });
+
+    const error = await service
+      .recordMiniappVisit({ userId: 'user-1', code: 'js-code-1' })
+      .catch((thrown: unknown) => thrown);
+    expect(error).toMatchObject({
+      code: 'BAD_GATEWAY',
+      cause: { appCode: APP_ERROR_CODES.BAD_GATEWAY },
+    });
+    const message = error instanceof Error ? error.message : '';
+    expect(message).toBe('服务暂时不可用，请稍后再试');
+    expect(message).not.toMatch(/session_key|js-code|wx-secret|WeChat|Timeout/i);
+    expect(calls).toBe(1);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(logs).toEqual([
+      {
+        level: 'warn',
+        message: 'miniapp code2Session failed',
+        payload: {
+          event: 'miniapp_code2session_failed',
+          userId: 'user-1',
+          errcode: null,
+          reason: 'timeout',
+        },
+      },
+    ]);
+    expect(JSON.stringify(logs)).not.toMatch(/session_key|wx-secret|js-code-1/i);
+  });
+
+  it('returns MINIAPP_NOT_CONFIGURED when appSecret is missing, without calling WeChat or writing', async () => {
+    const { service, prisma } = makeService({
+      env: env({ appId: 'wx-app', appSecret: '', credentialsConfigured: false }),
+    });
+    let calls = 0;
+    service.useTestHooks({
+      code2Session: async () => {
+        calls += 1;
+        return { ok: true, openid: 'o-from-wechat' };
+      },
+    });
+
+    await expect(
+      service.recordMiniappVisit({ userId: 'user-1', code: 'js-code-1' }),
+    ).rejects.toMatchObject({
+      code: 'PRECONDITION_FAILED',
+      cause: { appCode: APP_ERROR_CODES.MINIAPP_NOT_CONFIGURED },
+    });
+    expect(calls).toBe(0);
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });

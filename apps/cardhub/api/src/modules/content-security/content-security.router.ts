@@ -18,6 +18,7 @@ export class ContentSecurityRouter {
         .input(recordMiniappVisitInput)
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          // input.openid is @deprecated and is never forwarded or trusted.
           await this.contentSecurity.recordMiniappVisit({
             userId: ctx.user.sub,
             code: input.code,

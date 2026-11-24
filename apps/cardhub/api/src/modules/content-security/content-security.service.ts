@@ -256,9 +256,19 @@ export class ContentSecurityService {
 
   /**
    * Exchange a one-time login code for openid and record a mini-program visit.
+   * A client-supplied openid is never accepted as identity and never written.
    * session_key is never stored or logged. The same code is never retried.
+   * Missing or invalid code does not write (never fail-open).
    */
-  async recordMiniappVisit(input: { userId: string; code: string }): Promise<void> {
+  async recordMiniappVisit(input: { userId: string; code?: string }): Promise<void> {
+    const code = input.code;
+    if (typeof code !== 'string' || code.length === 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: t('zh-CN', 'error.app.VALIDATION'),
+        cause: { appCode: APP_ERROR_CODES.VALIDATION },
+      });
+    }
     const env = this.env();
     if (!env.credentialsConfigured) {
       throw new TRPCError({
@@ -267,12 +277,13 @@ export class ContentSecurityService {
         cause: { appCode: APP_ERROR_CODES.MINIAPP_NOT_CONFIGURED },
       });
     }
-    const exchanged = await this.exchangeLoginCode({ code: input.code });
+    const exchanged = await this.exchangeLoginCode({ code });
     if (exchanged.ok === false) {
       this.safeLog('warn', 'miniapp code2Session failed', {
         event: 'miniapp_code2session_failed',
         userId: input.userId,
         errcode: exchanged.errcode,
+        reason: exchanged.reason,
       });
       throw new TRPCError({
         code: 'BAD_GATEWAY',

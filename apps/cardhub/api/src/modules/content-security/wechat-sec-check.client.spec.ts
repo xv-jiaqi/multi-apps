@@ -112,7 +112,7 @@ describe('WechatApiSecCheckClient', () => {
       fetchImpl,
     });
     const result = await client.code2Session({ code: 'used-code' });
-    expect(result).toEqual({ ok: false, errcode: 40163 });
+    expect(result).toEqual({ ok: false, errcode: 40163, reason: 'invalid' });
     expect(JSON.stringify(result)).not.toMatch(/session_key|leaked|errmsg/i);
   });
 
@@ -130,7 +130,27 @@ describe('WechatApiSecCheckClient', () => {
     await expect(client.code2Session({ code: 'js-code-2' })).resolves.toEqual({
       ok: false,
       errcode: null,
+      reason: 'http',
     });
     expect(hits).toBe(1);
+  });
+
+  it('returns a timeout failure without retrying or leaking secrets', async () => {
+    let hits = 0;
+    const fetchImpl: typeof fetch = async () => {
+      hits += 1;
+      const error = new Error('The operation was aborted due to timeout');
+      error.name = 'TimeoutError';
+      throw error;
+    };
+    const client = new WechatApiSecCheckClient({
+      appId: 'wx-app',
+      appSecret: 'wx-secret',
+      fetchImpl,
+    });
+    const result = await client.code2Session({ code: 'js-code-3' });
+    expect(result).toEqual({ ok: false, errcode: null, reason: 'timeout' });
+    expect(hits).toBe(1);
+    expect(JSON.stringify(result)).not.toMatch(/session_key|wx-secret|js-code-3/i);
   });
 });

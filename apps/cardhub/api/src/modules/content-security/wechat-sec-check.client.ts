@@ -48,9 +48,11 @@ const code2SessionResponseSchema = z.object({
   errmsg: z.string().optional(),
 });
 
+export type Code2SessionFailureReason = 'invalid' | 'timeout' | 'http';
+
 export type Code2SessionResult =
   | { ok: true; openid: string }
-  | { ok: false; errcode: number | null };
+  | { ok: false; errcode: number | null; reason: Code2SessionFailureReason };
 
 interface TokenCache {
   accessToken: string;
@@ -133,13 +135,18 @@ export class WechatApiSecCheckClient implements WechatSecCheckClient {
     let payload: unknown;
     try {
       payload = await this.getJson(url);
-    } catch {
-      return { ok: false, errcode: null };
+    } catch (error) {
+      const timedOut =
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        (error.name === 'TimeoutError' || error.name === 'AbortError');
+      return { ok: false, errcode: null, reason: timedOut ? 'timeout' : 'http' };
     }
     const parsed = code2SessionResponseSchema.safeParse(payload);
-    if (!parsed.success) return { ok: false, errcode: null };
+    if (!parsed.success) return { ok: false, errcode: null, reason: 'invalid' };
     if ((parsed.data.errcode ?? 0) !== 0 || !parsed.data.openid) {
-      return { ok: false, errcode: parsed.data.errcode ?? null };
+      return { ok: false, errcode: parsed.data.errcode ?? null, reason: 'invalid' };
     }
     return { ok: true, openid: parsed.data.openid };
   }

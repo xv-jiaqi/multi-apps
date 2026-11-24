@@ -789,6 +789,8 @@ export type {
 
 export {
   WECHAT_JS_CODE_MAX,
+  WECHAT_OPENID_MAX,
+  WECHAT_OPENID_MIN,
   recordMiniappVisitInput,
   recordMiniappVisitResult,
 } from './content-security';

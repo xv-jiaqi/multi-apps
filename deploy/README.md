@@ -1146,10 +1146,13 @@ Leave them empty until JQ-Boss provides a real AppID and secret (CH-302).
 Do not put real secrets in this repository. If `WECHAT_APP_ID` or
 `WECHAT_APP_SECRET` is missing or blank, new writes are stored as unchecked
 and `recordMiniappVisit` returns tRPC `PRECONDITION_FAILED` with `appCode`
-`MINIAPP_NOT_CONFIGURED` without calling WeChat. The procedure accepts a
-one-time `wx.login` code, exchanges it for openid via `code2Session`, and
-stores `wechatOpenid` plus `miniappLastSeenAt`. The response is `{ ok: true }`
-only; `session_key` is not stored or logged. `CONTENT_SECURITY_TEST_RESULT`
+`MINIAPP_NOT_CONFIGURED` without calling WeChat. The procedure accepts an
+optional one-time `wx.login` `code` and an optional deprecated `openid`.
+The server ignores any client-supplied `openid` (it is never written and
+never used as identity). Only the openid from `code2Session` is stored on
+`wechatOpenid` plus `miniappLastSeenAt`. Missing or invalid `code` fails
+explicitly and does not write. The response is `{ ok: true }` only;
+`session_key` is not stored or logged. `CONTENT_SECURITY_TEST_RESULT`
 is staging/dev only and must stay unset when `NODE_ENV=production`.
 
 ### Off-site OSS copy (required)
