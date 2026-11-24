@@ -1,0 +1,26 @@
+[
+  {
+    "name": "signout-trade-zh-1440",
+    "url": "http://localhost:5173/trade?card=ch250-shot-card",
+    "file": "/tmp/ch250-shots/png/signout-trade-zh-1440.png",
+    "leaked": false
+  },
+  {
+    "name": "signout-card-zh-1440",
+    "url": "http://localhost:5173/cards/ch250-shot-card",
+    "file": "/tmp/ch250-shots/png/signout-card-zh-1440.png",
+    "leaked": false
+  },
+  {
+    "name": "signout-trade-zh-375",
+    "url": "http://localhost:5173/trade?card=ch250-shot-card",
+    "file": "/tmp/ch250-shots/png/signout-trade-zh-375.png",
+    "leaked": false
+  },
+  {
+    "name": "signout-card-zh-375",
+    "url": "http://localhost:5173/cards/ch250-shot-card",
+    "file": "/tmp/ch250-shots/png/signout-card-zh-375.png",
+    "leaked": false
+  }
+]
