@@ -1,9 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro';
-import { ScrollView, View, Text, Button } from '@tarojs/components';
-import type { ButtonProps } from '@tarojs/components';
-import { BreadcrumbsMini, Empty, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import { ScrollView, View, Text } from '@tarojs/components';
+import {
+  BreadcrumbsMini,
+  Empty,
+  FocusableButton,
+  Link,
+  PrimaryButton,
+  Skeleton,
+} from '@repo/ui-mini';
 import { t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { applyTabBarLabels } from '../../../lib/apply-tab-bar-labels';
@@ -198,22 +204,16 @@ export default observer(function ForumListPage() {
             ))}
 
             {nextCursor && !more.moreFailed ? (
-              <Button
+              <FocusableButton
                 className={
                   loadingMore ? 'forum-page__more forum-page__more--disabled' : 'forum-page__more'
                 }
                 hoverClass="none"
+                disabled={loadingMore ? true : undefined}
                 onClick={loadingMore ? undefined : () => onLoadMore()}
-                {...(loadingMore
-                  ? ({
-                      disabled: true,
-                      ariaDisabled: true,
-                      'aria-disabled': true,
-                    } as ButtonProps)
-                  : {})}
               >
                 {more.moreLoading ? tt('state.loading') : tt('forum.list.loadMore')}
-              </Button>
+              </FocusableButton>
             ) : null}
 
             {more.moreFailed ? (

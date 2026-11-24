@@ -1,3 +1,9 @@
+export {
+  FocusableButton,
+  isMiniappWebEnv,
+  activateOnEnterOrSpace,
+} from './components/focusable-button';
+export type { FocusableButtonProps } from './components/focusable-button';
 export { PrimaryButton } from './components/primary-button';
 export type { PrimaryButtonProps } from './components/primary-button';
 export { SectionCard } from './components/section-card';

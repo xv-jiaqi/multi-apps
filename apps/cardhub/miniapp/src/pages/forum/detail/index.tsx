@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow, useRouter } from '@tarojs/taro';
-import { ScrollView, View, Text, Textarea, Button } from '@tarojs/components';
-import type { ButtonProps } from '@tarojs/components';
-import { BreadcrumbsMini, Empty, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import { ScrollView, View, Text, Textarea } from '@tarojs/components';
+import {
+  BreadcrumbsMini,
+  Empty,
+  FocusableButton,
+  Link,
+  PrimaryButton,
+  Skeleton,
+} from '@repo/ui-mini';
 import { APP_ERROR_CODES, fieldErrorMessage, replyCreateInput, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
@@ -192,22 +198,16 @@ export default observer(function ForumDetailPage() {
             ))}
 
             {nextCursor ? (
-              <Button
+              <FocusableButton
                 className={
                   loadingMore ? 'forum-page__more forum-page__more--disabled' : 'forum-page__more'
                 }
                 hoverClass="none"
+                disabled={loadingMore ? true : undefined}
                 onClick={loadingMore ? undefined : () => onLoadMore()}
-                {...(loadingMore
-                  ? ({
-                      disabled: true,
-                      ariaDisabled: true,
-                      'aria-disabled': true,
-                    } as ButtonProps)
-                  : {})}
               >
                 {more.moreLoading ? tt('state.loading') : tt('forum.detail.loadMoreReplies')}
-              </Button>
+              </FocusableButton>
             ) : replies.length > 0 ? (
               <Text className="forum-card__meta">{tt('forum.detail.allRepliesShown')}</Text>
             ) : null}
