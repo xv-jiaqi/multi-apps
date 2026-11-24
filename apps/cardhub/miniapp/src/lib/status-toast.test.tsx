@@ -16,6 +16,7 @@ import {
   announceStatusToast,
   STATUS_TOAST_DURATION_MS,
   resetQueuedStatusToast,
+  collectStatusToastAvoidRects,
   useStatusToast,
 } from './status-toast';
 
@@ -94,5 +95,61 @@ describe('useStatusToast', () => {
       announceStatusToast('from-announce');
     });
     expect(screen.getByRole('status').textContent).toBe('from-announce');
+  });
+});
+
+describe('StatusToast pointer events and avoid rects', () => {
+  it('sets pointer-events: none so the bar cannot intercept clicks', () => {
+    render(<Probe />);
+    act(() => {
+      screen.getByText('show').click();
+    });
+    const node = screen.getByRole('status') as HTMLElement;
+    expect(node.style.pointerEvents).toBe('none');
+  });
+
+  it('includes the focused control in avoid rects', () => {
+    const link = document.createElement('a');
+    link.href = '#/pages/index/index';
+    link.textContent = '首页';
+    document.body.appendChild(link);
+    link.getBoundingClientRect = () =>
+      ({
+        x: 16,
+        y: 16,
+        width: 24,
+        height: 19,
+        top: 16,
+        left: 16,
+        right: 40,
+        bottom: 35,
+        toJSON() {},
+      }) as DOMRect;
+    link.focus();
+    expect(collectStatusToastAvoidRects()).toEqual([{ x: 16, y: 16, width: 24, height: 19 }]);
+    link.remove();
+  });
+
+  it('does not duplicate a focused control already inside data-toast-avoid', () => {
+    const wrap = document.createElement('div');
+    wrap.setAttribute('data-toast-avoid', 'true');
+    const btn = document.createElement('button');
+    wrap.appendChild(btn);
+    document.body.appendChild(wrap);
+    wrap.getBoundingClientRect = () =>
+      ({
+        x: 16,
+        y: 748,
+        width: 343,
+        height: 44,
+        top: 748,
+        left: 16,
+        right: 359,
+        bottom: 792,
+        toJSON() {},
+      }) as DOMRect;
+    btn.focus();
+    expect(collectStatusToastAvoidRects()).toEqual([{ x: 16, y: 748, width: 343, height: 44 }]);
+    wrap.remove();
   });
 });

@@ -321,7 +321,7 @@ describe('trade publish safety, note, and limits', () => {
     const noteArea = areas.find((el) => el.getAttribute('maxlength') === '500');
     expect(imageArea).toBeTruthy();
     expect(noteArea).toBeTruthy();
-    expect(screen.getByText('联系方式请填在『联系方式』栏')).toBeTruthy();
+    expect(screen.getByText('联系方式请填在「联系方式」栏')).toBeTruthy();
     const hint = document.getElementById('trade-publish-note-hint');
     expect(hint).toBeTruthy();
     expect(hint?.className).toContain('trade-form__hint');

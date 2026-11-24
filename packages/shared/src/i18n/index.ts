@@ -453,7 +453,7 @@ const zhCN: Dictionary = {
   'trade.publish.contact': '联系方式（微信 / QQ / 邮箱…）',
   'trade.publish.contactHintSignedIn': '只有登录用户能看到联系方式',
   'trade.publish.note': '备注（可选，最多 500 字）',
-  'trade.publish.noteHint': '联系方式请填在『联系方式』栏',
+  'trade.publish.noteHint': '联系方式请填在「联系方式」栏',
   'trade.publish.submit': '发布意向',
   'trade.publish.submitting': '正在发布意向…',
   'trade.publish.cancel': '取消',

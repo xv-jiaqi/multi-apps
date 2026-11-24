@@ -679,7 +679,7 @@ export default observer(function TradePublishPage() {
               </View>
             ) : null}
 
-            <View className="trade-form__footer">
+            <View className="trade-form__footer" data-toast-avoid>
               <PrimaryButton
                 label={submit.pending ? tt('trade.publish.submitting') : tt('trade.publish.submit')}
                 disabled={submit.pending}
