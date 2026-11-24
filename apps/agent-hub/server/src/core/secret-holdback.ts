@@ -10,9 +10,11 @@
  * 3. 不在 PEM 块里（BEGIN 到 END 行之间，或 END 还没来）：BEGIN…END 跨多行，整块要在同一块里。
  * 4. 离末尾至少 HOLDBACK_CHARS 个字符：见下面常量的依据。
  * 5. 不落在 redact.ts 任何一条规则在整段文字上的匹配里（REDACT_RULES）：落进去就退到匹配开头。
- * 单段无空白文本超过 MAX_HOLD_CHARS 时才在离末尾 HOLDBACK_CHARS 处强行切，强切点同样经过 2、5 两步，
- * 所以已经成形的密钥不会被切开（审查 6041423500 第 1 条）。只有超过 MAX_HOLD_CHARS 的未闭合 PEM 块会被切开，
- * 那不可能是真实私钥（见 security.md §8）。
+ * 按上面的规则要扣住的尾巴超过 MAX_HOLD_CHARS 时（例如超过 64 KiB 的无空白长行），才在离末尾
+ * HOLDBACK_CHARS 处强行切，而且强切点还要退到任何“还没写完的密钥”的开头之前（openSecretStart），
+ * 再经过 2、5 两步。这样已经成形的密钥、以及跨过末尾还没写完的密钥都不会被切开（审查 6041423500 第 1 条、
+ * 6042967785 第 6 条）。强切之后要扣的尾巴仍超过 MAX_HOLD_CHARS（一个超长的未闭合 PEM 块，或一个
+ * 超过 64 KiB 还没写完的“密钥”），返回 seal，调用方整路丢弃，绝不在里面切。
  *
  * 所有放出路径都只能走 splitForRedaction（审查 6042585463）：continue / force / end / truncate
  * 四种模式都在这里做脱敏匹配与切点保护，EventStore 不得另起一条放行。force 与 continue 同一规则，
@@ -38,6 +40,42 @@ const PEM_END = /-----END [A-Z0-9 ]*-----/;
 const WS = /\s/;
 const HEADER_NAME = /(?:authorization|x-access-token)$/i;
 const SCHEME = /(?:^|\s)(?:bearer|basic|token)$/i;
+
+/**
+ * 每条 REDACT_RULES 的“还没写完”版本：一个完整匹配的任何前缀（够长的）都会被对应的模式匹配到、且一直
+ * 延伸到末尾。只放宽不收紧（字符集、长度都更宽，也不要求词边界），所以漏判不会发生，只会多扣。
+ * 私钥块由 openPemStart 处理（没有 END 的 BEGIN 都算没写完）。
+ * 证明见 openSecretStart。
+ */
+const OPEN_SECRET: readonly RegExp[] = [
+  /\b(?:ahu|ahb)_[A-Za-z0-9_-]*$/,
+  /\bgithub_pat_[A-Za-z0-9_]*$/,
+  /\bgh[pousr]_[A-Za-z0-9]*$/,
+  /\bsk-[A-Za-z0-9_-]*$/,
+  /\bxox[baprs]-[A-Za-z0-9-]*$/,
+  /\bAKIA[0-9A-Z]*$/,
+  /\beyJ[A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]*){0,2}$/,
+  /https?:\/\/[^/\s@]*$/i,
+  /ssh:\/\/[^:/\s@]*(?::[^@/\s]*)?$/i,
+  /(?:authorization|x-access-token)\s*(?:[:=]\s*(?:(?:bearer|basic|token)(?:\s+\S*)?|\S*)?)?$/i,
+];
+
+/**
+ * 最左边一个“可能还没写完的密钥”的开头；没有就返回 text.length。
+ *
+ * 为什么强切点 ≤ 它就安全：设最终全文里某个匹配 m 跨过切点 c（m.start < c < m.end），c ≤ len − 64。
+ * - m.end ≤ len：m 在当前文字里已经成形，guardCut 的规则 5 会把 c 退到 m.start。
+ * - m.end > len：text.slice(m.start) 是 m 的前缀，长度 > 64，已经含有 m 的整个字面前缀（最长 14 个字符），
+ *   所以被上面对应的 OPEN_SECRET 模式在 m.start（或更左）处匹配到末尾，openSecretStart ≤ m.start < c，矛盾。
+ */
+export function openSecretStart(text: string): number {
+  let start = openPemStart(text);
+  for (const re of OPEN_SECRET) {
+    const m = re.exec(text);
+    if (m && m.index < start) start = m.index;
+  }
+  return start;
+}
 
 /**
  * emit 是否以认证头的前缀结尾（`Authorization`、`Authorization:`、`Authorization:   Basic   ` 等，空白多长都算）。
@@ -99,31 +137,37 @@ function normalizeMode(mode: ReleaseMode | boolean): ReleaseMode {
   return mode;
 }
 
+/** splitForRedaction 的结果：emit + hold === text。seal = 这一路必须整路丢弃（hold 不得落库）。 */
+export interface Split {
+  emit: string;
+  hold: string;
+  seal?: true;
+}
+
 /**
- * 所有放出路径的唯一入口：把 text 分成现在可以下发的 emit 和剩下的 hold。emit + hold === text。
+ * 所有放出路径的唯一入口：把 text 分成现在可以下发的 emit 和剩下的 hold。
  *
- * - continue：正常增量，扣住短尾（上面的规则 1–5）。
- * - force：任务扣留超过总上限时用，规则与 continue **完全相同**（审查 6042967785）：不在末尾那段
- *   无空白文字的中间切，除非这段本身超过 MAX_HOLD_CHARS。切不出安全前段就 emit=''，调用方跳过
- *   这一路；所有路都切不出、总量又超了，由调用方整路丢弃（EventStore.sealStream），不明文拆开。
+ * - continue：正常增量，扣住短尾（上面的规则 1–5）。要扣的尾巴超过 MAX_HOLD_CHARS 时强切，
+ *   强切点 ≤ openSecretStart；强切后仍超过就 seal。
+ * - force：任务扣留超过总上限时用，规则与 continue 完全相同（审查 6042967785）。
  * - end：这一路已结束，整段放出。
- * - truncate：1 MB 截断。cutLimit 是拟截到的位置；hold 是要丢弃的后缀。截掉的部分反正要丢，所以
- *   往回找空白**没有下限**；整段都没有空白就整段丢掉（emit=''）。text 的开头是上一次的安全切点，
- *   退到那里是安全的。没闭合的 PEM 块一律退到 BEGIN 前。
+ * - truncate：1 MB 截断。cutLimit 是拟截到的位置；hold 是要丢弃的后缀。往回找空白没有下限，整段都没有
+ *   空白就整段丢掉（emit=''）；没闭合的 PEM 块一律退到 BEGIN 前。
  */
 export function splitForRedaction(
   text: string,
   mode: ReleaseMode | boolean = 'continue',
   cutLimit?: number,
-): { emit: string; hold: string } {
+): Split {
   const kind = normalizeMode(mode);
   if (kind === 'end') return { emit: text, hold: '' };
   const truncate = kind === 'truncate';
 
-  let cut = truncate
+  const limit = truncate
     ? Math.min(cutLimit ?? text.length, text.length)
     : text.length - HOLDBACK_CHARS;
-  if (cut <= 0) return { emit: '', hold: text };
+  if (limit <= 0) return { emit: '', hold: text };
+  let cut = limit;
 
   // 3. PEM 块不能被切开：切点落在 BEGIN 与 END 行之间（或 END 还没来）就退到 BEGIN 前。
   for (const m of text.matchAll(PEM_BEGIN)) {
@@ -132,17 +176,20 @@ export function splitForRedaction(
     const end = PEM_END.exec(text.slice(after));
     const blockEnd = end ? after + end.index + end[0].length : Infinity;
     if (cut >= blockEnd) continue;
-    if (truncate || end || text.length - m.index <= MAX_HOLD_CHARS) cut = m.index;
+    cut = m.index;
     break;
   }
 
-  // 1. 退到空白之后（不切在一段 token 中间）。
+  // 1. 退到空白之后（不切在一段 token 中间）；没有空白就是 0。
   if (cut > 0 && !WS.test(text[cut - 1]!)) {
     let j = cut - 1;
     while (j >= 0 && !WS.test(text[j]!)) j--;
-    if (j >= 0) cut = j + 1;
-    // 整段没有空白：truncate 整段丢掉；continue / force 只有超过 MAX_HOLD_CHARS 才强切。
-    else if (truncate || text.length <= MAX_HOLD_CHARS) cut = 0;
+    cut = j + 1;
+  }
+
+  // 要扣的尾巴太长（continue / force）：强切，但不越过任何还没写完的密钥（含没闭合的私钥块）的开头。
+  if (!truncate && text.length - cut > MAX_HOLD_CHARS) {
+    cut = Math.max(cut, Math.min(limit, openSecretStart(text)));
   }
 
   cut = guardCut(text, cut);
@@ -150,6 +197,17 @@ export function splitForRedaction(
   // 强行切时别切开代理对。
   if (cut > 0 && /[\uD800-\uDBFF]/.test(text[cut - 1]!)) cut--;
 
-  if (cut <= 0) return { emit: '', hold: text };
-  return { emit: text.slice(0, cut), hold: text.slice(cut) };
+  const emit = cut > 0 ? text.slice(0, cut) : '';
+  const hold = text.slice(emit.length);
+  if (!truncate && hold.length > MAX_HOLD_CHARS) return { emit, hold, seal: true };
+  return { emit, hold };
+}
+
+/** 第一个还没闭合的 PEM 块（BEGIN 之后没有完整的 END 行）的开头；没有就返回 text.length。 */
+function openPemStart(text: string): number {
+  for (const m of text.matchAll(PEM_BEGIN)) {
+    const after = m.index + m[0].length;
+    if (!PEM_END.test(text.slice(after))) return m.index;
+  }
+  return text.length;
 }

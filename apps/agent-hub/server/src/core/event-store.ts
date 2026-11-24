@@ -141,12 +141,22 @@ export class EventStore {
     const out: Released[] = [];
     /** 所有放出只走 splitForRedaction，这里不另起放行。返回仍需扣住的尾巴。 */
     const release = (p: Pending, mode: ReleaseMode): string => {
-      const { emit: now, hold } = splitForRedaction(p.event.text, mode);
+      const { emit: now, hold, seal } = splitForRedaction(p.event.text, mode);
       if (now) out.push({ turnId: p.turnId, event: { ...p.event, text: now } as DeltaEvent });
-      return hold;
+      if (!seal) return hold;
+      // 切不出安全前段、尾巴又超过 MAX_HOLD_CHARS：整路丢弃，不在没写完的密钥中间切（审查 6042967785 第 6 条）。
+      out.push(
+        ...this.sealStream(taskId, streamKey(p.event), {
+          ...p,
+          event: { ...p.event, text: hold } as DeltaEvent,
+        }),
+      );
+      return '';
     };
     for (const item of items) {
       const key = streamKey(item.event);
+      // 这一批前面刚被 seal 的一路：后面交错进来的同路增量也丢掉，不能当成新的一路放出。
+      if (this.sealed.get(taskId)?.has(key)) continue;
       const prev = held.get(key);
       held.delete(key);
       const truncated = 'truncated' in item.event && item.event.truncated === true;
@@ -196,7 +206,8 @@ export class EventStore {
   }
 
   /**
-   * 扣留超限、又切不出安全前段时，把这一路整路丢弃：扣着的尾巴不落库，之后的增量也丢掉。
+   * 切不出安全前段时把这一路整路丢弃：扣着的尾巴不落库，之后的增量也丢掉。两种情况：任务扣留合计
+   * 超过上限；或者单路要扣的尾巴超过 MAX_HOLD_CHARS（splitForRedaction 返回 seal）。
    * 工具输出补一条 truncated 标记；每一路都补一条 OUTPUT_OMITTED 提示（adapter-interface.md §3.2）。
    */
   private sealStream(taskId: string, key: string, p: Pending): Released[] {
@@ -225,7 +236,7 @@ export class EventStore {
         type: 'notice',
         level: 'warning',
         code: 'OUTPUT_OMITTED',
-        message: `输出扣留超过上限，这一段（${p.event.itemId}）剩下的输出已省略`,
+        message: `这一段输出里有无法安全切开的超长内容，为了不切开可能的密钥，剩下的输出已省略（${p.event.itemId}）`,
       },
     });
     return res;

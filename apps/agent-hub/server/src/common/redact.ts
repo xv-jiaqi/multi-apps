@@ -5,8 +5,9 @@ const MASK = '«已脱敏»';
  * secret-holdback.ts 用同一张表找“切点不能落进去”的区间。
  */
 export const REDACT_RULES: ReadonlyArray<{ re: RegExp; to: string }> = [
+  // 私钥块：到 END 行为止；没闭合（head -c 400 id_rsa、输出被截断）就一直打码到文末。
   {
-    re: /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g,
+    re: /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|$)/g,
     to: MASK,
   },
   { re: /\b(?:ahu|ahb)_[A-Za-z0-9_-]{43}\b/g, to: MASK },
@@ -16,8 +17,9 @@ export const REDACT_RULES: ReadonlyArray<{ re: RegExp; to: string }> = [
   { re: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, to: MASK },
   { re: /\bAKIA[0-9A-Z]{16}\b/g, to: MASK },
   { re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g, to: MASK },
-  { re: /\b(https?:\/\/)[^/\s@]+@/gi, to: '$1' },
-  { re: /\b(ssh:\/\/)([^:/\s@]+):[^@/\s]+@/gi, to: '$1$2@' },
+  // URL 凭据不要求词边界：xhttps://u:p@h 这种紧贴字母数字的也要打码。
+  { re: /(https?:\/\/)[^/\s@]+@/gi, to: '$1' },
+  { re: /(ssh:\/\/)([^:/\s@]+):[^@/\s]+@/gi, to: '$1$2@' },
   // 认证头：scheme（Bearer / Basic / Token）和后面的凭据一起打码；`curl -v -u` 输出的是 Basic。
   {
     re: /((?:authorization|x-access-token)\s*[:=]\s*)(?:(?:bearer|basic|token)\s+)?\S+/gi,

@@ -3,7 +3,12 @@
  * 测试里的密钥都是运行时拼出来的假值。
  */
 import { redact } from '../common/redact';
-import { HOLDBACK_CHARS, MAX_HOLD_CHARS, splitForRedaction } from './secret-holdback';
+import {
+  HOLDBACK_CHARS,
+  MAX_HOLD_CHARS,
+  openSecretStart,
+  splitForRedaction,
+} from './secret-holdback';
 
 const rep = (s: string, n: number) => s.repeat(n);
 /** [整段里的写法, 必须消失的敏感部分] */
@@ -182,6 +187,74 @@ describe('secret-holdback', () => {
       const body = rep('Tk3', 10);
       const t = `${rep('x ', 40)}Authorization:${rep(' ', 300)}Bearer ${body}\nnext\n`;
       for (let p = 0; p <= t.length; p++) noLeak([t.slice(0, p), t.slice(p)], body);
+    });
+  });
+
+  describe('长行强切不切开没写完的密钥（审查 6042967785 第 6 条）', () => {
+    const tokens: Array<[string, string]> = [
+      ['ahu', `ahu_${'Qw9'.repeat(14)}Q`],
+      ['github_pat', `github_pat_${'Ab3'.repeat(30)}`],
+      ['gho', `gho_${'Zq9'.repeat(30)}`],
+      ['sk', `sk-${'Ab3'.repeat(40)}`],
+      ['xoxb', `xoxb-${'123-'.repeat(20)}abc`],
+      ['AKIA', `AKIA${'QW3RTY7UIOP2ASDF'.repeat(6)}`],
+      ['jwt', `eyJ${'Hh1'.repeat(30)}.${'Pp2'.repeat(60)}.${'Sg3'.repeat(20)}`],
+      ['url', `https://deploy:${'Pw8'.repeat(40)}@git.example.com/r.git`],
+      ['ssh', `ssh://deploy:${'Pw8'.repeat(40)}@git.example.com/r.git`],
+      ['header', `Authorization: Bearer ${'Tk5'.repeat(40)}`],
+      ['xhttps', `xhttps://deploy:${'Pw8'.repeat(40)}@git.example.com/r.git`],
+      ['pem', `-----BEGIN RSA PRIVATE KEY-----\n${'Kq7'.repeat(21)}K\n${'Kq7'.repeat(21)}K`],
+    ];
+
+    // xhttps：紧贴的 x 不是密钥的一部分，密钥从 https 开始。
+    const lead = (tok: string) => (tok.startsWith('x') && !tok.startsWith('xox') ? 1 : 0);
+
+    it.each(tokens)('%s：每个长于 64 的前缀都被认成没写完的密钥', (_n, tok) => {
+      const pre = `${'c'.repeat(100)}"`;
+      // URL / ssh 到 @ 为止才是密钥部分，过了 @ 就已经成形（由 guardCut 负责）。
+      const end = tok.includes('@') ? tok.indexOf('@') : tok.length;
+      for (let k = HOLDBACK_CHARS + 1; k <= end; k++) {
+        expect(openSecretStart(pre + tok.slice(0, k))).toBeLessThanOrEqual(pre.length + lead(tok));
+      }
+    });
+
+    it.each(tokens)(
+      '%s：64 KiB 以上无空白前缀 + 跨在强切点上的半截密钥，emit 不含密钥的任何部分',
+      (_n, tok) => {
+        const pre = `${'c'.repeat(MAX_HOLD_CHARS + 10)}"`;
+        for (const k of [HOLDBACK_CHARS + 1, Math.floor(tok.length / 2) + 40, tok.length - 1]) {
+          const text = pre + tok.slice(0, Math.min(k, tok.length - 1));
+          const { emit, hold, seal } = splitForRedaction(text, 'continue');
+          expect(emit + hold).toBe(text);
+          expect(emit.length).toBeLessThanOrEqual(pre.length + lead(tok));
+          expect(emit.length).toBeGreaterThan(0);
+          expect(seal).toBeUndefined();
+        }
+      },
+    );
+
+    it('没写完的“密钥”本身超过 MAX_HOLD_CHARS：放出安全前段，返回 seal，不在里面切', () => {
+      const pre = `${'c'.repeat(1000)}"`;
+      const text = `${pre}eyJ${'A'.repeat(MAX_HOLD_CHARS + 10)}`;
+      for (const mode of ['continue', 'force'] as const) {
+        const r = splitForRedaction(text, mode);
+        expect(r.seal).toBe(true);
+        expect(r.emit).toBe(pre);
+      }
+    });
+
+    it('超过 MAX_HOLD_CHARS 的未闭合 PEM 块不再被切开，返回 seal', () => {
+      const text = `x\n-----BEGIN RSA PRIVATE KEY-----\n${'A'.repeat(MAX_HOLD_CHARS + 10)}`;
+      const r = splitForRedaction(text, 'continue');
+      expect(r.seal).toBe(true);
+      expect(r.emit).toBe('x\n');
+    });
+
+    it('没有密钥前缀的无空白长串照旧在离末尾 64 处切，不 seal', () => {
+      const text = 'a'.repeat(MAX_HOLD_CHARS + 100);
+      const r = splitForRedaction(text, 'continue');
+      expect(r.emit.length).toBe(text.length - HOLDBACK_CHARS);
+      expect(r.seal).toBeUndefined();
     });
   });
 

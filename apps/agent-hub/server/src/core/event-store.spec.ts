@@ -588,6 +588,71 @@ describe('EventStore', () => {
       expect(marker).toBeGreaterThan(msg);
     });
 
+    it('复现 3：continue 下超过 64 KiB 的无空白长行，没写完的长 JWT 跨在强切点上，不被切开', () => {
+      const jwt = `eyJ${'Hh1'.repeat(10)}.${'Pp2'.repeat(60)}.${'S1g'.repeat(20)}`;
+      const body = jwt.slice(3);
+      const pre = `{"blob":"${'c'.repeat(MAX_HOLD_CHARS + 500)}","jwt":"`;
+      store.append(T, 't', out(pre + jwt.slice(0, 150)));
+      store.flush(T);
+      store.append(T, 't', out(`${jwt.slice(150)}"} done\n`));
+      store.append(T, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
+      assertNoLeak(body);
+    });
+
+    it('continue 下切不出安全前段、尾巴又超过 64 KiB：整路丢弃并打 OUTPUT_OMITTED / truncated 标记', () => {
+      const body = 'A'.repeat(MAX_HOLD_CHARS + 10);
+      store.append(T, 't', out(`ok "eyJ${body.slice(0, 40_000)}`));
+      store.flush(T);
+      store.append(T, 't', out(`${body.slice(40_000)}`));
+      store.flush(T);
+      store.append(T, 't', out('.more" done\n'));
+      store.append(T, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
+      expect(textOf('cmd')).toBe('ok "');
+      const evs = published.map(
+        (e) => e.event as { type: string; code?: string; truncated?: boolean },
+      );
+      expect(evs.some((e) => e.type === 'notice' && e.code === 'OUTPUT_OMITTED')).toBe(true);
+      expect(evs.some((e) => e.type === 'tool.output.delta' && e.truncated === true)).toBe(true);
+      expect(JSON.stringify(published)).not.toContain('AAAAAAAA');
+    });
+
+    it('同一批里被 seal 的一路，后面交错进来的同路增量也丢掉，不当成新的一路放出', () => {
+      store.append(T, 't', out('ok "eyJ'));
+      for (let i = 0; i < 4; i++) {
+        store.append(T, 't', out('A'.repeat(15_000)));
+        store.flush(T);
+      }
+      store.append(T, 't', out('A'.repeat(6000)));
+      store.append(T, 't', out('other ', 'cmd2'));
+      store.append(T, 't', out(`${'A'.repeat(5000)}.sigsigsig" done\n`));
+      store.flush(T);
+      store.append(T, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
+      expect(textOf('cmd')).toBe('ok "');
+      expect(JSON.stringify(published)).not.toContain('AAAAAAAA');
+      expect(JSON.stringify(published)).not.toContain('sigsig');
+    });
+
+    it('没闭合的私钥块（head -c 400 id_rsa）：输出结束时从 BEGIN 打码到文末', () => {
+      const body = Array.from({ length: 5 }, () => 'Kq7'.repeat(21) + 'K').join('\n');
+      store.append(T, 't', out('$ head -c 400 id_rsa\n-----BEGIN RSA PRIVATE KEY-----\n'));
+      store.flush(T);
+      store.append(T, 't', out(body.slice(0, 200)));
+      store.flush(T);
+      store.append(T, 't', out(body.slice(200)));
+      store.append(T, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
+      assertNoLeak(body);
+    });
+
+    it('紧贴字母数字的 URL 凭据（xhttps://u:p@h）跨块也打码', () => {
+      const pw = 'Pw8'.repeat(30);
+      const url = `xhttps://deploy:${pw}@git.example.com/r.git`;
+      store.append(T, 't', out(`clone ${url.slice(0, 40)}`));
+      store.flush(T);
+      store.append(T, 't', out(`${url.slice(40)} ok\n`));
+      store.append(T, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
+      assertNoLeak(pw);
+    });
+
     it('随机性质（v2）：无空白长度、密钥长度、切点都随机；单条与同路拼接都没有密钥片段', () => {
       let s = 6042967785 >>> 0;
       const r = () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32;
@@ -596,7 +661,7 @@ describe('EventStore', () => {
       const rep = (u: string, n: number) => u.repeat(Math.ceil(n / u.length)).slice(0, n);
       /** [完整写法, 必须消失的正文]，长度随机。 */
       const genSecret = (): [string, string] => {
-        switch (int(0, 5)) {
+        switch (int(0, 7)) {
           case 0: {
             const b = `${rep('Qw9', 42)}Q`;
             return [`ahu_${b}`, b];
@@ -616,6 +681,17 @@ describe('EventStore', () => {
           case 4: {
             const b = `${rep('Hh1', int(8, 60))}.${rep('Pp2', int(8, 200))}.${rep('Sg3', int(8, 80))}`;
             return [`eyJ${b}`, b];
+          }
+          case 6: {
+            // 没闭合的私钥块（head -c N id_rsa）：没有 END，正文必须从 BEGIN 打码到这一路结束。
+            const lines = Array.from({ length: int(1, 8) }, () => rep('Kq7', 21) + 'K');
+            const b = lines.join('\n').slice(0, int(20, lines.length * 65));
+            return [`-----BEGIN ${pick(['RSA ', 'OPENSSH ', 'EC ', ''])}PRIVATE KEY-----\n${b}`, b];
+          }
+          case 7: {
+            // 紧贴字母数字的 URL 凭据（xhttps://u:p@h），不能依赖 \b。
+            const b = rep('Pw8', int(10, 120));
+            return [`x${pick(['https', 'http'])}://deploy:${b}@git.example.com/r.git`, b];
           }
           default: {
             const b = rep('Pw8', int(10, 120));
@@ -665,21 +741,34 @@ describe('EventStore', () => {
           store.append(task, null, out(`${secret.slice(split)} done`, 'A'));
           store.flush(task, 'all');
         } else {
-          // 普通增量：无空白前缀长度随机（短于 64 KiB），整行随机切块，随机 flush，最后结束。
-          const pre = 'c'.repeat(int(0, 3000));
-          const line = `noise ${pre}${pick(['=', ' ', ':'])}${secret} tail\n`;
-          const cuts = Array.from({ length: int(1, 8) }, () => int(0, line.length)).sort(
-            (a, b) => a - b,
+          // 普通增量：无空白前缀长度随机，一半超过 MAX_HOLD_CHARS（64 KiB）；长密钥可能还没写完就跨在
+          // 强切点上（审查 6042967785 第 6 条）。整行随机切块、随机 flush，最后结束。
+          const long = r() < 0.5;
+          const pre = 'c'.repeat(
+            long ? int(MAX_HOLD_CHARS + 1, MAX_HOLD_CHARS + 8000) : int(0, 3000),
           );
+          const line = long
+            ? `${pre}"${secret}"${'d'.repeat(int(0, 200))} tail\n`
+            : `noise ${pre}${pick(['=', ' ', ':'])}${secret} tail\n`;
+          const k = line.indexOf(secret);
+          // 长行：至少一个切点落在密钥里，且之前没有空白可退。
+          const cuts = Array.from({ length: int(1, 8) }, () => int(0, line.length));
+          if (long) cuts.push(k + int(1, secret.length - 1));
+          cuts.sort((a, b) => a - b);
           let prev = 0;
           for (const c of [...cuts, line.length]) {
             if (c === prev) continue;
             store.append(task, 't', out(line.slice(prev, c)));
-            if (r() < 0.5) store.flush(task);
+            if (long || r() < 0.5) store.flush(task);
             prev = c;
           }
           store.append(task, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
-          expect(textOf('cmd')).toBe(line);
+          const omitted = published.some(
+            (e) => (e.event as { code?: string }).code === 'OUTPUT_OMITTED',
+          );
+          // 不丢的话逐字相同；整路丢弃时落库的是原文的前缀。
+          if (omitted) expect(line.startsWith(textOf('cmd'))).toBe(true);
+          else expect(textOf('cmd')).toBe(line);
         }
         assertNoLeak(body, label);
         store.forgetTask(task);
