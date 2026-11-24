@@ -37,43 +37,86 @@ export const MAX_HOLD_CHARS = 64 * 1024;
 /** “-----BEGIN”本身不含空白，不会被切开；只要后面还没有完整的 END 行，就算没闭合（END 行写了一半也算）。 */
 const PEM_BEGIN = /-----BEGIN/g;
 const PEM_END = /-----END [A-Z0-9 ]*-----/;
+const PEM_END_AT = /-----END [A-Z0-9 ]*-----/y;
 const WS = /\s/;
 const HEADER_NAME = /(?:authorization|x-access-token)$/i;
 const SCHEME = /(?:^|\s)(?:bearer|basic|token)$/i;
 
 /**
- * 每条 REDACT_RULES 的“还没写完”版本：一个完整匹配的任何前缀（够长的）都会被对应的模式匹配到、且一直
- * 延伸到末尾。只放宽不收紧（字符集、长度都更宽，也不要求词边界），所以漏判不会发生，只会多扣。
- * 私钥块由 openPemStart 处理（没有 END 的 BEGIN 都算没写完）。
- * 证明见 openSecretStart。
+ * 每条令牌规则的“还没写完”版本：字面前缀 + 末尾一段属于该规则字符集的字符（不限长度、不要求词边界）。
+ * 一个完整匹配的任何前缀（够长的）都落在这个形状里，所以只会多扣、不会漏判。
+ * 不用 `/…[class]*$/` 这种正则直接在长文本上找：没有锚点的 `*$` 在一段很长、又反复出现前缀的文字上会
+ * 退化成平方级。这里先从末尾往前找出这段字符集的连续区间，再在区间里找最左边的字面前缀，线性时间。
  */
-const OPEN_SECRET: readonly RegExp[] = [
-  /\b(?:ahu|ahb)_[A-Za-z0-9_-]*$/,
-  /\bgithub_pat_[A-Za-z0-9_]*$/,
-  /\bgh[pousr]_[A-Za-z0-9]*$/,
-  /\bsk-[A-Za-z0-9_-]*$/,
-  /\bxox[baprs]-[A-Za-z0-9-]*$/,
-  /\bAKIA[0-9A-Z]*$/,
-  /\beyJ[A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]*){0,2}$/,
-  /https?:\/\/[^/\s@]*$/i,
-  /ssh:\/\/[^:/\s@]*(?::[^@/\s]*)?$/i,
-  /(?:authorization|x-access-token)\s*(?:[:=]\s*(?:(?:bearer|basic|token)(?:\s+\S*)?|\S*)?)?$/i,
+interface OpenToken {
+  /** 字面前缀。 */
+  lit: RegExp;
+  /** 前缀之后允许的字符。 */
+  cls: RegExp;
+  /** 前缀本身的字符也都在 cls 里（ghp_ 的 “_” 不在，单独处理）。 */
+  litInClass: boolean;
+  /** JWT：区间里最多再出现两个点。 */
+  maxDots?: number;
+}
+const OPEN_TOKENS: readonly OpenToken[] = [
+  { lit: /(?:ahu|ahb)_/, cls: /[A-Za-z0-9_-]/, litInClass: true },
+  { lit: /github_pat_/, cls: /[A-Za-z0-9_]/, litInClass: true },
+  { lit: /gh[pousr]_$/, cls: /[A-Za-z0-9]/, litInClass: false },
+  { lit: /sk-/, cls: /[A-Za-z0-9_-]/, litInClass: true },
+  { lit: /xox[baprs]-/, cls: /[A-Za-z0-9-]/, litInClass: true },
+  { lit: /AKIA/, cls: /[0-9A-Z]/, litInClass: true },
+  { lit: /eyJ/, cls: /[A-Za-z0-9_.-]/, litInClass: true, maxDots: 2 },
 ];
+
+/** URL / ssh 的“还没写完”版本。`[^/\s@]*` 遇到下一个 “//” 就停，不会退化。 */
+const OPEN_URL: readonly RegExp[] = [/https?:\/\/[^/\s@]*$/i, /ssh:\/\/[^:/\s@]*(?::[^@/\s]*)?$/i];
+
+/** 末尾那段连续属于 cls 的字符的开头（maxDots：从末尾数，遇到第 maxDots+1 个点就停在它后面）。 */
+function trailingRun(text: string, cls: RegExp, maxDots = Infinity): number {
+  let i = text.length;
+  let dots = 0;
+  while (i > 0 && cls.test(text[i - 1]!)) {
+    if (text[i - 1] === '.' && ++dots > maxDots) break;
+    i--;
+  }
+  return i;
+}
+
+function openTokenStart(text: string, tok: OpenToken): number {
+  const run = trailingRun(text, tok.cls, tok.maxDots);
+  if (!tok.litInClass) {
+    // 前缀里有不在 cls 里的字符：前缀只能正好结束在区间开头。
+    const head = text.slice(Math.max(0, run - 4), run);
+    return tok.lit.test(head) ? run - 4 : -1;
+  }
+  const i = text.slice(run).search(tok.lit);
+  return i < 0 ? -1 : run + i;
+}
 
 /**
  * 最左边一个“可能还没写完的密钥”的开头；没有就返回 text.length。
  *
  * 为什么强切点 ≤ 它就安全：设最终全文里某个匹配 m 跨过切点 c（m.start < c < m.end），c ≤ len − 64。
  * - m.end ≤ len：m 在当前文字里已经成形，guardCut 的规则 5 会把 c 退到 m.start。
- * - m.end > len：text.slice(m.start) 是 m 的前缀，长度 > 64，已经含有 m 的整个字面前缀（最长 14 个字符），
- *   所以被上面对应的 OPEN_SECRET 模式在 m.start（或更左）处匹配到末尾，openSecretStart ≤ m.start < c，矛盾。
+ * - m.end > len：text.slice(m.start) 是 m 的前缀，长度 > 64，已经含有 m 的整个字面前缀（最长 14 个字符）。
+ *   令牌、URL：落在上面对应的“未写完”形状里，开头 ≤ m.start。私钥块：BEGIN 之后还没有 END，openPemStart ≤ m.start。
+ *   认证头：值已经写出至少一个字符时，当前文字里已经有同一开头的完整匹配（\S+ 一直到末尾），归第一种情况；
+ *   值还没写出来时，末尾就是认证头前缀（关键字、冒号、scheme 之间空白多长都算），headerPrefixStart 找得到。
+ *   所以 openSecretStart ≤ m.start < c，矛盾。
+ * 整个函数是线性时间（审查 #315 之后的自查：原来的 `…\S*$` 正则在一行重复的 “authorization:” 上要跑几分钟）。
  */
 export function openSecretStart(text: string): number {
   let start = openPemStart(text);
-  for (const re of OPEN_SECRET) {
+  for (const tok of OPEN_TOKENS) {
+    const i = openTokenStart(text, tok);
+    if (i >= 0 && i < start) start = i;
+  }
+  for (const re of OPEN_URL) {
     const m = re.exec(text);
     if (m && m.index < start) start = m.index;
   }
+  const header = headerPrefixStart(text);
+  if (header >= 0 && header < start) start = header;
   return start;
 }
 
@@ -205,9 +248,16 @@ export function splitForRedaction(
 
 /** 第一个还没闭合的 PEM 块（BEGIN 之后没有完整的 END 行）的开头；没有就返回 text.length。 */
 function openPemStart(text: string): number {
-  for (const m of text.matchAll(PEM_BEGIN)) {
-    const after = m.index + m[0].length;
-    if (!PEM_END.test(text.slice(after))) return m.index;
+  // 线性：先找最后一个完整的 END 行，再找它之后（BEGIN 的结尾在它开头之后）的第一个 BEGIN。
+  let lastEnd = -1;
+  for (let i = text.lastIndexOf('-----END '); i >= 0; i = text.lastIndexOf('-----END ', i - 1)) {
+    PEM_END_AT.lastIndex = i;
+    if (PEM_END_AT.test(text)) {
+      lastEnd = i;
+      break;
+    }
+    if (i === 0) break;
   }
-  return text.length;
+  const begin = text.indexOf('-----BEGIN', Math.max(0, lastEnd - '-----BEGIN'.length + 1));
+  return begin < 0 ? text.length : begin;
 }

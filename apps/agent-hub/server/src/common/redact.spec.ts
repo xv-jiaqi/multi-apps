@@ -90,4 +90,35 @@ describe('E47 redact', () => {
       expect(redact(i!)).toBe(o);
     }
   });
+  it('紧贴字母数字的令牌也打码（#315 复审非阻塞 ②）：开头不要求 \\b', () => {
+    const ahu = `ahu_${'Qw9'.repeat(14)}Q`;
+    const jwt = `eyJ${'Hh1'.repeat(4)}.${'Pp2'.repeat(4)}.${'Sg3'.repeat(4)}`;
+    for (const [glued, tok] of [
+      [`abc${ahu}`, ahu],
+      [`zgithub_pat_${'Ab3'.repeat(8)}`, `github_pat_${'Ab3'.repeat(8)}`],
+      [`tokghp_${'Zq9'.repeat(8)}`, `ghp_${'Zq9'.repeat(8)}`],
+      [`fooxoxb-${'12ab'.repeat(4)}`, `xoxb-${'12ab'.repeat(4)}`],
+      [`keyAKIA${'QW3RTY7UIOP2ASDF'}`, `AKIA${'QW3RTY7UIOP2ASDF'}`],
+      [`xxx${jwt}`, jwt],
+      [`Bearer${jwt}`, jwt],
+    ] as const) {
+      const out = redact(glued);
+      expect(out).not.toContain(tok.slice(-8));
+      expect(out).toContain(MASK);
+    }
+  });
+
+  it('sk-：URL 编码后的 key%3Dsk-… 打码；普通单词里的 “…sk-” 不误伤', () => {
+    const sk = `sk-${'Ab3'.repeat(8)}`;
+    expect(redact(`https://h/x?key%3D${sk}`)).toBe(`https://h/x?key%3D${MASK}`);
+    expect(redact(`q=a%20${sk}`)).toBe(`q=a%20${MASK}`);
+    for (const s of [
+      'api-gfm-task-list-item-from-markdown',
+      'micromark-extension-gfm-task-list-items-extension',
+      'disk-usage-report-generator-2026',
+      'abcsk-not-a-secret-just-words',
+    ]) {
+      expect(redact(s)).toBe(s);
+    }
+  });
 });
