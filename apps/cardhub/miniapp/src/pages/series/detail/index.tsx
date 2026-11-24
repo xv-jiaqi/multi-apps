@@ -11,18 +11,26 @@ import {
   Skeleton,
   type Rarity,
 } from '@repo/ui-mini';
-import { t } from '@repo/shared';
+import { collectSeriesDetailCardPages, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { gradientFor } from '../../../lib/gradients';
 
-type SeriesBySlugResult = Awaited<ReturnType<typeof trpc.series.bySlug.query>>;
+type SeriesHeader = {
+  title: string;
+  description: string | null;
+  slug: string;
+};
 
-const RARITY_ORDER: readonly Rarity[] = ['common', 'rare', 'epic', 'legendary'];
+type SeriesCard = {
+  slug: string;
+  name: string;
+  rarity: string | null;
+};
 
 function normalizeRarity(rarity: string | null): Rarity {
-  if (rarity && (RARITY_ORDER as readonly string[]).includes(rarity)) {
-    return rarity as Rarity;
+  if (rarity === 'common' || rarity === 'rare' || rarity === 'epic' || rarity === 'legendary') {
+    return rarity;
   }
   return 'common';
 }
@@ -33,7 +41,9 @@ export default observer(function SeriesDetailPage() {
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
-  const [data, setData] = useState<SeriesBySlugResult | null>(null);
+  const [header, setHeader] = useState<SeriesHeader | null>(null);
+  const [cards, setCards] = useState<SeriesCard[]>([]);
+  const [cardCount, setCardCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,10 +56,20 @@ export default observer(function SeriesDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await trpc.series.bySlug.query({ slug });
-      setData(result);
-      void Taro.setNavigationBarTitle({ title: result.title });
+      const [series, listed] = await Promise.all([
+        trpc.series.bySlug.query({ slug, includeCards: false }),
+        collectSeriesDetailCardPages((input) => trpc.cards.listBySeries.query(input), slug),
+      ]);
+      setHeader({ title: series.title, description: series.description, slug: series.slug });
+      setCards(
+        listed.items.map((card) => ({ slug: card.slug, name: card.name, rarity: card.rarity })),
+      );
+      setCardCount(listed.total);
+      void Taro.setNavigationBarTitle({ title: series.title });
     } catch (e) {
+      setHeader(null);
+      setCards([]);
+      setCardCount(0);
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
@@ -67,7 +87,7 @@ export default observer(function SeriesDetailPage() {
           items={[
             { label: tt('breadcrumb.home'), to: '/pages/index/index' },
             { label: tt('breadcrumb.series'), to: '/pages/series/list/index' },
-            { label: data?.title ?? slug },
+            { label: header?.title ?? slug },
           ]}
         />
 
@@ -78,7 +98,7 @@ export default observer(function SeriesDetailPage() {
             <Skeleton height="200rpx" />
             <Skeleton height="200rpx" />
           </View>
-        ) : error || !data ? (
+        ) : error || !header ? (
           <View>
             <Empty title={error ?? tt('state.notFound')} />
             <View style={{ height: '16rpx' }} />
@@ -89,20 +109,20 @@ export default observer(function SeriesDetailPage() {
             <View
               style={{
                 padding: '40rpx 32rpx',
-                background: gradientFor(data.slug),
+                background: gradientFor(header.slug),
                 borderRadius: '24rpx',
                 color: '#ffffff',
                 marginBottom: '32rpx',
               }}
             >
               <Text style={{ display: 'block', fontSize: '40rpx', fontWeight: 700 }}>
-                {data.title}
+                {header.title}
               </Text>
               <View style={{ height: '12rpx' }} />
-              <Text style={{ fontSize: '26rpx', opacity: 0.95 }}>{data.description}</Text>
+              <Text style={{ fontSize: '26rpx', opacity: 0.95 }}>{header.description}</Text>
               <View style={{ height: '12rpx' }} />
               <Text style={{ fontSize: '22rpx', opacity: 0.85, letterSpacing: '3rpx' }}>
-                {tt('series.cardCount', { count: (data.cards ?? []).length })}
+                {tt('series.cardCount', { count: cardCount })}
               </Text>
             </View>
 
@@ -117,11 +137,11 @@ export default observer(function SeriesDetailPage() {
               {tt('series.detail.cardsTitle')}
             </Text>
 
-            {(data.cards ?? []).length === 0 ? (
+            {cards.length === 0 ? (
               <Empty title={tt('series.empty')} />
             ) : (
               <View>
-                {(data.cards ?? []).map((card) => (
+                {cards.map((card) => (
                   <Link
                     key={card.slug}
                     to={`/pages/cards/detail/index?slug=${card.slug}`}

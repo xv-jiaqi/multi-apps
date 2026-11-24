@@ -878,16 +878,54 @@ if set and it fails, it triggers the same rollback path and exits non-zero.
 The web container receives runtime `TRPC_URL` and optional browser Sentry
 settings (`WEB_SENTRY_DSN`, `SENTRY_ENVIRONMENT`, and the image `GIT_SHA`) via
 the nginx entrypoint. The generated `/config.js` is uncached and validated at
-container startup; a missing or malformed `TRPC_URL` makes the web container
-exit instead of silently falling back to another API URL. The production web
-build omits source maps, and nginx answers `/assets/*.map` with 404. CI
-passes the browser DSN through `WEB_SENTRY_DSN` and does not upload maps.
+container startup; a missing required field or malformed value makes the web
+container exit and names the field (for example `TRPC_URL`) instead of
+silently falling back to another API URL. The production web
+image still does not ship source maps, and nginx answers `/assets/*.map`
+with 404. CI uploads maps to Sentry when `SENTRY_AUTH_TOKEN` is set, and
+skips without failing when it is not. See "Sentry source maps" below.
 The same entrypoint writes `/etc/nginx/conf.d/api-preconnect.inc`, so SPA HTML
 responses (only `location /`) carry
 `Link: <API origin>; rel=preconnect; crossorigin`. The browser opens the API
 TLS connection while the JS bundle downloads (CH-240 first card). A
 `TRPC_URL` whose origin is not a plain `scheme://host[:port]` gets an empty
 file and no hint.
+
+### Sentry source maps
+
+Browser events already have a DSN (`WEB_SENTRY_DSN` in `/config.js`). Uploading
+source maps needs a separate Sentry auth token, which JQ-Boss keeps. The token
+is not the DSN: `WEB_SENTRY_DSN` / `SENTRY_DSN` are project DSNs (safe to
+expose in the browser for the public key part); `SENTRY_AUTH_TOKEN` is a secret
+API token and must never go into the image, `config.js`, or compose env.
+
+Configure these at the **repository** level (Actions secrets / variables), not
+as deploy Environment secrets. They are used by the Web image CI job and by
+Cardhub Images on `main`, not by `remote-deploy.sh`.
+
+- Secret `SENTRY_AUTH_TOKEN` — Sentry auth token with source map upload
+  permission. Leave it unset to skip the upload.
+- Variable `SENTRY_ORG` — Sentry organization slug.
+- Variable `SENTRY_PROJECT` — Sentry project slug for the Cardhub web app.
+- Variable `SENTRY_URL` — optional. Only for self-hosted Sentry; leave unset
+  for sentry.io.
+
+The release name is the git SHA of the image (`GIT_SHA` build-arg). That is
+the same value the nginx entrypoint writes to `/config.js`, and the same value
+`readSentryRelease()` sends as the SDK `release`. Do not use `package.json`
+version. If the two ever diverge, uploaded maps will not match events.
+
+`Dockerfile.web` builds hidden source maps (`CARDHUB_WEB_SOURCEMAP=hidden`) in
+the builder, then deletes `*.map` before copying dist into the nginx image.
+CI exports the builder dist (JS + maps) into the job directory and runs
+`apps/cardhub/web/scripts/upload-sentry-sourcemaps.sh`. When
+`SENTRY_AUTH_TOKEN` is unset or blank, the script prints
+`sentry sourcemaps: skip, SENTRY_AUTH_TOKEN unset` and exits 0, so PR and fork
+CI stay green. When the token is set, a failed upload fails the job; the image
+digest artifact is not published. The script never prints the token.
+
+nginx continues to return 404 for `/assets/*.map`. This change does not
+re-enable public maps.
 
 ## Rollback
 
