@@ -1,0 +1,507 @@
+{
+  "failures": [],
+  "results": {
+    "cases": [
+      {
+        "name": "confirm-mouse-zh-375",
+        "at500": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "card-comment__action",
+          "role": null,
+          "name": "删除",
+          "inConfirm": true,
+          "inForm": false,
+          "isBody": false
+        }
+      },
+      {
+        "name": "confirm-tab-enter-zh-375",
+        "tabReachedDelete": true,
+        "at500": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "card-comment__action",
+          "role": null,
+          "name": "删除",
+          "inConfirm": true,
+          "inForm": false,
+          "isBody": false
+        }
+      },
+      {
+        "name": "report-form-mouse-zh-375",
+        "at500": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "report-entry__reason-option report-entry__reason-option--selected",
+          "role": "radio",
+          "name": "垃圾广告",
+          "inConfirm": false,
+          "inForm": true,
+          "isBody": false
+        },
+        "layout": {
+          "position": "fixed",
+          "box": {
+            "x": 16,
+            "y": 227.609375,
+            "width": 343,
+            "height": 568.390625
+          },
+          "viewport": {
+            "w": 375,
+            "h": 812
+          },
+          "bottomGap": 16,
+          "inCard": false,
+          "parent": "report-form-root"
+        }
+      },
+      {
+        "name": "report-form-tab-enter-zh-375",
+        "tabReachedReport": true,
+        "at500": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "report-entry__reason-option report-entry__reason-option--selected",
+          "role": "radio",
+          "name": "垃圾广告",
+          "inConfirm": false,
+          "inForm": true,
+          "isBody": false
+        },
+        "afterSelect": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "report-entry__reason-option report-entry__reason-option--selected",
+          "role": "radio",
+          "name": "违法违规",
+          "inConfirm": false,
+          "inForm": true,
+          "isBody": false
+        }
+      }
+    ],
+    "axe": [
+      {
+        "scene": "report-form-open-zh-375",
+        "aria": {
+          "radios": [
+            {
+              "label": "垃圾广告",
+              "checked": "true",
+              "role": "radio",
+              "tabIndex": 0
+            },
+            {
+              "label": "违法违规",
+              "checked": "false",
+              "role": "radio",
+              "tabIndex": -1
+            },
+            {
+              "label": "骚扰或人身攻击",
+              "checked": "false",
+              "role": "radio",
+              "tabIndex": -1
+            },
+            {
+              "label": "不实信息",
+              "checked": "false",
+              "role": "radio",
+              "tabIndex": -1
+            },
+            {
+              "label": "其他",
+              "checked": "false",
+              "role": "radio",
+              "tabIndex": -1
+            }
+          ],
+          "textareaTag": "TEXTAREA",
+          "labelledBy": "report-detail-00000000-0000-4000-8000-0000000000a1",
+          "labelText": "补充说明",
+          "deleteAria": "删除 @alice 的评论"
+        },
+        "axe": [
+          {
+            "id": "html-has-lang",
+            "impact": "serious",
+            "nodes": 1,
+            "targets": [
+              [
+                "html"
+              ]
+            ]
+          },
+          {
+            "id": "meta-viewport",
+            "impact": "moderate",
+            "nodes": 1,
+            "targets": [
+              [
+                "meta[name=\"viewport\"]"
+              ]
+            ]
+          },
+          {
+            "id": "region",
+            "impact": "moderate",
+            "nodes": 20,
+            "targets": [
+              [
+                ".card-detail-page__body > taro-view-core:nth-child(1)"
+              ],
+              [
+                ".card-hero"
+              ],
+              [
+                ".card-detail-page__heading"
+              ],
+              [
+                ".card-detail-page__description"
+              ],
+              [
+                ".card-detail-page__series"
+              ],
+              [
+                ".section-card:nth-child(6)"
+              ],
+              [
+                ".section-card:nth-child(8) > .section-card__title"
+              ],
+              [
+                ".comment-form"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "formLayout": [
+      {
+        "name": "375-mouse",
+        "position": "fixed",
+        "box": {
+          "x": 16,
+          "y": 227.609375,
+          "width": 343,
+          "height": 568.390625
+        },
+        "viewport": {
+          "w": 375,
+          "h": 812
+        },
+        "bottomGap": 16,
+        "inCard": false,
+        "parent": "report-form-root"
+      },
+      {
+        "name": "1440-mouse",
+        "position": "fixed",
+        "box": {
+          "x": 32,
+          "y": 238,
+          "width": 1376,
+          "height": 630
+        },
+        "viewport": {
+          "w": 1440,
+          "h": 900
+        },
+        "bottomGap": 32,
+        "inCard": false,
+        "at500": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "report-entry__reason-option report-entry__reason-option--selected",
+          "role": "radio",
+          "name": "垃圾广告",
+          "inConfirm": false,
+          "inForm": true,
+          "isBody": false
+        }
+      }
+    ],
+    "toast": [
+      {
+        "name": "probe-toast-unscrolled-zh-375",
+        "viewport": {
+          "w": 375,
+          "h": 812
+        },
+        "toast": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 48,
+          "label": "已删除，列表暂未更新",
+          "className": "miniapp-status-toast"
+        },
+        "avoid": [
+          {
+            "x": 32,
+            "y": 495.09375,
+            "width": 311,
+            "height": 44,
+            "label": "0 / 500\n发布评论",
+            "overlap": false,
+            "className": "comment-form__footer"
+          },
+          {
+            "x": 41,
+            "y": 606.78125,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 719.46875,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          }
+        ],
+        "anyOverlap": false,
+        "overlapped": []
+      },
+      {
+        "name": "probe-toast-scrolled-zh-375",
+        "viewport": {
+          "w": 375,
+          "h": 812
+        },
+        "toast": {
+          "x": 16,
+          "y": 80.09375,
+          "width": 343,
+          "height": 48,
+          "label": "已删除，列表暂未更新",
+          "className": "miniapp-status-toast"
+        },
+        "avoid": [
+          {
+            "x": 32,
+            "y": 20.09375,
+            "width": 311,
+            "height": 44,
+            "label": "0 / 500\n发布评论",
+            "overlap": false,
+            "className": "comment-form__footer"
+          },
+          {
+            "x": 41,
+            "y": 170.78125,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 322.46875,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 474.15625,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 625.84375,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 777.53125,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 929.21875,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 1080.90625,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 1232.59375,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 1384.28125,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 1535.96875,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 1687.65625,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 1839.34375,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 1991.03125,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          }
+        ],
+        "anyOverlap": false,
+        "overlapped": []
+      },
+      {
+        "name": "probe-toast-with-form-zh-375",
+        "viewport": {
+          "w": 375,
+          "h": 812
+        },
+        "toast": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 48,
+          "label": "已删除，列表暂未更新",
+          "className": "miniapp-status-toast"
+        },
+        "avoid": [
+          {
+            "x": 32,
+            "y": 495.09375,
+            "width": 311,
+            "height": 44,
+            "label": "0 / 500\n发布评论",
+            "overlap": false,
+            "className": "comment-form__footer"
+          },
+          {
+            "x": 41,
+            "y": 606.78125,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 41,
+            "y": 719.46875,
+            "width": 36,
+            "height": 44,
+            "label": "举报",
+            "overlap": false,
+            "className": "report-entry__trigger"
+          },
+          {
+            "x": 16,
+            "y": 227.609375,
+            "width": 343,
+            "height": 568.390625,
+            "label": "举报内容\n请说明举报原因\n垃圾广告\n违法",
+            "overlap": false,
+            "className": "report-entry__form report-entry__form--docked"
+          },
+          {
+            "x": 33,
+            "y": 574.984375,
+            "width": 309,
+            "height": 80,
+            "label": "",
+            "overlap": false,
+            "className": "report-entry__textarea"
+          },
+          {
+            "x": 33,
+            "y": 694.171875,
+            "width": 309,
+            "height": 96,
+            "label": "提交举报\n取消",
+            "overlap": false,
+            "className": "report-entry__footer"
+          }
+        ],
+        "anyOverlap": false,
+        "overlapped": []
+      }
+    ],
+    "shots": [
+      "/workspace/xiangzi-notes/ch301d/shots/probe-confirm-mouse-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/probe-confirm-enter-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/probe-report-form-mouse-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/probe-report-form-enter-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/probe-report-form-mouse-zh-1440.png",
+      "/workspace/xiangzi-notes/ch301d/shots/probe-toast-unscrolled-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/probe-toast-scrolled-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/probe-toast-with-form-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/comments-report-form-docked-zh-375.png",
+      "/workspace/xiangzi-notes/ch301d/shots/comments-report-form-docked-en-375.png"
+    ]
+  },
+  "headSha": "6ca8a6df6cc49b9e5ed12d82503afdfe2418d1c4"
+}

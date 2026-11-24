@@ -1,5 +1,5 @@
 {
-  "headSha": "7b4efe4bc8e8ae105f83c355b0f1bdff00e372c7",
+  "headSha": "6ca8a6df6cc49b9e5ed12d82503afdfe2418d1c4",
   "toastOverlap": [
     {
       "name": "comments-delete-refresh-failed-zh",
@@ -42,11 +42,11 @@
       "name": "comments-delete-refresh-failed-scrolled-zh",
       "toast": {
         "x": 16,
-        "y": 748,
+        "y": 80.09375,
         "width": 343,
         "height": 48
       },
-      "toastPlacement": "miniapp-status-toast miniapp-status-toast--bottom",
+      "toastPlacement": "miniapp-status-toast",
       "submit": {
         "x": 68.71875,
         "y": 20.09375,
@@ -122,11 +122,11 @@
       "name": "comments-delete-refresh-failed-scrolled-en",
       "toast": {
         "x": 16,
-        "y": 748,
+        "y": 80.09375,
         "width": 343,
         "height": 48
       },
-      "toastPlacement": "miniapp-status-toast miniapp-status-toast--bottom",
+      "toastPlacement": "miniapp-status-toast",
       "submit": {
         "x": 68.71875,
         "y": 20.09375,

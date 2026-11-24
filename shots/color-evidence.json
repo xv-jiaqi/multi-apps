@@ -1,5 +1,5 @@
 {
-  "headSha": "7b4efe4bc8e8ae105f83c355b0f1bdff00e372c7",
+  "headSha": "6ca8a6df6cc49b9e5ed12d82503afdfe2418d1c4",
   "probes": [
     {
       "viewport": {
@@ -193,7 +193,7 @@
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -213,6 +213,76 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 964.78125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 1060.96875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 1174.15625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 1287.34375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "删除",
+          "box": {
+            "x": 41,
+            "y": 1469.03125,
+            "width": 28,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
         }
       ],
       "count": [
@@ -284,7 +354,7 @@
           "label": "展开其余 2 条回复",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
@@ -341,7 +411,7 @@
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -376,6 +446,76 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 173.78125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 269.96875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 383.15625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 496.34375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "删除",
+          "box": {
+            "x": 41,
+            "y": 678.03125,
+            "width": 28,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
         }
       ],
       "count": [
@@ -447,7 +587,7 @@
           "label": "展开其余 2 条回复",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
@@ -504,7 +644,7 @@
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -539,6 +679,62 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 327.78125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 423.96875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 537.15625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 650.34375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
         }
       ],
       "count": [
@@ -610,7 +806,7 @@
           "label": "展开其余 2 条回复",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
@@ -663,14 +859,14 @@
           "label": "已删除，列表暂未更新",
           "box": {
             "x": 16,
-            "y": 748,
+            "y": 80.09375,
             "width": 343,
             "height": 48
           },
           "computedBg": "rgb(23, 23, 23)",
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
-          "className": "miniapp-status-toast miniapp-status-toast--bottom"
+          "className": "miniapp-status-toast"
         }
       ],
       "avoid": [
@@ -687,6 +883,160 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 170.78125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 322.46875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 474.15625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 625.84375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 777.53125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 929.21875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 1080.90625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 1232.59375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 1384.28125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 1535.96875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 1687.65625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
         }
       ],
       "count": [
@@ -721,7 +1071,7 @@
           "className": "primary-button primary-button--disabled"
         }
       ],
-      "toastPlacement": "miniapp-status-toast miniapp-status-toast--bottom",
+      "toastPlacement": "miniapp-status-toast",
       "toastOverlapsSubmit": false,
       "toastOverlapsCount": false,
       "toastOverlapsAvoid": false,
@@ -775,7 +1125,7 @@
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -786,9 +1136,9 @@
           "label": "提交举报",
           "state": "rest",
           "box": {
-            "x": 58,
-            "y": 699.34375,
-            "width": 210,
+            "x": 33,
+            "y": 694.171875,
+            "width": 309,
             "height": 44
           },
           "computedBg": "rgb(37, 99, 235)",
@@ -802,13 +1152,13 @@
           "label": "展开其余 2 条回复",
           "box": {
             "x": 41,
-            "y": 1159.90625,
+            "y": 775.34375,
             "width": 293,
             "height": 44
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -820,7 +1170,7 @@
           "label": "0 / 500\n发布评论",
           "box": {
             "x": 32,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 311,
             "height": 44
           },
@@ -828,6 +1178,118 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 383.78125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 479.96875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 593.15625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 706.34375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "删除",
+          "box": {
+            "x": 41,
+            "y": 888.03125,
+            "width": 28,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补",
+          "box": {
+            "x": 16,
+            "y": 227.609375,
+            "width": 343,
+            "height": 568.390625
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__form report-entry__form--docked"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "",
+          "box": {
+            "x": 33,
+            "y": 574.984375,
+            "width": 309,
+            "height": 80
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(23, 23, 23)",
+          "ariaDisabled": null,
+          "className": "report-entry__textarea"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "提交举报\n取消",
+          "box": {
+            "x": 33,
+            "y": 694.171875,
+            "width": 309,
+            "height": 96
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__footer"
         }
       ],
       "count": [
@@ -836,7 +1298,7 @@
           "label": "0 / 500",
           "box": {
             "x": 32,
-            "y": 81.5,
+            "y": 284.5,
             "width": 36.71875,
             "height": 19.1875
           },
@@ -852,7 +1314,7 @@
           "label": "发布评论",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -866,7 +1328,7 @@
       "toastOverlapsSubmit": false,
       "toastOverlapsCount": false,
       "toastOverlapsAvoid": false,
-      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补充说明\n4 / 500\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除\n举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补充说明\n4 / 500\n提交举报\n取消",
       "name": "comments-report-form-zh",
       "pixelColors": [
         {
@@ -877,19 +1339,19 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 182,
-              "r": 245,
-              "g": 245,
-              "b": 245,
-              "hex": "#f5f5f5"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             },
             "fill": {
               "x": 161,
-              "y": 182,
-              "r": 245,
-              "g": 245,
-              "b": 245,
-              "hex": "#f5f5f5"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             }
           }
         },
@@ -900,16 +1362,16 @@
           "computedFg": "rgb(255, 255, 255)",
           "pixel": {
             "center": {
-              "x": 326,
-              "y": 1443,
-              "r": 37,
-              "g": 99,
+              "x": 375,
+              "y": 1432,
+              "r": 38,
+              "g": 100,
               "b": 235,
-              "hex": "#2563eb"
+              "hex": "#2664eb"
             },
             "fill": {
-              "x": 140,
-              "y": 1443,
+              "x": 90,
+              "y": 1432,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -923,23 +1385,23 @@
           "label": "展开其余 2 条回复",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
-              "y": 1623,
-              "r": 212,
-              "g": 212,
-              "b": 212,
-              "hex": "#d4d4d4"
+              "y": 1595,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             },
             "fill": {
               "x": 106,
-              "y": 1623,
-              "r": 212,
-              "g": 212,
-              "b": 212,
-              "hex": "#d4d4d4"
+              "y": 1595,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             }
           }
         }
@@ -960,7 +1422,7 @@
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -971,9 +1433,9 @@
           "label": "提交举报",
           "state": "rest",
           "box": {
-            "x": 58,
-            "y": 757.34375,
-            "width": 216,
+            "x": 33,
+            "y": 752.171875,
+            "width": 309,
             "height": 44
           },
           "computedBg": "rgb(37, 99, 235)",
@@ -987,13 +1449,13 @@
           "label": "展开其余 2 条回复",
           "box": {
             "x": 41,
-            "y": 1217.90625,
+            "y": 775.34375,
             "width": 293,
             "height": 44
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -1005,7 +1467,7 @@
           "label": "0 / 500\n发布评论",
           "box": {
             "x": 32,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 311,
             "height": 44
           },
@@ -1013,6 +1475,118 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 383.78125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 479.96875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 593.15625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 706.34375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "删除",
+          "box": {
+            "x": 41,
+            "y": 888.03125,
+            "width": 28,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补",
+          "box": {
+            "x": 16,
+            "y": 227.609375,
+            "width": 343,
+            "height": 568.390625
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__form report-entry__form--docked"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "",
+          "box": {
+            "x": 33,
+            "y": 574.984375,
+            "width": 309,
+            "height": 80
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(23, 23, 23)",
+          "ariaDisabled": null,
+          "className": "report-entry__textarea report-entry__textarea--error"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "提交举报\n取消",
+          "box": {
+            "x": 33,
+            "y": 752.171875,
+            "width": 309,
+            "height": 96
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__footer"
         }
       ],
       "count": [
@@ -1021,7 +1595,7 @@
           "label": "0 / 500",
           "box": {
             "x": 32,
-            "y": 81.5,
+            "y": 284.5,
             "width": 36.71875,
             "height": 19.1875
           },
@@ -1037,7 +1611,7 @@
           "label": "发布评论",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -1051,7 +1625,7 @@
       "toastOverlapsSubmit": false,
       "toastOverlapsCount": false,
       "toastOverlapsAvoid": false,
-      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补充说明\n4 / 500\n内容未通过审核，没有发布。\n提交举报\n取消\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除",
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n0 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n举报\n@cara\n2026/11/20 16:01:00\n我也觉得。\n举报\n@cara\n2026/11/20 16:02:00\n同感。\n举报\n@drew\n2026/11/20 16:03:00\n求出处。\n举报\n展开其余 2 条回复\n@alice\n2026/11/20 16:10:00\n审核中\n我刚入手一张，品相很好。\n删除\n举报内容\n请说明举报原因\n垃圾广告\n违法违规\n骚扰或人身攻击\n不实信息\n其他\n补充说明\n4 / 500\n内容未通过审核，没有发布。\n提交举报\n取消",
       "name": "comments-report-blocked-zh",
       "pixelColors": [
         {
@@ -1062,19 +1636,19 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 182,
-              "r": 245,
-              "g": 245,
-              "b": 245,
-              "hex": "#f5f5f5"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             },
             "fill": {
               "x": 161,
-              "y": 182,
-              "r": 245,
-              "g": 245,
-              "b": 245,
-              "hex": "#f5f5f5"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             }
           }
         },
@@ -1085,16 +1659,16 @@
           "computedFg": "rgb(255, 255, 255)",
           "pixel": {
             "center": {
-              "x": 332,
-              "y": 1559,
-              "r": 37,
-              "g": 99,
+              "x": 375,
+              "y": 1548,
+              "r": 38,
+              "g": 100,
               "b": 235,
-              "hex": "#2563eb"
+              "hex": "#2664eb"
             },
             "fill": {
-              "x": 140,
-              "y": 1559,
+              "x": 90,
+              "y": 1548,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -1108,11 +1682,11 @@
           "label": "展开其余 2 条回复",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
-              "y": 1623,
+              "y": 1595,
               "r": 255,
               "g": 255,
               "b": 255,
@@ -1120,7 +1694,7 @@
             },
             "fill": {
               "x": 106,
-              "y": 1623,
+              "y": 1595,
               "r": 255,
               "g": 255,
               "b": 255,
@@ -1186,6 +1760,76 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 41,
+            "y": 214.78125,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 310.96875,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 424.15625,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "举报",
+          "box": {
+            "x": 65,
+            "y": 537.34375,
+            "width": 36,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "删除",
+          "box": {
+            "x": 41,
+            "y": 719.03125,
+            "width": 28,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
         }
       ],
       "count": [
@@ -1472,7 +2116,7 @@
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -1492,6 +2136,76 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 964.78125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 1060.96875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 1174.15625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 1287.34375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Delete",
+          "box": {
+            "x": 41,
+            "y": 1469.03125,
+            "width": 40.46875,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
         }
       ],
       "count": [
@@ -1563,7 +2277,7 @@
           "label": "Show 2 more replies",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
@@ -1620,7 +2334,7 @@
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -1655,6 +2369,76 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 173.78125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 269.96875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 383.15625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 496.34375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Delete",
+          "box": {
+            "x": 41,
+            "y": 678.03125,
+            "width": 40.46875,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
         }
       ],
       "count": [
@@ -1726,7 +2510,7 @@
           "label": "Show 2 more replies",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
@@ -1783,7 +2567,7 @@
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -1818,6 +2602,62 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 327.78125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 423.96875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 537.15625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 650.34375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
         }
       ],
       "count": [
@@ -1889,7 +2729,7 @@
           "label": "Show 2 more replies",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
@@ -1942,14 +2782,14 @@
           "label": "Deleted. The list hasn't refreshed yet.",
           "box": {
             "x": 16,
-            "y": 748,
+            "y": 80.09375,
             "width": 343,
             "height": 48
           },
           "computedBg": "rgb(23, 23, 23)",
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
-          "className": "miniapp-status-toast miniapp-status-toast--bottom"
+          "className": "miniapp-status-toast"
         }
       ],
       "avoid": [
@@ -1966,6 +2806,160 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 170.78125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 322.46875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 474.15625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 625.84375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 777.53125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 929.21875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 1080.90625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 1232.59375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 1384.28125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 1535.96875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 1687.65625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
         }
       ],
       "count": [
@@ -2000,7 +2994,7 @@
           "className": "primary-button primary-button--disabled"
         }
       ],
-      "toastPlacement": "miniapp-status-toast miniapp-status-toast--bottom",
+      "toastPlacement": "miniapp-status-toast",
       "toastOverlapsSubmit": false,
       "toastOverlapsCount": false,
       "toastOverlapsAvoid": false,
@@ -2054,7 +3048,7 @@
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -2065,9 +3059,9 @@
           "label": "Submit report",
           "state": "rest",
           "box": {
-            "x": 58,
-            "y": 699.34375,
-            "width": 210,
+            "x": 33,
+            "y": 694.171875,
+            "width": 309,
             "height": 44
           },
           "computedBg": "rgb(37, 99, 235)",
@@ -2081,13 +3075,13 @@
           "label": "Show 2 more replies",
           "box": {
             "x": 41,
-            "y": 1159.90625,
+            "y": 775.34375,
             "width": 293,
             "height": 44
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -2099,7 +3093,7 @@
           "label": "0 / 500\nPost comment",
           "box": {
             "x": 32,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 311,
             "height": 44
           },
@@ -2107,6 +3101,118 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 383.78125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 479.96875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 593.15625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 706.34375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Delete",
+          "box": {
+            "x": 41,
+            "y": 888.03125,
+            "width": 40.46875,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report content\nTell us what is wrong\nSpa",
+          "box": {
+            "x": 16,
+            "y": 227.609375,
+            "width": 343,
+            "height": 568.390625
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__form report-entry__form--docked"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "",
+          "box": {
+            "x": 33,
+            "y": 574.984375,
+            "width": 309,
+            "height": 80
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(23, 23, 23)",
+          "ariaDisabled": null,
+          "className": "report-entry__textarea"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Submit report\nCancel",
+          "box": {
+            "x": 33,
+            "y": 694.171875,
+            "width": 309,
+            "height": 96
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__footer"
         }
       ],
       "count": [
@@ -2115,7 +3221,7 @@
           "label": "0 / 500",
           "box": {
             "x": 32,
-            "y": 81.5,
+            "y": 284.5,
             "width": 36.71875,
             "height": 19.1875
           },
@@ -2131,7 +3237,7 @@
           "label": "Post comment",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -2145,7 +3251,7 @@
       "toastOverlapsSubmit": false,
       "toastOverlapsCount": false,
       "toastOverlapsAvoid": false,
-      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\nMore details\n4 / 500\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete\nReport content\nTell us what is wrong\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\nMore details\n4 / 500\nSubmit report\nCancel",
       "name": "comments-report-form-en",
       "pixelColors": [
         {
@@ -2156,19 +3262,19 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 182,
-              "r": 82,
-              "g": 82,
-              "b": 82,
-              "hex": "#525252"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             },
             "fill": {
               "x": 161,
-              "y": 182,
-              "r": 245,
-              "g": 245,
-              "b": 245,
-              "hex": "#f5f5f5"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             }
           }
         },
@@ -2179,16 +3285,16 @@
           "computedFg": "rgb(255, 255, 255)",
           "pixel": {
             "center": {
-              "x": 326,
-              "y": 1443,
+              "x": 375,
+              "y": 1432,
               "r": 37,
               "g": 99,
               "b": 235,
               "hex": "#2563eb"
             },
             "fill": {
-              "x": 140,
-              "y": 1443,
+              "x": 90,
+              "y": 1432,
               "r": 37,
               "g": 99,
               "b": 235,
@@ -2202,23 +3308,23 @@
           "label": "Show 2 more replies",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
-              "y": 1623,
-              "r": 212,
-              "g": 212,
-              "b": 212,
-              "hex": "#d4d4d4"
+              "y": 1595,
+              "r": 118,
+              "g": 157,
+              "b": 242,
+              "hex": "#769df2"
             },
             "fill": {
               "x": 106,
-              "y": 1623,
-              "r": 212,
-              "g": 212,
-              "b": 212,
-              "hex": "#d4d4d4"
+              "y": 1595,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             }
           }
         }
@@ -2239,7 +3345,7 @@
           "state": "disabled",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -2250,9 +3356,9 @@
           "label": "Submit report",
           "state": "rest",
           "box": {
-            "x": 58,
-            "y": 789.34375,
-            "width": 259,
+            "x": 33,
+            "y": 784.171875,
+            "width": 309,
             "height": 44
           },
           "computedBg": "rgb(37, 99, 235)",
@@ -2266,13 +3372,13 @@
           "label": "Show 2 more replies",
           "box": {
             "x": 41,
-            "y": 1249.90625,
+            "y": 775.34375,
             "width": 293,
             "height": 44
           },
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "className": "card-comment__more"
         }
       ],
@@ -2284,7 +3390,7 @@
           "label": "0 / 500\nPost comment",
           "box": {
             "x": 32,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 311,
             "height": 44
           },
@@ -2292,6 +3398,118 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 383.78125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 479.96875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 593.15625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 706.34375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Delete",
+          "box": {
+            "x": 41,
+            "y": 888.03125,
+            "width": 40.46875,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report content\nTell us what is wrong\nSpa",
+          "box": {
+            "x": 16,
+            "y": 227.609375,
+            "width": 343,
+            "height": 568.390625
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__form report-entry__form--docked"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "",
+          "box": {
+            "x": 33,
+            "y": 574.984375,
+            "width": 309,
+            "height": 80
+          },
+          "computedBg": "rgb(255, 255, 255)",
+          "computedFg": "rgb(23, 23, 23)",
+          "ariaDisabled": null,
+          "className": "report-entry__textarea report-entry__textarea--error"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Submit report\nCancel",
+          "box": {
+            "x": 33,
+            "y": 784.171875,
+            "width": 309,
+            "height": 96
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(0, 0, 0)",
+          "ariaDisabled": null,
+          "className": "report-entry__footer"
         }
       ],
       "count": [
@@ -2300,7 +3518,7 @@
           "label": "0 / 500",
           "box": {
             "x": 32,
-            "y": 81.5,
+            "y": 284.5,
             "width": 36.71875,
             "height": 19.1875
           },
@@ -2316,7 +3534,7 @@
           "label": "Post comment",
           "box": {
             "x": 68.71875,
-            "y": 69.09375,
+            "y": 272.09375,
             "width": 274.28125,
             "height": 44
           },
@@ -2330,7 +3548,7 @@
       "toastOverlapsSubmit": false,
       "toastOverlapsCount": false,
       "toastOverlapsAvoid": false,
-      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\nReport content\nTell us what is wrong\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\nMore details\n4 / 500\nThis didn't pass review and wasn't published.\nSubmit report\nCancel\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete",
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n0 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\nReport\n@cara\n11/20/2026, 4:01:00 PM\n我也觉得。\nReport\n@cara\n11/20/2026, 4:02:00 PM\n同感。\nReport\n@drew\n11/20/2026, 4:03:00 PM\n求出处。\nReport\nShow 2 more replies\n@alice\n11/20/2026, 4:10:00 PM\nUnder review\n我刚入手一张，品相很好。\nDelete\nReport content\nTell us what is wrong\nSpam\nIllegal content\nHarassment or abuse\nMisinformation\nOther\nMore details\n4 / 500\nThis didn't pass review and wasn't published.\nSubmit report\nCancel",
       "name": "comments-report-blocked-en",
       "pixelColors": [
         {
@@ -2341,19 +3559,19 @@
           "pixel": {
             "center": {
               "x": 412,
-              "y": 182,
-              "r": 82,
-              "g": 82,
-              "b": 82,
-              "hex": "#525252"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             },
             "fill": {
               "x": 161,
-              "y": 182,
-              "r": 245,
-              "g": 245,
-              "b": 245,
-              "hex": "#f5f5f5"
+              "y": 588,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             }
           }
         },
@@ -2365,19 +3583,19 @@
           "pixel": {
             "center": {
               "x": 375,
-              "y": 1623,
-              "r": 37,
-              "g": 99,
-              "b": 235,
-              "hex": "#2563eb"
+              "y": 1612,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             },
             "fill": {
-              "x": 140,
-              "y": 1623,
-              "r": 37,
-              "g": 99,
-              "b": 235,
-              "hex": "#2563eb"
+              "x": 90,
+              "y": 1612,
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "hex": "#ffffff"
             }
           }
         }
@@ -2387,19 +3605,19 @@
           "label": "Show 2 more replies",
           "computedBg": "rgb(255, 255, 255)",
           "computedFg": "rgb(37, 99, 235)",
-          "ariaDisabled": null,
+          "ariaDisabled": "false",
           "pixel": {
             "center": {
               "x": 375,
-              "y": 1623,
-              "r": 37,
-              "g": 99,
-              "b": 235,
-              "hex": "#2563eb"
+              "y": 1595,
+              "r": 118,
+              "g": 157,
+              "b": 242,
+              "hex": "#769df2"
             },
             "fill": {
               "x": 106,
-              "y": 1623,
+              "y": 1595,
               "r": 255,
               "g": 255,
               "b": 255,
@@ -2465,6 +3683,76 @@
           "computedFg": "rgb(0, 0, 0)",
           "ariaDisabled": null,
           "className": "comment-form__footer"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 41,
+            "y": 214.78125,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 310.96875,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 424.15625,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Report",
+          "box": {
+            "x": 65,
+            "y": 537.34375,
+            "width": 50.03125,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "report-entry__trigger"
+        },
+        {
+          "sel": "[data-toast-avoid]",
+          "label": "Delete",
+          "box": {
+            "x": 41,
+            "y": 719.03125,
+            "width": 40.46875,
+            "height": 44
+          },
+          "computedBg": "rgba(0, 0, 0, 0)",
+          "computedFg": "rgb(37, 99, 235)",
+          "ariaDisabled": null,
+          "className": "card-comment__action"
         }
       ],
       "count": [
