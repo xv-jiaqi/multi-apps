@@ -72,6 +72,14 @@ describe('field error codes', () => {
     );
     expect(t('en-US', 'error.app.TOO_MANY_REQUESTS')).toBe('Too many actions. Try again later.');
     expect(t('zh-CN', 'error.app.TOO_MANY_REQUESTS')).toBe('操作太频繁，请稍后再试');
+    expect(t('zh-CN', 'error.app.UPLOADS_NOT_CONFIGURED')).toBe(
+      '上传未配置，请稍后再试或联系管理员',
+    );
+    expect(t('en-US', 'error.app.UPLOADS_NOT_CONFIGURED')).toBe(
+      'Uploads are not configured. Try again later or contact an administrator.',
+    );
+    expect(t('zh-CN', 'error.app.UPLOADS_NOT_CONFIGURED')).not.toMatch(/OSS_|ACCESS_KEY/);
+    expect(t('en-US', 'error.app.UPLOADS_NOT_CONFIGURED')).not.toMatch(/OSS_|ACCESS_KEY/);
   });
 });
 
@@ -80,6 +88,12 @@ describe('app error copy', () => {
     expect(appErrorMessage('zh-CN', 'VALIDATION')).toBe('填写的内容不符合要求，请修改后再试');
     expect(appErrorMessage('en-US', 'VALIDATION')).toBe(
       'Some fields need to be changed before you can continue.',
+    );
+    expect(appErrorMessage('zh-CN', 'UPLOADS_NOT_CONFIGURED')).toBe(
+      '上传未配置，请稍后再试或联系管理员',
+    );
+    expect(appErrorMessage('en-US', 'UPLOADS_NOT_CONFIGURED')).toBe(
+      'Uploads are not configured. Try again later or contact an administrator.',
     );
     expect(appErrorMessage('zh-CN', 'NOT_A_REAL_CODE')).toBe('出了点问题，请稍后再试');
     expect(appErrorMessage('zh-CN', undefined)).toBe('出了点问题，请稍后再试');

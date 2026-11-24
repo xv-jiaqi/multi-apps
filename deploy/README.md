@@ -1081,12 +1081,34 @@ gzip -dc /opt/cardhub/backups/cardhub-prod/cardhub-prod-YYYYMMDDTHHMMSSZ.sql.gz 
     'PGPASSWORD="$POSTGRES_PASSWORD" psql -w -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
+### API upload presigning (CH-245)
+
+`uploads.createPresignedPut` is in the API. It does not talk to a bucket yet.
+The api service reads these placeholders from the app env file (also listed
+in `deploy/docker-compose.yml`; an env-file line alone never reaches the
+container):
+
+```dotenv
+OSS_ENDPOINT=
+OSS_BUCKET=
+OSS_ACCESS_KEY_ID=
+OSS_ACCESS_KEY_SECRET=
+OSS_PUBLIC_BASE_URL=
+```
+
+Leave them empty until a Hong Kong bucket and RAM credentials exist. If any
+value is missing or blank, the procedure returns tRPC `PRECONDITION_FAILED`
+with `appCode` `UPLOADS_NOT_CONFIGURED` and does not call a cloud SDK. Do
+not copy the backup off-site keys into this app env; those stay in
+`/opt/cardhub/backups/offsite.env` (see below). `OSS_PUBLIC_BASE_URL` is the
+public read base used to build `publicUrl`.
+
 ### Off-site OSS copy (required)
 
 After a local dump is finalized and before local retention pruning, the backup
 script uploads that single `.sql.gz` file to Alibaba Cloud OSS using the
 official `rclone/rclone:1.75.2` Docker image pinned by digest in the script.
-The upload is mandatory. There is no switch to skip it. If `OFFSITE_ENV_FILE`
+The upload is mandatory. There is no switch to skip it. These four keys belong only in the off-site env file, not in the API app env used by `uploads.createPresignedPut`. If `OFFSITE_ENV_FILE`
 is missing or unreadable, or if any of `OSS_ACCESS_KEY_ID`,
 `OSS_ACCESS_KEY_SECRET`, `OSS_BUCKET`, or `OSS_ENDPOINT` is empty, the script
 exits non-zero, writes `BACKUP_RESULT=fail`, and does not send a success ping.

@@ -552,3 +552,53 @@ describe('CH-228 user-layer Retry-After and banned accounts', () => {
     expect(second.status).toBe(429);
   });
 });
+
+describe('45-4: uploads.createPresignedPut user quota (CH-245)', () => {
+  const ossKeys = [
+    'OSS_ENDPOINT',
+    'OSS_BUCKET',
+    'OSS_ACCESS_KEY_ID',
+    'OSS_ACCESS_KEY_SECRET',
+    'OSS_PUBLIC_BASE_URL',
+  ] as const;
+  const previous = new Map<string, string | undefined>();
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    for (const key of ossKeys) {
+      previous.set(key, process.env[key]);
+      delete process.env[key];
+    }
+    app = await createApp({
+      rateLimitPrefix: testPrefix(),
+      rateLimitOverrides: { uploadCreatePresignedPut: { limit: 2, windowMs: 60_000 } },
+    });
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    for (const key of ossKeys) {
+      const value = previous.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  it('counts each call and returns TOO_MANY_REQUESTS after the window is full', async () => {
+    const user = await createSignedUser(app);
+    const ip = '203.0.113.245';
+    const body = { purpose: 'listing', contentType: 'image/png', size: 1024 };
+    for (let i = 0; i < 2; i += 1) {
+      const res = await post(app, 'uploads.createPresignedPut', body, ip, user.token);
+      expect(res.status).toBe(412);
+      expect(res.body.error.data.code).toBe('PRECONDITION_FAILED');
+      expect(res.body.error.data.appCode).toBe(APP_ERROR_CODES.UPLOADS_NOT_CONFIGURED);
+    }
+    const over = await post(app, 'uploads.createPresignedPut', body, ip, user.token);
+    expect(over.status).toBe(429);
+    expect(over.body.error.data.appCode).toBe(APP_ERROR_CODES.TOO_MANY_REQUESTS);
+    expect(over.body.error.data.path).toBe('uploads.createPresignedPut');
+    expectUserLayerHeaders(over.headers, { minSeconds: 1, maxSeconds: 60 });
+  });
+});
