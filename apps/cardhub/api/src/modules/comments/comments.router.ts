@@ -25,6 +25,7 @@ import { ContentSecurityService } from '../content-security/content-security.ser
 import {
   publicSafetyWhere,
   resolveContentSurface,
+  contentPublicForNotify,
   resolveSafetyView,
   toSafetyStatusDto,
   type ContentSafetyStatusName,
@@ -204,7 +205,8 @@ export class CommentsRouter {
       userId: string;
       cardId?: string;
       seriesId?: string;
-      parentId?: string;
+      /** The parent comment for a reply, `null` for a top-level comment. */
+      parent: { id: string; safetyStatus: ContentSafetyStatusName } | null;
       replyUserId: string | null;
       kind: 'card' | 'series';
       slug: string;
@@ -222,7 +224,7 @@ export class CommentsRouter {
           safetyStatus: decision.safetyStatus,
           ...(input.cardId ? { cardId: input.cardId } : {}),
           ...(input.seriesId ? { seriesId: input.seriesId } : {}),
-          ...(input.parentId ? { parentId: input.parentId } : {}),
+          ...(input.parent ? { parentId: input.parent.id } : {}),
         },
         include: { user: { select: { id: true, username: true } } },
       });
@@ -235,7 +237,10 @@ export class CommentsRouter {
       });
       const replyUserId =
         input.replyUserId && input.replyUserId !== input.userId ? input.replyUserId : null;
-      if (contentMayNotify(row.content, replyUserId, input.userId)) {
+      const isPublic = input.parent
+        ? contentPublicForNotify(row.safetyStatus, input.parent.safetyStatus)
+        : contentPublicForNotify(row.safetyStatus);
+      if (isPublic && contentMayNotify(row.content, replyUserId, input.userId)) {
         await notifyAfterCommit(() =>
           notifyContent(prisma, {
             actorId: input.userId,
@@ -243,7 +248,7 @@ export class CommentsRouter {
             excerpt: notificationExcerpt(row.content),
             targetType: 'COMMENT',
             targetId: row.id,
-            href: commentHref(input.kind, input.slug, row.id, input.parentId ?? null),
+            href: commentHref(input.kind, input.slug, row.id, input.parent?.id ?? null),
             reply: replyUserId ? { userId: replyUserId, type: 'COMMENT_REPLY' } : null,
           }),
         );
@@ -396,7 +401,7 @@ export class CommentsRouter {
             content: input.content,
             userId: ctx.user.sub,
             cardId: card.id,
-            parentId: input.parentId,
+            parent: parent ? { id: parent.id, safetyStatus: parent.safetyStatus } : null,
             replyUserId: parent && typeof parent.userId === 'string' ? parent.userId : null,
             kind: 'card',
             slug: input.cardSlug,
@@ -438,7 +443,7 @@ export class CommentsRouter {
               content: input.content,
               userId: ctx.user.sub,
               seriesId: series.id,
-              parentId: input.parentId,
+              parent: parent ? { id: parent.id, safetyStatus: parent.safetyStatus } : null,
               replyUserId: parent && typeof parent.userId === 'string' ? parent.userId : null,
               kind: 'series',
               slug: input.seriesSlug,
