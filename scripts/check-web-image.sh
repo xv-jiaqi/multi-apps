@@ -82,7 +82,9 @@ import sys
 
 html = open(sys.argv[1], encoding="utf-8", errors="replace").read()
 pattern = re.compile(
-    r"/assets/[A-Za-z0-9._~-]+-[A-Za-z0-9_-]+\.(?:js|css|woff2|woff|ttf|eot|svg|png|jpg|jpeg|webp|gif|map)"
+    # .map is not a published asset. nginx returns 404 for /assets/*.map,
+    # so it must not be selected as the immutable hashed asset.
+    r"/assets/[A-Za-z0-9._~-]+-[A-Za-z0-9_-]+\.(?:js|css|woff2|woff|ttf|eot|svg|png|jpg|jpeg|webp|gif)"
 )
 match = pattern.search(html)
 if match is None:
