@@ -81,7 +81,6 @@ export default observer(function CardDetailPage() {
       showCommentError(tt('card.detail.loginToComment'));
       return;
     }
-    if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     try {
