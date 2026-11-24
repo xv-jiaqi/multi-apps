@@ -780,3 +780,71 @@ describe('action buttons', () => {
     await waitFor(() => expect(container.textContent).toContain('删除这条评论？'));
   });
 });
+
+function firstDeleteTrigger(container: HTMLElement) {
+  return container.querySelector('[data-delete-trigger]') as HTMLButtonElement;
+}
+
+function simulateTaroBlurToBody() {
+  act(() => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+    if (document.activeElement !== document.body) {
+      document.body.setAttribute('tabindex', '-1');
+      document.body.focus();
+    }
+  });
+  expect(
+    document.activeElement === document.body || document.activeElement === document.documentElement,
+  ).toBe(true);
+}
+
+describe('confirm bar restores focus to Delete after close', () => {
+  async function openConfirmBar(container: HTMLElement) {
+    const deleteBtn = firstDeleteTrigger(container);
+    act(() => {
+      deleteBtn.click();
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).not.toBeNull());
+    return deleteBtn;
+  }
+
+  it('returns focus to Delete after a quick cancel, even if focus blurs to body', async () => {
+    const { container } = await mountList();
+    const deleteBtn = await openConfirmBar(container);
+    act(() => {
+      (container.querySelector('[data-confirm-action="cancel"]') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).toBeNull());
+    simulateTaroBlurToBody();
+    await waitFor(() => expect(document.activeElement).toBe(deleteBtn));
+  });
+
+  it('returns focus to Delete after a quick Escape, even if focus blurs to body', async () => {
+    const { container } = await mountList();
+    const deleteBtn = await openConfirmBar(container);
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).toBeNull());
+    simulateTaroBlurToBody();
+    await waitFor(() => expect(document.activeElement).toBe(deleteBtn));
+  });
+
+  it('returns focus to Delete after a failed delete, even if focus blurs to body', async () => {
+    api.commentDelete.mockRejectedValue(
+      trpcErr({ code: 'INTERNAL_SERVER_ERROR', httpStatus: 500 }),
+    );
+    const { container } = await mountList();
+    const deleteBtn = await openConfirmBar(container);
+    await act(async () => {
+      (container.querySelector('[data-confirm-action="delete"]') as HTMLElement).click();
+    });
+    await waitFor(() => expect(container.querySelector('.card-comment__confirm')).toBeNull());
+    simulateTaroBlurToBody();
+    await waitFor(() => {
+      expect(container.querySelector('.card-comment__error')?.textContent).toBe('删除失败，请重试');
+      expect(document.activeElement).toBe(deleteBtn);
+    });
+  });
+});

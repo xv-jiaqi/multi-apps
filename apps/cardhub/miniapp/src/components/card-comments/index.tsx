@@ -10,7 +10,7 @@ import { readTrpcErrorCodes } from '../../lib/load-error';
 import { nextNoticeId, type Notice } from '../../lib/notice';
 import { ErrorBoxMini } from '../error-box-mini';
 import { ReportEntry } from '../report-entry';
-import { FocusableButton, focusSelector, focusWhenSettled } from '../focusable-button';
+import { FocusableButton, focusWhenSettled } from '../focusable-button';
 import './index.scss';
 
 export type CardComment = Awaited<ReturnType<typeof trpc.comments.listForCard.query>>[number];
@@ -82,6 +82,7 @@ function CommentThread({
   const [deleteError, setDeleteError] = useState<{ id: string; text: string } | null>(null);
   const guard = useRef(createLoadMoreGuard());
   const deleting = usePendingSubmit();
+  const restoreFocusTo = useRef<(() => HTMLElement | null) | null>(null);
 
   const previewKey = `${comment.replyCount}|${comment.repliesNextCursor ?? ''}|${comment.replies
     .map((reply) => reply.id)
@@ -135,26 +136,40 @@ function CommentThread({
 
   const cancelConfirm = () => {
     const id = confirm?.id;
+    if (id) {
+      restoreFocusTo.current = () =>
+        document.querySelector<HTMLElement>(`[data-delete-trigger="${id}"]`);
+    }
     setConfirm(null);
-    if (id) focusSelector(`[data-delete-trigger="${id}"]`);
   };
 
+  const deletingPendingRef = useRef(deleting.pending);
+  deletingPendingRef.current = deleting.pending;
+
   useLayoutEffect(() => {
-    if (!confirm || typeof document === 'undefined') return;
-    const stop = focusWhenSettled(() =>
-      document.querySelector<HTMLElement>(`.card-comment__confirm [data-confirm-action="delete"]`),
-    );
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || deleting.pending) return;
-      event.preventDefault();
-      cancelConfirm();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      stop();
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [confirm, deleting.pending]);
+    if (typeof document === 'undefined') return;
+    if (confirm) {
+      const stop = focusWhenSettled(() =>
+        document.querySelector<HTMLElement>(
+          `.card-comment__confirm [data-confirm-action="delete"]`,
+        ),
+      );
+      const onKey = (event: KeyboardEvent) => {
+        if (event.key !== 'Escape' || deletingPendingRef.current) return;
+        event.preventDefault();
+        cancelConfirm();
+      };
+      document.addEventListener('keydown', onKey);
+      return () => {
+        stop();
+        document.removeEventListener('keydown', onKey);
+      };
+    }
+    const getEl = restoreFocusTo.current;
+    if (!getEl) return;
+    restoreFocusTo.current = null;
+    return focusWhenSettled(getEl);
+  }, [confirm]);
 
   const runDelete = async () => {
     if (!confirm || !deleting.begin()) return;
@@ -168,15 +183,14 @@ function CommentThread({
       const hiddenId = confirm.id;
       const result = await onHide(hiddenId);
       if (result !== 'stale') onNotice('success', successText);
-      setConfirm(null);
-      const next = () => {
+      restoreFocusTo.current = () => {
         const row = document.querySelector<HTMLElement>(
           `.card-comment [data-delete-trigger]:not([data-delete-trigger="${hiddenId}"]), .card-comment [data-report-trigger]`,
         );
         if (row) return row;
         return document.querySelector<HTMLElement>('[data-comments-heading]');
       };
-      focusWhenSettled(next);
+      setConfirm(null);
     };
     try {
       await trpc.comments.delete.mutate({ id: confirm.id });
@@ -193,6 +207,8 @@ function CommentThread({
       }
       const forbidden = code === 'FORBIDDEN' || appCode === 'FORBIDDEN' || appCode === 'FORBIDDEN';
       const failedId = confirm.id;
+      restoreFocusTo.current = () =>
+        document.querySelector<HTMLElement>(`[data-delete-trigger="${failedId}"]`);
       setConfirm(null);
       setDeleteError({
         id: failedId,
@@ -200,7 +216,6 @@ function CommentThread({
           ? tt('card.detail.commentDeleteForbidden')
           : tt('card.detail.commentDeleteFailed'),
       });
-      focusSelector(`[data-delete-trigger="${failedId}"]`);
     } finally {
       deleting.end();
     }

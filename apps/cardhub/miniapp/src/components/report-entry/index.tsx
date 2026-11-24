@@ -16,7 +16,7 @@ import { isWebEnv } from '../../lib/env';
 import { readTrpcErrorCodes } from '../../lib/load-error';
 import { nextNoticeId, type Notice } from '../../lib/notice';
 import { usePendingSubmit } from '../../lib/use-pending-submit';
-import { FocusableButton, focusSelector, focusWhenSettled } from '../focusable-button';
+import { FocusableButton, focusWhenSettled } from '../focusable-button';
 import './index.scss';
 
 const REASON_IDS = ['spam', 'illegal', 'harassment', 'misinfo', 'other'] as const;
@@ -78,6 +78,7 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
   const formId = `report-form-${targetId}`;
   const detailLabelId = `report-detail-${targetId}`;
   const openedRef = useRef(false);
+  const restoreFocusTo = useRef<(() => HTMLElement | null) | null>(null);
 
   const openForm = (reasonId: ReportReasonId) => {
     activeCloser?.();
@@ -108,11 +109,11 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
 
   const closeForm = () => {
     if (submit.pending) return;
+    restoreFocusTo.current = () => document.querySelector<HTMLElement>(triggerSelector);
     setForm(null);
     setDetail('');
     setError(null);
     if (activeCloser) activeCloser = null;
-    focusSelector(triggerSelector);
   };
 
   useLayoutEffect(() => {
@@ -133,7 +134,13 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
   }, [form, submit.pending]);
 
   useLayoutEffect(() => {
-    if (!form) return;
+    if (!form) {
+      openedRef.current = false;
+      const getEl = restoreFocusTo.current;
+      if (!getEl) return;
+      restoreFocusTo.current = null;
+      return focusWhenSettled(getEl);
+    }
     if (openedRef.current) return;
     openedRef.current = true;
     const stop = focusWhenSettled(() => {
@@ -194,11 +201,11 @@ export function ReportEntry({ targetType, targetId, onSuccess }: ReportEntryProp
     }
     try {
       await trpc.reports.create.mutate(parsed.data);
+      restoreFocusTo.current = () => document.querySelector<HTMLElement>(triggerSelector);
       setForm(null);
       setDetail('');
       if (activeCloser) activeCloser = null;
       onSuccess?.();
-      focusSelector(triggerSelector);
     } catch (err) {
       if (goLoginIfUnauthorized(err)) {
         return;
