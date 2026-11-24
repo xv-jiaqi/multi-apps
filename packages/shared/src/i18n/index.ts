@@ -981,6 +981,7 @@ const zhCN: Dictionary = {
   'error.app.CANNOT_BAN_SELF': '不能封禁自己',
   'error.app.ALREADY_BANNED': '这个用户已经被封禁',
   'error.app.NOT_BANNED': '这个用户没有被封禁',
+  'error.app.MINIAPP_NOT_CONFIGURED': '小程序登录未配置，请稍后再试或联系管理员',
   'error.app.CONTENT_BLOCKED': '内容未通过审核，请修改后再试',
   'error.app.UNKNOWN': '出了点问题，请稍后再试',
   'error.app.unknown': '出了点问题，请稍后再试',
@@ -2114,6 +2115,8 @@ const enUS: Dictionary = {
   'error.app.CANNOT_BAN_SELF': "You can't ban yourself",
   'error.app.ALREADY_BANNED': 'This user is already banned',
   'error.app.NOT_BANNED': 'This user is not banned',
+  'error.app.MINIAPP_NOT_CONFIGURED':
+    'Mini program login is not configured. Try again later or contact an administrator.',
   'error.app.CONTENT_BLOCKED': 'This content did not pass review. Please edit it and try again.',
   'error.app.UNKNOWN': 'Something went wrong. Try again later.',
   'error.app.unknown': 'Something went wrong. Try again later.',

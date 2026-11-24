@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
+import { recordMiniappVisitInput, recordMiniappVisitResult } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { ContentSecurityService } from './content-security.service';
 
@@ -15,14 +15,14 @@ export class ContentSecurityRouter {
     const t = this.t;
     return t.router({
       recordMiniappVisit: t.authedProcedure
-        .input(z.object({ openid: z.string().trim().min(4).max(128) }))
+        .input(recordMiniappVisitInput)
         .mutation(async ({ ctx, input }) => {
           if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
           await this.contentSecurity.recordMiniappVisit({
             userId: ctx.user.sub,
-            openid: input.openid,
+            code: input.code,
           });
-          return { ok: true };
+          return recordMiniappVisitResult.parse({ ok: true });
         }),
     });
   }

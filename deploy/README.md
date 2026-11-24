@@ -1128,6 +1128,30 @@ does not write a token. Setting `MAIL_PROVIDER=resend` plus `RESEND_API_KEY`,
 or `MAIL_PROVIDER=smtp` plus `SMTP_HOST`, `SMTP_PORT`, and `SMTP_FROM`, is
 treated as configured, but send is not wired and returns `NOT_IMPLEMENTED`.
 
+### WeChat content security and mini-program login (CH-248 / CH-249)
+
+`msgSecCheck`, `mediaCheckAsync`, and `contentSecurity.recordMiniappVisit`
+share these placeholders from the app env file (also listed in
+`deploy/docker-compose.yml`; an env-file line alone never reaches the
+container):
+
+```dotenv
+WECHAT_APP_ID=
+WECHAT_APP_SECRET=
+WECHAT_MEDIA_CHECK_CALLBACK_TOKEN=
+CONTENT_SECURITY_TEST_RESULT=
+```
+
+Leave them empty until JQ-Boss provides a real AppID and secret (CH-302).
+Do not put real secrets in this repository. If `WECHAT_APP_ID` or
+`WECHAT_APP_SECRET` is missing or blank, new writes are stored as unchecked
+and `recordMiniappVisit` returns tRPC `PRECONDITION_FAILED` with `appCode`
+`MINIAPP_NOT_CONFIGURED` without calling WeChat. The procedure accepts a
+one-time `wx.login` code, exchanges it for openid via `code2Session`, and
+stores `wechatOpenid` plus `miniappLastSeenAt`. The response is `{ ok: true }`
+only; `session_key` is not stored or logged. `CONTENT_SECURITY_TEST_RESULT`
+is staging/dev only and must stay unset when `NODE_ENV=production`.
+
 ### Off-site OSS copy (required)
 
 After a local dump is finalized and before local retention pruning, the backup

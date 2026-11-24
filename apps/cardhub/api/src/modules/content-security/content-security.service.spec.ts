@@ -507,3 +507,96 @@ describe('aggregateTargetStatus', () => {
     ).toBe('REVIEW');
   });
 });
+
+describe('ContentSecurityService.recordMiniappVisit', () => {
+  const configured = env({
+    appId: 'wx-app',
+    appSecret: 'wx-secret',
+    credentialsConfigured: true,
+  });
+
+  it('stores openid and last-seen time after a successful code exchange', async () => {
+    const { service, prisma } = makeService({ env: configured });
+    const logs: { level: string; message: string; payload: Record<string, unknown> }[] = [];
+    let calls = 0;
+    service.useTestHooks({
+      code2Session: async () => {
+        calls += 1;
+        return { ok: true, openid: 'o-from-wechat' };
+      },
+      log: (level, message, payload) => {
+        logs.push({ level, message, payload });
+      },
+    });
+
+    await service.recordMiniappVisit({ userId: 'user-1', code: 'js-code-1' });
+
+    expect(calls).toBe(1);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { wechatOpenid: 'o-from-wechat', miniappLastSeenAt: new Date(NOW) },
+    });
+    expect(logs.some((entry) => entry.payload.event === 'miniapp_visit_recorded')).toBe(true);
+    expect(JSON.stringify(logs)).not.toMatch(/session_key|wx-secret|js-code-1/i);
+  });
+
+  it('returns MINIAPP_NOT_CONFIGURED without calling WeChat or writing the user', async () => {
+    const { service, prisma } = makeService({ env: env() });
+    let calls = 0;
+    service.useTestHooks({
+      code2Session: async () => {
+        calls += 1;
+        return { ok: true, openid: 'o-from-wechat' };
+      },
+    });
+
+    await expect(
+      service.recordMiniappVisit({ userId: 'user-1', code: 'js-code-1' }),
+    ).rejects.toMatchObject({
+      code: 'PRECONDITION_FAILED',
+      cause: { appCode: APP_ERROR_CODES.MINIAPP_NOT_CONFIGURED },
+    });
+    expect(calls).toBe(0);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('logs a failed exchange once, does not write the user, and hides WeChat text', async () => {
+    const { service, prisma } = makeService({ env: configured });
+    const logs: { level: string; message: string; payload: Record<string, unknown> }[] = [];
+    let calls = 0;
+    service.useTestHooks({
+      code2Session: async () => {
+        calls += 1;
+        return { ok: false, errcode: 40163 };
+      },
+      log: (level, message, payload) => {
+        logs.push({ level, message, payload });
+      },
+    });
+
+    const error = await service
+      .recordMiniappVisit({ userId: 'user-1', code: 'js-code-1' })
+      .catch((thrown: unknown) => thrown);
+    expect(error).toMatchObject({
+      code: 'BAD_GATEWAY',
+      cause: { appCode: APP_ERROR_CODES.BAD_GATEWAY },
+    });
+    const message = error instanceof Error ? error.message : '';
+    expect(message).toBe('服务暂时不可用，请稍后再试');
+    expect(message).not.toMatch(/session_key|40163|js-code|wx-secret|WeChat/i);
+    expect(calls).toBe(1);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(logs).toEqual([
+      {
+        level: 'warn',
+        message: 'miniapp code2Session failed',
+        payload: {
+          event: 'miniapp_code2session_failed',
+          userId: 'user-1',
+          errcode: 40163,
+        },
+      },
+    ]);
+    expect(JSON.stringify(logs)).not.toMatch(/session_key|wx-secret|js-code-1/i);
+  });
+});

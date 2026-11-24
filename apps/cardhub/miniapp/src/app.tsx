@@ -3,6 +3,7 @@ import { reaction } from 'mobx';
 import Taro from '@tarojs/taro';
 import { rootStore, StoreProvider } from './stores/root-store';
 import { applyTabBarLabels } from './lib/apply-tab-bar-labels';
+import { miniappVisit } from './lib/miniapp-visit';
 import './app.scss';
 
 /**
@@ -21,7 +22,27 @@ function App({ children }: PropsWithChildren) {
     () => reaction(() => rootStore.locale.locale, applyTabBarLabels, { fireImmediately: true }),
     [],
   );
-  Taro.useDidShow(applyTabBarLabels);
+  useEffect(
+    () =>
+      reaction(
+        () => rootStore.session.isAuthenticated,
+        (authenticated) => {
+          if (authenticated) {
+            void miniappVisit.reportVisit();
+            return;
+          }
+          miniappVisit.reset();
+        },
+      ),
+    [],
+  );
+  Taro.useLaunch(() => {
+    void miniappVisit.reportVisit();
+  });
+  Taro.useDidShow(() => {
+    applyTabBarLabels();
+    void miniappVisit.reportVisit();
+  });
   return <StoreProvider value={rootStore}>{children}</StoreProvider>;
 }
 

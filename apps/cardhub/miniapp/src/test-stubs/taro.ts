@@ -3,7 +3,21 @@
  * needs build-time globals. Tests that care about a call mock this module.
  */
 const noop = async () => undefined;
+const ENV_TYPE = {
+  WEAPP: 'WEAPP',
+  SWAN: 'SWAN',
+  ALIPAY: 'ALIPAY',
+  TT: 'TT',
+  QQ: 'QQ',
+  WEB: 'WEB',
+};
+
 const Taro = {
+  ENV_TYPE,
+  getEnv: () => ENV_TYPE.WEB,
+  login: async () => ({ errMsg: 'login:ok', code: '' }),
+  useLaunch: (_cb: () => void) => undefined,
+  useDidShow: (_cb: () => void) => undefined,
   showToast: noop,
   setNavigationBarTitle: noop,
   navigateTo: noop,

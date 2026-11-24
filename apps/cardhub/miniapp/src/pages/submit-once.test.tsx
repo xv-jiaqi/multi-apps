@@ -157,7 +157,7 @@ describe.each(pages)('$name submit guard', ({ request, mount }) => {
       button.click();
       button.click();
     });
-    expect(request).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
     await act(async () => {
       pending.resolve(signedIn);
       await pending.promise;

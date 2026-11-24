@@ -19,6 +19,7 @@ import { resolveBlockView } from '../../../lib/block-view';
 import { LocalNotFoundError, mutationErrorMessage } from '../../../lib/load-error';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useBlock } from '../../../lib/use-block';
+import { miniappVisit } from '../../../lib/miniapp-visit';
 import { ArtworkMini } from '../../../components/artwork-mini';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import './index.scss';
@@ -84,6 +85,7 @@ export default observer(function CardDetailPage() {
     submittingRef.current = true;
     setSubmitting(true);
     try {
+      await miniappVisit.ensureFresh();
       await trpc.comments.create.mutate(parsed.data);
       setCommentContent('');
       void Taro.showToast({ title: tt('miniapp.toast.commentOk'), icon: 'success' });
