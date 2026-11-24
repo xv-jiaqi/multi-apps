@@ -109,6 +109,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Lint agent-hub server with zero warnings
+        run: pnpm --filter @agent-hub/server --fail-if-no-match run lint
+
       - name: Typecheck
         run: pnpm typecheck
 

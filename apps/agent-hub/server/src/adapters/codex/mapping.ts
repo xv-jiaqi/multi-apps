@@ -1,5 +1,6 @@
 import {
   reasoningEffortLabel,
+  type JsonValue,
   type AgentError,
   type AgentEvent,
   type ApprovalDecision,
@@ -7,6 +8,7 @@ import {
   type TaskMode,
   type UsageInfo,
 } from '@agent-hub/contract';
+import { GUARD_ENV_KEYS } from '../../workspace/agent-env';
 import { agentError, toJsonValue, type ApprovalRequestInput, type TurnResult } from '../types';
 import type {
   ApprovalDecisionWire,
@@ -28,6 +30,23 @@ import type {
 export const CODEX_DEVELOPER_INSTRUCTIONS =
   '你在 Agent Hub 派发的任务中运行。不要执行 git push，不要修改 git remote 配置，' +
   '不要读取或输出凭据文件（例如 ~/.ssh、~/.netrc、.env）。';
+
+/**
+ * thread/start、thread/resume 的 config 覆盖（PR3 待办 5，security.md §3.2）：用户的 ~/.codex/config.toml
+ * 若设了 shell_environment_policy（inherit = "none"、exclude、include_only），Agent 跑的命令里会丢掉
+ * git 推送守卫的环境变量。这里把守卫变量逐个 set 回去，并清掉 include_only。
+ * 实测 codex-cli 0.164.0（evidence/pr3-qoder/codex-env-policy.md）：inherit = "none" / "core"、
+ * exclude 会剥掉守卫变量，set 能盖回来；include_only 却在 set 之后过滤，只 set 不够，必须同时清掉。
+ * 键用点分路径，只覆盖这几个子键，不动用户 policy 的其余设置。
+ */
+export function codexConfigOverrides(env: Record<string, string>): Record<string, JsonValue> {
+  const config: Record<string, JsonValue> = { 'shell_environment_policy.include_only': [] };
+  for (const key of GUARD_ENV_KEYS) {
+    const value = env[key];
+    if (value !== undefined) config[`shell_environment_policy.set.${key}`] = value;
+  }
+  return config;
+}
 
 export const ALL_DECISIONS: ApprovalDecision[] = [
   'allow_once',

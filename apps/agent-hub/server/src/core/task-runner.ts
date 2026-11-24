@@ -417,6 +417,8 @@ export class TaskRunner {
       });
     });
     this.events.publish(env);
+    // 终态：放掉这个任务在 EventStore 里的计数与扣留（PR3 待办 1）；追问时会重新建。
+    if (isTerminalStatus(to)) this.events.forgetTask(taskId);
     this.bus.publishTask(taskToDto(this.repo.task(taskId)!));
   }
 

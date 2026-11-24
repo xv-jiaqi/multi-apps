@@ -9,7 +9,7 @@
     "build": "nest build",
     "start": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node dist/main.js",
     "dev": "AGENT_HUB_DEV=1 NODE_OPTIONS=--disable-warning=ExperimentalWarning nest start --watch --preserveWatchOutput",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "pretypecheck": "pnpm --filter @agent-hub/contract run build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "pretest": "pnpm --filter @agent-hub/contract run build",
@@ -27,6 +27,7 @@
     "zod": "^4.6.6"
   },
   "devDependencies": {
+    "@agentclientprotocol/sdk": "2.0.2",
     "@nestjs/cli": "^11.0.21",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.19",

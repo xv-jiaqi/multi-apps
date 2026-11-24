@@ -155,6 +155,8 @@ export function stripUserinfo(url: string): string {
 
 `HOME` 必须留下，Agent 才能读到自己的登录状态，因此子进程仍能读到用户的全局 git 配置。网络传输已经被 `GIT_ALLOW_PROTOCOL` 和 §3.3 挡住。
 
+**Codex 的 `shell_environment_policy`**（PR3）：Codex 给 Agent 跑的命令另造一份环境，规则来自用户的 `~/.codex/config.toml`。`inherit = "none"` / `"core"`、`exclude`、`include_only` 都会把上表的守卫变量从命令里剥掉。`CodexAdapter` 在 `thread/start` / `thread/resume` 的 `config` 里用点分键覆盖：`shell_environment_policy.set.<变量>` 逐个设回 `GUARD_ENV_KEYS`，并把 `shell_environment_policy.include_only` 设成 `[]`（`codexConfigOverrides()`，[adapter-codex.md](adapter-codex.md) §4.2）。实测 codex-cli 0.164.0：`set` 能盖回前三种，`include_only` 却在 `set` 之后过滤，必须一起清掉；其余 policy 设置不动。记录在 `server/evidence/pr3-qoder/codex-env-policy.md`。ACP Agent 没有这类设置，命令直接继承子进程环境。
+
 ```ts
 // server/src/workspace/agent-env.ts
 
@@ -169,6 +171,21 @@ export interface AgentEnvInput {
   askpassPath: string;
   ghConfigDir: string;
 }
+
+/**
+ * git 推送守卫用到的环境变量（security.md §3.2）。Codex 的 shell_environment_policy 可能把它们从
+ * Agent 跑的命令里剥掉，CodexAdapter 用这份清单在 thread/start 的 config 里显式 set 回去。
+ */
+export const GUARD_ENV_KEYS = [
+  'GIT_ALLOW_PROTOCOL',
+  'GIT_TERMINAL_PROMPT',
+  'GIT_ASKPASS',
+  'SSH_ASKPASS',
+  'GIT_CONFIG_COUNT',
+  'GIT_CONFIG_KEY_0',
+  'GIT_CONFIG_VALUE_0',
+  'GH_CONFIG_DIR',
+] as const;
 
 /** 按白名单构造 Agent 子进程环境，再盖上 git 守卫变量。不从父进程继承其余变量。 */
 export function agentEnv(input: AgentEnvInput): Record<string, string> {
@@ -484,41 +501,54 @@ v1 不保存第三方密钥，也不把密钥放进钥匙串。以后若自动�
 
 ## 5. 脱敏规则
 
-`redact(text)` 把下表的模式换成 `«已脱敏»`。替换结果不再匹配这些模式，所以可以重复调用。单测逐条覆盖。
+`redact(text)` 把下表的模式换成 `«已脱敏»`。替换结果不再匹配这些模式，所以可以重复调用。单测逐条覆盖。规则表 `REDACT_RULES` 同时被增量的尾部扣留用来判断切点（[architecture.md](architecture.md) §6 第 2 步）。
 
-| 模式                               | 说明                                                  |
-| ---------------------------------- | ----------------------------------------------------- |
-| Hub token                          | `ahu_` / `ahb_` 后再接 43 位 base64url                |
-| `Authorization` / `x-access-token` | 头或 `key: value` 的值整段替换                        |
-| URL userinfo                       | https 去掉整段；ssh 只去掉密码                        |
-| GitHub token                       | `ghp_`、`gho_`、`ghu_`、`ghs_`、`ghr_`、`github_pat_` |
-| OpenAI 风格密钥                    | `sk-` 后的长串                                        |
-| Slack token                        | `xoxb-`、`xoxp-`、`xoxa-`、`xoxr-`、`xoxs-`           |
-| AWS 访问密钥                       | `AKIA` 后 16 位大写字母或数字                         |
-| JWT                                | 以 `eyJ` 开头的三段 base64url                         |
-| PEM 私钥块                         | `BEGIN` / `END` 之间的 `PRIVATE KEY`                  |
+| 模式                               | 说明                                                                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Hub token                          | `ahu_` / `ahb_` 后再接 43 位 base64url                                                                                               |
+| `Authorization` / `x-access-token` | 头或 `key: value` 的值整段替换；scheme `Bearer` / `Basic` / `Token` 连同后面的凭据一起替换（`curl -v -u` 输出的是 `Basic <base64>`） |
+| URL userinfo                       | https 去掉整段；ssh 只去掉密码。不要求词边界，`xhttps://u:p@h` 这种紧贴字母数字的也打码                                              |
+| GitHub token                       | `ghp_`、`gho_`、`ghu_`、`ghs_`、`ghr_`、`github_pat_`                                                                                |
+| OpenAI 风格密钥                    | `sk-` 后的长串                                                                                                                       |
+| Slack token                        | `xoxb-`、`xoxp-`、`xoxa-`、`xoxr-`、`xoxs-`                                                                                          |
+| AWS 访问密钥                       | `AKIA` 后 16 位大写字母或数字                                                                                                        |
+| JWT                                | 以 `eyJ` 开头的三段 base64url                                                                                                        |
+| PEM 私钥块                         | `BEGIN … PRIVATE KEY` 到 `END` 行；没闭合（`head -c 400 id_rsa`、输出被截断）就从 `BEGIN` 一直打码到文末                             |
 
 ```ts
 // server/src/common/redact.ts
 const MASK = '«已脱敏»';
 
-/** §5 的全部模式。替换成固定占位，重复调用结果不变。 */
+/**
+ * §5 的全部模式，按顺序替换。替换结果不再匹配这些模式，重复调用结果不变。
+ * secret-holdback.ts 用同一张表找“切点不能落进去”的区间。
+ */
+export const REDACT_RULES: ReadonlyArray<{ re: RegExp; to: string }> = [
+  // 私钥块：到 END 行为止；没闭合（head -c 400 id_rsa、输出被截断）就一直打码到文末。
+  {
+    re: /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|$)/g,
+    to: MASK,
+  },
+  { re: /\b(?:ahu|ahb)_[A-Za-z0-9_-]{43}\b/g, to: MASK },
+  { re: /\bgithub_pat_[A-Za-z0-9_]{20,}\b/g, to: MASK },
+  { re: /\bgh[pousr]_[A-Za-z0-9]{20,}\b/g, to: MASK },
+  { re: /\bsk-[A-Za-z0-9_-]{20,}\b/g, to: MASK },
+  { re: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, to: MASK },
+  { re: /\bAKIA[0-9A-Z]{16}\b/g, to: MASK },
+  { re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g, to: MASK },
+  // URL 凭据不要求词边界：xhttps://u:p@h 这种紧贴字母数字的也要打码。
+  { re: /(https?:\/\/)[^/\s@]+@/gi, to: '$1' },
+  { re: /(ssh:\/\/)([^:/\s@]+):[^@/\s]+@/gi, to: '$1$2@' },
+  // 认证头：scheme（Bearer / Basic / Token）和后面的凭据一起打码；`curl -v -u` 输出的是 Basic。
+  {
+    re: /((?:authorization|x-access-token)\s*[:=]\s*)(?:(?:bearer|basic|token)\s+)?\S+/gi,
+    to: `$1${MASK}`,
+  },
+];
+
 export function redact(text: string): string {
   let out = text;
-  out = out.replace(
-    /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g,
-    MASK,
-  );
-  out = out.replace(/\b(?:ahu|ahb)_[A-Za-z0-9_-]{43}\b/g, MASK);
-  out = out.replace(/\bgithub_pat_[A-Za-z0-9_]{20,}\b/g, MASK);
-  out = out.replace(/\bgh[pousr]_[A-Za-z0-9]{20,}\b/g, MASK);
-  out = out.replace(/\bsk-[A-Za-z0-9_-]{20,}\b/g, MASK);
-  out = out.replace(/\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, MASK);
-  out = out.replace(/\bAKIA[0-9A-Z]{16}\b/g, MASK);
-  out = out.replace(/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g, MASK);
-  out = out.replace(/\b(https?:\/\/)[^/\s@]+@/gi, '$1');
-  out = out.replace(/\b(ssh:\/\/)([^:/\s@]+):[^@/\s]+@/gi, '$1$2@');
-  out = out.replace(/((?:authorization|x-access-token)\s*[:=]\s*)(?:bearer\s+)?\S+/gi, `$1${MASK}`);
+  for (const { re, to } of REDACT_RULES) out = out.replace(re, to);
   return out;
 }
 ```
@@ -549,7 +579,14 @@ export function redact(text: string): string {
 
 对应 [decisions-and-risks.md](decisions-and-risks.md) R7。
 
-桥接方脱敏依赖增量的尾部扣留（§6）。一段没有空白的文本或一个没闭合的 PEM 块超过 64 KiB 时，扣留会在离末尾 64 个字符处强行切开；落在这个位置的密钥会被切进两条增量。正常的密钥和 PEM 私钥都远小于这个长度。
+桥接方脱敏依赖增量的尾部扣留（§6、[architecture.md](architecture.md) §6 第 2 步）。PR3 之后的边界：
+
+- 按正常规则要扣住的尾巴超过 64 KiB（`MAX_HOLD_CHARS`，例如一段超过 64 KiB 的无空白长行）时，扣留才强行切：强切点先放在离末尾 64 个字符处，再退到**任何还没写完的密钥的开头之前**（`openSecretStart`：对 §5 每条模式各有一个只放宽不收紧的“未写完”版本，锚在文本末尾），然后退出 `REDACT_RULES` 在整段文字上的任何匹配、不落在认证头前缀后面（空白多长都算）、不在 PEM 块中间。可以证明这样切不会切开任何密钥：一个跨过强切点的密钥，要么已经在当前文字里成形（退出匹配那一步会把切点退到它前面），要么延伸过末尾，这时它在当前文字里的部分长于 64 个字符、已含有整个字面前缀，必然被对应的“未写完”模式认出（证明写在 `secret-holdback.ts` 的 `openSecretStart` 注释里）。强切后要扣的尾巴仍超过 64 KiB（一个超过 64 KiB 还没写完的“密钥”，或一个超过 64 KiB 的没闭合 PEM 块）时，放出前面安全的部分，这一路**整路丢弃**：尾巴不落库，之后的增量也丢掉，补一条 `OUTPUT_OMITTED` 提示（工具输出另有 `truncated` 标记）；PEM 块也不再被切开（审查 6042967785 第 6 条）。代价是多扣或多丢：长行里恰好出现像 `sk-`、`eyJ` 开头的长串时，这一段会晚一些出现，超长时整路省略。
+- 没闭合的私钥块（`head -c 400 id_rsa`、输出到 1 MB 被截断）：扣留时 `BEGIN` 之后的内容一律扣住不放；这一路结束时整段在同一条事件里放出，§5 的私钥规则从 `BEGIN` 打码到这条事件末尾，所以桥接方看不到正文；1 MB 截断时退到 `BEGIN` 前、后面整段丢掉；超过 64 KiB 还没闭合就整路丢弃（上一条）。审批前提前放出消息尾巴时同样是一整条，后面若还有同一段消息的续写，仍受下一条的前提约束（e2ee818 复审第 ② 条）。
+- URL 凭据规则不要求词边界（e2ee818 复审第 ③ 条）：`xhttps://u:p@h`、`abc123http://u:p@h` 都会去掉 userinfo；扣留判断“还没写完的 URL”时也不要求词边界。
+- 审批卡片出现前，消息与推理扣住的尾巴提前放出（Agent 在等人，这段文字不会有下文）。前提是同一段消息在审批之后不会再追加文字（ACP mapper 在 tool_call 前会先关闭消息段，Codex 也是先发 completed 再发审批）。若这个前提被打破、又恰好在边界上写一个密钥，这个密钥会被切开。工具输出照旧扣着。
+- 一个任务所有输出流扣住的合计超过 1 MiB 字符时，先按最久没更新的顺序走 `splitForRedaction(..., 'force')`。force 和 continue 是同一条规则（包括上一条的强切和整路丢弃），切不出安全前段就跳过这一路。因为扣着的尾巴本来就是 continue 切剩的，这一步通常放不出东西；这时从扣得最多的一路开始**整路丢弃**：扣着的尾巴不落库，这一路之后的增量也丢掉，只补一条 `OUTPUT_OMITTED` 提示（工具输出另有 `truncated` 标记）。宁可丢掉一段输出，也不把密钥明文拆成两条。Hub UI 看到的这一段也是缺的（审查 6042967785）。正常任务远到不了这个量：要十几路同时各扣近 64 KiB 的无空白文字。
+- 工具输出到 1 MB 上限时，先按剩余额度取前缀，再把截断点前那段连续非空白退到最后一个空白之后（往回找**没有下限**，截掉的部分反正要丢），然后走切点保护。这一路还没落库的文字里一个空白都没有时，整段丢掉；它的开头是上一次的安全切点，退到那里是安全的。没闭合的 PEM 块一律退到 BEGIN 前。因此跨两块、截断点落在还没成形的密钥中间时，前半段也不会落库；实际落库可能略少于 1 MB。
 
 没有沙箱的 ACP Agent 可以在自己的命令里清掉 `GIT_ALLOW_PROTOCOL` 再推送。这时还剩：子进程里没有 SSH agent、没有 GitHub token、`gh` 未登录；`origin` 的推送地址在用户保持默认勾选时已被禁用（D49）；§3.4 的远端跟踪分支比对和 `blocked.ndjson`。命令执行一般会先变成审批。用户在 Hub 之外自己执行的 git 不在保护范围内。
 

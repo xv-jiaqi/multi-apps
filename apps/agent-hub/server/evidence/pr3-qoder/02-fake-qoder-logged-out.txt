@@ -1,0 +1,156 @@
+# 2026-11-24 23:23:16 CST 假 Qoder（test/fakes/fake-acp.mjs，剧本 logged-out，帧照 Qoder CLI 1.1.80 实测）  commit=0ceb78c  侧车=node dist/main.js
+## stdout (ready line)
+{"event":"ready","port":47821,"uiToken":"<redacted>","version":"0.1.0","pid":54720}
+## listening sockets（ss -ltnp）
+LISTEN 0      511        127.0.0.1:47821      0.0.0.0:*    users:(("MainThread",pid=54720,fd=24))  
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/agents -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "items": [
+        {
+            "id": "qoder",
+            "displayName": "Qoder",
+            "kind": "acp",
+            "profile": "qoder",
+            "enabled": true,
+            "health": {
+                "status": "auth_required",
+                "message": "Qoder 未登录：请在终端运行 qodercli，按提示登录后重试",
+                "version": "1.1.80"
+            },
+            "capabilities": {
+                "models": [],
+                "modelsSource": "session",
+                "sandbox": false,
+                "resume": false,
+                "userVisibleSessions": false,
+                "workspaces": [
+                    "in_place",
+                    "worktree"
+                ],
+                "fetchedAt": "2026-11-24T15:23:16.232Z"
+            },
+            "maxConcurrentTasks": 1,
+            "runningTasks": 0,
+            "queuedTasks": 0
+        }
+    ]
+}
+
+$ curl -s -X POST http://127.0.0.1:47821/api/v1/tasks -H 'Authorization: Bearer <bridgeToken>' -d '{"agentId":"qoder","prompt":"看看健康检查接口能不能通，只读。"}'
+{
+    "task": {
+        "id": "feab129f-14bd-4cc6-9415-e2d0a8f892b9",
+        "shortId": "feab129f",
+        "title": "看看健康检查接口能不能通，只读。",
+        "agentId": "qoder",
+        "adapterKind": "acp",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev3-02-fake-qoder-logged-out/repo",
+        "source": "bridge",
+        "sourceTokenId": "06db1aea-3eaf-4ee6-b287-ec22facf3c25",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev3-02-fake-qoder-logged-out/repo",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": null,
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": null,
+        "remoteUrl": null,
+        "status": "preparing",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 1,
+        "lastError": null,
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T15:23:16.659Z",
+        "updatedAt": "2026-11-24T15:23:16.661Z",
+        "startedAt": null,
+        "endedAt": null,
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "turn": {
+        "id": "9b168ff4-673c-497a-98d2-d0c1f524d84a",
+        "taskId": "feab129f-14bd-4cc6-9415-e2d0a8f892b9",
+        "index": 1,
+        "prompt": "看看健康检查接口能不能通，只读。",
+        "model": null,
+        "reasoningEffort": null,
+        "status": "pending",
+        "stopReason": null,
+        "error": null,
+        "nativeTurnId": null,
+        "turnStats": null,
+        "taskStats": null,
+        "patchTruncated": false,
+        "usage": null,
+        "finalMessage": null,
+        "createdAt": "2026-11-24T15:23:16.659Z",
+        "startedAt": null,
+        "endedAt": null
+    },
+    "replayed": false
+}
+
+$ curl -s -X GET http://127.0.0.1:47821/api/v1/tasks/feab129f-14bd-4cc6-9415-e2d0a8f892b9/wait?until=turn_end&timeoutSec=30 -H 'Authorization: Bearer <bridgeToken>' 
+{
+    "reached": true,
+    "task": {
+        "id": "feab129f-14bd-4cc6-9415-e2d0a8f892b9",
+        "shortId": "feab129f",
+        "title": "看看健康检查接口能不能通，只读。",
+        "agentId": "qoder",
+        "adapterKind": "acp",
+        "repoId": "multi-apps",
+        "repoPath": "/tmp/ah-ev3-02-fake-qoder-logged-out/repo",
+        "source": "bridge",
+        "sourceTokenId": "06db1aea-3eaf-4ee6-b287-ec22facf3c25",
+        "externalRef": null,
+        "mode": "read_only",
+        "workspace": "in_place",
+        "workspacePath": "/tmp/ah-ev3-02-fake-qoder-logged-out/repo",
+        "branch": null,
+        "baseRef": null,
+        "baseCommit": "0ceb78ceda1d3895e9cf9f1af46e643cb34d86b9",
+        "model": null,
+        "reasoningEffort": null,
+        "userVisible": true,
+        "nativeSessionId": null,
+        "remoteUrl": null,
+        "status": "failed",
+        "pendingApprovals": 0,
+        "turnCount": 1,
+        "lastEventSeq": 3,
+        "lastError": {
+            "code": "AGENT_AUTH_REQUIRED",
+            "message": "Qoder 未登录：请在终端运行 qodercli，按提示登录后重试",
+            "retryable": false,
+            "detail": {
+                "code": -32000,
+                "message": "Authentication required: Authentication is required."
+            }
+        },
+        "readOnlyViolation": false,
+        "createdAt": "2026-11-24T15:23:16.659Z",
+        "updatedAt": "2026-11-24T15:23:16.734Z",
+        "startedAt": null,
+        "endedAt": "2026-11-24T15:23:16.734Z",
+        "archivedAt": null,
+        "worktreeRemovedAt": null
+    },
+    "lastSeq": 3
+}
+
+# 帧日志里没有 authenticate：
+0
+
+## SIGTERM
+exit=0
+## stderr
+{"ts":"2026-11-24T15:23:16.733Z","level":"warn","scope":"adapter","msg":"Qoder 进程退出","label":"acp:qoder:feab129f","code":0,"signal":null,"stderr":""}
+## 侧车退出后还活着的 fake-acp 进程数：0

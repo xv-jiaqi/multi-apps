@@ -26,6 +26,10 @@ export const WS_CLOSE_CODES = {
   UNAUTHORIZED: 4401,
   FORBIDDEN: 4403,
   SLOW_CONSUMER: 4008,
+  /** 桥接 token 的连接数已满（8 个）；用 auth 消息鉴权的连接在这里被拒（PR3）。 */
+  TOO_MANY_CONNECTIONS: 4429,
+  /** 回放出错（读库失败等），客户端带 afterSeq 重连即可（PR3）。 */
+  INTERNAL_ERROR: 1011,
 } as const;
 
 const prompt = z.string().trim().min(1, '提示词不能为空').max(200_000, '提示词最多 20 万字符');

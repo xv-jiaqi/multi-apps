@@ -836,6 +836,10 @@ export const WS_CLOSE_CODES = {
   UNAUTHORIZED: 4401,
   FORBIDDEN: 4403,
   SLOW_CONSUMER: 4008,
+  /** 桥接 token 的连接数已满（8 个）；用 auth 消息鉴权的连接在这里被拒（PR3）。 */
+  TOO_MANY_CONNECTIONS: 4429,
+  /** 回放出错（读库失败等），客户端带 afterSeq 重连即可（PR3）。 */
+  INTERNAL_ERROR: 1011,
 } as const;
 
 const prompt = z.string().trim().min(1, '提示词不能为空').max(200_000, '提示词最多 20 万字符');
@@ -1057,18 +1061,19 @@ export type WsServerMessage =
 
 行到 DTO 的通用规则见 [data-model.md](data-model.md) §4.1。其余规则：
 
-| DTO / 字段                         | 规则                                                                                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `TaskDto.title`                    | 创建时没给就取提示词第一行，按 Unicode 字符取前 40 个，截断时末尾加 `…`。                                                               |
-| `TaskDetailDto.turns`              | 按 `index` 升序。                                                                                                                       |
-| `TaskDetailDto.approvals`          | 该任务全部审批，按 `createdAt` 升序。                                                                                                   |
-| `TaskResultDto.turn`               | `index` 最大的轮（任务刚创建时就是 `pending` 的第 1 轮）。                                                                              |
-| `TaskResultDto.diff`               | `task_stats` 不为空的轮里 `index` 最大的一个：`{ turnIndex, stats: taskStats, patchTruncated }`；没有这样的轮时为 `null`。              |
-| `AgentDto.runningTasks`            | 该 Agent 处于 `preparing` / `running` 的任务数；`queuedTasks` 是 `queued` 的任务数。                                                    |
-| `AgentDto.health` / `capabilities` | `AdapterRegistry` 的缓存（[adapter-interface.md](adapter-interface.md) §9）；禁用的 Agent 为 `{ status: 'disabled' }` 和 `null`。       |
-| `RepoDto.inspection`               | `RepoInspector` 的结果，每个仓库缓存 10 秒；`GET /repos?refresh=1` 跳过缓存。`isDefault` = `id === defaultRepoId`。                     |
-| `ApprovalDto.title`                | 适配器给出的中文标题（[adapter-interface.md](adapter-interface.md) §5）。                                                               |
-| `MeResponse`                       | UI token：`{ kind: 'ui', tokenId: null, scopes: 全部, admin: true }`；桥接 token：`{ kind: 'bridge', tokenId, scopes, admin: false }`。 |
+| DTO / 字段                         | 规则                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TaskDto.title`                    | 创建时没给就取提示词第一行，按 Unicode 字符取前 40 个，截断时末尾加 `…`。                                                                                                                                                                                                                                                                                                           |
+| `TaskDetailDto.turns`              | 按 `index` 升序。                                                                                                                                                                                                                                                                                                                                                                   |
+| `TaskDetailDto.approvals`          | 该任务全部审批，按 `createdAt` 升序。                                                                                                                                                                                                                                                                                                                                               |
+| `TaskResultDto.turn`               | `index` 最大的轮（任务刚创建时就是 `pending` 的第 1 轮）。                                                                                                                                                                                                                                                                                                                          |
+| `TaskResultDto.diff`               | `task_stats` 不为空的轮里 `index` 最大的一个：`{ turnIndex, stats: taskStats, patchTruncated }`；没有这样的轮时为 `null`。                                                                                                                                                                                                                                                          |
+| `AgentDto.runningTasks`            | 该 Agent 处于 `preparing` / `running` 的任务数；`queuedTasks` 是 `queued` 的任务数。                                                                                                                                                                                                                                                                                                |
+| `AgentDto.health` / `capabilities` | `AdapterRegistry` 的缓存（[adapter-interface.md](adapter-interface.md) §9）；禁用的 Agent 为 `{ status: 'disabled' }` 和 `null`。                                                                                                                                                                                                                                                   |
+| `AgentDto`（`kind: 'acp'`）        | 本版本只接入了 `profile: 'qoder'`（PR3，[adapter-acp.md](adapter-acp.md)）。其他 profile（`claude-code` / `gemini` / `generic`）的 Agent 照常列出，健康为 `unavailable`（`AGENT_DISABLED`，“本版本的 ACP 适配器只接入了 Qoder，还不支持 profile“x””），建任务后在准备阶段失败。Qoder 的 `capabilities.models` 来自最近一次新建会话（`modelsSource: 'session'`），`sandbox: false`。 |
+| `RepoDto.inspection`               | `RepoInspector` 的结果，每个仓库缓存 10 秒；`GET /repos?refresh=1` 跳过缓存。`isDefault` = `id === defaultRepoId`。                                                                                                                                                                                                                                                                 |
+| `ApprovalDto.title`                | 适配器给出的中文标题（[adapter-interface.md](adapter-interface.md) §5）。                                                                                                                                                                                                                                                                                                           |
+| `MeResponse`                       | UI token：`{ kind: 'ui', tokenId: null, scopes: 全部, admin: true }`；桥接 token：`{ kind: 'bridge', tokenId, scopes, admin: false }`。                                                                                                                                                                                                                                             |
 
 ## 5. 端点
 
@@ -1346,7 +1351,7 @@ Idempotency-Key: conv_7f3a:msg_12
 | `GET /repos/:repoId/refs`                 | 基线下拉框用：`git for-each-ref --sort=-committerdate --count=200 --format='%(refname:short)' refs/heads refs/remotes refs/tags`。                                                                                                                                                                                                                                                                                                                                                                                  |
 | `POST /repos/inspect`                     | 设置页“检测”按钮：对任意路径做体检（不要求已注册），返回 `RepoInspectionDto`。                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `POST /repos/:repoId/disable-origin-push` | `git -C <repo> remote set-url --push origin DISABLED`（D49），审计 `repo.origin_push_disabled`，返回刷新后的 `RepoDto`。没有 `origin` 远端时什么都不做。设置页新增仓库时“禁用 origin 推送”默认勾选，保存设置成功后由 Hub UI 调用。                                                                                                                                                                                                                                                                                  |
-| `POST /agents/:agentId/refresh`           | 重新做健康检查并刷新能力（Codex 重新 `model/list`），返回 `AgentDto`。                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `POST /agents/:agentId/refresh`           | 重新做健康检查并刷新能力（Codex 重新 `model/list`；ACP 起一个探测进程新建再关闭一个会话），返回 `AgentDto`。                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `GET /tokens`                             | 全部桥接 token（含已吊销的），按创建时间倒序。                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `POST /tokens`                            | 新建桥接 token（`isDefault: false`），**明文只在这个响应里出现一次**；审计 `token.created`。                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `PATCH /tokens/:tokenId`                  | 改 scope；已吊销 → `409 ILLEGAL_TRANSITION`；审计 `token.scopes_changed`。加 `approvals:decide` 前由 Hub UI 弹二次确认。                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -1367,7 +1372,7 @@ Idempotency-Key: conv_7f3a:msg_12
 2. 与 HTTP 相同的 Host / Origin / 停机检查（§2.1），失败回对应的 HTTP 状态码。
 3. 握手带了 `Authorization` 头（Node 客户端）：校验失败回 `401`；桥接 token 已有 8 个连接 → `429`。
 4. `wss.handleUpgrade(...)`。握手没带 `Authorization` 头（浏览器里的 Hub UI 无法设置 WebSocket 请求头）时，连接后 **5 秒**内第一条消息必须是 `{ "op": "auth", "token": "…" }`，否则以 `4401` 关闭。
-5. 鉴权通过后，主体没有 `tasks:read` → `4403` 关闭；否则发送 `{ "op": "ready", "kind": "ui", "scopes": [...], "admin": true }`。`ready` 之前客户端只能发 `auth`；`ready` 之后再发 `auth` → `4400`。
+5. 鉴权通过后，主体没有 `tasks:read` → `4403` 关闭；桥接 token 已有 8 个已鉴权的连接 → `4429` 关闭（握手带头的在第 3 步已回过 `429`，这里兜住并发握手和用 `auth` 消息鉴权的连接；连接数只数鉴权成功的连接）；否则发送 `{ "op": "ready", "kind": "ui", "scopes": [...], "admin": true }`。`ready` 之前客户端只能发 `auth`；`ready` 之后再发 `auth` → `4400`。
 
 ### 6.2 订阅
 
@@ -1394,7 +1399,7 @@ Idempotency-Key: conv_7f3a:msg_12
 
 ### 6.3 回放与衔接
 
-带 `afterSeq` 订阅 `task` 时，先订阅实时事件（回放期间不缓存），再分页从库里回放 `seq > afterSeq` 的事件（逐条等写完），然后同步补齐回放期间落库的事件并切到跟随；之后直接转发。按 `seq` 去重，衔接处不重不漏。断线后客户端用最后收到的 `seq` 重新订阅即可。实时流与库里是同一份已合并的事件（[architecture.md](architecture.md) §6），回放与实时看到的内容一致。
+带 `afterSeq` 订阅 `task` 时，先订阅实时事件（回放期间不缓存），再分页从库里回放 `seq > afterSeq` 的事件（逐条等写完），回放期间新落库的事件也一样逐条等写完（追赶），直到某次读库读不到新事件，在同一个同步段里切到跟随；之后直接转发。追赶不再一次性写出：重连时积累了几 MB 也不会再触发 `4008`，生产比客户端快时客户端一直停在回放，不会断开。回放读库出错时记日志并以 `1011` 关闭，客户端照常带 `afterSeq` 重连。按 `seq` 去重，衔接处不重不漏。断线后客户端用最后收到的 `seq` 重新订阅即可。实时流与库里是同一份已合并的事件（[architecture.md](architecture.md) §6），回放与实时看到的内容一致。
 
 ```ts
 // server/src/api/ws/replay.ts
@@ -1410,11 +1415,13 @@ export interface EventFeed {
 const PAGE = 500;
 
 /**
- * 先订阅（回放期间只占位、不缓存），再分页回放库里 seq > afterSeq 的事件，然后同步补齐回放期间
- * 落库的事件并切到跟随，之后直接转发。补齐与切换之间没有 await，按 seq 去重，衔接处不重不漏。
+ * 先订阅（回放期间只占位、不缓存），再分页回放库里 seq > afterSeq 的事件，直到某次读库读不到新事件，
+ * 在同一个同步段里切到跟随，之后直接转发。读空与切换之间没有 await，按 seq 去重，衔接处不重不漏。
  *
- * - 回放：逐条等 send 写完再发下一条。历史在库里，按客户端的速度补，不占内存也不占待发送额度，
- *   断线重连补大量历史时不会被误判为慢消费者。
+ * - 回放：逐条等 send 写完再发下一条，包括回放期间新落库的事件（追赶）。历史在库里，按客户端的速度补，
+ *   不占内存也不占待发送额度；重连补几 MB 的历史或追赶时不会被误判为慢消费者（PR3 待办 6：原来的
+ *   追赶是一次性同步写出，回放期间积累的事件多时会再次 4008，慢客户端可能永远追不上）。
+ *   生产快于客户端时一直停在回放，不会断开。
  * - 跟随：send 立即把消息交给 socket（ws 自己保证顺序），不串成 Promise 链。积压留在 socket 上，
  *   调用方按待发送字节数判断慢消费者并以 4008 关闭（§6.4）。
  *
@@ -1440,23 +1447,19 @@ export async function replayThenFollow(
     if (following) push(env);
   });
   try {
-    for (;;) {
-      if (signal.aborted) break;
+    while (!signal.aborted) {
       const page = feed.list(taskId, lastSent, PAGE);
+      if (page.length === 0) {
+        // 读空到切换是同步的，中间没有新事件能插进来。
+        following = true;
+        break;
+      }
       for (const env of page) {
         if (signal.aborted) break;
         push(env);
         await tail;
       }
-      if (page.length < PAGE) break;
     }
-    // 补齐并切到跟随：同步完成，中间没有新事件能插进来。
-    while (!signal.aborted) {
-      const page = feed.list(taskId, lastSent, PAGE);
-      for (const env of page) push(env);
-      if (page.length < PAGE) break;
-    }
-    following = true;
   } catch (err) {
     unsubscribe();
     throw err;
@@ -1473,13 +1476,15 @@ export async function replayThenFollow(
 - 每次发送前检查待发送数据（已交给 `ws.send` 但写回调未触发的字节数与 `ws.bufferedAmount` 取大者，再加上这条消息），超过 **8 MB** → 以 `4008` 关闭（消费太慢）；客户端应带 `afterSeq` 按 1、2、5、10 秒重连，之后保持 10 秒，不立即重连。
 - 侧车停机时所有连接以 `1001` 关闭。
 
-| 关闭码 | 常量                           | 含义                                          | 客户端应当                         |
-| ------ | ------------------------------ | --------------------------------------------- | ---------------------------------- |
-| `1001` | `WS_CLOSE_CODES.SHUTDOWN`      | 侧车停机                                      | 稍后重连                           |
-| `4400` | `WS_CLOSE_CODES.BAD_MESSAGE`   | 消息格式错误                                  | 修正代码，不要重连                 |
-| `4401` | `WS_CLOSE_CODES.UNAUTHORIZED`  | 未鉴权、token 无效或已吊销、5 秒内没有 `auth` | 重新取 token 后再连                |
-| `4403` | `WS_CLOSE_CODES.FORBIDDEN`     | 没有 `tasks:read`                             | 不要重连                           |
-| `4008` | `WS_CLOSE_CODES.SLOW_CONSUMER` | 待发送数据超过 8 MB                           | 带 `afterSeq` 退避重连，上限 10 秒 |
+| 关闭码 | 常量                                  | 含义                                          | 客户端应当                         |
+| ------ | ------------------------------------- | --------------------------------------------- | ---------------------------------- |
+| `1001` | `WS_CLOSE_CODES.SHUTDOWN`             | 侧车停机                                      | 稍后重连                           |
+| `4400` | `WS_CLOSE_CODES.BAD_MESSAGE`          | 消息格式错误                                  | 修正代码，不要重连                 |
+| `4401` | `WS_CLOSE_CODES.UNAUTHORIZED`         | 未鉴权、token 无效或已吊销、5 秒内没有 `auth` | 重新取 token 后再连                |
+| `4403` | `WS_CLOSE_CODES.FORBIDDEN`            | 没有 `tasks:read`                             | 不要重连                           |
+| `4008` | `WS_CLOSE_CODES.SLOW_CONSUMER`        | 待发送数据超过 8 MB                           | 带 `afterSeq` 退避重连，上限 10 秒 |
+| `4429` | `WS_CLOSE_CODES.TOO_MANY_CONNECTIONS` | 桥接 token 已有 8 个连接（`auth` 消息鉴权时） | 关掉不用的连接后再连               |
+| `1011` | `WS_CLOSE_CODES.INTERNAL_ERROR`       | 回放出错（读库失败等）                        | 带 `afterSeq` 退避重连             |
 
 ## 7. 错误码
 

@@ -1,0 +1,30 @@
+# 2026-11-25 00:45:03 CST 剧本 c  commit=e2ee818  侧车=node dist/main.js  假 Qoder=test/fakes/fake-acp.mjs
+task=52c0b055-41b0-44a4-a69d-37e6f8fd273c
+wait: {"reached": true}
+
+## 从 hub.db 取落库事件检查（/tmp/ah-hb-old-c/home/hub.db）
+LEAK seq=6 tool.output.delta 单条含 jwt 片段 Hh1Hh1Hh
+LEAK seq=7 tool.output.delta 单条含 jwt 片段 Pp2Pp2Pp
+  原文 seq=11 tool.output.delta/t1-tool-c2 完整含 bigjwt（单条 redact 后：仍在！）
+LEAK seq=11 tool.output.delta 单条含 bigjwt 片段 Bb7Bb7Bb
+  原文 seq=12 tool.output.delta/t1-tool-c2 完整含 bigtail（单条 redact 后：仍在！）
+LEAK seq=12 tool.output.delta 单条含 bigjwt 片段 Bb7Bb7Bb
+events=18 各类型条数={"task.status":3,"session.started":1,"turn.started":1,"tool.started":2,"tool.output.delta":5,"tool.completed":2,"message.delta":1,"message.completed":1,"diff.updated":1,"turn.completed":1}
+LEAK tool.output.delta/t1-tool-c1 seq=6+7 拼接含 jwt 片段 Hh1Hh1Hh
+LEAK tool.output.delta/t1-tool-c1 整路拼接含 jwt 片段 Hh1Hh1Hh
+  tool.output.delta/t1-tool-c1: 2 条，单条脱敏后拼接 70301 字符，truncated 标记=false，结尾 …"gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1gS1g\"} done\\n"
+LEAK tool.output.delta/t1-tool-c2 seq=10+11 拼接含 bigjwt 片段 Bb7Bb7Bb
+LEAK tool.output.delta/t1-tool-c2 seq=11+12 拼接含 bigjwt 片段 Bb7Bb7Bb
+LEAK tool.output.delta/t1-tool-c2 整路拼接含 bigjwt 片段 Bb7Bb7Bb
+  tool.output.delta/t1-tool-c2: 3 条，单条脱敏后拼接 69045 字符，truncated 标记=false，结尾 …"7Bb7Bb7Bb7Bb7Bb7Bb7Bb7.Tt5Tt5Tt5Tt5Tt5Tt5Tt5Tt5Tt5Tt5\" done\\n"
+  message.delta/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  message.completed/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+RESULT 9 处泄漏
+check-db exit=1
+
+## 桥接 REST /events 同样检查（全部事件的 JSON 里找片段）
+LEAK bridge jwt Hh1Hh1Hh
+LEAK bridge bigjwt Bb7Bb7Bb
+LEAK bridge bigtail Tt5Tt5Tt
+bridge 有泄漏
+## 侧车 SIGTERM exit=0

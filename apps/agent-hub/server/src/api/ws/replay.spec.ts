@@ -113,6 +113,42 @@ describe('replayThenFollow', () => {
     expect(sent).toEqual(Array.from({ length: 1002 }, (_, i) => i + 1));
   });
 
+  it('追赶（回放期间新落库的事件）也逐条等写完，不一次性写出（PR3 待办 6）', async () => {
+    const feed = new FakeFeed();
+    feed.add(2);
+    const resolvers: Array<() => void> = [];
+    let inflight = 0;
+    let maxInflight = 0;
+    const done = replayThenFollow(
+      feed,
+      't',
+      0,
+      () => {
+        inflight += 1;
+        maxInflight = Math.max(maxInflight, inflight);
+        return new Promise<void>((r) =>
+          resolvers.push(() => {
+            inflight -= 1;
+            r();
+          }),
+        );
+      },
+      new AbortController().signal,
+    );
+    await tick();
+    feed.add(1); // 第 1 页最后一条之前落库：同一页之后的追赶
+    resolvers.shift()!();
+    await tick();
+    feed.add(3000); // 回放到最后一条时又来了几页
+    while (resolvers.length) {
+      resolvers.shift()!();
+      await tick();
+    }
+    await done;
+    expect(maxInflight).toBe(1);
+    expect(feed.listCalls.at(-1)).toEqual([3003, 500]);
+  });
+
   it('跟随阶段不串行：send 未完成时新事件也立即交给 send（慢消费者检查才看得到积压）', async () => {
     const feed = new FakeFeed();
     const sent: number[] = [];

@@ -1,0 +1,18 @@
+# 2026-11-25 00:49:19 CST 剧本 d  commit=37aa133  侧车=node dist/main.js  假 Qoder=test/fakes/fake-acp.mjs
+task=35a7c3d8-17db-4ccc-9ba9-9f800c8c4788
+wait: {"reached": true}
+
+## 从 hub.db 取落库事件检查（/tmp/ah-hb-06-holdback-d/home/hub.db）
+  原文 seq=6 tool.output.delta/t1-tool-d1 完整含 pem（单条 redact 后：已脱敏）
+  原文 seq=9 tool.output.delta/t1-tool-d2 完整含 urlpw（单条 redact 后：已脱敏）
+events=15 各类型条数={"task.status":3,"session.started":1,"turn.started":1,"tool.started":2,"tool.output.delta":2,"tool.completed":2,"message.delta":1,"message.completed":1,"diff.updated":1,"turn.completed":1}
+  tool.output.delta/t1-tool-d1: 1 条，单条脱敏后拼接 5 字符，truncated 标记=false，结尾 …"«已脱敏»"
+  tool.output.delta/t1-tool-d2: 1 条，单条脱敏后拼接 46 字符，truncated 标记=false，结尾 …"origin\txhttps://git.example.com/r.git (fetch)\\n"
+  message.delta/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  message.completed/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+RESULT 没有任何密钥片段（单条 / 相邻拼接 / 整路拼接）
+check-db exit=0
+
+## 桥接 REST /events 同样检查（全部事件的 JSON 里找片段）
+bridge 响应里没有任何密钥片段
+## 侧车 SIGTERM exit=0

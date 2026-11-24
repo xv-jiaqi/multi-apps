@@ -1,0 +1,18 @@
+# 2026-11-25 00:49:17 CST 剧本 c  commit=37aa133  侧车=node dist/main.js  假 Qoder=test/fakes/fake-acp.mjs
+task=6e7a2af1-2df3-4588-a7fe-06e991833318
+wait: {"reached": true}
+
+## 从 hub.db 取落库事件检查（/tmp/ah-hb-05-holdback-c/home/hub.db）
+  原文 seq=7 tool.output.delta/t1-tool-c1 完整含 jwt（单条 redact 后：已脱敏）
+events=19 各类型条数={"task.status":3,"session.started":1,"turn.started":1,"tool.started":2,"tool.output.delta":5,"tool.completed":2,"notice":1,"message.delta":1,"message.completed":1,"diff.updated":1,"turn.completed":1}
+  tool.output.delta/t1-tool-c1: 2 条，单条脱敏后拼接 70031 字符，truncated 标记=false，结尾 …"cccccccccccccccccccccccccccccccccccccc\",\"jwt\":\"«已脱敏»\"} done\\n"
+  tool.output.delta/t1-tool-c2: 3 条，单条脱敏后拼接 4 字符，truncated 标记=true，结尾 …"ok \""
+  message.delta/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  message.completed/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  notice seq=13 OUTPUT_OMITTED: 这一段输出里有无法安全切开的超长内容，为了不切开可能的密钥，剩下的输出已省略（t1-tool-c2）
+RESULT 没有任何密钥片段（单条 / 相邻拼接 / 整路拼接）
+check-db exit=0
+
+## 桥接 REST /events 同样检查（全部事件的 JSON 里找片段）
+bridge 响应里没有任何密钥片段
+## 侧车 SIGTERM exit=0

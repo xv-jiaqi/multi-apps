@@ -298,21 +298,22 @@ export interface HubEventEnvelope {
 
 `notice.code` 是字符串，下表是全部取值；新增时先补这张表。界面按 `level` 着色，按 `code` 决定是否折叠同类提示。
 
-| `code`                   | `level`             | 产出方     | 何时                                                                                                      |
-| ------------------------ | ------------------- | ---------- | --------------------------------------------------------------------------------------------------------- |
-| `TURN_LIMIT`             | `warning`           | 核心       | 轮以 `max_tokens` / `max_turn_requests` / `refusal` 结束（§6.1 规则 4）。                                 |
-| `READ_ONLY_VIOLATION`    | `error`             | 核心       | 只读任务的工作区在本轮有改动（[architecture.md](architecture.md) §7.3）。                                 |
-| `REMOTE_REF_CHANGED`     | `error`             | 核心       | 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4）。                                           |
-| `AGENT_RETRYING`         | `warning`           | Codex      | `error` 通知且 `willRetry: true`（[adapter-codex.md](adapter-codex.md) §5.3）。                           |
-| `MODEL_REROUTED`         | `warning`           | Codex      | `model/rerouted`。                                                                                        |
-| `CONTEXT_COMPACTED`      | `info`              | Codex、ACP | Codex `contextCompaction` item 结束；ACP `compaction_update` 完成。                                       |
-| `USER_INPUT_UNSUPPORTED` | `warning`           | Codex      | `item/tool/requestUserInput`：Hub 回空答案。                                                              |
-| `ELICITATION_DECLINED`   | `warning`           | Codex      | `mcpServer/elicitation/request`：Hub 回拒绝。                                                             |
-| `AGENT_WARNING`          | `warning` / `error` | Codex、ACP | Agent 自己发的警告（Codex `warning` 通知；ACP `warning` / `error` 级的 `notice`，`info` 级不带 `code`）。 |
-| `MODE_RESTORED`          | `warning`           | ACP        | Agent 切到不允许的会话模式，Hub 已切回（D37，[adapter-acp.md](adapter-acp.md) §5）。                      |
-| `PLAN_EXIT_DECLINED`     | `info`              | ACP        | 只读任务里 Agent 请求退出计划模式，Hub 代为拒绝、本轮结束（[adapter-acp.md](adapter-acp.md) §7.3）。      |
-| `WEB_FETCH_FAILED`       | `warning`           | 网页       | 轮询拉取远端任务分支失败；一段连续失败只发一次（[web-agent.md](web-agent.md) §3.2）。                     |
-| `WEB_BRANCH_REWRITTEN`   | `warning`           | 网页       | 远端任务分支被强推改写；每轮只发一次（[web-agent.md](web-agent.md) §3.2）。                               |
+| `code`                   | `level`             | 产出方     | 何时                                                                                                                                             |
+| ------------------------ | ------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `TURN_LIMIT`             | `warning`           | 核心       | 轮以 `max_tokens` / `max_turn_requests` / `refusal` 结束（§6.1 规则 4）。                                                                        |
+| `READ_ONLY_VIOLATION`    | `error`             | 核心       | 只读任务的工作区在本轮有改动（[architecture.md](architecture.md) §7.3）。                                                                        |
+| `REMOTE_REF_CHANGED`     | `error`             | 核心       | 轮后发现远端跟踪分支有变化（[security.md](security.md) §3.4）。                                                                                  |
+| `AGENT_RETRYING`         | `warning`           | Codex      | `error` 通知且 `willRetry: true`（[adapter-codex.md](adapter-codex.md) §5.3）。                                                                  |
+| `MODEL_REROUTED`         | `warning`           | Codex      | `model/rerouted`。                                                                                                                               |
+| `CONTEXT_COMPACTED`      | `info`              | Codex、ACP | Codex `contextCompaction` item 结束；ACP `compaction_update` 完成。                                                                              |
+| `USER_INPUT_UNSUPPORTED` | `warning`           | Codex      | `item/tool/requestUserInput`：Hub 回空答案。                                                                                                     |
+| `ELICITATION_DECLINED`   | `warning`           | Codex      | `mcpServer/elicitation/request`：Hub 回拒绝。                                                                                                    |
+| `AGENT_WARNING`          | `warning` / `error` | Codex、ACP | Agent 自己发的警告（Codex `warning` 通知；ACP `warning` / `error` 级的 `notice`，`info` 级不带 `code`）。                                        |
+| `OUTPUT_OMITTED`         | `warning`           | 核心       | 一个任务扣住的输出合计超过上限、或者一路要扣的尾巴超过 64 KiB，又切不出安全前段时，这一段剩下的输出被整路丢弃（[security.md](security.md) §8）。 |
+| `MODE_RESTORED`          | `warning`           | ACP        | Agent 切到不允许的会话模式，Hub 已切回（D37，[adapter-acp.md](adapter-acp.md) §5）。                                                             |
+| `PLAN_EXIT_DECLINED`     | `info`              | ACP        | 只读任务里 Agent 请求退出计划模式，Hub 代为拒绝、本轮结束（[adapter-acp.md](adapter-acp.md) §7.3）。                                             |
+| `WEB_FETCH_FAILED`       | `warning`           | 网页       | 轮询拉取远端任务分支失败；一段连续失败只发一次（[web-agent.md](web-agent.md) §3.2）。                                                            |
+| `WEB_BRANCH_REWRITTEN`   | `warning`           | 网页       | 远端任务分支被强推改写；每轮只发一次（[web-agent.md](web-agent.md) §3.2）。                                                                      |
 
 ## 4. 错误码
 

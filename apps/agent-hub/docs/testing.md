@@ -75,6 +75,16 @@ export interface FakeScenario {
 
 `sdk-agent.mjs` 只走正常路径，证明 `AcpAdapter` 能和官方 SDK 的 Agent 互通。
 
+**PR3 实际的 `fake-acp.mjs`**（上面的 `FakeStep` 是 Codex 那一版的按序剧本；ACP 的 Agent 要同时应对探测进程、任务进程和恢复后的新进程，按方法应答更好写）：
+
+- 剧本路径经 `FAKE_ACP_SCENARIO` 传入（同样写进 `envPassthrough`）。剧本字段：`initialize`（结果）或 `initializeError` / `hangHandshake` / `exitBeforeHandshake`；`handlers`：方法 → `{ then?, reply? | error?, after? }`，`then` 在回复前、`after` 在回复后执行；值也可以是数组，按该方法**跨进程**的第 n 次调用取第 n 项（计数存在 `<剧本>.count.json`）；`ignoreSigterm`；`exitOnStdinClose`（默认 `true`，三个真实 Agent 都是关 stdin 就退出）。
+- 步骤：`{ update }`（`session/update`，自动补 `sessionId`）、`{ notify, params }`、`{ request, params, id?, writeFileIfSelected? }`（向 Hub 发请求并等回复；回复选了某个 `optionId` 时在会话 cwd 写文件）、`{ awaitNotify, timeoutMs? }`（等 Hub 发 `session/cancel` 之类的通知）、`{ sleepMs }`、`{ writeFile, content }`、`{ stderr }`、`{ writeRaw }`、`{ exit }`、`{ hang }`。
+- 收发的每一帧追加到 `<剧本>.log`（`<-` 收到、`->` 发出），测试据此核对 Hub 发了什么（模式切换在提示词之前、权限回复的 `optionId`、`session/cancel`、`session/resume`、没有 `authenticate`）。
+- `session/prompt` 并发处理（轮内 Hub 还会发 `set_config_option`），其他请求按顺序处理。
+- Qoder 的帧照 [adapter-acp.md](adapter-acp.md) §10 的 1.1.80 实测编写（`test/helpers/qoder-scenario.ts`），剧本在测试里生成。
+
+PR3 没有加 `sdk-agent.mjs`（理由见 PR3 正文），`fake-codex.mjs` 多了 `recordRequests`：把收到的每个请求追加到指定文件，`codex-env-policy.e2e-spec.ts` 用它核对 `thread/start` 的 `config`。
+
 ### 3.2 夹具录制
 
 - 来源：owner 在 Mac 上打开诊断开关后的 `transcripts/<taskId>.ndjson`（已经过 `redact`）。
@@ -124,14 +134,14 @@ export interface FakeScenario {
 
 ### 4.1 进程与握手
 
-| 编号 | 场景             | 层  | 注入方式                                                      | 期望                                                                           |
-| ---- | ---------------- | --- | ------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| E01  | 可执行文件不存在 | A   | profile 的 `command` 指向不存在的路径                         | 健康状态 `unavailable`；创建任务 `409 AGENT_UNAVAILABLE`                       |
-| E02  | 启动后立即退出   | A   | 剧本第一步 `exit: 1`，之前写 stderr                           | `AGENT_SPAWN_FAILED`，`detail` 带 stderr 尾部；任务 `failed`                   |
-| E03  | 握手无响应       | A   | 剧本 `hang`                                                   | `AGENT_HANDSHAKE_TIMEOUT`，进程组结束，没有残留                                |
-| E04  | 协议版本不支持   | A   | ACP `initialize` 返回不支持的 `protocolVersion`               | `AGENT_PROTOCOL_UNSUPPORTED`，健康状态 `unavailable`                           |
-| E05  | 未登录           | A   | Codex `account/read` 返回 `account: null`；ACP 按 D60 的信号  | 健康 `auth_required`；创建任务 `409 AGENT_AUTH_REQUIRED`；没有调用登录方法     |
-| E06  | 子进程环境       | A   | 父进程放 `GITHUB_TOKEN`、`SSH_AUTH_SOCK`，剧本 `echoEnvNames` | 回显里没有这两个；有 `GIT_ALLOW_PROTOCOL`；`FAKE_SCENARIO` 因 passthrough 放行 |
+| 编号 | 场景             | 层  | 注入方式                                                      | 期望                                                                                                                                                                              |
+| ---- | ---------------- | --- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E01  | 可执行文件不存在 | A   | profile 的 `command` 指向不存在的路径                         | 健康状态 `unavailable`；创建任务 `409 AGENT_UNAVAILABLE`                                                                                                                          |
+| E02  | 启动后立即退出   | A   | 剧本第一步 `exit: 1`，之前写 stderr                           | `AGENT_SPAWN_FAILED`，`detail` 带 stderr 尾部；任务 `failed`                                                                                                                      |
+| E03  | 握手无响应       | A   | 剧本 `hang`                                                   | `AGENT_HANDSHAKE_TIMEOUT`，进程组结束，没有残留                                                                                                                                   |
+| E04  | 协议版本不支持   | A   | ACP `initialize` 返回不支持的 `protocolVersion`               | `AGENT_PROTOCOL_UNSUPPORTED`，健康状态 `unavailable`                                                                                                                              |
+| E05  | 未登录           | A   | Codex `account/read` 返回 `account: null`；ACP 按 D60 的信号  | 健康 `auth_required`；创建任务照常 `201`（[local-api.md](local-api.md) `POST /tasks` 第 3 步不看健康），准备阶段失败、`lastError.code` 为 `AGENT_AUTH_REQUIRED`；没有调用登录方法 |
+| E06  | 子进程环境       | A   | 父进程放 `GITHUB_TOKEN`、`SSH_AUTH_SOCK`，剧本 `echoEnvNames` | 回显里没有这两个；有 `GIT_ALLOW_PROTOCOL`；`FAKE_SCENARIO` 因 passthrough 放行                                                                                                    |
 
 ### 4.2 协议
 
@@ -195,28 +205,28 @@ export interface FakeScenario {
 
 ### 4.7 推送守卫与脱敏
 
-| 编号 | 场景                    | 层  | 注入方式                                                                       | 期望                                                                       |
-| ---- | ----------------------- | --- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| E41  | Agent 环境里推送        | G   | `agentEnv()` 之后 `git push` 到 `git://127.0.0.1`                              | 失败，`transport 'git' not allowed`；裸仓库没有新引用                      |
-| E42  | `insteadOf` 改写        | G   | 全局改写把远端指到 daemon                                                      | 同 E41                                                                     |
-| E43  | `pre-push`              | G   | [security.md](security.md) §3.3 的 12 组；另测 `commit-msg` 转发               | 12 组与表一致；仓库自己的 `commit-msg` 被调用；`pre-push` 不转发           |
-| E44  | Hub 推送到 GitHub 主机  | G   | `internal` 被改写成 `https://github.com/...`                                   | `checkPushTarget` 拒绝，`GIT_PUSH_BLOCKED`，没有连接；审计 URL 无 userinfo |
-| E45  | 非 `agent-hub/*` 或强推 | G   | 直接调用 `PushService`                                                         | 拒绝                                                                       |
-| E46  | 远端跟踪分支变化        | G   | 轮中用不带守卫的环境推一次命名远端                                             | 轮后审计 `security.remote_ref_changed`，并有 warning `notice`              |
-| E47  | 脱敏                    | U   | [security.md](security.md) §5 的每种模式；密钥被切在两条增量之间（REST 与 WS） | 日志、transcript、桥接响应是 `«已脱敏»`；Hub UI 的 REST 响应保持原文       |
-| E48  | 目录越界                | I   | 仓库路径不在已注册列表                                                         | `400 REPO_INVALID`                                                         |
+| 编号 | 场景                    | 层  | 注入方式                                                                                                                                                                                                                                                                    | 期望                                                                                                 |
+| ---- | ----------------------- | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| E41  | Agent 环境里推送        | G   | `agentEnv()` 之后 `git push` 到 `git://127.0.0.1`                                                                                                                                                                                                                           | 失败，`transport 'git' not allowed`；裸仓库没有新引用                                                |
+| E42  | `insteadOf` 改写        | G   | 全局改写把远端指到 daemon                                                                                                                                                                                                                                                   | 同 E41                                                                                               |
+| E43  | `pre-push`              | G   | [security.md](security.md) §3.3 的 12 组；另测 `commit-msg` 转发                                                                                                                                                                                                            | 12 组与表一致；仓库自己的 `commit-msg` 被调用；`pre-push` 不转发                                     |
+| E44  | Hub 推送到 GitHub 主机  | G   | `internal` 被改写成 `https://github.com/...`                                                                                                                                                                                                                                | `checkPushTarget` 拒绝，`GIT_PUSH_BLOCKED`，没有连接；审计 URL 无 userinfo                           |
+| E45  | 非 `agent-hub/*` 或强推 | G   | 直接调用 `PushService`                                                                                                                                                                                                                                                      | 拒绝                                                                                                 |
+| E46  | 远端跟踪分支变化        | G   | 轮中用不带守卫的环境推一次命名远端                                                                                                                                                                                                                                          | 轮后审计 `security.remote_ref_changed`，并有 warning `notice`                                        |
+| E47  | 脱敏                    | U   | [security.md](security.md) §5 的每种模式（含 `Authorization: Basic`）；密钥被切在两条增量之间（REST 与 WS）；超过 64 KiB 的无空白文本里的密钥、认证头后 300 个空格；工具输出 1 MB 截断点落在密钥上；没闭合的私钥块（`head -c 400 id_rsa`）；紧贴字母数字的 `xhttps://u:p@h` | 日志、transcript、桥接响应是 `«已脱敏»`；强切点与截断点不落在任何匹配里；Hub UI 的 REST 响应保持原文 |
+| E48  | 目录越界                | I   | 仓库路径不在已注册列表                                                                                                                                                                                                                                                      | `400 REPO_INVALID`                                                                                   |
 
 ### 4.8 本地 API
 
-| 编号 | 场景                  | 层  | 注入方式                                       | 期望                                                                                                |
-| ---- | --------------------- | --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| E49  | Host / Origin / token | I   | 非法 Host；非法 Origin；无 token；吊销的 token | `421 HOST_FORBIDDEN`；`403 ORIGIN_FORBIDDEN`；`401`；WS `4401`                                      |
-| E50  | 幂等键                | I   | 桥接 token 同一键发两次；同一键不同正文        | 同一个任务；`409 IDEMPOTENCY_CONFLICT`。Hub UI 不发这个头（D67）                                    |
-| E51  | 长轮询                | I   | `wait` 超时；期间本轮结束                      | `reached: false`；`reached: true`                                                                   |
-| E52  | WS 续订               | I   | 断开后用最后的 `seq` 重连                      | 不重不漏                                                                                            |
-| E53  | 慢消费者              | I   | 客户端不读，阈值调小                           | `4008` 关闭；重连后数据完整                                                                         |
-| E54  | 排队已满              | I   | 调小 `maxQueuedTasks`                          | `503 QUEUE_FULL`                                                                                    |
-| E55  | 桥接方写任务          | I   | 桥接 token 创建写任务；再传 `in_place`         | 省略工作区时直接 `queued` 且为 worktree（D45）；`in_place` 为 `403 BRIDGE_IN_PLACE_WRITE_FORBIDDEN` |
+| 编号 | 场景                  | 层  | 注入方式                                                                                               | 期望                                                                                                                  |
+| ---- | --------------------- | --- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| E49  | Host / Origin / token | I   | 非法 Host；非法 Origin；无 token；吊销的 token；同一桥接 token 第 9 个 WS 连接（header / `auth` 消息） | `421 HOST_FORBIDDEN`；`403 ORIGIN_FORBIDDEN`；`401`；WS `4401`；第 9 个连接 `429` / `4429`（`ws-limits.e2e-spec.ts`） |
+| E50  | 幂等键                | I   | 桥接 token 同一键发两次；同一键不同正文                                                                | 同一个任务；`409 IDEMPOTENCY_CONFLICT`。Hub UI 不发这个头（D67）                                                      |
+| E51  | 长轮询                | I   | `wait` 超时；期间本轮结束                                                                              | `reached: false`；`reached: true`                                                                                     |
+| E52  | WS 续订               | I   | 断开后用最后的 `seq` 重连                                                                              | 不重不漏                                                                                                              |
+| E53  | 慢消费者              | I   | 客户端不读，阈值调小；重连回放期间又落库几 MB；回放读库失败                                            | `4008` 关闭；重连后数据完整；追赶逐条等写完、不再 `4008`；读库失败以 `1011` 关闭、重连照常                            |
+| E54  | 排队已满              | I   | 调小 `maxQueuedTasks`                                                                                  | `503 QUEUE_FULL`                                                                                                      |
+| E55  | 桥接方写任务          | I   | 桥接 token 创建写任务；再传 `in_place`                                                                 | 省略工作区时直接 `queued` 且为 worktree（D45）；`in_place` 为 `403 BRIDGE_IN_PLACE_WRITE_FORBIDDEN`                   |
 
 ### 4.9 网页 Agent
 
@@ -251,6 +261,18 @@ export interface FakeScenario {
 - Agent Hub 的测试不读 `turbo.json` 里 `test.env` 的变量。需要的配置写在 jest / vitest 配置和测试辅助代码里。
 - 侧车的 `test` 脚本带 `NODE_OPTIONS=--disable-warning=ExperimentalWarning`（[data-model.md](data-model.md) 对 [milestones.md](milestones.md) §2 的约定）。
 - Ubuntu 镜像自带 git，`git daemon` 是 git 的一部分。
+- 侧车的 lint 单独一步、`--max-warnings 0`（PR3）：根目录的 `pnpm lint` 对警告不失败，Cardhub 现有的警告不归这里管。
+
+PR3（Qoder）新增的自动化用例：
+
+| 文件                                                            | 覆盖                                                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test/qoder-task.e2e-spec.ts`                                   | Qoder 的探测（`ready`、版本已验证、模型来自 `session/new`）；E14、E15（`proceed_once`）、E16（`cancel`、工具 `declined`）、E26、模式守卫（`MODE_RESTORED`）、进程退出后 `session/resume`、E37、E05 的 ACP 部分；终态后 `EventStore` 不留状态                                                                                                                                                                        |
+| `test/codex-env-policy.e2e-spec.ts`                             | `thread/start` 的 `config` 覆盖 `shell_environment_policy`（[security.md](security.md) §3.2）                                                                                                                                                                                                                                                                                                                       |
+| `test/ws-limits.e2e-spec.ts`                                    | 桥接 token 第 9 个连接 `4429` / `429`；回放读库失败 `1011`                                                                                                                                                                                                                                                                                                                                                          |
+| `test/ws-slow-consumer.e2e-spec.ts`                             | E53 追赶                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `src/core/event-store.spec.ts`                                  | 1 MB 截到正好（UTF-8 / 代理对 / 密钥）；审批前放出消息尾巴；扣留合计上限（整路丢弃）；审查 6042585463、6042967785 的复现（含 continue 长行跨强切点、超长时整路丢弃）；截断原位替换不改顺序；随机性质测试（无空白长度含超过 64 KiB、密钥种类和长度含没闭合私钥块与紧贴字母数字的 URL 凭据、切点、截断、总上限、结束都随机，种子固定）：每条落库事件单独脱敏、以及同一路相邻事件和整路拼接后，都没有密钥的 8 字符片段 |
+| `src/core/secret-holdback.spec.ts`、`src/common/redact.spec.ts` | 强切点不落进匹配；认证头后任意长空白；`Basic` / `Token` scheme；放出模式：truncate 回看空白无下限、force 与 continue 同一规则；每种密钥长于 64 的前缀都被认成没写完；长行强切不切开没写完的密钥，超长时 seal                                                                                                                                                                                                        |
 
 ## 6. 测试数据规范
 

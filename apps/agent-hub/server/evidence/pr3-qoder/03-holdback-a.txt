@@ -1,0 +1,16 @@
+# 2026-11-25 00:49:07 CST 剧本 a  commit=37aa133  侧车=node dist/main.js  假 Qoder=test/fakes/fake-acp.mjs
+task=d5e41914-8bac-4d47-b9ae-a2d4cec66d59
+wait: {"reached": true}
+
+## 从 hub.db 取落库事件检查（/tmp/ah-hb-03-holdback-a/home/hub.db）
+events=19 各类型条数={"task.status":3,"session.started":1,"turn.started":1,"tool.started":2,"tool.output.delta":6,"tool.completed":2,"message.delta":1,"message.completed":1,"diff.updated":1,"turn.completed":1}
+  tool.output.delta/t1-tool-a1: 4 条，单条脱敏后拼接 1048533 字符，truncated 标记=true，结尾 …"y y y y y y y y y y y y y y y y y y y y y y y y y y y y y y "
+  tool.output.delta/t1-tool-a2: 2 条，单条脱敏后拼接 1048362 字符，truncated 标记=true，结尾 …"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  message.delta/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+  message.completed/t1-msg-1: 1 条，单条脱敏后拼接 3 字符，truncated 标记=false，结尾 …"完成。"
+RESULT 没有任何密钥片段（单条 / 相邻拼接 / 整路拼接）
+check-db exit=0
+
+## 桥接 REST /events 同样检查（全部事件的 JSON 里找片段）
+bridge 响应里没有任何密钥片段
+## 侧车 SIGTERM exit=0

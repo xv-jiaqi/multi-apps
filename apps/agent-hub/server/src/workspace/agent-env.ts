@@ -10,6 +10,21 @@ export interface AgentEnvInput {
   ghConfigDir: string;
 }
 
+/**
+ * git 推送守卫用到的环境变量（security.md §3.2）。Codex 的 shell_environment_policy 可能把它们从
+ * Agent 跑的命令里剥掉，CodexAdapter 用这份清单在 thread/start 的 config 里显式 set 回去。
+ */
+export const GUARD_ENV_KEYS = [
+  'GIT_ALLOW_PROTOCOL',
+  'GIT_TERMINAL_PROMPT',
+  'GIT_ASKPASS',
+  'SSH_ASKPASS',
+  'GIT_CONFIG_COUNT',
+  'GIT_CONFIG_KEY_0',
+  'GIT_CONFIG_VALUE_0',
+  'GH_CONFIG_DIR',
+] as const;
+
 /** 按白名单构造 Agent 子进程环境，再盖上 git 守卫变量。不从父进程继承其余变量。 */
 export function agentEnv(input: AgentEnvInput): Record<string, string> {
   const env: Record<string, string> = {};
