@@ -27,6 +27,7 @@ const { invalidateAdminSeriesList, invalidateSeriesList, invalidateSeriesBySlug 
 );
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     admin: {
       series: {

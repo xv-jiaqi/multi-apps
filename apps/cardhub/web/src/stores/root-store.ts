@@ -7,7 +7,7 @@ import {
   type SessionStorageDriver,
 } from '@repo/stores';
 
-const SESSION_KEY = 'cardhub:session';
+export const SESSION_KEY = 'cardhub:session';
 const LOCALE_KEY = 'cardhub:locale';
 
 const browserSessionDriver: SessionStorageDriver | null =

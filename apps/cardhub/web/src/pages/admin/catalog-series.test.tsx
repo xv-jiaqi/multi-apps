@@ -24,6 +24,7 @@ const deleteImpl: {
 let listCalls = 0;
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     admin: {
       series: {

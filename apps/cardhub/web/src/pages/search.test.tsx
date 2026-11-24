@@ -191,6 +191,7 @@ function currentResult(query: string) {
 }
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     search: {
       global: {

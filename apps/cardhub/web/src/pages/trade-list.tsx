@@ -32,6 +32,7 @@ import { queryFallback, useFocusOnRecovery } from '../components/retry-button';
 import { useStores } from '../stores/root-store';
 import { shouldRetryQuery, trpc } from '../lib/trpc';
 import { ReportButton } from '../components/report-button';
+import { ContactSignInLink } from '../components/contact-sign-in-link';
 import { ListingCloseControl } from '../components/listing-close-control';
 import { CardPicker, type CardPickerItem } from '../components/card-picker';
 import { CardThumb, isHttpsImageUrl } from '../components/card-thumb';
@@ -291,7 +292,7 @@ export const TradeListPage = observer(function TradeListPage() {
           ) : (
             <Link
               to="/login"
-              state={{ from: '/trade' }}
+              state={{ from: `${location.pathname}${location.search}` }}
               className="text-sm text-link hover:underline"
             >
               {tt('trade.list.loginToPublish')}
@@ -676,17 +677,17 @@ export const TradeListPage = observer(function TradeListPage() {
                             <dt className="text-xs uppercase tracking-widest text-muted">
                               {tt('trade.list.contact')}
                             </dt>
-                            <dd className="min-w-0 font-mono text-neutral-800 wrap-anywhere">
+                            <dd className="min-w-0 wrap-anywhere">
                               {listing.contact === null ? (
-                                <Link
-                                  to="/login"
-                                  state={{ from: `${location.pathname}${location.search}` }}
-                                  className="text-link hover:underline"
-                                >
-                                  {tt('trade.list.contactSignIn')}
-                                </Link>
+                                <ContactSignInLink
+                                  from={`${location.pathname}${location.search}`}
+                                />
+                              ) : listing.contact.trim() === '' ? (
+                                '-'
                               ) : (
-                                listing.contact
+                                <span className="font-mono text-neutral-800">
+                                  {listing.contact}
+                                </span>
                               )}
                             </dd>
                             {listing.note ? (

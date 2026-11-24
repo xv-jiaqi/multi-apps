@@ -29,9 +29,11 @@ export const RegisterPage = observer(function RegisterPage() {
 
   const redirectTo = resolvePostAuthRedirect(location.state);
 
+  const utils = trpc.useUtils();
   const mutation = trpc.auth.register.useMutation({
     onSuccess(data) {
       session.signIn(data.token, data.user);
+      void utils.listings.invalidate();
       navigate(redirectTo, { replace: true });
     },
     onError(err) {
@@ -110,7 +112,11 @@ export const RegisterPage = observer(function RegisterPage() {
               </Button>
 
               <p className="text-center text-xs text-muted">
-                <Link to="/login" className="text-link hover:underline">
+                <Link
+                  to="/login"
+                  state={{ from: redirectTo }}
+                  className="text-link hover:underline"
+                >
                   {tt('auth.actions.toLogin')}
                 </Link>
               </p>

@@ -25,9 +25,11 @@ const idleQuery = vi.hoisted(() => () => ({
 }));
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       forum: { topics: { list: { invalidate: vi.fn() } } },
+      listings: { invalidate: vi.fn() },
     }),
     search: { global: { useQuery: idleQuery } },
     auth: {

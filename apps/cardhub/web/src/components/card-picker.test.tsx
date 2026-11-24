@@ -9,6 +9,7 @@ const results = vi.hoisted(() => ({
 }));
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     cards: {
       search: {

@@ -56,6 +56,7 @@ const cardState = {
 };
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     admin: {
       series: {

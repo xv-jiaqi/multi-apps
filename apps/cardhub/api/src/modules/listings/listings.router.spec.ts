@@ -199,6 +199,7 @@ describe('ListingsRouter.publish', () => {
     expect(result.condition).toBe('NEAR_MINT');
     expect(result.language).toBe('ZH');
     expect(result.variantNote).toBe('foil');
+    expect(result.contact).toBe('wechat: alice');
     expect(result.card).toEqual({
       slug: 'aurora-knight',
       name: 'Aurora Knight',
@@ -515,5 +516,56 @@ describe('ListingsRouter.byCard', () => {
       AND: [{ safetyStatus: { in: ['PASS', 'UNCHECKED'] } }],
     });
     expect(args.take).toBe(5);
+  });
+});
+
+const viewer = {
+  sub: 'u-viewer',
+  username: 'viewer',
+  role: 'user',
+  tokenVersion: 0,
+  bannedAt: null,
+} as const;
+
+describe('ListingsRouter contact visibility', () => {
+  it('hides contact on list and byCard for anonymous callers', async () => {
+    const { caller, listingFindMany, cardFindMany } = makeRouter();
+    listingFindMany.mockResolvedValue([listingRow()]);
+    cardFindMany.mockResolvedValue([]);
+
+    const listed = await caller(null).list({ limit: 20, sort: 'newest' });
+    expect(listed.items[0]?.contact).toBeNull();
+    expect(JSON.stringify(listed)).not.toContain('wechat: alice');
+
+    const byCard = await caller(null).byCard({ cardSlug: 'aurora-knight', limit: 5 });
+    expect(byCard[0]?.contact).toBeNull();
+    expect(JSON.stringify(byCard)).not.toContain('wechat: alice');
+  });
+
+  it('returns the original contact on list and byCard for a signed-in caller', async () => {
+    const { caller, listingFindMany, cardFindMany } = makeRouter();
+    listingFindMany.mockResolvedValue([listingRow()]);
+    cardFindMany.mockResolvedValue([]);
+
+    const listed = await caller(viewer).list({ limit: 20, sort: 'newest' });
+    expect(listed.items[0]?.contact).toBe('wechat: alice');
+
+    const byCard = await caller(viewer).byCard({ cardSlug: 'aurora-knight', limit: 5 });
+    expect(byCard[0]?.contact).toBe('wechat: alice');
+  });
+
+  it('returns the original contact on mine for the owner', async () => {
+    const { caller, listingFindMany, cardFindMany } = makeRouter();
+    listingFindMany.mockResolvedValueOnce([listingRow()]);
+    cardFindMany.mockResolvedValueOnce([]);
+
+    const mine = await caller({
+      sub: 'u-alice',
+      username: 'alice',
+      role: 'user',
+      tokenVersion: 0,
+      bannedAt: null,
+    }).mine({ limit: 20 });
+    expect(mine.items[0]?.contact).toBe('wechat: alice');
   });
 });
