@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow } from '@tarojs/taro';
-import { Button, ScrollView, Text, View } from '@tarojs/components';
+import { Button, ScrollView, Text, View, type ButtonProps } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, PrimaryButton, Skeleton } from '@repo/ui-mini';
 import { t, type ListingKind } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
@@ -10,6 +10,7 @@ import { useStores } from '../../../stores/root-store';
 import { resolveBlockView } from '../../../lib/block-view';
 import { useBlock } from '../../../lib/use-block';
 import { goToLogin } from '../../../lib/auth-redirect';
+import { createLoadMoreGuard } from '../../../lib/load-more-guard';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import { ListingRow, type ListingItem } from '../../../components/listing-row';
@@ -32,23 +33,26 @@ export default observer(function TradeListPage() {
   const [moreCursor, setMoreCursor] = useState<string | null>(null);
   const [moreLoading, setMoreLoading] = useState(false);
   const [moreFailed, setMoreFailed] = useState<Notice<{ text: string }> | null>(null);
+  const moreGuard = useRef(createLoadMoreGuard());
 
-  useEffect(() => {
+  const resetPaging = () => {
+    moreGuard.current.invalidate();
     setExtra([]);
     setMoreCursor(null);
     setMoreFailed(null);
-    void load();
+    setMoreLoading(false);
+  };
+
+  useEffect(() => {
+    resetPaging();
+    void load({ fresh: true });
   }, [load, kind]);
 
   useDidShow(() => {
     applyTabBarLabels();
     void Taro.setNavigationBarTitle({ title: tt('trade.list.title') });
-    if (!state.loading) {
-      setExtra([]);
-      setMoreCursor(null);
-      setMoreFailed(null);
-      void load();
-    }
+    resetPaging();
+    void load({ fresh: true });
   });
 
   const view = resolveBlockView({
@@ -61,7 +65,9 @@ export default observer(function TradeListPage() {
     extra.length > 0 ? moreCursor : view.kind === 'success' ? view.data.nextCursor : null;
 
   const loadMore = async () => {
-    if (!nextCursor || moreLoading) return;
+    if (!nextCursor) return;
+    const token = moreGuard.current.tryStart();
+    if (token === null) return;
     setMoreLoading(true);
     setMoreFailed(null);
     try {
@@ -71,12 +77,15 @@ export default observer(function TradeListPage() {
         kind,
         cursor: nextCursor,
       });
+      if (!moreGuard.current.isCurrent(token)) return;
       setExtra((current) => [...current, ...page.items]);
       setMoreCursor(page.nextCursor);
     } catch {
+      if (!moreGuard.current.isCurrent(token)) return;
       setMoreFailed({ id: nextNoticeId(), text: tt('trade.list.loadFailed') });
     } finally {
-      setMoreLoading(false);
+      moreGuard.current.finish(token);
+      if (moreGuard.current.isCurrent(token)) setMoreLoading(false);
     }
   };
 
@@ -138,7 +147,7 @@ export default observer(function TradeListPage() {
             retryLabel={tt('state.retry')}
             retryingLabel={tt('state.retrying')}
             retrying={view.retrying}
-            onRetry={() => void load()}
+            onRetry={() => void load({ fresh: true })}
           />
         ) : null}
 
@@ -152,10 +161,14 @@ export default observer(function TradeListPage() {
             ))}
             {nextCursor ? (
               <Button
-                className="trade-page__more"
+                className={`trade-page__more${moreLoading ? ' trade-page__more--disabled' : ''}`}
                 hoverClass="none"
-                disabled={moreLoading ? true : undefined}
-                onClick={moreLoading ? undefined : () => void loadMore()}
+                {...(moreLoading
+                  ? ({
+                      ariaDisabled: true,
+                      'aria-disabled': true,
+                    } as ButtonProps)
+                  : { onClick: () => void loadMore() })}
               >
                 {moreLoading ? tt('state.loading') : tt('trade.list.loadMore')}
               </Button>

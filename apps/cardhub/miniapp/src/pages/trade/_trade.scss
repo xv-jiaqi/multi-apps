@@ -86,6 +86,15 @@
   }
 }
 
+// Loading / disabled must stay neutral-600 on white (7.81:1). Native
+// `disabled` / `.button-disabled` was white-on-white (1:1) in #321.
+.trade-page__more--disabled,
+.trade-page__more.button-disabled {
+  color: $color-neutral-600;
+  background-color: $color-white;
+  opacity: 1;
+}
+
 .trade-login {
   display: flex;
   align-items: center;
@@ -94,6 +103,11 @@
   margin-bottom: $spacing-md;
   background-color: $color-neutral-100;
   border-radius: $radius-md;
+}
+
+.trade-login__text {
+  font-size: 28rpx;
+  color: $color-brand-600;
 }
 
 .trade-form__section {

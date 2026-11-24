@@ -21,7 +21,7 @@ import {
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { mutationErrorMessage, readTrpcErrorCodes } from '../../../lib/load-error';
-import { goLoginIfUnauthorized, goToLogin } from '../../../lib/auth-redirect';
+import { goLoginIfUnauthorized, goToLogin, redirectToLogin } from '../../../lib/auth-redirect';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { usePendingSubmit } from '../../../lib/use-pending-submit';
 import { ArtworkMini } from '../../../components/artwork-mini';
@@ -88,7 +88,9 @@ export default observer(function TradePublishPage() {
 
   useDidShow(() => {
     void Taro.setNavigationBarTitle({ title: tt('trade.publish.title') });
-    if (!session.isAuthenticated) goToLogin();
+    // Direct / shared entry: replace this page once so backing out of login
+    // cannot bounce back here and stack another login (CH-301 §2 v1.4).
+    if (!session.isAuthenticated) redirectToLogin();
   });
 
   useEffect(() => {
@@ -516,9 +518,9 @@ export default observer(function TradePublishPage() {
             </Link>
           </View>
         ) : (
-          <View className="trade-login" onClick={goToLogin}>
-            <Text>{tt('trade.list.loginToPublish')}</Text>
-          </View>
+          <Link to="/pages/auth/login/index" className="trade-login">
+            <Text className="trade-login__text">{tt('trade.list.loginToPublish')}</Text>
+          </Link>
         )}
       </View>
     </ScrollView>
