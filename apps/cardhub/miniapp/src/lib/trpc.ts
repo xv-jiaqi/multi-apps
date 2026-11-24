@@ -1,7 +1,6 @@
 import Taro from '@tarojs/taro';
-import { createTRPCClient, httpLink } from '@trpc/client';
-import type { AppRouter } from '@repo/trpc-contract';
 import { rootStore } from '../stores/root-store';
+import { createMiniappTrpcClient } from './trpc-client';
 
 declare const TRPC_URL: string;
 
@@ -59,19 +58,13 @@ const taroFetch: typeof fetch = (input, init) => {
  * - `TRPC_URL` injected at build time via `defineConstants` in
  *   `apps/cardhub/miniapp/config/index.ts`. Switches between localhost and
  *   the Render staging URL based on `process.env.TARO_APP_ENV`.
- * - A headers callback that reads the current session token from MobX on
+ * - A token getter that reads the current session token from MobX on
  *   every request so sign-in / sign-out flows are picked up without
  *   recreating the client.
+ * - `x-cardhub-surface: miniapp` on every request (see `trpc-client.ts`).
  */
-export const trpc = createTRPCClient<AppRouter>({
-  links: [
-    httpLink({
-      url: TRPC_URL,
-      fetch: taroFetch,
-      headers: () => {
-        const token = rootStore.session.token;
-        return token ? { authorization: `Bearer ${token}` } : {};
-      },
-    }),
-  ],
+export const trpc = createMiniappTrpcClient({
+  url: TRPC_URL,
+  fetch: taroFetch,
+  getToken: () => rootStore.session.token,
 });

@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
+  type ContentSurface,
   contentSurfaceSchema,
   listingListInput,
   listingMineInput,
@@ -15,7 +16,11 @@ import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { ContentSecurityService } from '../content-security/content-security.service';
 import {
+  authorSafetyStatus,
+  blockedSafetyStatus,
+  ownerSafetyWhere,
   publicSafetyWhere,
+  resolveSafetyView,
   resolveContentSurface,
   toSafetyStatusDto,
 } from '../content-security/visibility';
@@ -60,6 +65,56 @@ function mapListing(
     seller: row.user ?? null,
     safetyStatus: toSafetyStatusDto(row.safetyStatus),
   };
+}
+
+/**
+ * `listings.mine` row. Same shape as `mapListing`; the author's own RISKY
+ * listing keeps only the status: checked text (contact, note, variant note)
+ * and image URLs are withheld. `contact` is a required string in the
+ * existing contract, so it becomes '' instead of being dropped. Returns
+ * an empty array for a row the viewer may not see (fail-closed; the query
+ * already filters on the author, so this is a second line of defence).
+ */
+function mapOwnListing(
+  row: ListingWithUser,
+  visibility: { viewerId: string; surface: ContentSurface },
+  cardsBySlug: Map<string, ListingCardSummary>,
+) {
+  const view = resolveSafetyView({
+    scope: 'owner',
+    surface: visibility.surface,
+    status: row.safetyStatus,
+    authorId: row.userId,
+    viewerId: visibility.viewerId,
+  });
+  if (view.kind === 'hidden') return [];
+  if (view.kind === 'visible') {
+    return [
+      { ...mapListing(row, cardsBySlug), safetyStatus: authorSafetyStatus(view.safetyStatus) },
+    ];
+  }
+  // Field by field (no spread) so a new text field cannot leak by default.
+  return [
+    {
+      id: row.id,
+      cardSlug: row.cardSlug,
+      card: cardsBySlug.get(row.cardSlug) ?? null,
+      kind: row.kind,
+      price: row.price === null ? null : row.price.toFixed(2),
+      currency: row.currency,
+      imageUrls: [],
+      contact: '',
+      note: null,
+      condition: row.condition,
+      language: row.language,
+      variantNote: null,
+      status: row.status,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      seller: row.user ?? null,
+      safetyStatus: blockedSafetyStatus(),
+    },
+  ];
 }
 
 async function loadListingCards(prisma: PrismaService, cardSlugs: string[]) {
@@ -121,7 +176,7 @@ export class ListingsRouter {
         // Currency alone (newest, no min/max) still narrows the board.
         // Price ranges and price sorts additionally drop unpriced rows.
         const safety = publicSafetyWhere({
-          surface: resolveContentSurface(input.surface),
+          surface: resolveContentSurface(input.surface, ctx.surfaceHeader),
           viewerId: ctx.user?.sub,
         });
         const where: Prisma.ListingWhereInput = {
@@ -189,7 +244,7 @@ export class ListingsRouter {
               status: 'OPEN',
               AND: [
                 publicSafetyWhere({
-                  surface: resolveContentSurface(input.surface),
+                  surface: resolveContentSurface(input.surface, ctx.surfaceHeader),
                   viewerId: ctx.user?.sub,
                 }),
               ],
@@ -207,9 +262,10 @@ export class ListingsRouter {
 
       mine: t.authedProcedure.input(listingMineInput).query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
         const pageCursor = input.pageCursor ?? input.cursor;
         const items = await prisma.listing.findMany({
-          where: { userId: ctx.user.sub },
+          where: { userId: ctx.user.sub, ...ownerSafetyWhere({ surface }) },
           take: input.limit + 1,
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
           ...(pageCursor ? { cursor: { id: pageCursor }, skip: 1 } : {}),
@@ -221,8 +277,11 @@ export class ListingsRouter {
           prisma,
           sliced.map((row) => row.cardSlug),
         );
+        const visibility = { viewerId: ctx.user.sub, surface };
         return {
-          items: sliced.map((row: ListingWithUser) => mapListing(row, cardsBySlug)),
+          items: sliced.flatMap((row: ListingWithUser) =>
+            mapOwnListing(row, visibility, cardsBySlug),
+          ),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };
       }),

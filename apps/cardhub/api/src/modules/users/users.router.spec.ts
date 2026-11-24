@@ -77,8 +77,13 @@ describe('UsersRouter.me', () => {
     expect(result.topicCount).toBe(3);
     expect(result.replyCount).toBe(7);
     expect(result.commentCount).toBe(11);
-    expect(listingCount.mock.calls[0]?.[0]).toEqual({ where: { userId: 'u1', status: 'OPEN' } });
-    expect(listingCount.mock.calls[1]?.[0]).toEqual({ where: { userId: 'u1' } });
+    // Web default: same owner filter as listings.mine (RISKY rows left out).
+    const own = { userId: 'u1', safetyStatus: { not: 'RISKY' } };
+    expect(listingCount.mock.calls[0]?.[0]).toEqual({ where: { ...own, status: 'OPEN' } });
+    expect(listingCount.mock.calls[1]?.[0]).toEqual({ where: own });
+    expect(topicCount.mock.calls[0]?.[0]).toEqual({ where: own });
+    expect(replyCount.mock.calls[0]?.[0]).toEqual({ where: own });
+    expect(commentCount.mock.calls[0]?.[0]).toEqual({ where: own });
   });
 });
 
@@ -91,6 +96,8 @@ describe('UsersRouter.myTopics', () => {
         slug: 'hello-world',
         title: 'Hello world',
         createdAt: new Date('2026-05-02T00:00:00Z'),
+        userId: 'u1',
+        safetyStatus: 'PASS',
         _count: { replies: 4 },
       },
     ]);
@@ -111,6 +118,7 @@ describe('UsersRouter.myTopics', () => {
           title: 'Hello world',
           replyCount: 4,
           createdAt: '2026-05-02T00:00:00.000Z',
+          safetyStatus: 'pass',
         },
       ],
       nextCursor: null,
@@ -129,6 +137,8 @@ describe('UsersRouter.myComments', () => {
         id: 'c1',
         content: 'Great card',
         createdAt: new Date('2026-05-03T00:00:00Z'),
+        userId: 'u1',
+        safetyStatus: 'PASS',
         card: {
           slug: 'aurora-knight',
           name: 'Aurora Knight',
@@ -149,6 +159,7 @@ describe('UsersRouter.myComments', () => {
       id: 'c1',
       body: 'Great card',
       createdAt: '2026-05-03T00:00:00.000Z',
+      safetyStatus: 'pass',
       cardSlug: 'aurora-knight',
       cardName: 'Aurora Knight',
       cardImageUrl: 'https://img.cardhub.test/aurora.jpg',
@@ -172,6 +183,8 @@ describe('UsersRouter.myComments', () => {
         id: 'c-series',
         content: 'Great series',
         createdAt: new Date('2026-05-04T00:00:00Z'),
+        userId: 'u1',
+        safetyStatus: 'PASS',
         card: null,
         series: { slug: 'sky-dawn', title: '天穹黎明' },
       },
@@ -189,6 +202,7 @@ describe('UsersRouter.myComments', () => {
       id: 'c-series',
       body: 'Great series',
       createdAt: '2026-05-04T00:00:00.000Z',
+      safetyStatus: 'pass',
       cardSlug: null,
       cardName: null,
       cardImageUrl: null,

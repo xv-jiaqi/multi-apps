@@ -15,8 +15,20 @@ export type PublicSafetyWhere =
       ];
     };
 
-export function resolveContentSurface(surface: ContentSurface | undefined): ContentSurface {
-  return surface ?? 'web';
+/**
+ * Which surface's visibility rules apply: the stricter of the explicit
+ * `input.surface` and the `x-cardhub-surface` header (parsed in the tRPC
+ * context; an invalid header already reads as `miniapp`). `miniapp` is the
+ * stricter one: public reads show only PASS plus the viewer's own REVIEW,
+ * and an author's own RISKY row is reduced to the `blocked` status. With
+ * neither set the surface is `web`, so web and native keep their default.
+ */
+export function resolveContentSurface(
+  surface: ContentSurface | undefined,
+  headerSurface?: ContentSurface,
+): ContentSurface {
+  if (surface === 'miniapp' || headerSurface === 'miniapp') return 'miniapp';
+  return 'web';
 }
 
 export function toSafetyStatusDto(
@@ -26,6 +38,112 @@ export function toSafetyStatusDto(
   if (status === 'REVIEW') return 'review';
   if (status === 'PASS') return 'pass';
   return 'risky';
+}
+
+export type SafetyStatusDto = Exclude<ContentSafetyResultName, 'pending'>;
+
+/**
+ * Status DTO for responses that may carry an author's own blocked row.
+ * `'risky'` stays in the union so existing clients keep type-checking
+ * (contract is add-only); author views send `'blocked'` instead.
+ */
+export type AuthorSafetyStatusDto = SafetyStatusDto | 'blocked';
+
+/** Widen a visible row's status to the author-view union. */
+export function authorSafetyStatus(status: SafetyStatusDto): AuthorSafetyStatusDto {
+  return status;
+}
+
+/** Status for the author's own RISKY row. */
+export function blockedSafetyStatus(): AuthorSafetyStatusDto {
+  return 'blocked';
+}
+
+/** Signed-in viewer who wrote the row. Missing or empty ids never match. */
+function isAuthorViewer(args: { authorId: string; viewerId?: string | null }): boolean {
+  return (
+    typeof args.viewerId === 'string' && args.viewerId.length > 0 && args.viewerId === args.authorId
+  );
+}
+
+/**
+ * What one viewer may see of one row:
+ * - `hidden`: treat as missing (NOT_FOUND / left out of the list);
+ * - `blocked`: the signed-in author's own RISKY row, on the miniapp surface
+ *   only; send the status only, never the original text;
+ * - `visible`: send the row with its status.
+ *
+ * `public` reads follow the surface rules (`isVisibleOnSurface`). `owner`
+ * reads ("my" lists) show every non-RISKY row to its author and nothing to
+ * anyone else. A RISKY row is `blocked` for its author on miniapp and
+ * `hidden` everywhere else: web does not render the blocked status yet, so
+ * web keeps NOT_FOUND for the detail and leaves the row out of "my" lists.
+ * Fail-closed: no viewer id, or a viewer id that is not the author, never
+ * reaches REVIEW or RISKY rows.
+ */
+export type SafetyView =
+  | { kind: 'hidden' }
+  | { kind: 'blocked' }
+  | { kind: 'visible'; safetyStatus: SafetyStatusDto };
+
+export function resolveSafetyView(args: {
+  scope: 'owner' | 'public';
+  surface: ContentSurface;
+  status: ContentSafetyStatusName;
+  authorId: string;
+  viewerId?: string | null;
+}): SafetyView {
+  const isAuthor = isAuthorViewer({ authorId: args.authorId, viewerId: args.viewerId });
+  if (args.status === 'RISKY') {
+    return isAuthor && args.surface === 'miniapp' ? { kind: 'blocked' } : { kind: 'hidden' };
+  }
+  if (args.scope === 'owner') {
+    return isAuthor
+      ? { kind: 'visible', safetyStatus: toSafetyStatusDto(args.status) }
+      : { kind: 'hidden' };
+  }
+  return isVisibleOnSurface({
+    surface: args.surface,
+    status: args.status,
+    authorId: args.authorId,
+    viewerId: args.viewerId,
+  })
+    ? { kind: 'visible', safetyStatus: toSafetyStatusDto(args.status) }
+    : { kind: 'hidden' };
+}
+
+/**
+ * Whether a notification may carry its stored excerpt and link to a target.
+ * A notification is not an owner view: it goes to the mentioned user, the
+ * topic author, or the content author, so it follows the anonymous public
+ * view of the target on this surface. RISKY and REVIEW (for everyone, author
+ * included) and miniapp UNCHECKED are withheld. Fail-closed by design: no
+ * viewer id is passed, so no row is ever shown because of who reads it.
+ */
+export function notificationTargetVisible(args: {
+  surface: ContentSurface;
+  status: ContentSafetyStatusName;
+}): boolean {
+  return (
+    resolveSafetyView({
+      scope: 'public',
+      surface: args.surface,
+      status: args.status,
+      authorId: '',
+      viewerId: null,
+    }).kind === 'visible'
+  );
+}
+
+/**
+ * Extra filter for "my" lists, so a page is not short of rows that
+ * `resolveSafetyView` would drop: web leaves RISKY rows out in the query.
+ * Keep in step with the RISKY branch of `resolveSafetyView`.
+ */
+export function ownerSafetyWhere(args: {
+  surface: ContentSurface;
+}): { safetyStatus: { not: 'RISKY' } } | Record<string, never> {
+  return args.surface === 'miniapp' ? {} : { safetyStatus: { not: 'RISKY' } };
 }
 
 /**
@@ -92,7 +210,7 @@ export function isVisibleOnSurface(args: {
   if (status === 'RISKY') return false;
   if (status === 'PASS') return true;
   if (status === 'UNCHECKED') return surface !== 'miniapp';
-  return viewerId === authorId;
+  return isAuthorViewer({ authorId, viewerId });
 }
 
 export function publicSafetySql(args: {
