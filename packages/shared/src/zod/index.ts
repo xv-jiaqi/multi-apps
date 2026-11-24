@@ -58,6 +58,19 @@ export const changePasswordInput = z.object({
 
 export type ChangePasswordInput = z.infer<typeof changePasswordInput>;
 
+export const requestPasswordResetInput = z.object({
+  email: emailSchema,
+});
+
+export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetInput>;
+
+export const resetPasswordInput = z.object({
+  token: z.string().trim().min(1).max(256),
+  newPassword: passwordSchema,
+});
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordInput>;
+
 export type RegisterInput = z.infer<typeof registerInput>;
 export type LoginInput = z.infer<typeof loginInput>;
 
@@ -741,3 +754,17 @@ export type {
   ReleaseUpdateInput,
   ReleasesListInput,
 } from './release';
+
+export {
+  UPLOAD_CONTENT_TYPES,
+  UPLOAD_PURPOSES,
+  UPLOAD_SIZE_MAX,
+  createPresignedPutInput,
+  createPresignedPutResult,
+} from './uploads';
+export type {
+  CreatePresignedPutInput,
+  CreatePresignedPutResult,
+  UploadContentType,
+  UploadPurpose,
+} from './uploads';

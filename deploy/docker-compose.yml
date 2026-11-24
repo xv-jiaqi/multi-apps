@@ -49,6 +49,22 @@ services:
       # Empty CATALOG_CACHE_HEADER keeps X-Cache off. Staging sets it to true.
       ENV_NAME: ${ENV_NAME:-}
       CATALOG_CACHE_HEADER: ${CATALOG_CACHE_HEADER:-}
+      # Upload presign credentials (CH-245). Empty keeps the procedure on
+      # UPLOADS_NOT_CONFIGURED. Not the backup offsite.env keys.
+      OSS_ENDPOINT: ${OSS_ENDPOINT:-}
+      OSS_BUCKET: ${OSS_BUCKET:-}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
+      OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:-}
+      # Password-reset mail (CH-246). Empty keeps the procedure on
+      # MAIL_NOT_CONFIGURED. Leave blank until D4 is decided.
+      MAIL_PROVIDER: ${MAIL_PROVIDER:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
     depends_on:
       postgres:
         condition: service_healthy

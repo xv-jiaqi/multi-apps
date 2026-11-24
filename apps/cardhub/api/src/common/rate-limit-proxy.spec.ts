@@ -48,6 +48,20 @@ describe('rate limit proxy IP handling', () => {
     ).toBe(false);
   });
 
+  it('keeps uploads.createPresignedPut at 10 per minute per user, 100 per IP', () => {
+    expect(userRateLimitConfigs.uploadCreatePresignedPut).toEqual({ windowMs: 60_000, limit: 10 });
+    expect(productionRateLimitConfigs.uploadCreatePresignedPut.windowMs).toBe(60_000);
+    expect(productionRateLimitConfigs.uploadCreatePresignedPut.limit).toBe(100);
+    expect(
+      productionRateLimitConfigs.uploadCreatePresignedPut.skip({
+        url: '/trpc/uploads.createPresignedPut',
+      }),
+    ).toBe(false);
+    expect(
+      productionRateLimitConfigs.uploadCreatePresignedPut.skip({ url: '/trpc/listings.publish' }),
+    ).toBe(true);
+  });
+
   it('27-12: user and IP layers match CH-227 §1 and §2 27-C', () => {
     const hour = 3_600_000;
     expect(userRateLimitConfigs).toEqual({
@@ -57,6 +71,7 @@ describe('rate limit proxy IP handling', () => {
       listingPublish: { windowMs: hour, limit: 10 },
       reportCreate: { windowMs: hour, limit: 20 },
       collectionUpsert: { windowMs: 60_000, limit: 60 },
+      uploadCreatePresignedPut: { windowMs: 60_000, limit: 10 },
     });
     expect(IP_FALLBACK_MULTIPLIER).toBe(10);
     const ip = Object.fromEntries(
@@ -73,6 +88,7 @@ describe('rate limit proxy IP handling', () => {
       listingPublish: { windowMs: hour, limit: 100 },
       reportCreate: { windowMs: hour, limit: 200 },
       collectionUpsert: { windowMs: 60_000, limit: 600 },
+      uploadCreatePresignedPut: { windowMs: 60_000, limit: 100 },
     });
   });
 

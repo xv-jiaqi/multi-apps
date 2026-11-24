@@ -111,6 +111,30 @@ describe('auth account key', () => {
       readAuthAccount({ url: '/trpc/auth.register', body: { email: 'a@b.c' } }),
     ).toBeUndefined();
     expect(readAuthAccount({ url: '/trpc/auth.changePassword', body: {} })).toBeUndefined();
+    expect(
+      readAuthAccount({ url: '/trpc/auth.resetPassword', body: { token: 'x' } }),
+    ).toBeUndefined();
+    expect(
+      readAuthAccount({
+        url: '/trpc/auth.requestPasswordReset',
+        body: { email: '  A@B.CO ' },
+      }),
+    ).toBe('a@b.co');
+    expect(
+      readAuthAccount({
+        url: '/trpc/auth.requestPasswordReset?batch=1',
+        body: { 0: { email: '  User@Cardhub.test ' } },
+      }),
+    ).toBe('user@cardhub.test');
+    expect(
+      readAuthAccount({
+        url: '/trpc/auth.requestPasswordReset',
+        body: { json: { email: 'only-inside-json@x.test' } },
+      }),
+    ).toBeUndefined();
+    expect(
+      readAuthAccount({ url: '/trpc/auth.requestPasswordReset', body: { email: 'not-an-email' } }),
+    ).toBeUndefined();
     expect(readAuthAccount({ url: '/trpc/auth.login' })).toBeUndefined();
     expect(
       readAuthAccount({
@@ -166,6 +190,12 @@ describe('auth account key', () => {
     expect(parseTrpcProcedures({ path: '/%E0%A4%A' })).toEqual({ ok: false });
     expect(productionRateLimitConfigs.authMutation.skip({ path: '/auth%2Elogin' })).toBe(false);
     expect(productionRateLimitConfigs.authMutation.skip({ path: '/auth%2elogin' })).toBe(false);
+    expect(
+      productionRateLimitConfigs.authMutation.skip({ path: '/auth.requestPasswordReset' }),
+    ).toBe(false);
+    expect(productionRateLimitConfigs.authMutation.skip({ path: '/auth.resetPassword' })).toBe(
+      false,
+    );
     expect(productionRateLimitConfigs.authMutation.skip({ path: '/Auth.Login' })).toBe(true);
     expect(productionRateLimitConfigs.authMutation.skip({ path: '/%E0%A4%A' })).toBe(true);
 
@@ -180,6 +210,15 @@ describe('auth account key', () => {
     expect(trpcCallRejection({ path: '/auth.login,auth.login', query: { batch: '1' } })).toBe(
       'auth-writes',
     );
+    expect(
+      trpcCallRejection({
+        path: '/auth.requestPasswordReset,auth.resetPassword',
+        query: { batch: '1' },
+      }),
+    ).toBe('auth-writes');
+    expect(
+      trpcCallRejection({ path: '/health.ping,auth.requestPasswordReset', query: { batch: '1' } }),
+    ).toBeUndefined();
     expect(
       trpcCallRejection({ path: '/health.ping,auth.login', query: { batch: '1' } }),
     ).toBeUndefined();
