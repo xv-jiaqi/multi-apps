@@ -45,7 +45,7 @@ export interface CardCommentsListProps {
 
 export function CardCommentsList({ comments, hiddenIds, onHide, onNotice }: CardCommentsListProps) {
   return (
-    <View data-comments-heading tabIndex={-1}>
+    <View {...({ 'data-comments-heading': 'true', tabIndex: -1 } as Record<string, unknown>)}>
       {comments
         .filter((comment) => !hiddenIds.has(comment.id))
         .map((comment) => (
