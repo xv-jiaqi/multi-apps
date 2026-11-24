@@ -15,6 +15,7 @@ import { AdminRouter } from '../modules/admin/admin.router';
 import { CollectionRouter } from '../modules/collection/collection.router';
 import { NotificationsRouter } from '../modules/notifications/notifications.router';
 import { ReleasesRouter } from '../modules/releases/releases.router';
+import { ContentSecurityRouter } from '../modules/content-security/content-security.router';
 
 @Injectable()
 export class TrpcService {
@@ -37,6 +38,7 @@ export class TrpcService {
     private readonly collection: CollectionRouter,
     private readonly notifications: NotificationsRouter,
     private readonly releases: ReleasesRouter,
+    private readonly contentSecurity: ContentSecurityRouter,
   ) {
     this.appRouter = this.t.router({
       health: this.health.build(),
@@ -57,6 +59,7 @@ export class TrpcService {
       collection: this.collection.build(),
       notifications: this.notifications.build(),
       releases: this.releases.build(),
+      contentSecurity: this.contentSecurity.build(),
     });
   }
 }

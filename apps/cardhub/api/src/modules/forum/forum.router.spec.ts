@@ -1,5 +1,6 @@
 import { TrpcBase } from '../../trpc/trpc-base';
 import { ForumRouter } from './forum.router';
+import { stubContentSecurity } from '../content-security/content-security.test-stub';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { TrpcContext } from '../../trpc/context';
 
@@ -48,7 +49,7 @@ function makeRouter() {
     $transaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback(prisma)),
   } as unknown as PrismaService;
 
-  const router = new ForumRouter(new TrpcBase(), prisma);
+  const router = new ForumRouter(new TrpcBase(), prisma, stubContentSecurity());
   const built = router.build();
 
   function caller(user: TrpcContext['user']) {
@@ -97,6 +98,7 @@ function makeTopicRow(
     title: overrides.title ?? 'sample',
     body: overrides.body ?? 'body',
     pinned: overrides.pinned ?? false,
+    safetyStatus: 'UNCHECKED',
     editedAt: overrides.editedAt ?? null,
     createdAt: overrides.createdAt ?? new Date('2026-05-01T00:00:00Z'),
     updatedAt: overrides.updatedAt ?? new Date('2026-05-01T00:00:00Z'),
@@ -155,7 +157,7 @@ describe('ForumRouter.topics.list', () => {
     const page = await caller(null).topics.list({ limit: 20 });
 
     expect(page.items[0]?.excerpt).toBe('Heading Read docs.');
-    expect(page.items[0]?.body).toContain('![alt]');
+    expect(page.items[0]).not.toHaveProperty('body');
   });
 });
 
@@ -171,6 +173,8 @@ describe('ForumRouter.topics.bySlug', () => {
 
     expect(topic.editableUntil).toBe('2026-05-01T00:05:00.000Z');
     expect(Date.parse(topic.serverNow)).not.toBeNaN();
+    expect(topic.body).toBe('body');
+    expect(topic.excerpt).toBe('body');
   });
 });
 
@@ -216,6 +220,7 @@ describe('ForumRouter.topics.update', () => {
       title: 'edited title',
       body: 'edited body',
       editedAt: expect.any(Date),
+      safetyStatus: 'UNCHECKED',
     });
     expect(result.editedAt).toBe('2026-05-01T00:01:00.000Z');
   });
@@ -342,4 +347,69 @@ describe('ForumRouter.topics.delete', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     expect(topicDelete).not.toHaveBeenCalled();
   });
+});
+
+describe('ForumRouter content safety (CH-248)', () => {
+  it('keeps unchecked topics on the default web list and omits them from miniapp', async () => {
+    const { caller, topicFindMany } = makeRouter();
+    topicFindMany.mockResolvedValue([]);
+
+    await caller(null).topics.list({ limit: 20 });
+    expect(topicFindMany.mock.calls[0]?.[0]?.where).toEqual({
+      safetyStatus: { in: ['PASS', 'UNCHECKED'] },
+    });
+
+    await caller(null).topics.list({ limit: 20, surface: 'miniapp' });
+    expect(topicFindMany.mock.calls[1]?.[0]?.where).toEqual({ safetyStatus: 'PASS' });
+  });
+
+  it('hides an unchecked topic from miniapp bySlug even for the author', async () => {
+    const { caller, topicFindUnique } = makeRouter();
+    topicFindUnique.mockResolvedValueOnce(makeTopicRow({ id: 't1', userId: 'u-alice' }));
+
+    await expect(
+      caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).topics.bySlug({ slug: 'sample-topic', surface: 'miniapp' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it.each(['REVIEW', 'RISKY'] as const)(
+    'does not publish a %s topic as unchecked when an edit cannot be re-checked',
+    async (previous) => {
+      const { caller, topicFindUnique, topicUpdate } = makeRouter();
+      topicFindUnique.mockResolvedValueOnce({
+        id: 't-held',
+        userId: 'u-alice',
+        createdAt: new Date(),
+        safetyStatus: previous,
+      });
+      topicUpdate.mockResolvedValueOnce(
+        makeTopicRow({
+          id: 't-held',
+          title: 'edited title',
+          body: 'edited body',
+          editedAt: new Date('2026-05-01T00:01:00Z'),
+        }),
+      );
+
+      await caller({
+        sub: 'u-alice',
+        username: 'alice',
+        role: 'user',
+        tokenVersion: 0,
+        bannedAt: null,
+      }).topics.update({
+        id: '11111111-1111-4111-a111-111111111111',
+        title: 'edited title',
+        body: 'edited body',
+      });
+
+      expect(topicUpdate.mock.calls[0]?.[0].data.safetyStatus).toBe(previous);
+    },
+  );
 });

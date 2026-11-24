@@ -42,6 +42,7 @@ interface TopicReply {
   body: string;
   createdAt: string;
   author: { id: string; username: string };
+  safetyStatus: 'pass' | 'review' | 'risky' | 'unchecked';
 }
 
 type ConfirmingDelete = { kind: 'topic' } | { kind: 'reply'; id: string };

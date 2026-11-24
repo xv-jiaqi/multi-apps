@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
+  contentSurfaceSchema,
   listingListInput,
   listingMineInput,
   listingPublishInput,
@@ -12,6 +13,12 @@ import {
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { ContentSecurityService } from '../content-security/content-security.service';
+import {
+  publicSafetyWhere,
+  resolveContentSurface,
+  toSafetyStatusDto,
+} from '../content-security/visibility';
 
 type ListingWithUser = Prisma.ListingGetPayload<{
   include: { user: { select: { id: true; username: true } } };
@@ -51,6 +58,7 @@ function mapListing(
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     seller: row.user ?? null,
+    safetyStatus: toSafetyStatusDto(row.safetyStatus),
   };
 }
 
@@ -87,6 +95,7 @@ export class ListingsRouter {
   constructor(
     private readonly t: TrpcBase,
     private readonly prisma: PrismaService,
+    private readonly contentSecurity: ContentSecurityService,
   ) {}
 
   build() {
@@ -94,9 +103,10 @@ export class ListingsRouter {
     // Per-user quota after auth, before input validation (CH-227).
     const publishProcedure = t.activeUserProcedure.use(t.userRateLimit('listingPublish'));
     const prisma = this.prisma;
+    const contentSecurity = this.contentSecurity;
 
     return t.router({
-      list: t.procedure.input(listingListInput).query(async ({ input }) => {
+      list: t.procedure.input(listingListInput).query(async ({ ctx, input }) => {
         const usesPriceFilter = input.minPrice !== undefined || input.maxPrice !== undefined;
         const usesPriceSort = input.sort === 'price_asc' || input.sort === 'price_desc';
         if ((usesPriceFilter || usesPriceSort) && !input.currency) {
@@ -110,8 +120,13 @@ export class ListingsRouter {
         // browseable via listings.mine but don't pollute the public board.
         // Currency alone (newest, no min/max) still narrows the board.
         // Price ranges and price sorts additionally drop unpriced rows.
+        const safety = publicSafetyWhere({
+          surface: resolveContentSurface(input.surface),
+          viewerId: ctx.user?.sub,
+        });
         const where: Prisma.ListingWhereInput = {
           status: 'OPEN',
+          AND: [safety],
           ...(input.cardSlug ? { cardSlug: input.cardSlug } : {}),
           ...(input.kind ? { kind: input.kind } : {}),
           ...(input.condition ? { condition: input.condition } : {}),
@@ -161,14 +176,24 @@ export class ListingsRouter {
           z.object({
             cardSlug: z.string().min(1).max(96),
             limit: z.number().int().min(1).max(20).default(5),
+            surface: contentSurfaceSchema.optional(),
           }),
         )
-        .query(async ({ input }) => {
+        .query(async ({ ctx, input }) => {
           // Card-detail page uses this to surface "trade intents for this
           // card" inline. We only show OPEN listings — closed deals are
           // historical noise on the card page.
           const items = await prisma.listing.findMany({
-            where: { cardSlug: input.cardSlug, status: 'OPEN' },
+            where: {
+              cardSlug: input.cardSlug,
+              status: 'OPEN',
+              AND: [
+                publicSafetyWhere({
+                  surface: resolveContentSurface(input.surface),
+                  viewerId: ctx.user?.sub,
+                }),
+              ],
+            },
             take: input.limit,
             orderBy: [{ createdAt: 'desc' }],
             include: { user: { select: { id: true, username: true } } },
@@ -218,9 +243,17 @@ export class ListingsRouter {
             message: '找不到对应的卡牌，请检查 slug',
           });
         }
+        const actorId = ctx.user.sub;
+        const decision = await contentSecurity.evaluateWrite({
+          actorId,
+          scene: 4,
+          texts: [input.contact, input.note ?? '', input.variantNote ?? ''],
+          imageUrls: input.imageUrls,
+          targetType: 'LISTING',
+        });
         const created = await prisma.listing.create({
           data: {
-            userId: ctx.user.sub,
+            userId: actorId,
             cardSlug: input.cardSlug,
             kind: input.kind,
             price: input.price === undefined ? null : new Decimal(input.price.toString()),
@@ -231,8 +264,16 @@ export class ListingsRouter {
             condition: input.condition ?? null,
             language: input.language ?? null,
             variantNote: input.variantNote ?? null,
+            safetyStatus: decision.safetyStatus,
           },
           include: { user: { select: { id: true, username: true } } },
+        });
+        await contentSecurity.finalizeWrite({
+          decision,
+          actorId,
+          targetType: 'LISTING',
+          targetId: created.id,
+          scene: 4,
         });
         const cardsBySlug = await loadListingCards(prisma, [created.cardSlug]);
         return mapListing(created, cardsBySlug);

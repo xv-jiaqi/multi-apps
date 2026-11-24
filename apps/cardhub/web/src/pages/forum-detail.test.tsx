@@ -26,6 +26,7 @@ interface ReplyFixture {
   body: string;
   createdAt: string;
   author: { id: string; username: string };
+  safetyStatus: 'pass' | 'review' | 'risky' | 'unchecked';
 }
 
 function makeReply(index: number): ReplyFixture {
@@ -34,6 +35,7 @@ function makeReply(index: number): ReplyFixture {
     body: `Reply ${index}`,
     createdAt: `2026-05-01T00:${String(index).padStart(2, '0')}:00.000Z`,
     author: { id: `user-${index}`, username: `user${index}` },
+    safetyStatus: 'pass',
   };
 }
 
@@ -299,11 +301,12 @@ beforeEach(() => {
   });
   createReplyMutate.mockReset();
   createReplyMutate.mockImplementation((_input, handlers) => {
-    const created = {
+    const created: ReplyFixture = {
       id: 'reply-new',
       body: 'new reply',
       createdAt: '2026-05-01T00:50:00.000Z',
       author: { id: 'user-current', username: 'alice' },
+      safetyStatus: 'pass',
     };
     availableReplies = [...availableReplies, created];
     return handlers.onSuccess?.(created);
@@ -424,12 +427,14 @@ describe('ForumDetailPage hash target', () => {
           body: 'Earlier anchored reply',
           createdAt: '2026-04-01T00:00:00.000Z',
           author: { id: 'user-x', username: 'ada' },
+          safetyStatus: 'pass',
         },
         {
           id: 'reply-01',
           body: 'Reply 1',
           createdAt: '2026-05-01T00:01:00.000Z',
           author: { id: 'user-1', username: 'user1' },
+          safetyStatus: 'pass',
         },
       ],
       nextCursor: null,
@@ -681,6 +686,7 @@ describe('ForumDetailPage replies pagination', () => {
         body: 'new reply',
         createdAt: '2026-05-01T00:30:00.000Z',
         author: { id: 'user-current', username: 'alice' },
+        safetyStatus: 'pass',
       }),
     );
     const user = userEvent.setup({ delay: null });
@@ -705,6 +711,7 @@ describe('ForumDetailPage replies pagination', () => {
         body: 'new reply',
         createdAt: '2026-05-01T00:30:00.000Z',
         author: { id: 'user-current', username: 'alice' },
+        safetyStatus: 'pass',
       }),
     );
     fetchNextPage.mockImplementation(async () => {
@@ -762,11 +769,12 @@ describe('ForumDetailPage replies pagination', () => {
 
   it('visibly highlights a newly posted reply after it becomes visible', async () => {
     rootStore.session.signIn('jwt.token', { id: 'user-current', username: 'alice' });
-    const newReply = {
+    const newReply: ReplyFixture = {
       id: 'reply-new',
       body: 'new highlighted reply',
       createdAt: '2026-05-01T00:30:00.000Z',
       author: { id: 'user-current', username: 'alice' },
+      safetyStatus: 'pass',
     };
     createReplyMutate.mockImplementation((_input, handlers) => handlers.onSuccess?.(newReply));
     repliesQueryState.hasNextPage = false;
