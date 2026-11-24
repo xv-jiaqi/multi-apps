@@ -171,17 +171,17 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 
 Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web 一致；差异只在发布状态。小程序是用 Taro 重写的 UI，功能需要逐页补齐。
 
-| 功能            | Web        | Desktop（Tauri）                      | iOS / Android（Tauri）                                               | 小程序 / H5（Taro）            |
-| --------------- | ---------- | ------------------------------------- | -------------------------------------------------------------------- | ------------------------------ |
-| 系列 / 卡牌浏览 | ✅         | ✅                                    | ✅                                                                   | ✅                             |
-| 搜索            | ✅         | ✅                                    | ✅                                                                   | ✅                             |
-| 登录 / 注册     | ✅         | ✅                                    | ✅                                                                   | ✅                             |
-| 卡牌评论        | ✅         | ✅                                    | ✅                                                                   | 🟡 无举报入口                  |
-| 论坛            | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
-| 交易信息板      | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
-| 举报 / 举报队列 | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
-| 内容管理后台    | ✅         | ✅                                    | ✅                                                                   | ❌                             |
-| 发布状态        | 生产已上线 | `release-native.yml` 手动出包，未签名 | iOS 需本机 `ios:init` 生成工程；Android 未初始化；均未上架（CH-304） | 未申请 AppID、未上线（CH-302） |
+| 功能            | Web        | Desktop（Tauri）                      | iOS / Android（Tauri）                                               | 小程序 / H5（Taro）                           |
+| --------------- | ---------- | ------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------- |
+| 系列 / 卡牌浏览 | ✅         | ✅                                    | ✅                                                                   | ✅                                            |
+| 搜索            | ✅         | ✅                                    | ✅                                                                   | ✅                                            |
+| 登录 / 注册     | ✅         | ✅                                    | ✅                                                                   | ✅                                            |
+| 卡牌评论        | ✅         | ✅                                    | ✅                                                                   | 🟡 无举报入口                                 |
+| 论坛            | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                                  |
+| 交易信息板      | ✅         | ✅                                    | ✅                                                                   | 🟡 列表 / 发布 / 卡牌页意向；无关闭与我的意向 |
+| 举报 / 举报队列 | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                                  |
+| 内容管理后台    | ✅         | ✅                                    | ✅                                                                   | ❌                                            |
+| 发布状态        | 生产已上线 | `release-native.yml` 手动出包，未签名 | iOS 需本机 `ios:init` 生成工程；Android 未初始化；均未上架（CH-304） | 未申请 AppID、未上线（CH-302）                |
 
 ## 5. tRPC 接口清单
 
@@ -475,6 +475,7 @@ erDiagram
 - 图片（CH-301 §5）：`ArtworkMini` 用 Taro `Image`，经 `resolveArtwork` 只认 `https://`，其余与 `binderror` 回退 `gradientFor(slug)`，加载中底色 `$color-neutral-100`。卡牌详情大图 63:88 `aspectFit`，其余卡图 63:88 `aspectFill`，系列封面与首页精选 2:1 `aspectFill`。首页精选、系列列表、系列详情头图都是「图在上、字在下」，色带上不放字。
 - 错误态（CH-301 §6）：块级失败用 `ErrorBoxMini`（固定 i18n 标题 + 「重试」，进行中「重试中…」，点击区 ≥ 88rpx），`NOT_FOUND` 用 `state.notFound`。页面不展示 `e.message`、状态码或 zod 原文（单测 `no-raw-error-text.test.ts`）。首页统计只在 `series.list` 成功后渲染，不回退「—」。卡牌评论加载失败走红框，不落入空态。
 - 卡牌评论列表请求带 `surface: 'miniapp'`，只返回已过检的评论和自己审核中的评论。系列详情的卡列表来自 `cards.listBySeries`（含平行、按收录时间、`pageSize` 100 拼页），系列头图文走 `series.bySlug({ includeCards:false })`（CH-244）。
+- 交易（CH-301 §3）：本 PR 增加 `pages/trade/list` 与 `pages/trade/publish` 两页，并在 tabBar「我的」前加入「交易」（论坛 PR 合入后顺序为 首页 / 论坛 / 交易 / 我的）。列表只展示 `OPEN` 意向，页内轻量筛选「全部 / 出 / 求」，不搬 Web 的 URL 筛选。读接口 `listings.list` / `listings.byCard` 入参带 `surface: 'miniapp'`。发布成功用 `switchTab` 回交易列表（交易列表是 tab 页，微信不允许 `redirectTo` 到 tab，效果同样是发布页出栈）。卡牌详情「该卡交易意向」最多 5 条 OPEN，失败走红框，不落入空态。不做关闭意向、我的意向、相册上传。
 
 小程序的 tRPC client 只在 `apps/cardhub/miniapp/src/lib/trpc-client.ts` 构建，每个请求都带请求头 `x-cardhub-surface: miniapp`。api 取显式 `input.surface` 和这个请求头里更严的一个：任一方是 `miniapp` 就按 `miniapp`；请求头存在但值不是 `web` / `miniapp`（含空串、大小写不符、重复）也按 `miniapp`；两者都没有时仍是 `web`。所以公开读接口在小程序上只返回已过检内容和作者自己的 `review`，漏传或写错 `surface` 都不会放宽到 Web 规则。`src/lib/trpc-client.test.ts` 拦截 fetch 断言请求头，并检查 `src` 里只有 `trpc-client.ts` 构建 client、只有 `trpc.ts` 的 fetch 适配调用 `Taro.request`（不许绕过 client 直接请求）。`notifications.list` 的摘要和链接、`users.me` 的计数也按同一个 surface 判断（见接口表）。
 

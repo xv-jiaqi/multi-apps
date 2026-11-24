@@ -1,0 +1,98 @@
+@import '@repo/design-tokens/taro.scss';
+
+.listing-row {
+  display: flex;
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm;
+  overflow: hidden;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-lg;
+}
+
+.listing-row__thumb {
+  flex-shrink: 0;
+  width: 126rpx;
+}
+
+.listing-row__body {
+  flex: 1;
+  margin-left: $spacing-sm;
+  min-width: 0;
+}
+
+.listing-row__kind {
+  display: inline-block;
+  margin-right: $spacing-xs;
+  margin-bottom: $spacing-xs;
+  padding: $spacing-xs;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: $color-brand-600;
+  background-color: $color-neutral-100;
+  border-radius: $radius-sm;
+  vertical-align: middle;
+}
+
+.listing-row__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.listing-row__meta,
+.listing-row__contact,
+.listing-row__price {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: $color-neutral-600;
+  word-break: break-word;
+}
+
+.listing-row__price {
+  font-weight: 600;
+  color: $color-neutral-900;
+}
+
+.listing-row__review {
+  display: inline-block;
+  margin-left: $spacing-xs;
+  padding: $spacing-xs;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: $color-neutral-600;
+  background-color: $color-neutral-100;
+  border-radius: $radius-sm;
+  vertical-align: middle;
+}
+
+.listing-row__photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-top: $spacing-xs;
+}
+
+.listing-row__photo {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background-color: $color-neutral-100;
+}
+
+.listing-row__photo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96rpx;
+  height: 96rpx;
+  font-size: 20rpx;
+  line-height: 1.3;
+  color: $color-neutral-600;
+  text-align: center;
+  word-break: break-word;
+}

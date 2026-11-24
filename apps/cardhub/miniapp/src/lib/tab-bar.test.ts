@@ -91,10 +91,14 @@ describe('PrimaryButton (CH-301 §5)', () => {
 });
 
 describe('tabBar labels on tab pages (CH-301 §1)', () => {
-  it('home and me call applyTabBarLabels in useDidShow', () => {
-    const home = readFileSync(path.join(srcDir, 'pages/index/index.tsx'), 'utf8');
-    const me = readFileSync(path.join(srcDir, 'pages/me/index.tsx'), 'utf8');
-    expect(home).toMatch(/applyTabBarLabels\(\)/);
-    expect(me).toMatch(/applyTabBarLabels\(\)/);
+  it('every tab page calls applyTabBarLabels in useDidShow', () => {
+    for (const file of [
+      'pages/index/index.tsx',
+      'pages/trade/list/index.tsx',
+      'pages/me/index.tsx',
+    ]) {
+      const source = readFileSync(path.join(srcDir, file), 'utf8');
+      expect(source, file).toMatch(/applyTabBarLabels\(\)/);
+    }
   });
 });

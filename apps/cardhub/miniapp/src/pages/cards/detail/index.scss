@@ -166,3 +166,19 @@
   color: $color-neutral-900;
   word-break: break-word;
 }
+
+.trade-links {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.trade-links__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  font-size: 28rpx;
+  color: $color-brand-600;
+}

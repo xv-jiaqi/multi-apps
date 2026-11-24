@@ -30,6 +30,13 @@ export const TAB_BAR_ITEMS = [
     selectedIconPath: 'assets/tab/home-active.png',
   },
   {
+    pagePath: 'pages/trade/list/index',
+    text: '交易',
+    textKey: 'tab.trade',
+    iconPath: 'assets/tab/trade.png',
+    selectedIconPath: 'assets/tab/trade-active.png',
+  },
+  {
     pagePath: 'pages/me/index',
     text: '我的',
     textKey: 'tab.me',
@@ -47,4 +54,6 @@ export const APP_PAGES = [
   'pages/search/index/index',
   'pages/auth/login/index',
   'pages/auth/register/index',
+  'pages/trade/list/index',
+  'pages/trade/publish/index',
 ] as const;
