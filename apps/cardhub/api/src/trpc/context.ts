@@ -26,15 +26,18 @@ export interface TrpcContext {
   userRateLimit?: UserRateLimiter;
   /**
    * Surface named by the `x-cardhub-surface` header (the miniapp client sets
-   * it on every request). Only consulted when `input.surface` is omitted; an
-   * unknown or repeated header value is ignored, so web keeps its default.
+   * it on every request). Absent header: undefined. A header that is present
+   * but not exactly `web` or `miniapp` counts as `miniapp` (the stricter
+   * rules), so a malformed client can never widen what it sees.
    */
   surfaceHeader?: ContentSurface;
 }
 
 function readSurfaceHeader(req: CreateExpressContextOptions['req']): ContentSurface | undefined {
-  const parsed = contentSurfaceSchema.safeParse(req.headers[CONTENT_SURFACE_HEADER]);
-  return parsed.success ? parsed.data : undefined;
+  const raw = req.headers[CONTENT_SURFACE_HEADER];
+  if (raw === undefined) return undefined;
+  const parsed = contentSurfaceSchema.safeParse(raw);
+  return parsed.success ? parsed.data : 'miniapp';
 }
 
 const BEARER_PREFIX = 'Bearer ';

@@ -224,6 +224,12 @@ export const pageCursorPaginationInput = z.object({
 });
 export type PageCursorPaginationInput = z.infer<typeof pageCursorPaginationInput>;
 
+/** `users.myTopics` / `users.myComments`: page input plus the optional surface. */
+export const myContentPageInput = pageCursorPaginationInput.extend({
+  surface: contentSurfaceSchema.optional(),
+});
+export type MyContentPageInput = z.infer<typeof myContentPageInput>;
+
 // M7 — Trade listings + reports.
 export const LISTING_KIND_VALUES = ['SELL', 'BUY'] as const;
 export type ListingKind = (typeof LISTING_KIND_VALUES)[number];
@@ -339,6 +345,7 @@ export type ListingListInput = z.infer<typeof listingListInput>;
 
 export const listingMineInput = pageCursorPaginationInput.extend({
   cursor: cursorSchema.optional(),
+  surface: contentSurfaceSchema.optional(),
 });
 export type ListingMineInput = z.infer<typeof listingMineInput>;
 

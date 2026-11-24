@@ -403,6 +403,26 @@ export class ForumRouter {
       list: t.procedure.input(forumRepliesListInput).query(async ({ ctx, input }) => {
         const include = { user: { select: { id: true, username: true } } };
         const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
+        // A topic the viewer may not open (missing, hidden, or the author's
+        // own blocked topic) answers with the same empty page as a missing
+        // id, so the list cannot leak replies or probe for existence.
+        const emptyPage = { items: [], nextCursor: null };
+        const topic = await prisma.topic.findUnique({
+          where: { id: input.topicId },
+          select: { userId: true, safetyStatus: true },
+        });
+        if (
+          !topic ||
+          resolveSafetyView({
+            scope: 'public',
+            surface,
+            status: topic.safetyStatus,
+            authorId: topic.userId,
+            viewerId: ctx.user?.sub,
+          }).kind !== 'visible'
+        ) {
+          return emptyPage;
+        }
         const safety = publicSafetyWhere({ surface, viewerId: ctx.user?.sub });
         const mapPage = (rows: ReplyWithAuthor[]) => {
           const hasMore = rows.length > input.limit;
@@ -424,7 +444,7 @@ export class ForumRouter {
             where: { id: input.aroundId, topicId: input.topicId, AND: [safety] },
             select: { id: true, createdAt: true },
           });
-          if (!target) return { items: [], nextCursor: null };
+          if (!target) return emptyPage;
           const before = await prisma.reply.count({
             where: {
               topicId: input.topicId,
@@ -463,9 +483,22 @@ export class ForumRouter {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const topic = await prisma.topic.findUnique({
           where: { id: input.topicId },
-          select: { id: true, slug: true, userId: true },
+          select: { id: true, slug: true, userId: true, safetyStatus: true },
         });
-        if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
+        // Only a topic the actor can open as a normal topic takes replies:
+        // hidden and blocked topics answer NOT_FOUND, same as a missing id.
+        if (
+          !topic ||
+          resolveSafetyView({
+            scope: 'public',
+            surface: resolveContentSurface(undefined, ctx.surfaceHeader),
+            status: topic.safetyStatus,
+            authorId: topic.userId,
+            viewerId: ctx.user.sub,
+          }).kind !== 'visible'
+        ) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
+        }
         const actorId = ctx.user.sub;
         const decision = await contentSecurity.evaluateWrite({
           actorId,

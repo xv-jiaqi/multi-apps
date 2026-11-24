@@ -55,6 +55,9 @@ const RISKY_CONTACT = '拦截联系方式戊';
 const RISKY_NOTE = '拦截备注原文己';
 const RISKY_VARIANT = '拦截版本原文庚';
 const RISKY_IMAGE = 'https://img.cardhub.test/risky-listing-image.png';
+/** Unique per run, so reply-count checks do not see rows from earlier runs. */
+const RUN = Date.now().toString(36);
+
 const RISKY_MARKERS = [
   RISKY_TITLE,
   RISKY_BODY,
@@ -107,9 +110,29 @@ describe('author-only safety view', () => {
       .get(`/trpc/${path}?input=${encodeURIComponent(JSON.stringify(input))}`)
       .set('X-Forwarded-For', '203.0.113.77');
     if (options.token) req = req.set('Authorization', `Bearer ${options.token}`);
-    if (options.surfaceHeader) req = req.set('x-cardhub-surface', options.surfaceHeader);
+    if (options.surfaceHeader !== undefined) {
+      req = req.set('x-cardhub-surface', options.surfaceHeader);
+    }
     return req;
   }
+
+  function mutate(
+    path: string,
+    input: unknown,
+    options: { token?: string; surfaceHeader?: string } = {},
+  ) {
+    let req = request(app.getHttpServer())
+      .post(`/trpc/${path}`)
+      .set('Content-Type', 'application/json')
+      .set('X-Forwarded-For', '203.0.113.78');
+    if (options.token) req = req.set('Authorization', `Bearer ${options.token}`);
+    if (options.surfaceHeader !== undefined) {
+      req = req.set('x-cardhub-surface', options.surfaceHeader);
+    }
+    return req.send(JSON.stringify(input));
+  }
+
+  const topicIds = { review: '', risky: '' };
 
   beforeAll(async () => {
     app = await createApp();
@@ -130,17 +153,25 @@ describe('author-only safety view', () => {
       })
     ).id;
 
-    topics.review = (
-      await prisma.topic.create({
-        data: {
-          slug: `sv-review-${suffix}`,
-          title: '审核中的话题',
-          body: '审核中的正文',
-          userId: author.id,
-          safetyStatus: 'REVIEW',
-        },
-      })
-    ).slug;
+    const reviewTopic = await prisma.topic.create({
+      data: {
+        slug: `sv-review-${suffix}`,
+        title: '审核中的话题',
+        body: '审核中的正文',
+        userId: author.id,
+        safetyStatus: 'REVIEW',
+      },
+    });
+    topics.review = reviewTopic.slug;
+    topicIds.review = reviewTopic.id;
+    await prisma.reply.create({
+      data: {
+        topicId: reviewTopic.id,
+        userId: other.id,
+        body: '审核中话题下的回帖',
+        safetyStatus: 'PASS',
+      },
+    });
     const riskyTopic = await prisma.topic.create({
       data: {
         slug: `sv-risky-${suffix}`,
@@ -151,6 +182,7 @@ describe('author-only safety view', () => {
       },
     });
     topics.risky = riskyTopic.slug;
+    topicIds.risky = riskyTopic.id;
     await prisma.reply.create({
       data: { topicId: riskyTopic.id, userId: author.id, body: RISKY_REPLY, safetyStatus: 'PASS' },
     });
@@ -236,23 +268,44 @@ describe('author-only safety view', () => {
       },
     );
 
-    it.each(['web', 'miniapp'] as const)(
-      'gives the author of a RISKY topic only the blocked status (%s)',
-      async (surface) => {
+    it.each([
+      ['input surface', { surface: 'miniapp' }, {}],
+      ['surface header', {}, { surfaceHeader: 'miniapp' }],
+    ] as const)(
+      'gives the author of a RISKY topic only the blocked status on miniapp (%s)',
+      async (_label, extraInput, extraOptions) => {
         const mine = await query(
           'forum.topics.bySlug',
-          { slug: topics.risky, surface },
-          { token: author.token },
+          { slug: topics.risky, ...extraInput },
+          { token: author.token, ...extraOptions },
         );
         expect(mine.status).toBe(200);
         const data = resultData(mine.body);
         if (!isRecord(data)) throw new Error('expected a topic');
         expect(data.safetyStatus).toBe('blocked');
         expect(data.title).toBe('');
+        expect(data.excerpt).toBe('');
         expect(data.body).toBe('');
         expect(data.replies).toEqual([]);
         expect(data.replyNextCursor).toBeNull();
         expect(data.replyCount).toBe(0);
+        expectNoRiskyText(mine.body);
+      },
+    );
+
+    it.each([
+      ['explicit web', { surface: 'web' }],
+      ['default web', {}],
+    ] as const)(
+      'keeps the author RISKY topic NOT_FOUND on web (%s)',
+      async (_label, extraInput) => {
+        const mine = await query(
+          'forum.topics.bySlug',
+          { slug: topics.risky, ...extraInput },
+          { token: author.token },
+        );
+        expect(mine.status).toBe(404);
+        expect(errorCode(mine.body)).toBe('NOT_FOUND');
         expectNoRiskyText(mine.body);
       },
     );
@@ -278,8 +331,41 @@ describe('author-only safety view', () => {
   });
 
   describe('users.myTopics', () => {
-    it('labels REVIEW and blocks RISKY for the author', async () => {
-      const response = await query('users.myTopics', { limit: 50 }, { token: author.token });
+    it('leaves the author RISKY rows out on web and keeps REVIEW', async () => {
+      for (const extraInput of [{}, { surface: 'web' }]) {
+        const response = await query(
+          'users.myTopics',
+          { limit: 50, ...extraInput },
+          { token: author.token },
+        );
+        expect(response.status).toBe(200);
+        const items = pageItems(response.body);
+        const keys = items.map((item) => item.slug);
+        expect(keys).toContain(topics.review);
+        expect(keys).not.toContain(topics.risky);
+        expect(items.some((item) => item.safetyStatus === 'blocked')).toBe(false);
+        expectNoRiskyText(response.body);
+      }
+    });
+
+    it('blocks RISKY for the author when the input names miniapp', async () => {
+      const response = await query(
+        'users.myTopics',
+        { limit: 50, surface: 'miniapp' },
+        { token: author.token },
+      );
+      expect(response.status).toBe(200);
+      const risky = pageItems(response.body).find((item) => item.slug === topics.risky);
+      expect(risky?.safetyStatus).toBe('blocked');
+      expectNoRiskyText(response.body);
+    });
+
+    it('labels REVIEW and blocks RISKY for the author on miniapp', async () => {
+      const response = await query(
+        'users.myTopics',
+        { limit: 50 },
+        { token: author.token, surfaceHeader: 'miniapp' },
+      );
       expect(response.status).toBe(200);
       const items = pageItems(response.body);
       const review = items.find((item) => item.slug === topics.review);
@@ -306,8 +392,41 @@ describe('author-only safety view', () => {
   });
 
   describe('users.myComments', () => {
-    it('labels REVIEW and blocks RISKY for the author', async () => {
-      const response = await query('users.myComments', { limit: 50 }, { token: author.token });
+    it('leaves the author RISKY rows out on web and keeps REVIEW', async () => {
+      for (const extraInput of [{}, { surface: 'web' }]) {
+        const response = await query(
+          'users.myComments',
+          { limit: 50, ...extraInput },
+          { token: author.token },
+        );
+        expect(response.status).toBe(200);
+        const items = pageItems(response.body);
+        const keys = items.map((item) => item.id);
+        expect(keys).toContain(comments.review);
+        expect(keys).not.toContain(comments.risky);
+        expect(items.some((item) => item.safetyStatus === 'blocked')).toBe(false);
+        expectNoRiskyText(response.body);
+      }
+    });
+
+    it('blocks RISKY for the author when the input names miniapp', async () => {
+      const response = await query(
+        'users.myComments',
+        { limit: 50, surface: 'miniapp' },
+        { token: author.token },
+      );
+      expect(response.status).toBe(200);
+      const risky = pageItems(response.body).find((item) => item.id === comments.risky);
+      expect(risky?.safetyStatus).toBe('blocked');
+      expectNoRiskyText(response.body);
+    });
+
+    it('labels REVIEW and blocks RISKY for the author on miniapp', async () => {
+      const response = await query(
+        'users.myComments',
+        { limit: 50 },
+        { token: author.token, surfaceHeader: 'miniapp' },
+      );
       expect(response.status).toBe(200);
       const items = pageItems(response.body);
       const review = items.find((item) => item.id === comments.review);
@@ -333,8 +452,41 @@ describe('author-only safety view', () => {
   });
 
   describe('listings.mine', () => {
-    it('labels REVIEW and blocks RISKY for the author', async () => {
-      const response = await query('listings.mine', { limit: 50 }, { token: author.token });
+    it('leaves the author RISKY rows out on web and keeps REVIEW', async () => {
+      for (const extraInput of [{}, { surface: 'web' }]) {
+        const response = await query(
+          'listings.mine',
+          { limit: 50, ...extraInput },
+          { token: author.token },
+        );
+        expect(response.status).toBe(200);
+        const items = pageItems(response.body);
+        const keys = items.map((item) => item.id);
+        expect(keys).toContain(listings.review);
+        expect(keys).not.toContain(listings.risky);
+        expect(items.some((item) => item.safetyStatus === 'blocked')).toBe(false);
+        expectNoRiskyText(response.body);
+      }
+    });
+
+    it('blocks RISKY for the author when the input names miniapp', async () => {
+      const response = await query(
+        'listings.mine',
+        { limit: 50, surface: 'miniapp' },
+        { token: author.token },
+      );
+      expect(response.status).toBe(200);
+      const risky = pageItems(response.body).find((item) => item.id === listings.risky);
+      expect(risky?.safetyStatus).toBe('blocked');
+      expectNoRiskyText(response.body);
+    });
+
+    it('labels REVIEW and blocks RISKY for the author on miniapp', async () => {
+      const response = await query(
+        'listings.mine',
+        { limit: 50 },
+        { token: author.token, surfaceHeader: 'miniapp' },
+      );
       expect(response.status).toBe(200);
       const items = pageItems(response.body);
       const review = items.find((item) => item.id === listings.review);
@@ -378,6 +530,158 @@ describe('author-only safety view', () => {
     });
   });
 
+  describe('forum.replies.list and replies.create follow the topic visibility', () => {
+    const emptyPage = { items: [], nextCursor: null };
+    const viewers = [
+      ['author', () => author.token],
+      ['other user', () => other.token],
+      ['anonymous', () => undefined],
+    ] as const;
+
+    it.each(['web', 'miniapp'] as const)(
+      'lists nothing for a RISKY topic, for every viewer (%s)',
+      async (surface) => {
+        for (const [, token] of viewers) {
+          const t = token();
+          const response = await query(
+            'forum.replies.list',
+            { topicId: topicIds.risky, limit: 20, surface },
+            t ? { token: t } : {},
+          );
+          expect(response.status).toBe(200);
+          expect(resultData(response.body)).toEqual(emptyPage);
+          expectNoRiskyText(response.body);
+        }
+      },
+    );
+
+    it.each(['web', 'miniapp'] as const)(
+      'lists a REVIEW topic replies for its author only (%s)',
+      async (surface) => {
+        const mine = await query(
+          'forum.replies.list',
+          { topicId: topicIds.review, limit: 20, surface },
+          { token: author.token },
+        );
+        expect(mine.status).toBe(200);
+        const bodies = pageItems(mine.body).map((item) => item.body);
+        expect(bodies).toContain('审核中话题下的回帖');
+
+        for (const t of [other.token, undefined]) {
+          const response = await query(
+            'forum.replies.list',
+            { topicId: topicIds.review, limit: 20, surface },
+            t ? { token: t } : {},
+          );
+          expect(response.status).toBe(200);
+          expect(resultData(response.body)).toEqual(emptyPage);
+        }
+      },
+    );
+
+    it('answers a hidden topic exactly like a missing topic', async () => {
+      const missing = await query('forum.replies.list', {
+        topicId: '00000000-0000-4000-8000-000000000000',
+        limit: 20,
+      });
+      const hidden = await query(
+        'forum.replies.list',
+        { topicId: topicIds.review, limit: 20 },
+        { token: other.token },
+      );
+      expect(hidden.status).toBe(missing.status);
+      expect(hidden.body).toEqual(missing.body);
+    });
+
+    it.each([
+      ['web', undefined],
+      ['miniapp', 'miniapp'],
+    ] as const)('refuses replies to a RISKY topic for every viewer (%s)', async (_s, header) => {
+      for (const t of [author.token, other.token]) {
+        const response = await mutate(
+          'forum.replies.create',
+          { topicId: topicIds.risky, body: `想回一个被拦截的话题 ${RUN}` },
+          header ? { token: t, surfaceHeader: header } : { token: t },
+        );
+        expect(response.status).toBe(404);
+        expect(errorCode(response.body)).toBe('NOT_FOUND');
+      }
+      const anonymous = await mutate(
+        'forum.replies.create',
+        { topicId: topicIds.risky, body: `想回一个被拦截的话题 ${RUN}` },
+        header ? { surfaceHeader: header } : {},
+      );
+      expect(anonymous.status).toBe(401);
+      expect(await prisma.reply.count({ where: { body: `想回一个被拦截的话题 ${RUN}` } })).toBe(0);
+    });
+
+    it('lets only the author reply to a REVIEW topic', async () => {
+      const others = await mutate(
+        'forum.replies.create',
+        { topicId: topicIds.review, body: `别人回审核中的话题 ${RUN}` },
+        { token: other.token },
+      );
+      expect(others.status).toBe(404);
+      expect(errorCode(others.body)).toBe('NOT_FOUND');
+
+      const anonymous = await mutate('forum.replies.create', {
+        topicId: topicIds.review,
+        body: `未登录回审核中的话题 ${RUN}`,
+      });
+      expect(anonymous.status).toBe(401);
+
+      const mine = await mutate(
+        'forum.replies.create',
+        { topicId: topicIds.review, body: `作者回自己审核中的话题 ${RUN}` },
+        { token: author.token },
+      );
+      expect(mine.status).toBe(200);
+      expect(await prisma.reply.count({ where: { body: `别人回审核中的话题 ${RUN}` } })).toBe(0);
+    });
+  });
+
+  describe('blocked rows keep the normal row shape', () => {
+    function keysOf(row: Record<string, unknown> | undefined) {
+      if (!row) throw new Error('expected a row');
+      return Object.keys(row).sort();
+    }
+
+    it.each([
+      ['users.myTopics', 'slug', () => topics],
+      ['users.myComments', 'id', () => comments],
+      ['listings.mine', 'id', () => listings],
+    ] as const)('%s', async (path, key, ids) => {
+      const response = await query(
+        path,
+        { limit: 50 },
+        { token: author.token, surfaceHeader: 'miniapp' },
+      );
+      const items = pageItems(response.body);
+      const review = items.find((item) => item[key] === ids().review);
+      const risky = items.find((item) => item[key] === ids().risky);
+      expect(risky?.safetyStatus).toBe('blocked');
+      expect(keysOf(risky)).toEqual(keysOf(review));
+    });
+
+    it('forum.topics.bySlug', async () => {
+      const review = await query(
+        'forum.topics.bySlug',
+        { slug: topics.review },
+        { token: author.token, surfaceHeader: 'miniapp' },
+      );
+      const risky = await query(
+        'forum.topics.bySlug',
+        { slug: topics.risky },
+        { token: author.token, surfaceHeader: 'miniapp' },
+      );
+      const reviewData = resultData(review.body);
+      const riskyData = resultData(risky.body);
+      if (!isRecord(reviewData) || !isRecord(riskyData)) throw new Error('expected topics');
+      expect(riskyData.safetyStatus).toBe('blocked');
+      expect(keysOf(riskyData)).toEqual(keysOf(reviewData));
+    });
+  });
+
   describe('x-cardhub-surface header', () => {
     it('applies miniapp visibility when the input omits surface', async () => {
       const web = await query('forum.topics.bySlug', { slug: topics.unchecked });
@@ -392,13 +696,29 @@ describe('author-only safety view', () => {
       expect(errorCode(miniapp.body)).toBe('NOT_FOUND');
     });
 
-    it('lets an explicit input.surface win over the header', async () => {
-      const explicit = await query(
+    it.each([
+      ['header miniapp, input web', { surface: 'web' }, 'miniapp'],
+      ['header web, input miniapp', { surface: 'miniapp' }, 'web'],
+    ] as const)('takes the stricter surface (%s)', async (_label, extraInput, header) => {
+      const response = await query(
         'forum.topics.bySlug',
-        { slug: topics.unchecked, surface: 'web' },
-        { surfaceHeader: 'miniapp' },
+        { slug: topics.unchecked, ...extraInput },
+        { surfaceHeader: header },
       );
-      expect(explicit.status).toBe(200);
+      expect(response.status).toBe(404);
+      expect(errorCode(response.body)).toBe('NOT_FOUND');
+    });
+
+    it('lets a miniapp author keep the blocked view when the input says web', async () => {
+      const response = await query(
+        'users.myTopics',
+        { limit: 50, surface: 'web' },
+        { token: author.token, surfaceHeader: 'miniapp' },
+      );
+      expect(response.status).toBe(200);
+      const risky = pageItems(response.body).find((item) => item.slug === topics.risky);
+      expect(risky?.safetyStatus).toBe('blocked');
+      expectNoRiskyText(response.body);
     });
 
     it('passes the CORS preflight for the H5 build', async () => {
@@ -414,13 +734,17 @@ describe('author-only safety view', () => {
       ).toContain('x-cardhub-surface');
     });
 
-    it('ignores an unknown header value and keeps the web default', async () => {
-      const unknown = await query(
-        'forum.topics.bySlug',
-        { slug: topics.unchecked },
-        { surfaceHeader: 'not-a-surface' },
-      );
-      expect(unknown.status).toBe(200);
-    });
+    it.each(['not-a-surface', '', 'WEB', 'web,web'])(
+      'treats an invalid header value %j as miniapp',
+      async (header) => {
+        const response = await query(
+          'forum.topics.bySlug',
+          { slug: topics.unchecked },
+          { surfaceHeader: header },
+        );
+        expect(response.status).toBe(404);
+        expect(errorCode(response.body)).toBe('NOT_FOUND');
+      },
+    );
   });
 });

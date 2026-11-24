@@ -58,24 +58,46 @@ describe('miniapp tRPC client', () => {
   });
 
   it('is the only way the miniapp builds a tRPC client', () => {
-    const srcDir = join(__dirname, '..');
-    const files: string[] = [];
-    const walk = (dir: string) => {
-      for (const name of readdirSync(dir)) {
-        const path = join(dir, name);
-        if (statSync(path).isDirectory()) walk(path);
-        else if (/\.(ts|tsx)$/.test(name) && !/\.test\.tsx?$/.test(name)) files.push(path);
-      }
-    };
-    walk(srcDir);
-    const builders = files
-      .filter((path) =>
-        /\b(createTRPCClient|createTRPCProxyClient|httpLink|httpBatchLink)\b/.test(
-          readFileSync(path, 'utf8'),
-        ),
+    const builders = sourceFiles()
+      .filter(({ text }) =>
+        /\b(createTRPCClient|createTRPCProxyClient|httpLink|httpBatchLink)\b/.test(text),
       )
-      .map((path) => relative(srcDir, path));
+      .map(({ path }) => path);
     expect(builders).toEqual(['lib/trpc-client.ts']);
     expect(readFileSync(join(srcDir, 'lib/trpc.ts'), 'utf8')).toContain('createMiniappTrpcClient(');
   });
+
+  it('sends no network request around the tRPC client', () => {
+    // Only the fetch adapter in lib/trpc.ts may call Taro.request; anything
+    // else would reach the api without the surface header.
+    const network = sourceFiles()
+      .filter(({ text }) =>
+        /\bTaro\s*\.\s*(request|uploadFile|downloadFile|connectSocket)\b|(^|[^.\w])(request|fetch)\s*\(|\bXMLHttpRequest\b|\bWebSocket\b/m.test(
+          stripComments(text),
+        ),
+      )
+      .map(({ path }) => path);
+    expect(network).toEqual(['lib/trpc.ts']);
+  });
 });
+
+const srcDir = join(__dirname, '..');
+
+function stripComments(text: string): string {
+  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
+
+function sourceFiles(): Array<{ path: string; text: string }> {
+  const files: Array<{ path: string; text: string }> = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) walk(path);
+      else if (/\.(ts|tsx)$/.test(name) && !/\.test\.tsx?$/.test(name)) {
+        files.push({ path: relative(srcDir, path), text: readFileSync(path, 'utf8') });
+      }
+    }
+  };
+  walk(srcDir);
+  return files.sort((a, b) => a.path.localeCompare(b.path));
+}

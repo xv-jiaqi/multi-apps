@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 import {
+  type ContentSurface,
   contentSurfaceSchema,
   listingListInput,
   listingMineInput,
@@ -17,6 +18,7 @@ import { ContentSecurityService } from '../content-security/content-security.ser
 import {
   authorSafetyStatus,
   blockedSafetyStatus,
+  ownerSafetyWhere,
   publicSafetyWhere,
   resolveSafetyView,
   resolveContentSurface,
@@ -75,14 +77,15 @@ function mapListing(
  */
 function mapOwnListing(
   row: ListingWithUser,
-  viewerId: string,
+  visibility: { viewerId: string; surface: ContentSurface },
   cardsBySlug: Map<string, ListingCardSummary>,
 ) {
   const view = resolveSafetyView({
     scope: 'owner',
+    surface: visibility.surface,
     status: row.safetyStatus,
     authorId: row.userId,
-    viewerId,
+    viewerId: visibility.viewerId,
   });
   if (view.kind === 'hidden') return [];
   if (view.kind === 'visible') {
@@ -259,9 +262,10 @@ export class ListingsRouter {
 
       mine: t.authedProcedure.input(listingMineInput).query(async ({ ctx, input }) => {
         if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
         const pageCursor = input.pageCursor ?? input.cursor;
         const items = await prisma.listing.findMany({
-          where: { userId: ctx.user.sub },
+          where: { userId: ctx.user.sub, ...ownerSafetyWhere({ surface }) },
           take: input.limit + 1,
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
           ...(pageCursor ? { cursor: { id: pageCursor }, skip: 1 } : {}),
@@ -273,10 +277,10 @@ export class ListingsRouter {
           prisma,
           sliced.map((row) => row.cardSlug),
         );
-        const viewerId = ctx.user.sub;
+        const visibility = { viewerId: ctx.user.sub, surface };
         return {
           items: sliced.flatMap((row: ListingWithUser) =>
-            mapOwnListing(row, viewerId, cardsBySlug),
+            mapOwnListing(row, visibility, cardsBySlug),
           ),
           nextCursor: hasMore ? sliced[sliced.length - 1]!.id : null,
         };

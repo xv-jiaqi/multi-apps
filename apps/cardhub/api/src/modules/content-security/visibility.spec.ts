@@ -1,6 +1,7 @@
 import {
   isVisibleOnSurface,
   mergeSafetyStatus,
+  ownerSafetyWhere,
   publicSafetyWhere,
   resolveContentSurface,
   resolveSafetyView,
@@ -12,9 +13,12 @@ describe('resolveContentSurface', () => {
     expect(resolveContentSurface('miniapp')).toBe('miniapp');
   });
 
-  it('uses the header only when the input omits surface', () => {
+  it('takes the stricter of input and header', () => {
     expect(resolveContentSurface(undefined, 'miniapp')).toBe('miniapp');
-    expect(resolveContentSurface('web', 'miniapp')).toBe('web');
+    expect(resolveContentSurface('web', 'miniapp')).toBe('miniapp');
+    expect(resolveContentSurface('miniapp', 'web')).toBe('miniapp');
+    expect(resolveContentSurface('web', 'web')).toBe('web');
+    expect(resolveContentSurface(undefined, 'web')).toBe('web');
     expect(resolveContentSurface(undefined, undefined)).toBe('web');
   });
 });
@@ -96,31 +100,29 @@ describe('mergeSafetyStatus', () => {
 
 describe('resolveSafetyView', () => {
   const statuses = ['UNCHECKED', 'REVIEW', 'PASS', 'RISKY'] as const;
+  const surfaces = ['web', 'miniapp'] as const;
+  const scopes = ['owner', 'public'] as const;
 
   it('never shows REVIEW or RISKY to other users or anonymous viewers', () => {
     for (const viewerId of [undefined, null, '', 'u2']) {
       for (const status of ['REVIEW', 'RISKY'] as const) {
-        expect(resolveSafetyView({ scope: 'owner', status, authorId: 'u1', viewerId })).toEqual({
-          kind: 'hidden',
-        });
-        for (const surface of ['web', 'miniapp'] as const) {
-          expect(
-            resolveSafetyView({ scope: 'public', surface, status, authorId: 'u1', viewerId }),
-          ).toEqual({ kind: 'hidden' });
+        for (const scope of scopes) {
+          for (const surface of surfaces) {
+            expect(resolveSafetyView({ scope, surface, status, authorId: 'u1', viewerId })).toEqual(
+              { kind: 'hidden' },
+            );
+          }
         }
       }
     }
   });
 
-  it('gives the author only the blocked status for RISKY rows', () => {
-    expect(
-      resolveSafetyView({ scope: 'owner', status: 'RISKY', authorId: 'u1', viewerId: 'u1' }),
-    ).toEqual({ kind: 'blocked' });
-    for (const surface of ['web', 'miniapp'] as const) {
+  it('gives the author only the blocked status for RISKY rows on miniapp', () => {
+    for (const scope of scopes) {
       expect(
         resolveSafetyView({
-          scope: 'public',
-          surface,
+          scope,
+          surface: 'miniapp',
           status: 'RISKY',
           authorId: 'u1',
           viewerId: 'u1',
@@ -129,15 +131,37 @@ describe('resolveSafetyView', () => {
     }
   });
 
+  it('hides the author RISKY rows on web', () => {
+    for (const scope of scopes) {
+      expect(
+        resolveSafetyView({
+          scope,
+          surface: 'web',
+          status: 'RISKY',
+          authorId: 'u1',
+          viewerId: 'u1',
+        }),
+      ).toEqual({ kind: 'hidden' });
+    }
+  });
+
   it('shows every non-RISKY row to its author on the owner scope', () => {
-    for (const status of statuses.filter((value) => value !== 'RISKY')) {
-      const view = resolveSafetyView({ scope: 'owner', status, authorId: 'u1', viewerId: 'u1' });
-      expect(view.kind).toBe('visible');
+    for (const surface of surfaces) {
+      for (const status of statuses.filter((value) => value !== 'RISKY')) {
+        const view = resolveSafetyView({
+          scope: 'owner',
+          surface,
+          status,
+          authorId: 'u1',
+          viewerId: 'u1',
+        });
+        expect(view.kind).toBe('visible');
+      }
     }
   });
 
   it('matches isVisibleOnSurface for non-RISKY rows on the public scope', () => {
-    for (const surface of ['web', 'miniapp'] as const) {
+    for (const surface of surfaces) {
       for (const status of statuses.filter((value) => value !== 'RISKY')) {
         for (const viewerId of [undefined, 'u1', 'u2']) {
           const view = resolveSafetyView({
@@ -159,5 +183,12 @@ describe('resolveSafetyView', () => {
     expect(
       isVisibleOnSurface({ surface: 'web', status: 'REVIEW', authorId: '', viewerId: '' }),
     ).toBe(false);
+  });
+});
+
+describe('ownerSafetyWhere', () => {
+  it('drops RISKY rows in the query on web only', () => {
+    expect(ownerSafetyWhere({ surface: 'web' })).toEqual({ safetyStatus: { not: 'RISKY' } });
+    expect(ownerSafetyWhere({ surface: 'miniapp' })).toEqual({});
   });
 });
