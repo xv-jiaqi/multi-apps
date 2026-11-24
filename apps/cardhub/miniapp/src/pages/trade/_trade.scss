@@ -294,7 +294,8 @@ taro-button-core.trade-filters__chip,
   min-width: 88rpx;
   min-height: 88rpx;
   font-size: 26rpx;
-  color: $color-brand-600;
+  // #2563eb on the preview's #efefef is 4.49:1; brand-700 meets 4.5:1.
+  color: $color-brand-700;
 }
 
 .trade-links {

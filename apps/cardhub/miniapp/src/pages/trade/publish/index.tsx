@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow, useRouter } from '@tarojs/taro';
 import { Input, Picker, ScrollView, Text, Textarea, View } from '@tarojs/components';
-import { BreadcrumbsMini, FocusableButton, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import {
+  BreadcrumbsMini,
+  FocusableButton,
+  isMiniappWebEnv,
+  Link,
+  PrimaryButton,
+  Skeleton,
+} from '@repo/ui-mini';
 import {
   APP_ERROR_CODES,
   LISTING_CONDITION_VALUES,
@@ -65,13 +72,59 @@ function parseImageLines(raw: string): { urls: string[]; errorKey?: string } {
   return { urls };
 }
 
-function controlA11y(labelId: string, describedIds: Array<string | undefined> = []) {
+function FormLabel({ id, htmlFor, children }: { id: string; htmlFor?: string; children: string }) {
+  // Taro `<Text id>` compiles to `taro-text-core`, which often cannot be the
+  // accessible name for aria-labelledby (axe label-title-only). On H5 use a
+  // real <label>.
+  if (isMiniappWebEnv()) {
+    return (
+      <label id={id} htmlFor={htmlFor} className="trade-form__label">
+        {children}
+      </label>
+    );
+  }
+  return (
+    <Text id={id} className="trade-form__label">
+      {children}
+    </Text>
+  );
+}
+
+function FormHint({ id, children }: { id: string; children: string }) {
+  if (isMiniappWebEnv()) {
+    return (
+      <span id={id} className="trade-form__hint">
+        {children}
+      </span>
+    );
+  }
+  return (
+    <Text id={id} className="trade-form__hint">
+      {children}
+    </Text>
+  );
+}
+
+function controlA11y({
+  labelId,
+  labelText,
+  inputId,
+  describedIds = [],
+}: {
+  labelId: string;
+  labelText: string;
+  inputId: string;
+  describedIds?: Array<string | undefined>;
+}) {
   const describedby = describedIds.filter((id): id is string => Boolean(id)).join(' ') || undefined;
   return {
     'aria-labelledby': labelId,
+    'aria-label': labelText,
     ...(describedby ? { 'aria-describedby': describedby } : {}),
     nativeProps: {
+      id: inputId,
       'aria-labelledby': labelId,
+      'aria-label': labelText,
       ...(describedby ? { 'aria-describedby': describedby } : {}),
     },
   };
@@ -327,9 +380,9 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text id="trade-publish-card-label" className="trade-form__label">
+              <FormLabel id="trade-publish-card-label" htmlFor="trade-publish-card">
                 {tt('trade.publish.card')}
-              </Text>
+              </FormLabel>
               {prefillLoading ? <Skeleton /> : null}
               {selectedCard ? (
                 <View className="trade-card-preview">
@@ -364,9 +417,12 @@ export default observer(function TradePublishPage() {
                     value={cardQuery}
                     placeholder={tt('trade.publish.cardPlaceholder')}
                     disabled={submit.pending ? true : undefined}
-                    {...controlA11y('trade-publish-card-label', [
-                      fieldErrors.card ? 'trade-publish-card-error' : undefined,
-                    ])}
+                    {...controlA11y({
+                      labelId: 'trade-publish-card-label',
+                      labelText: tt('trade.publish.card'),
+                      inputId: 'trade-publish-card',
+                      describedIds: [fieldErrors.card ? 'trade-publish-card-error' : undefined],
+                    })}
                     onInput={(event) => setCardQuery(event.detail.value)}
                   />
                   {cardSearching ? (
@@ -425,17 +481,20 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text id="trade-publish-price-label" className="trade-form__label">
+              <FormLabel id="trade-publish-price-label" htmlFor="trade-publish-price">
                 {tt('trade.publish.price')}
-              </Text>
+              </FormLabel>
               <Input
                 className={`trade-form__input${fieldErrors.price ? ' trade-form__input--error' : ''}`}
                 value={price}
                 type="digit"
                 disabled={submit.pending ? true : undefined}
-                {...controlA11y('trade-publish-price-label', [
-                  fieldErrors.price ? 'trade-publish-price-error' : undefined,
-                ])}
+                {...controlA11y({
+                  labelId: 'trade-publish-price-label',
+                  labelText: tt('trade.publish.price'),
+                  inputId: 'trade-publish-price',
+                  describedIds: [fieldErrors.price ? 'trade-publish-price-error' : undefined],
+                })}
                 onInput={(event) => setPrice(event.detail.value)}
               />
               {fieldErrors.price ? (
@@ -516,32 +575,39 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text id="trade-publish-variant-label" className="trade-form__label">
+              <FormLabel id="trade-publish-variant-label" htmlFor="trade-publish-variant">
                 {tt('trade.publish.variantNote')}
-              </Text>
+              </FormLabel>
               <Input
                 className="trade-form__input"
                 value={variantNote}
                 placeholder={tt('trade.publish.variantNotePlaceholder')}
                 maxlength={40}
                 disabled={submit.pending ? true : undefined}
-                {...controlA11y('trade-publish-variant-label')}
+                {...controlA11y({
+                  labelId: 'trade-publish-variant-label',
+                  labelText: tt('trade.publish.variantNote'),
+                  inputId: 'trade-publish-variant',
+                })}
                 onInput={(event) => setVariantNote(event.detail.value)}
               />
             </View>
 
             <View className="trade-form__section">
-              <Text id="trade-publish-contact-label" className="trade-form__label">
+              <FormLabel id="trade-publish-contact-label" htmlFor="trade-publish-contact">
                 {tt('trade.publish.contact')}
-              </Text>
+              </FormLabel>
               <Input
                 className={`trade-form__input${fieldErrors.contact ? ' trade-form__input--error' : ''}`}
                 value={contact}
                 maxlength={200}
                 disabled={submit.pending ? true : undefined}
-                {...controlA11y('trade-publish-contact-label', [
-                  fieldErrors.contact ? 'trade-publish-contact-error' : undefined,
-                ])}
+                {...controlA11y({
+                  labelId: 'trade-publish-contact-label',
+                  labelText: tt('trade.publish.contact'),
+                  inputId: 'trade-publish-contact',
+                  describedIds: [fieldErrors.contact ? 'trade-publish-contact-error' : undefined],
+                })}
                 onInput={(event) => setContact(event.detail.value)}
               />
               {fieldErrors.contact ? (
@@ -552,23 +618,26 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text id="trade-publish-note-label" className="trade-form__label">
+              <FormLabel id="trade-publish-note-label" htmlFor="trade-publish-note">
                 {tt('trade.publish.note')}
-              </Text>
+              </FormLabel>
               <Textarea
                 className={`trade-form__textarea${fieldErrors.note ? ' trade-form__textarea--error' : ''}`}
                 value={note}
                 maxlength={500}
                 disabled={submit.pending ? true : undefined}
-                {...controlA11y('trade-publish-note-label', [
-                  'trade-publish-note-hint',
-                  fieldErrors.note ? 'trade-publish-note-error' : undefined,
-                ])}
+                {...controlA11y({
+                  labelId: 'trade-publish-note-label',
+                  labelText: tt('trade.publish.note'),
+                  inputId: 'trade-publish-note',
+                  describedIds: [
+                    'trade-publish-note-hint',
+                    fieldErrors.note ? 'trade-publish-note-error' : undefined,
+                  ],
+                })}
                 onInput={(event) => setNote(event.detail.value)}
               />
-              <Text id="trade-publish-note-hint" className="trade-form__hint">
-                {tt('trade.publish.noteHint')}
-              </Text>
+              <FormHint id="trade-publish-note-hint">{tt('trade.publish.noteHint')}</FormHint>
               <Text className="trade-form__count">{note.length} / 500</Text>
               {fieldErrors.note ? (
                 <Text id="trade-publish-note-error" className="trade-select__error">
@@ -578,9 +647,9 @@ export default observer(function TradePublishPage() {
             </View>
 
             <View className="trade-form__section">
-              <Text id="trade-publish-images-label" className="trade-form__label">
+              <FormLabel id="trade-publish-images-label" htmlFor="trade-publish-images">
                 {tt('trade.publish.imageUrls')}
-              </Text>
+              </FormLabel>
               <Textarea
                 className={`trade-form__textarea${fieldErrors.imageUrls ? ' trade-form__textarea--error' : ''}`}
                 value={imageText}
@@ -589,9 +658,12 @@ export default observer(function TradePublishPage() {
                   LISTING_IMAGE_MAX_COUNT * LISTING_IMAGE_URL_MAX + (LISTING_IMAGE_MAX_COUNT - 1)
                 }
                 disabled={submit.pending ? true : undefined}
-                {...controlA11y('trade-publish-images-label', [
-                  fieldErrors.imageUrls ? 'trade-publish-images-error' : undefined,
-                ])}
+                {...controlA11y({
+                  labelId: 'trade-publish-images-label',
+                  labelText: tt('trade.publish.imageUrls'),
+                  inputId: 'trade-publish-images',
+                  describedIds: [fieldErrors.imageUrls ? 'trade-publish-images-error' : undefined],
+                })}
                 onInput={(event) => setImageText(event.detail.value)}
               />
               {fieldErrors.imageUrls ? (

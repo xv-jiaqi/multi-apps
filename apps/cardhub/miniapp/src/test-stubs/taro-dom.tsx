@@ -21,7 +21,8 @@ function domProps(props: AnyProps): Record<string, unknown> {
       key === 'disabled' ||
       key === 'id' ||
       key === 'tabIndex' ||
-      key === 'role'
+      key === 'role' ||
+      key === 'alt'
     ) {
       out[key] = value;
     } else if (
@@ -54,7 +55,7 @@ export function ScrollView(props: AnyProps) {
   return createElement('div', domProps(props), props.children);
 }
 export function Image(props: AnyProps) {
-  return createElement('img', { ...domProps(props), src: props.src, alt: '' });
+  return createElement('img', { ...domProps(props), src: props.src });
 }
 export function Button(props: AnyProps) {
   return createElement('button', { type: 'button', ...domProps(props) }, props.children);

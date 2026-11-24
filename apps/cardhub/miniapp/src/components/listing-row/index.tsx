@@ -70,6 +70,8 @@ export function ListingRow({ listing, locale }: { listing: ListingItem; locale: 
                   className="listing-row__photo"
                   src={url}
                   mode="aspectFill"
+                  ariaLabel={fallback}
+                  nativeProps={{ alt: fallback, 'aria-label': fallback }}
                   onError={() => setFailedPhotos((current) => ({ ...current, [index]: true }))}
                 />
               );

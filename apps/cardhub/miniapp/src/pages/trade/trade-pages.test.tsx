@@ -391,6 +391,24 @@ describe('listing row (CH-301 §3 v1.9)', () => {
       view.unmount();
     }
   });
+
+  it('gives https listing photos an accessible name from trade.list.photoFallback', () => {
+    const view = render(
+      <ListingRow
+        listing={
+          {
+            ...listing(1),
+            imageUrls: ['https://img.cardhub.test/a.png', 'http://insecure.example/b.png'],
+          } as ListingItem
+        }
+        locale="zh-CN"
+      />,
+    );
+    const img = view.container.querySelector('img.listing-row__photo') as HTMLImageElement | null;
+    expect(img).toBeTruthy();
+    expect(img?.getAttribute('alt')).toBe('图片 1');
+    expect(view.container.textContent).toContain('图片 2');
+  });
 });
 
 describe('trade list account switch and publish a11y', () => {
