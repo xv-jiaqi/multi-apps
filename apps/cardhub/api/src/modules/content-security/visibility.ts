@@ -136,6 +136,18 @@ export function notificationTargetVisible(args: {
 }
 
 /**
+ * Write-time gate for notifications (mentions and reply notices). Send only
+ * when every row in the chain is publicly visible on web: the new content,
+ * plus the topic of a reply or the parent of a comment reply. Otherwise the
+ * read-time gate (`notificationTargetVisible`) would empty the row while it
+ * still counts as unread. Web is the loosest public surface, so UNCHECKED
+ * still notifies; a later PASS does not send the skipped notifications.
+ */
+export function contentPublicForNotify(...statuses: ContentSafetyStatusName[]): boolean {
+  return statuses.every((status) => notificationTargetVisible({ surface: 'web', status }));
+}
+
+/**
  * Extra filter for "my" lists, so a page is not short of rows that
  * `resolveSafetyView` would drop: web leaves RISKY rows out in the query.
  * Keep in step with the RISKY branch of `resolveSafetyView`.
