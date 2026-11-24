@@ -1,0 +1,104 @@
+{
+  "title": "Delete confirm, report submit, and load-more each send one request despite extra clicks",
+  "method": "Open the in-page confirm / report form / load-more control, click once (request hung), then force-click 3–4 more times.",
+  "headSha": "fc20abcb954b4e6de31d1e46c4b4fc18afb17f1e",
+  "results": [
+    {
+      "name": "comment-delete-confirm-clicks",
+      "locale": "zh-CN",
+      "proc": "comments.delete",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795548101133,
+          "method": "POST",
+          "proc": "comments.delete",
+          "url": "http://127.0.0.1:4999/trpc/comments.delete"
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots-clicks/comment-delete-confirm-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "report-submit-clicks",
+      "locale": "zh-CN",
+      "proc": "reports.create",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795548105185,
+          "method": "POST",
+          "proc": "reports.create",
+          "url": "http://127.0.0.1:4999/trpc/reports.create"
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots-clicks/report-submit-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "comment-load-more-clicks",
+      "locale": "zh-CN",
+      "proc": "comments.listReplies",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795548108153,
+          "method": "GET",
+          "proc": "comments.listReplies",
+          "url": "http://127.0.0.1:4999/trpc/comments.listReplies?input=%7B%22parentId%22%3A%2200000000-0000-4000-8000-0000000000a1%22%2C%22cursor%22%3A%2200000000-0000-4000-8000-0000000000b3%22%2C%22limit%22%3A20%2C%22surface%22%3A%22miniapp%22%7D"
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots-clicks/comment-load-more-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "comment-delete-confirm-clicks",
+      "locale": "en-US",
+      "proc": "comments.delete",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795548111750,
+          "method": "POST",
+          "proc": "comments.delete",
+          "url": "http://127.0.0.1:4999/trpc/comments.delete"
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots-clicks/comment-delete-confirm-clicks-en-375.png",
+      "ok": true
+    },
+    {
+      "name": "report-submit-clicks",
+      "locale": "en-US",
+      "proc": "reports.create",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795548115785,
+          "method": "POST",
+          "proc": "reports.create",
+          "url": "http://127.0.0.1:4999/trpc/reports.create"
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots-clicks/report-submit-clicks-en-375.png",
+      "ok": true
+    },
+    {
+      "name": "comment-load-more-clicks",
+      "locale": "en-US",
+      "proc": "comments.listReplies",
+      "requestCount": 1,
+      "requests": [
+        {
+          "at": 1795548118769,
+          "method": "GET",
+          "proc": "comments.listReplies",
+          "url": "http://127.0.0.1:4999/trpc/comments.listReplies?input=%7B%22parentId%22%3A%2200000000-0000-4000-8000-0000000000a1%22%2C%22cursor%22%3A%2200000000-0000-4000-8000-0000000000b3%22%2C%22limit%22%3A20%2C%22surface%22%3A%22miniapp%22%7D"
+        }
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301d/shots-clicks/comment-load-more-clicks-en-375.png",
+      "ok": true
+    }
+  ],
+  "allOk": true
+}
