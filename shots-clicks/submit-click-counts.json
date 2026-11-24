@@ -1,7 +1,7 @@
 {
   "title": "Trade publish submit sends one request despite extra clicks",
   "method": "Click submit once (request hung), then click the disabled button 3 more times with force:true.",
-  "headSha": "a0d7df086e1114f80e5e8f65e95155dc344a721a",
+  "headSha": "dc0fa64a13c68fd87b2517e59edea06c44bdbbbe",
   "results": [
     {
       "name": "trade-publish-submit-clicks",
@@ -10,7 +10,7 @@
       "requestCount": 1,
       "requests": [
         {
-          "at": 1795545250543,
+          "at": 1795545827885,
           "method": "POST",
           "proc": "listings.publish",
           "url": "http://127.0.0.1:4999/trpc/listings.publish"
@@ -34,7 +34,7 @@
       "requestCount": 1,
       "requests": [
         {
-          "at": 1795545254154,
+          "at": 1795545831500,
           "method": "POST",
           "proc": "listings.publish",
           "url": "http://127.0.0.1:4999/trpc/listings.publish"

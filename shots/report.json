@@ -1,5 +1,5 @@
 {
-  "headSha": "a0d7df086e1114f80e5e8f65e95155dc344a721a",
+  "headSha": "dc0fa64a13c68fd87b2517e59edea06c44bdbbbe",
   "failed": 0,
   "shots": 26,
   "report": [
@@ -53,6 +53,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-loading-zh-375.png"
@@ -107,6 +108,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-error-zh-375.png"
@@ -161,6 +163,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-empty-zh-375.png"
@@ -215,6 +218,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-success-zh-375.png"
@@ -436,7 +440,7 @@
       ],
       "buttonAssertFailures": [],
       "alerts": 1,
-      "bodyText": "首页\n/ 交易意向板\n/ 发布交易意向\n发布交易意向\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。\n意向类型\n想出（卖）\n想求（买）\n卡牌\nAurora Knight\nCelestial Dawn 天穹黎明\n更换\n价格（可空）\n货币\nCNY\n品相\n不填写\n语言\n不填写\n版本备注（可选）\n联系方式（微信 / QQ / 邮箱…）\n只有登录用户能看到联系方式\n实物图链接（可选）\n内容未通过审核，请修改后再提交\n发布意向\n取消",
+      "bodyText": "首页\n/ 交易意向板\n/ 发布交易意向\n发布交易意向\nCardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。\n意向类型\n想出（卖）\n想求（买）\n卡牌\nAurora Knight\nCelestial Dawn 天穹黎明\n更换\n价格（可空）\n货币\nCNY\n品相\n不填写\n语言\n不填写\n版本备注（可选）\n联系方式（微信 / QQ / 邮箱…）\n只有登录用户能看到联系方式\n实物图链接（可选）\n内容未通过审核，没有发布。\n发布意向\n取消",
       "name": "trade-publish-blocked-zh",
       "pixelColors": [
         {
@@ -858,6 +862,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-loading-en-375.png"
@@ -912,6 +917,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-error-en-375.png"
@@ -966,6 +972,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-empty-en-375.png"
@@ -1020,6 +1027,7 @@
         }
       ],
       "requests": [
+        "listings.list",
         "listings.list"
       ],
       "screenshot": "/workspace/xiangzi-notes/ch301c/shots/trade-list-success-en-375.png"
@@ -1241,7 +1249,7 @@
       ],
       "buttonAssertFailures": [],
       "alerts": 1,
-      "bodyText": "Home\n/ Trade board\n/ Publish a listing\nPublish a listing\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.\nListing type\nSelling\nBuying\nCard\nAurora Knight\nCelestial Dawn 天穹黎明\nChange\nPrice (optional)\nCurrency\nCNY\nCondition\nNot specified\nLanguage\nNot specified\nEdition note (optional)\nContact info (WeChat / QQ / email…)\nOnly signed-in users can see this\nPhoto links (optional)\nThis didn't pass review. Edit and try again.\nPost listing\nCancel",
+      "bodyText": "Home\n/ Trade board\n/ Publish a listing\nPublish a listing\nCardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.\nListing type\nSelling\nBuying\nCard\nAurora Knight\nCelestial Dawn 天穹黎明\nChange\nPrice (optional)\nCurrency\nCNY\nCondition\nNot specified\nLanguage\nNot specified\nEdition note (optional)\nContact info (WeChat / QQ / email…)\nOnly signed-in users can see this\nPhoto links (optional)\nThis didn't pass review and wasn't published.\nPost listing\nCancel",
       "name": "trade-publish-blocked-en",
       "pixelColors": [
         {
