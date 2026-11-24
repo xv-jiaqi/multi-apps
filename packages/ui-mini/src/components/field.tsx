@@ -51,9 +51,9 @@ export function Field({
       <Input
         value={value}
         type={type}
-        password={password}
+        password={password ? true : undefined}
         placeholder={placeholder}
-        disabled={disabled}
+        disabled={disabled ? true : undefined}
         maxlength={maxlength ?? 140}
         onInput={(e) => onInput(e.detail.value)}
         style={rpxStyle({

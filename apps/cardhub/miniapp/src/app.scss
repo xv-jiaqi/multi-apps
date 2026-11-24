@@ -34,9 +34,12 @@ taro-button-core.primary-button.primary-button--pressed,
   background-color: $color-brand-700;
 }
 
-taro-button-core.primary-button[disabled],
-.primary-button[type='default'][disabled],
-.primary-button[disabled],
+// Hang disabled styles on a class, not [disabled]: Taro H5 renders
+// disabled={false} as disabled="false", which still matches [disabled].
+// WeChat keeps adding .button-disabled when the button is actually disabled.
+taro-button-core.primary-button.primary-button--disabled,
+.primary-button[type='default'].primary-button--disabled,
+.primary-button.primary-button--disabled,
 .primary-button.button-disabled {
   color: $color-neutral-600;
   background-color: $color-neutral-100;

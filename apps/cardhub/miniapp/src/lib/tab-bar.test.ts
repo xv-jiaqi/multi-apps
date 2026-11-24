@@ -82,9 +82,11 @@ describe('PrimaryButton (CH-301 §5)', () => {
       /\.primary-button--pressed\s*\{[\s\S]*background-color:\s*\$color-brand-700/,
     );
     expect(scss).toMatch(
-      /\.primary-button\[disabled\][\s\S]*background-color:\s*\$color-neutral-100/,
+      /\.primary-button--disabled[\s\S]*background-color:\s*\$color-neutral-100/,
     );
-    expect(scss).toMatch(/\.primary-button\[disabled\][\s\S]*color:\s*\$color-neutral-600/);
+    expect(scss).toMatch(/\.primary-button--disabled[\s\S]*color:\s*\$color-neutral-600/);
+    expect(scss).toMatch(/\.button-disabled/);
+    expect(scss).not.toMatch(/primary-button[^\n{]*\[disabled\]/);
   });
 });
 
