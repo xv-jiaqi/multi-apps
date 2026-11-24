@@ -94,7 +94,7 @@ export default observer(function CardDetailPage() {
         toast.show(tt(SUBMITTED_FOR_REVIEW_KEY));
         return;
       }
-      void Taro.showToast({ title: tt('miniapp.toast.commentOk'), icon: 'success' });
+      toast.show(tt('miniapp.toast.commentOk'));
       await loadComments({ fresh: true, keepDataOnError: true });
     } catch (error) {
       showCommentError(
