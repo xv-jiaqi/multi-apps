@@ -243,7 +243,7 @@ export default observer(function ForumDetailPage() {
                     <Text className="forum-form__error-text">{replyError.text}</Text>
                   </View>
                 ) : null}
-                <View className="forum-form__footer">
+                <View className="forum-form__footer" data-toast-avoid>
                   <Text className="forum-form__count">{replyBody.length} / 5000</Text>
                   <PrimaryButton
                     label={

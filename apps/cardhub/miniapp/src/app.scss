@@ -64,12 +64,20 @@ taro-text.ui-mini-field__label {
   text-align: center;
   background-color: $color-neutral-900;
   border-radius: $radius-md;
+  // Clicks must reach controls the bar may visually cover (breadcrumbs).
+  pointer-events: none;
+}
+
+.miniapp-status-toast--bottom {
+  top: auto;
+  bottom: $spacing-md;
 }
 
 .miniapp-status-toast__text {
   font-size: 28rpx;
   line-height: 1.4;
   color: $color-white;
+  pointer-events: none;
 }
 
 

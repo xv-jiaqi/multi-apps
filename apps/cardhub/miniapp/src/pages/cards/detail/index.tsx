@@ -215,7 +215,7 @@ export default observer(function CardDetailPage() {
                       <Text className="comment-form__error-text">{commentError.text}</Text>
                     </View>
                   ) : null}
-                  <View className="comment-form__footer">
+                  <View className="comment-form__footer" data-toast-avoid>
                     <Text className="card-detail-page__meta comment-form__count">
                       {commentContent.length} / 500
                     </Text>

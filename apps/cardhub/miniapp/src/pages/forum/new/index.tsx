@@ -121,7 +121,7 @@ export default observer(function ForumNewPage() {
               </View>
             ) : null}
 
-            <View className="forum-form__footer">
+            <View className="forum-form__footer" data-toast-avoid>
               <Text className="forum-form__count">{body.length} / 10000</Text>
               <PrimaryButton
                 label={submit.pending ? tt('forum.new.publishing') : tt('forum.new.publish')}
