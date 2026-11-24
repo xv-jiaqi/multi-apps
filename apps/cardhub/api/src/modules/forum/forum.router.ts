@@ -26,6 +26,7 @@ import { ContentSecurityService } from '../content-security/content-security.ser
 import {
   authorSafetyStatus,
   blockedSafetyStatus,
+  contentPublicForNotify,
   mergeSafetyStatus,
   resolveSafetyView,
   publicSafetyWhere,
@@ -257,7 +258,10 @@ export class ForumRouter {
           targetId: created.id,
           scene: 3,
         });
-        if (contentMayNotify(created.body, null, actorId)) {
+        if (
+          contentPublicForNotify(created.safetyStatus) &&
+          contentMayNotify(created.body, null, actorId)
+        ) {
           await notifyAfterCommit(() =>
             notifyContent(prisma, {
               actorId,
@@ -316,18 +320,21 @@ export class ForumRouter {
           targetId: updated.id,
           scene: 3,
         });
-        await notifyAfterCommit(() =>
-          notifyContent(prisma, {
-            actorId,
-            body: updated.body,
-            excerpt: notificationExcerpt(updated.body),
-            targetType: 'TOPIC',
-            targetId: updated.id,
-            href: forumTopicHref(updated.slug),
-            reply: null,
-            dedupeMentions: true,
-          }),
-        );
+        // A RISKY / REVIEW topic is not public: an edit must not @ anyone.
+        if (contentPublicForNotify(updated.safetyStatus)) {
+          await notifyAfterCommit(() =>
+            notifyContent(prisma, {
+              actorId,
+              body: updated.body,
+              excerpt: notificationExcerpt(updated.body),
+              targetType: 'TOPIC',
+              targetId: updated.id,
+              href: forumTopicHref(updated.slug),
+              reply: null,
+              dedupeMentions: true,
+            }),
+          );
+        }
         return mapTopicDetail(updated);
       }),
 
@@ -522,17 +529,21 @@ export class ForumRouter {
           targetId: created.id,
           scene: 3,
         });
-        await notifyAfterCommit(() =>
-          notifyContent(prisma, {
-            actorId,
-            body: created.body,
-            excerpt: notificationExcerpt(created.body),
-            targetType: 'REPLY',
-            targetId: created.id,
-            href: forumReplyHref(topic.slug, created.id),
-            reply: topic.userId === actorId ? null : { userId: topic.userId, type: 'TOPIC_REPLY' },
-          }),
-        );
+        // Reply notices need both the reply and its topic to be public.
+        if (contentPublicForNotify(created.safetyStatus, topic.safetyStatus)) {
+          await notifyAfterCommit(() =>
+            notifyContent(prisma, {
+              actorId,
+              body: created.body,
+              excerpt: notificationExcerpt(created.body),
+              targetType: 'REPLY',
+              targetId: created.id,
+              href: forumReplyHref(topic.slug, created.id),
+              reply:
+                topic.userId === actorId ? null : { userId: topic.userId, type: 'TOPIC_REPLY' },
+            }),
+          );
+        }
         return {
           id: created.id,
           body: created.body,
