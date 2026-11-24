@@ -1,6 +1,6 @@
 import type { IncomingMessage, Server as HttpServer } from 'node:http';
 import type { Duplex } from 'node:stream';
-import { Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
 import {
   WS_CLOSE_CODES,
   wsClientMessageSchema,
@@ -11,7 +11,9 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { AuthService } from '../auth/auth.service';
 import type { Principal } from '../auth/principal';
 import { parseBearer } from '../auth/tokens';
+import type { HubLogger } from '../common/logger';
 import { redact } from '../common/redact';
+import { HUB_LOGGER } from '../common/tokens';
 import { EventBus } from '../core/event-bus';
 import { EventStore } from '../core/event-store';
 import { TaskService } from '../core/task.service';
@@ -59,6 +61,7 @@ export class WsHub implements OnModuleDestroy {
     @Optional() private readonly bus?: EventBus,
     @Optional() private readonly events?: EventStore,
     @Optional() private readonly tasks?: TaskService,
+    @Optional() @Inject(HUB_LOGGER) private readonly logger?: HubLogger,
   ) {}
 
   attach(server: HttpServer, port: number): void {
@@ -194,10 +197,21 @@ export class WsHub implements OnModuleDestroy {
       msg.afterSeq ?? 0,
       (env) => this.sendAsync(state, { op: 'event', id: subId, ...env }),
       abort.signal,
-    ).then((u) => {
-      if (abort.signal.aborted) u();
-      else unsub = u;
-    });
+    ).then(
+      (u) => {
+        if (abort.signal.aborted) u();
+        else unsub = u;
+      },
+      // 回放读库失败等：记日志并关闭连接，客户端带 afterSeq 重连（PR3 待办 2）。
+      (err: unknown) => {
+        this.logger?.errorMsg('WebSocket 回放失败', {
+          scope: 'ws',
+          taskId: row.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        this.close(state, WS_CLOSE_CODES.INTERNAL_ERROR, 'replay failed');
+      },
+    );
   }
 
   private markReady(state: ClientState, principal: Principal): void {
@@ -207,6 +221,14 @@ export class WsHub implements OnModuleDestroy {
     }
     if (!principal.scopes.includes('tasks:read')) {
       return this.close(state, WS_CLOSE_CODES.FORBIDDEN, 'missing tasks:read');
+    }
+    // 桥接 token 的连接上限在鉴权成功时计数：header 与 auth 消息两种鉴权方式一样（PR3 待办 3）。
+    // header 鉴权在握手时已经检查过一次（回 HTTP 429），这里兜住并发握手和 auth 消息。
+    if (
+      principal.kind === 'bridge' &&
+      this.bridgeConnections(principal.tokenId) >= MAX_BRIDGE_CONNECTIONS
+    ) {
+      return this.close(state, WS_CLOSE_CODES.TOO_MANY_CONNECTIONS, 'too many connections');
     }
     state.principal = principal;
     this.send(state, {

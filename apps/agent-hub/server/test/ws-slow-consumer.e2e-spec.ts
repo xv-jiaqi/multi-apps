@@ -95,6 +95,41 @@ describe('E53 慢消费者', () => {
     again.ws.close();
   });
 
+  it('重连回放期间又落库了几 MB（追赶）：逐条等写完，不再 4008，最终追上（PR3 待办 6）', async () => {
+    hub = await startHub('codex-readonly-demo');
+    hub.app.get(WsHub).slowConsumerBytes = THRESHOLD;
+    await waitAgentReady(hub);
+    const created = await api<{ task: { id: string } }>(hub, 'POST', '/tasks', {
+      agentId: 'codex',
+      prompt: 'hi',
+    });
+    const taskId = created.body.task.id;
+    await api<WaitResponse>(hub, 'GET', `/tasks/${taskId}/wait?until=turn_end&timeoutSec=20`);
+    const store = hub.app.get(EventStore);
+    const big = (i: number) => ({
+      type: 'notice' as const,
+      level: 'info' as const,
+      message: `${i}:`.padEnd(CHUNK, 'x'),
+    });
+    for (let i = 0; i < 160; i++) store.append(taskId, null, big(i)); // 约 10 MB 历史
+
+    const { ws, msgs } = await connect(hub);
+    let closeCode: number | null = null;
+    ws.on('close', (c) => (closeCode = c));
+    const socket = (ws as unknown as { _socket: Socket })._socket;
+    socket.pause(); // 慢客户端：回放卡在 socket 写不出去
+    ws.send(JSON.stringify({ op: 'subscribe', id: 't', topic: 'task', taskId, afterSeq: 0 }));
+    await new Promise((r) => setTimeout(r, 300));
+    for (let i = 0; i < 64; i++) store.append(taskId, null, big(1000 + i)); // 回放期间又来 4 MB
+    const lastSeq = store.list(taskId, 0, 10_000).at(-1)!.seq;
+    socket.resume();
+    await until(() => closeCode !== null || msgs.some((m) => m.seq === lastSeq), 30_000);
+    expect(closeCode).toBeNull();
+    const seqs = msgs.filter((m): m is Msg & { seq: number } => m.op === 'event').map((m) => m.seq);
+    expect(seqs).toEqual(Array.from({ length: lastSeq }, (_, i) => i + 1));
+    ws.close();
+  });
+
   it('客户端正常读：同样的数据量不会被断开', async () => {
     hub = await startHub('codex-readonly-demo');
     hub.app.get(WsHub).slowConsumerBytes = 4 * 1024 * 1024;
