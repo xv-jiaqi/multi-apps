@@ -464,7 +464,7 @@ describe('CommentsRouter replies', () => {
     const { caller, commentFindUnique, commentFindMany } = makeRouter();
     const cursor = '33333333-3333-4333-8333-333333333333';
     const nextId = '44444444-4444-4444-8444-444444444444';
-    commentFindUnique.mockResolvedValueOnce({ parentId: null });
+    commentFindUnique.mockResolvedValueOnce({ parentId: null, safetyStatus: 'PASS' });
     commentFindUnique.mockResolvedValueOnce({ parentId });
     commentFindMany.mockResolvedValueOnce([
       {
@@ -511,7 +511,7 @@ describe('CommentsRouter replies', () => {
       nextCursor: null,
     });
 
-    commentFindUnique.mockResolvedValueOnce({ parentId: null });
+    commentFindUnique.mockResolvedValueOnce({ parentId: null, safetyStatus: 'PASS' });
     commentFindUnique.mockResolvedValueOnce({ parentId: '77777777-7777-4777-8777-777777777777' });
     await expect(
       caller(null).listReplies({
@@ -529,6 +529,7 @@ describe('CommentsRouter replies', () => {
     commentFindUnique.mockResolvedValueOnce({
       id: parentId,
       parentId: null,
+      safetyStatus: 'PASS',
       cardId: 'card-1',
       seriesId: null,
     });
@@ -557,6 +558,7 @@ describe('CommentsRouter replies', () => {
     commentFindUnique.mockResolvedValueOnce({
       id: parentId,
       parentId: null,
+      safetyStatus: 'PASS',
       cardId: 'card-1',
       seriesId: null,
     });
@@ -577,6 +579,7 @@ describe('CommentsRouter replies', () => {
     commentFindUnique.mockResolvedValueOnce({
       id: parentId,
       parentId: null,
+      safetyStatus: 'PASS',
       cardId: 'card-1',
       seriesId: null,
     });
@@ -612,6 +615,7 @@ describe('CommentsRouter replies', () => {
     commentFindUnique.mockResolvedValueOnce({
       id: parentId,
       parentId: null,
+      safetyStatus: 'PASS',
       cardId: 'other-card',
       seriesId: null,
     });
@@ -631,6 +635,7 @@ describe('CommentsRouter replies', () => {
     commentFindUnique.mockResolvedValueOnce({
       id: parentId,
       parentId: null,
+      safetyStatus: 'PASS',
       cardId: null,
       seriesId: 'series-1',
     });

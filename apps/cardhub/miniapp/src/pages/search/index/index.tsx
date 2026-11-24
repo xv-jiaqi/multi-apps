@@ -5,7 +5,10 @@ import { BreadcrumbsMini, Empty, Link, RarityBadge, Skeleton, type Rarity } from
 import { cardSearchHint, hasCardSearchConditions, parseCardSearchQuery, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
-import { gradientFor } from '../../../lib/gradients';
+import { nextNoticeId, type Notice } from '../../../lib/notice';
+import { ArtworkMini } from '../../../components/artwork-mini';
+import { ErrorBoxMini } from '../../../components/error-box-mini';
+import './index.scss';
 
 type SearchResult = Awaited<ReturnType<typeof trpc.cards.search.query>>;
 
@@ -26,7 +29,11 @@ export default observer(function SearchPage() {
   const [debounced, setDebounced] = useState('');
   const [results, setResults] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // `hint` is local parser copy; `failure` is a failed request (red box + retry).
+  const [hint, setHint] = useState<string | null>(null);
+  const [failure, setFailure] = useState<Notice<object> | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const lastQueryRef = useRef('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce the query by 250ms to match web UX.
@@ -39,9 +46,13 @@ export default observer(function SearchPage() {
   }, [query]);
 
   useEffect(() => {
+    if (lastQueryRef.current !== debounced) {
+      lastQueryRef.current = debounced;
+      setFailure(null);
+    }
     if (debounced.length === 0) {
       setResults(null);
-      setError(null);
+      setHint(null);
       return;
     }
     const parsed = parseCardSearchQuery(debounced);
@@ -60,26 +71,28 @@ export default observer(function SearchPage() {
               })
       : null;
     if (!parsed.ok) {
-      setError(hintText);
+      setHint(hintText);
       setLoading(false);
       return;
     }
     if (!hasCardSearchConditions(parsed)) {
       setResults(null);
-      setError(hintText);
+      setHint(hintText);
       setLoading(false);
       return;
     }
     let cancelled = false;
     setLoading(true);
-    setError(hintText);
+    setHint(hintText);
     trpc.cards.search
       .query({ q: debounced, limit: 30 })
       .then((res) => {
-        if (!cancelled) setResults(res);
+        if (cancelled) return;
+        setResults(res);
+        setFailure(null);
       })
-      .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      .catch(() => {
+        if (!cancelled) setFailure({ id: nextNoticeId() });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -87,57 +100,47 @@ export default observer(function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [debounced]);
+  }, [debounced, attempt]);
 
   return (
-    <ScrollView scrollY style={{ height: '100vh' }}>
-      <View style={{ padding: '32rpx' }}>
+    <ScrollView scrollY className="search-page">
+      <View className="search-page__body">
         <BreadcrumbsMini
           items={[
-            { label: tt('breadcrumb.home'), to: '/pages/index/index' },
+            { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
             { label: tt('nav.search') },
           ]}
         />
 
-        <Text style={{ fontSize: '40rpx', fontWeight: 700, color: '#171717', display: 'block' }}>
-          {tt('nav.search')}
-        </Text>
-        <View style={{ height: '16rpx' }} />
+        <Text className="search-page__title">{tt('nav.search')}</Text>
         <Input
+          className="search-page__input"
           value={query}
           placeholder={tt('search.placeholder')}
           confirmType="search"
           onInput={(e) => setQuery(e.detail.value)}
-          style={{
-            width: '100%',
-            padding: '20rpx 24rpx',
-            fontSize: '28rpx',
-            background: '#ffffff',
-            border: '1rpx solid #e5e7eb',
-            borderRadius: '16rpx',
-            boxSizing: 'border-box',
-          }}
         />
-        <View style={{ height: '24rpx' }} />
 
         {debounced === '' ? (
           <Empty description={tt('search.placeholder')} />
+        ) : failure ? (
+          <ErrorBoxMini
+            key={failure.id}
+            title={tt('form.searchFailed')}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+            retrying={loading}
+            onRetry={() => setAttempt((n) => n + 1)}
+          />
         ) : loading ? (
           <View>
-            <Skeleton height="100rpx" />
-            <Skeleton height="100rpx" />
-            <Skeleton height="100rpx" />
+            <Skeleton height="120rpx" />
+            <Skeleton height="120rpx" />
+            <Skeleton height="120rpx" />
           </View>
-        ) : error ? (
-          <View
-            style={{
-              padding: '32rpx',
-              background: '#fef2f2',
-              borderRadius: '16rpx',
-              border: '1rpx solid #fecaca',
-            }}
-          >
-            <Text style={{ color: '#b91c1c', fontSize: '26rpx' }}>{error}</Text>
+        ) : hint ? (
+          <View className="search-page__hint">
+            <Text className="search-page__hint-text">{hint}</Text>
           </View>
         ) : !results || results.results.length === 0 ? (
           <Empty title={tt('search.empty')} />
@@ -147,42 +150,22 @@ export default observer(function SearchPage() {
               <Link
                 key={card.slug}
                 to={`/pages/cards/detail/index?slug=${card.slug}`}
-                style={{ marginBottom: '12rpx' }}
+                className="search-result"
               >
-                <View
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '16rpx',
-                    background: '#ffffff',
-                    borderRadius: '16rpx',
-                    border: '1rpx solid #f1f5f9',
-                  }}
-                >
-                  <View
-                    style={{
-                      width: '80rpx',
-                      height: '80rpx',
-                      borderRadius: '12rpx',
-                      background: gradientFor(card.slug),
-                      flexShrink: 0,
-                    }}
+                <View className="search-result__art">
+                  <ArtworkMini
+                    src={card.imageUrl}
+                    slug={card.slug}
+                    ratio="card"
+                    mode="aspectFill"
+                    label={card.name}
                   />
-                  <View style={{ flex: 1, marginLeft: '20rpx', minWidth: 0 }}>
-                    <Text
-                      style={{
-                        fontSize: '28rpx',
-                        fontWeight: 600,
-                        color: '#171717',
-                        display: 'block',
-                      }}
-                    >
-                      {card.name}
-                    </Text>
-                    <Text style={{ fontSize: '22rpx', color: '#737373' }}>{card.seriesTitle}</Text>
-                  </View>
-                  <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
                 </View>
+                <View className="search-result__text">
+                  <Text className="search-result__name">{card.name}</Text>
+                  <Text className="search-result__series">{card.seriesTitle}</Text>
+                </View>
+                <RarityBadge rarity={normalizeRarity(card.rarity)} locale={locale.locale} />
               </Link>
             ))}
           </View>

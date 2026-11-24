@@ -14,3 +14,4 @@ export { Link } from './components/link';
 export type { LinkProps, LinkMode } from './components/link';
 export { BreadcrumbsMini } from './components/breadcrumbs-mini';
 export type { BreadcrumbsMiniProps, BreadcrumbItem } from './components/breadcrumbs-mini';
+export { rpxStyle, rpxValue } from './rpx';

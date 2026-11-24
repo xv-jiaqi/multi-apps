@@ -1,10 +1,13 @@
 import { View, Text } from '@tarojs/components';
-import { Link } from './link';
+import { Link, type LinkMode } from './link';
+import { rpxStyle } from '../rpx';
 
 export interface BreadcrumbItem {
   label: string;
-  /** When set the item is rendered as a `Taro.navigateTo` link. */
+  /** When set the item is rendered as a link (`Taro.navigateTo` by default). */
   to?: string;
+  /** Tab pages (tabBar) only accept `switchTab`. Defaults to `navigate`. */
+  mode?: LinkMode;
 }
 
 export interface BreadcrumbsMiniProps {
@@ -19,7 +22,7 @@ export interface BreadcrumbsMiniProps {
 export function BreadcrumbsMini({ items }: BreadcrumbsMiniProps) {
   return (
     <View
-      style={{
+      style={rpxStyle({
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
@@ -27,7 +30,7 @@ export function BreadcrumbsMini({ items }: BreadcrumbsMiniProps) {
         marginBottom: '16rpx',
         fontSize: '24rpx',
         color: '#525252',
-      }}
+      })}
     >
       {items.map((item, idx) => {
         const last = idx === items.length - 1;
@@ -35,7 +38,7 @@ export function BreadcrumbsMini({ items }: BreadcrumbsMiniProps) {
         const label = `${separator}${item.label}`;
         if (item.to && !last) {
           return (
-            <Link key={`${idx}-${item.label}`} to={item.to}>
+            <Link key={`${idx}-${item.label}`} to={item.to} mode={item.mode}>
               <Text style={{ color: '#2563eb' }}>{label}</Text>
             </Link>
           );

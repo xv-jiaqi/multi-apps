@@ -1,1 +1,45 @@
 @import '@repo/design-tokens/taro.scss';
+
+.auth-page {
+  height: 100vh;
+  background-color: $color-page;
+}
+
+.auth-page__body {
+  padding: $spacing-md;
+}
+
+.auth-page__subtitle {
+  display: block;
+  margin-bottom: $spacing-md;
+  font-size: 26rpx;
+  color: $color-neutral-600;
+}
+
+.auth-page__error {
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: $radius-md;
+}
+
+.auth-page__error-text {
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: $color-red-700;
+  word-break: break-word;
+}
+
+.auth-page__switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin-top: $spacing-sm;
+}
+
+.auth-page__switch-text {
+  font-size: 26rpx;
+  color: $color-brand-600;
+}

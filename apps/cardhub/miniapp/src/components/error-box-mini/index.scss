@@ -1,0 +1,43 @@
+@import '@repo/design-tokens/taro.scss';
+
+.error-box-mini {
+  padding: $spacing-md;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: $radius-md;
+}
+
+.error-box-mini__title {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: $color-red-700;
+  word-break: break-word;
+}
+
+.error-box-mini__retry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 176rpx;
+  min-height: 88rpx;
+  margin: $spacing-sm 0 0;
+  padding: 0 $spacing-md;
+  font-size: 28rpx;
+  line-height: 1.2;
+  color: $color-red-700;
+  background-color: $color-white;
+  border: 2rpx solid $color-red-300;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+
+  // Beat the runtime's `button[disabled]` gray so 「重试中…」 keeps AA contrast.
+  &[disabled] {
+    color: $color-red-700;
+    background-color: $color-white;
+    opacity: 1;
+  }
+}

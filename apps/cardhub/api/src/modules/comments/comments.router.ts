@@ -12,6 +12,7 @@ import {
   optionalDeleteReason,
   seriesCommentInput,
   slugSchema,
+  type ContentSurface,
 } from '@repo/shared';
 import { aroundPageSkip } from '../../common/around-page';
 import { normalizeDeleteReason, writeContentDelete } from '../audit/content-delete';
@@ -24,7 +25,9 @@ import { ContentSecurityService } from '../content-security/content-security.ser
 import {
   publicSafetyWhere,
   resolveContentSurface,
+  resolveSafetyView,
   toSafetyStatusDto,
+  type ContentSafetyStatusName,
 } from '../content-security/visibility';
 import { loadReplyPreviews, type ReplyPreview } from './reply-preview';
 
@@ -61,6 +64,28 @@ function blankReply(): TRPCError {
 function isMissingParentFk(error: unknown): boolean {
   if (!(error instanceof PrismaClientKnownRequestError) || error.code !== 'P2003') return false;
   return JSON.stringify(error.meta ?? {}).includes('parentId');
+}
+
+/**
+ * Whether this viewer may see a top-level comment, and so its replies.
+ * Public scope: RISKY is hidden for everyone (the author's blocked view is
+ * not a thread to read or answer), REVIEW only for its author, UNCHECKED
+ * hidden on miniapp. The comment's card / series has no safety status, so
+ * the parent row is the whole check.
+ */
+function parentVisible(
+  parent: { userId: string; safetyStatus: ContentSafetyStatusName },
+  visibility: { surface: ContentSurface; viewerId?: string | null },
+): boolean {
+  return (
+    resolveSafetyView({
+      scope: 'public',
+      surface: visibility.surface,
+      status: parent.safetyStatus,
+      authorId: parent.userId,
+      viewerId: visibility.viewerId,
+    }).kind === 'visible'
+  );
 }
 
 @Injectable()
@@ -141,17 +166,36 @@ export class CommentsRouter {
       if (isBlankReplyContent(trimmed, names)) throw blankReply();
     }
 
+    /**
+     * A parent this viewer cannot see answers like a deleted one (same
+     * NOT_FOUND / COMMENT_PARENT_GONE), so a reply cannot probe for it.
+     */
     async function requireTopLevel(
       parentId: string,
       scope: { cardId?: string; seriesId?: string },
+      visibility: { surface: ContentSurface; viewerId: string },
     ) {
       const parent = await prisma.comment.findUnique({
         where: { id: parentId },
-        select: { id: true, parentId: true, cardId: true, seriesId: true, userId: true },
+        select: {
+          id: true,
+          parentId: true,
+          cardId: true,
+          seriesId: true,
+          userId: true,
+          safetyStatus: true,
+        },
       });
-      if (!parent || parent.parentId !== null) throw parentGone();
-      if (scope.cardId && parent.cardId !== scope.cardId) throw parentGone();
-      if (scope.seriesId && parent.seriesId !== scope.seriesId) throw parentGone();
+      // One throw site, so a hidden parent's error matches a missing one exactly.
+      if (
+        !parent ||
+        parent.parentId !== null ||
+        (scope.cardId && parent.cardId !== scope.cardId) ||
+        (scope.seriesId && parent.seriesId !== scope.seriesId) ||
+        !parentVisible(parent, visibility)
+      ) {
+        throw parentGone();
+      }
       return parent;
     }
 
@@ -253,15 +297,18 @@ export class CommentsRouter {
         }),
 
       listReplies: t.procedure.input(commentRepliesListInput).query(async ({ ctx, input }) => {
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
+        const viewerId = ctx.user?.sub;
+        // Missing, not top-level, or hidden from this viewer: one empty page,
+        // so the list cannot leak replies or tell a hidden parent from none.
         const parent = await prisma.comment.findUnique({
           where: { id: input.parentId },
-          select: { parentId: true },
+          select: { parentId: true, userId: true, safetyStatus: true },
         });
-        if (!parent || parent.parentId !== null) return { items: [], nextCursor: null };
-        const safety = publicSafetyWhere({
-          surface: resolveContentSurface(input.surface, ctx.surfaceHeader),
-          viewerId: ctx.user?.sub,
-        });
+        if (!parent || parent.parentId !== null || !parentVisible(parent, { surface, viewerId })) {
+          return { items: [], nextCursor: null };
+        }
+        const safety = publicSafetyWhere({ surface, viewerId });
 
         const mapPage = (rows: CommentWithUser[]) => {
           const hasMore = rows.length > input.limit;
@@ -333,7 +380,14 @@ export class CommentsRouter {
           throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
         }
         const parent = input.parentId
-          ? await requireTopLevel(input.parentId, { cardId: card.id })
+          ? await requireTopLevel(
+              input.parentId,
+              { cardId: card.id },
+              {
+                surface: resolveContentSurface(undefined, ctx.surfaceHeader),
+                viewerId: ctx.user.sub,
+              },
+            )
           : null;
         if (input.parentId) await assertReplyContent(input.parentId, input.content);
 
@@ -368,7 +422,14 @@ export class CommentsRouter {
             throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
           }
           const parent = input.parentId
-            ? await requireTopLevel(input.parentId, { seriesId: series.id })
+            ? await requireTopLevel(
+                input.parentId,
+                { seriesId: series.id },
+                {
+                  surface: resolveContentSurface(undefined, ctx.surfaceHeader),
+                  viewerId: ctx.user.sub,
+                },
+              )
             : null;
           if (input.parentId) await assertReplyContent(input.parentId, input.content);
 

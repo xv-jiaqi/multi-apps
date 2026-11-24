@@ -1,4 +1,5 @@
 import { View, Text } from '@tarojs/components';
+import { rpxStyle } from '../rpx';
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
@@ -42,13 +43,13 @@ export function RarityBadge({ rarity, locale }: RarityBadgeProps) {
   const style = RARITY_STYLE[rarity];
   return (
     <View
-      style={{
+      style={rpxStyle({
         display: 'inline-block',
         padding: '4rpx 20rpx',
         borderRadius: '9999rpx',
         background: style.background,
         fontSize: '22rpx',
-      }}
+      })}
     >
       <Text style={{ color: style.color, fontWeight: 500 }}>{style.label[locale]}</Text>
     </View>

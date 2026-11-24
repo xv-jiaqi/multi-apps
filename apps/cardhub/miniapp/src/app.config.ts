@@ -1,18 +1,22 @@
+import { APP_PAGES, PAGE_BACKGROUND, TAB_BAR_COLORS, TAB_BAR_ITEMS } from './lib/tab-bar';
+
 export default defineAppConfig({
-  pages: [
-    'pages/index/index',
-    'pages/series/list/index',
-    'pages/series/detail/index',
-    'pages/cards/detail/index',
-    'pages/search/index/index',
-    'pages/auth/login/index',
-    'pages/auth/register/index',
-  ],
+  pages: [...APP_PAGES],
   window: {
     backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#ffffff',
+    navigationBarBackgroundColor: TAB_BAR_COLORS.backgroundColor,
     navigationBarTitleText: 'Cardhub',
     navigationBarTextStyle: 'black',
-    backgroundColor: '#fafafa',
+    backgroundColor: PAGE_BACKGROUND,
+  },
+  tabBar: {
+    ...TAB_BAR_COLORS,
+    borderStyle: 'black',
+    list: TAB_BAR_ITEMS.map(({ pagePath, text, iconPath, selectedIconPath }) => ({
+      pagePath,
+      text,
+      iconPath,
+      selectedIconPath,
+    })),
   },
 });
