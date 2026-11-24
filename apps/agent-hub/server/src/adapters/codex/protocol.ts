@@ -3,6 +3,7 @@
  * 只包含 Hub 发出的请求、Hub 处理的通知与服务端请求；字段名、取值与线上完全一致。
  * 线上的帧不带 "jsonrpc" 字段。
  */
+import type { JsonValue } from '@agent-hub/contract';
 
 export const CODEX_VERIFIED_VERSIONS = ['0.164.0'] as const;
 
@@ -89,6 +90,8 @@ export interface ThreadStartParams {
   developerInstructions: string;
   /** D31：userVisible 时为 "user"，否则不带这个字段。 */
   threadSource?: string;
+  /** 覆盖 config.toml 的键（点分路径），见 mapping.ts 的 codexConfigOverrides。 */
+  config?: Record<string, JsonValue> | null;
 }
 
 export interface ThreadResumeParams {
@@ -99,6 +102,7 @@ export interface ThreadResumeParams {
   developerInstructions: string;
   /** 不要整段历史，历史在 Hub 自己的事件库里。 */
   excludeTurns: boolean;
+  config?: Record<string, JsonValue> | null;
 }
 
 export interface CodexThread {

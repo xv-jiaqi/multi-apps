@@ -7,7 +7,7 @@
  * item/started → item/commandExecution/outputDelta → item/completed。
  */
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 
@@ -133,6 +133,8 @@ function matches(step, method, params) {
 }
 
 async function handleRequest(msg) {
+  // recordRequests：把收到的每个请求追加到这个文件（一行一个 JSON），测试核对参数用。
+  if (scenario.recordRequests) appendFileSync(scenario.recordRequests, `${JSON.stringify(msg)}\n`);
   await advanceNotifications();
   const step = scenario.steps[stepIndex];
   if (step?.expect && matches(step, msg.method, msg.params ?? {})) {

@@ -27,6 +27,7 @@ import {
 import { CodexSession } from './codex-session';
 import {
   CODEX_DEVELOPER_INSTRUCTIONS,
+  codexConfigOverrides,
   normalizeCodexModels,
   parseCodexVersion,
   sandboxFor,
@@ -152,6 +153,7 @@ export class CodexAdapter implements AgentAdapter {
           sandbox,
           developerInstructions: CODEX_DEVELOPER_INSTRUCTIONS,
           excludeTurns: true,
+          config: codexConfigOverrides(this.deps.agentEnv()),
         };
         try {
           res = await proc.conn.request<ThreadStartResponse>('thread/resume', p);
@@ -174,6 +176,7 @@ export class CodexAdapter implements AgentAdapter {
           serviceName: 'agent_hub',
           developerInstructions: CODEX_DEVELOPER_INSTRUCTIONS,
           ...(params.userVisible ? { threadSource: 'user' } : {}),
+          config: codexConfigOverrides(this.deps.agentEnv()),
         };
         res = await proc.conn.request<ThreadStartResponse>('thread/start', p);
       }
