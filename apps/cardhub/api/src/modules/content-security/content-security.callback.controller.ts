@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import {
   BadRequestException,
   Body,
@@ -63,5 +64,9 @@ export function callbackAuthorized(args: {
   // WeChat credentials are absent. Tests and unconfigured environments
   // call the service directly instead of posting without a secret.
   if (!args.env.callbackToken) return false;
-  return args.headerToken === args.env.callbackToken;
+  if (!args.headerToken) return false;
+  const expected = Buffer.from(args.env.callbackToken);
+  const provided = Buffer.from(args.headerToken);
+  if (expected.length !== provided.length) return false;
+  return timingSafeEqual(expected, provided);
 }

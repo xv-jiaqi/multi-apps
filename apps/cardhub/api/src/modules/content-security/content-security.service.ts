@@ -186,14 +186,12 @@ export class ContentSecurityService {
     }
 
     const openid = args.decision.openid;
+    // Write every image as pending before any WeChat call. If a later
+    // submit fails, the row stays pending so a pass on the other images
+    // cannot aggregate to PASS (AC 248-4).
+    const pendingIds: Array<{ id: string; mediaUrl: string }> = [];
     for (const mediaUrl of args.decision.pendingMedia) {
-      const traceId = await this.submitMedia({
-        env,
-        openid,
-        scene: args.scene,
-        mediaUrl,
-      });
-      await this.writeCheck({
+      const created = await this.writeCheck({
         actor,
         actorId: args.actorId,
         targetType: args.targetType,
@@ -203,8 +201,25 @@ export class ContentSecurityService {
         excerpt: excerptOf([mediaUrl]),
         result: 'pending',
         mediaUrl,
-        traceId,
       });
+      pendingIds.push({ id: created.id, mediaUrl });
+    }
+    for (const pending of pendingIds) {
+      try {
+        const traceId = await this.submitMedia({
+          env,
+          openid,
+          scene: args.scene,
+          mediaUrl: pending.mediaUrl,
+        });
+        await this.prisma.contentSafetyCheck.update({
+          where: { id: pending.id },
+          data: { traceId },
+        });
+      } catch {
+        // Leave the row pending. The post is already saved; throwing
+        // would 500 the client and still leave a public-able row.
+      }
     }
   }
 
@@ -215,10 +230,11 @@ export class ContentSecurityService {
     if (!check || check.kind !== 'IMAGE' || !check.targetType || !check.targetId) {
       throw new TRPCError({ code: 'NOT_FOUND', message: '媒体检查记录不存在' });
     }
-    await this.prisma.contentSafetyCheck.update({
-      where: { id: check.id },
+    const updated = await this.prisma.contentSafetyCheck.updateMany({
+      where: { id: check.id, result: 'pending' },
       data: { result: input.suggest, decidedAt: new Date(this.now()) },
     });
+    if (updated.count === 0) return;
     await this.recomputeTargetStatus({
       targetType: check.targetType,
       targetId: check.targetId,
@@ -281,9 +297,17 @@ export class ContentSecurityService {
     return worstTextSuggest(suggests);
   }
 
+  private wechatInstance: WechatSecCheckClient | undefined;
+
   private wechatClient(env: ContentSecurityEnv): WechatSecCheckClient {
     if (this.wechatOverride) return this.wechatOverride;
-    return new WechatApiSecCheckClient({ appId: env.appId, appSecret: env.appSecret });
+    if (!this.wechatInstance) {
+      this.wechatInstance = new WechatApiSecCheckClient({
+        appId: env.appId,
+        appSecret: env.appSecret,
+      });
+    }
+    return this.wechatInstance;
   }
 
   private async submitMedia(args: {
@@ -316,8 +340,8 @@ export class ContentSecurityService {
     result: string;
     mediaUrl?: string;
     traceId?: string;
-  }): Promise<void> {
-    await this.prisma.contentSafetyCheck.create({
+  }): Promise<{ id: string }> {
+    return this.prisma.contentSafetyCheck.create({
       data: {
         actorId: args.actor ? args.actorId : null,
         actorUsername: args.actor?.username ?? 'unknown',

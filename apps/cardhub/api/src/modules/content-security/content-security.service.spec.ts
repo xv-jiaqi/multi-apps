@@ -36,6 +36,7 @@ function makeService(args: {
   const contentSafetyCheckFindUnique = jest.fn();
   const contentSafetyCheckFindMany = jest.fn();
   const contentSafetyCheckUpdate = jest.fn().mockResolvedValue({});
+  const contentSafetyCheckUpdateMany = jest.fn().mockResolvedValue({ count: 1 });
   const listingUpdate = jest.fn().mockResolvedValue({});
   const userFindUnique = jest
     .fn()
@@ -48,6 +49,7 @@ function makeService(args: {
       findUnique: contentSafetyCheckFindUnique,
       findMany: contentSafetyCheckFindMany,
       update: contentSafetyCheckUpdate,
+      updateMany: contentSafetyCheckUpdateMany,
     },
     topic: { update: jest.fn().mockResolvedValue({}) },
     reply: { update: jest.fn().mockResolvedValue({}) },
@@ -69,9 +71,103 @@ function makeService(args: {
     contentSafetyCheckFindUnique,
     contentSafetyCheckFindMany,
     contentSafetyCheckUpdate,
+    contentSafetyCheckUpdateMany,
     listingUpdate,
     userFindUnique,
   };
+}
+
+function makeStatefulService(args: { env: ContentSecurityEnv; wechat?: WechatSecCheckClient }) {
+  type CheckRow = {
+    id: string;
+    kind: string;
+    result: string;
+    targetType?: string | null;
+    targetId?: string | null;
+    traceId?: string | null;
+    mediaUrl?: string | null;
+    decidedAt?: Date | null;
+  };
+  const checks: CheckRow[] = [];
+  let listingStatus: string | undefined;
+  let nextId = 0;
+
+  const prisma = {
+    user: {
+      findUnique: jest.fn().mockResolvedValue(actorRow()),
+      update: jest.fn().mockResolvedValue({}),
+    },
+    contentSafetyCheck: {
+      create: jest.fn(async ({ data }: { data: Omit<CheckRow, 'id'> & { id?: string } }) => {
+        const row: CheckRow = { ...data, id: data.id ?? `chk-${++nextId}` };
+        checks.push(row);
+        return row;
+      }),
+      findUnique: jest.fn(async ({ where }: { where: { id?: string; traceId?: string } }) => {
+        return (
+          checks.find(
+            (row) =>
+              (where.traceId !== undefined && row.traceId === where.traceId) ||
+              (where.id !== undefined && row.id === where.id),
+          ) ?? null
+        );
+      }),
+      findMany: jest.fn(
+        async ({ where }: { where: { targetType?: string; targetId?: string } }) => {
+          return checks.filter(
+            (row) =>
+              (where.targetType === undefined || row.targetType === where.targetType) &&
+              (where.targetId === undefined || row.targetId === where.targetId),
+          );
+        },
+      ),
+      update: jest.fn(
+        async ({ where, data }: { where: { id: string }; data: Partial<CheckRow> }) => {
+          const row = checks.find((item) => item.id === where.id);
+          if (!row) throw new Error('contentSafetyCheck not found');
+          Object.assign(row, data);
+          return row;
+        },
+      ),
+      updateMany: jest.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { id?: string; traceId?: string; result?: string; kind?: string };
+          data: Partial<CheckRow>;
+        }) => {
+          const matched = checks.filter((row) => {
+            if (where.id !== undefined && row.id !== where.id) return false;
+            if (where.traceId !== undefined && row.traceId !== where.traceId) return false;
+            if (where.result !== undefined && row.result !== where.result) return false;
+            if (where.kind !== undefined && row.kind !== where.kind) return false;
+            return true;
+          });
+          for (const row of matched) Object.assign(row, data);
+          return { count: matched.length };
+        },
+      ),
+    },
+    topic: { update: jest.fn().mockResolvedValue({}) },
+    reply: { update: jest.fn().mockResolvedValue({}) },
+    comment: { update: jest.fn().mockResolvedValue({}) },
+    listing: {
+      update: jest.fn(async ({ data }: { data: { safetyStatus: string } }) => {
+        listingStatus = data.safetyStatus;
+        return data;
+      }),
+    },
+    report: { update: jest.fn().mockResolvedValue({}) },
+  } as unknown as PrismaService;
+
+  const service = new ContentSecurityService(prisma).useTestHooks({
+    env: () => args.env,
+    wechat: args.wechat,
+    now: () => NOW,
+  });
+
+  return { service, checks, listingStatus: () => listingStatus, prisma };
 }
 
 describe('ContentSecurityService.evaluateWrite', () => {
@@ -263,12 +359,13 @@ describe('ContentSecurityService.finalizeWrite and media callback', () => {
     expect(wechat.mediaCheckAsync).not.toHaveBeenCalled();
   });
 
-  it('keeps a listing out of miniapp until a pass callback, then hides it again on risky', async () => {
+  it('keeps a listing out of miniapp until a pass callback', async () => {
     const {
       service,
       contentSafetyCheckCreate,
       contentSafetyCheckFindUnique,
       contentSafetyCheckFindMany,
+      contentSafetyCheckUpdate,
       listingUpdate,
     } = makeService({ env: env({ testResult: 'pass' }) });
 
@@ -292,34 +389,111 @@ describe('ContentSecurityService.finalizeWrite and media callback', () => {
       (call) => call[0]?.data?.kind === 'IMAGE',
     )?.[0]?.data;
     expect(mediaLog?.result).toBe('pending');
-    expect(typeof mediaLog?.traceId).toBe('string');
+    const assignedTraceId = contentSafetyCheckUpdate.mock.calls[0]?.[0]?.data?.traceId as
+      | string
+      | undefined;
+    expect(typeof assignedTraceId).toBe('string');
 
     contentSafetyCheckFindUnique.mockResolvedValue({
-      id: 'img-1',
+      id: 'chk-1',
       kind: 'IMAGE',
       targetType: 'LISTING',
       targetId: 'listing-1',
-      traceId: mediaLog?.traceId,
+      traceId: assignedTraceId,
     });
     contentSafetyCheckFindMany.mockResolvedValueOnce([
       { kind: 'TEXT', result: 'pass' },
       { kind: 'IMAGE', result: 'pass' },
     ]);
-    await service.handleMediaCallback({ traceId: mediaLog.traceId, suggest: 'pass' });
+    await service.handleMediaCallback({ traceId: assignedTraceId!, suggest: 'pass' });
     expect(listingUpdate).toHaveBeenLastCalledWith({
       where: { id: 'listing-1' },
       data: { safetyStatus: 'PASS' },
     });
+  });
 
-    contentSafetyCheckFindMany.mockResolvedValueOnce([
-      { kind: 'TEXT', result: 'pass' },
-      { kind: 'IMAGE', result: 'risky' },
-    ]);
-    await service.handleMediaCallback({ traceId: mediaLog.traceId, suggest: 'risky' });
-    expect(listingUpdate).toHaveBeenLastCalledWith({
-      where: { id: 'listing-1' },
-      data: { safetyStatus: 'RISKY' },
+  it('does not mark a post public when a later image fails submission and an earlier one later passes', async () => {
+    const wechat: WechatSecCheckClient = {
+      msgSecCheck: jest.fn().mockResolvedValue('pass'),
+      mediaCheckAsync: jest
+        .fn()
+        .mockResolvedValueOnce({ traceId: 'tr-a' })
+        .mockRejectedValueOnce(new Error('WeChat mediaCheckAsync failed')),
+    };
+    const { service, listingStatus } = makeStatefulService({
+      env: env({
+        testResult: 'pass',
+        credentialsConfigured: true,
+        appId: 'wx-test',
+        appSecret: 'secret',
+      }),
+      wechat,
     });
+
+    const decision = await service.evaluateWrite({
+      actorId: 'u-alice',
+      scene: 3,
+      texts: ['hello'],
+      imageUrls: ['https://cdn.example/a.png', 'https://cdn.example/b.png'],
+      targetType: 'LISTING',
+    });
+    expect(decision.safetyStatus).toBe('REVIEW');
+    expect(decision.pendingMedia).toEqual([
+      'https://cdn.example/a.png',
+      'https://cdn.example/b.png',
+    ]);
+
+    await service
+      .finalizeWrite({
+        decision,
+        actorId: 'u-alice',
+        targetType: 'LISTING',
+        targetId: 'listing-2',
+        scene: 3,
+      })
+      .catch(() => undefined);
+
+    const submitted = wechat.mediaCheckAsync as jest.Mock;
+    expect(submitted).toHaveBeenCalled();
+    await service.handleMediaCallback({ traceId: 'tr-a', suggest: 'pass' });
+
+    expect(listingStatus()).not.toBe('PASS');
+  });
+
+  it('does not let a later pass callback overwrite an already decided risky result', async () => {
+    const wechat: WechatSecCheckClient = {
+      msgSecCheck: jest.fn(),
+      mediaCheckAsync: jest.fn().mockResolvedValue({ traceId: 'tr-only' }),
+    };
+    const { service, listingStatus } = makeStatefulService({
+      env: env({
+        testResult: 'pass',
+        credentialsConfigured: true,
+        appId: 'wx-test',
+        appSecret: 'secret',
+      }),
+      wechat,
+    });
+
+    const decision = await service.evaluateWrite({
+      actorId: 'u-alice',
+      scene: 4,
+      texts: ['note'],
+      imageUrls: ['https://cdn.example/a.png'],
+      targetType: 'LISTING',
+    });
+    await service.finalizeWrite({
+      decision,
+      actorId: 'u-alice',
+      targetType: 'LISTING',
+      targetId: 'listing-3',
+      scene: 4,
+    });
+
+    await service.handleMediaCallback({ traceId: 'tr-only', suggest: 'risky' });
+    expect(listingStatus()).toBe('RISKY');
+    await service.handleMediaCallback({ traceId: 'tr-only', suggest: 'pass' });
+    expect(listingStatus()).toBe('RISKY');
   });
 });
 
