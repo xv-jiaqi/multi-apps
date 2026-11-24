@@ -1,0 +1,1755 @@
+{
+  "headSha": "12b862f45307cbcf98d101cd6f50d42fde05a262",
+  "failed": 0,
+  "shots": 32,
+  "report": [
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n社区论坛\n发布新话题\n\n首页\n\n论坛\n\n我的",
+      "name": "forum-list-loading-zh",
+      "pixelColors": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 94,
+            "g": 140,
+            "b": 240,
+            "hex": "#5e8cf0"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-loading-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "首页\n/ 社区论坛\n社区论坛\n发布新话题\n论坛加载失败\n重试\n\n首页\n\n论坛\n\n我的",
+      "name": "forum-list-error-zh",
+      "pixelColors": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 94,
+            "g": 140,
+            "b": 240,
+            "hex": "#5e8cf0"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-error-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n社区论坛\n发布新话题\n还没有话题，第一个开聊吧\n\n首页\n\n论坛\n\n我的",
+      "name": "forum-list-empty-zh",
+      "pixelColors": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 94,
+            "g": 140,
+            "b": 240,
+            "hex": "#5e8cf0"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-empty-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n社区论坛\n发布新话题\n我的待审话题审核中\n审核中的正文摘要\nalice · 2026/11/20 16:00:00 · 0 条回帖\n天穹黎明开荒讨论\n大家觉得首发卡力如何？第二行会被摘要折叠。\nbob · 2026/11/20 16:00:00 · 2 条回帖\n\n首页\n\n论坛\n\n我的",
+      "name": "forum-list-success-zh",
+      "pixelColors": [
+        {
+          "label": "发布新话题",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 94,
+            "g": 140,
+            "b": 240,
+            "hex": "#5e8cf0"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-success-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n/ 社区论坛",
+      "name": "forum-detail-loading-zh",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-loading-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "首页\n/ 社区论坛\n/ 社区论坛\n论坛加载失败\n重试",
+      "name": "forum-detail-error-zh",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-error-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n/ 社区论坛\n内容不存在",
+      "name": "forum-detail-notfound-zh",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-notfound-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布回帖",
+          "state": "rest",
+          "box": {
+            "x": 67.390625,
+            "y": 528.71875,
+            "width": 291.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 158,
+            "y": 1101,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 528.71875,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n/ 天穹黎明开荒讨论\n天穹黎明开荒讨论\nbob · 2026/11/20 16:00:00\n大家觉得首发卡力如何？\n\n我的看法是先做一套节奏轴。\n第二行保留换行。\n回帖（2）\n还没有回帖，来抢沙发吧\n撰写回帖\n0 / 5000\n发布回帖",
+      "name": "forum-detail-empty-replies-zh",
+      "pixelColors": [
+        {
+          "label": "发布回帖",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 426,
+            "y": 1101,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 158,
+            "y": 1101,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-empty-replies-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布回帖",
+          "state": "rest",
+          "box": {
+            "x": 74.0625,
+            "y": 620.0625,
+            "width": 284.9375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 172,
+            "y": 1284,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 620.0625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n/ 天穹黎明开荒讨论\n天穹黎明开荒讨论\nbob · 2026/11/20 16:00:00\n大家觉得首发卡力如何？\n\n我的看法是先做一套节奏轴。\n第二行保留换行。\n回帖（2）\ncarol · 2026/11/20 17:00:00\n我觉得 节奏 很重要。\n换行保留。\nalice · 2026/11/20 18:00:00审核中\n我这条还在审\n已显示全部回帖\n撰写回帖\n15 / 5000\n发布回帖",
+      "name": "forum-detail-success-zh",
+      "pixelColors": [
+        {
+          "label": "发布回帖",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 433,
+            "y": 1284,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 172,
+            "y": 1284,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-success-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布回帖",
+          "state": "rest",
+          "box": {
+            "x": 67.390625,
+            "y": 506.328125,
+            "width": 291.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 158,
+            "y": 1056,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 506.328125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n/ 我的待审话题\n我的待审话题审核中\nalice · 2026/11/20 16:00:00\n审核中的正文\n\n第二段保留换行。\n回帖（0）\n还没有回帖，来抢沙发吧\n撰写回帖\n0 / 5000\n发布回帖",
+      "name": "forum-detail-review-zh",
+      "pixelColors": [
+        {
+          "label": "发布回帖",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 426,
+            "y": 1057,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 158,
+            "y": 1056,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-review-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "首页\n/ 社区论坛\n/ 社区论坛\n内容未通过审核，请修改后再提交",
+      "name": "forum-detail-blocked-zh",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-blocked-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布话题",
+          "state": "rest",
+          "box": {
+            "x": 80.734375,
+            "y": 372.015625,
+            "width": 278.265625,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 185,
+            "y": 788,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 372.015625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n/ 发布新话题\n发布新话题\n标题\n5 / 120\n正文\n24 / 10000\n发布话题\n取消",
+      "name": "forum-new-form-zh",
+      "pixelColors": [
+        {
+          "label": "发布话题",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 440,
+            "y": 788,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 185,
+            "y": 788,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-new-form-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布话题",
+          "state": "rest",
+          "box": {
+            "x": 74.0625,
+            "y": 430.015625,
+            "width": 284.9375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 172,
+            "y": 904,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 430.015625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "首页\n/ 社区论坛\n/ 发布新话题\n发布新话题\n标题\n7 / 120\n正文\n内容未通过审核，请修改后再提交\n8 / 10000\n发布话题\n取消",
+      "name": "forum-new-blocked-zh",
+      "pixelColors": [
+        {
+          "label": "发布话题",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 433,
+            "y": 904,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 172,
+            "y": 904,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.create"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-new-blocked-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "正在发布…",
+          "state": "disabled",
+          "box": {
+            "x": 74.0625,
+            "y": 372.015625,
+            "width": 284.9375,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17,
+          "pixelFill": {
+            "x": 172,
+            "y": 788,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 372.015625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 社区论坛\n/ 发布新话题\n发布新话题\n标题\n5 / 120\n正文\n7 / 10000\n正在发布…\n取消",
+      "name": "forum-new-disabled-zh",
+      "pixelColors": [
+        {
+          "label": "正在发布…",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "x": 433,
+            "y": 788,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          },
+          "pixelFill": {
+            "x": 172,
+            "y": 788,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "requests": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-new-disabled-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "发布评论",
+          "state": "rest",
+          "box": {
+            "x": 83.390625,
+            "y": 853.09375,
+            "width": 259.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n10 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！",
+      "name": "card-comment-form-zh",
+      "pixelColors": [
+        {
+          "label": "发布评论",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 426,
+            "y": 1750,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/card-comment-form-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "正在发布…",
+          "state": "disabled",
+          "box": {
+            "x": 83.390625,
+            "y": 853.09375,
+            "width": 259.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17,
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n10 / 500\n正在发布…\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！",
+      "name": "card-comment-disabled-zh",
+      "pixelColors": [
+        {
+          "label": "正在发布…",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "x": 426,
+            "y": 1750,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          },
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/card-comment-disabled-zh-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\nCommunity forum\nNew topic\n\nHome\n\nForum\n\nMe",
+      "name": "forum-list-loading-en",
+      "pixelColors": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-loading-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "Home\n/ Community forum\nCommunity forum\nNew topic\nCouldn't load topics\nRetry\n\nHome\n\nForum\n\nMe",
+      "name": "forum-list-error-en",
+      "pixelColors": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-error-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\nCommunity forum\nNew topic\nNo topics yet — start the first conversation\n\nHome\n\nForum\n\nMe",
+      "name": "forum-list-empty-en",
+      "pixelColors": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-empty-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "box": {
+            "x": 16,
+            "y": 83.1875,
+            "width": 343,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\nCommunity forum\nNew topic\n我的待审话题Under review\n审核中的正文摘要\nalice · 11/20/2026, 4:00:00 PM · 0 replies\n天穹黎明开荒讨论\n大家觉得首发卡力如何？第二行会被摘要折叠。\nbob · 11/20/2026, 4:00:00 PM · 2 replies\n\nHome\n\nForum\n\nMe",
+      "name": "forum-list-success-en",
+      "pixelColors": [
+        {
+          "label": "New topic",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 375,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 56,
+            "y": 210,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.list"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-list-success-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\n/ Community forum",
+      "name": "forum-detail-loading-en",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-loading-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "Home\n/ Community forum\n/ Community forum\nCouldn't load topics\nRetry",
+      "name": "forum-detail-error-en",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-error-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\n/ Community forum\nNot found",
+      "name": "forum-detail-notfound-en",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-notfound-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post reply",
+          "state": "rest",
+          "box": {
+            "x": 67.390625,
+            "y": 528.71875,
+            "width": 291.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 158,
+            "y": 1101,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 528.71875,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\n/ 天穹黎明开荒讨论\n天穹黎明开荒讨论\nbob · 11/20/2026, 4:00:00 PM\n大家觉得首发卡力如何？\n\n我的看法是先做一套节奏轴。\n第二行保留换行。\nReplies (2)\nNo replies yet — be the first to chime in\nWrite a reply\n0 / 5000\nPost reply",
+      "name": "forum-detail-empty-replies-en",
+      "pixelColors": [
+        {
+          "label": "Post reply",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 426,
+            "y": 1101,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 158,
+            "y": 1101,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-empty-replies-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post reply",
+          "state": "rest",
+          "box": {
+            "x": 74.0625,
+            "y": 620.0625,
+            "width": 284.9375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 172,
+            "y": 1284,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 620.0625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\n/ 天穹黎明开荒讨论\n天穹黎明开荒讨论\nbob · 11/20/2026, 4:00:00 PM\n大家觉得首发卡力如何？\n\n我的看法是先做一套节奏轴。\n第二行保留换行。\nReplies (2)\ncarol · 11/20/2026, 5:00:00 PM\n我觉得 节奏 很重要。\n换行保留。\nalice · 11/20/2026, 6:00:00 PMUnder review\n我这条还在审\nAll replies shown\nWrite a reply\n15 / 5000\nPost reply",
+      "name": "forum-detail-success-en",
+      "pixelColors": [
+        {
+          "label": "Post reply",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 433,
+            "y": 1284,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 172,
+            "y": 1284,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-success-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post reply",
+          "state": "rest",
+          "box": {
+            "x": 67.390625,
+            "y": 506.328125,
+            "width": 291.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 158,
+            "y": 1056,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 506.328125,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\n/ 我的待审话题\n我的待审话题Under review\nalice · 11/20/2026, 4:00:00 PM\n审核中的正文\n\n第二段保留换行。\nReplies (0)\nNo replies yet — be the first to chime in\nWrite a reply\n0 / 5000\nPost reply",
+      "name": "forum-detail-review-en",
+      "pixelColors": [
+        {
+          "label": "Post reply",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 426,
+            "y": 1057,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 158,
+            "y": 1056,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-review-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [],
+      "footers": [],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "Home\n/ Community forum\n/ Community forum\nThis didn't pass review. Edit and try again.",
+      "name": "forum-detail-blocked-en",
+      "pixelColors": [],
+      "requests": [
+        "forum.topics.bySlug"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-detail-blocked-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post topic",
+          "state": "rest",
+          "box": {
+            "x": 80.734375,
+            "y": 372.015625,
+            "width": 278.265625,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 185,
+            "y": 788,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 372.015625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\n/ Start a new topic\nStart a new topic\nTITLE\n5 / 120\nBody\n24 / 10000\nPost topic\nCancel",
+      "name": "forum-new-form-en",
+      "pixelColors": [
+        {
+          "label": "Post topic",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 440,
+            "y": 788,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 185,
+            "y": 788,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-new-form-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post topic",
+          "state": "rest",
+          "box": {
+            "x": 74.0625,
+            "y": 430.015625,
+            "width": 284.9375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 172,
+            "y": 904,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 430.015625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 1,
+      "bodyText": "Home\n/ Community forum\n/ Start a new topic\nStart a new topic\nTITLE\n7 / 120\nBody\nThis didn't pass review. Edit and try again.\n8 / 10000\nPost topic\nCancel",
+      "name": "forum-new-blocked-en",
+      "pixelColors": [
+        {
+          "label": "Post topic",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 433,
+            "y": 904,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          },
+          "pixelFill": {
+            "x": 172,
+            "y": 904,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "forum.topics.create"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-new-blocked-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Publishing…",
+          "state": "disabled",
+          "box": {
+            "x": 74.0625,
+            "y": 372.015625,
+            "width": 284.9375,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17,
+          "pixelFill": {
+            "x": 172,
+            "y": 788,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "forum-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 16,
+            "y": 372.015625,
+            "width": 343,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Community forum\n/ Start a new topic\nStart a new topic\nTITLE\n5 / 120\nBody\n7 / 10000\nPublishing…\nCancel",
+      "name": "forum-new-disabled-en",
+      "pixelColors": [
+        {
+          "label": "Publishing…",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "x": 433,
+            "y": 788,
+            "r": 82,
+            "g": 82,
+            "b": 82,
+            "hex": "#525252"
+          },
+          "pixelFill": {
+            "x": 172,
+            "y": 788,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "requests": [],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/forum-new-disabled-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Post comment",
+          "state": "rest",
+          "box": {
+            "x": 83.390625,
+            "y": 853.09375,
+            "width": 259.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "ratio": 5.17,
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n10 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！",
+      "name": "card-comment-form-en",
+      "pixelColors": [
+        {
+          "label": "Post comment",
+          "state": "rest",
+          "computedBg": "rgb(37, 99, 235)",
+          "computedFg": "rgb(255, 255, 255)",
+          "pixel": {
+            "x": 426,
+            "y": 1750,
+            "r": 204,
+            "g": 219,
+            "b": 251,
+            "hex": "#ccdbfb"
+          },
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 37,
+            "g": 99,
+            "b": 235,
+            "hex": "#2563eb"
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/card-comment-form-en-375.png"
+    },
+    {
+      "viewport": 375,
+      "maxScrollWidth": 375,
+      "buttons": [
+        {
+          "label": "Posting…",
+          "state": "disabled",
+          "box": {
+            "x": 83.390625,
+            "y": 853.09375,
+            "width": 259.609375,
+            "height": 44
+          },
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "ratio": 7.17,
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "footers": [
+        {
+          "cls": "comment-form__footer",
+          "gap": "8px",
+          "display": "flex",
+          "box": {
+            "x": 32,
+            "y": 853.09375,
+            "width": 311,
+            "height": 44
+          }
+        }
+      ],
+      "buttonAssertFailures": [],
+      "alerts": 0,
+      "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n10 / 500\nPosting…\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！",
+      "name": "card-comment-disabled-en",
+      "pixelColors": [
+        {
+          "label": "Posting…",
+          "state": "disabled",
+          "computedBg": "rgb(245, 245, 245)",
+          "computedFg": "rgb(82, 82, 82)",
+          "pixel": {
+            "x": 426,
+            "y": 1750,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          },
+          "pixelFill": {
+            "x": 190,
+            "y": 1750,
+            "r": 245,
+            "g": 245,
+            "b": 245,
+            "hex": "#f5f5f5"
+          }
+        }
+      ],
+      "requests": [
+        "cards.bySlug",
+        "comments.listForCard"
+      ],
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots/card-comment-disabled-en-375.png"
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "title": "Submit buttons (comment, forum topic, forum reply) send one request despite extra clicks",
+  "method": "Click submit once (request hung), then click the disabled button 3 more times with force:true.",
+  "headSha": "12b862f45307cbcf98d101cd6f50d42fde05a262",
+  "results": [
+    {
+      "name": "comment-submit-clicks-zh",
+      "proc": "comments.create",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795543550212,
+          "method": "POST",
+          "proc": "comments.create",
+          "url": "http://127.0.0.1:4999/trpc/comments.create"
+        }
+      ],
+      "ui": {
+        "text": "正在发布…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/comment-submit-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "forum-topic-submit-clicks-zh",
+      "proc": "forum.topics.create",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795543553258,
+          "method": "POST",
+          "proc": "forum.topics.create",
+          "url": "http://127.0.0.1:4999/trpc/forum.topics.create"
+        }
+      ],
+      "ui": {
+        "text": "正在发布…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-topic-submit-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "forum-reply-submit-clicks-zh",
+      "proc": "forum.replies.create",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795543556240,
+          "method": "POST",
+          "proc": "forum.replies.create",
+          "url": "http://127.0.0.1:4999/trpc/forum.replies.create"
+        }
+      ],
+      "ui": {
+        "text": "正在发布…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-reply-submit-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "comment-submit-clicks-en",
+      "proc": "comments.create",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795543559224,
+          "method": "POST",
+          "proc": "comments.create",
+          "url": "http://127.0.0.1:4999/trpc/comments.create"
+        }
+      ],
+      "ui": {
+        "text": "Posting…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/comment-submit-clicks-en-375.png",
+      "ok": true
+    },
+    {
+      "name": "forum-topic-submit-clicks-en",
+      "proc": "forum.topics.create",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795543562274,
+          "method": "POST",
+          "proc": "forum.topics.create",
+          "url": "http://127.0.0.1:4999/trpc/forum.topics.create"
+        }
+      ],
+      "ui": {
+        "text": "Publishing…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-topic-submit-clicks-en-375.png",
+      "ok": true
+    },
+    {
+      "name": "forum-reply-submit-clicks-en",
+      "proc": "forum.replies.create",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795543565235,
+          "method": "POST",
+          "proc": "forum.replies.create",
+          "url": "http://127.0.0.1:4999/trpc/forum.replies.create"
+        }
+      ],
+      "ui": {
+        "text": "Posting…",
+        "className": "primary-button primary-button--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(245, 245, 245)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-reply-submit-clicks-en-375.png",
+      "ok": true
+    }
+  ],
+  "allOk": true
+}
