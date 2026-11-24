@@ -92,12 +92,18 @@ const cursorPageLimit = z
   .max(CURSOR_PAGE_LIMIT_MAX)
   .default(CURSOR_PAGE_LIMIT_DEFAULT);
 
+/** Public content reads. Omitted (or `web`) keeps today's Web list/detail semantics. */
+export const CONTENT_SURFACE_VALUES = ['web', 'miniapp'] as const;
+export type ContentSurface = (typeof CONTENT_SURFACE_VALUES)[number];
+export const contentSurfaceSchema = z.enum(CONTENT_SURFACE_VALUES);
+
 export const commentRepliesListInput = z.object({
   parentId: z.string().uuid(),
   cursor: z.string().uuid().optional(),
   limit: cursorPageLimit,
   // When set, the page that contains this reply is returned and `cursor` is ignored.
   aroundId: z.string().uuid().optional(),
+  surface: contentSurfaceSchema.optional(),
 });
 export type CommentRepliesListInput = z.infer<typeof commentRepliesListInput>;
 
@@ -165,6 +171,17 @@ export const cursorPaginationInput = z.object({
 });
 export type CursorPaginationInput = z.infer<typeof cursorPaginationInput>;
 
+export const topicListInput = cursorPaginationInput.extend({
+  surface: contentSurfaceSchema.optional(),
+});
+export type TopicListInput = z.infer<typeof topicListInput>;
+
+export const topicBySlugInput = z.object({
+  slug: z.string().min(1).max(96),
+  surface: contentSurfaceSchema.optional(),
+});
+export type TopicBySlugInput = z.infer<typeof topicBySlugInput>;
+
 /** Own notifications, newest first. `limit` stays on the shared 1–50 cursor cap. */
 export const notificationListInput = cursorPaginationInput;
 export type NotificationListInput = z.infer<typeof notificationListInput>;
@@ -178,6 +195,7 @@ export type NotificationMarkReadInput = z.infer<typeof notificationMarkReadInput
 export const forumRepliesListInput = cursorPaginationInput.extend({
   topicId: z.string().uuid(),
   aroundId: z.string().uuid().optional(),
+  surface: contentSurfaceSchema.optional(),
 });
 export type ForumRepliesListInput = z.infer<typeof forumRepliesListInput>;
 
@@ -297,6 +315,7 @@ export const listingListInput = cursorPaginationInput.extend({
   maxPrice: listingPriceSchema.optional(),
   currency: z.enum(TRADE_CURRENCY_VALUES).optional(),
   sort: z.enum(LISTING_SORT_VALUES).default('newest'),
+  surface: contentSurfaceSchema.optional(),
 });
 export type ListingListInput = z.infer<typeof listingListInput>;
 

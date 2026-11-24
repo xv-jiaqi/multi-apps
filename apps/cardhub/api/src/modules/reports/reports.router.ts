@@ -9,6 +9,7 @@ import {
 } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { ContentSecurityService } from '../content-security/content-security.service';
 import { writeReportResolve } from '../audit/content-delete';
 import { notifyAfterCommit, notifyModeration } from '../notifications/notify';
 import { readTargetSnapshot } from '../notifications/target-snapshot';
@@ -118,6 +119,7 @@ export class ReportsRouter {
   constructor(
     private readonly t: TrpcBase,
     private readonly prisma: PrismaService,
+    private readonly contentSecurity: ContentSecurityService,
   ) {}
 
   /** `now` is injectable so tests can pin the quota window edges (CH-229). */
@@ -126,6 +128,7 @@ export class ReportsRouter {
     // Per-user quota after auth, before input validation (CH-227).
     const reportCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('reportCreate'));
     const prisma = this.prisma;
+    const contentSecurity = this.contentSecurity;
 
     return t.router({
       create: reportCreateProcedure.input(reportCreateInput).mutation(async ({ ctx, input }) => {
@@ -135,6 +138,12 @@ export class ReportsRouter {
         // is generous enough for legitimate moderation reports while
         // still curbing report-flood griefing.
         const reporterId = ctx.user.sub;
+        const decision = await contentSecurity.evaluateWrite({
+          actorId: reporterId,
+          scene: 4,
+          texts: [input.reason],
+          targetType: 'REPORT',
+        });
         // CH-230: count and insert as one step per account. The advisory lock
         // makes a second report from the same account wait until this one
         // commits, so it counts the row this one wrote. Other accounts do not
@@ -174,6 +183,7 @@ export class ReportsRouter {
                 targetType: input.targetType,
                 targetId: input.targetId,
                 reason: input.reason,
+                safetyStatus: decision.safetyStatus,
               },
             });
           })
@@ -189,6 +199,13 @@ export class ReportsRouter {
               cause: reportQuotaCause({ retryAfterSeconds: REPORT_QUOTA_LOCK_RETRY_AFTER_SECONDS }),
             });
           });
+        await contentSecurity.finalizeWrite({
+          decision,
+          actorId: reporterId,
+          targetType: 'REPORT',
+          targetId: created.id,
+          scene: 4,
+        });
         return {
           id: created.id,
           createdAt: created.createdAt.toISOString(),

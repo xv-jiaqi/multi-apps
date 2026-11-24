@@ -10,6 +10,7 @@ import {
   reportQuotaRetryAfterSeconds,
 } from './report-quota';
 import { ReportsRouter } from './reports.router';
+import { stubContentSecurity } from '../content-security/content-security.test-stub';
 
 const NOW = Date.UTC(2026, 10, 10, 11, 0, 0);
 const DAY = 24 * 60 * 60 * 1000;
@@ -72,7 +73,9 @@ describe('reports.create quota with an injected clock (CH-229 229-A)', () => {
       // CH-230: the quota check runs inside an interactive transaction.
       $transaction: async (callback: (client: typeof tx) => unknown) => callback(tx),
     } as unknown as PrismaService;
-    const built = new ReportsRouter(new TrpcBase(), prisma).build({ now: () => NOW });
+    const built = new ReportsRouter(new TrpcBase(), prisma, stubContentSecurity()).build({
+      now: () => NOW,
+    });
     const caller = built.createCaller({
       req: {} as never,
       res: {} as never,
@@ -148,7 +151,9 @@ describe('reports quota lock timeout (CH-231 231-B)', () => {
         throw error;
       },
     } as unknown as PrismaService;
-    const built = new ReportsRouter(new TrpcBase(), prisma).build({ now: () => NOW });
+    const built = new ReportsRouter(new TrpcBase(), prisma, stubContentSecurity()).build({
+      now: () => NOW,
+    });
     const caller = built.createCaller({
       req: {} as never,
       res: {} as never,

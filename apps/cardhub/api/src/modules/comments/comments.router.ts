@@ -7,6 +7,7 @@ import {
   APP_ERROR_CODES,
   commentInput,
   commentRepliesListInput,
+  contentSurfaceSchema,
   isBlankReplyContent,
   optionalDeleteReason,
   seriesCommentInput,
@@ -19,6 +20,12 @@ import { notificationExcerpt } from '../notifications/plan';
 import { contentMayNotify, notifyAfterCommit, notifyContent } from '../notifications/notify';
 import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
+import { ContentSecurityService } from '../content-security/content-security.service';
+import {
+  publicSafetyWhere,
+  resolveContentSurface,
+  toSafetyStatusDto,
+} from '../content-security/visibility';
 import { loadReplyPreviews, type ReplyPreview } from './reply-preview';
 
 type CommentWithUser = Prisma.CommentGetPayload<{
@@ -31,6 +38,7 @@ function mapComment(c: CommentWithUser) {
     content: c.content,
     createdAt: c.createdAt.toISOString(),
     user: c.user,
+    safetyStatus: toSafetyStatusDto(c.safetyStatus),
   };
 }
 
@@ -60,6 +68,7 @@ export class CommentsRouter {
   constructor(
     private readonly t: TrpcBase,
     private readonly prisma: PrismaService,
+    private readonly contentSecurity: ContentSecurityService,
   ) {}
 
   build() {
@@ -67,12 +76,21 @@ export class CommentsRouter {
     // Per-user quota after auth, before input validation (CH-227).
     const commentCreateProcedure = t.activeUserProcedure.use(t.userRateLimit('commentCreate'));
     const prisma = this.prisma;
+    const contentSecurity = this.contentSecurity;
 
     const userSelect = { select: { id: true, username: true } } as const;
 
-    async function withReplies(where: Prisma.CommentWhereInput, limit: number) {
+    async function withReplies(
+      where: Prisma.CommentWhereInput,
+      limit: number,
+      visibility: { surface: ReturnType<typeof resolveContentSurface>; viewerId?: string | null },
+    ) {
+      const safety = publicSafetyWhere({
+        surface: visibility.surface,
+        viewerId: visibility.viewerId,
+      });
       const comments = await prisma.comment.findMany({
-        where: { ...where, parentId: null },
+        where: { ...where, parentId: null, AND: [safety] },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: limit,
         include: { user: userSelect },
@@ -82,10 +100,10 @@ export class CommentsRouter {
       const [counts, replyRows] = await Promise.all([
         prisma.comment.groupBy({
           by: ['parentId'],
-          where: { parentId: { in: ids } },
+          where: { parentId: { in: ids }, AND: [safety] },
           _count: { _all: true },
         }),
-        loadReplyPreviews(prisma, ids),
+        loadReplyPreviews(prisma, ids, visibility),
       ]);
       const countByParent = new Map(counts.map((row) => [row.parentId, row._count._all] as const));
       const grouped = new Map<string, ReplyPreview[]>();
@@ -147,15 +165,29 @@ export class CommentsRouter {
       kind: 'card' | 'series';
       slug: string;
     }) {
+      const decision = await contentSecurity.evaluateWrite({
+        actorId: input.userId,
+        scene: 2,
+        texts: [input.content],
+        targetType: 'COMMENT',
+      });
       const row = await prisma.comment.create({
         data: {
           content: input.content,
           userId: input.userId,
+          safetyStatus: decision.safetyStatus,
           ...(input.cardId ? { cardId: input.cardId } : {}),
           ...(input.seriesId ? { seriesId: input.seriesId } : {}),
           ...(input.parentId ? { parentId: input.parentId } : {}),
         },
         include: { user: { select: { id: true, username: true } } },
+      });
+      await contentSecurity.finalizeWrite({
+        decision,
+        actorId: input.userId,
+        targetType: 'COMMENT',
+        targetId: row.id,
+        scene: 2,
       });
       const replyUserId =
         input.replyUserId && input.replyUserId !== input.userId ? input.replyUserId : null;
@@ -181,9 +213,10 @@ export class CommentsRouter {
           z.object({
             cardSlug: slugSchema,
             limit: z.number().int().min(1).max(100).default(50),
+            surface: contentSurfaceSchema.optional(),
           }),
         )
-        .query(async ({ input }) => {
+        .query(async ({ ctx, input }) => {
           const card = await prisma.card.findUnique({
             where: { slug: input.cardSlug },
             select: { id: true },
@@ -191,7 +224,10 @@ export class CommentsRouter {
           if (!card) {
             throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
           }
-          return withReplies({ cardId: card.id }, input.limit);
+          return withReplies({ cardId: card.id }, input.limit, {
+            surface: resolveContentSurface(input.surface),
+            viewerId: ctx.user?.sub,
+          });
         }),
 
       listForSeries: t.procedure
@@ -199,9 +235,10 @@ export class CommentsRouter {
           z.object({
             seriesSlug: slugSchema,
             limit: z.number().int().min(1).max(100).default(50),
+            surface: contentSurfaceSchema.optional(),
           }),
         )
-        .query(async ({ input }) => {
+        .query(async ({ ctx, input }) => {
           const series = await prisma.series.findUnique({
             where: { slug: input.seriesSlug },
             select: { id: true },
@@ -209,15 +246,22 @@ export class CommentsRouter {
           if (!series) {
             throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
           }
-          return withReplies({ seriesId: series.id }, input.limit);
+          return withReplies({ seriesId: series.id }, input.limit, {
+            surface: resolveContentSurface(input.surface),
+            viewerId: ctx.user?.sub,
+          });
         }),
 
-      listReplies: t.procedure.input(commentRepliesListInput).query(async ({ input }) => {
+      listReplies: t.procedure.input(commentRepliesListInput).query(async ({ ctx, input }) => {
         const parent = await prisma.comment.findUnique({
           where: { id: input.parentId },
           select: { parentId: true },
         });
         if (!parent || parent.parentId !== null) return { items: [], nextCursor: null };
+        const safety = publicSafetyWhere({
+          surface: resolveContentSurface(input.surface),
+          viewerId: ctx.user?.sub,
+        });
 
         const mapPage = (rows: CommentWithUser[]) => {
           const hasMore = rows.length > input.limit;
@@ -230,21 +274,26 @@ export class CommentsRouter {
 
         if (input.aroundId) {
           const target = await prisma.comment.findFirst({
-            where: { id: input.aroundId, parentId: input.parentId },
+            where: { id: input.aroundId, parentId: input.parentId, AND: [safety] },
             select: { id: true, createdAt: true },
           });
           if (!target) return { items: [], nextCursor: null };
           const before = await prisma.comment.count({
             where: {
               parentId: input.parentId,
-              OR: [
-                { createdAt: { lt: target.createdAt } },
-                { AND: [{ createdAt: target.createdAt }, { id: { lt: target.id } }] },
+              AND: [
+                safety,
+                {
+                  OR: [
+                    { createdAt: { lt: target.createdAt } },
+                    { AND: [{ createdAt: target.createdAt }, { id: { lt: target.id } }] },
+                  ],
+                },
               ],
             },
           });
           const rows = await prisma.comment.findMany({
-            where: { parentId: input.parentId },
+            where: { parentId: input.parentId, AND: [safety] },
             orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
             skip: aroundPageSkip(before, input.limit),
             take: input.limit + 1,
@@ -263,7 +312,7 @@ export class CommentsRouter {
           }
         }
         const rows = await prisma.comment.findMany({
-          where: { parentId: input.parentId },
+          where: { parentId: input.parentId, AND: [safety] },
           orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
           take: input.limit + 1,
           ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),

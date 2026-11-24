@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PUBLIC_WEB_ORIGIN_ERROR, resolvePublicWebOrigin } from '../modules/seo/public-web-origin';
+import { contentSecurityEnvError, readContentSecurityEnv } from './content-security-env';
 
 export const BANNED_PRODUCTION_JWT_SECRETS = [
   'dev-insecure-secret',
@@ -44,6 +45,14 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
     PASSWORD_PREHASH_WRITE: passwordPrehashWriteSchema.parse(config.PASSWORD_PREHASH_WRITE),
   };
 
+  let contentSecurityError: string | undefined;
+  try {
+    contentSecurityError = contentSecurityEnvError(readContentSecurityEnv(config));
+  } catch (error) {
+    contentSecurityError =
+      error instanceof Error ? error.message : 'Invalid content security configuration';
+  }
+
   let originError: string | undefined;
   try {
     const corsOrigin = config.CORS_ORIGIN;
@@ -58,8 +67,11 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
 
   const nodeEnv = envString(parsed.data.NODE_ENV);
   if (nodeEnv !== 'production') {
-    if (originError !== undefined) {
-      throw new Error(`Invalid Cardhub API environment configuration:\n- ${originError}`);
+    const early = [originError, contentSecurityError].filter(
+      (message): message is string => message !== undefined,
+    );
+    if (early.length > 0) {
+      throw new Error(`Invalid Cardhub API environment configuration:\n- ${early.join('\n- ')}`);
     }
     return normalized;
   }
@@ -90,6 +102,10 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
 
   if (originError !== undefined) {
     messages.push(originError);
+  }
+
+  if (contentSecurityError !== undefined) {
+    messages.push(contentSecurityError);
   }
 
   if (messages.length > 0) {
