@@ -1,0 +1,750 @@
+{
+  "headSha": "6e3edc01dcf6b436ffba473e83f4ba9efe20c988",
+  "failed": false,
+  "cases": [
+    {
+      "tag": "forum-375",
+      "ok": true,
+      "peOk": true,
+      "clickThroughOk": true,
+      "clickOk": true,
+      "focusNotCovered": true,
+      "submitClear": true,
+      "countClear": true,
+      "hashBefore": "#/pages/forum/detail/index?slug=topic-1",
+      "hashAfter": "#/pages/index/index",
+      "beforeFocus": {
+        "toast": {
+          "x": 16,
+          "y": 16,
+          "w": 343,
+          "h": 48,
+          "top": 16,
+          "bottom": 64,
+          "left": 16,
+          "right": 359
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 16,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              16,
+              16,
+              40,
+              35.1875
+            ],
+            "overlapPct": 100,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 社区论坛",
+            "box": [
+              44,
+              16,
+              98.671875,
+              35.1875
+            ],
+            "overlapPct": 100,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布回帖",
+          "box": {
+            "x": 67.390625,
+            "y": 461.546875,
+            "w": 291.609375,
+            "h": 44,
+            "top": 461.546875,
+            "bottom": 505.546875,
+            "left": 67.390625,
+            "right": 359
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 5000",
+          "box": {
+            "x": 16,
+            "y": 473.953125,
+            "w": 43.390625,
+            "h": 19.1875,
+            "top": 473.953125,
+            "bottom": 493.140625,
+            "left": 16,
+            "right": 59.390625
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "新卡包开箱分享：天穹黎明首页 / 社区论坛 / 新卡包开箱分享：天穹黎明新卡包开",
+          "tag": "BODY",
+          "overlapPct": 5.4,
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 375,
+            "h": 812,
+            "top": 0,
+            "bottom": 812,
+            "left": 0,
+            "right": 375
+          }
+        }
+      },
+      "afterFocus": {
+        "toast": {
+          "x": 16,
+          "y": 51.1875,
+          "w": 343,
+          "h": 48,
+          "top": 51.1875,
+          "bottom": 99.1875,
+          "left": 16,
+          "right": 359
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 51.1875,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              16,
+              16,
+              40,
+              35.1875
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 社区论坛",
+            "box": [
+              44,
+              16,
+              98.671875,
+              35.1875
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布回帖",
+          "box": {
+            "x": 67.390625,
+            "y": 461.546875,
+            "w": 291.609375,
+            "h": 44,
+            "top": 461.546875,
+            "bottom": 505.546875,
+            "left": 67.390625,
+            "right": 359
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 5000",
+          "box": {
+            "x": 16,
+            "y": 473.953125,
+            "w": 43.390625,
+            "h": 19.1875,
+            "top": 473.953125,
+            "bottom": 493.140625,
+            "left": 16,
+            "right": 59.390625
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "首页",
+          "tag": "A",
+          "overlapPct": 0,
+          "box": {
+            "x": 16,
+            "y": 16,
+            "w": 24,
+            "h": 19.1875,
+            "top": 16,
+            "bottom": 35.1875,
+            "left": 16,
+            "right": 40
+          }
+        }
+      }
+    },
+    {
+      "tag": "forum-1440",
+      "ok": true,
+      "peOk": true,
+      "clickThroughOk": true,
+      "clickOk": true,
+      "focusNotCovered": true,
+      "submitClear": true,
+      "countClear": true,
+      "hashBefore": "#/pages/forum/detail/index?slug=topic-1",
+      "hashAfter": "#/pages/index/index",
+      "beforeFocus": {
+        "toast": {
+          "x": 32,
+          "y": 32,
+          "w": 1376,
+          "h": 96,
+          "top": 32,
+          "bottom": 128,
+          "left": 32,
+          "right": 1408
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 32,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              32,
+              0,
+              80,
+              38.390625
+            ],
+            "overlapPct": 16.6,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 社区论坛",
+            "box": [
+              88,
+              0,
+              197.34375,
+              38.390625
+            ],
+            "overlapPct": 16.6,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布回帖",
+          "box": {
+            "x": 134.765625,
+            "y": 891.140625,
+            "w": 1273.234375,
+            "h": 88,
+            "top": 891.140625,
+            "bottom": 979.140625,
+            "left": 134.765625,
+            "right": 1408
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 5000",
+          "box": {
+            "x": 32,
+            "y": 915.9375,
+            "w": 86.765625,
+            "h": 38.390625,
+            "top": 915.9375,
+            "bottom": 954.328125,
+            "left": 32,
+            "right": 118.765625
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "新卡包开箱分享：天穹黎明首页 / 社区论坛 / 新卡包开箱分享：天穹黎明新卡包开",
+          "tag": "BODY",
+          "overlapPct": 10.2,
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900,
+            "top": 0,
+            "bottom": 900,
+            "left": 0,
+            "right": 1440
+          }
+        }
+      },
+      "afterFocus": {
+        "toast": {
+          "x": 32,
+          "y": 70.390625,
+          "w": 1376,
+          "h": 96,
+          "top": 70.390625,
+          "bottom": 166.390625,
+          "left": 32,
+          "right": 1408
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 70.390625,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              32,
+              0,
+              80,
+              38.390625
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 社区论坛",
+            "box": [
+              88,
+              0,
+              197.34375,
+              38.390625
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布回帖",
+          "box": {
+            "x": 134.765625,
+            "y": 891.140625,
+            "w": 1273.234375,
+            "h": 88,
+            "top": 891.140625,
+            "bottom": 979.140625,
+            "left": 134.765625,
+            "right": 1408
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 5000",
+          "box": {
+            "x": 32,
+            "y": 915.9375,
+            "w": 86.765625,
+            "h": 38.390625,
+            "top": 915.9375,
+            "bottom": 954.328125,
+            "left": 32,
+            "right": 118.765625
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "首页",
+          "tag": "A",
+          "overlapPct": 0,
+          "box": {
+            "x": 32,
+            "y": 0,
+            "w": 48,
+            "h": 38.390625,
+            "top": 0,
+            "bottom": 38.390625,
+            "left": 32,
+            "right": 80
+          }
+        }
+      }
+    },
+    {
+      "tag": "card-375",
+      "ok": true,
+      "peOk": true,
+      "clickThroughOk": true,
+      "clickOk": true,
+      "focusNotCovered": true,
+      "submitClear": true,
+      "countClear": true,
+      "hashBefore": "#/pages/cards/detail/index?slug=aurora-knight",
+      "hashAfter": "#/pages/index/index",
+      "beforeFocus": {
+        "toast": {
+          "x": 16,
+          "y": 16,
+          "w": 343,
+          "h": 48,
+          "top": 16,
+          "bottom": 64,
+          "left": 16,
+          "right": 359
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 16,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              16,
+              0,
+              40,
+              19.1875
+            ],
+            "overlapPct": 16.6,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 系列",
+            "box": [
+              44,
+              0,
+              74.671875,
+              19.1875
+            ],
+            "overlapPct": 16.6,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布评论",
+          "box": {
+            "x": 76.71875,
+            "y": 775.5,
+            "w": 266.28125,
+            "h": 44,
+            "top": 775.5,
+            "bottom": 819.5,
+            "left": 76.71875,
+            "right": 343
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 787.90625,
+            "w": 36.71875,
+            "h": 19.1875,
+            "top": 787.90625,
+            "bottom": 807.09375,
+            "left": 32,
+            "right": 68.71875
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "极光骑士首页 / 系列 / 天穹黎明 / 极光骑士极光骑士传说黎明骑士所属系列 ",
+          "tag": "BODY",
+          "overlapPct": 5.4,
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 375,
+            "h": 812,
+            "top": 0,
+            "bottom": 812,
+            "left": 0,
+            "right": 375
+          }
+        }
+      },
+      "afterFocus": {
+        "toast": {
+          "x": 16,
+          "y": 35.1875,
+          "w": 343,
+          "h": 48,
+          "top": 35.1875,
+          "bottom": 83.1875,
+          "left": 16,
+          "right": 359
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 35.1875,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              16,
+              0,
+              40,
+              19.1875
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 系列",
+            "box": [
+              44,
+              0,
+              74.671875,
+              19.1875
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布评论",
+          "box": {
+            "x": 76.71875,
+            "y": 775.5,
+            "w": 266.28125,
+            "h": 44,
+            "top": 775.5,
+            "bottom": 819.5,
+            "left": 76.71875,
+            "right": 343
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 500",
+          "box": {
+            "x": 32,
+            "y": 787.90625,
+            "w": 36.71875,
+            "h": 19.1875,
+            "top": 787.90625,
+            "bottom": 807.09375,
+            "left": 32,
+            "right": 68.71875
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "首页",
+          "tag": "A",
+          "overlapPct": 0,
+          "box": {
+            "x": 16,
+            "y": 0,
+            "w": 24,
+            "h": 19.1875,
+            "top": 0,
+            "bottom": 19.1875,
+            "left": 16,
+            "right": 40
+          }
+        }
+      }
+    },
+    {
+      "tag": "card-1440",
+      "ok": true,
+      "peOk": true,
+      "clickThroughOk": true,
+      "clickOk": true,
+      "focusNotCovered": true,
+      "submitClear": true,
+      "countClear": true,
+      "hashBefore": "#/pages/cards/detail/index?slug=aurora-knight",
+      "hashAfter": "#/pages/index/index",
+      "beforeFocus": {
+        "toast": {
+          "x": 32,
+          "y": 32,
+          "w": 1376,
+          "h": 96,
+          "top": 32,
+          "bottom": 128,
+          "left": 32,
+          "right": 1408
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 32,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              32,
+              0,
+              80,
+              38.390625
+            ],
+            "overlapPct": 16.6,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 系列",
+            "box": [
+              88,
+              0,
+              149.34375,
+              38.390625
+            ],
+            "overlapPct": 16.6,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布评论",
+          "box": {
+            "x": 153.40625,
+            "y": 1551.03125,
+            "w": 1222.59375,
+            "h": 88,
+            "top": 1551.03125,
+            "bottom": 1639.03125,
+            "left": 153.40625,
+            "right": 1376
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 500",
+          "box": {
+            "x": 64,
+            "y": 1575.828125,
+            "w": 73.40625,
+            "h": 38.390625,
+            "top": 1575.828125,
+            "bottom": 1614.21875,
+            "left": 64,
+            "right": 137.40625
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "极光骑士首页 / 系列 / 天穹黎明 / 极光骑士极光骑士传说黎明骑士所属系列 ",
+          "tag": "BODY",
+          "overlapPct": 10.2,
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900,
+            "top": 0,
+            "bottom": 900,
+            "left": 0,
+            "right": 1440
+          }
+        }
+      },
+      "afterFocus": {
+        "toast": {
+          "x": 32,
+          "y": 70.390625,
+          "w": 1376,
+          "h": 96,
+          "top": 70.390625,
+          "bottom": 166.390625,
+          "left": 32,
+          "right": 1408
+        },
+        "toastText": "已提交，审核通过后显示。",
+        "toastPE": "none",
+        "toastTop": 70.390625,
+        "links": [
+          {
+            "text": "首页",
+            "box": [
+              32,
+              0,
+              80,
+              38.390625
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          },
+          {
+            "text": "/ 系列",
+            "box": [
+              88,
+              0,
+              149.34375,
+              38.390625
+            ],
+            "overlapPct": 0,
+            "centerHitIsLink": true,
+            "centerHitInToast": false,
+            "hitTag": "TARO-TEXT-CORE"
+          }
+        ],
+        "submit": {
+          "text": "发布评论",
+          "box": {
+            "x": 153.40625,
+            "y": 1551.03125,
+            "w": 1222.59375,
+            "h": 88,
+            "top": 1551.03125,
+            "bottom": 1639.03125,
+            "left": 153.40625,
+            "right": 1376
+          },
+          "overlap": 0
+        },
+        "count": {
+          "text": "0 / 500",
+          "box": {
+            "x": 64,
+            "y": 1575.828125,
+            "w": 73.40625,
+            "h": 38.390625,
+            "top": 1575.828125,
+            "bottom": 1614.21875,
+            "left": 64,
+            "right": 137.40625
+          },
+          "overlap": 0
+        },
+        "active": {
+          "text": "首页",
+          "tag": "A",
+          "overlapPct": 0,
+          "box": {
+            "x": 32,
+            "y": 0,
+            "w": 48,
+            "h": 38.390625,
+            "top": 0,
+            "bottom": 38.390625,
+            "left": 32,
+            "right": 80
+          }
+        }
+      }
+    },
+    {
+      "tag": "duration-forum-375",
+      "ok": true,
+      "visibleMs": 3316,
+      "startMs": 1067,
+      "appearedAt": 1795556961427,
+      "goneAt": 1795556964743
+    }
+  ]
+}
