@@ -1,7 +1,7 @@
 {
-  "title": "Submit buttons (comment, forum topic, forum reply) send one request despite extra clicks",
-  "method": "Click submit once (request hung), then click the disabled button 3 more times with force:true.",
-  "headSha": "12b862f45307cbcf98d101cd6f50d42fde05a262",
+  "title": "Submit and load-more buttons send one request despite extra clicks",
+  "method": "Click submit or load-more once (request hung), then click the disabled button 3 more times with force:true.",
+  "headSha": "32549bfe495d0f9d02197725c912b1f5dca0e17c",
   "results": [
     {
       "name": "comment-submit-clicks-zh",
@@ -11,7 +11,7 @@
       "totalRequests": 1,
       "requests": [
         {
-          "at": 1795543550212,
+          "at": 1795546326563,
           "method": "POST",
           "proc": "comments.create",
           "url": "http://127.0.0.1:4999/trpc/comments.create"
@@ -36,7 +36,7 @@
       "totalRequests": 1,
       "requests": [
         {
-          "at": 1795543553258,
+          "at": 1795546329614,
           "method": "POST",
           "proc": "forum.topics.create",
           "url": "http://127.0.0.1:4999/trpc/forum.topics.create"
@@ -61,7 +61,7 @@
       "totalRequests": 1,
       "requests": [
         {
-          "at": 1795543556240,
+          "at": 1795546332613,
           "method": "POST",
           "proc": "forum.replies.create",
           "url": "http://127.0.0.1:4999/trpc/forum.replies.create"
@@ -79,6 +79,58 @@
       "ok": true
     },
     {
+      "name": "forum-list-loadmore-clicks-zh",
+      "proc": "forum.topics.list",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795546335861,
+          "method": "GET",
+          "proc": "forum.topics.list",
+          "url": "http://127.0.0.1:4999/trpc/forum.topics.list?input=%7B%22surface%22%3A%22miniapp%22%2C%22limit%22%3A20%2C%22cursor%22%3A%22c20%22%7D",
+          "hasCursor": true
+        }
+      ],
+      "ui": {
+        "text": "加载中…",
+        "className": "forum-page__more forum-page__more--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(255, 255, 255)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-list-loadmore-clicks-zh-375.png",
+      "ok": true
+    },
+    {
+      "name": "forum-detail-loadmore-clicks-zh",
+      "proc": "forum.replies.list",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795546339113,
+          "method": "GET",
+          "proc": "forum.replies.list",
+          "url": "http://127.0.0.1:4999/trpc/forum.replies.list?input=%7B%22topicId%22%3A%2211111111-1111-4111-8111-111111111111%22%2C%22cursor%22%3A%22r19%22%2C%22limit%22%3A20%2C%22surface%22%3A%22miniapp%22%7D",
+          "hasCursor": true
+        }
+      ],
+      "ui": {
+        "text": "加载中…",
+        "className": "forum-page__more forum-page__more--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(255, 255, 255)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-detail-loadmore-clicks-zh-375.png",
+      "ok": true
+    },
+    {
       "name": "comment-submit-clicks-en",
       "proc": "comments.create",
       "firstClickRequests": 1,
@@ -86,7 +138,7 @@
       "totalRequests": 1,
       "requests": [
         {
-          "at": 1795543559224,
+          "at": 1795546342077,
           "method": "POST",
           "proc": "comments.create",
           "url": "http://127.0.0.1:4999/trpc/comments.create"
@@ -111,7 +163,7 @@
       "totalRequests": 1,
       "requests": [
         {
-          "at": 1795543562274,
+          "at": 1795546345111,
           "method": "POST",
           "proc": "forum.topics.create",
           "url": "http://127.0.0.1:4999/trpc/forum.topics.create"
@@ -136,7 +188,7 @@
       "totalRequests": 1,
       "requests": [
         {
-          "at": 1795543565235,
+          "at": 1795546348093,
           "method": "POST",
           "proc": "forum.replies.create",
           "url": "http://127.0.0.1:4999/trpc/forum.replies.create"
@@ -151,6 +203,58 @@
         "fg": "rgb(82, 82, 82)"
       },
       "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-reply-submit-clicks-en-375.png",
+      "ok": true
+    },
+    {
+      "name": "forum-list-loadmore-clicks-en",
+      "proc": "forum.topics.list",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795546351326,
+          "method": "GET",
+          "proc": "forum.topics.list",
+          "url": "http://127.0.0.1:4999/trpc/forum.topics.list?input=%7B%22surface%22%3A%22miniapp%22%2C%22limit%22%3A20%2C%22cursor%22%3A%22c20%22%7D",
+          "hasCursor": true
+        }
+      ],
+      "ui": {
+        "text": "Loading…",
+        "className": "forum-page__more forum-page__more--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(255, 255, 255)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-list-loadmore-clicks-en-375.png",
+      "ok": true
+    },
+    {
+      "name": "forum-detail-loadmore-clicks-en",
+      "proc": "forum.replies.list",
+      "firstClickRequests": 1,
+      "extraClicks": 3,
+      "totalRequests": 1,
+      "requests": [
+        {
+          "at": 1795546354560,
+          "method": "GET",
+          "proc": "forum.replies.list",
+          "url": "http://127.0.0.1:4999/trpc/forum.replies.list?input=%7B%22topicId%22%3A%2211111111-1111-4111-8111-111111111111%22%2C%22cursor%22%3A%22r19%22%2C%22limit%22%3A20%2C%22surface%22%3A%22miniapp%22%7D",
+          "hasCursor": true
+        }
+      ],
+      "ui": {
+        "text": "Loading…",
+        "className": "forum-page__more forum-page__more--disabled",
+        "disabledAttr": "",
+        "ariaDisabled": "true",
+        "bg": "rgb(255, 255, 255)",
+        "fg": "rgb(82, 82, 82)"
+      },
+      "screenshot": "/workspace/xiangzi-notes/ch301b/shots-clicks/forum-detail-loadmore-clicks-en-375.png",
       "ok": true
     }
   ],
