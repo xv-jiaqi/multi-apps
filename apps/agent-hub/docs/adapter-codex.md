@@ -120,7 +120,7 @@
 
 - 网络每轮都显式关闭（D30）：Agent 需要联网时会发权限申请，由人审批（§6）。
 - `developerInstructions` = `CODEX_DEVELOPER_INSTRUCTIONS`（§9）：不推送、不改 remote、不碰凭据文件。这只是提示，真正的防线是推送守卫（[security.md](security.md) §3）。
-- `config`（PR3）：用户 `~/.codex/config.toml` 里的 `shell_environment_policy` 会把推送守卫的环境变量从 Agent 跑的命令里剥掉。`codexConfigOverrides()`（§9）用点分键逐个 `set` 回 `GUARD_ENV_KEYS`，并把 `include_only` 设成 `[]`（实测它在 `set` 之后过滤），其余 policy 设置不动（[security.md](security.md) §3.2）。
+- `config`（PR3）：用户 `~/.codex/config.toml` 里的 `shell_environment_policy` 会把推送守卫的环境变量从 Agent 跑的命令里剥掉。`codexConfigOverrides()`（§9）用点分键逐个 `set` 回 `GUARD_ENV_KEYS`，并把 `include_only` 设成 `[]`（实测它在 `set` 之后过滤），其余 policy 设置不动（[security.md](security.md) §3.2）。清掉 `include_only` 会覆盖用户自己在 config.toml 里收紧的白名单；子进程环境本身已是白名单（只注入守卫变量和 `envPassthrough`），所以影响有限，但用户若只靠 `include_only` 限制 Agent 命令能看到的变量，这一项会被拿掉。
 - Hub 不传 `danger-full-access`，也不提供任何改沙箱的入口。实测：传错 `sandbox` 值时 Codex 返回 `-32600`。
 
 ### 4.3 每轮的模型与推理档位

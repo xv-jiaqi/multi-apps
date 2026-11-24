@@ -13,6 +13,9 @@
  * 单段无空白文本超过 MAX_HOLD_CHARS 时才在离末尾 HOLDBACK_CHARS 处强行切，强切点同样经过 2、5 两步，
  * 所以已经成形的密钥不会被切开（审查 6041423500 第 1 条）。只有超过 MAX_HOLD_CHARS 的未闭合 PEM 块会被切开，
  * 那不可能是真实私钥（见 security.md §8）。
+ *
+ * 所有放出路径都只能走 splitForRedaction（审查 6042585463）：continue / force / end / truncate
+ * 四种模式都在这里做脱敏匹配与切点保护，EventStore 不得另起一条放行。
  */
 
 import { REDACT_RULES } from '../common/redact';
@@ -75,7 +78,6 @@ function outOfMatches(text: string, cut: number): number {
 /**
  * 规则 2 和 5 交替做到不再移动：认证头前缀之后不切；切点不落在任何脱敏匹配里。
  * text 要包含切点之后的文字（匹配是在整段上找的）；返回值 ≤ cut。
- * EventStore 截断工具输出（1 MB 上限）时也用它定截断点。
  */
 export function guardCut(text: string, cut: number): number {
   for (let prev = -1; prev !== cut && cut > 0; ) {
@@ -87,13 +89,45 @@ export function guardCut(text: string, cut: number): number {
   return Math.max(cut, 0);
 }
 
+/** EventStore 放出增量时的模式；布尔值是旧写法（true = end，false = continue）。 */
+export type ReleaseMode = 'continue' | 'force' | 'end' | 'truncate';
+
+function normalizeMode(mode: ReleaseMode | boolean): ReleaseMode {
+  if (mode === true || mode === 'end') return 'end';
+  if (mode === false || mode === 'continue') return 'continue';
+  return mode;
+}
+
+/** 整段文字本身就是一条脱敏规则的匹配（force 切不出安全前段时可以整段放出）。 */
+function wholeIsCompleteMatch(text: string): boolean {
+  for (const { re } of REDACT_RULES) {
+    for (const m of text.matchAll(re)) {
+      if (m.index === 0 && m[0].length === text.length) return true;
+    }
+  }
+  return false;
+}
+
 /**
- * 把 text 分成现在可以下发的 emit 和需要扣住的 hold（emit + hold === text）。
- * final=true（这一路输出结束）时全部下发。
+ * 所有放出路径的唯一入口：把 text 分成现在可以下发的 emit 和需要扣住（或丢掉）的 hold。
+ * emit + hold === text。
+ *
+ * - continue：正常增量，扣住短尾。
+ * - force：任务扣留超过总上限，必须尽量放出前段；用强切，短尾继续扣着。切不出安全前段时整段
+ *   继续扣；若整段就是一个匹配，整段放出（调用方把这一路标记成「后续文字前面拼上旧尾巴再切」）。
+ * - end：这一路已结束，整段放出。
+ * - truncate：1 MB 截断。cutLimit 是拟截到的位置（字符下标）。先把截断点前那段连续非空白退到
+ *   最后一个空白之后（长度上限 MAX_HOLD_CHARS），再走 guardCut。hold 是要丢弃的后缀，不得再下发。
  */
-export function splitForRedaction(text: string, final = false): { emit: string; hold: string } {
-  if (final) return { emit: text, hold: '' };
-  let cut = text.length - HOLDBACK_CHARS;
+export function splitForRedaction(
+  text: string,
+  mode: ReleaseMode | boolean = 'continue',
+  cutLimit?: number,
+): { emit: string; hold: string } {
+  const kind = normalizeMode(mode);
+  if (kind === 'end') return { emit: text, hold: '' };
+
+  let cut = kind === 'truncate' ? (cutLimit ?? text.length) : text.length - HOLDBACK_CHARS;
   if (cut <= 0) return { emit: '', hold: text };
 
   // 3. PEM 块不能被切开：切点落在 BEGIN 与 END 行之间（或 END 还没来）就退到 BEGIN 前。
@@ -108,16 +142,23 @@ export function splitForRedaction(text: string, final = false): { emit: string; 
   }
 
   // 1. 退到空白之后（不切在一段 token 中间）。
+  // truncate / force：只回看 MAX_HOLD_CHARS；窗口内没有空白就保住切点（强切）。
   if (cut > 0 && !WS.test(text[cut - 1]!)) {
     let j = cut - 1;
-    while (j >= 0 && !WS.test(text[j]!)) j--;
-    if (j >= 0) cut = j + 1;
-    else if (text.length <= MAX_HOLD_CHARS) cut = 0;
+    const floor = kind === 'continue' ? 0 : Math.max(0, cut - MAX_HOLD_CHARS);
+    while (j >= floor && !WS.test(text[j]!)) j--;
+    if (j >= floor && j >= 0 && WS.test(text[j]!)) cut = j + 1;
+    else if (kind === 'continue' && j < 0 && text.length <= MAX_HOLD_CHARS) cut = 0;
   }
 
   cut = guardCut(text, cut);
 
   // 强行切时别切开代理对。
   if (cut > 0 && /[\uD800-\uDBFF]/.test(text[cut - 1]!)) cut--;
+
+  if (cut <= 0) {
+    if (kind === 'force' && wholeIsCompleteMatch(text)) return { emit: text, hold: '' };
+    return { emit: '', hold: text };
+  }
   return { emit: text.slice(0, cut), hold: text.slice(cut) };
 }

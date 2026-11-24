@@ -233,7 +233,7 @@ describe('EventStore', () => {
       expect(published.at(-1)!.taskId).toBe(U);
     });
 
-    it('截断标记之前先放出这一路扣住的尾巴', () => {
+    it('截断标记之前先放出这一路扣住的尾巴；截断点前的未完成词一起丢掉', () => {
       store.append(T, 't', out('x'.repeat(TOOL_OUTPUT_CAP_BYTES - 10) + ' last'));
       store.append(T, 't', out('y'.repeat(100)));
       store.flush(T);
@@ -249,7 +249,7 @@ describe('EventStore', () => {
           .slice(0, -1)
           .map((e) => e.text)
           .join(''),
-      ).toBe('x'.repeat(TOOL_OUTPUT_CAP_BYTES - 10) + ' last' + 'y'.repeat(5)); // 截到正好 1 MB（PR3）
+      ).toBe('x'.repeat(TOOL_OUTPUT_CAP_BYTES - 10) + ' '); // 截断点前连续非空白整段丢掉（审查 6042585463）
     });
   });
 
@@ -267,23 +267,23 @@ describe('EventStore', () => {
         .join('');
 
     it('越过 1 MB 的那一块截到正好剩余的额度，再记 truncated', () => {
-      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 10)));
-      store.append(T, null, out('abcdefghij' + 'klmno'));
+      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 12) + ' '));
+      store.append(T, null, out('abcdefghij ' + 'klmno'));
       store.flush(T, 'all');
       expect(Buffer.byteLength(toolText(), 'utf8')).toBe(TOOL_OUTPUT_CAP_BYTES);
-      expect(toolText().endsWith('abcdefghij')).toBe(true);
+      expect(toolText().endsWith(' abcdefghij ')).toBe(true);
       expect(published.at(-1)!.event).toMatchObject({ truncated: true });
     });
 
     it('截断不切开 UTF-8 字符与代理对', () => {
-      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 5), 'a'));
-      store.append(T, null, out('中中中', 'a')); // 每个 3 字节，只放得下 1 个
-      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 6), 'b'));
-      store.append(T, null, out('😀😀', 'b')); // 每个 4 字节（2 个 UTF-16 单元），只放得下 1 个
+      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 5) + ' ', 'a'));
+      store.append(T, null, out('中 中', 'a')); // 每个 3 字节，剩余 4 字节正好放下「中 」
+      store.append(T, null, out('y'.repeat(TOOL_OUTPUT_CAP_BYTES - 6) + ' ', 'b'));
+      store.append(T, null, out('😀 😀', 'b')); // 每个 4 字节（2 个 UTF-16 单元），剩余 5 字节正好放下「😀 」
       store.flush(T, 'all');
-      expect(toolText('a').endsWith('y中')).toBe(true);
-      expect(Buffer.byteLength(toolText('a'), 'utf8')).toBe(TOOL_OUTPUT_CAP_BYTES - 2);
-      expect(toolText('b').endsWith('y😀')).toBe(true);
+      expect(toolText('a').endsWith(' 中 ')).toBe(true);
+      expect(Buffer.byteLength(toolText('a'), 'utf8')).toBe(TOOL_OUTPUT_CAP_BYTES);
+      expect(toolText('b').endsWith(' 😀 ')).toBe(true);
       expect(toolText('b')).not.toMatch(/[\uD800-\uDBFF]$/);
     });
 
@@ -322,7 +322,7 @@ describe('EventStore', () => {
       expect(toolText()).toBe('partial-output-without-newline');
     });
 
-    it('一个任务扣住的合计超过上限时，从最久没更新的那一路开始整段放出', () => {
+    it('一个任务扣住的合计超过上限时，从最久没更新的那一路强切放出前段，短尾继续扣着', () => {
       const per = MAX_HOLD_CHARS - 1024; // 无空白，单路整段扣住
       const n = Math.floor((1024 * 1024) / per) + 3;
       for (let i = 0; i < n; i++) {
@@ -332,12 +332,148 @@ describe('EventStore', () => {
       const released = published
         .map((e) => e.event as { itemId: string; text: string })
         .filter((e) => e.text);
-      // 合计上限之内：最旧的几路整段放出，按先后顺序。
+      // 合计上限之内：最旧的几路用强切放出安全前段（审查 6042585463），短尾 64 字符继续扣着。
       expect(released.map((e) => e.itemId)).toEqual(['cmd0', 'cmd1', 'cmd2']);
-      expect(released.every((e) => e.text.length === per)).toBe(true);
+      expect(released.every((e) => e.text.length === per - HOLDBACK_CHARS)).toBe(true);
       store.flush(T, 'all');
-      expect(published.filter((e) => (e.event as { text: string }).text)).toHaveLength(n);
+      const byItem = new Map<string, string>();
+      for (const e of published) {
+        const ev = e.event as { itemId?: string; text?: string };
+        if (ev.itemId && ev.text) byItem.set(ev.itemId, (byItem.get(ev.itemId) ?? '') + ev.text);
+      }
+      expect(byItem.size).toBe(n);
+      for (let i = 0; i < n; i++)
+        expect(byItem.get(`cmd${i}`)).toBe(String.fromCharCode(97 + (i % 26)).repeat(per));
       expect(MAX_TASK_HOLD_CHARS).toBe(1024 * 1024);
+    });
+  });
+
+  describe('PR3（审查 6042585463：截断与总上限放出不得切开密钥）', () => {
+    const out = (text: string, itemId = 'cmd') => ({
+      type: 'tool.output.delta' as const,
+      itemId,
+      text,
+    });
+    const textsOf = (itemId = 'cmd') =>
+      published
+        .filter((e) => {
+          const ev = e.event as { type: string; itemId?: string };
+          return ev.type === 'tool.output.delta' && ev.itemId === itemId;
+        })
+        .map((e) => (e.event as { text?: string }).text ?? '');
+    const noFragment = (body: string) => {
+      for (const env of published) {
+        const text = (env.event as { text?: string }).text;
+        if (!text) continue;
+        const red = redact(text);
+        for (let i = 0; i + 8 <= body.length; i++) {
+          const frag = body.slice(i, i + 8);
+          const at = red.indexOf(frag);
+          if (at >= 0) {
+            const ev = env.event as { type: string; itemId?: string };
+            // 失败时只打印片段附近，避免把 1 MB 输出写进日志。
+            throw new Error(
+              `seq=${env.seq} ${ev.type}${ev.itemId ? ' ' + ev.itemId : ''} 含片段 ${JSON.stringify(frag)}：…${red.slice(Math.max(0, at - 24), at + 24)}…`,
+            );
+          }
+        }
+      }
+    };
+
+    it('token 跨两块且 1 MB 截断点落在 token 中间：前半段不以明文落库', () => {
+      // 复现审查 6042585463 第 1 条：先输出 1 MiB-193 字节，下一块是 `y y …`
+      // 加上 ahu_ token 的前 44 个字符，再下一块是最后 3 个字符。
+      const body = 'Qw9'.repeat(14) + 'Q'; // 43
+      const token = `ahu_${body}`;
+      expect(token).toHaveLength(47);
+      const pad = 'y '.repeat(75); // 150
+      store.append(T, null, out('x'.repeat(TOOL_OUTPUT_CAP_BYTES - 193)));
+      store.append(T, null, out(pad + token.slice(0, 44)));
+      store.append(T, null, out(token.slice(44)));
+      store.flush(T, 'all');
+      expect(textsOf().join('')).not.toContain('ahu_');
+      noFragment(body);
+      expect(published.some((e) => 'truncated' in e.event && e.event.truncated)).toBe(true);
+    });
+
+    it('超过扣留总上限时最旧一路只放安全前段，续写半个密钥不会切成两条明文', () => {
+      // 复现审查 6042585463 第 2 条：A 先输出不完整的 sk- 前缀；17 路各扣 64000
+      // 无空白字符触发总上限；再续写 A 的后半段。
+      const body = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd';
+      const prefix = 'env: OPENAI=sk-ABCDEFGHIJ';
+      const suffix = 'KLMNOPQRSTUVWXYZ0123456789abcd done';
+      store.append(T, null, out(prefix, 'A'));
+      store.flush(T);
+      expect(published.filter((e) => (e.event as { itemId?: string }).itemId === 'A')).toHaveLength(
+        0,
+      );
+      for (let i = 0; i < 17; i++) {
+        store.append(T, null, out('z'.repeat(64_000), `cmd${i}`));
+        store.flush(T);
+      }
+      store.append(T, null, out(suffix, 'A'));
+      store.flush(T, 'all');
+      noFragment(body);
+      expect(textsOf('A').join('')).toBe(prefix + suffix);
+    });
+
+    it('随机切块、截断、总量上限和结束：每条落库事件脱敏后都没有密钥的 8 字符片段', () => {
+      // 固定种子，失败可复现。覆盖四种放出：普通切块 + 结束、1 MB 截断、总上限、两者交错。
+      let s = 6042585463 >>> 0;
+      const r = () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32;
+      const cases: Array<{ secret: string; body: string }> = [
+        { secret: `ahu_${'Qw9'.repeat(14)}Q`, body: `${'Qw9'.repeat(14)}Q` },
+        { secret: `sk-${'Ab3'.repeat(14)}`, body: 'Ab3'.repeat(14) },
+        { secret: `gho_${'Zq9'.repeat(9)}`, body: 'Zq9'.repeat(9) },
+      ];
+      const nextTask = (n: number) => {
+        const id = `${String(n).padStart(8, '0')}-cccc-0000-0000-000000000000`;
+        insertTask(db, id);
+        return id;
+      };
+      for (let trial = 0; trial < 24; trial++) {
+        published.length = 0;
+        const task = nextTask(trial);
+        const { secret, body } = cases[trial % cases.length]!;
+        const kind = trial % 3;
+        if (kind === 0) {
+          const line = `noise ${'w '.repeat(8)}KEY=${secret} end\n`;
+          const cuts = Array.from({ length: 1 + Math.floor(r() * 6) }, () =>
+            Math.floor(r() * (line.length + 1)),
+          ).sort((a, b) => a - b);
+          let prev = 0;
+          for (const c of [...cuts, line.length]) {
+            if (c === prev) continue;
+            store.append(task, 't', out(line.slice(prev, c)));
+            if (r() < 0.5) store.flush(task);
+            prev = c;
+          }
+          store.append(task, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
+          expect(textsOf().join('')).toBe(line);
+        } else if (kind === 1) {
+          const keep = 80 + Math.floor(r() * 120);
+          const split = 1 + Math.floor(r() * (secret.length - 2));
+          const pad = 'y '.repeat(Math.ceil(keep / 2)).slice(0, Math.max(0, keep - split));
+          store.append(task, null, out('x'.repeat(TOOL_OUTPUT_CAP_BYTES - keep)));
+          store.append(task, null, out(pad + secret.slice(0, split)));
+          store.append(task, null, out(secret.slice(split) + ' tail'));
+          store.flush(task, 'all');
+        } else {
+          const split = 1 + Math.floor(r() * (secret.length - 2));
+          store.append(task, null, out(`env: KEY=${secret.slice(0, split)}`, 'A'));
+          store.flush(task);
+          const n = 17;
+          for (let i = 0; i < n; i++) {
+            store.append(task, null, out('z'.repeat(64_000), `cmd${i}`));
+            store.flush(task);
+          }
+          store.append(task, null, out(`${secret.slice(split)} done`, 'A'));
+          store.flush(task, 'all');
+          expect(textsOf('A').join('')).toBe(`env: KEY=${secret} done`);
+        }
+        noFragment(body);
+        store.forgetTask(task);
+      }
     });
   });
 });

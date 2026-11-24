@@ -271,7 +271,7 @@ PR3（Qoder）新增的自动化用例：
 | `test/codex-env-policy.e2e-spec.ts`                             | `thread/start` 的 `config` 覆盖 `shell_environment_policy`（[security.md](security.md) §3.2）                                                                                                                                                |
 | `test/ws-limits.e2e-spec.ts`                                    | 桥接 token 第 9 个连接 `4429` / `429`；回放读库失败 `1011`                                                                                                                                                                                   |
 | `test/ws-slow-consumer.e2e-spec.ts`                             | E53 追赶                                                                                                                                                                                                                                     |
-| `src/core/event-store.spec.ts`                                  | 1 MB 截到正好（UTF-8 / 代理对 / 密钥）；审批前放出消息尾巴；扣留合计上限                                                                                                                                                                     |
+| `src/core/event-store.spec.ts`                                  | 1 MB 截到正好（UTF-8 / 代理对 / 密钥）；审批前放出消息尾巴；扣留合计上限；审查 6042585463：跨块截断不漏 `ahu_` 前半段、总上限强切后续写半个密钥、随机切块/截断/上限/结束的性质测试（脱敏后无 8 字符片段）                                    |
 | `src/core/secret-holdback.spec.ts`、`src/common/redact.spec.ts` | 强切点不落进匹配；认证头后任意长空白；`Basic` / `Token` scheme                                                                                                                                                                               |
 
 ## 6. 测试数据规范

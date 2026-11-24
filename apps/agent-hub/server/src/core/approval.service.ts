@@ -57,6 +57,9 @@ export class ApprovalService {
     };
     // 审批卡片出现前，把消息与推理扣住的尾巴放出来（审查 6041423500 第 3 条）：Agent 在等人，
     // 这些文字在审批结束前不会再有下文，人要看到完整的说明才好做决定。工具输出照旧扣着。
+    // 前提（审查 6042585463 非阻塞 1）：同一 message itemId 在审批之后不会再追加文字。ACP mapper
+    // 在 tool_call 时会先关闭消息段；Codex 也是先发 completed 再发审批。若这个前提被打破，
+    // 密钥可能被切开（flush('text') 按 end 放出）。
     this.events.flush(taskId, 'text');
     const env = this.db.tx(() => {
       this.repo.insertApproval({
