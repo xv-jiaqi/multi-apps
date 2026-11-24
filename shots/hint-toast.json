@@ -1,0 +1,23 @@
+{
+  "headSha": "21dd670781eac00ae993d824438a09be8051aca3",
+  "cases": [
+    {
+      "tag": "noteHint-zh-375",
+      "ok": true,
+      "hint": "联系方式请填在「联系方式」栏",
+      "expected": "联系方式请填在「联系方式」栏"
+    },
+    {
+      "tag": "list-crumb-click",
+      "ok": true,
+      "hashBefore": "#/pages/trade/list/index",
+      "hashAfter": "#/pages/index/index"
+    },
+    {
+      "tag": "duration-publish-pass-375",
+      "ok": true,
+      "visibleMs": 3322,
+      "toastText": "意向已发布"
+    }
+  ]
+}
