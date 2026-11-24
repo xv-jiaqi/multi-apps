@@ -82,6 +82,14 @@ describe('field error codes', () => {
     expect(t('en-US', 'error.app.RESET_TOKEN_INVALID')).toBe(
       'This reset link is invalid or has expired. Request a new one.',
     );
+    expect(t('zh-CN', 'error.app.UPLOADS_NOT_CONFIGURED')).toBe(
+      '上传未配置，请稍后再试或联系管理员',
+    );
+    expect(t('en-US', 'error.app.UPLOADS_NOT_CONFIGURED')).toBe(
+      'Uploads are not configured. Try again later or contact an administrator.',
+    );
+    expect(t('zh-CN', 'error.app.UPLOADS_NOT_CONFIGURED')).not.toMatch(/OSS_|ACCESS_KEY/);
+    expect(t('en-US', 'error.app.UPLOADS_NOT_CONFIGURED')).not.toMatch(/OSS_|ACCESS_KEY/);
   });
 });
 
@@ -102,6 +110,12 @@ describe('app error copy', () => {
     );
     expect(appErrorMessage('en-US', 'RESET_TOKEN_INVALID')).toBe(
       'This reset link is invalid or has expired. Request a new one.',
+    );
+    expect(appErrorMessage('zh-CN', 'UPLOADS_NOT_CONFIGURED')).toBe(
+      '上传未配置，请稍后再试或联系管理员',
+    );
+    expect(appErrorMessage('en-US', 'UPLOADS_NOT_CONFIGURED')).toBe(
+      'Uploads are not configured. Try again later or contact an administrator.',
     );
     expect(appErrorMessage('zh-CN', 'NOT_A_REAL_CODE')).toBe('出了点问题，请稍后再试');
     expect(appErrorMessage('zh-CN', undefined)).toBe('出了点问题，请稍后再试');

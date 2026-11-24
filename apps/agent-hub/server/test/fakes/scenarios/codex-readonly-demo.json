@@ -1,0 +1,193 @@
+{
+  "name": "codex-readonly-demo",
+  "protocol": "codex",
+  "exitOnStdinClose": true,
+  "always": {
+    "account/read": {
+      "account": {
+        "type": "apiKey"
+      },
+      "requiresOpenaiAuth": false
+    },
+    "model/list": {
+      "data": [
+        {
+          "id": "gpt-5.1-codex",
+          "model": "gpt-5.1-codex",
+          "displayName": "GPT-5.1 Codex",
+          "description": "fake",
+          "hidden": false,
+          "supportedReasoningEfforts": [
+            {
+              "reasoningEffort": "medium",
+              "description": "medium"
+            },
+            {
+              "reasoningEffort": "high",
+              "description": "high"
+            }
+          ],
+          "defaultReasoningEffort": "medium",
+          "isDefault": true
+        }
+      ],
+      "nextCursor": null
+    },
+    "thread/unsubscribe": {
+      "status": "unsubscribed"
+    },
+    "turn/interrupt": {}
+  },
+  "steps": [
+    {
+      "expect": "initialize",
+      "reply": {
+        "userAgent": "agent_hub/0.164.0 (fake; x86_64) fake (agent_hub; 0.1.0)",
+        "platformFamily": "unix",
+        "platformOs": "linux"
+      }
+    },
+    {
+      "expect": "thread/start",
+      "match": {
+        "sandbox": "read-only",
+        "approvalPolicy": "on-request"
+      },
+      "reply": {
+        "thread": {
+          "id": "thread_fake_1",
+          "model": "gpt-5.1-codex",
+          "reasoningEffort": null
+        },
+        "model": "gpt-5.1-codex",
+        "reasoningEffort": null
+      }
+    },
+    {
+      "expect": "turn/start",
+      "match": {
+        "sandboxPolicy": {
+          "type": "readOnly",
+          "networkAccess": false
+        }
+      },
+      "reply": {
+        "turn": {
+          "id": "turn_fake_1",
+          "status": "inProgress",
+          "error": null
+        }
+      }
+    },
+    {
+      "notify": "turn/started",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turn": {
+          "id": "turn_fake_1",
+          "status": "inProgress",
+          "error": null
+        }
+      }
+    },
+    {
+      "notify": "item/reasoning/summaryTextDelta",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turnId": "turn_fake_1",
+        "itemId": "rs_1",
+        "delta": "先看一下最近的提交。"
+      }
+    },
+    {
+      "notify": "item/completed",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turnId": "turn_fake_1",
+        "item": {
+          "type": "reasoning",
+          "id": "rs_1",
+          "summary": ["先看一下最近的提交。"],
+          "content": []
+        }
+      }
+    },
+    {
+      "execCommand": ["git", "log", "-3", "--oneline"],
+      "itemId": "cmd_1",
+      "threadId": "thread_fake_1",
+      "turnId": "turn_fake_1"
+    },
+    {
+      "sleepMs": 50
+    },
+    {
+      "notify": "item/agentMessage/delta",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turnId": "turn_fake_1",
+        "itemId": "msg_1",
+        "delta": "最近 3 个提交见上。"
+      }
+    },
+    {
+      "sleepMs": 50
+    },
+    {
+      "notify": "item/agentMessage/delta",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turnId": "turn_fake_1",
+        "itemId": "msg_1",
+        "delta": "这是只读任务，没有改动任何文件。"
+      }
+    },
+    {
+      "notify": "item/completed",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turnId": "turn_fake_1",
+        "item": {
+          "type": "agentMessage",
+          "id": "msg_1",
+          "text": "最近 3 个提交见上。这是只读任务，没有改动任何文件。"
+        }
+      }
+    },
+    {
+      "notify": "thread/tokenUsage/updated",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turnId": "turn_fake_1",
+        "tokenUsage": {
+          "total": {
+            "totalTokens": 1234,
+            "inputTokens": 1000,
+            "cachedInputTokens": 0,
+            "outputTokens": 234,
+            "reasoningOutputTokens": 20
+          },
+          "last": {
+            "totalTokens": 1234,
+            "inputTokens": 1000,
+            "cachedInputTokens": 0,
+            "outputTokens": 234,
+            "reasoningOutputTokens": 20
+          },
+          "modelContextWindow": 200000
+        }
+      }
+    },
+    {
+      "notify": "turn/completed",
+      "params": {
+        "threadId": "thread_fake_1",
+        "turn": {
+          "id": "turn_fake_1",
+          "status": "completed",
+          "error": null
+        }
+      }
+    }
+  ]
+}

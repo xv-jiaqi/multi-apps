@@ -122,6 +122,73 @@ describe('E49 Host / Origin / token', () => {
     expect(denied.body.error.code).toBe('ADMIN_ONLY');
   });
 
+  it('E49 WS without tasks:read → 4403', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/api/v1/tokens')
+      .set('Host', `127.0.0.1:${port}`)
+      .set('Authorization', `Bearer ${uiToken}`)
+      .send({ name: 'no-read', scopes: ['approvals:decide'] })
+      .expect(201);
+    const token = created.body.token as string;
+    const code = await new Promise<number>((resolve, reject) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/api/v1/ws`, {
+        headers: { Host: `127.0.0.1:${port}` },
+      });
+      ws.on('open', () => ws.send(JSON.stringify({ op: 'auth', token })));
+      ws.on('message', () => reject(new Error('should not get ready')));
+      ws.on('close', (c) => resolve(c));
+      ws.on('error', reject);
+      setTimeout(() => reject(new Error('4403 timeout')), 5000).unref();
+    });
+    expect(code).toBe(4403);
+  });
+
+  it('E49 WS 握手 Authorization 错误 → upgrade 401', async () => {
+    const status = await new Promise<number>((resolve, reject) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/api/v1/ws`, {
+        headers: { Host: `127.0.0.1:${port}`, Authorization: 'Bearer ahb_wrong' },
+      });
+      ws.on('unexpected-response', (_req, res) => resolve(res.statusCode ?? 0));
+      ws.on('open', () => reject(new Error('should not open')));
+      ws.on('error', () => undefined);
+      setTimeout(() => reject(new Error('timeout')), 5000).unref();
+    });
+    expect(status).toBe(401);
+  });
+
+  it('E49 WS 握手带正确 Authorization → 直接 ready', async () => {
+    const op = await new Promise<string>((resolve, reject) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/api/v1/ws`, {
+        headers: { Host: `127.0.0.1:${port}`, Authorization: `Bearer ${bridgeToken}` },
+      });
+      ws.on('message', (d) => {
+        resolve((JSON.parse(String(d)) as { op: string }).op);
+        ws.close();
+      });
+      ws.on('error', reject);
+      setTimeout(() => reject(new Error('timeout')), 5000).unref();
+    });
+    expect(op).toBe('ready');
+  });
+
+  it('E49 WS ready 之后再发 auth → 4400', async () => {
+    const code = await new Promise<number>((resolve, reject) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/api/v1/ws`, {
+        headers: { Host: `127.0.0.1:${port}` },
+      });
+      ws.on('open', () => ws.send(JSON.stringify({ op: 'auth', token: uiToken })));
+      ws.on('message', (d) => {
+        if ((JSON.parse(String(d)) as { op: string }).op === 'ready') {
+          ws.send(JSON.stringify({ op: 'auth', token: uiToken }));
+        }
+      });
+      ws.on('close', (c) => resolve(c));
+      ws.on('error', reject);
+      setTimeout(() => reject(new Error('timeout')), 5000).unref();
+    });
+    expect(code).toBe(4400);
+  });
+
   it('E49 WS illegal Origin → upgrade 403', async () => {
     const status = await new Promise<number>((resolve, reject) => {
       const ws = new WebSocket(`ws://127.0.0.1:${port}/api/v1/ws`, {
@@ -140,7 +207,7 @@ describe('E49 Host / Origin / token', () => {
       ws.on('error', () => {
         // some clients only emit error; treat as rejection if no open
       });
-      setTimeout(() => reject(new Error('WS origin reject timeout')), 5000);
+      setTimeout(() => reject(new Error('WS origin reject timeout')), 5000).unref();
     });
     expect(status).toBe(403);
   });
@@ -183,7 +250,7 @@ describe('E49 Host / Origin / token', () => {
       });
       ws.on('close', (code) => resolve(code));
       ws.on('error', reject);
-      setTimeout(() => reject(new Error('ws revoke timeout')), 8000);
+      setTimeout(() => reject(new Error('ws revoke timeout')), 8000).unref();
     });
     expect(closeCode).toBe(4401);
 

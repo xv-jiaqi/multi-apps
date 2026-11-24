@@ -528,12 +528,12 @@ export function redact(text: string): string {
 三处调用 §5，不在界面上对 Hub UI 脱敏（那是用户自己的代码，在本机查看）：
 
 1. **日志 meta。** 写日志前对 meta 做 `redact()`（[architecture.md](architecture.md) §11）。提示词全文不进日志，只记长度和 SHA-256 前 8 位。带 userinfo 的 git URL 先 `stripUserinfo`。
-2. **桥接响应。** `BridgeRedactInterceptor` 把返回给桥接 token 的每个字符串（含 WebSocket）过一遍 `redact()`（[local-api.md](local-api.md) §3.4）。Hub UI 拿到原文。
+2. **桥接响应。** `BridgeRedactInterceptor` 把返回给桥接 token 的每个字符串（含 WebSocket）过一遍 `redact()`（[local-api.md](local-api.md) §3.4）。Hub UI 拿到原文。增量事件是逐条脱敏的，所以事件管线保证一个密钥不会被切进两条增量（[architecture.md](architecture.md) §6 第 2 步的尾部扣留）。
 3. **诊断包和 transcript。** 导出前再跑一遍 §5 的模式；transcript 只在诊断开关打开时写（D14）。
 
 ## 7. 本地接口与默认只读
 
-- 只绑定 `127.0.0.1`。`Host` 必须是 `127.0.0.1:<port>` 或 `localhost:<port>`，否则 `421 HOST_FORBIDDEN`。非法 `Origin` 为 `403 ORIGIN_NOT_ALLOWED`。不用 Cookie，鉴权只靠 Bearer token（[local-api.md](local-api.md) §2）。
+- 只绑定 `127.0.0.1`。`Host` 必须是 `127.0.0.1:<port>` 或 `localhost:<port>`，否则 `421 HOST_FORBIDDEN`。非法 `Origin` 为 `403 ORIGIN_FORBIDDEN`。不用 Cookie，鉴权只靠 Bearer token（[local-api.md](local-api.md) §2）。
 - 唯一免鉴权的接口是 `GET /api/v1/health`。
 - Hub 自身不发起外网请求：不检查更新、不上报遥测、不接 Sentry（D27）。会联网的只有 Agent 进程、Hub 对内网 `internal` 的 git，以及用户自己打开的网页。
 
@@ -548,6 +548,8 @@ export function redact(text: string): string {
 ## 8. 残余风险
 
 对应 [decisions-and-risks.md](decisions-and-risks.md) R7。
+
+桥接方脱敏依赖增量的尾部扣留（§6）。一段没有空白的文本或一个没闭合的 PEM 块超过 64 KiB 时，扣留会在离末尾 64 个字符处强行切开；落在这个位置的密钥会被切进两条增量。正常的密钥和 PEM 私钥都远小于这个长度。
 
 没有沙箱的 ACP Agent 可以在自己的命令里清掉 `GIT_ALLOW_PROTOCOL` 再推送。这时还剩：子进程里没有 SSH agent、没有 GitHub token、`gh` 未登录；`origin` 的推送地址在用户保持默认勾选时已被禁用（D49）；§3.4 的远端跟踪分支比对和 `blocked.ndjson`。命令执行一般会先变成审批。用户在 Hub 之外自己执行的 git 不在保护范围内。
 
