@@ -151,7 +151,8 @@ describe('EventStore', () => {
       itemId,
       text,
     });
-    const chunk = 'y'.repeat(256 * 1024);
+    // 每块以换行结尾：截断点前是空白，正好落库 1 MB（无空白长行的情况见审查 6042967785 那一组）。
+    const chunk = `${'y'.repeat(256 * 1024 - 1)}\n`;
     for (let i = 0; i < 4; i++) store.append(T, null, out(chunk)); // 正好 1 MB
     store.append(T, null, out('z')); // 越界
     store.append(T, null, out('more')); // 已截断：丢弃
@@ -322,28 +323,41 @@ describe('EventStore', () => {
       expect(toolText()).toBe('partial-output-without-newline');
     });
 
-    it('一个任务扣住的合计超过上限时，从最久没更新的那一路强切放出前段，短尾继续扣着', () => {
-      const per = MAX_HOLD_CHARS - 1024; // 无空白，单路整段扣住
+    it('一个任务扣住的合计超过上限、各路都切不出安全前段时，从扣得最多的一路开始整路丢弃', () => {
+      const per = MAX_HOLD_CHARS - 1024; // 无空白，单路整段扣住，force 也切不出安全前段
       const n = Math.floor((1024 * 1024) / per) + 3;
+      store.append(T, null, out('short tail', 'small')); // 扣得少的一路不受影响
+      store.flush(T);
       for (let i = 0; i < n; i++) {
         store.append(T, null, out(String.fromCharCode(97 + (i % 26)).repeat(per), `cmd${i}`));
         store.flush(T);
       }
-      const released = published
-        .map((e) => e.event as { itemId: string; text: string })
-        .filter((e) => e.text);
-      // 合计上限之内：最旧的几路用强切放出安全前段（审查 6042585463），短尾 64 字符继续扣着。
-      expect(released.map((e) => e.itemId)).toEqual(['cmd0', 'cmd1', 'cmd2']);
-      expect(released.every((e) => e.text.length === per - HOLDBACK_CHARS)).toBe(true);
+      const evs = published.map(
+        (e) =>
+          e.event as {
+            type: string;
+            itemId?: string;
+            text?: string;
+            truncated?: true;
+            code?: string;
+          },
+      );
+      // 被丢弃的几路：正文一个字都不落库，只有 truncated 标记和 OUTPUT_OMITTED 提示（审查 6042967785）。
+      const sealed = evs.filter((e) => e.truncated).map((e) => e.itemId);
+      expect(sealed.length).toBeGreaterThan(0);
+      expect(evs.filter((e) => e.code === 'OUTPUT_OMITTED')).toHaveLength(sealed.length);
+      expect(evs.every((e) => !e.text)).toBe(true);
+      // 之后这几路再来的输出也丢掉。
+      for (const id of sealed) store.append(T, null, out('more', id!));
       store.flush(T, 'all');
-      const byItem = new Map<string, string>();
+      const texts = new Map<string, string>();
       for (const e of published) {
         const ev = e.event as { itemId?: string; text?: string };
-        if (ev.itemId && ev.text) byItem.set(ev.itemId, (byItem.get(ev.itemId) ?? '') + ev.text);
+        if (ev.itemId && ev.text) texts.set(ev.itemId, (texts.get(ev.itemId) ?? '') + ev.text);
       }
-      expect(byItem.size).toBe(n);
-      for (let i = 0; i < n; i++)
-        expect(byItem.get(`cmd${i}`)).toBe(String.fromCharCode(97 + (i % 26)).repeat(per));
+      for (const id of sealed) expect(texts.has(id!)).toBe(false);
+      expect(texts.get('small')).toBe('short tail');
+      expect(texts.size).toBe(n + 1 - sealed.length);
       expect(MAX_TASK_HOLD_CHARS).toBe(1024 * 1024);
     });
   });
@@ -472,6 +486,202 @@ describe('EventStore', () => {
           expect(textsOf('A').join('')).toBe(`env: KEY=${secret} done`);
         }
         noFragment(body);
+        store.forgetTask(task);
+      }
+    });
+  });
+
+  describe('PR3（审查 6042967785：无空白长行截断、未成形长密钥、拼接、顺序）', () => {
+    const out = (text: string, itemId = 'cmd') => ({
+      type: 'tool.output.delta' as const,
+      itemId,
+      text,
+    });
+    type Ev = { type: string; itemId?: string; text?: string; truncated?: true };
+    /** 同一路（事件类型 + itemId）落库的增量，按 seq 排好。 */
+    const streams = () => {
+      const m = new Map<string, HubEventEnvelope[]>();
+      for (const env of published) {
+        const ev = env.event as Ev;
+        if (!ev.type.endsWith('.delta') || !ev.itemId) continue;
+        const key = `${ev.type}/${ev.itemId}`;
+        m.set(key, [...(m.get(key) ?? []), env]);
+      }
+      return m;
+    };
+    /**
+     * 桥接方能拿到的东西：每条单独脱敏；再把同一路相邻的（以及整路）脱敏结果拼起来。
+     * 两种都不能出现密钥正文的任何 8 字符片段（审查 6042967785：seq 23 + seq 25 拼出完整 JWT）。
+     */
+    const assertNoLeak = (body: string, label = '') => {
+      const frags = Array.from({ length: Math.max(0, body.length - 7) }, (_, i) =>
+        body.slice(i, i + 8),
+      );
+      const hit = (s: string) => frags.find((f) => s.includes(f));
+      for (const [key, envs] of streams()) {
+        const reds = envs.map((e) => redact((e.event as Ev).text ?? ''));
+        for (let i = 0; i < reds.length; i++) {
+          const one = hit(reds[i]!);
+          if (one)
+            throw new Error(
+              `${label} ${key} seq=${envs[i]!.seq} 单条含片段 ${JSON.stringify(one)}`,
+            );
+          if (i + 1 < reds.length) {
+            const two = hit(reds[i]! + reds[i + 1]!);
+            if (two)
+              throw new Error(
+                `${label} ${key} seq=${envs[i]!.seq}+${envs[i + 1]!.seq} 拼接后含片段 ${JSON.stringify(two)}`,
+              );
+          }
+        }
+        const all = hit(reds.join(''));
+        if (all) throw new Error(`${label} ${key} 整路拼接后含片段 ${JSON.stringify(all)}`);
+      }
+    };
+    const textOf = (itemId: string) =>
+      (streams().get(`tool.output.delta/${itemId}`) ?? [])
+        .map((e) => (e.event as Ev).text ?? '')
+        .join('');
+
+    it('复现 1：1 MiB 无空白文本后，跨块的 ahu_ token 被截断点切开，前缀不落库', () => {
+      const body = `${'Qw9'.repeat(14)}Q`;
+      const token = `ahu_${body}`;
+      store.append(T, null, out('a'.repeat(TOOL_OUTPUT_CAP_BYTES - 300)));
+      store.append(T, null, out(`${'b'.repeat(270)}"${token.slice(0, 41)}`));
+      store.append(T, null, out(`${token.slice(41)}" done`));
+      store.flush(T, 'all');
+      expect(textOf('cmd')).not.toContain('ahu_');
+      assertNoLeak(body);
+      expect(published.some((e) => (e.event as Ev).truncated)).toBe(true);
+    });
+
+    it('复现 2：超总上限时扣着 90 字符未成形的 JWT，不被切成两条明文', () => {
+      const sig = 'S1g'.repeat(10);
+      const jwt = `eyJ${'hHh'.repeat(6)}.${'pPp'.repeat(30)}.${sig}`;
+      const body = jwt.slice(3);
+      store.append(T, null, out(`X=${jwt.slice(0, 90)}`, 'A'));
+      store.flush(T);
+      for (let i = 0; i < 17; i++) {
+        store.append(T, null, out('z'.repeat(64_000), `cmd${i}`));
+        store.flush(T);
+      }
+      store.append(T, null, out(`${jwt.slice(90)} done`, 'A'));
+      store.flush(T, 'all');
+      assertNoLeak(body);
+    });
+
+    it('截断时原位替换：同一缓冲里别的 item 的落库顺序不变', () => {
+      store.append(T, 't', out('x'.repeat(TOOL_OUTPUT_CAP_BYTES - 200) + ' '));
+      jest.advanceTimersByTime(DELTA_FLUSH_MS);
+      store.append(T, 't', out('first part of the tail '));
+      store.append(T, 't', delta('message after the tool chunk ', 'm1'));
+      store.append(T, 't', out('y '.repeat(200)));
+      store.flush(T, 'all');
+      const seqOf = (pred: (e: Ev) => boolean) =>
+        published.find((env) => pred(env.event as Ev))?.seq ?? -1;
+      const tail = seqOf((e) => e.type === 'tool.output.delta' && !!e.text?.includes('first part'));
+      const msg = seqOf((e) => e.type === 'message.delta');
+      const marker = seqOf((e) => !!e.truncated);
+      expect(tail).toBeGreaterThan(0);
+      // 工具这一块在消息之前到达，落库也要在消息之前；截断标记在最后。
+      expect(msg).toBeGreaterThan(tail);
+      expect(marker).toBeGreaterThan(msg);
+    });
+
+    it('随机性质（v2）：无空白长度、密钥长度、切点都随机；单条与同路拼接都没有密钥片段', () => {
+      let s = 6042967785 >>> 0;
+      const r = () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32;
+      const int = (lo: number, hi: number) => lo + Math.floor(r() * (hi - lo + 1));
+      const pick = <X>(xs: X[]) => xs[int(0, xs.length - 1)]!;
+      const rep = (u: string, n: number) => u.repeat(Math.ceil(n / u.length)).slice(0, n);
+      /** [完整写法, 必须消失的正文]，长度随机。 */
+      const genSecret = (): [string, string] => {
+        switch (int(0, 5)) {
+          case 0: {
+            const b = `${rep('Qw9', 42)}Q`;
+            return [`ahu_${b}`, b];
+          }
+          case 1: {
+            const b = rep('Ab3', int(20, 120));
+            return [`sk-${b}`, b];
+          }
+          case 2: {
+            const b = rep('Zq9', int(20, 90));
+            return [`gho_${b}`, b];
+          }
+          case 3: {
+            const b = rep('QW3RTY7UIOP2ASDF', 16);
+            return [`AKIA${b}`, b];
+          }
+          case 4: {
+            const b = `${rep('Hh1', int(8, 60))}.${rep('Pp2', int(8, 200))}.${rep('Sg3', int(8, 80))}`;
+            return [`eyJ${b}`, b];
+          }
+          default: {
+            const b = rep('Pw8', int(10, 120));
+            return [`https://deploy:${b}@git.example.com/r.git`, b];
+          }
+        }
+      };
+      let n = 0;
+      const nextTask = () => {
+        const id = `${String(++n).padStart(8, '0')}-dddd-0000-0000-000000000000`;
+        insertTask(db, id);
+        return id;
+      };
+      for (let trial = 0; trial < 90; trial++) {
+        published.length = 0;
+        const task = nextTask();
+        const [secret, body] = genSecret();
+        const kind = trial % 3;
+        const label = `trial=${trial} kind=${kind} len=${secret.length}`;
+        if (kind === 0) {
+          // 截断：前面整段无空白（长度随机，可能是整个 1 MiB），截断点落在跨块的密钥里。
+          const room = int(1, Math.min(400, secret.length + 60));
+          // 填充以引号结尾，保证密钥前有词边界（redact 规则用 \b，紧贴字母时本来就不匹配）。
+          const filler = int(0, 60);
+          const split = int(1, secret.length - 1);
+          const head =
+            r() < 0.5
+              ? 'a'.repeat(TOOL_OUTPUT_CAP_BYTES - room)
+              : `${'a'.repeat(TOOL_OUTPUT_CAP_BYTES - room - 1)} `;
+          store.append(task, null, out(head));
+          if (r() < 0.5) store.flush(task);
+          store.append(task, null, out(`${'b'.repeat(filler)}"${secret.slice(0, split)}`));
+          if (r() < 0.5) store.flush(task);
+          store.append(task, null, out(`${secret.slice(split)} done`));
+          store.flush(task, 'all');
+        } else if (kind === 1) {
+          // 总上限：最旧一路扣着一段未成形的密钥（可能长于 64 字符），其他路占满上限，再续写。
+          const split = int(1, secret.length - 1);
+          const lead = pick(['X=', 'KEY=', '"token":"', 'env: K=', '']);
+          store.append(task, null, out(`${lead}${secret.slice(0, split)}`, 'A'));
+          store.flush(task);
+          const ways = int(17, 20);
+          for (let i = 0; i < ways; i++) {
+            store.append(task, null, out('z'.repeat(int(60_000, 65_000)), `cmd${i}`));
+            store.flush(task);
+          }
+          store.append(task, null, out(`${secret.slice(split)} done`, 'A'));
+          store.flush(task, 'all');
+        } else {
+          // 普通增量：无空白前缀长度随机（短于 64 KiB），整行随机切块，随机 flush，最后结束。
+          const pre = 'c'.repeat(int(0, 3000));
+          const line = `noise ${pre}${pick(['=', ' ', ':'])}${secret} tail\n`;
+          const cuts = Array.from({ length: int(1, 8) }, () => int(0, line.length)).sort(
+            (a, b) => a - b,
+          );
+          let prev = 0;
+          for (const c of [...cuts, line.length]) {
+            if (c === prev) continue;
+            store.append(task, 't', out(line.slice(prev, c)));
+            if (r() < 0.5) store.flush(task);
+            prev = c;
+          }
+          store.append(task, 't', { type: 'tool.completed', itemId: 'cmd', status: 'completed' });
+          expect(textOf('cmd')).toBe(line);
+        }
+        assertNoLeak(body, label);
         store.forgetTask(task);
       }
     });

@@ -184,4 +184,29 @@ describe('secret-holdback', () => {
       for (let p = 0; p <= t.length; p++) noLeak([t.slice(0, p), t.slice(p)], body);
     });
   });
+
+  describe('放出模式（审查 6042967785）', () => {
+    it('truncate：往回找空白没有下限；整段没有空白就整段丢掉', () => {
+      const t = `start ${rep('a', MAX_HOLD_CHARS * 3)}ahu_${rep('Qw9', 10)}`;
+      expect(splitForRedaction(t, 'truncate', t.length - 5)).toEqual({
+        emit: 'start ',
+        hold: t.slice(6),
+      });
+      const noWs = `${rep('a', MAX_HOLD_CHARS * 3)}ahu_${rep('Qw9', 10)}`;
+      expect(splitForRedaction(noWs, 'truncate', noWs.length - 5).emit).toBe('');
+    });
+
+    it('truncate：没闭合的 PEM 块一律退到 BEGIN 前', () => {
+      const begin = `-----BEGIN RSA ${'PRIVATE'} KEY-----\n`;
+      const t = `intro ${begin}${rep(`${rep('Pk4', 20)}\n`, 2000)}`;
+      expect(splitForRedaction(t, 'truncate', t.length - 10).emit).toBe('intro ');
+    });
+
+    it('force 与 continue 同一规则：不在末尾那段无空白文字中间切', () => {
+      const jwtPart = `X=eyJ${rep('Hh1', 6)}.${rep('Pp2', 30)}`;
+      for (const t of [jwtPart, `w ${rep('x ', 10)}${jwtPart}`, rep('a', MAX_HOLD_CHARS + 100)])
+        expect(splitForRedaction(t, 'force')).toEqual(splitForRedaction(t, 'continue'));
+      expect(splitForRedaction(jwtPart, 'force').emit).toBe('');
+    });
+  });
 });
