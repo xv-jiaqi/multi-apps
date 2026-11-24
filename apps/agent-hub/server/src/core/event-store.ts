@@ -9,6 +9,7 @@ import { HUB_DB } from '../common/tokens';
 import { EventsRepo } from '../db/repositories/events.repo';
 import type { Db } from '../db/sqlite';
 import { EventBus } from './event-bus';
+import { splitForRedaction } from './secret-holdback';
 
 export const DELTA_FLUSH_MS = 200;
 export const DELTA_FLUSH_BYTES = 16 * 1024;
@@ -18,6 +19,12 @@ interface Pending {
   turnId: string | null;
   event: DeltaEvent;
 }
+
+/** 结束哪些输出流：'all' = 本任务全部；字符串 = 这个 itemId 的各路输出。 */
+export type StreamEnd = 'all' | string;
+
+/** 这些事件表示对应 itemId 的输出已写完，扣住的尾巴可以放出来。 */
+const ITEM_END_EVENTS = new Set(['message.completed', 'reasoning.completed', 'tool.completed']);
 
 interface TaskBuffer {
   items: Pending[];
@@ -32,6 +39,8 @@ export class EventStore {
   private readonly buffers = new Map<string, TaskBuffer>();
   /** taskId → itemId → 已落库的工具输出字节数（-1 = 已截断）。 */
   private readonly toolBytes = new Map<string, Map<string, number>>();
+  /** taskId → `${type}\u0000${itemId}` → 扣住的尾巴（secret-holdback.ts），等下一块或这一路结束。 */
+  private readonly holds = new Map<string, Map<string, Pending>>();
 
   constructor(
     @Inject(HUB_DB) private readonly db: Db,
@@ -45,7 +54,10 @@ export class EventStore {
       this.bufferDelta(taskId, turnId, event);
       return;
     }
-    this.flush(taskId);
+    let end: StreamEnd | undefined;
+    if (event.type === 'turn.completed') end = 'all';
+    else if (ITEM_END_EVENTS.has(event.type) && 'itemId' in event) end = event.itemId;
+    this.flush(taskId, end);
     this.persist(taskId, turnId, event);
   }
 
@@ -61,19 +73,28 @@ export class EventStore {
     this.bus.publishEvent(env);
   }
 
-  flush(taskId: string): void {
+  /**
+   * 把缓冲的增量落库并广播。每路输出末尾可能是半个密钥的部分扣住不发（secret-holdback.ts），
+   * 和下一块拼起来再切；end 指定的输出流（或 'all'）已经写完，整段放出。
+   */
+  flush(taskId: string, end?: StreamEnd): void {
     const buf = this.buffers.get(taskId);
-    if (!buf || buf.items.length === 0) return;
-    if (buf.timer) clearTimeout(buf.timer);
-    this.buffers.delete(taskId);
-    const envs = this.db.tx(() =>
-      buf.items.map((p) => this.persistInTx(taskId, p.turnId, p.event)),
-    );
+    const held = this.holds.get(taskId);
+    if ((!buf || buf.items.length === 0) && !(end && held?.size)) return;
+    if (buf) {
+      if (buf.timer) clearTimeout(buf.timer);
+      this.buffers.delete(taskId);
+    }
+    const out = this.cutAtSafeBoundaries(taskId, buf?.items ?? [], end);
+    if (out.length === 0) return;
+    const envs = this.db.tx(() => out.map((p) => this.persistInTx(taskId, p.turnId, p.event)));
     for (const env of envs) this.publish(env);
   }
 
+  /** 进程退出前：所有任务的所有输出都放出来。 */
   flushAll(): void {
-    for (const taskId of [...this.buffers.keys()]) this.flush(taskId);
+    for (const taskId of new Set([...this.buffers.keys(), ...this.holds.keys()]))
+      this.flush(taskId, 'all');
   }
 
   list(taskId: string, afterSeq: number, limit: number): HubEventEnvelope[] {
@@ -81,8 +102,47 @@ export class EventStore {
   }
 
   forgetTask(taskId: string): void {
-    this.flush(taskId);
+    this.flush(taskId, 'all');
     this.toolBytes.delete(taskId);
+    this.holds.delete(taskId);
+  }
+
+  private cutAtSafeBoundaries(taskId: string, items: Pending[], end?: StreamEnd): Pending[] {
+    let held = this.holds.get(taskId);
+    if (!held) {
+      held = new Map();
+      this.holds.set(taskId, held);
+    }
+    const ends = (ev: DeltaEvent) => end === 'all' || end === ev.itemId;
+    const out: Pending[] = [];
+    const emit = (p: Pending) => {
+      if (p.event.text !== '' || ('truncated' in p.event && p.event.truncated)) out.push(p);
+    };
+    for (const item of items) {
+      const key = `${item.event.type}\u0000${item.event.itemId}`;
+      const prev = held.get(key);
+      held.delete(key);
+      const truncated = 'truncated' in item.event && item.event.truncated === true;
+      let text = item.event.text;
+      if (prev && (prev.turnId !== item.turnId || truncated)) emit(prev);
+      else if (prev) text = prev.event.text + text;
+      if (truncated) {
+        emit(item);
+        continue;
+      }
+      const turnId = prev && prev.turnId === item.turnId ? prev.turnId : item.turnId;
+      const { emit: now, hold } = splitForRedaction(text, ends(item.event));
+      emit({ turnId, event: { ...item.event, text: now } as DeltaEvent });
+      if (hold) held.set(key, { turnId, event: { ...item.event, text: hold } as DeltaEvent });
+    }
+    // 这次没有新增量、但已经结束的输出流：把扣住的尾巴放出来。
+    for (const [key, p] of [...held]) {
+      if (!ends(p.event)) continue;
+      held.delete(key);
+      emit(p);
+    }
+    if (held.size === 0) this.holds.delete(taskId);
+    return out;
   }
 
   private persist(taskId: string, turnId: string | null, event: HubEvent): HubEventEnvelope {

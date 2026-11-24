@@ -7,6 +7,7 @@ import type {
   TaskStatus,
   TurnStatus,
 } from '@agent-hub/contract';
+import { isTerminalStatus } from '@agent-hub/contract';
 import { AgentFailure, agentError, type AgentSession } from '../adapters/types';
 import type { HubLogger } from '../common/logger';
 import { HUB_DB, HUB_GIT, HUB_LOGGER, GIT_GUARD } from '../common/tokens';
@@ -238,8 +239,8 @@ export class TaskRunner {
     });
     this.approvals.withdrawAll(turnId);
 
-    // 7. 轮后
-    this.events.flush(taskId);
+    // 7. 轮后：本轮输出都结束了，扣住的尾巴一起放出来。
+    this.events.flush(taskId, 'all');
     let diffError: AgentError | null = null;
     try {
       const afterTree = await snapshotTree(this.git, cwd);
@@ -404,7 +405,7 @@ export class TaskRunner {
     extra: Record<string, string | number | null | undefined> = {},
   ): void {
     assertTransition(from, to);
-    this.events.flush(taskId);
+    this.events.flush(taskId, isTerminalStatus(to) ? 'all' : undefined);
     const env = this.db.tx(() => {
       const cur = this.repo.task(taskId)!;
       if (cur.status !== from) assertTransition(cur.status as TaskStatus, to);

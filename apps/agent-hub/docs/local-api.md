@@ -519,7 +519,7 @@ export function requestHash(method: string, routeKey: string, body: unknown): st
 
 ### 3.4 返回给桥接方的内容：脱敏与截断
 
-- **脱敏**：`BridgeRedactInterceptor`（全局）把返回给桥接 token 的响应里每一个字符串值过一遍 `redact()`（[security.md](security.md) §6），包括提示词、消息、工具输出、命令、审批详情、错误信息、diff 补丁；WebSocket 消息同样处理（§6）。Hub UI 拿到的是原文。
+- **脱敏**：`BridgeRedactInterceptor`（全局）把返回给桥接 token 的响应里每一个字符串值过一遍 `redact()`（[security.md](security.md) §6），包括提示词、消息、工具输出、命令、审批详情、错误信息、diff 补丁；WebSocket 消息同样处理（§6）。Hub UI 拿到的是原文。增量事件（`message.delta` 等）逐条脱敏，事件管线保证同一个密钥不会被切进两条增量（[architecture.md](architecture.md) §6 第 2 步），REST `/events`、WebSocket 实时推送和回放都一样。
 - **diff 截断**：桥接方读取补丁时先脱敏，再按文件边界截断到 `security.maxBridgeDiffBytes`（默认 512 KB，UTF-8 字节数），被截断时 JSON 里 `truncated: true`、`format=patch` 时响应头 `X-Agent-Hub-Truncated: true`（D46）。
 - **审计**：桥接 token 每次读 diff 记一条 `bridge.diff_read`（[data-model.md](data-model.md) §7）。
 - 工具输出在落库时已经按单个工具 1 MB 截断（[architecture.md](architecture.md) §6），事件接口不再另外截断。

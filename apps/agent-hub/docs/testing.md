@@ -195,16 +195,16 @@ export interface FakeScenario {
 
 ### 4.7 推送守卫与脱敏
 
-| 编号 | 场景                    | 层  | 注入方式                                                         | 期望                                                                       |
-| ---- | ----------------------- | --- | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| E41  | Agent 环境里推送        | G   | `agentEnv()` 之后 `git push` 到 `git://127.0.0.1`                | 失败，`transport 'git' not allowed`；裸仓库没有新引用                      |
-| E42  | `insteadOf` 改写        | G   | 全局改写把远端指到 daemon                                        | 同 E41                                                                     |
-| E43  | `pre-push`              | G   | [security.md](security.md) §3.3 的 12 组；另测 `commit-msg` 转发 | 12 组与表一致；仓库自己的 `commit-msg` 被调用；`pre-push` 不转发           |
-| E44  | Hub 推送到 GitHub 主机  | G   | `internal` 被改写成 `https://github.com/...`                     | `checkPushTarget` 拒绝，`GIT_PUSH_BLOCKED`，没有连接；审计 URL 无 userinfo |
-| E45  | 非 `agent-hub/*` 或强推 | G   | 直接调用 `PushService`                                           | 拒绝                                                                       |
-| E46  | 远端跟踪分支变化        | G   | 轮中用不带守卫的环境推一次命名远端                               | 轮后审计 `security.remote_ref_changed`，并有 warning `notice`              |
-| E47  | 脱敏                    | U   | [security.md](security.md) §5 的每种模式                         | 日志、transcript、桥接响应是 `«已脱敏»`；Hub UI 的 REST 响应保持原文       |
-| E48  | 目录越界                | I   | 仓库路径不在已注册列表                                           | `400 REPO_INVALID`                                                         |
+| 编号 | 场景                    | 层  | 注入方式                                                                       | 期望                                                                       |
+| ---- | ----------------------- | --- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| E41  | Agent 环境里推送        | G   | `agentEnv()` 之后 `git push` 到 `git://127.0.0.1`                              | 失败，`transport 'git' not allowed`；裸仓库没有新引用                      |
+| E42  | `insteadOf` 改写        | G   | 全局改写把远端指到 daemon                                                      | 同 E41                                                                     |
+| E43  | `pre-push`              | G   | [security.md](security.md) §3.3 的 12 组；另测 `commit-msg` 转发               | 12 组与表一致；仓库自己的 `commit-msg` 被调用；`pre-push` 不转发           |
+| E44  | Hub 推送到 GitHub 主机  | G   | `internal` 被改写成 `https://github.com/...`                                   | `checkPushTarget` 拒绝，`GIT_PUSH_BLOCKED`，没有连接；审计 URL 无 userinfo |
+| E45  | 非 `agent-hub/*` 或强推 | G   | 直接调用 `PushService`                                                         | 拒绝                                                                       |
+| E46  | 远端跟踪分支变化        | G   | 轮中用不带守卫的环境推一次命名远端                                             | 轮后审计 `security.remote_ref_changed`，并有 warning `notice`              |
+| E47  | 脱敏                    | U   | [security.md](security.md) §5 的每种模式；密钥被切在两条增量之间（REST 与 WS） | 日志、transcript、桥接响应是 `«已脱敏»`；Hub UI 的 REST 响应保持原文       |
+| E48  | 目录越界                | I   | 仓库路径不在已注册列表                                                         | `400 REPO_INVALID`                                                         |
 
 ### 4.8 本地 API
 
