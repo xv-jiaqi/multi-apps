@@ -109,7 +109,7 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 | 我的意向（含已关闭）                          | ✅   | `/me#me-listings`                       | `listings.mine`                     | `/me` 上混合显示 OPEN / CLOSED，可用行内两步确认关闭；页面仍显示 slug，接口已附带卡牌摘要                                                                                                                                                                                                                                                   |
 | 图片展示                                      | ✅   | 列表项、发布预览                        | —                                   | https 图片显示缩略图；非 https 或加载失败显示“图片 n”文字链接（列表与发布预览）；已有非 https 数据不迁移                                                                                                                                                                                                                                    |
 | 免责声明                                      | ✅   | 列表页 + 发布页                         | —                                   |                                                                                                                                                                                                                                                                                                                                             |
-| 联系方式可见性                                | ✅   | 列表项 + 卡牌页区块                     | `listings.list` / `listings.byCard` | 未登录时 `contact` 为 `null`，前端显示“登录后查看联系方式”（样式对齐评论区登录提示，点击区 ≥24px）；登录或注册成功后让 listings 缓存失效。登录后发布保留当前筛选；登录页“去注册”带上回跳。需求 CH-250 / Spec CH-250.md v1                                                                                                                   |
+| 联系方式可见性                                | ✅   | 列表项 + 卡牌页区块                     | `listings.list` / `listings.byCard` | 未登录时 `contact` 为 `null`，前端显示“登录后查看联系方式”（样式对齐评论区登录提示，点击区 ≥24px）；登录或注册成功后让 listings 缓存失效；退出登录时清除缓存，不保留联系方式原文。登录后发布保留当前筛选；登录页“去注册”带上回跳。需求 CH-250 / Spec CH-250.md v1.1                                                                         |
 
 ### 3.7 举报与管理
 
@@ -399,7 +399,7 @@ erDiagram
     decimal price
     string currency
     string_array imageUrls
-    string contact
+    string contact  // DB 非空；公开 list/byCard 对未登录返回 null
     string note
     enum status
   }
