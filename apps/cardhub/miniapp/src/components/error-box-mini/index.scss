@@ -33,4 +33,11 @@
   &::after {
     border: none;
   }
+
+  // Beat the runtime's `button[disabled]` gray so 「重试中…」 keeps AA contrast.
+  &[disabled] {
+    color: $color-red-700;
+    background-color: $color-white;
+    opacity: 1;
+  }
 }

@@ -9,6 +9,21 @@
     />
     <meta name="theme-color" content="#ffffff" />
     <title>Cardhub</title>
+    <!--
+      H5 only. Taro turns rpx into rem with 40 rpx per rem (designWidth 750),
+      so 20px per rem at a 375px viewport keeps 750rpx equal to the viewport
+      width, as on the mini program (88rpx = 44px at 375).
+    -->
+    <script>
+      !(function (w) {
+        function setRootFontSize() {
+          var width = Math.min(w.document.documentElement.getBoundingClientRect().width, 750);
+          w.document.documentElement.style.fontSize = (width / 375) * 20 + 'px';
+        }
+        w.addEventListener('resize', setRootFontSize);
+        setRootFontSize();
+      })(window);
+    </script>
   </head>
   <body>
     <div id="app"></div>

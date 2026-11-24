@@ -1,5 +1,21 @@
 @import '@repo/design-tokens/taro.scss';
 
+.auth-page {
+  height: 100vh;
+  background-color: $color-page;
+}
+
+.auth-page__body {
+  padding: $spacing-md;
+}
+
+.auth-page__subtitle {
+  display: block;
+  margin-bottom: 24rpx;
+  font-size: 26rpx;
+  color: $color-neutral-600;
+}
+
 .auth-page__error {
   margin-bottom: $spacing-sm;
   padding: $spacing-sm;

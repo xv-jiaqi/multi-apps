@@ -53,8 +53,8 @@ export default observer(function RegisterPage() {
   };
 
   return (
-    <ScrollView scrollY style={{ height: '100vh' }}>
-      <View style={{ padding: '32rpx' }}>
+    <ScrollView scrollY className="auth-page">
+      <View className="auth-page__body">
         <BreadcrumbsMini
           items={[
             { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
@@ -63,10 +63,7 @@ export default observer(function RegisterPage() {
         />
 
         <SectionCard title={tt('auth.register.title')}>
-          <Text style={{ fontSize: '26rpx', color: '#525252' }}>
-            {tt('auth.register.subtitle')}
-          </Text>
-          <View style={{ height: '24rpx' }} />
+          <Text className="auth-page__subtitle">{tt('auth.register.subtitle')}</Text>
 
           <Field
             label={tt('auth.fields.email')}
@@ -103,7 +100,6 @@ export default observer(function RegisterPage() {
             onClick={submit}
           />
 
-          <View style={{ height: '16rpx' }} />
           <Link to="/pages/auth/login/index" mode="redirect" className="auth-page__switch">
             <Text className="auth-page__switch-text">{tt('auth.actions.toLogin')}</Text>
           </Link>

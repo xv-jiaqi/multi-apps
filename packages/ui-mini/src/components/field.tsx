@@ -1,5 +1,6 @@
 import { View, Text, Input } from '@tarojs/components';
 import type { InputProps } from '@tarojs/components';
+import { rpxStyle } from '../rpx';
 
 export interface FieldProps {
   label: string;
@@ -34,16 +35,16 @@ export function Field({
   error,
 }: FieldProps) {
   return (
-    <View style={{ display: 'block', marginBottom: '24rpx' }}>
+    <View style={rpxStyle({ display: 'block', marginBottom: '24rpx' })}>
       <Text
-        style={{
+        style={rpxStyle({
           display: 'block',
           fontSize: '24rpx',
           color: '#6b7280',
           marginBottom: '8rpx',
           textTransform: 'uppercase',
           letterSpacing: '2rpx',
-        }}
+        })}
       >
         {label}
       </Text>
@@ -55,7 +56,7 @@ export function Field({
         disabled={disabled}
         maxlength={maxlength ?? 140}
         onInput={(e) => onInput(e.detail.value)}
-        style={{
+        style={rpxStyle({
           width: '100%',
           padding: '20rpx 24rpx',
           fontSize: '30rpx',
@@ -63,10 +64,17 @@ export function Field({
           border: error ? '1rpx solid #ef4444' : '1rpx solid #e5e7eb',
           borderRadius: '12rpx',
           boxSizing: 'border-box',
-        }}
+        })}
       />
       {error ? (
-        <Text style={{ display: 'block', color: '#dc2626', fontSize: '24rpx', marginTop: '8rpx' }}>
+        <Text
+          style={rpxStyle({
+            display: 'block',
+            color: '#dc2626',
+            fontSize: '24rpx',
+            marginTop: '8rpx',
+          })}
+        >
           {error}
         </Text>
       ) : null}

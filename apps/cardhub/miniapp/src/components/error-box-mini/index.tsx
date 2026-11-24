@@ -27,7 +27,9 @@ export function ErrorBoxMini({
       <Text className="error-box-mini__title">{title}</Text>
       <Button
         className="error-box-mini__retry"
-        disabled={retrying}
+        // Taro H5 writes `disabled="false"`, which still matches `[disabled]`.
+        disabled={retrying ? true : undefined}
+        ariaLabel={retrying ? retryingLabel : retryLabel}
         onClick={() => {
           if (!retrying) onRetry();
         }}

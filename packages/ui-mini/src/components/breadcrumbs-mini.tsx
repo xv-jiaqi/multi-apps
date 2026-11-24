@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components';
 import { Link, type LinkMode } from './link';
+import { rpxStyle } from '../rpx';
 
 export interface BreadcrumbItem {
   label: string;
@@ -21,7 +22,7 @@ export interface BreadcrumbsMiniProps {
 export function BreadcrumbsMini({ items }: BreadcrumbsMiniProps) {
   return (
     <View
-      style={{
+      style={rpxStyle({
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
@@ -29,7 +30,7 @@ export function BreadcrumbsMini({ items }: BreadcrumbsMiniProps) {
         marginBottom: '16rpx',
         fontSize: '24rpx',
         color: '#525252',
-      }}
+      })}
     >
       {items.map((item, idx) => {
         const last = idx === items.length - 1;
