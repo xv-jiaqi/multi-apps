@@ -1,1 +1,88 @@
 @import '@repo/design-tokens/taro.scss';
+
+.series-detail-page {
+  height: 100vh;
+  background-color: $color-page;
+}
+
+.series-detail-page__body {
+  padding: $spacing-md;
+}
+
+.series-detail-page__section-title {
+  display: block;
+  margin-bottom: $spacing-sm;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+}
+
+// CH-301 §5 C-2: same structure as the home featured card.
+.series-hero {
+  margin-bottom: $spacing-md;
+  overflow: hidden;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-lg;
+}
+
+.series-hero__text {
+  padding: $spacing-md;
+  background-color: $color-white;
+}
+
+.series-hero__title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.series-hero__description {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: $color-neutral-600;
+  word-break: break-word;
+}
+
+.series-hero__count {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.series-card-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  padding: 20rpx;
+  background-color: $color-white;
+  border-radius: 20rpx;
+}
+
+.series-card-row__art {
+  flex-shrink: 0;
+  width: 120rpx;
+  overflow: hidden;
+  border-radius: 12rpx;
+}
+
+.series-card-row__text {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.series-card-row__name {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+  word-break: break-word;
+}

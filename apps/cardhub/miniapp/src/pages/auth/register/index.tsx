@@ -5,7 +5,11 @@ import { ScrollView, View, Text } from '@tarojs/components';
 import { BreadcrumbsMini, Field, Link, PrimaryButton, SectionCard } from '@repo/ui-mini';
 import { fieldErrorMessage, registerInput, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
+import { leaveAuthPage } from '../../../lib/leave-auth-page';
+import { mutationErrorMessage } from '../../../lib/load-error';
+import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useStores } from '../../../stores/root-store';
+import './index.scss';
 
 export default observer(function RegisterPage() {
   const { locale, session } = useStores();
@@ -14,7 +18,9 @@ export default observer(function RegisterPage() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorNotice] = useState<Notice<{ text: string }> | null>(null);
+  const setError = (text: string | null) =>
+    setErrorNotice(text === null ? null : { id: nextNoticeId(), text });
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
@@ -33,9 +39,14 @@ export default observer(function RegisterPage() {
       const { token, user } = await trpc.auth.register.mutate(parsed.data);
       session.signIn(token, { id: user.id, username: user.username, role: user.role });
       void Taro.showToast({ title: tt('miniapp.toast.registerOk'), icon: 'success' });
-      void Taro.redirectTo({ url: '/pages/index/index' });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      leaveAuthPage();
+    } catch (err) {
+      setError(
+        mutationErrorMessage({
+          locale: locale.locale,
+          error: err,
+        }),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -46,7 +57,7 @@ export default observer(function RegisterPage() {
       <View style={{ padding: '32rpx' }}>
         <BreadcrumbsMini
           items={[
-            { label: tt('breadcrumb.home'), to: '/pages/index/index' },
+            { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
             { label: tt('auth.register.title') },
           ]}
         />
@@ -81,16 +92,8 @@ export default observer(function RegisterPage() {
           />
 
           {error ? (
-            <View
-              style={{
-                padding: '16rpx',
-                background: '#fef2f2',
-                borderRadius: '12rpx',
-                border: '1rpx solid #fecaca',
-                marginBottom: '16rpx',
-              }}
-            >
-              <Text style={{ color: '#b91c1c', fontSize: '24rpx' }}>{error}</Text>
+            <View key={error.id} className="auth-page__error" ariaRole="alert">
+              <Text className="auth-page__error-text">{error.text}</Text>
             </View>
           ) : null}
 
@@ -101,10 +104,8 @@ export default observer(function RegisterPage() {
           />
 
           <View style={{ height: '16rpx' }} />
-          <Link to="/pages/auth/login/index">
-            <Text style={{ color: '#2563eb', fontSize: '24rpx', textAlign: 'center' }}>
-              {tt('auth.actions.toLogin')}
-            </Text>
+          <Link to="/pages/auth/login/index" mode="redirect" className="auth-page__switch">
+            <Text className="auth-page__switch-text">{tt('auth.actions.toLogin')}</Text>
           </Link>
         </SectionCard>
       </View>

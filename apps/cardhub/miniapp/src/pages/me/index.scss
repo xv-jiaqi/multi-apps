@@ -1,0 +1,62 @@
+@import '@repo/design-tokens/taro.scss';
+
+.me-page {
+  height: 100vh;
+  background-color: $color-page;
+}
+
+.me-page__body {
+  padding: $spacing-md;
+}
+
+.me-page__title {
+  display: block;
+  margin-bottom: $spacing-md;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $color-neutral-900;
+}
+
+.me-page__card {
+  padding: $spacing-md;
+  background-color: $color-white;
+  border-radius: $radius-md;
+}
+
+.me-page__user {
+  display: block;
+  margin-bottom: $spacing-md;
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.me-page__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin: 0 0 $spacing-sm;
+  font-size: 30rpx;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.me-page__button--primary {
+  color: $color-white;
+  background-color: $color-brand-600;
+}
+
+.me-page__button--secondary {
+  color: $color-brand-600;
+  background-color: $color-white;
+  border: 2rpx solid $color-brand-600;
+}

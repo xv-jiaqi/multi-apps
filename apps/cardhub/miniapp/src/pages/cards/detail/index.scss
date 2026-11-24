@@ -1,1 +1,164 @@
 @import '@repo/design-tokens/taro.scss';
+
+.card-detail-page {
+  height: 100vh;
+  background-color: $color-page;
+}
+
+.card-detail-page__body {
+  padding: $spacing-md;
+}
+
+.card-detail-page__gap {
+  height: 24rpx;
+}
+
+// CH-301 §5: 63:88, aspectFit. Capped so the whole card stays in view.
+.card-hero {
+  width: 480rpx;
+  max-width: 100%;
+  margin: 0 auto 24rpx;
+  overflow: hidden;
+  border-radius: $radius-lg;
+}
+
+.card-detail-page__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: 12rpx;
+}
+
+.card-detail-page__name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.card-detail-page__description {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: $color-neutral-600;
+  word-break: break-word;
+}
+
+.card-detail-page__series {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 88rpx;
+}
+
+.card-detail-page__meta {
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.card-detail-page__link {
+  font-size: 26rpx;
+  color: $color-brand-600;
+}
+
+.card-attributes {
+  display: flex;
+  flex-flow: row wrap;
+  gap: $spacing-sm;
+}
+
+.card-attributes__item {
+  min-width: 180rpx;
+  margin-right: 24rpx;
+}
+
+.card-attributes__key {
+  display: block;
+  margin-bottom: 4rpx;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  text-transform: uppercase;
+  color: $color-neutral-600;
+}
+
+.card-attributes__value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.comment-form {
+  margin-bottom: 24rpx;
+}
+
+.comment-form__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 160rpx;
+  padding: 20rpx;
+  font-size: 26rpx;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: 12rpx;
+}
+
+.comment-form__error {
+  margin-top: 12rpx;
+  padding: $spacing-sm;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: 12rpx;
+}
+
+.comment-form__error-text {
+  font-size: 26rpx;
+  color: $color-red-700;
+}
+
+.comment-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $spacing-sm;
+}
+
+.comment-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin-bottom: 24rpx;
+  background-color: $color-neutral-100;
+  border-radius: 12rpx;
+}
+
+.comment-item {
+  margin-bottom: $spacing-sm;
+  padding: 20rpx;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-100;
+  border-radius: 12rpx;
+}
+
+.comment-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-xs;
+}
+
+.comment-item__author {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+}
+
+.comment-item__content {
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: $color-neutral-900;
+  word-break: break-word;
+}

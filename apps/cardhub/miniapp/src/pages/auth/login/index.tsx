@@ -3,9 +3,13 @@ import { observer } from 'mobx-react-lite';
 import Taro from '@tarojs/taro';
 import { ScrollView, View, Text } from '@tarojs/components';
 import { BreadcrumbsMini, Field, Link, PrimaryButton, SectionCard } from '@repo/ui-mini';
-import { fieldErrorMessage, loginInput, t } from '@repo/shared';
+import { APP_ERROR_CODES, fieldErrorMessage, loginInput, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
+import { leaveAuthPage } from '../../../lib/leave-auth-page';
+import { mutationErrorMessage } from '../../../lib/load-error';
+import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useStores } from '../../../stores/root-store';
+import './index.scss';
 
 export default observer(function LoginPage() {
   const { locale, session } = useStores();
@@ -13,7 +17,9 @@ export default observer(function LoginPage() {
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorNotice] = useState<Notice<{ text: string }> | null>(null);
+  const setError = (text: string | null) =>
+    setErrorNotice(text === null ? null : { id: nextNoticeId(), text });
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
@@ -32,16 +38,15 @@ export default observer(function LoginPage() {
       const { token, user } = await trpc.auth.login.mutate(parsed.data);
       session.signIn(token, { id: user.id, username: user.username, role: user.role });
       void Taro.showToast({ title: tt('miniapp.toast.loginOk'), icon: 'success' });
-      // `navigateBack` when the user got here from the card detail page;
-      // `redirectTo` home otherwise so the sign-in page isn't in the stack.
-      const pages = Taro.getCurrentPages();
-      if (pages.length > 1) {
-        void Taro.navigateBack({ delta: 1 });
-      } else {
-        void Taro.redirectTo({ url: '/pages/index/index' });
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      leaveAuthPage();
+    } catch (err) {
+      setError(
+        mutationErrorMessage({
+          locale: locale.locale,
+          error: err,
+          copy: { [APP_ERROR_CODES.INVALID_CREDENTIALS]: tt('auth.login.unauthorized') },
+        }),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -52,7 +57,7 @@ export default observer(function LoginPage() {
       <View style={{ padding: '32rpx' }}>
         <BreadcrumbsMini
           items={[
-            { label: tt('breadcrumb.home'), to: '/pages/index/index' },
+            { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
             { label: tt('auth.login.title') },
           ]}
         />
@@ -78,16 +83,8 @@ export default observer(function LoginPage() {
           />
 
           {error ? (
-            <View
-              style={{
-                padding: '16rpx',
-                background: '#fef2f2',
-                borderRadius: '12rpx',
-                border: '1rpx solid #fecaca',
-                marginBottom: '16rpx',
-              }}
-            >
-              <Text style={{ color: '#b91c1c', fontSize: '24rpx' }}>{error}</Text>
+            <View key={error.id} className="auth-page__error" ariaRole="alert">
+              <Text className="auth-page__error-text">{error.text}</Text>
             </View>
           ) : null}
 
@@ -98,10 +95,8 @@ export default observer(function LoginPage() {
           />
 
           <View style={{ height: '16rpx' }} />
-          <Link to="/pages/auth/register/index">
-            <Text style={{ color: '#2563eb', fontSize: '24rpx', textAlign: 'center' }}>
-              {tt('auth.actions.toRegister')}
-            </Text>
+          <Link to="/pages/auth/register/index" mode="redirect" className="auth-page__switch">
+            <Text className="auth-page__switch-text">{tt('auth.actions.toRegister')}</Text>
           </Link>
         </SectionCard>
       </View>

@@ -1,1 +1,129 @@
-// Page-level styles for Cardhub miniapp home.
+@import '@repo/design-tokens/taro.scss';
+
+.home-page {
+  height: 100vh;
+  background-color: $color-page;
+}
+
+.home-page__body {
+  padding: $spacing-md;
+}
+
+.home-page__hero {
+  margin-bottom: $spacing-md;
+}
+
+.home-page__eyebrow {
+  display: block;
+  margin-bottom: $spacing-xs;
+  font-size: 24rpx;
+  letter-spacing: 3rpx;
+  color: $color-neutral-600;
+}
+
+.home-page__title {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 48rpx;
+  font-weight: 700;
+  color: $color-neutral-900;
+}
+
+.home-page__subtitle {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: $color-neutral-600;
+}
+
+.home-page__actions {
+  display: flex;
+  flex-flow: row wrap;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.home-page__view-all {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+}
+
+.home-page__link-text {
+  font-size: 28rpx;
+  color: $color-brand-600;
+}
+
+.home-page__stats {
+  margin-top: $spacing-md;
+}
+
+// CH-301 §5: the band carries no text; text sits on white below it.
+.home-featured {
+  display: block;
+  margin-bottom: $spacing-sm;
+  overflow: hidden;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+.home-featured__text {
+  padding: 24rpx;
+  background-color: $color-white;
+}
+
+.home-featured__title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.home-featured__description {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: $color-neutral-600;
+  word-break: break-word;
+}
+
+.home-featured__count {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.home-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.home-stats__item {
+  flex: 1;
+  min-width: 220rpx;
+}
+
+.home-stats__label {
+  display: block;
+  margin-bottom: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.home-stats__value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $color-neutral-900;
+}
+
+.home-stats__note {
+  display: block;
+  margin-top: $spacing-sm;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}

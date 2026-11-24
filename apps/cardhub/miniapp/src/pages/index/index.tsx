@@ -1,189 +1,135 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import Taro, { useDidShow } from '@tarojs/taro';
+import { useDidShow } from '@tarojs/taro';
 import { View, Text, ScrollView } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, Link, PrimaryButton, SectionCard, Skeleton } from '@repo/ui-mini';
 import { APP_NAME, t } from '@repo/shared';
 import { trpc } from '../../lib/trpc';
 import { useStores } from '../../stores/root-store';
-import { gradientFor } from '../../lib/gradients';
+import { resolveBlockView } from '../../lib/block-view';
+import { useBlock } from '../../lib/use-block';
+import { ArtworkMini } from '../../components/artwork-mini';
+import { ErrorBoxMini } from '../../components/error-box-mini';
+import './index.scss';
 
 type SeriesListResult = Awaited<ReturnType<typeof trpc.series.list.query>>;
 
+/**
+ * Home: browse series and search. The account area moved to 「我的」
+ * (CH-301 §1). Featured series use 「图在上、字在下」 (CH-301 §5, CH-105
+ * C-2). Stats only render after `series.list` succeeds (CH-301 §6).
+ */
 export default observer(function Index() {
-  const { locale, session } = useStores();
+  const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
-  const [data, setData] = useState<SeriesListResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await trpc.series.list.query({ page: 1, pageSize: 10 });
-      setData(result);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { state, load } = useBlock<SeriesListResult>(() =>
+    trpc.series.list.query({ page: 1, pageSize: 10 }),
+  );
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   // Re-pull once the page is shown again, e.g. after the user signs in
   // from a navigated-to subpage and comes back.
   useDidShow(() => {
-    if (!loading) void load();
+    if (!state.loading) void load();
   });
 
-  const featured = (data?.items ?? []).slice(0, 4);
-  const totalCards = (data?.items ?? []).reduce((acc, s) => acc + s.cardCount, 0);
+  const view = resolveBlockView({ state, isEmpty: (data) => data.items.length === 0 });
 
   return (
-    <ScrollView scrollY style={{ height: '100vh' }}>
-      <View style={{ padding: '32rpx' }}>
+    <ScrollView scrollY className="home-page">
+      <View className="home-page__body">
         <BreadcrumbsMini items={[{ label: tt('breadcrumb.home') }]} />
 
-        <View style={{ marginBottom: '32rpx' }}>
-          <Text style={{ fontSize: '24rpx', color: '#6b7280', letterSpacing: '3rpx' }}>
-            {APP_NAME} · MVP
-          </Text>
-          <View style={{ height: '8rpx' }} />
-          <Text style={{ fontSize: '48rpx', fontWeight: 700, color: '#171717' }}>
-            {tt('welcome.title')}
-          </Text>
-          <View style={{ height: '12rpx' }} />
-          <Text style={{ fontSize: '28rpx', color: '#525252' }}>{tt('welcome.subtitle')}</Text>
+        <View className="home-page__hero">
+          <Text className="home-page__eyebrow">{APP_NAME} · MVP</Text>
+          <Text className="home-page__title">{tt('welcome.title')}</Text>
+          <Text className="home-page__subtitle">{tt('welcome.subtitle')}</Text>
         </View>
 
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '16rpx',
-            marginBottom: '40rpx',
-            flexWrap: 'wrap',
-          }}
-        >
+        <View className="home-page__actions">
           <Link to="/pages/series/list/index">
             <PrimaryButton label={tt('miniapp.home.browse')} />
           </Link>
           <Link to="/pages/search/index/index">
             <PrimaryButton label={tt('miniapp.home.search')} />
           </Link>
-          {session.isAuthenticated ? null : (
-            <Link to="/pages/auth/login/index">
-              <PrimaryButton label={tt('miniapp.home.login')} />
-            </Link>
-          )}
         </View>
 
-        {session.isAuthenticated && session.user ? (
-          <View
-            style={{
-              padding: '20rpx 24rpx',
-              background: '#f1f5f9',
-              borderRadius: '16rpx',
-              marginBottom: '32rpx',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ fontSize: '26rpx', color: '#0f172a' }}>
-              {tt('miniapp.home.profile', { username: session.user.username })}
-            </Text>
-            <Text
-              style={{ fontSize: '24rpx', color: '#2563eb' }}
-              onClick={() => {
-                session.signOut();
-                void Taro.showToast({ title: tt('miniapp.toast.logoutOk'), icon: 'success' });
-              }}
-            >
-              {tt('miniapp.home.logout')}
-            </Text>
-          </View>
-        ) : null}
-
         <SectionCard title={tt('miniapp.home.featured')}>
-          {loading ? (
+          {view.kind === 'failed' ? (
+            <ErrorBoxMini
+              key={view.noticeId}
+              title={tt('home.series.loadFailed')}
+              retryLabel={tt('state.retry')}
+              retryingLabel={tt('state.retrying')}
+              retrying={view.retrying}
+              onRetry={() => void load()}
+            />
+          ) : view.kind === 'notFound' ? (
+            <Empty title={tt('state.notFound')} />
+          ) : view.kind === 'loading' ? (
             <View>
-              <Skeleton height="160rpx" />
-              <Skeleton height="160rpx" />
-              <Skeleton height="160rpx" />
+              <Skeleton height="320rpx" />
+              <Skeleton height="320rpx" />
             </View>
-          ) : error ? (
-            <View>
-              <Text style={{ color: '#dc2626', fontSize: '26rpx' }}>
-                {tt('state.error')}: {error}
-              </Text>
-              <View style={{ height: '16rpx' }} />
-              <PrimaryButton label={tt('state.retry')} onClick={load} />
-            </View>
-          ) : featured.length === 0 ? (
+          ) : view.kind === 'empty' ? (
             <Empty title={tt('series.empty')} />
           ) : (
             <View>
-              {featured.map((series) => (
+              {view.data.items.slice(0, 4).map((series) => (
                 <Link
                   key={series.slug}
                   to={`/pages/series/detail/index?slug=${series.slug}`}
-                  style={{ marginBottom: '16rpx' }}
+                  className="home-featured"
                 >
-                  <View
-                    style={{
-                      position: 'relative',
-                      overflow: 'hidden',
-                      borderRadius: '16rpx',
-                      background: gradientFor(series.slug),
-                      padding: '32rpx',
-                      color: '#ffffff',
-                    }}
-                  >
-                    <Text style={{ display: 'block', fontSize: '34rpx', fontWeight: 600 }}>
-                      {series.title}
-                    </Text>
-                    <View style={{ height: '8rpx' }} />
-                    <Text style={{ fontSize: '24rpx', opacity: 0.9 }}>{series.description}</Text>
-                    <View style={{ height: '8rpx' }} />
-                    <Text style={{ fontSize: '22rpx', opacity: 0.8 }}>
+                  <ArtworkMini
+                    src={series.coverUrl}
+                    slug={series.slug}
+                    ratio="series"
+                    mode="aspectFill"
+                    label={series.title}
+                  />
+                  <View className="home-featured__text">
+                    <Text className="home-featured__title">{series.title}</Text>
+                    {series.description ? (
+                      <Text className="home-featured__description">{series.description}</Text>
+                    ) : null}
+                    <Text className="home-featured__count">
                       {tt('series.cardCount', { count: series.cardCount })}
                     </Text>
                   </View>
                 </Link>
               ))}
-              <Link to="/pages/series/list/index" style={{ padding: '12rpx 0' }}>
-                <Text style={{ color: '#2563eb', fontSize: '26rpx' }}>
-                  {tt('miniapp.home.viewAll')}
-                </Text>
+              <Link to="/pages/series/list/index" className="home-page__view-all">
+                <Text className="home-page__link-text">{tt('miniapp.home.viewAll')}</Text>
               </Link>
             </View>
           )}
         </SectionCard>
 
-        <View style={{ height: '24rpx' }} />
-
-        <SectionCard title={`${APP_NAME} · ${tt('home.stats.source')}`}>
-          <View style={{ display: 'flex', gap: '16rpx', flexWrap: 'wrap' }}>
-            <View style={{ flex: 1, minWidth: '220rpx' }}>
-              <Text style={{ fontSize: '22rpx', color: '#737373' }}>{tt('home.stats.series')}</Text>
-              <View style={{ height: '8rpx' }} />
-              <Text style={{ fontSize: '40rpx', fontWeight: 700 }}>{data?.total ?? '—'}</Text>
-            </View>
-            <View style={{ flex: 1, minWidth: '220rpx' }}>
-              <Text style={{ fontSize: '22rpx', color: '#737373' }}>{tt('home.stats.cards')}</Text>
-              <View style={{ height: '8rpx' }} />
-              <Text style={{ fontSize: '40rpx', fontWeight: 700 }}>{data ? totalCards : '—'}</Text>
-            </View>
+        {view.kind === 'success' || view.kind === 'empty' ? (
+          <View className="home-page__stats">
+            <SectionCard title={`${APP_NAME} · ${tt('home.stats.source')}`}>
+              <View className="home-stats">
+                <View className="home-stats__item">
+                  <Text className="home-stats__label">{tt('home.stats.series')}</Text>
+                  <Text className="home-stats__value">{state.data?.total ?? 0}</Text>
+                </View>
+                <View className="home-stats__item">
+                  <Text className="home-stats__label">{tt('home.stats.cards')}</Text>
+                  <Text className="home-stats__value">
+                    {(state.data?.items ?? []).reduce((acc, s) => acc + s.cardCount, 0)}
+                  </Text>
+                </View>
+              </View>
+              <Text className="home-stats__note">{tt('home.stats.sourceNote')}</Text>
+            </SectionCard>
           </View>
-          <View style={{ height: '16rpx' }} />
-          <Text style={{ fontSize: '22rpx', color: '#737373' }}>{tt('home.stats.sourceNote')}</Text>
-        </SectionCard>
+        ) : null}
       </View>
     </ScrollView>
   );

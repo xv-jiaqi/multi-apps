@@ -1056,6 +1056,25 @@ const zhCN: Dictionary = {
   'miniapp.toast.registerOk': '注册成功',
   'miniapp.toast.commentOk': '评论成功',
   'miniapp.toast.logoutOk': '已退出登录',
+  // CH-301 §7 (miniapp forum, trade, report).
+  'report.reason.spam': '垃圾广告',
+  'report.reason.illegal': '违法违规',
+  'report.reason.harassment': '骚扰或人身攻击',
+  'report.reason.misinfo': '不实信息',
+  'report.reason.other': '其他',
+  'report.detailLabel': '补充说明',
+  'report.detailRequired': '请填写补充说明（至少 4 个字）',
+  'report.submitFailed': '提交失败，请重试',
+  'content.blocked': '内容未通过审核，请修改后再提交',
+  'content.pendingReview': '审核中',
+  'tab.home': '首页',
+  'tab.forum': '论坛',
+  'tab.trade': '交易',
+  'tab.me': '我的',
+  'forum.list.loadFailed': '论坛加载失败',
+  'trade.list.loadFailed': '交易意向加载失败',
+  'series.detail.loadFailed': '系列加载失败',
+  'search.loadFailed': '搜索失败',
 };
 
 const enUS: Dictionary = {
@@ -2166,6 +2185,25 @@ const enUS: Dictionary = {
   'miniapp.toast.registerOk': 'Account created',
   'miniapp.toast.commentOk': 'Comment posted',
   'miniapp.toast.logoutOk': 'Signed out',
+  // CH-301 §7 (miniapp forum, trade, report).
+  'report.reason.spam': 'Spam',
+  'report.reason.illegal': 'Illegal content',
+  'report.reason.harassment': 'Harassment or abuse',
+  'report.reason.misinfo': 'Misinformation',
+  'report.reason.other': 'Other',
+  'report.detailLabel': 'More details',
+  'report.detailRequired': 'Add details (at least 4 characters)',
+  'report.submitFailed': "Couldn't submit. Try again.",
+  'content.blocked': "This didn't pass review. Edit and try again.",
+  'content.pendingReview': 'Under review',
+  'tab.home': 'Home',
+  'tab.forum': 'Forum',
+  'tab.trade': 'Trade',
+  'tab.me': 'Me',
+  'forum.list.loadFailed': "Couldn't load topics",
+  'trade.list.loadFailed': "Couldn't load listings",
+  'series.detail.loadFailed': "Couldn't load this series",
+  'search.loadFailed': "Couldn't load search results",
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {
