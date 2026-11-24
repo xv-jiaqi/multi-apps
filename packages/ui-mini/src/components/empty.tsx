@@ -1,4 +1,5 @@
 import { View, Text } from '@tarojs/components';
+import { rpxStyle } from '../rpx';
 
 export interface EmptyProps {
   title?: string;
@@ -9,29 +10,29 @@ export interface EmptyProps {
 export function Empty({ title, description }: EmptyProps) {
   return (
     <View
-      style={{
+      style={rpxStyle({
         padding: '64rpx 32rpx',
         border: '2rpx dashed #d4d4d4',
         borderRadius: '24rpx',
         background: 'rgba(255,255,255,0.6)',
         textAlign: 'center',
-      }}
+      })}
     >
       {title ? (
         <Text
-          style={{
+          style={rpxStyle({
             display: 'block',
             fontSize: '32rpx',
             fontWeight: 600,
             color: '#525252',
             marginBottom: '12rpx',
-          }}
+          })}
         >
           {title}
         </Text>
       ) : null}
       {description ? (
-        <Text style={{ fontSize: '26rpx', color: '#737373' }}>{description}</Text>
+        <Text style={rpxStyle({ fontSize: '26rpx', color: '#737373' })}>{description}</Text>
       ) : null}
     </View>
   );

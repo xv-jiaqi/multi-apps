@@ -1,5 +1,47 @@
 @import '@repo/design-tokens/taro.scss';
 
 page {
-  background-color: #fafafa;
+  background-color: $color-page;
+}
+
+// CH-301 §5 v1.3: PrimaryButton uses tokens, not WeChat's type="primary" green.
+// Selectors must beat Taro H5 `taro-button-core[type="default"]` (0,1,1).
+// Resting / pressed / disabled contrast: 5.17 / 6.70 / 7.17 against their own fills.
+taro-button-core.primary-button,
+.primary-button[type='default'],
+.primary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin: 0;
+  padding: 0 $spacing-md;
+  font-size: 30rpx;
+  line-height: 1.4;
+  color: $color-white;
+  background-color: $color-brand-600;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+}
+
+taro-button-core.primary-button.primary-button--pressed,
+.primary-button[type='default'].primary-button--pressed,
+.primary-button.primary-button--pressed {
+  color: $color-white;
+  background-color: $color-brand-700;
+}
+
+// Hang disabled styles on a class, not [disabled]: Taro H5 renders
+// disabled={false} as disabled="false", which still matches [disabled].
+// WeChat keeps adding .button-disabled when the button is actually disabled.
+taro-button-core.primary-button.primary-button--disabled,
+.primary-button[type='default'].primary-button--disabled,
+.primary-button.primary-button--disabled,
+.primary-button.button-disabled {
+  color: $color-neutral-600;
+  background-color: $color-neutral-100;
+  opacity: 1;
 }

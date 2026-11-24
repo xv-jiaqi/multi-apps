@@ -468,7 +468,13 @@ erDiagram
 
 ### 7.2 小程序 / H5
 
-注册在 `apps/cardhub/miniapp/src/app.config.ts`：首页、系列列表、系列详情、卡牌详情（含评论）、搜索、登录、注册，共 7 页。没有 tabBar。系列详情的卡列表来自 `cards.listBySeries`（含平行、按收录时间、`pageSize` 100 拼页），系列头图文走 `series.bySlug({ includeCards:false })`（CH-244）。
+注册在 `apps/cardhub/miniapp/src/app.config.ts`（页面与 tabBar 常量在 `src/lib/tab-bar.ts`）：首页、我的、系列列表、系列详情、卡牌详情（含评论）、搜索、登录、注册，共 8 页。每个页面目录都有 `index.tsx`、`index.config.ts`、`index.scss`（单测 `tab-bar.test.ts` 检查）。
+
+- tabBar（CH-301 §1）：目前两项「首页 / 我的」，论坛、交易两项随论坛、交易两个 PR 插在中间。栏底 `$color-white`，未选 `$color-neutral-600`，选中 `$color-brand-600`，81px 双态图标在 `src/assets/tab/`。文字按语言用 `Taro.setTabBarItem` 换成 `tab.*`。tab 页之间 `switchTab`，面包屑回首页也用 `switchTab`。
+- 「我的」：只放登录态。已登录显示用户名与「退出登录」，未登录显示「登录」「注册」。首页不再有账号区。登录、注册成功后 `navigateBack`，已在栈底则 `switchTab` 回首页；登录与注册页互相跳转用 `redirectTo`，不压栈。
+- 图片（CH-301 §5）：`ArtworkMini` 用 Taro `Image`，经 `resolveArtwork` 只认 `https://`，其余与 `binderror` 回退 `gradientFor(slug)`，加载中底色 `$color-neutral-100`。卡牌详情大图 63:88 `aspectFit`，其余卡图 63:88 `aspectFill`，系列封面与首页精选 2:1 `aspectFill`。首页精选、系列列表、系列详情头图都是「图在上、字在下」，色带上不放字。
+- 错误态（CH-301 §6）：块级失败用 `ErrorBoxMini`（固定 i18n 标题 + 「重试」，进行中「重试中…」，点击区 ≥ 88rpx），`NOT_FOUND` 用 `state.notFound`。页面不展示 `e.message`、状态码或 zod 原文（单测 `no-raw-error-text.test.ts`）。首页统计只在 `series.list` 成功后渲染，不回退「—」。卡牌评论加载失败走红框，不落入空态。
+- 卡牌评论列表请求带 `surface: 'miniapp'`，只返回已过检的评论和自己审核中的评论。系列详情的卡列表来自 `cards.listBySeries`（含平行、按收录时间、`pageSize` 100 拼页），系列头图文走 `series.bySlug({ includeCards:false })`（CH-244）。
 
 小程序的 tRPC client 只在 `apps/cardhub/miniapp/src/lib/trpc-client.ts` 构建，每个请求都带请求头 `x-cardhub-surface: miniapp`。api 取显式 `input.surface` 和这个请求头里更严的一个：任一方是 `miniapp` 就按 `miniapp`；请求头存在但值不是 `web` / `miniapp`（含空串、大小写不符、重复）也按 `miniapp`；两者都没有时仍是 `web`。所以公开读接口在小程序上只返回已过检内容和作者自己的 `review`，漏传或写错 `surface` 都不会放宽到 Web 规则。`src/lib/trpc-client.test.ts` 拦截 fetch 断言请求头，并检查 `src` 里只有 `trpc-client.ts` 构建 client、只有 `trpc.ts` 的 fetch 适配调用 `Taro.request`（不许绕过 client 直接请求）。`notifications.list` 的摘要和链接、`users.me` 的计数也按同一个 surface 判断（见接口表）。
 

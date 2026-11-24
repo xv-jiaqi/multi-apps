@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { View } from '@tarojs/components';
 import Taro from '@tarojs/taro';
+import { rpxStyle } from '../rpx';
 
 export type LinkMode = 'navigate' | 'redirect' | 'switchTab' | 'back';
 
@@ -54,11 +55,11 @@ export function Link({
       hoverStayTime={80}
       onClick={handleClick}
       className={className}
-      style={{
+      style={rpxStyle({
         cursor: 'pointer',
         opacity: disabled ? 0.5 : 1,
         ...style,
-      }}
+      })}
     >
       {children}
     </View>

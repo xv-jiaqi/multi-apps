@@ -1,1 +1,81 @@
 @import '@repo/design-tokens/taro.scss';
+
+.search-page {
+  height: 100vh;
+  background-color: $color-page;
+}
+
+.search-page__body {
+  padding: $spacing-md;
+}
+
+.search-page__title {
+  display: block;
+  margin-bottom: $spacing-sm;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $color-neutral-900;
+}
+
+.search-page__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88rpx;
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  font-size: 28rpx;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+// Local parser hint (unknown prefix, ignored year, ...). Not a request failure.
+.search-page__hint {
+  padding: $spacing-md;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: $radius-md;
+}
+
+.search-page__hint-text {
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: $color-red-700;
+  word-break: break-word;
+}
+
+.search-result {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-100;
+  border-radius: $radius-md;
+}
+
+.search-result__art {
+  flex-shrink: 0;
+  width: 80rpx;
+  overflow: hidden;
+  border-radius: $radius-md;
+}
+
+.search-result__text {
+  flex: 1;
+  min-width: 0;
+  margin: 0 $spacing-sm;
+}
+
+.search-result__name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.search-result__series {
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}

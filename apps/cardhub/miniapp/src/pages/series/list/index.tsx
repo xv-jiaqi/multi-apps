@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { ScrollView, View, Text } from '@tarojs/components';
-import { BreadcrumbsMini, Empty, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import { BreadcrumbsMini, Empty, Link, Skeleton } from '@repo/ui-mini';
 import { t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
-import { gradientFor } from '../../../lib/gradients';
+import { resolveBlockView } from '../../../lib/block-view';
+import { useBlock } from '../../../lib/use-block';
+import { ArtworkMini } from '../../../components/artwork-mini';
+import { ErrorBoxMini } from '../../../components/error-box-mini';
+import './index.scss';
 
 type SeriesListResult = Awaited<ReturnType<typeof trpc.series.list.query>>;
 
@@ -13,103 +17,73 @@ export default observer(function SeriesListPage() {
   const { locale } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
 
-  const [data, setData] = useState<SeriesListResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await trpc.series.list.query({ page: 1, pageSize: 50 });
-      setData(result);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { state, load } = useBlock<SeriesListResult>(() =>
+    trpc.series.list.query({ page: 1, pageSize: 50 }),
+  );
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
+
+  const view = resolveBlockView({ state, isEmpty: (data) => data.items.length === 0 });
 
   return (
-    <ScrollView scrollY style={{ height: '100vh' }}>
-      <View style={{ padding: '32rpx' }}>
+    <ScrollView scrollY className="series-list-page">
+      <View className="series-list-page__body">
         <BreadcrumbsMini
           items={[
-            { label: tt('breadcrumb.home'), to: '/pages/index/index' },
+            { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
             { label: tt('breadcrumb.series') },
           ]}
         />
 
-        <View style={{ marginBottom: '32rpx' }}>
-          <Text style={{ fontSize: '40rpx', fontWeight: 700, color: '#171717' }}>
-            {tt('series.list.title')}
-          </Text>
-          <View style={{ height: '8rpx' }} />
-          <Text style={{ fontSize: '26rpx', color: '#525252' }}>{tt('series.list.subtitle')}</Text>
+        <View className="series-list-page__header">
+          <Text className="series-list-page__title">{tt('series.list.title')}</Text>
+          <Text className="series-list-page__subtitle">{tt('series.list.subtitle')}</Text>
         </View>
 
-        {loading ? (
+        {view.kind === 'failed' ? (
+          <ErrorBoxMini
+            key={view.noticeId}
+            title={tt('home.series.loadFailed')}
+            retryLabel={tt('state.retry')}
+            retryingLabel={tt('state.retrying')}
+            retrying={view.retrying}
+            onRetry={() => void load()}
+          />
+        ) : view.kind === 'notFound' ? (
+          <Empty title={tt('state.notFound')} />
+        ) : view.kind === 'loading' ? (
           <View>
-            <Skeleton height="200rpx" />
-            <Skeleton height="200rpx" />
-            <Skeleton height="200rpx" />
+            <Skeleton height="320rpx" />
+            <Skeleton height="320rpx" />
+            <Skeleton height="320rpx" />
           </View>
-        ) : error ? (
-          <View
-            style={{
-              padding: '32rpx',
-              background: '#fef2f2',
-              borderRadius: '16rpx',
-              border: '1rpx solid #fecaca',
-            }}
-          >
-            <Text style={{ color: '#b91c1c', fontSize: '26rpx' }}>
-              {tt('state.error')}: {error}
-            </Text>
-            <View style={{ height: '16rpx' }} />
-            <PrimaryButton label={tt('state.retry')} onClick={load} />
-          </View>
-        ) : !data || data.items.length === 0 ? (
+        ) : view.kind === 'empty' ? (
           <Empty title={tt('series.empty')} />
         ) : (
           <View>
-            {data.items.map((series) => (
+            {view.data.items.map((series) => (
               <Link
                 key={series.slug}
                 to={`/pages/series/detail/index?slug=${series.slug}`}
-                style={{ marginBottom: '20rpx' }}
+                className="series-card"
               >
-                <View
-                  style={{
-                    overflow: 'hidden',
-                    borderRadius: '20rpx',
-                    background: '#ffffff',
-                    boxShadow: '0 1rpx 4rpx rgba(15,23,42,0.06)',
-                  }}
-                >
-                  <View
-                    style={{
-                      height: '180rpx',
-                      background: gradientFor(series.slug),
-                    }}
-                  />
-                  <View style={{ padding: '24rpx' }}>
-                    <Text style={{ fontSize: '32rpx', fontWeight: 600, color: '#171717' }}>
-                      {series.title}
-                    </Text>
-                    <View style={{ height: '8rpx' }} />
-                    <Text style={{ fontSize: '24rpx', color: '#525252' }}>
-                      {series.description}
-                    </Text>
-                    <View style={{ height: '12rpx' }} />
-                    <Text style={{ fontSize: '22rpx', color: '#737373' }}>
-                      {tt('series.cardCount', { count: series.cardCount })}
-                    </Text>
-                  </View>
+                <ArtworkMini
+                  src={series.coverUrl}
+                  slug={series.slug}
+                  ratio="series"
+                  mode="aspectFill"
+                  label={series.title}
+                />
+                <View className="series-card__text">
+                  <Text className="series-card__title">{series.title}</Text>
+                  {series.description ? (
+                    <Text className="series-card__description">{series.description}</Text>
+                  ) : null}
+                  <Text className="series-card__count">
+                    {tt('series.cardCount', { count: series.cardCount })}
+                  </Text>
                 </View>
               </Link>
             ))}

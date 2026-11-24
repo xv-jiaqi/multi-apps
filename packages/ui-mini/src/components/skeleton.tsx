@@ -1,4 +1,5 @@
 import { View } from '@tarojs/components';
+import { rpxStyle } from '../rpx';
 
 export interface SkeletonProps {
   width?: string;
@@ -20,13 +21,13 @@ export function Skeleton({
 }: SkeletonProps) {
   return (
     <View
-      style={{
+      style={rpxStyle({
         width,
         height,
         borderRadius: radius,
         marginBottom,
         background: 'linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%)',
-      }}
+      })}
     />
   );
 }

@@ -1,0 +1,27 @@
+@import '@repo/design-tokens/taro.scss';
+
+// Padding-top keeps the ratio on every runtime (no `aspect-ratio` in older
+// weapp base libraries). 88 / 63 = 139.68%, 1 / 2 = 50%.
+.artwork-mini {
+  position: relative;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  background-color: $color-neutral-100;
+}
+
+.artwork-mini--card {
+  padding-top: 139.68%;
+}
+
+.artwork-mini--series {
+  padding-top: 50%;
+}
+
+.artwork-mini__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
