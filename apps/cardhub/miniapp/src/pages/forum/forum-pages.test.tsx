@@ -6,6 +6,7 @@ vi.mock('@tarojs/components', () => import('../../test-stubs/taro-dom'));
 
 const lifecycle = vi.hoisted(() => ({
   didShow: undefined as undefined | (() => void),
+  pullDown: undefined as undefined | (() => void),
   slug: 'topic-1',
 }));
 
@@ -16,6 +17,8 @@ const taro = vi.hoisted(() => ({
   redirectTo: vi.fn(async () => undefined),
   switchTab: vi.fn(async () => undefined),
   navigateBack: vi.fn(async () => undefined),
+  getCurrentPages: vi.fn(() => [{}, {}]),
+  stopPullDownRefresh: vi.fn(async () => undefined),
   pxTransform: (size: number) => `${size}px`,
   getStorageSync: vi.fn(() => ''),
   setStorageSync: vi.fn(),
@@ -27,8 +30,12 @@ const taro = vi.hoisted(() => ({
 vi.mock('@tarojs/taro', () => ({
   default: taro,
   ...taro,
+  useDidHide: () => undefined,
   useDidShow: (fn: () => void) => {
     lifecycle.didShow = fn;
+  },
+  usePullDownRefresh: (fn: () => void) => {
+    lifecycle.pullDown = fn;
   },
   useRouter: () => ({ params: { slug: lifecycle.slug } }),
 }));
@@ -71,6 +78,9 @@ vi.mock('../../lib/apply-tab-bar-labels', () => ({ applyTabBarLabels: vi.fn() })
 import ForumListPage from './list/index';
 import ForumDetailPage from './detail/index';
 import ForumNewPage from './new/index';
+import { markListNeedsRefresh, resetListRefreshFlags } from '../../lib/list-refresh';
+import { forgetAllListSessions } from '../../lib/list-session';
+import { resetQueuedStatusToast } from '../../lib/status-toast';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -147,6 +157,12 @@ beforeEach(() => {
   taro.showToast.mockReset();
   taro.redirectTo.mockReset();
   taro.navigateTo.mockReset();
+  taro.navigateBack.mockReset();
+  taro.switchTab.mockReset();
+  taro.getCurrentPages.mockReturnValue([{}, {}] as never);
+  resetListRefreshFlags();
+  forgetAllListSessions();
+  resetQueuedStatusToast();
 });
 
 describe('forum list load more and refresh', () => {
@@ -189,7 +205,7 @@ describe('forum list load more and refresh', () => {
     expect(new Set(titles).size).toBe(23);
   });
 
-  it('does not append a stale page after leaving and returning while load-more is in flight', async () => {
+  it('does not append a stale page after a submit-driven reload while load-more is in flight', async () => {
     const first = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
     const stale = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
     const fresh = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
@@ -213,6 +229,7 @@ describe('forum list load more and refresh', () => {
     });
     expect(api.listTopics).toHaveBeenCalledTimes(2);
 
+    markListNeedsRefresh('forum');
     await act(async () => {
       lifecycle.didShow?.();
     });
@@ -238,7 +255,7 @@ describe('forum list load more and refresh', () => {
     expect(titles).not.toContain('话题 20');
   });
 
-  it('reloads the first page with a fresh request when shown again while the first load is still running', async () => {
+  it('reloads the first page with a fresh request when shown again after a submit while the first load is still running', async () => {
     const hanging = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
     const fresh = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
     api.listTopics
@@ -248,6 +265,7 @@ describe('forum list load more and refresh', () => {
     await showList();
     expect(api.listTopics).toHaveBeenCalledTimes(1);
 
+    markListNeedsRefresh('forum');
     await act(async () => {
       lifecycle.didShow?.();
     });
@@ -274,7 +292,7 @@ describe('forum detail reply refresh and breadcrumbs', () => {
     api.topicBySlug
       .mockImplementationOnce(() => initial.promise)
       .mockImplementationOnce(() => refreshed.promise);
-    api.createReply.mockResolvedValue({ id: 'r-new' });
+    api.createReply.mockResolvedValue({ id: 'r-new', safetyStatus: 'pass' });
 
     render(<ForumDetailPage />);
     await act(async () => {
@@ -311,7 +329,7 @@ describe('forum detail reply refresh and breadcrumbs', () => {
     api.topicBySlug
       .mockResolvedValueOnce(detail())
       .mockRejectedValueOnce(new Error('refresh failed'));
-    api.createReply.mockResolvedValue({ id: 'r-new' });
+    api.createReply.mockResolvedValue({ id: 'r-new', safetyStatus: 'pass' });
 
     render(<ForumDetailPage />);
     await act(async () => {
@@ -394,5 +412,147 @@ describe('forum new login redirect', () => {
       lifecycle.didShow?.();
     });
     expect(taro.redirectTo).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('forum write safety and list return (CH-301 v1.5)', () => {
+  it('does not reload the first page when returning to the list without a new post', async () => {
+    const first = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
+    api.listTopics.mockImplementationOnce(() => first.promise);
+
+    await showList();
+    await act(async () => {
+      first.resolve({ items: [topic(1), topic(2)], nextCursor: null });
+      await first.promise;
+    });
+    expect(api.listTopics).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    expect(api.listTopics).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('话题 1')).toBeTruthy();
+  });
+
+  it('reloads the first page after a successful submit when the list is shown again', async () => {
+    const first = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
+    const fresh = deferred<{ items: ReturnType<typeof topic>[]; nextCursor: string | null }>();
+    api.listTopics
+      .mockImplementationOnce(() => first.promise)
+      .mockImplementationOnce(() => fresh.promise);
+
+    await showList();
+    await act(async () => {
+      first.resolve({ items: [topic(1)], nextCursor: null });
+      await first.promise;
+    });
+    expect(api.listTopics).toHaveBeenCalledTimes(1);
+
+    markListNeedsRefresh('forum');
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    expect(api.listTopics).toHaveBeenCalledTimes(2);
+    expect(api.listTopics.mock.calls[1]?.[0]?.cursor).toBeUndefined();
+
+    await act(async () => {
+      fresh.resolve({ items: [topic(9)], nextCursor: null });
+      await fresh.promise;
+    });
+    expect(screen.getByText('话题 9')).toBeTruthy();
+    expect(screen.queryByText('话题 1')).toBeNull();
+  });
+
+  it('does not jump to the topic and leaves the compose page when create returns unchecked', async () => {
+    api.createTopic.mockResolvedValue({ slug: 'new-topic', safetyStatus: 'unchecked' });
+    render(<ForumNewPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    fireEvent.change(screen.getByPlaceholderText('一句话概括你想讨论的内容'), {
+      target: { value: '新话题标题' },
+    });
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '新话题正文内容' } });
+    const submit = document.querySelector('button.primary-button') as HTMLButtonElement;
+    await act(async () => {
+      submit.click();
+    });
+    await waitFor(() => expect(api.createTopic).toHaveBeenCalledTimes(1));
+    expect(taro.redirectTo).not.toHaveBeenCalled();
+    expect(taro.navigateBack).toHaveBeenCalledWith({ delta: 1 });
+  });
+
+  it('redirects to the topic when create returns pass', async () => {
+    api.createTopic.mockResolvedValue({ slug: 'new-topic', safetyStatus: 'pass' });
+    render(<ForumNewPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    fireEvent.change(screen.getByPlaceholderText('一句话概括你想讨论的内容'), {
+      target: { value: '新话题标题' },
+    });
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '新话题正文内容' } });
+    const submit = document.querySelector('button.primary-button') as HTMLButtonElement;
+    await act(async () => {
+      submit.click();
+    });
+    await waitFor(() => expect(api.createTopic).toHaveBeenCalledTimes(1));
+    expect(taro.redirectTo).toHaveBeenCalledWith({
+      url: '/pages/forum/detail/index?slug=new-topic',
+    });
+  });
+
+  it('clears the reply box and does not refresh when the reply is not public', async () => {
+    api.topicBySlug.mockResolvedValueOnce(detail());
+    api.createReply.mockResolvedValue({ id: 'r-new', safetyStatus: 'unchecked' });
+
+    render(<ForumDetailPage />);
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    await screen.findByText('话题 1');
+
+    const input = screen.getByPlaceholderText('说点什么…');
+    fireEvent.change(input, { target: { value: '这是一条回帖内容' } });
+    const submit = document.querySelector('button.primary-button') as HTMLButtonElement;
+    await act(async () => {
+      submit.click();
+    });
+    await waitFor(() => expect(api.createReply).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toContain('已提交，审核通过后显示'),
+    );
+    expect(api.topicBySlug).toHaveBeenCalledTimes(1);
+    expect((screen.getByPlaceholderText('说点什么…') as HTMLTextAreaElement).value).toBe('');
+  });
+});
+
+describe('forum compose accessibility and list session', () => {
+  it('associates the body textarea with the visible 正文 label', async () => {
+    render(<ForumNewPage />);
+    const textarea = document.querySelector('textarea');
+    expect(textarea).not.toBeNull();
+    const byId = document.getElementById('forum-new-body-label');
+    expect(byId?.textContent).toContain('正文');
+    expect(
+      textarea?.getAttribute('aria-labelledby') === 'forum-new-body-label' ||
+        textarea?.getAttribute('aria-label') === '正文',
+    ).toBe(true);
+  });
+
+  it('keeps loaded topics after the list remounts and does not fetch again', async () => {
+    api.listTopics.mockResolvedValue({
+      items: Array.from({ length: 5 }, (_, i) => topic(i)),
+      nextCursor: 'c5',
+    });
+    const first = await showList();
+    await screen.findByText('话题 4');
+    expect(api.listTopics).toHaveBeenCalledTimes(1);
+    first.unmount();
+    await showList();
+    await screen.findByText('话题 4');
+    expect(api.listTopics).toHaveBeenCalledTimes(1);
   });
 });

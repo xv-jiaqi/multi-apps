@@ -27,11 +27,18 @@ export interface LoadOptions {
  * true })` always sends a new one. Only the response to the most recently sent
  * request updates the state; older responses are dropped.
  */
-export function useBlock<T>(fetcher: () => Promise<T>): {
+export function useBlock<T>(
+  fetcher: () => Promise<T>,
+  initial?: T | null,
+): {
   state: BlockState<T>;
   load: (options?: LoadOptions) => Promise<void>;
 } {
-  const [state, setState] = useState<BlockState<T>>({ data: null, failure: null, loading: true });
+  const [state, setState] = useState<BlockState<T>>(
+    initial
+      ? { data: initial, failure: null, loading: false }
+      : { data: null, failure: null, loading: true },
+  );
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
   const requestId = useRef(0);

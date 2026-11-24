@@ -13,7 +13,7 @@ export type LoadMorePage<T> = {
  * in flight when the list was reset (tab hide/show or a first-page
  * refresh), so an old page is never appended to a new first page.
  */
-export function useLoadMore<T>(): {
+export function useLoadMore<T>(initial?: { extra?: T[]; moreCursor?: string | null }): {
   extra: T[];
   moreCursor: string | null;
   moreLoading: boolean;
@@ -25,8 +25,8 @@ export function useLoadMore<T>(): {
   }) => Promise<void>;
   reset: () => void;
 } {
-  const [extra, setExtra] = useState<T[]>([]);
-  const [moreCursor, setMoreCursor] = useState<string | null>(null);
+  const [extra, setExtra] = useState<T[]>(initial?.extra ?? []);
+  const [moreCursor, setMoreCursor] = useState<string | null>(initial?.moreCursor ?? null);
   const [moreLoading, setMoreLoading] = useState(false);
   const [moreFailed, setMoreFailed] = useState<Notice<{ text: string }> | null>(null);
   const pendingRef = useRef(false);

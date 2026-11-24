@@ -10,10 +10,22 @@ type AnyProps = Record<string, unknown> & { children?: ReactNode };
 function domProps(props: AnyProps): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(props)) {
-    if (key === 'className' || key === 'style' || key === 'onClick' || key === 'disabled') {
+    if (
+      key === 'className' ||
+      key === 'style' ||
+      key === 'onClick' ||
+      key === 'disabled' ||
+      key === 'id'
+    ) {
       out[key] = value;
     } else if (key === 'aria-disabled' || key === 'ariaRole') {
       out[key === 'ariaRole' ? 'role' : key] = value;
+    } else if (key === 'ariaLabelledBy' || key === 'aria-labelledby') {
+      out['aria-labelledby'] = value;
+    } else if (key === 'ariaLabel' || key === 'aria-label') {
+      out['aria-label'] = value;
+    } else if (key === 'ariaPressed' || key === 'aria-pressed') {
+      out['aria-pressed'] = value;
     }
   }
   return out;

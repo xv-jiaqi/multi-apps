@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import Taro, { useDidShow } from '@tarojs/taro';
+import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro';
 import { ScrollView, View, Text, Button } from '@tarojs/components';
 import type { ButtonProps } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
@@ -14,6 +14,11 @@ import { useLoadMore } from '../../../lib/use-load-more';
 import { goToLogin } from '../../../lib/auth-redirect';
 import { formatDateTime } from '../../../lib/format-datetime';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
+import { StatusToast } from '../../../components/status-toast';
+import { consumeListNeedsRefresh } from '../../../lib/list-refresh';
+import { useScrollRestore } from '../../../lib/scroll-restore';
+import { forgetListSession, readListSession, rememberListSession } from '../../../lib/list-session';
+import { useStatusToast } from '../../../lib/status-toast';
 import './index.scss';
 
 type TopicListPage = Awaited<ReturnType<typeof trpc.forum.topics.list.query>>;
@@ -24,29 +29,77 @@ const PAGE_SIZE = 20;
 export default observer(function ForumListPage() {
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
+  const cached = readListSession<TopicListPage, TopicListItem>('forum', session.isAuthenticated);
 
-  const { state, load } = useBlock<TopicListPage>(() =>
-    trpc.forum.topics.list.query({ surface: 'miniapp', limit: PAGE_SIZE }),
+  const { state, load } = useBlock<TopicListPage>(
+    () => trpc.forum.topics.list.query({ surface: 'miniapp', limit: PAGE_SIZE }),
+    cached?.data,
   );
-  const more = useLoadMore<TopicListItem>();
+  const more = useLoadMore<TopicListItem>(cached ?? undefined);
+  const toast = useStatusToast();
+  const scroll = useScrollRestore('.forum-page', 'forum');
+  const firstShow = useRef(true);
+  const lastAuth = useRef(session.isAuthenticated);
+  const dataRef = useRef(state.data);
+  dataRef.current = state.data;
 
-  const resetAndLoad = () => {
-    // Returning to the list (from a topic, compose, or another tab) always
-    // reloads the first page and clears already-loaded later pages, so a
-    // new first-page cursor is never mixed with items from a previous
-    // cursor. The user starts again from the top of the list.
+  const resetAndLoad = (keepDataOnError = false) => {
+    // Page 1 reload: after the author just submitted, when auth changes,
+    // or on pull-down refresh (CH-301 §2.8 v1.5). Other returns keep
+    // already-loaded items and scroll position.
     more.reset();
-    void load({ fresh: true });
+    scroll.reset();
+    forgetListSession('forum');
+    return load({ fresh: true, keepDataOnError }).catch(() => {
+      toast.show(tt('forum.list.loadFailed'));
+    });
   };
-
-  useEffect(() => {
-    more.reset();
-  }, [load, more.reset]);
 
   useDidShow(() => {
     applyTabBarLabels();
     void Taro.setNavigationBarTitle({ title: tt('forum.list.title') });
-    resetAndLoad();
+    toast.consumeQueued();
+    const authChanged = lastAuth.current !== session.isAuthenticated;
+    lastAuth.current = session.isAuthenticated;
+    const afterSubmit = consumeListNeedsRefresh('forum');
+    if (firstShow.current) {
+      firstShow.current = false;
+      if (cached) {
+        scroll.restore();
+      } else {
+        void resetAndLoad();
+      }
+      return;
+    }
+    if (afterSubmit || authChanged) {
+      void resetAndLoad(Boolean(dataRef.current));
+    } else {
+      scroll.restore();
+    }
+  });
+
+  useEffect(() => {
+    if (!state.data || state.loading) return;
+    rememberListSession('forum', {
+      data: state.data,
+      extra: more.extra,
+      moreCursor: more.moreCursor,
+      scrollTop: scroll.scrollTop,
+      auth: session.isAuthenticated,
+    });
+  }, [
+    state.data,
+    state.loading,
+    more.extra,
+    more.moreCursor,
+    scroll.scrollTop,
+    session.isAuthenticated,
+  ]);
+
+  usePullDownRefresh(() => {
+    void Promise.resolve(resetAndLoad()).finally(() => {
+      void Taro.stopPullDownRefresh();
+    });
   });
 
   const view = resolveBlockView({
@@ -56,8 +109,13 @@ export default observer(function ForumListPage() {
 
   const firstItems = view.kind === 'success' ? view.data.items : [];
   const items = [...firstItems, ...more.extra];
-  const nextCursor =
-    more.extra.length > 0 ? more.moreCursor : view.kind === 'success' ? view.data.nextCursor : null;
+  const nextCursor = state.loading
+    ? null
+    : more.extra.length > 0
+      ? more.moreCursor
+      : view.kind === 'success'
+        ? view.data.nextCursor
+        : null;
 
   const loadingMore = more.moreLoading || state.loading;
   const onLoadMore = () => {
@@ -79,7 +137,12 @@ export default observer(function ForumListPage() {
   };
 
   return (
-    <ScrollView scrollY className="forum-page">
+    <ScrollView
+      scrollY
+      scrollTop={scroll.scrollTop}
+      onScroll={scroll.onScroll}
+      className="forum-page"
+    >
       <View className="forum-page__body">
         <BreadcrumbsMini
           items={[
@@ -134,7 +197,7 @@ export default observer(function ForumListPage() {
               </Link>
             ))}
 
-            {nextCursor ? (
+            {nextCursor && !more.moreFailed ? (
               <Button
                 className={
                   loadingMore ? 'forum-page__more forum-page__more--disabled' : 'forum-page__more'
@@ -165,6 +228,7 @@ export default observer(function ForumListPage() {
             ) : null}
           </View>
         ) : null}
+        <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>
   );

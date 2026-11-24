@@ -16,7 +16,10 @@ import { formatDateTime } from '../../../lib/format-datetime';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { stripMarkdownKeepNewlines } from '../../../lib/plain-text';
 import { usePendingSubmit } from '../../../lib/use-pending-submit';
+import { isPublicSafetyStatus, SUBMITTED_FOR_REVIEW_KEY } from '../../../lib/post-safety';
+import { useStatusToast } from '../../../lib/status-toast';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
+import { StatusToast } from '../../../components/status-toast';
 import './index.scss';
 
 type TopicDetail = Awaited<ReturnType<typeof trpc.forum.topics.bySlug.query>>;
@@ -42,14 +45,13 @@ export default observer(function ForumDetailPage() {
 
   const [replyBody, setReplyBody] = useState('');
   const [replyError, setReplyError] = useState<Notice<{ text: string }> | null>(null);
-  const [refreshToast, setRefreshToast] = useState<Notice<{ text: string }> | null>(null);
+  const toast = useStatusToast();
   const submit = usePendingSubmit();
 
   useEffect(() => {
     more.reset();
     setReplyBody('');
     setReplyError(null);
-    setRefreshToast(null);
     void load({ fresh: true });
   }, [slug, load, more.reset]);
 
@@ -87,18 +89,9 @@ export default observer(function ForumDetailPage() {
 
   const showReplyError = (text: string) => setReplyError({ id: nextNoticeId(), text });
 
-  const showPostedRefreshFailed = (text: string) => {
-    setRefreshToast({ id: nextNoticeId(), text });
-    const env = typeof Taro.getEnv === 'function' ? Taro.getEnv() : '';
-    if (env && env !== 'WEB') {
-      void Taro.showToast({ title: text, icon: 'none', duration: 3000 });
-    }
-  };
-
   const submitReply = async () => {
     if (submit.pending || blocked || !topic) return;
     setReplyError(null);
-    setRefreshToast(null);
     const parsed = replyCreateInput.safeParse({ topicId: topic.id, body: replyBody });
     if (!parsed.success) {
       showReplyError(fieldErrorMessage(locale.locale, parsed.error.issues[0]?.message));
@@ -110,13 +103,17 @@ export default observer(function ForumDetailPage() {
     }
     if (!submit.begin()) return;
     try {
-      await trpc.forum.replies.create.mutate(parsed.data);
+      const created = await trpc.forum.replies.create.mutate(parsed.data);
       setReplyBody('');
+      if (!isPublicSafetyStatus(created.safetyStatus)) {
+        toast.show(tt(SUBMITTED_FOR_REVIEW_KEY));
+        return;
+      }
       try {
         await load({ fresh: true, keepDataOnError: true });
         more.reset();
       } catch {
-        showPostedRefreshFailed(tt('forum.reply.postedRefreshFailed'));
+        toast.show(tt('forum.reply.postedRefreshFailed'));
       }
     } catch (error) {
       if (goLoginIfUnauthorized(error)) return;
@@ -263,11 +260,7 @@ export default observer(function ForumDetailPage() {
           </View>
         ) : null}
 
-        {refreshToast ? (
-          <View key={refreshToast.id} className="forum-toast" ariaRole="status">
-            <Text className="forum-toast__text">{refreshToast.text}</Text>
-          </View>
-        ) : null}
+        <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>
   );

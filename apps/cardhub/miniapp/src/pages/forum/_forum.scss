@@ -196,24 +196,6 @@
   text-transform: uppercase;
 }
 
-.forum-toast {
-  position: fixed;
-  right: $spacing-md;
-  bottom: 80rpx;
-  left: $spacing-md;
-  z-index: 10;
-  padding: $spacing-sm $spacing-md;
-  text-align: center;
-  background-color: $color-neutral-900;
-  border-radius: $radius-md;
-}
-
-.forum-toast__text {
-  font-size: 28rpx;
-  line-height: 1.4;
-  color: $color-white;
-}
-
 .forum-topic-title {
   font-size: 40rpx;
   font-weight: 700;

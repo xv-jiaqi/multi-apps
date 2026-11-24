@@ -10,6 +10,10 @@ import { mutationErrorMessage } from '../../../lib/load-error';
 import { goLoginIfUnauthorized, LOGIN_PAGE, redirectToLogin } from '../../../lib/auth-redirect';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { usePendingSubmit } from '../../../lib/use-pending-submit';
+import { leaveToTabPage, markListNeedsRefresh } from '../../../lib/list-refresh';
+import { isPublicSafetyStatus, SUBMITTED_FOR_REVIEW_KEY } from '../../../lib/post-safety';
+import { useStatusToast } from '../../../lib/status-toast';
+import { StatusToast } from '../../../components/status-toast';
 import './index.scss';
 
 export default observer(function ForumNewPage() {
@@ -21,6 +25,7 @@ export default observer(function ForumNewPage() {
   const [formError, setFormError] = useState<Notice<{ text: string }> | null>(null);
   const submit = usePendingSubmit();
   const loginRedirected = useRef(false);
+  const toast = useStatusToast();
 
   useDidShow(() => {
     void Taro.setNavigationBarTitle({ title: tt('forum.new.title') });
@@ -47,9 +52,15 @@ export default observer(function ForumNewPage() {
     if (!submit.begin()) return;
     try {
       const created = await trpc.forum.topics.create.mutate(parsed.data);
+      markListNeedsRefresh('forum');
+      if (!isPublicSafetyStatus(created.safetyStatus)) {
+        toast.show(tt(SUBMITTED_FOR_REVIEW_KEY), { persistAcrossPages: true });
+        leaveToTabPage('/pages/forum/list/index');
+        return;
+      }
       const url = `/pages/forum/detail/index?slug=${encodeURIComponent(created.slug)}`;
-      // redirectTo so Back returns to the list (tab), not the compose form,
-      // and keeps the 10-page stack smaller.
+      // pass: go to the new topic. redirectTo so Back returns to the list
+      // (tab), not the compose form, and keeps the 10-page stack smaller.
       void Taro.redirectTo({ url });
     } catch (error) {
       if (goLoginIfUnauthorized(error)) return;
@@ -89,12 +100,16 @@ export default observer(function ForumNewPage() {
             />
             <Text className="forum-form__count">{title.length} / 120</Text>
 
-            <Text className="forum-field-label">{tt('forum.new.bodyLabel')}</Text>
+            <Text id="forum-new-body-label" className="forum-field-label">
+              {tt('forum.new.bodyLabel')}
+            </Text>
             <Textarea
               className="forum-form__input"
               value={body}
               maxlength={10000}
               disabled={submit.pending ? true : undefined}
+              ariaLabel={tt('forum.new.bodyLabel')}
+              nativeProps={{ 'aria-labelledby': 'forum-new-body-label' }}
               onInput={(event) => setBody(event.detail.value)}
             />
 
@@ -122,6 +137,7 @@ export default observer(function ForumNewPage() {
             <Text className="forum-login__text">{tt('forum.list.loginToPost')}</Text>
           </Link>
         )}
+        <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>
   );

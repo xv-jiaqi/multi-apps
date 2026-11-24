@@ -205,7 +205,7 @@ describe('card comments list after posting', () => {
     createdAt: '2026-11-25T00:00:00.000Z',
     replies: [],
     replyCount: 0,
-    safetyStatus: 'review',
+    safetyStatus: 'pass',
   };
 
   // Slow network: the first list request (sent on mount, before the comment
@@ -244,4 +244,20 @@ describe('card comments list after posting', () => {
       expect(container.querySelector('.comment-item__content')?.textContent).toBe('好卡');
     },
   );
+
+  it('does not refresh the list when the comment is not publicly visible', async () => {
+    api.listForCard.mockReset();
+    api.listForCard.mockResolvedValue([]);
+    api.commentCreate.mockResolvedValue({ ...mine, safetyStatus: 'unchecked' });
+    const { container } = render(<CardDetailPage />);
+    await waitFor(() => expect(container.querySelector('textarea')).not.toBeNull());
+    type(container, 'textarea', '好卡');
+    await act(async () => {
+      submitButton(container).click();
+    });
+    await waitFor(() => expect(api.commentCreate).toHaveBeenCalledTimes(1));
+    expect(api.listForCard).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('content.submittedForReview');
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toBe('');
+  });
 });
