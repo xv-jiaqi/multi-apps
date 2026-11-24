@@ -1,4 +1,5 @@
 import type { CreateExpressContextOptions } from '@trpc/server/adapters/express';
+import { CONTENT_SURFACE_HEADER, contentSurfaceSchema, type ContentSurface } from '@repo/shared';
 import type { UserRateLimiter } from '../bootstrap/rate-limiters';
 import { InvalidAuthTokenError, type AuthService } from '../modules/auth/auth.service';
 import { recordDailyActivity, type DailyActivityRedis } from '../modules/metrics/daily-activity';
@@ -23,6 +24,17 @@ export interface TrpcContext {
    * without it cannot skip the quota.
    */
   userRateLimit?: UserRateLimiter;
+  /**
+   * Surface named by the `x-cardhub-surface` header (the miniapp client sets
+   * it on every request). Only consulted when `input.surface` is omitted; an
+   * unknown or repeated header value is ignored, so web keeps its default.
+   */
+  surfaceHeader?: ContentSurface;
+}
+
+function readSurfaceHeader(req: CreateExpressContextOptions['req']): ContentSurface | undefined {
+  const parsed = contentSurfaceSchema.safeParse(req.headers[CONTENT_SURFACE_HEADER]);
+  return parsed.success ? parsed.data : undefined;
 }
 
 const BEARER_PREFIX = 'Bearer ';
@@ -44,6 +56,8 @@ export function makeCreateContext(
   userRateLimit?: UserRateLimiter,
 ) {
   return async ({ req, res }: CreateExpressContextOptions): Promise<TrpcContext> => {
+    const surfaceHeader = readSurfaceHeader(req);
+    const surface = surfaceHeader ? { surfaceHeader } : {};
     const header = req.headers['authorization'];
     if (typeof header === 'string' && header.startsWith(BEARER_PREFIX)) {
       const token = header.slice(BEARER_PREFIX.length).trim();
@@ -79,6 +93,7 @@ export function makeCreateContext(
                 bannedAt: row.bannedAt,
               },
               ...(userRateLimit ? { userRateLimit } : {}),
+              ...surface,
             };
           }
         } catch (error) {
@@ -86,6 +101,6 @@ export function makeCreateContext(
         }
       }
     }
-    return { req, res, user: null, ...(userRateLimit ? { userRateLimit } : {}) };
+    return { req, res, user: null, ...(userRateLimit ? { userRateLimit } : {}), ...surface };
   };
 }

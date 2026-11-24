@@ -225,7 +225,7 @@ export class CommentsRouter {
             throw new TRPCError({ code: 'NOT_FOUND', message: '卡牌不存在' });
           }
           return withReplies({ cardId: card.id }, input.limit, {
-            surface: resolveContentSurface(input.surface),
+            surface: resolveContentSurface(input.surface, ctx.surfaceHeader),
             viewerId: ctx.user?.sub,
           });
         }),
@@ -247,7 +247,7 @@ export class CommentsRouter {
             throw new TRPCError({ code: 'NOT_FOUND', message: '系列不存在' });
           }
           return withReplies({ seriesId: series.id }, input.limit, {
-            surface: resolveContentSurface(input.surface),
+            surface: resolveContentSurface(input.surface, ctx.surfaceHeader),
             viewerId: ctx.user?.sub,
           });
         }),
@@ -259,7 +259,7 @@ export class CommentsRouter {
         });
         if (!parent || parent.parentId !== null) return { items: [], nextCursor: null };
         const safety = publicSafetyWhere({
-          surface: resolveContentSurface(input.surface),
+          surface: resolveContentSurface(input.surface, ctx.surfaceHeader),
           viewerId: ctx.user?.sub,
         });
 

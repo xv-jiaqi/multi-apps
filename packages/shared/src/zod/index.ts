@@ -109,6 +109,11 @@ const cursorPageLimit = z
 export const CONTENT_SURFACE_VALUES = ['web', 'miniapp'] as const;
 export type ContentSurface = (typeof CONTENT_SURFACE_VALUES)[number];
 export const contentSurfaceSchema = z.enum(CONTENT_SURFACE_VALUES);
+/**
+ * Request header naming the client surface. The miniapp tRPC client sets it
+ * on every request; the api applies it when `input.surface` is omitted.
+ */
+export const CONTENT_SURFACE_HEADER = 'x-cardhub-surface';
 
 export const commentRepliesListInput = z.object({
   parentId: z.string().uuid(),

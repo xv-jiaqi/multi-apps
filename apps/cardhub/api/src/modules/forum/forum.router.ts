@@ -24,8 +24,10 @@ import { TrpcBase } from '../../trpc/trpc-base';
 import { PrismaService } from '../prisma/prisma.service';
 import { ContentSecurityService } from '../content-security/content-security.service';
 import {
-  isVisibleOnSurface,
+  authorSafetyStatus,
+  blockedSafetyStatus,
   mergeSafetyStatus,
+  resolveSafetyView,
   publicSafetyWhere,
   resolveContentSurface,
   toSafetyStatusDto,
@@ -104,6 +106,29 @@ function mapTopicListItem(topic: TopicSummaryPayload) {
   };
 }
 
+/**
+ * The author's own RISKY topic. Built field by field (no spread of the
+ * normal mapper) so a new text field can never leak by default: every
+ * field of the existing detail shape is present, text fields are '' and
+ * the status is 'blocked'.
+ */
+function mapBlockedTopicDetail(topic: TopicSummaryPayload) {
+  return {
+    id: topic.id,
+    slug: topic.slug,
+    title: '',
+    excerpt: '',
+    pinned: topic.pinned,
+    editedAt: topic.editedAt?.toISOString() ?? null,
+    createdAt: topic.createdAt.toISOString(),
+    updatedAt: topic.updatedAt.toISOString(),
+    author: topic.user,
+    replyCount: 0,
+    safetyStatus: blockedSafetyStatus(),
+    body: '',
+  };
+}
+
 function mapTopicDetail(topic: TopicSummaryPayload) {
   return {
     ...mapTopicListItem(topic),
@@ -131,7 +156,7 @@ export class ForumRouter {
       list: t.procedure.input(topicListInput).query(async ({ ctx, input }) => {
         // Cursor pagination keyed on (pinned desc, createdAt desc, id desc)
         // so pinned topics float without the client doing a second sort.
-        const surface = resolveContentSurface(input.surface);
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
         const items = await prisma.topic.findMany({
           where: publicSafetyWhere({ surface, viewerId: ctx.user?.sub }),
           take: input.limit + 1,
@@ -158,17 +183,30 @@ export class ForumRouter {
             _count: { select: { replies: true } },
           },
         });
-        const surface = resolveContentSurface(input.surface);
-        if (
-          !topic ||
-          !isVisibleOnSurface({
-            surface,
-            status: topic.safetyStatus,
-            authorId: topic.userId,
-            viewerId: ctx.user?.sub,
-          })
-        ) {
+        if (!topic) throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
+        const view = resolveSafetyView({
+          scope: 'public',
+          surface,
+          status: topic.safetyStatus,
+          authorId: topic.userId,
+          viewerId: ctx.user?.sub,
+        });
+        if (view.kind === 'hidden') {
           throw new TRPCError({ code: 'NOT_FOUND', message: '话题不存在' });
+        }
+        const editableUntil = new Date(topic.createdAt.getTime() + EDIT_WINDOW_MS);
+        if (view.kind === 'blocked') {
+          // The author's own RISKY topic: same shape, status only. Title,
+          // excerpt, body and replies are withheld, so no original text
+          // leaves the server even for the author.
+          return {
+            ...mapBlockedTopicDetail(topic),
+            editableUntil: editableUntil.toISOString(),
+            serverNow: new Date().toISOString(),
+            replies: [],
+            replyNextCursor: null,
+          };
         }
         // Inline the first page of replies so /forum/:slug renders in
         // a single roundtrip; further pages stream via replies.list.
@@ -181,9 +219,9 @@ export class ForumRouter {
         });
         const hasMore = initialReplies.length > 20;
         const sliced = hasMore ? initialReplies.slice(0, 20) : initialReplies;
-        const editableUntil = new Date(topic.createdAt.getTime() + EDIT_WINDOW_MS);
         return {
           ...mapTopicDetail(topic),
+          safetyStatus: authorSafetyStatus(view.safetyStatus),
           editableUntil: editableUntil.toISOString(),
           serverNow: new Date().toISOString(),
           replies: sliced.map((r: ReplyWithAuthor) => ({
@@ -364,7 +402,7 @@ export class ForumRouter {
     const replies = t.router({
       list: t.procedure.input(forumRepliesListInput).query(async ({ ctx, input }) => {
         const include = { user: { select: { id: true, username: true } } };
-        const surface = resolveContentSurface(input.surface);
+        const surface = resolveContentSurface(input.surface, ctx.surfaceHeader);
         const safety = publicSafetyWhere({ surface, viewerId: ctx.user?.sub });
         const mapPage = (rows: ReplyWithAuthor[]) => {
           const hasMore = rows.length > input.limit;
