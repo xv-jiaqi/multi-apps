@@ -1,0 +1,42 @@
+[
+  {
+    "name": "redirect-login-to-publish-start-zh-1440",
+    "url": "http://localhost:5173/trade?kind=SELL&sort=price_asc",
+    "file": "/tmp/ch250-shots/png/redirect-login-to-publish-start-zh-1440.png"
+  },
+  {
+    "name": "redirect-login-to-publish-login-zh-1440",
+    "url": "http://localhost:5173/login",
+    "file": "/tmp/ch250-shots/png/redirect-login-to-publish-login-zh-1440.png"
+  },
+  {
+    "name": "redirect-login-to-publish-after-zh-1440",
+    "url": "http://localhost:5173/trade?kind=SELL&sort=price_asc",
+    "file": "/tmp/ch250-shots/png/redirect-login-to-publish-after-zh-1440.png"
+  },
+  {
+    "name": "redirect-to-register-login-zh-1440",
+    "url": "http://localhost:5173/login",
+    "file": "/tmp/ch250-shots/png/redirect-to-register-login-zh-1440.png"
+  },
+  {
+    "name": "redirect-to-register-form-zh-1440",
+    "url": "http://localhost:5173/register",
+    "file": "/tmp/ch250-shots/png/redirect-to-register-form-zh-1440.png"
+  },
+  {
+    "name": "redirect-to-register-after-zh-1440",
+    "url": "http://localhost:5173/trade?kind=SELL&sort=price_asc",
+    "file": "/tmp/ch250-shots/png/redirect-to-register-after-zh-1440.png"
+  },
+  {
+    "name": "redirect-direct-register-start-zh-1440",
+    "url": "http://localhost:5173/register",
+    "file": "/tmp/ch250-shots/png/redirect-direct-register-start-zh-1440.png"
+  },
+  {
+    "name": "redirect-direct-register-after-zh-1440",
+    "url": "http://localhost:5173/",
+    "file": "/tmp/ch250-shots/png/redirect-direct-register-after-zh-1440.png"
+  }
+]
