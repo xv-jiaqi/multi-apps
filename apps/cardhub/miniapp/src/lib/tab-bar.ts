@@ -17,8 +17,9 @@ export const PAGE_BACKGROUND = '#f6f6f6';
 
 /**
  * CH-301 §1 tabBar. Labels are the zh-CN defaults; `app.tsx` swaps them to
- * the current locale with `Taro.setTabBarItem` (`tab.*` keys). Trade joins between forum and me in the trade PR, once its list page
- * exists (WeChat rejects a tab whose page is not registered).
+ * the current locale with `Taro.setTabBarItem` (`tab.*` keys). Trade joins
+ * between forum and me in the trade PR, once its list page exists (WeChat
+ * rejects a tab whose page is not registered).
  */
 export const TAB_BAR_ITEMS = [
   {

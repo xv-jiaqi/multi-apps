@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { ScrollView, View, Text, Textarea } from '@tarojs/components';
@@ -7,7 +7,7 @@ import { APP_ERROR_CODES, fieldErrorMessage, t, topicCreateInput } from '@repo/s
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { mutationErrorMessage } from '../../../lib/load-error';
-import { goLoginIfUnauthorized, goToLogin } from '../../../lib/auth-redirect';
+import { goLoginIfUnauthorized, LOGIN_PAGE, redirectToLogin } from '../../../lib/auth-redirect';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { usePendingSubmit } from '../../../lib/use-pending-submit';
 import './index.scss';
@@ -20,10 +20,14 @@ export default observer(function ForumNewPage() {
   const [body, setBody] = useState('');
   const [formError, setFormError] = useState<Notice<{ text: string }> | null>(null);
   const submit = usePendingSubmit();
+  const loginRedirected = useRef(false);
 
   useDidShow(() => {
     void Taro.setNavigationBarTitle({ title: tt('forum.new.title') });
-    if (!session.isAuthenticated) goToLogin();
+    if (!session.isAuthenticated && !loginRedirected.current) {
+      loginRedirected.current = true;
+      redirectToLogin();
+    }
   });
 
   const showError = (text: string) => setFormError({ id: nextNoticeId(), text });
@@ -37,7 +41,7 @@ export default observer(function ForumNewPage() {
       return;
     }
     if (!session.isAuthenticated) {
-      goToLogin();
+      redirectToLogin();
       return;
     }
     if (!submit.begin()) return;
@@ -85,11 +89,10 @@ export default observer(function ForumNewPage() {
             />
             <Text className="forum-form__count">{title.length} / 120</Text>
 
-            <Text className="forum-section-title">{tt('forum.new.bodyLabel')}</Text>
+            <Text className="forum-field-label">{tt('forum.new.bodyLabel')}</Text>
             <Textarea
               className="forum-form__input"
               value={body}
-              placeholder={tt('forum.new.bodyPlaceholder')}
               maxlength={10000}
               disabled={submit.pending ? true : undefined}
               onInput={(event) => setBody(event.detail.value)}
@@ -115,9 +118,9 @@ export default observer(function ForumNewPage() {
             </Link>
           </View>
         ) : (
-          <View className="forum-login" onClick={goToLogin}>
-            <Text>{tt('forum.list.loginToPost')}</Text>
-          </View>
+          <Link to={LOGIN_PAGE} mode="redirect" className="forum-login">
+            <Text className="forum-login__text">{tt('forum.list.loginToPost')}</Text>
+          </Link>
         )}
       </View>
     </ScrollView>

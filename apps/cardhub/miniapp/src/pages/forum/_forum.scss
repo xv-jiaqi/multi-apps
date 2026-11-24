@@ -98,6 +98,15 @@
   }
 }
 
+/* WeChat's disabled button is white-on-white at ~60% opacity (1:1). */
+.forum-page__more--disabled,
+.forum-page__more[disabled],
+.forum-page__more.button-disabled {
+  color: $color-neutral-600 !important;
+  background-color: $color-white !important;
+  opacity: 1 !important;
+}
+
 .forum-blocked {
   margin-bottom: $spacing-md;
   padding: $spacing-md;
@@ -171,6 +180,38 @@
   margin-bottom: $spacing-md;
   background-color: $color-neutral-100;
   border-radius: $radius-md;
+}
+
+.forum-login__text {
+  font-size: 28rpx;
+  color: $color-brand-600;
+}
+
+.forum-field-label {
+  display: block;
+  margin-bottom: $spacing-xs;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  color: $color-neutral-600;
+  text-transform: uppercase;
+}
+
+.forum-toast {
+  position: fixed;
+  right: $spacing-md;
+  bottom: 80rpx;
+  left: $spacing-md;
+  z-index: 10;
+  padding: $spacing-sm $spacing-md;
+  text-align: center;
+  background-color: $color-neutral-900;
+  border-radius: $radius-md;
+}
+
+.forum-toast__text {
+  font-size: 28rpx;
+  line-height: 1.4;
+  color: $color-white;
 }
 
 .forum-topic-title {

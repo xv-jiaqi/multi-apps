@@ -40,7 +40,7 @@ export function Field({
         style={rpxStyle({
           display: 'block',
           fontSize: '24rpx',
-          color: '#6b7280',
+          color: '#525252',
           marginBottom: '8rpx',
           textTransform: 'uppercase',
           letterSpacing: '2rpx',

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { ScrollView, View, Text, Button } from '@tarojs/components';
+import type { ButtonProps } from '@tarojs/components';
 import { BreadcrumbsMini, Empty, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
 import { t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
@@ -9,9 +10,9 @@ import { applyTabBarLabels } from '../../../lib/apply-tab-bar-labels';
 import { useStores } from '../../../stores/root-store';
 import { resolveBlockView } from '../../../lib/block-view';
 import { useBlock } from '../../../lib/use-block';
+import { useLoadMore } from '../../../lib/use-load-more';
 import { goToLogin } from '../../../lib/auth-redirect';
 import { formatDateTime } from '../../../lib/format-datetime';
-import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import './index.scss';
 
@@ -27,30 +28,25 @@ export default observer(function ForumListPage() {
   const { state, load } = useBlock<TopicListPage>(() =>
     trpc.forum.topics.list.query({ surface: 'miniapp', limit: PAGE_SIZE }),
   );
-
-  const [extra, setExtra] = useState<TopicListItem[]>([]);
-  const [moreCursor, setMoreCursor] = useState<string | null>(null);
-  const [moreLoading, setMoreLoading] = useState(false);
-  const [moreFailed, setMoreFailed] = useState<Notice<{ text: string }> | null>(null);
+  const more = useLoadMore<TopicListItem>();
 
   const resetAndLoad = () => {
-    setExtra([]);
-    setMoreCursor(null);
-    setMoreFailed(null);
-    void load();
+    // Returning to the list (from a topic, compose, or another tab) always
+    // reloads the first page and clears already-loaded later pages, so a
+    // new first-page cursor is never mixed with items from a previous
+    // cursor. The user starts again from the top of the list.
+    more.reset();
+    void load({ fresh: true });
   };
 
   useEffect(() => {
-    setExtra([]);
-    setMoreCursor(null);
-    setMoreFailed(null);
-    void load();
-  }, [load]);
+    more.reset();
+  }, [load, more.reset]);
 
   useDidShow(() => {
     applyTabBarLabels();
     void Taro.setNavigationBarTitle({ title: tt('forum.list.title') });
-    if (!state.loading) resetAndLoad();
+    resetAndLoad();
   });
 
   const view = resolveBlockView({
@@ -59,27 +55,19 @@ export default observer(function ForumListPage() {
   });
 
   const firstItems = view.kind === 'success' ? view.data.items : [];
-  const items = [...firstItems, ...extra];
+  const items = [...firstItems, ...more.extra];
   const nextCursor =
-    extra.length > 0 ? moreCursor : view.kind === 'success' ? view.data.nextCursor : null;
+    more.extra.length > 0 ? more.moreCursor : view.kind === 'success' ? view.data.nextCursor : null;
 
-  const loadMore = async () => {
-    if (!nextCursor || moreLoading) return;
-    setMoreLoading(true);
-    setMoreFailed(null);
-    try {
-      const page = await trpc.forum.topics.list.query({
-        surface: 'miniapp',
-        limit: PAGE_SIZE,
-        cursor: nextCursor,
-      });
-      setExtra((current) => [...current, ...page.items]);
-      setMoreCursor(page.nextCursor);
-    } catch {
-      setMoreFailed({ id: nextNoticeId(), text: tt('forum.list.loadFailed') });
-    } finally {
-      setMoreLoading(false);
-    }
+  const loadingMore = more.moreLoading || state.loading;
+  const onLoadMore = () => {
+    if (!nextCursor || loadingMore) return;
+    void more.loadMore({
+      cursor: nextCursor,
+      failedText: tt('forum.list.loadFailed'),
+      fetchPage: (cursor) =>
+        trpc.forum.topics.list.query({ surface: 'miniapp', limit: PAGE_SIZE, cursor }),
+    });
   };
 
   const onPublish = () => {
@@ -114,7 +102,7 @@ export default observer(function ForumListPage() {
             retryLabel={tt('state.retry')}
             retryingLabel={tt('state.retrying')}
             retrying={view.retrying}
-            onRetry={() => void load()}
+            onRetry={() => void load({ fresh: true })}
           />
         ) : null}
 
@@ -148,23 +136,31 @@ export default observer(function ForumListPage() {
 
             {nextCursor ? (
               <Button
-                className="forum-page__more"
+                className={
+                  loadingMore ? 'forum-page__more forum-page__more--disabled' : 'forum-page__more'
+                }
                 hoverClass="none"
-                disabled={moreLoading ? true : undefined}
-                onClick={moreLoading ? undefined : () => void loadMore()}
+                onClick={loadingMore ? undefined : () => onLoadMore()}
+                {...(loadingMore
+                  ? ({
+                      disabled: true,
+                      ariaDisabled: true,
+                      'aria-disabled': true,
+                    } as ButtonProps)
+                  : {})}
               >
-                {moreLoading ? tt('state.loading') : tt('forum.list.loadMore')}
+                {more.moreLoading ? tt('state.loading') : tt('forum.list.loadMore')}
               </Button>
             ) : null}
 
-            {moreFailed ? (
+            {more.moreFailed ? (
               <ErrorBoxMini
-                key={moreFailed.id}
-                title={moreFailed.text}
+                key={more.moreFailed.id}
+                title={more.moreFailed.text}
                 retryLabel={tt('state.retry')}
                 retryingLabel={tt('state.retrying')}
-                retrying={moreLoading}
-                onRetry={() => void loadMore()}
+                retrying={more.moreLoading}
+                onRetry={() => onLoadMore()}
               />
             ) : null}
           </View>

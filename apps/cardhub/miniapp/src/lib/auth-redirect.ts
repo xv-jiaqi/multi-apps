@@ -7,6 +7,11 @@ export function goToLogin(): void {
   void Taro.navigateTo({ url: LOGIN_PAGE });
 }
 
+/** Replace the current page so returning from login cannot re-open it and loop. */
+export function redirectToLogin(): void {
+  void Taro.redirectTo({ url: LOGIN_PAGE });
+}
+
 /** Session expired on a write: go to login and do not keep a draft. */
 export function goLoginIfUnauthorized(error: unknown): boolean {
   const { code, appCode } = readTrpcErrorCodes(error);

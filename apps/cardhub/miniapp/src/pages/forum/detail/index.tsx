@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Taro, { useDidShow, useRouter } from '@tarojs/taro';
 import { ScrollView, View, Text, Textarea, Button } from '@tarojs/components';
-import { BreadcrumbsMini, Empty, PrimaryButton, Skeleton } from '@repo/ui-mini';
+import type { ButtonProps } from '@tarojs/components';
+import { BreadcrumbsMini, Empty, Link, PrimaryButton, Skeleton } from '@repo/ui-mini';
 import { APP_ERROR_CODES, fieldErrorMessage, replyCreateInput, t } from '@repo/shared';
 import { trpc } from '../../../lib/trpc';
 import { useStores } from '../../../stores/root-store';
 import { resolveBlockView } from '../../../lib/block-view';
 import { LocalNotFoundError, mutationErrorMessage } from '../../../lib/load-error';
 import { useBlock } from '../../../lib/use-block';
-import { goLoginIfUnauthorized, goToLogin } from '../../../lib/auth-redirect';
+import { useLoadMore } from '../../../lib/use-load-more';
+import { goLoginIfUnauthorized, goToLogin, LOGIN_PAGE } from '../../../lib/auth-redirect';
 import { formatDateTime } from '../../../lib/format-datetime';
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { stripMarkdownKeepNewlines } from '../../../lib/plain-text';
@@ -36,24 +38,20 @@ export default observer(function ForumDetailPage() {
     void Taro.setNavigationBarTitle({ title: navTitle });
     return topic;
   });
-
-  const [extraReplies, setExtraReplies] = useState<ReplyItem[]>([]);
-  const [moreCursor, setMoreCursor] = useState<string | null>(null);
-  const [moreLoading, setMoreLoading] = useState(false);
-  const [moreFailed, setMoreFailed] = useState<Notice<{ text: string }> | null>(null);
+  const more = useLoadMore<ReplyItem>();
 
   const [replyBody, setReplyBody] = useState('');
   const [replyError, setReplyError] = useState<Notice<{ text: string }> | null>(null);
+  const [refreshToast, setRefreshToast] = useState<Notice<{ text: string }> | null>(null);
   const submit = usePendingSubmit();
 
   useEffect(() => {
-    setExtraReplies([]);
-    setMoreCursor(null);
-    setMoreFailed(null);
+    more.reset();
     setReplyBody('');
     setReplyError(null);
-    void load();
-  }, [slug, load]);
+    setRefreshToast(null);
+    void load({ fresh: true });
+  }, [slug, load, more.reset]);
 
   useDidShow(() => {
     const topic = state.data;
@@ -67,35 +65,40 @@ export default observer(function ForumDetailPage() {
   const topic = view.kind === 'success' ? view.data : null;
   const blocked = topic?.safetyStatus === 'blocked';
   const firstReplies = topic && !blocked ? topic.replies : [];
-  const replies = [...firstReplies, ...extraReplies];
+  const replies = [...firstReplies, ...more.extra];
   const nextCursor =
-    extraReplies.length > 0 ? moreCursor : topic && !blocked ? topic.replyNextCursor : null;
+    more.extra.length > 0 ? more.moreCursor : topic && !blocked ? topic.replyNextCursor : null;
 
-  const loadMore = async () => {
-    if (!topic || !nextCursor || moreLoading || blocked) return;
-    setMoreLoading(true);
-    setMoreFailed(null);
-    try {
-      const page = await trpc.forum.replies.list.query({
-        topicId: topic.id,
-        cursor: nextCursor,
-        limit: PAGE_SIZE,
-        surface: 'miniapp',
-      });
-      setExtraReplies((current) => [...current, ...page.items]);
-      setMoreCursor(page.nextCursor);
-    } catch {
-      setMoreFailed({ id: nextNoticeId(), text: tt('forum.detail.loadMoreFailed') });
-    } finally {
-      setMoreLoading(false);
-    }
+  const loadingMore = more.moreLoading || state.loading;
+  const onLoadMore = () => {
+    if (!topic || !nextCursor || loadingMore || blocked) return;
+    void more.loadMore({
+      cursor: nextCursor,
+      failedText: tt('forum.detail.loadMoreFailed'),
+      fetchPage: (cursor) =>
+        trpc.forum.replies.list.query({
+          topicId: topic.id,
+          cursor,
+          limit: PAGE_SIZE,
+          surface: 'miniapp',
+        }),
+    });
   };
 
   const showReplyError = (text: string) => setReplyError({ id: nextNoticeId(), text });
 
+  const showPostedRefreshFailed = (text: string) => {
+    setRefreshToast({ id: nextNoticeId(), text });
+    const env = typeof Taro.getEnv === 'function' ? Taro.getEnv() : '';
+    if (env && env !== 'WEB') {
+      void Taro.showToast({ title: text, icon: 'none', duration: 3000 });
+    }
+  };
+
   const submitReply = async () => {
     if (submit.pending || blocked || !topic) return;
     setReplyError(null);
+    setRefreshToast(null);
     const parsed = replyCreateInput.safeParse({ topicId: topic.id, body: replyBody });
     if (!parsed.success) {
       showReplyError(fieldErrorMessage(locale.locale, parsed.error.issues[0]?.message));
@@ -109,9 +112,12 @@ export default observer(function ForumDetailPage() {
     try {
       await trpc.forum.replies.create.mutate(parsed.data);
       setReplyBody('');
-      setExtraReplies([]);
-      setMoreCursor(null);
-      await load();
+      try {
+        await load({ fresh: true, keepDataOnError: true });
+        more.reset();
+      } catch {
+        showPostedRefreshFailed(tt('forum.reply.postedRefreshFailed'));
+      }
     } catch (error) {
       if (goLoginIfUnauthorized(error)) return;
       showReplyError(
@@ -126,29 +132,28 @@ export default observer(function ForumDetailPage() {
     }
   };
 
-  const crumbTitle = blocked || !topic?.title ? tt('forum.list.title') : topic.title;
+  const showTopicCrumb = view.kind === 'success' && topic && !blocked && Boolean(topic.title);
+  const crumbs = [
+    { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' as const },
+    { label: tt('forum.list.title'), to: '/pages/forum/list/index', mode: 'switchTab' as const },
+    ...(showTopicCrumb ? [{ label: topic.title }] : []),
+  ];
 
   return (
     <ScrollView scrollY className="forum-page">
       <View className="forum-page__body">
-        <BreadcrumbsMini
-          items={[
-            { label: tt('breadcrumb.home'), to: '/pages/index/index', mode: 'switchTab' },
-            { label: tt('forum.list.title'), to: '/pages/forum/list/index', mode: 'switchTab' },
-            { label: crumbTitle },
-          ]}
-        />
+        <BreadcrumbsMini items={crumbs} />
 
         {view.kind === 'loading' ? <Skeleton /> : null}
 
         {view.kind === 'failed' ? (
           <ErrorBoxMini
             key={view.noticeId}
-            title={tt('forum.list.loadFailed')}
+            title={tt('forum.detail.loadFailed')}
             retryLabel={tt('state.retry')}
             retryingLabel={tt('state.retrying')}
             retrying={view.retrying}
-            onRetry={() => void load()}
+            onRetry={() => void load({ fresh: true })}
           />
         ) : null}
 
@@ -191,25 +196,33 @@ export default observer(function ForumDetailPage() {
 
             {nextCursor ? (
               <Button
-                className="forum-page__more"
+                className={
+                  loadingMore ? 'forum-page__more forum-page__more--disabled' : 'forum-page__more'
+                }
                 hoverClass="none"
-                disabled={moreLoading ? true : undefined}
-                onClick={moreLoading ? undefined : () => void loadMore()}
+                onClick={loadingMore ? undefined : () => onLoadMore()}
+                {...(loadingMore
+                  ? ({
+                      disabled: true,
+                      ariaDisabled: true,
+                      'aria-disabled': true,
+                    } as ButtonProps)
+                  : {})}
               >
-                {moreLoading ? tt('state.loading') : tt('forum.detail.loadMoreReplies')}
+                {more.moreLoading ? tt('state.loading') : tt('forum.detail.loadMoreReplies')}
               </Button>
             ) : replies.length > 0 ? (
               <Text className="forum-card__meta">{tt('forum.detail.allRepliesShown')}</Text>
             ) : null}
 
-            {moreFailed ? (
+            {more.moreFailed ? (
               <ErrorBoxMini
-                key={moreFailed.id}
-                title={moreFailed.text}
+                key={more.moreFailed.id}
+                title={more.moreFailed.text}
                 retryLabel={tt('state.retry')}
                 retryingLabel={tt('state.retrying')}
-                retrying={moreLoading}
-                onRetry={() => void loadMore()}
+                retrying={more.moreLoading}
+                onRetry={() => onLoadMore()}
               />
             ) : null}
 
@@ -243,10 +256,16 @@ export default observer(function ForumDetailPage() {
                 </View>
               </View>
             ) : (
-              <View className="forum-login" onClick={goToLogin}>
-                <Text>{tt('forum.detail.loginToReply')}</Text>
-              </View>
+              <Link to={LOGIN_PAGE} className="forum-login">
+                <Text className="forum-login__text">{tt('forum.detail.loginToReply')}</Text>
+              </Link>
             )}
+          </View>
+        ) : null}
+
+        {refreshToast ? (
+          <View key={refreshToast.id} className="forum-toast" ariaRole="status">
+            <Text className="forum-toast__text">{refreshToast.text}</Text>
           </View>
         ) : null}
       </View>

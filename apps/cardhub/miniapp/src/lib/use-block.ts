@@ -10,6 +10,12 @@ export interface LoadOptions {
    * already in flight was sent before the write and may not.
    */
   fresh?: boolean;
+  /**
+   * After a successful write, keep the data already on screen if the
+   * refresh fails, and reject so the caller can toast. The block does
+   * not switch to a full-page error.
+   */
+  keepDataOnError?: boolean;
 }
 
 /**
@@ -37,29 +43,38 @@ export function useBlock<T>(fetcher: () => Promise<T>): {
     requestId.current += 1;
     const current = requestId.current;
     let settle!: () => void;
-    const run = new Promise<void>((resolve) => {
+    let reject!: (error: unknown) => void;
+    const run = new Promise<void>((resolve, rej) => {
       settle = resolve;
+      reject = rej;
     });
     // Register before calling the fetcher: a fetcher that throws synchronously
     // finishes inside the call, and its cleanup must see this request.
     inFlight.current = run;
     setState((prev) => ({ ...prev, loading: true }));
 
+    let settleError: unknown;
     void (async () => {
       try {
         const data = await fetcherRef.current();
         if (current === requestId.current) setState({ data, failure: null, loading: false });
       } catch (error) {
         if (current === requestId.current) {
-          setState({
-            data: null,
-            failure: { id: nextNoticeId(), ...classifyLoadError(error) },
-            loading: false,
-          });
+          if (options?.keepDataOnError) {
+            setState((prev) => ({ ...prev, loading: false }));
+            settleError = error;
+          } else {
+            setState({
+              data: null,
+              failure: { id: nextNoticeId(), ...classifyLoadError(error) },
+              loading: false,
+            });
+          }
         }
       } finally {
         if (inFlight.current === run) inFlight.current = null;
-        settle();
+        if (settleError) reject(settleError);
+        else settle();
       }
     })();
     return run;

@@ -16,8 +16,11 @@ const Taro = {
   setStorageSync: () => undefined,
   removeStorageSync: () => undefined,
   request: noop,
+  getEnv: () => 'WEB',
+  ENV_TYPE: { WEB: 'WEB', WEAPP: 'WEAPP' },
 };
 export function useRouter() {
   return { params: {} as Record<string, string | undefined> };
 }
+export function useDidShow(_cb: () => void) {}
 export default Taro;
