@@ -533,7 +533,7 @@ export function redact(text: string): string {
 
 ## 7. 本地接口与默认只读
 
-- 只绑定 `127.0.0.1`。`Host` 必须是 `127.0.0.1:<port>` 或 `localhost:<port>`，否则 `421 HOST_FORBIDDEN`。非法 `Origin` 为 `403 ORIGIN_NOT_ALLOWED`。不用 Cookie，鉴权只靠 Bearer token（[local-api.md](local-api.md) §2）。
+- 只绑定 `127.0.0.1`。`Host` 必须是 `127.0.0.1:<port>` 或 `localhost:<port>`，否则 `421 HOST_FORBIDDEN`。非法 `Origin` 为 `403 ORIGIN_FORBIDDEN`。不用 Cookie，鉴权只靠 Bearer token（[local-api.md](local-api.md) §2）。
 - 唯一免鉴权的接口是 `GET /api/v1/health`。
 - Hub 自身不发起外网请求：不检查更新、不上报遥测、不接 Sentry（D27）。会联网的只有 Agent 进程、Hub 对内网 `internal` 的 git，以及用户自己打开的网页。
 

@@ -210,7 +210,7 @@ export interface FakeScenario {
 
 | 编号 | 场景                  | 层  | 注入方式                                       | 期望                                                                                                |
 | ---- | --------------------- | --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| E49  | Host / Origin / token | I   | 非法 Host；非法 Origin；无 token；吊销的 token | `421 HOST_FORBIDDEN`；`403 ORIGIN_NOT_ALLOWED`；`401`；WS `4401`                                    |
+| E49  | Host / Origin / token | I   | 非法 Host；非法 Origin；无 token；吊销的 token | `421 HOST_FORBIDDEN`；`403 ORIGIN_FORBIDDEN`；`401`；WS `4401`                                      |
 | E50  | 幂等键                | I   | 桥接 token 同一键发两次；同一键不同正文        | 同一个任务；`409 IDEMPOTENCY_CONFLICT`。Hub UI 不发这个头（D67）                                    |
 | E51  | 长轮询                | I   | `wait` 超时；期间本轮结束                      | `reached: false`；`reached: true`                                                                   |
 | E52  | WS 续订               | I   | 断开后用最后的 `seq` 重连                      | 不重不漏                                                                                            |
