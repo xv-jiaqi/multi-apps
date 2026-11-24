@@ -1,0 +1,4346 @@
+[
+  {
+    "name": "home-loading-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "欢迎来到 Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "权威、集中的卡牌知识分享平台",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "首页\nCardhub · MVP\n欢迎来到 Cardhub\n权威、集中的卡牌知识分享平台\n浏览系列\n搜索卡牌\n热门系列\n\n首页\n\n我的",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-error-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "欢迎来到 Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "权威、集中的卡牌知识分享平台",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "系列加载失败",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "重试",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 277
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "首页\nCardhub · MVP\n欢迎来到 Cardhub\n权威、集中的卡牌知识分享平台\n浏览系列\n搜索卡牌\n热门系列\n系列加载失败\n重试\n\n首页\n\n我的",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "targets": [
+            [
+              ".home-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".home-page__hero"
+            ],
+            [
+              ".home-page__actions"
+            ],
+            [
+              ".section-card__title"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-retrying-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "欢迎来到 Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "权威、集中的卡牌知识分享平台",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "系列加载失败",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "重试中…",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 277
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "首页\nCardhub · MVP\n欢迎来到 Cardhub\n权威、集中的卡牌知识分享平台\n浏览系列\n搜索卡牌\n热门系列\n系列加载失败\n重试中…\n\n首页\n\n我的",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "targets": [
+            [
+              ".home-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".home-page__hero"
+            ],
+            [
+              ".home-page__actions"
+            ],
+            [
+              ".section-card__title"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-empty-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "欢迎来到 Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "权威、集中的卡牌知识分享平台",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-stats__label",
+        "text": "系列总览",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-stats__value",
+        "text": "0",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "home-stats__note",
+        "text": "由 Cardhub 团队整理。",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "首页\nCardhub · MVP\n欢迎来到 Cardhub\n权威、集中的卡牌知识分享平台\n浏览系列\n搜索卡牌\n热门系列\n暂无系列数据\nCardhub · 数据来源\n系列总览\n0\n已索引卡牌\n0\n由 Cardhub 团队整理。\n\n首页\n\n我的",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-success-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "欢迎来到 Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "权威、集中的卡牌知识分享平台",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-featured__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 17,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "home-featured__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-featured__count",
+        "text": "收录 120 张卡牌",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-page__link-text",
+        "text": "查看全部 →",
+        "fontPx": 14,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "home-stats__label",
+        "text": "系列总览",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-stats__value",
+        "text": "3",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "home-stats__note",
+        "text": "由 Cardhub 团队整理。",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "浏览系列",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "搜索卡牌",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 92
+      },
+      {
+        "cls": "home-page__view-all",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "首页\nCardhub · MVP\n欢迎来到 Cardhub\n权威、集中的卡牌知识分享平台\n浏览系列\n搜索卡牌\n热门系列\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n收录 120 张卡牌\nVerdant Rift\nForests, rifts, and old roots.\n收录 80 张卡牌\nForge of Titans\nBroken cover link falls back to the gradient.\n收录 64 张卡牌\n查看全部 →\nCardhub · 数据来源\n系列总览\n3\n已索引卡牌\n264\n由 Cardhub 团队整理。\n\n首页\n\n我的",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-loading-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "所有系列",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "探索 Cardhub 收录的全部卡牌系列",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "首页\n/ 系列\n所有系列\n探索 Cardhub 收录的全部卡牌系列",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-error-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "所有系列",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "探索 Cardhub 收录的全部卡牌系列",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "系列加载失败",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "重试",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "首页\n/ 系列\n所有系列\n探索 Cardhub 收录的全部卡牌系列\n系列加载失败\n重试",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".series-list-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".series-list-page__header"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-empty-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "所有系列",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "探索 Cardhub 收录的全部卡牌系列",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "首页\n/ 系列\n所有系列\n探索 Cardhub 收录的全部卡牌系列\n暂无系列数据",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-success-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "所有系列",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "探索 Cardhub 收录的全部卡牌系列",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "series-card__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 16,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "series-card__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-card__count",
+        "text": "收录 120 张卡牌",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "首页\n/ 系列\n所有系列\n探索 Cardhub 收录的全部卡牌系列\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n收录 120 张卡牌\nVerdant Rift\nForests, rifts, and old roots.\n收录 80 张卡牌\nForge of Titans\nBroken cover link falls back to the gradient.\n收录 64 张卡牌",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-loading-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ celestial-dawn",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-error-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "error-box-mini__title",
+        "text": "系列加载失败",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "重试",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ celestial-dawn\n系列加载失败\n重试",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".series-detail-page__body > taro-view-core:nth-child(1)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-notfound-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ celestial-dawn\n内容不存在",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-empty-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-hero__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "series-hero__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-hero__count",
+        "text": "收录 0 张卡牌",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-detail-page__section-title",
+        "text": "本系列卡牌",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n收录 0 张卡牌\n本系列卡牌\n暂无系列数据",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-success-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-hero__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "series-hero__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-hero__count",
+        "text": "收录 3 张卡牌",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-detail-page__section-title",
+        "text": "本系列卡牌",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-card-row__name",
+        "text": "Aurora Knight",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n收录 3 张卡牌\n本系列卡牌\nAurora Knight\n传说\nGlacier Sentinel\n史诗\nMoonlit Raven\n稀有",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-loading-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ aurora-knight",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-error-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "error-box-mini__title",
+        "text": "卡牌加载失败",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "重试",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ aurora-knight\n卡牌加载失败\n重试",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".card-detail-page__body > taro-view-core:nth-child(1)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-notfound-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ aurora-knight\n内容不存在",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comments-empty-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "所属系列 ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "comment-login",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士，守护天穹的第一道光。\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n登录后即可发表评论\n还没有评论，来抢沙发吧",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comments-error-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "所属系列 ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "评论加载失败",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "重试",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "comment-login",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 277
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士，守护天穹的第一道光。\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n登录后即可发表评论\n评论加载失败\n重试",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "targets": [
+            [
+              ".card-detail-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".card-hero"
+            ],
+            [
+              ".card-detail-page__heading"
+            ],
+            [
+              ".card-detail-page__description"
+            ],
+            [
+              ".card-detail-page__series"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-success-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "所属系列 ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__author",
+        "text": "@bob",
+        "fontPx": 12,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__content",
+        "text": "这张卡的画面太好看了！",
+        "fontPx": 13,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "comment-login",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士，守护天穹的第一道光。\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n登录后即可发表评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n@carol\n2026/11/21 17:30:00\nGreat art, solid stats for a 4-cost.",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-idle-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "搜索",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "首页\n/ 搜索\n搜索\n搜索卡牌或系列…",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-loading-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "搜索",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.search {\"q\":\"aurora\",\"limit\":30}"
+    ],
+    "bodyText": "首页\n/ 搜索\n搜索",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-error-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "搜索",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "搜索失败",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "重试",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "cards.search {\"q\":\"aurora\",\"limit\":30}"
+    ],
+    "bodyText": "首页\n/ 搜索\n搜索\n搜索失败\n重试",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "targets": [
+            [
+              ".search-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".search-page__title"
+            ],
+            [
+              "taro-input-core"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-empty-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "搜索",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.search {\"q\":\"zzz\",\"limit\":30}"
+    ],
+    "bodyText": "首页\n/ 搜索\n搜索\n没有找到匹配的卡牌或系列",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-success-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "搜索",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "search-result__name",
+        "text": "Aurora Knight",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "search-result__series",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.search {\"q\":\"aurora\",\"limit\":30}"
+    ],
+    "bodyText": "首页\n/ 搜索\n搜索\nAurora Knight\nCelestial Dawn 天穹黎明\n传说\nGlacier Sentinel\nCelestial Dawn 天穹黎明\n史诗\nMoonlit Raven\nCelestial Dawn 天穹黎明\n稀有",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "me-signed-out-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "me-page__title",
+        "text": "我的",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "me-page__button",
+        "text": "登录",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "ratio": 5.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "me-page__button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "me-page__button",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "我的\n登录\n注册\n\n首页\n\n我的",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "me-signed-in-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "me-page__title",
+        "text": "我的",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "me-page__user",
+        "text": "你已登录为 @alice_long_userna",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "me-page__button",
+        "text": "退出登录",
+        "fontPx": 15,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "me-page__button",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "我的\n你已登录为 @alice_long_username_for_wrap\n退出登录\n\n首页\n\n我的",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "login-error-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "欢迎回来",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__error-text",
+        "text": "账号或密码不正确",
+        "fontPx": 13,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "还没有账户？立即注册",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "登录",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "登录",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "登录",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "auth.login"
+    ],
+    "bodyText": "首页\n/ 登录\n登录\n欢迎回来\n邮箱或用户名\n密码\n账号或密码不正确\n登录\n还没有账户？立即注册",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "targets": [
+            [
+              ".auth-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".section-card__title"
+            ],
+            [
+              ".auth-page__subtitle"
+            ],
+            [
+              ".section-card__body > taro-view-core:nth-child(2)"
+            ],
+            [
+              "taro-view-core:nth-child(3)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "register-idle-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "加入 Cardhub 社区，参与卡牌讨论",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "已有账户？去登录",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "注册",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "注册",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "注册",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "首页\n/ 创建账户\n创建账户\n加入 Cardhub 社区，参与卡牌讨论\n邮箱\n用户名\n密码\n注册\n已有账户？去登录",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comment-form-zh",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "所属系列 ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__author",
+        "text": "@bob",
+        "fontPx": 12,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__content",
+        "text": "这张卡的画面太好看了！",
+        "fontPx": 13,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "发布评论",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "发布评论",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "发布评论",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 273.5
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "首页\n/ 系列\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\n传说\n黎明骑士，守护天穹的第一道光。\n所属系列 ·\nCelestial Dawn 天穹黎明\n属性\nATK\n7\nDEF\n5\nCOST\n4\n评论区\n10 / 500\n发布评论\n@bob\n2026/11/20 16:00:00\n这张卡的画面太好看了！\n@carol\n2026/11/21 17:30:00\nGreat art, solid stats for a 4-cost.",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-loading-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "Welcome to Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "A central, authoritative",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 126.2
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 120.4
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "Home\nCardhub · MVP\nWelcome to Cardhub\nA central, authoritative card knowledge platform\nBrowse series\nSearch cards\nFeatured series\n\nHome\n\nMe",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-error-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "Welcome to Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "A central, authoritative",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "Couldn't load series",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "Retry",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 126.2
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 120.4
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 277
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "Home\nCardhub · MVP\nWelcome to Cardhub\nA central, authoritative card knowledge platform\nBrowse series\nSearch cards\nFeatured series\nCouldn't load series\nRetry\n\nHome\n\nMe",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "targets": [
+            [
+              ".home-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".home-page__hero"
+            ],
+            [
+              ".home-page__actions"
+            ],
+            [
+              ".section-card__title"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-retrying-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "Welcome to Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "A central, authoritative",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "Couldn't load series",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "Retrying…",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 126.2
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 120.4
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 277
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "Home\nCardhub · MVP\nWelcome to Cardhub\nA central, authoritative card knowledge platform\nBrowse series\nSearch cards\nFeatured series\nCouldn't load series\nRetrying…\n\nHome\n\nMe",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "targets": [
+            [
+              ".home-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".home-page__hero"
+            ],
+            [
+              ".home-page__actions"
+            ],
+            [
+              ".section-card__title"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-empty-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "Welcome to Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "A central, authoritative",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-stats__label",
+        "text": "Series indexed",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-stats__value",
+        "text": "0",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "home-stats__note",
+        "text": "Curated by the Cardhub t",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 126.2
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 120.4
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "Home\nCardhub · MVP\nWelcome to Cardhub\nA central, authoritative card knowledge platform\nBrowse series\nSearch cards\nFeatured series\nNo series yet\nCardhub · Data source\nSeries indexed\n0\nCards indexed\n0\nCurated by the Cardhub team.\n\nHome\n\nMe",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "home-success-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "home-page__eyebrow",
+        "text": "Cardhub · MVP",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-page__title",
+        "text": "Welcome to Cardhub",
+        "fontPx": 24,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "home-page__subtitle",
+        "text": "A central, authoritative",
+        "fontPx": 14,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "home-featured__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 17,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "home-featured__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-featured__count",
+        "text": "120 cards inside",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-page__link-text",
+        "text": "View all →",
+        "fontPx": 14,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "home-stats__label",
+        "text": "Series indexed",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "home-stats__value",
+        "text": "3",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "home-stats__note",
+        "text": "Curated by the Cardhub t",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Browse series",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Search cards",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 126.2
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 120.4
+      },
+      {
+        "cls": "home-page__view-all",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":10}"
+    ],
+    "bodyText": "Home\nCardhub · MVP\nWelcome to Cardhub\nA central, authoritative card knowledge platform\nBrowse series\nSearch cards\nFeatured series\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n120 cards inside\nVerdant Rift\nForests, rifts, and old roots.\n80 cards inside\nForge of Titans\nBroken cover link falls back to the gradient.\n64 cards inside\nView all →\nCardhub · Data source\nSeries indexed\n3\nCards indexed\n264\nCurated by the Cardhub team.\n\nHome\n",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-loading-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "All series",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "Explore every card serie",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "Home\n/ Series\nAll series\nExplore every card series indexed in Cardhub",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-error-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "All series",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "Explore every card serie",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "Couldn't load series",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "Retry",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "Home\n/ Series\nAll series\nExplore every card series indexed in Cardhub\nCouldn't load series\nRetry",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".series-list-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".series-list-page__header"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-empty-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "All series",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "Explore every card serie",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "Home\n/ Series\nAll series\nExplore every card series indexed in Cardhub\nNo series yet",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-list-success-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-list-page__title",
+        "text": "All series",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-list-page__subtitle",
+        "text": "Explore every card serie",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "series-card__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 16,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "series-card__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-card__count",
+        "text": "120 cards inside",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.list {\"page\":1,\"pageSize\":50}"
+    ],
+    "bodyText": "Home\n/ Series\nAll series\nExplore every card series indexed in Cardhub\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n120 cards inside\nVerdant Rift\nForests, rifts, and old roots.\n80 cards inside\nForge of Titans\nBroken cover link falls back to the gradient.\n64 cards inside",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-loading-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "Home\n/ Series\n/ celestial-dawn",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-error-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "error-box-mini__title",
+        "text": "Couldn't load series",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "Retry",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "Home\n/ Series\n/ celestial-dawn\nCouldn't load series\nRetry",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".series-detail-page__body > taro-view-core:nth-child(1)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-notfound-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "Home\n/ Series\n/ celestial-dawn\nNot found",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-empty-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-hero__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "series-hero__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-hero__count",
+        "text": "0 cards inside",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-detail-page__section-title",
+        "text": "Cards in this series",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n0 cards inside\nCards in this series\nNo series yet",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "series-detail-success-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "series-hero__title",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "series-hero__description",
+        "text": "星辰与黎明主题的首发系列，含 120 张卡牌与一",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-hero__count",
+        "text": "3 cards inside",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "series-detail-page__section-title",
+        "text": "Cards in this series",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "series-card-row__name",
+        "text": "Aurora Knight",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      }
+    ],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "series.bySlug {\"slug\":\"celestial-dawn\",\"includeCards\":false}",
+      "cards.listBySeries {\"seriesSlug\":\"celestial-dawn\",\"includeParallels\":true,\"sort\":\"created\",\"page\":1,\"pageSize\":100}"
+    ],
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\nCelestial Dawn 天穹黎明\n星辰与黎明主题的首发系列，含 120 张卡牌与一段很长的描述，用来验证折行 Averyveryverylongwordwithoutanybreakstocheckwrapping。\n3 cards inside\nCards in this series\nAurora Knight\nLegendary\nGlacier Sentinel\nEpic\nMoonlit Raven\nRare",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-loading-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ aurora-knight",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-error-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "error-box-mini__title",
+        "text": "Couldn't load this card",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "Retry",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ aurora-knight\nCouldn't load this card\nRetry",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".card-detail-page__body > taro-view-core:nth-child(1)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-notfound-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [],
+    "targets": [],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ aurora-knight\nNot found",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comments-empty-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "Series ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "comment-login",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士，守护天穹的第一道光。\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\nSign in to leave a comment\nNo comments yet — be the first to chime in",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comments-error-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "Series ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "Couldn't load comments",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "Retry",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "comment-login",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 277
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士，守护天穹的第一道光。\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\nSign in to leave a comment\nCouldn't load comments\nRetry",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "targets": [
+            [
+              ".card-detail-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".card-hero"
+            ],
+            [
+              ".card-detail-page__heading"
+            ],
+            [
+              ".card-detail-page__description"
+            ],
+            [
+              ".card-detail-page__series"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-success-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "Series ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__author",
+        "text": "@bob",
+        "fontPx": 12,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__content",
+        "text": "这张卡的画面太好看了！",
+        "fontPx": 13,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "comment-login",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士，守护天穹的第一道光。\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\nSign in to leave a comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\n@carol\n11/21/2026, 5:30:00 PM\nGreat art, solid stats for a 4-cost.",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-idle-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "Search",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "Home\n/ Search\nSearch\nSearch cards or series…",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-loading-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "Search",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.search {\"q\":\"aurora\",\"limit\":30}"
+    ],
+    "bodyText": "Home\n/ Search\nSearch",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-error-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "Search",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "error-box-mini__title",
+        "text": "Search failed",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "text": "Retry",
+        "fontPx": 14,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 6.47
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "error-box-mini__retry",
+        "h": 44,
+        "w": 309
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "cards.search {\"q\":\"aurora\",\"limit\":30}"
+    ],
+    "bodyText": "Home\n/ Search\nSearch\nSearch failed\nRetry",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "targets": [
+            [
+              ".search-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".search-page__title"
+            ],
+            [
+              "taro-input-core"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-empty-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "Search",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.search {\"q\":\"zzz\",\"limit\":30}"
+    ],
+    "bodyText": "Home\n/ Search\nSearch\nNo matching cards or series",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "search-success-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "search-page__title",
+        "text": "Search",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "search-result__name",
+        "text": "Aurora Knight",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "search-result__series",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      }
+    ],
+    "targets": [
+      {
+        "cls": "search-page__input",
+        "h": 44,
+        "w": 343
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.search {\"q\":\"aurora\",\"limit\":30}"
+    ],
+    "bodyText": "Home\n/ Search\nSearch\nAurora Knight\nCelestial Dawn 天穹黎明\nLegendary\nGlacier Sentinel\nCelestial Dawn 天穹黎明\nEpic\nMoonlit Raven\nCelestial Dawn 天穹黎明\nRare",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "me-signed-out-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "me-page__title",
+        "text": "Me",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "me-page__button",
+        "text": "Sign in",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "ratio": 5.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "me-page__button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "me-page__button",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "Me\nSign in\nSign up\n\nHome\n\nMe",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "me-signed-in-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "me-page__title",
+        "text": "Me",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "me-page__user",
+        "text": "Signed in as @alice_long",
+        "fontPx": 15,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "me-page__button",
+        "text": "Sign out",
+        "fontPx": 15,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "me-page__button",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "Me\nSigned in as @alice_long_username_for_wrap\nSign out\n\nHome\n\nMe",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ],
+            [
+              "taro-tabbar"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "login-error-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "Welcome back",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__error-text",
+        "text": "The account or password ",
+        "fontPx": 13,
+        "fg": "rgb(185, 28, 28)",
+        "ratio": 5.91
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "New here? Create an acco",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Sign in",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Sign in",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Sign in",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 1,
+    "requests": [
+      "auth.login"
+    ],
+    "bodyText": "Home\n/ Sign in\nSign in\nWelcome back\nEMAIL OR USERNAME\nPASSWORD\nThe account or password is incorrect.\nSign in\nNew here? Create an account",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "targets": [
+            [
+              ".auth-page__body > taro-view-core:nth-child(1)"
+            ],
+            [
+              ".section-card__title"
+            ],
+            [
+              ".auth-page__subtitle"
+            ],
+            [
+              ".section-card__body > taro-view-core:nth-child(2)"
+            ],
+            [
+              "taro-view-core:nth-child(3)"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "register-idle-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "auth-page__subtitle",
+        "text": "Join the Cardhub communi",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "auth-page__switch-text",
+        "text": "Already have an account?",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Sign up",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Sign up",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Sign up",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 311
+      },
+      {
+        "cls": "auth-page__switch",
+        "h": 44,
+        "w": 311
+      }
+    ],
+    "alerts": 0,
+    "requests": [],
+    "bodyText": "Home\n/ Create account\nCreate account\nJoin the Cardhub community and discuss cards\nEMAIL\nUSERNAME\nPASSWORD\nSign up\nAlready have an account? Sign in",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "card-comment-form-en",
+    "viewport": 375,
+    "maxScrollWidth": 375,
+    "contrast": [
+      {
+        "cls": "card-detail-page__name",
+        "text": "Aurora Knight",
+        "fontPx": 20,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 16.59
+      },
+      {
+        "cls": "card-detail-page__description",
+        "text": "黎明骑士，守护天穹的第一道光。",
+        "fontPx": 13,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__meta",
+        "text": "Series ·",
+        "fontPx": 12,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.23
+      },
+      {
+        "cls": "card-detail-page__link",
+        "text": "Celestial Dawn 天穹黎明",
+        "fontPx": 13,
+        "fg": "rgb(37, 99, 235)",
+        "ratio": 4.78
+      },
+      {
+        "cls": "card-attributes__key",
+        "text": "ATK",
+        "fontPx": 11,
+        "fg": "rgb(82, 82, 82)",
+        "ratio": 7.81
+      },
+      {
+        "cls": "card-attributes__value",
+        "text": "7",
+        "fontPx": 14,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__author",
+        "text": "@bob",
+        "fontPx": 12,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "comment-item__content",
+        "text": "这张卡的画面太好看了！",
+        "fontPx": 13,
+        "fg": "rgb(23, 23, 23)",
+        "ratio": 17.93
+      },
+      {
+        "cls": "primary-button",
+        "state": "rest",
+        "text": "Post comment",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(37, 99, 235)",
+        "ratio": 5.17
+      },
+      {
+        "cls": "primary-button",
+        "state": "pressed",
+        "text": "Post comment",
+        "fontPx": 15,
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(29, 78, 216)",
+        "ratio": 6.7
+      },
+      {
+        "cls": "primary-button",
+        "state": "disabled",
+        "text": "Post comment",
+        "fontPx": 15,
+        "fg": "rgb(82, 82, 82)",
+        "bg": "rgb(245, 245, 245)",
+        "ratio": 7.17
+      }
+    ],
+    "targets": [
+      {
+        "cls": "card-detail-page__series",
+        "h": 44,
+        "w": 343
+      },
+      {
+        "cls": "primary-button",
+        "h": 44,
+        "w": 273.5
+      }
+    ],
+    "alerts": 0,
+    "requests": [
+      "cards.bySlug {\"slug\":\"aurora-knight\"}",
+      "comments.listForCard {\"cardSlug\":\"aurora-knight\",\"limit\":50,\"surface\":\"miniapp\"}"
+    ],
+    "bodyText": "Home\n/ Series\n/ Celestial Dawn 天穹黎明\n/ Aurora Knight\nAurora Knight\nLegendary\n黎明骑士，守护天穹的第一道光。\nSeries ·\nCelestial Dawn 天穹黎明\nAttributes\nATK\n7\nDEF\n5\nCOST\n4\nComments\n10 / 500\nPost comment\n@bob\n11/20/2026, 4:00:00 PM\n这张卡的画面太好看了！\n@carol\n11/21/2026, 5:30:00 PM\nGreat art, solid stats for a 4-cost.",
+    "axe": {
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 1,
+          "targets": [
+            [
+              ".taro-tabbar__panel"
+            ]
+          ]
+        }
+      ]
+    }
+  }
+]
