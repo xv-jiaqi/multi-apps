@@ -143,8 +143,15 @@ export function notificationTargetVisible(args: {
  * still counts as unread. Web is the loosest public surface, so UNCHECKED
  * still notifies; a later PASS does not send the skipped notifications.
  */
-export function contentPublicForNotify(...statuses: ContentSafetyStatusName[]): boolean {
-  return statuses.every((status) => notificationTargetVisible({ surface: 'web', status }));
+export function contentPublicForNotify(
+  content: ContentSafetyStatusName,
+  ...ancestors: ContentSafetyStatusName[]
+): boolean {
+  // The content's own status is a required argument, so a call can never
+  // pass an empty list and get a vacuous `true`.
+  return [content, ...ancestors].every((status) =>
+    notificationTargetVisible({ surface: 'web', status }),
+  );
 }
 
 /**

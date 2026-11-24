@@ -87,7 +87,7 @@ export default observer(function CardDetailPage() {
       await trpc.comments.create.mutate(parsed.data);
       setCommentContent('');
       void Taro.showToast({ title: tt('miniapp.toast.commentOk'), icon: 'success' });
-      await loadComments();
+      await loadComments({ fresh: true });
     } catch (error) {
       showCommentError(
         mutationErrorMessage({

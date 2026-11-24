@@ -1,4 +1,5 @@
 import {
+  contentPublicForNotify,
   isVisibleOnSurface,
   mergeSafetyStatus,
   notificationTargetVisible,
@@ -210,4 +211,20 @@ describe('notificationTargetVisible', () => {
       expect(notificationTargetVisible({ surface, status })).toBe(expected);
     },
   );
+});
+
+describe('contentPublicForNotify', () => {
+  it('notifies only when the content and every ancestor are public on web', () => {
+    expect(contentPublicForNotify('PASS')).toBe(true);
+    expect(contentPublicForNotify('UNCHECKED', 'PASS')).toBe(true);
+    expect(contentPublicForNotify('REVIEW')).toBe(false);
+    expect(contentPublicForNotify('RISKY')).toBe(false);
+    expect(contentPublicForNotify('PASS', 'REVIEW')).toBe(false);
+    expect(contentPublicForNotify('PASS', 'RISKY')).toBe(false);
+  });
+
+  it('fails closed when called without a status', () => {
+    // @ts-expect-error the content's own status is a required argument
+    expect(contentPublicForNotify()).toBe(false);
+  });
 });

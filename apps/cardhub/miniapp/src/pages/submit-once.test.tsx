@@ -196,3 +196,52 @@ describe.each(pages)('$name submit guard', ({ request, mount }) => {
     expect(request).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('card comments list after posting', () => {
+  const mine = {
+    id: 'c1',
+    content: '好卡',
+    user: { id: 'u1', username: 'alice' },
+    createdAt: '2026-11-25T00:00:00.000Z',
+    replies: [],
+    replyCount: 0,
+    safetyStatus: 'review',
+  };
+
+  // Slow network: the first list request (sent on mount, before the comment
+  // existed) is still running when the comment is posted.
+  it.each(['before', 'after'])(
+    'shows my comment when the mount-time list answers %s the refresh',
+    async (order) => {
+      const stale = deferred<unknown>();
+      const fresh = deferred<unknown>();
+      api.listForCard.mockReset();
+      api.listForCard.mockReturnValueOnce(stale.promise).mockReturnValueOnce(fresh.promise);
+      api.commentCreate.mockResolvedValue(mine);
+      const { container } = render(<CardDetailPage />);
+      await waitFor(() => expect(container.querySelector('textarea')).not.toBeNull());
+      type(container, 'textarea', '好卡');
+      await act(async () => {
+        submitButton(container).click();
+      });
+      await waitFor(() => expect(api.listForCard).toHaveBeenCalledTimes(2));
+
+      const answer = async (d: ReturnType<typeof deferred<unknown>>, value: unknown) => {
+        await act(async () => {
+          d.resolve(value);
+          await d.promise;
+        });
+      };
+      if (order === 'before') {
+        await answer(stale, []);
+        await answer(fresh, [mine]);
+      } else {
+        await answer(fresh, [mine]);
+        await answer(stale, []);
+      }
+
+      await waitFor(() => expect(container.textContent).toContain('@alice'));
+      expect(container.querySelector('.comment-item__content')?.textContent).toBe('好卡');
+    },
+  );
+});
