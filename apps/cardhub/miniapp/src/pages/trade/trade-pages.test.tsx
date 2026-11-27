@@ -203,6 +203,51 @@ describe('trade list load and return (CH-301 v1.5)', () => {
     expect(screen.getByText('卡9')).toBeTruthy();
   });
 
+  it('returns to page 1 at the top after a successful publish and does not restore later', async () => {
+    const first = deferred<{ items: ReturnType<typeof listing>[]; nextCursor: string | null }>();
+    const fresh = deferred<{ items: ReturnType<typeof listing>[]; nextCursor: string | null }>();
+    api.list
+      .mockImplementationOnce(() => first.promise)
+      .mockImplementationOnce(() => fresh.promise);
+    await showList();
+    await act(async () => {
+      first.resolve({ items: [listing(1)], nextCursor: null });
+      await first.promise;
+    });
+
+    const list = document.querySelector('.trade-list-page') as HTMLElement | null;
+    expect(list).toBeTruthy();
+    if (list) list.scrollTop = 200;
+    vi.useFakeTimers();
+    const leftoverPublish = document.createElement('div');
+    leftoverPublish.className = 'trade-page';
+    Object.defineProperty(leftoverPublish, 'clientHeight', { value: 800 });
+    leftoverPublish.scrollTop = 434;
+    document.body.appendChild(leftoverPublish);
+
+    markListNeedsRefresh('trade');
+    await act(async () => {
+      lifecycle.didShow?.();
+    });
+    expect(api.list).toHaveBeenCalledTimes(2);
+    expect(api.list.mock.calls[1]?.[0]?.cursor).toBeUndefined();
+    expect(list?.scrollTop).toBe(0);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+    expect(list?.scrollTop).toBe(0);
+    leftoverPublish.remove();
+
+    await act(async () => {
+      fresh.resolve({ items: [listing(9)], nextCursor: null });
+      await fresh.promise;
+    });
+    expect(screen.getByText('卡9')).toBeTruthy();
+    expect((document.querySelector('.trade-list-page') as HTMLElement | null)?.scrollTop).toBe(0);
+    vi.useRealTimers();
+  });
+
   it('disables load-more and does not use the stale cursor while a filter refresh is in flight', async () => {
     const first = deferred<{ items: ReturnType<typeof listing>[]; nextCursor: string | null }>();
     const sellPage = deferred<{ items: ReturnType<typeof listing>[]; nextCursor: string | null }>();

@@ -46,7 +46,7 @@ export default observer(function TradeListPage() {
   const authKey = listAuthKey(session);
   const cached = readListSession<ListingListPage, ListingItem>(sessionKey, authKey);
   const toast = useStatusToast();
-  const scroll = useScrollRestore('.trade-page', sessionKey);
+  const scroll = useScrollRestore('.trade-list-page', sessionKey);
   const firstShow = useRef(true);
   const lastAuth = useRef(authKey);
   const skipKindEffect = useRef(Boolean(cached));
@@ -102,12 +102,17 @@ export default observer(function TradeListPage() {
     toast.consumeQueued();
     const authChanged = lastAuth.current !== authKey;
     lastAuth.current = authKey;
+    const afterSubmit = consumeListNeedsRefresh('trade');
     if (firstShow.current) {
       firstShow.current = false;
+      if (afterSubmit || authChanged) {
+        void resetAndLoad(Boolean(dataRef.current));
+        return;
+      }
       if (cached) scroll.restore();
       return;
     }
-    if (consumeListNeedsRefresh('trade') || authChanged) {
+    if (afterSubmit || authChanged) {
       void resetAndLoad(Boolean(dataRef.current));
     } else {
       scroll.restore();
@@ -175,7 +180,7 @@ export default observer(function TradeListPage() {
 
   const onPublish = () => {
     if (typeof document !== 'undefined') {
-      const el = document.querySelector('.trade-page') as HTMLElement | null;
+      const el = document.querySelector('.trade-list-page') as HTMLElement | null;
       if (el) writeListScroll(sessionKey, el.scrollTop);
     }
     if (!session.isAuthenticated) {
@@ -199,7 +204,7 @@ export default observer(function TradeListPage() {
       scrollY
       scrollTop={scroll.scrollTop}
       onScroll={scroll.onScroll}
-      className="trade-page"
+      className="trade-page trade-list-page"
     >
       <View className="trade-page__body">
         <BreadcrumbsMini
