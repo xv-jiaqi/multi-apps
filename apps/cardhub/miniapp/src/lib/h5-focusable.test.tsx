@@ -96,4 +96,44 @@ describe('H5 focusable controls (CH-301 §5)', () => {
     const link = view.container.querySelector('a.h5-focusable-link') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('#/pages/forum/new/index');
   });
+
+  it('forwards camelCase aria-label and aria-checked', () => {
+    const view = render(
+      <FocusableButton role="radio" ariaLabel="骚扰或人身攻击" ariaChecked>
+        骚扰或人身攻击
+      </FocusableButton>,
+    );
+    const button = view.container.querySelector('button') as HTMLButtonElement;
+    expect(button.getAttribute('aria-label')).toBe('骚扰或人身攻击');
+    expect(button.getAttribute('aria-checked')).toBe('true');
+    expect(button.getAttribute('role')).toBe('radio');
+  });
+
+  it('honors tabIndex and onKeyDown so a radiogroup can move focus', () => {
+    const onKeyDown = vi.fn();
+    const view = render(
+      <FocusableButton role="radio" tabIndex={-1} onKeyDown={onKeyDown}>
+        垃圾信息
+      </FocusableButton>,
+    );
+    const button = view.container.querySelector('button') as HTMLButtonElement;
+    expect(button.tabIndex).toBe(-1);
+    fireEvent.keyDown(button, { key: 'ArrowDown' });
+    expect(onKeyDown).toHaveBeenCalled();
+  });
+
+  it('blocks clicks when only aria-disabled is set', () => {
+    const onClick = vi.fn();
+    const view = render(
+      <FocusableButton aria-disabled={true} onClick={onClick}>
+        删除
+      </FocusableButton>,
+    );
+    const button = view.container.querySelector('button') as HTMLButtonElement;
+    expect(button.tabIndex).toBe(-1);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(button.disabled).toBe(false);
+    fireEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
 });

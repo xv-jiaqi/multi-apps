@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { Text, View } from '@tarojs/components';
 import { t, type Locale } from '@repo/shared';
+import { FocusableButton } from '@repo/ui-mini';
 import { trpc } from '../../lib/trpc';
 import { useStores } from '../../stores/root-store';
 import { createLoadMoreGuard } from '../../lib/load-more-guard';
@@ -18,7 +19,7 @@ import { readTrpcErrorCodes } from '../../lib/load-error';
 import { nextNoticeId, type Notice } from '../../lib/notice';
 import { ErrorBoxMini } from '../error-box-mini';
 import { ReportEntry } from '../report-entry';
-import { FocusableButton, focusWhenSettled } from '../focusable-button';
+import { focusWhenSettled } from '../../lib/focus-when-settled';
 import { resolveFocusAfterCommentHide } from '../../lib/comment-hide-focus';
 
 import './index.scss';

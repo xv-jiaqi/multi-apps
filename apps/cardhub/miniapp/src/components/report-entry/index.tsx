@@ -9,6 +9,7 @@ import {
   t,
   type ReportCreateInput,
 } from '@repo/shared';
+import { FocusableButton } from '@repo/ui-mini';
 import { trpc } from '../../lib/trpc';
 import { useStores } from '../../stores/root-store';
 import { goLoginIfUnauthorized, goToLogin } from '../../lib/auth-redirect';
@@ -16,7 +17,7 @@ import { isWebEnv } from '../../lib/env';
 import { readTrpcErrorCodes } from '../../lib/load-error';
 import { nextNoticeId, type Notice } from '../../lib/notice';
 import { usePendingSubmit } from '../../lib/use-pending-submit';
-import { FocusableButton, focusWhenSettled } from '../focusable-button';
+import { focusWhenSettled } from '../../lib/focus-when-settled';
 import './index.scss';
 
 const REASON_IDS = ['spam', 'illegal', 'harassment', 'misinfo', 'other'] as const;
