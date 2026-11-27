@@ -237,6 +237,7 @@ const zhCN: Dictionary = {
   'comment.reply.loadFailed': '回复加载失败',
   'comment.reply.confirmDelete': '删除这条回复？',
   'comment.reply.deleted': '回复已删除',
+  'comment.deletedRefreshFailed': '已删除，列表暂未更新',
   'comment.confirmDeleteWithReplies_one': '删除这条评论？它的 {count} 条回复也会一起删除。',
   'comment.confirmDeleteWithReplies_other': '删除这条评论？它的 {count} 条回复也会一起删除。',
   'comment.deletedWithReplies_one': '评论和 {count} 条回复已删除',
@@ -1332,6 +1333,7 @@ const enUS: Dictionary = {
   'comment.reply.loadFailed': "Couldn't load replies",
   'comment.reply.confirmDelete': 'Delete this reply?',
   'comment.reply.deleted': 'Reply deleted',
+  'comment.deletedRefreshFailed': "Deleted. The list hasn't refreshed yet.",
   'comment.confirmDeleteWithReplies_one':
     'Delete this comment? Its {count} reply will be deleted too.',
   'comment.confirmDeleteWithReplies_other':

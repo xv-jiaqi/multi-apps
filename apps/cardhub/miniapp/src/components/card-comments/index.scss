@@ -1,0 +1,160 @@
+@import '@repo/design-tokens/taro.scss';
+
+.card-comment {
+  padding: $spacing-md 0;
+  border-bottom: 2rpx solid $color-neutral-100;
+}
+
+.card-comment--reply {
+  margin-left: $spacing-lg;
+  padding-top: $spacing-sm;
+  border-bottom-color: $color-neutral-100;
+}
+
+.card-comment__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-xs;
+}
+
+.card-comment__author {
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.card-comment__time {
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.card-comment__review {
+  padding: 0 $spacing-xs;
+  font-size: 22rpx;
+  line-height: 36rpx;
+  color: $color-neutral-600;
+  background-color: $color-neutral-100;
+  border-radius: $radius-sm;
+}
+
+.card-comment__body {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: $color-neutral-900;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.card-comment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+taro-button-core.card-comment__action,
+.card-comment__action[type='default'],
+.card-comment__action {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 0;
+  font-size: 28rpx;
+  line-height: 1.4;
+  color: $color-brand-600;
+  background-color: transparent;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.card-comment__action--disabled {
+  color: $color-neutral-600;
+}
+
+.card-comment__confirm {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background-color: $color-neutral-100;
+  border-radius: $radius-md;
+}
+
+.card-comment__confirm-text {
+  display: block;
+  font-size: 28rpx;
+  color: $color-neutral-900;
+}
+
+.card-comment__confirm-actions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.card-comment__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 88rpx;
+  margin-top: $spacing-sm;
+  font-size: 28rpx;
+  line-height: 1.2;
+  color: $color-brand-600;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+}
+
+.card-comment__more--disabled,
+.card-comment__more.button-disabled {
+  color: $color-neutral-600;
+  background-color: $color-white;
+  opacity: 1;
+}
+
+.notice-banner {
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-md;
+  font-size: 28rpx;
+}
+
+.notice-banner--success {
+  color: $color-emerald-800;
+  background-color: $color-emerald-50;
+  border: 2rpx solid $color-emerald-200;
+}
+
+.notice-banner--error {
+  color: $color-red-700;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+}
+
+.notice-banner__text {
+  font-size: 28rpx;
+}
+
+.card-comment__error {
+  margin-top: $spacing-sm;
+  padding: $spacing-md;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: $radius-md;
+}
+
+.card-comment__error-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: $color-red-700;
+  word-break: break-word;
+}

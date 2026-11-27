@@ -20,6 +20,7 @@ taro-button-core.primary-button,
   line-height: 1.4;
   color: $color-white;
   background-color: $color-brand-600;
+  border: none;
   border-radius: $radius-md;
 
   &::after {
@@ -79,7 +80,6 @@ taro-text.ui-mini-field__label {
   color: $color-white;
   pointer-events: none;
 }
-
 
 // CH-301 §5 v1.8: H5 uses a real <button>/<a> so Tab can focus it.
 // Do not use a `button` tag selector: Taro H5 compiles it to

@@ -5,6 +5,7 @@
 const noop = async () => undefined;
 const Taro = {
   showToast: noop,
+  showActionSheet: noop,
   setNavigationBarTitle: noop,
   navigateTo: noop,
   redirectTo: noop,

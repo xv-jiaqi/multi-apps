@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import Taro, { useRouter } from '@tarojs/taro';
+import Taro, { useDidShow, useRouter } from '@tarojs/taro';
 import { ScrollView, View, Text, Textarea } from '@tarojs/components';
 import {
   BreadcrumbsMini,
@@ -20,6 +20,12 @@ import { LocalNotFoundError, mutationErrorMessage } from '../../../lib/load-erro
 import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useBlock } from '../../../lib/use-block';
 import { ArtworkMini } from '../../../components/artwork-mini';
+import {
+  CardCommentsList,
+  CommentsFocusRoot,
+  NoticeBanner,
+} from '../../../components/card-comments';
+import { FORM_ROOT_ID } from '../../../components/report-entry';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import { StatusToast } from '../../../components/status-toast';
 import { isPublicSafetyStatus, SUBMITTED_FOR_REVIEW_KEY } from '../../../lib/post-safety';
@@ -44,6 +50,7 @@ export default observer(function CardDetailPage() {
   const slug = (router.params.slug ?? '').toString();
   const { locale, session } = useStores();
   const tt = (key: string, vars?: Record<string, string | number>) => t(locale.locale, key, vars);
+  const toast = useStatusToast();
 
   const cardBlock = useBlock<CardBySlugResult>(async () => {
     if (!slug) throw new LocalNotFoundError('missing slug');
@@ -64,12 +71,30 @@ export default observer(function CardDetailPage() {
   const [commentError, setCommentError] = useState<Notice<{ text: string }> | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const toast = useStatusToast();
+  const [hiddenCommentIds, setHiddenCommentIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [threadNotice, setThreadNotice] = useState<Notice<{
+    kind: 'success' | 'error';
+    text: string;
+  }> | null>(null);
+  const skipDidShow = useRef(true);
 
   useEffect(() => {
+    setHiddenCommentIds(new Set());
+    setThreadNotice(null);
     void loadCard();
     void loadComments();
   }, [slug, loadCard, loadComments]);
+
+  // Skip the first onShow (the mount-time useEffect already loaded). Later
+  // appearances — coming back from login — must refresh so a new comment
+  // list is fetched (周扒皮 D follow-up).
+  useDidShow(() => {
+    if (skipDidShow.current) {
+      skipDidShow.current = false;
+      return;
+    }
+    void loadComments({ fresh: true });
+  });
 
   const showCommentError = (text: string) => setCommentError({ id: nextNoticeId(), text });
 
@@ -200,76 +225,100 @@ export default observer(function CardDetailPage() {
 
             <View className="card-detail-page__gap" />
 
-            <SectionCard title={tt('card.detail.commentsTitle')}>
-              {session.isAuthenticated ? (
-                <View className="comment-form">
-                  <Textarea
-                    className="comment-form__input"
-                    value={commentContent}
-                    placeholder={tt('card.detail.commentPlaceholder')}
-                    maxlength={500}
-                    onInput={(e) => setCommentContent(e.detail.value)}
-                  />
-                  {commentError ? (
-                    <View key={commentError.id} className="comment-form__error" ariaRole="alert">
-                      <Text className="comment-form__error-text">{commentError.text}</Text>
-                    </View>
-                  ) : null}
-                  <View className="comment-form__footer" data-toast-avoid>
-                    <Text className="card-detail-page__meta comment-form__count">
-                      {commentContent.length} / 500
-                    </Text>
-                    <PrimaryButton
-                      label={
-                        submitting
-                          ? tt('card.detail.commentSubmitting')
-                          : tt('card.detail.commentSubmit')
-                      }
-                      disabled={submitting || !commentContent.trim()}
-                      onClick={submitComment}
+            <CommentsFocusRoot>
+              <SectionCard>
+                <Text
+                  className="card-detail-page__comments-title"
+                  {...({ 'data-comments-heading': 'true', tabIndex: -1 } as Record<
+                    string,
+                    unknown
+                  >)}
+                >
+                  {tt('card.detail.commentsTitle')}
+                </Text>
+                {session.isAuthenticated ? (
+                  <View className="comment-form">
+                    <Textarea
+                      className="comment-form__input"
+                      value={commentContent}
+                      placeholder={tt('card.detail.commentPlaceholder')}
+                      maxlength={500}
+                      onInput={(e) => setCommentContent(e.detail.value)}
                     />
-                  </View>
-                </View>
-              ) : (
-                <Link to="/pages/auth/login/index" className="comment-login">
-                  <Text className="comment-login__text">{tt('card.detail.loginToComment')}</Text>
-                </Link>
-              )}
-
-              {commentsView.kind === 'failed' ? (
-                <ErrorBoxMini
-                  key={commentsView.noticeId}
-                  title={tt('card.detail.commentsLoadFailed')}
-                  retryLabel={tt('state.retry')}
-                  retryingLabel={tt('state.retrying')}
-                  retrying={commentsView.retrying}
-                  onRetry={() => void loadComments()}
-                />
-              ) : commentsView.kind === 'loading' ? (
-                <View>
-                  <Skeleton height="120rpx" />
-                  <Skeleton height="120rpx" />
-                </View>
-              ) : commentsView.kind === 'empty' || commentsView.kind === 'notFound' ? (
-                <Empty title={tt('card.detail.commentEmpty')} />
-              ) : (
-                <View>
-                  {commentsView.data.map((comment) => (
-                    <View key={comment.id} className="comment-item">
-                      <View className="comment-item__meta">
-                        <Text className="comment-item__author">@{comment.user.username}</Text>
-                        <Text className="card-detail-page__meta">
-                          {new Date(comment.createdAt).toLocaleString(locale.locale)}
-                        </Text>
+                    {commentError ? (
+                      <View key={commentError.id} className="comment-form__error" ariaRole="alert">
+                        <Text className="comment-form__error-text">{commentError.text}</Text>
                       </View>
-                      <Text className="comment-item__content">{comment.content}</Text>
+                    ) : null}
+                    <View className="comment-form__footer" data-toast-avoid>
+                      <Text className="card-detail-page__meta comment-form__count">
+                        {commentContent.length} / 500
+                      </Text>
+                      <PrimaryButton
+                        label={
+                          submitting
+                            ? tt('card.detail.commentSubmitting')
+                            : tt('card.detail.commentSubmit')
+                        }
+                        disabled={submitting || !commentContent.trim()}
+                        onClick={submitComment}
+                      />
                     </View>
-                  ))}
-                </View>
-              )}
-            </SectionCard>
+                  </View>
+                ) : (
+                  <Link to="/pages/auth/login/index" className="comment-login">
+                    <Text className="comment-login__text">{tt('card.detail.loginToComment')}</Text>
+                  </Link>
+                )}
+
+                {threadNotice ? (
+                  <NoticeBanner
+                    id={threadNotice.id}
+                    kind={threadNotice.kind}
+                    text={threadNotice.text}
+                  />
+                ) : null}
+
+                {commentsView.kind === 'failed' ? (
+                  <ErrorBoxMini
+                    key={commentsView.noticeId}
+                    title={tt('card.detail.commentsLoadFailed')}
+                    retryLabel={tt('state.retry')}
+                    retryingLabel={tt('state.retrying')}
+                    retrying={commentsView.retrying}
+                    onRetry={() => void loadComments()}
+                  />
+                ) : commentsView.kind === 'loading' ? (
+                  <View>
+                    <Skeleton height="120rpx" />
+                    <Skeleton height="120rpx" />
+                  </View>
+                ) : commentsView.kind === 'empty' || commentsView.kind === 'notFound' ? (
+                  <Empty title={tt('card.detail.commentEmpty')} />
+                ) : (
+                  <CardCommentsList
+                    comments={commentsView.data}
+                    hiddenIds={hiddenCommentIds}
+                    onHide={async (id) => {
+                      setHiddenCommentIds((prev) => new Set(prev).add(id));
+                      try {
+                        await loadComments({ fresh: true, keepDataOnError: true });
+                        return 'refreshed';
+                      } catch {
+                        toast.show(tt('comment.deletedRefreshFailed'));
+                        return 'stale';
+                      }
+                    }}
+                    onNotice={(kind, noticeText) =>
+                      setThreadNotice({ id: nextNoticeId(), kind, text: noticeText })
+                    }
+                  />
+                )}
+              </SectionCard>
+            </CommentsFocusRoot>
           </View>
         )}
+        <View id={FORM_ROOT_ID} />
         <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>

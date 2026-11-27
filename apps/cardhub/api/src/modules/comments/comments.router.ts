@@ -7,6 +7,7 @@ import {
   APP_ERROR_CODES,
   commentInput,
   commentRepliesListInput,
+  commentReplyPreviewSchema,
   contentSurfaceSchema,
   isBlankReplyContent,
   optionalDeleteReason,
@@ -144,12 +145,17 @@ export class CommentsRouter {
         return {
           ...mapComment(comment),
           replyCount,
-          replies: shown.map((reply) => ({
-            id: reply.id,
-            content: reply.content,
-            createdAt: reply.createdAt.toISOString(),
-            user: { id: reply.userId, username: reply.username },
-          })),
+          replies: shown.map((reply) =>
+            commentReplyPreviewSchema.parse({
+              id: reply.id,
+              content: reply.content,
+              createdAt: reply.createdAt.toISOString(),
+              user: { id: reply.userId, username: reply.username },
+              ...(visibility.viewerId && reply.userId === visibility.viewerId
+                ? { safetyStatus: toSafetyStatusDto(reply.safetyStatus) }
+                : {}),
+            }),
+          ),
           repliesNextCursor: replyCount > shown.length ? (shown.at(-1)?.id ?? null) : null,
         };
       });

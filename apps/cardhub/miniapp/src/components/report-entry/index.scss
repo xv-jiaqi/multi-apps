@@ -1,0 +1,167 @@
+@import '@repo/design-tokens/taro.scss';
+
+taro-button-core.report-entry__trigger,
+.report-entry__trigger[type='default'],
+.report-entry__trigger {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 0 $spacing-sm 0 0;
+  font-size: 28rpx;
+  line-height: 1.4;
+  color: $color-brand-600;
+  background-color: transparent;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.report-entry__form {
+  margin-top: $spacing-sm;
+  padding: $spacing-md;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+.report-entry__title {
+  display: block;
+  margin-bottom: $spacing-sm;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+}
+
+.report-entry__label {
+  display: block;
+  margin-bottom: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.report-entry__reason {
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  background-color: $color-neutral-100;
+  border-radius: $radius-md;
+}
+
+.report-entry__reason-text {
+  font-size: 28rpx;
+  color: $color-neutral-900;
+}
+
+.report-entry__textarea {
+  width: 100%;
+  min-height: 160rpx;
+  padding: $spacing-sm $spacing-md;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: $color-neutral-900;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+.report-entry__textarea--error {
+  border-color: $color-red-200;
+}
+
+.report-entry__count {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.report-entry__error {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: $radius-md;
+}
+
+.report-entry__error-text {
+  font-size: 28rpx;
+  color: $color-red-700;
+}
+
+.report-entry__footer {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+}
+
+taro-button-core.report-entry__cancel,
+.report-entry__cancel[type='default'],
+.report-entry__cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  padding: 0;
+  font-size: 28rpx;
+  line-height: 1.4;
+  color: $color-brand-600;
+  background-color: transparent;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.report-entry__cancel--disabled {
+  color: $color-neutral-600;
+}
+
+.report-entry__reasons {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-md;
+}
+
+.report-entry__reason-option,
+taro-button-core.report-entry__reason-option,
+.report-entry__reason-option[type='default'] {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 0 $spacing-md;
+  font-size: 28rpx;
+  line-height: 1.4;
+  color: $color-neutral-900;
+  text-align: left;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+}
+
+.report-entry__reason-option--selected {
+  color: $color-brand-600;
+  border-color: $color-brand-600;
+}
+
+.report-entry__form--docked,
+taro-view-core.report-entry__form--docked {
+  position: fixed;
+  right: $spacing-md;
+  bottom: $spacing-md;
+  left: $spacing-md;
+  z-index: 20;
+  max-height: 70vh;
+  overflow: auto;
+  box-sizing: border-box;
+}

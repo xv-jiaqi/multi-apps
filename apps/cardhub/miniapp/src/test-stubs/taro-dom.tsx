@@ -12,7 +12,7 @@ function domProps(props: AnyProps): Record<string, unknown> {
   const native = (props.nativeProps as Record<string, unknown> | undefined) ?? {};
   const merged = { ...native, ...props };
   for (const [key, value] of Object.entries(merged)) {
-    if (key === 'nativeProps') continue;
+    if (key === 'nativeProps' || key === 'children') continue;
     if (
       key === 'className' ||
       key === 'style' ||
@@ -24,19 +24,20 @@ function domProps(props: AnyProps): Record<string, unknown> {
       key === 'role'
     ) {
       out[key] = value;
-    } else if (
-      key === 'aria-disabled' ||
-      key === 'aria-describedby' ||
-      key === 'aria-labelledby' ||
-      key === 'aria-label' ||
-      key === 'aria-pressed' ||
-      key === 'ariaRole'
-    ) {
-      out[key === 'ariaRole' ? 'role' : key] = value;
-    } else if (key === 'ariaLabelledBy') {
-      out['aria-labelledby'] = value;
+    } else if (key === 'ariaRole') {
+      out.role = value;
+    } else if (key.startsWith('data-') || key.startsWith('aria-')) {
+      out[key] = value;
     } else if (key === 'ariaLabel') {
       out['aria-label'] = value;
+    } else if (key === 'ariaLabelledBy') {
+      out['aria-labelledby'] = value;
+    } else if (key === 'ariaDescribedBy') {
+      out['aria-describedby'] = value;
+    } else if (key === 'ariaChecked') {
+      out['aria-checked'] = value;
+    } else if (key === 'ariaDisabled') {
+      out['aria-disabled'] = value;
     } else if (key === 'ariaPressed') {
       out['aria-pressed'] = value;
     } else if (key === 'maxlength') {

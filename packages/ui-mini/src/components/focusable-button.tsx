@@ -47,6 +47,7 @@ export function nativeAriaProps(rest: Record<string, unknown>): Record<string, u
   if (rest.id != null) out.id = rest.id;
   if (rest.style != null) out.style = rest.style;
   if (rest.role != null) out.role = rest.role;
+  if (rest.tabIndex !== undefined) out.tabIndex = rest.tabIndex;
   for (const [key, value] of Object.entries(rest)) {
     if (key.startsWith('data-') || key.startsWith('aria-')) out[key] = value;
   }
@@ -69,6 +70,8 @@ export interface FocusableButtonProps extends Omit<ButtonProps, 'ariaChecked' | 
   'aria-checked'?: boolean | 'mixed';
   'aria-disabled'?: boolean;
   'data-testid'?: string;
+  tabIndex?: number;
+  onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void;
 }
 
 export function FocusableButton({
@@ -77,23 +80,35 @@ export function FocusableButton({
   hoverClass,
   disabled,
   onClick,
+  onKeyDown,
+  tabIndex,
   ...rest
 }: FocusableButtonProps) {
-  const isDisabled = Boolean(disabled);
+  const forwarded = nativeAriaProps(rest as Record<string, unknown>);
+  const ariaBlocked = forwarded['aria-disabled'] === true || forwarded['aria-disabled'] === 'true';
+  const isDisabled = Boolean(disabled) || ariaBlocked;
   if (isMiniappWebEnv()) {
-    const forwarded = nativeAriaProps(rest as Record<string, unknown>);
     return (
       <button
         type="button"
         className={['h5-focusable', className].filter(Boolean).join(' ')}
-        disabled={isDisabled ? true : undefined}
-        tabIndex={isDisabled ? -1 : 0}
+        disabled={disabled ? true : undefined}
         {...forwarded}
+        tabIndex={isDisabled ? -1 : (tabIndex ?? 0)}
         aria-disabled={isDisabled ? true : (forwarded['aria-disabled'] as boolean | undefined)}
         onClick={
           isDisabled
             ? undefined
             : (onClick as ((event: MouseEvent<HTMLButtonElement>) => void) | undefined)
+        }
+        onKeyDown={
+          isDisabled
+            ? undefined
+            : (event: KeyboardEvent<HTMLButtonElement>) => {
+                onKeyDown?.(event);
+                if (event.defaultPrevented) return;
+                activateOnEnterOrSpace(onClick as ((event: unknown) => void) | undefined)(event);
+              }
         }
       >
         {children}
@@ -106,15 +121,17 @@ export function FocusableButton({
       className={className}
       hoverClass={hoverClass}
       type="default"
+      {...(tabIndex !== undefined ? ({ tabIndex } as ButtonProps) : {})}
       {...(isDisabled
         ? ({
             disabled: true,
             ariaDisabled: true,
             'aria-disabled': true,
           } as ButtonProps)
-        : onClick
-          ? { onClick }
-          : {})}
+        : {
+            ...(onClick ? { onClick } : {}),
+            ...(onKeyDown ? { onKeyDown } : {}),
+          })}
     >
       {children}
     </Button>
