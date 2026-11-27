@@ -14,6 +14,8 @@ export default defineConfig({
       // Source, not the CommonJS dist: require() in dist skips the aliases above
       // and would load the real Taro runtime.
       '@repo/ui-mini': path.resolve(root, '../../../packages/ui-mini/src/index.ts'),
+      // Dev-only: the web package already depends on axe-core; avoid a lockfile change.
+      'axe-core': path.resolve(root, '../web/node_modules/axe-core'),
     },
   },
   test: {

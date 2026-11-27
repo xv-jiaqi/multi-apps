@@ -49,7 +49,7 @@ export default observer(function ForumListPage() {
   );
   const more = useLoadMore<TopicListItem>(cached ?? undefined);
   const toast = useStatusToast();
-  const scroll = useScrollRestore('.forum-page', 'forum');
+  const scroll = useScrollRestore('.forum-list-page', 'forum');
   const firstShow = useRef(true);
   const lastAuth = useRef(authKey);
   const dataRef = useRef(state.data);
@@ -76,6 +76,10 @@ export default observer(function ForumListPage() {
     const afterSubmit = consumeListNeedsRefresh('forum');
     if (firstShow.current) {
       firstShow.current = false;
+      if (afterSubmit || authChanged) {
+        void resetAndLoad(Boolean(dataRef.current));
+        return;
+      }
       if (cached) {
         scroll.restore();
       } else {
@@ -146,7 +150,7 @@ export default observer(function ForumListPage() {
       scrollY
       scrollTop={scroll.scrollTop}
       onScroll={scroll.onScroll}
-      className="forum-page"
+      className="forum-page forum-list-page"
     >
       <View className="forum-page__body">
         <BreadcrumbsMini

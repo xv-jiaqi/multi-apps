@@ -21,15 +21,16 @@ function domProps(props: AnyProps): Record<string, unknown> {
       key === 'disabled' ||
       key === 'id' ||
       key === 'tabIndex' ||
-      key === 'role'
+      key === 'role' ||
+      key === 'alt'
     ) {
       out[key] = value;
     } else if (
       key === 'aria-disabled' ||
+      key === 'aria-pressed' ||
       key === 'aria-describedby' ||
       key === 'aria-labelledby' ||
       key === 'aria-label' ||
-      key === 'aria-pressed' ||
       key === 'ariaRole'
     ) {
       out[key === 'ariaRole' ? 'role' : key] = value;
@@ -56,7 +57,7 @@ export function ScrollView(props: AnyProps) {
   return createElement('div', domProps(props), props.children);
 }
 export function Image(props: AnyProps) {
-  return createElement('img', { ...domProps(props), src: props.src, alt: '' });
+  return createElement('img', { ...domProps(props), src: props.src });
 }
 export function Button(props: AnyProps) {
   return createElement('button', { type: 'button', ...domProps(props) }, props.children);
@@ -78,3 +79,7 @@ export const Input = field('input');
 export const Textarea = field('textarea');
 export type ButtonProps = Record<string, unknown>;
 export type InputProps = Record<string, unknown>;
+
+export function Picker(props: AnyProps) {
+  return createElement('div', domProps(props), props.children);
+}

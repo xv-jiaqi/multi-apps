@@ -100,6 +100,7 @@ describe('tabBar labels on tab pages (CH-301 §1)', () => {
     for (const file of [
       'pages/index/index.tsx',
       'pages/forum/list/index.tsx',
+      'pages/trade/list/index.tsx',
       'pages/me/index.tsx',
     ]) {
       const source = readFileSync(path.join(srcDir, file), 'utf8');

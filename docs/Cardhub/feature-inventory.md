@@ -171,17 +171,17 @@ Token：JWT（HS256，`JWT_EXPIRES_IN` 默认 7 天），无 refresh token。载
 
 Desktop / iOS / Android 加载的是同一份 Web 产物，所以功能与 Web 一致；差异只在发布状态。小程序是用 Taro 重写的 UI，功能需要逐页补齐。
 
-| 功能            | Web        | Desktop（Tauri）                      | iOS / Android（Tauri）                                               | 小程序 / H5（Taro）            |
-| --------------- | ---------- | ------------------------------------- | -------------------------------------------------------------------- | ------------------------------ |
-| 系列 / 卡牌浏览 | ✅         | ✅                                    | ✅                                                                   | ✅                             |
-| 搜索            | ✅         | ✅                                    | ✅                                                                   | ✅                             |
-| 登录 / 注册     | ✅         | ✅                                    | ✅                                                                   | ✅                             |
-| 卡牌评论        | ✅         | ✅                                    | ✅                                                                   | 🟡 无举报入口                  |
-| 论坛            | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
-| 交易信息板      | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
-| 举报 / 举报队列 | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                   |
-| 内容管理后台    | ✅         | ✅                                    | ✅                                                                   | ❌                             |
-| 发布状态        | 生产已上线 | `release-native.yml` 手动出包，未签名 | iOS 需本机 `ios:init` 生成工程；Android 未初始化；均未上架（CH-304） | 未申请 AppID、未上线（CH-302） |
+| 功能            | Web        | Desktop（Tauri）                      | iOS / Android（Tauri）                                               | 小程序 / H5（Taro）                           |
+| --------------- | ---------- | ------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------- |
+| 系列 / 卡牌浏览 | ✅         | ✅                                    | ✅                                                                   | ✅                                            |
+| 搜索            | ✅         | ✅                                    | ✅                                                                   | ✅                                            |
+| 登录 / 注册     | ✅         | ✅                                    | ✅                                                                   | ✅                                            |
+| 卡牌评论        | ✅         | ✅                                    | ✅                                                                   | 🟡 无举报入口                                 |
+| 论坛            | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                                  |
+| 交易信息板      | ✅         | ✅                                    | ✅                                                                   | 🟡 列表 / 发布 / 卡牌页意向；无关闭与我的意向 |
+| 举报 / 举报队列 | ✅         | ✅                                    | ✅                                                                   | ❌（CH-301）                                  |
+| 内容管理后台    | ✅         | ✅                                    | ✅                                                                   | ❌                                            |
+| 发布状态        | 生产已上线 | `release-native.yml` 手动出包，未签名 | iOS 需本机 `ios:init` 生成工程；Android 未初始化；均未上架（CH-304） | 未申请 AppID、未上线（CH-302）                |
 
 ## 5. tRPC 接口清单
 
@@ -469,14 +469,15 @@ erDiagram
 
 ### 7.2 小程序 / H5
 
-注册在 `apps/cardhub/miniapp/src/app.config.ts`（页面与 tabBar 常量在 `src/lib/tab-bar.ts`）：首页、论坛列表、我的、系列列表、系列详情、卡牌详情（含评论）、搜索、登录、注册、论坛详情、论坛发帖，共 11 页。每个页面目录都有 `index.tsx`、`index.config.ts`、`index.scss`（单测 `tab-bar.test.ts` 检查）。
+注册在 `apps/cardhub/miniapp/src/app.config.ts`（页面与 tabBar 常量在 `src/lib/tab-bar.ts`）：首页、论坛列表、我的、系列列表、系列详情、卡牌详情（含评论）、搜索、登录、注册、论坛详情、论坛发帖、交易列表、交易发布，共 13 页。每个页面目录都有 `index.tsx`、`index.config.ts`、`index.scss`（单测 `tab-bar.test.ts` 检查）。
 
-- tabBar（CH-301 §1）：目前三项「首页 / 论坛 / 我的」，交易一项随交易 PR 插在论坛和我的之间。栏底 `$color-white`，未选 `$color-neutral-600`，选中 `$color-brand-600`，81px 双态图标在 `src/assets/tab/`。文字按语言用 `Taro.setTabBarItem` 换成 `tab.*`。tab 页之间 `switchTab`，面包屑回首页或论坛列表也用 `switchTab`。论坛发帖、话题详情走 `navigateTo`；发布成功 `redirectTo` 详情，避免把表单留在栈里。
+- tabBar（CH-301 §1）：四项「首页 / 论坛 / 交易 / 我的」。栏底 `$color-white`，未选 `$color-neutral-600`，选中 `$color-brand-600`，81px 双态图标在 `src/assets/tab/`。文字按语言用 `Taro.setTabBarItem` 换成 `tab.*`。tab 页之间 `switchTab`，面包屑回首页或论坛列表也用 `switchTab`。论坛发帖、话题详情走 `navigateTo`；发布成功 `redirectTo` 详情，避免把表单留在栈里。
 - 「我的」：只放登录态。已登录显示用户名与「退出登录」，未登录显示「登录」「注册」。首页不再有账号区。登录、注册成功后 `navigateBack`，已在栈底则 `switchTab` 回首页；登录与注册页互相跳转用 `redirectTo`，不压栈。
 - 图片（CH-301 §5）：`ArtworkMini` 用 Taro `Image`，经 `resolveArtwork` 只认 `https://`，其余与 `binderror` 回退 `gradientFor(slug)`，加载中底色 `$color-neutral-100`。卡牌详情大图 63:88 `aspectFit`，其余卡图 63:88 `aspectFill`，系列封面与首页精选 2:1 `aspectFill`。首页精选、系列列表、系列详情头图都是「图在上、字在下」，色带上不放字。
 - 错误态（CH-301 §6）：块级失败用 `ErrorBoxMini`（固定 i18n 标题 + 「重试」，进行中「重试中…」，点击区 ≥ 88rpx），`NOT_FOUND` 用 `state.notFound`。页面不展示 `e.message`、状态码或 zod 原文（单测 `no-raw-error-text.test.ts`）。首页统计只在 `series.list` 成功后渲染，不回退「—」。卡牌评论加载失败走红框，不落入空态。
 - 卡牌评论列表请求带 `surface: 'miniapp'`，只返回已过检的评论和自己审核中的评论。系列详情的卡列表来自 `cards.listBySeries`（含平行、按收录时间、`pageSize` 100 拼页），系列头图文走 `series.bySlug({ includeCards:false })`（CH-244）。
 - 论坛（CH-301 §2 / §4 / §5 v1.9）：列表 `forum.topics.list`、详情 `forum.topics.bySlug`、回帖翻页 `forum.replies.list` 的入参都带 `surface: 'miniapp'`。列表只展示摘要 `excerpt`（服务端已把正文打成纯文本，最多 120 字）；详情和回帖用小程序自己的 `stripMarkdownKeepNewlines` 去掉 Markdown 标记但保留换行，不用会折叠空白的 `markdownToPlainText`。未登录点「发布新话题」或回帖去登录页，不存草稿。作者自己的 `review` 话题/回帖显示灰色 `content.pendingReview` 标签（文案不改）；作者自己的 `blocked` 话题只显示红色 `content.blocked`，不展示标题、正文和回帖。发帖或回帖命中拦截时表单下红框显示 `content.blocked`（「没有发布」，不提编辑），不创建内容。提交成功但结果不是 `pass`（含 `unchecked` / `review`）时不跳详情、不插入列表、不说已发布，统一 Toast `content.submittedForReview`（H5 `role=status`，约 3000ms 消失，钉在顶部不挡提交按钮或计数）；发帖页出栈（有上一页 `navigateBack`，否则 `switchTab` 列表），回帖与卡牌评论留本页并清空输入。`pass` 保持原成功路径。回帖成功但刷新失败时保留已有内容并用 Toast 提示 `forum.reply.postedRefreshFailed`。返回列表保留已加载条目和滚动位置，只在本人刚提交成功、登录状态变化或下拉刷新时回第 1 页并作废旧请求。发帖页「正文」标签与 textarea 程序关联（`aria-labelledby`）。 H5 上本期触及的按钮与 Link 可 Tab 聚焦：`PrimaryButton` / `Link` / `FocusableButton` 在 H5 渲染为原生 `<button>` / `<a>`（`tabIndex=0`，Enter 与 Space 可触发）；§2 页内确认条与 §4 举报入口仍属后续 PR。本 PR 范围与 v1.8 的论坛部分相同，v1.9 只改交易备注，见交易 PR。登录提示与卡牌详情 `comment-login` 同为品牌色 28rpx、底 `$color-neutral-100`、点击区 ≥88rpx。「加载更多」连点只发一次请求。本期不做话题编辑/置顶/删除、回帖删除、草稿（CH-226）、卡牌评论删除、卡牌评论「写回复」框、`comments.listReplies` 翻页和举报 ActionSheet（留给后续 PR）。
+- 交易（CH-301 §3 / §5 v1.9）：本 PR 增加 `pages/trade/list` 与 `pages/trade/publish` 两页，并在 tabBar「我的」前加入「交易」（论坛 PR 合入后顺序为 首页 / 论坛 / 交易 / 我的）。列表只展示 `OPEN` 意向，列表项即详情（不做详情页），字段顺序：类型；卡名（或已下架）与「审核中」标签；系列；品相 · 语言 · 版本备注；价格或面议；缩略图；实物图；联系方式；备注。全部折行不截断，备注保留换行。页内筛选「全部 / 出 / 求」三个按钮等高顶对齐（去掉相邻 `margin-top`），选中 `aria-pressed`。读接口 `listings.list` / `listings.byCard` 入参带 `surface: 'miniapp'`。发布页有选填多行备注（`trade.publish.note`，最多 500 字，超长映射字段下文案），框下提示 `trade.publish.noteHint`（H5 textarea `aria-describedby` 指向提示）；列表项 `note` 为 null 或 trim 后为空时整行连同标签不渲染，不放占位，不加第二个登录链接；联系方式下不放 `trade.publish.contactHintSignedIn`。`contact === null` 时 `trade.list.contactSignIn` 是可点登录 Link（品牌色 28rpx、底 `$color-neutral-100`、点击区 ≥88rpx）。发布一律 `switchTab` 回交易列表；`pass` 时 Toast `trade.publish.success`，非 `pass` 时 Toast `content.submittedForReview`（H5 `role=status`，约 3000ms）。返回列表保留已加载条目和滚动位置，只在本人刚发布成功、登录状态变化或切筛选时回第 1 页并作废旧请求。未登录从卡牌详情「发布意向」始终 `navigateTo` 发布页，发布页未登录再 `navigateTo` 登录一次，登录后可回到发布页继续。接口已有 `Listing.note` / `listingPublishInput.note`，本 PR 未改 Prisma/tRPC。「加载更多」用请求序号防重，加载中禁用。`content.blocked` 用 v1.4 文案，表单内容保留。卡牌详情「该卡交易意向」最多 5 条 OPEN，失败走红框，不落入空态。H5 上本期触及的按钮与 Link 可 Tab 聚焦（与论坛 PR 同一套 `FocusableButton` / `Link`）。服务端对未登录或封禁用户把 note 置 null 属 CH-252，本 PR 只做前端容错。不做关闭意向、我的意向、相册上传、交易详情页。
 
 小程序的 tRPC client 只在 `apps/cardhub/miniapp/src/lib/trpc-client.ts` 构建，每个请求都带请求头 `x-cardhub-surface: miniapp`。api 取显式 `input.surface` 和这个请求头里更严的一个：任一方是 `miniapp` 就按 `miniapp`；请求头存在但值不是 `web` / `miniapp`（含空串、大小写不符、重复）也按 `miniapp`；两者都没有时仍是 `web`。所以公开读接口在小程序上只返回已过检内容和作者自己的 `review`，漏传或写错 `surface` 都不会放宽到 Web 规则。`src/lib/trpc-client.test.ts` 拦截 fetch 断言请求头，并检查 `src` 里只有 `trpc-client.ts` 构建 client、只有 `trpc.ts` 的 fetch 适配调用 `Taro.request`（不许绕过 client 直接请求）。`notifications.list` 的摘要和链接、`users.me` 的计数也按同一个 surface 判断（见接口表）。
 

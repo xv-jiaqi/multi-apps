@@ -17,9 +17,9 @@ export const PAGE_BACKGROUND = '#f6f6f6';
 
 /**
  * CH-301 §1 tabBar. Labels are the zh-CN defaults; `app.tsx` swaps them to
- * the current locale with `Taro.setTabBarItem` (`tab.*` keys). Trade joins
- * between forum and me in the trade PR, once its list page exists (WeChat
- * rejects a tab whose page is not registered).
+ * the current locale with `Taro.setTabBarItem` (`tab.*` keys). Forum and
+ * trade sit between home and me (WeChat rejects a tab whose page is not
+ * registered).
  */
 export const TAB_BAR_ITEMS = [
   {
@@ -35,6 +35,13 @@ export const TAB_BAR_ITEMS = [
     textKey: 'tab.forum',
     iconPath: 'assets/tab/forum.png',
     selectedIconPath: 'assets/tab/forum-active.png',
+  },
+  {
+    pagePath: 'pages/trade/list/index',
+    text: '交易',
+    textKey: 'tab.trade',
+    iconPath: 'assets/tab/trade.png',
+    selectedIconPath: 'assets/tab/trade-active.png',
   },
   {
     pagePath: 'pages/me/index',
@@ -57,4 +64,6 @@ export const APP_PAGES = [
   'pages/auth/register/index',
   'pages/forum/detail/index',
   'pages/forum/new/index',
+  'pages/trade/list/index',
+  'pages/trade/publish/index',
 ] as const;

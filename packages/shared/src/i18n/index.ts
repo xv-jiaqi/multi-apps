@@ -453,6 +453,7 @@ const zhCN: Dictionary = {
   'trade.publish.contact': '联系方式（微信 / QQ / 邮箱…）',
   'trade.publish.contactHintSignedIn': '只有登录用户能看到联系方式',
   'trade.publish.note': '备注（可选，最多 500 字）',
+  'trade.publish.noteHint': '联系方式请填在「联系方式」栏',
   'trade.publish.submit': '发布意向',
   'trade.publish.submitting': '正在发布意向…',
   'trade.publish.cancel': '取消',
@@ -466,6 +467,7 @@ const zhCN: Dictionary = {
   'trade.publish.error.imageTooLong': '图片链接最长 2048 个字符',
   'trade.publish.error.priceTooLong': '价格最长 64 个字符',
   'trade.publish.error.contact': '联系方式需要 2–200 个字',
+  'trade.publish.error.note': '备注最多 500 个字',
   'trade.publish.rateLimited': '发布太频繁，请稍后再试',
   'trade.publish.disclaimer':
     'Cardhub 不参与交易、不担保资金安全，请通过站外联系并自行核实。请勿发布违法或侵权内容。',
@@ -1563,6 +1565,7 @@ const enUS: Dictionary = {
   'trade.publish.contact': 'Contact info (WeChat / QQ / email…)',
   'trade.publish.contactHintSignedIn': 'Only signed-in users can see this',
   'trade.publish.note': 'Notes (optional, max 500 chars)',
+  'trade.publish.noteHint': 'Put contact details in the Contact info field',
   'trade.publish.submit': 'Post listing',
   'trade.publish.submitting': 'Posting…',
   'trade.publish.cancel': 'Cancel',
@@ -1576,6 +1579,7 @@ const enUS: Dictionary = {
   'trade.publish.error.imageTooLong': 'Image links can be at most 2048 characters',
   'trade.publish.error.priceTooLong': 'Price can be at most 64 characters',
   'trade.publish.error.contact': 'Contact must be 2–200 characters',
+  'trade.publish.error.note': 'Use at most 500 characters for the notes.',
   'trade.publish.rateLimited': 'Too many listings. Try again later.',
   'trade.publish.disclaimer':
     'Cardhub does not facilitate trades or guarantee any funds. Contact off-platform and verify independently. Do not post illegal or infringing content.',

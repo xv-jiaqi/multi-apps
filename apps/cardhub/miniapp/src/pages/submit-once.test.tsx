@@ -37,6 +37,7 @@ const api = vi.hoisted(() => ({
   commentCreate: vi.fn(),
   cardBySlug: vi.fn(),
   listForCard: vi.fn(),
+  listingsByCard: vi.fn(),
 }));
 vi.mock('../lib/trpc', () => ({
   trpc: {
@@ -46,6 +47,7 @@ vi.mock('../lib/trpc', () => ({
       listForCard: { query: api.listForCard },
     },
     cards: { bySlug: { query: api.cardBySlug } },
+    listings: { byCard: { query: api.listingsByCard } },
   },
 }));
 
@@ -143,6 +145,7 @@ beforeEach(() => {
     attributes: {},
   });
   api.listForCard.mockResolvedValue([]);
+  api.listingsByCard.mockResolvedValue([]);
 });
 
 afterEach(() => {

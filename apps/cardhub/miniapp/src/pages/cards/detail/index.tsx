@@ -21,6 +21,7 @@ import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useBlock } from '../../../lib/use-block';
 import { ArtworkMini } from '../../../components/artwork-mini';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
+import { ListingRow } from '../../../components/listing-row';
 import { StatusToast } from '../../../components/status-toast';
 import { isPublicSafetyStatus, SUBMITTED_FOR_REVIEW_KEY } from '../../../lib/post-safety';
 import { useStatusToast } from '../../../lib/status-toast';
@@ -28,6 +29,7 @@ import './index.scss';
 
 type CardBySlugResult = Awaited<ReturnType<typeof trpc.cards.bySlug.query>>;
 type CommentsResult = Awaited<ReturnType<typeof trpc.comments.listForCard.query>>;
+type ListingsForCard = Awaited<ReturnType<typeof trpc.listings.byCard.query>>;
 
 const RARITY_ORDER: readonly Rarity[] = ['common', 'rare', 'epic', 'legendary'];
 
@@ -57,8 +59,13 @@ export default observer(function CardDetailPage() {
     if (!slug) throw new LocalNotFoundError('missing slug');
     return trpc.comments.listForCard.query({ cardSlug: slug, limit: 50, surface: 'miniapp' });
   });
+  const listingsBlock = useBlock<ListingsForCard>(async () => {
+    if (!slug) throw new LocalNotFoundError('missing slug');
+    return trpc.listings.byCard.query({ cardSlug: slug, limit: 5, surface: 'miniapp' });
+  });
   const loadCard = cardBlock.load;
   const loadComments = commentsBlock.load;
+  const loadListings = listingsBlock.load;
 
   const [commentContent, setCommentContent] = useState('');
   const [commentError, setCommentError] = useState<Notice<{ text: string }> | null>(null);
@@ -69,7 +76,8 @@ export default observer(function CardDetailPage() {
   useEffect(() => {
     void loadCard();
     void loadComments();
-  }, [slug, loadCard, loadComments]);
+    void loadListings();
+  }, [slug, loadCard, loadComments, loadListings]);
 
   const showCommentError = (text: string) => setCommentError({ id: nextNoticeId(), text });
 
@@ -116,6 +124,10 @@ export default observer(function CardDetailPage() {
   const cardView = resolveBlockView({ state: cardBlock.state, isEmpty: () => false });
   const commentsView = resolveBlockView({
     state: commentsBlock.state,
+    isEmpty: (items) => items.length === 0,
+  });
+  const listingsView = resolveBlockView({
+    state: listingsBlock.state,
     isEmpty: (items) => items.length === 0,
   });
   const card = cardView.kind === 'success' ? cardView.data : null;
@@ -196,6 +208,42 @@ export default observer(function CardDetailPage() {
                   ))}
                 </View>
               )}
+            </SectionCard>
+
+            <View className="card-detail-page__gap" />
+
+            <SectionCard title={tt('trade.detail.byCardTitle')}>
+              {listingsView.kind === 'failed' ? (
+                <ErrorBoxMini
+                  key={listingsView.noticeId}
+                  title={tt('trade.detail.byCardLoadFailed')}
+                  retryLabel={tt('state.retry')}
+                  retryingLabel={tt('state.retrying')}
+                  retrying={listingsView.retrying}
+                  onRetry={() => void loadListings()}
+                />
+              ) : listingsView.kind === 'loading' ? (
+                <Skeleton />
+              ) : listingsView.kind === 'empty' ? (
+                <Empty title={tt('trade.detail.byCardEmpty')} />
+              ) : listingsView.kind === 'success' ? (
+                <View>
+                  {listingsView.data.map((listing) => (
+                    <ListingRow key={listing.id} listing={listing} locale={locale.locale} />
+                  ))}
+                </View>
+              ) : null}
+              <View className="trade-links">
+                <Link to="/pages/trade/list/index" mode="switchTab" className="trade-links__item">
+                  <Text className="trade-links__item">{tt('trade.list.title')}</Text>
+                </Link>
+                <Link
+                  to={`/pages/trade/publish/index?cardSlug=${encodeURIComponent(slug)}`}
+                  className="trade-links__item"
+                >
+                  {tt('trade.detail.byCardPublish')}
+                </Link>
+              </View>
             </SectionCard>
 
             <View className="card-detail-page__gap" />

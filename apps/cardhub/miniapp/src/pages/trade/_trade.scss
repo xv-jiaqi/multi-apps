@@ -1,0 +1,328 @@
+@import '@repo/design-tokens/taro.scss';
+
+.trade-page {
+  height: 100vh;
+  overflow: hidden;
+  background-color: $color-page;
+}
+
+.trade-page__body {
+  padding: $spacing-md;
+}
+
+.trade-page__header {
+  margin-bottom: $spacing-md;
+}
+
+.trade-page__title {
+  display: block;
+  margin-bottom: $spacing-sm;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.trade-page__disclaimer {
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm;
+  background-color: $color-neutral-100;
+  border-radius: $radius-md;
+}
+
+.trade-page__disclaimer-text {
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: $color-neutral-600;
+  word-break: break-word;
+}
+
+.trade-filters {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-md;
+}
+
+taro-button-core.trade-filters__chip,
+.trade-filters__chip[type='default'],
+.trade-filters__chip {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  min-height: 88rpx;
+  margin: 0;
+  margin-top: 0;
+  padding: 0 $spacing-sm;
+  font-size: 28rpx;
+  line-height: 1.2;
+  color: $color-neutral-600;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+
+  & + .trade-filters__chip,
+  & + taro-button-core.trade-filters__chip {
+    margin-top: 0;
+  }
+}
+
+.trade-filters__chip--active {
+  color: $color-white;
+  background-color: $color-brand-600;
+  border-color: $color-brand-600;
+}
+
+.trade-page__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 88rpx;
+  margin-top: $spacing-md;
+  font-size: 28rpx;
+  line-height: 1.2;
+  color: $color-brand-600;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+}
+
+// Loading / disabled must stay neutral-600 on white (7.81:1). Native
+// `disabled` / `.button-disabled` was white-on-white (1:1) in #321.
+.trade-page__more--disabled,
+.trade-page__more.button-disabled {
+  color: $color-neutral-600;
+  background-color: $color-white;
+  opacity: 1;
+}
+
+.trade-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin-bottom: $spacing-md;
+  background-color: $color-neutral-100;
+  border-radius: $radius-md;
+}
+
+.trade-login__text {
+  font-size: 28rpx;
+  color: $color-brand-600;
+}
+
+.trade-form__section {
+  margin-bottom: $spacing-md;
+}
+
+.trade-form__label {
+  display: block;
+  margin-bottom: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
+
+.trade-form__hint {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 24rpx;
+  line-height: 1.4;
+  color: $color-neutral-600;
+  word-break: break-word;
+}
+
+.trade-form__input,
+.trade-form__textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: $spacing-sm;
+  font-size: 26rpx;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+.trade-form__textarea {
+  min-height: 160rpx;
+}
+
+.trade-form__input--error,
+.trade-form__textarea--error,
+.trade-select--error {
+  border-color: $color-red-200;
+}
+
+.trade-form__error {
+  margin-top: $spacing-xs;
+  padding: $spacing-sm;
+  background-color: $color-red-50;
+  border: 2rpx solid $color-red-200;
+  border-radius: $radius-md;
+}
+
+.trade-form__error-text,
+.trade-select__error {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 26rpx;
+  color: $color-red-700;
+  word-break: break-word;
+}
+
+.trade-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  margin-top: $spacing-sm;
+}
+
+.trade-form__cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin-top: $spacing-sm;
+  font-size: 28rpx;
+  color: $color-brand-600;
+}
+
+.trade-select {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 0 $spacing-sm;
+  font-size: 28rpx;
+  color: $color-neutral-900;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+.trade-kind {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.trade-kind__btn {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  font-size: 28rpx;
+  color: $color-neutral-600;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+
+  &::after {
+    border: none;
+  }
+}
+
+.trade-kind__btn--active {
+  color: $color-white;
+  background-color: $color-brand-600;
+  border-color: $color-brand-600;
+}
+
+.trade-search-hit {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  margin-bottom: $spacing-xs;
+  padding: $spacing-xs;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+.trade-search-hit__text {
+  margin-left: $spacing-sm;
+  font-size: 26rpx;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.trade-card-preview {
+  display: flex;
+  align-items: center;
+  margin-top: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: $color-white;
+  border: 2rpx solid $color-neutral-300;
+  border-radius: $radius-md;
+}
+
+.trade-card-preview__text {
+  margin-left: $spacing-sm;
+  flex: 1;
+}
+
+.trade-card-preview__name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-neutral-900;
+  word-break: break-word;
+}
+
+.trade-card-preview__series {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+  word-break: break-word;
+}
+
+.trade-card-preview__change {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88rpx;
+  min-height: 88rpx;
+  font-size: 26rpx;
+  // #2563eb on the preview's #efefef is 4.49:1; brand-700 meets 4.5:1.
+  color: $color-brand-700;
+}
+
+.trade-links {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.trade-links__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  font-size: 28rpx;
+  color: $color-brand-600;
+}
+
+.trade-search-hit__thumb,
+.trade-card-preview__thumb {
+  flex-shrink: 0;
+  width: 96rpx;
+}
+
+.trade-form__count {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: 24rpx;
+  color: $color-neutral-600;
+}
