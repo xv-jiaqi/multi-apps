@@ -1,7 +1,10 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  MINIAPP_VISIT_ENSURE_FRESH_TIMEOUT_MS,
+  MINIAPP_VISIT_FOREGROUND_SKIP_MS,
+  MINIAPP_VISIT_RATE_LIMIT_BACKOFF_MS,
   MINIAPP_VISIT_STALE_MS,
   createMiniappVisitReporter,
   type MiniappVisitReporterDeps,
@@ -107,9 +110,62 @@ describe('createMiniappVisitReporter', () => {
     nowValue.current = 6_500;
     await visit.reportVisit();
     expect(calls.report).toEqual(['code-1']);
-    nowValue.current = 7_100;
+  });
+
+  it('skips a launch or foreground report within 30 minutes of a successful one', async () => {
+    const nowValue = { current: 5_000 };
+    const { reporter: visit, calls } = reporter({ nowValue });
+    await visit.reportVisit();
+    expect(calls.report).toEqual(['code-1']);
+
+    nowValue.current = 5_000 + 60_000;
+    await visit.reportVisit();
+    nowValue.current = 5_000 + MINIAPP_VISIT_FOREGROUND_SKIP_MS - 1;
+    await visit.reportVisit();
+    expect(calls.login).toBe(1);
+    expect(calls.report).toEqual(['code-1']);
+
+    nowValue.current = 5_000 + MINIAPP_VISIT_FOREGROUND_SKIP_MS + 3_000;
     await visit.reportVisit();
     expect(calls.report).toEqual(['code-1', 'code-2']);
+  });
+
+  it('keeps trying on foreground while the last report failed', async () => {
+    const nowValue = { current: 5_000 };
+    let fail = true;
+    const { reporter: visit, calls } = reporter({
+      nowValue,
+      report: async (input) => {
+        calls.report.push(input.code);
+        if (fail) throw new Error('network');
+        return { ok: true };
+      },
+    });
+    await visit.reportVisit();
+    nowValue.current = 8_000;
+    await visit.reportVisit();
+    expect(calls.report).toEqual(['code-1', 'code-2']);
+    fail = false;
+    nowValue.current = 11_000;
+    await visit.reportVisit();
+    nowValue.current = 14_000;
+    await visit.reportVisit();
+    expect(calls.report).toEqual(['code-1', 'code-2', 'code-3']);
+  });
+
+  it('reports on foreground again for a different user, and after reset', async () => {
+    const nowValue = { current: 5_000 };
+    let userId = 'alice';
+    const { reporter: visit, calls } = reporter({ nowValue, userId: () => userId });
+    await visit.reportVisit();
+    userId = 'bob';
+    nowValue.current = 8_000;
+    await visit.reportVisit();
+    expect(calls.report).toEqual(['code-1', 'code-2']);
+    visit.reset();
+    nowValue.current = 11_000;
+    await visit.reportVisit();
+    expect(calls.report).toEqual(['code-1', 'code-2', 'code-3']);
   });
 
   it('refreshes before a write only after 100 minutes, and again after a user switch', async () => {
@@ -140,6 +196,95 @@ describe('createMiniappVisitReporter', () => {
     visit.reset();
     await visit.ensureFresh();
     expect(calls.report).toEqual(['code-1', 'code-2']);
+  });
+});
+
+describe('createMiniappVisitReporter server errors and slow reports', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const notConfigured = {
+    data: { code: 'PRECONDITION_FAILED', appCode: 'MINIAPP_NOT_CONFIGURED' },
+  };
+  const tooMany = { data: { code: 'TOO_MANY_REQUESTS', appCode: 'TOO_MANY_REQUESTS' } };
+
+  it('stops reporting for the session after a 412, until sign-out', async () => {
+    const nowValue = { current: 5_000 };
+    const { reporter: visit, calls } = reporter({
+      nowValue,
+      report: async (input) => {
+        calls.report.push(input.code);
+        throw notConfigured;
+      },
+    });
+    await visit.reportVisit();
+    nowValue.current += MINIAPP_VISIT_FOREGROUND_SKIP_MS;
+    await visit.reportVisit();
+    await visit.ensureFresh();
+    expect(calls.login).toBe(1);
+    expect(calls.report).toEqual(['code-1']);
+
+    visit.reset();
+    await visit.reportVisit();
+    expect(calls.report).toEqual(['code-1', 'code-2']);
+  });
+
+  it('pauses for 10 minutes after a 429', async () => {
+    const nowValue = { current: 5_000 };
+    const { reporter: visit, calls } = reporter({
+      nowValue,
+      report: async (input) => {
+        calls.report.push(input.code);
+        throw tooMany;
+      },
+    });
+    await visit.reportVisit();
+    nowValue.current += MINIAPP_VISIT_RATE_LIMIT_BACKOFF_MS - 3_000;
+    await visit.reportVisit();
+    await visit.ensureFresh();
+    expect(calls.login).toBe(1);
+
+    nowValue.current += 3_000;
+    await visit.reportVisit();
+    expect(calls.report).toEqual(['code-1', 'code-2']);
+  });
+
+  it('does not keep a comment waiting more than 3 seconds for a slow report', async () => {
+    vi.useFakeTimers();
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { reporter: visit, calls } = reporter({
+      login: async () => {
+        calls.login += 1;
+        await gate;
+        return { code: 'late-code' };
+      },
+    });
+    let settled = false;
+    const pending = visit.ensureFresh().then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(MINIAPP_VISIT_ENSURE_FRESH_TIMEOUT_MS - 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await pending;
+    expect(settled).toBe(true);
+    expect(calls.report).toEqual([]);
+
+    release();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(calls.report).toEqual(['late-code']);
+  });
+
+  it('returns as soon as a fast report finishes, without waiting for the timeout', async () => {
+    vi.useFakeTimers();
+    const { reporter: visit, calls } = reporter({});
+    await visit.ensureFresh();
+    expect(calls.report).toEqual(['code-1']);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 

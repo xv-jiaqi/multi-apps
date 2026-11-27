@@ -31,8 +31,6 @@ const Taro = {
   removeStorageSync: () => undefined,
   request: noop,
   stopPullDownRefresh: noop,
-  getEnv: () => 'WEB',
-  ENV_TYPE: { WEB: 'WEB', WEAPP: 'WEAPP' },
 };
 export function useRouter() {
   return { params: {} as Record<string, string | undefined> };
