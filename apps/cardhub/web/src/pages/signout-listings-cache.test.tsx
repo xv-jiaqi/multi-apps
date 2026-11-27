@@ -142,19 +142,27 @@ describe('sign-out listings cache (CH-250 §2-2)', () => {
     rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
     const { router } = renderApp('/trade');
 
-    expect(await screen.findByText(CONTACT)).toBeInTheDocument();
+    expect(await screen.findByText(CONTACT, { exact: false })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '登录后查看联系方式' })).not.toBeInTheDocument();
 
+    // The card page renders the contact inside "@seller · contact", so match a
+    // substring. Wait for each route to render first: right after navigate() the
+    // previous page is still mounted, and findByText could return its node
+    // before React unmounts it.
     await router.navigate(`/cards/${CARD_SLUG}`);
-    expect(await screen.findByText(CONTACT)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: '交易意向板' })).not.toBeInTheDocument(),
+    );
+    expect(await screen.findByText(CONTACT, { exact: false })).toBeInTheDocument();
 
     await router.navigate('/trade');
-    expect(await screen.findByText(CONTACT)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '交易意向板' })).toBeInTheDocument();
+    expect(await screen.findByText(CONTACT, { exact: false })).toBeInTheDocument();
 
     signOutFromHeader();
     expect(rootStore.session.isAuthenticated).toBe(false);
     expect(router.state.location.pathname).toBe('/');
-    expect(screen.queryByText(CONTACT)).not.toBeInTheDocument();
+    expect(screen.queryByText(CONTACT, { exact: false })).not.toBeInTheDocument();
 
     // Browser back returns to the trade list immediately after sign-out.
     await router.navigate(-1);
@@ -162,18 +170,23 @@ describe('sign-out listings cache (CH-250 §2-2)', () => {
     expect(
       await screen.findByRole('heading', { name: '交易意向板' }, { timeout: 3000 }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(CONTACT)).not.toBeInTheDocument();
+    expect(screen.queryByText(CONTACT, { exact: false })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '登录后查看联系方式' })).toBeInTheDocument();
 
+    // Same wait as above: the signed-out /trade page also has this link, so
+    // without it the assertions below could read the page that is leaving.
     await router.navigate(`/cards/${CARD_SLUG}`);
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: '交易意向板' })).not.toBeInTheDocument(),
+    );
     expect(await screen.findByRole('link', { name: '登录后查看联系方式' })).toBeInTheDocument();
-    expect(screen.queryByText(CONTACT)).not.toBeInTheDocument();
+    expect(screen.queryByText(CONTACT, { exact: false })).not.toBeInTheDocument();
 
     // Clicking 交易 from the card page (or after going home) also stays clean.
     goToTrade();
     expect(router.state.location.pathname).toBe('/trade');
     expect(await screen.findByRole('heading', { name: '交易意向板' })).toBeInTheDocument();
-    expect(screen.queryByText(CONTACT)).not.toBeInTheDocument();
+    expect(screen.queryByText(CONTACT, { exact: false })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '登录后查看联系方式' })).toBeInTheDocument();
   });
 
@@ -182,7 +195,7 @@ describe('sign-out listings cache (CH-250 §2-2)', () => {
     const stop = listenForCrossTabSessionChanges();
     rootStore.session.signIn('token', { id: 'user', username: 'ada', role: 'user' });
     renderApp('/trade');
-    expect(await screen.findByText(CONTACT)).toBeInTheDocument();
+    expect(await screen.findByText(CONTACT, { exact: false })).toBeInTheDocument();
 
     window.dispatchEvent(
       new StorageEvent('storage', {
@@ -195,7 +208,9 @@ describe('sign-out listings cache (CH-250 §2-2)', () => {
 
     expect(rootStore.session.isAuthenticated).toBe(false);
     expect(await screen.findByRole('link', { name: '登录后查看联系方式' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.queryByText(CONTACT)).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText(CONTACT, { exact: false })).not.toBeInTheDocument(),
+    );
     stop();
   });
 });
