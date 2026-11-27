@@ -4,7 +4,7 @@ import { readListScroll, writeListScroll, type ListSessionKey } from './list-ses
 
 function matchingScrollNodes(selector: string): HTMLElement[] {
   if (typeof document === 'undefined') return [];
-  return [...document.querySelectorAll(selector)].filter((node) => {
+  return [...document.querySelectorAll(selector)].filter((node): node is HTMLElement => {
     if (!(node instanceof HTMLElement)) return false;
     const style = window.getComputedStyle(node);
     return style.display !== 'none' && style.visibility !== 'hidden' && node.clientHeight > 0;
