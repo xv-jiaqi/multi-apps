@@ -786,3 +786,12 @@ export type {
   UploadContentType,
   UploadPurpose,
 } from './uploads';
+
+export {
+  WECHAT_JS_CODE_MAX,
+  WECHAT_OPENID_MAX,
+  WECHAT_OPENID_MIN,
+  recordMiniappVisitInput,
+  recordMiniappVisitResult,
+} from './content-security';
+export type { RecordMiniappVisitInput, RecordMiniappVisitResult } from './content-security';

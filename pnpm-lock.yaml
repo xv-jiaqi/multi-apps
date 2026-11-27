@@ -429,6 +429,9 @@ importers:
       '@babel/preset-react':
         specifier: ^7.24.1
         version: 7.28.5(@babel/core@7.29.0)
+      '@babel/runtime':
+        specifier: 7.29.14
+        version: 7.29.14
       '@repo/config-ts':
         specifier: workspace:*
         version: link:../../../packages/config-ts

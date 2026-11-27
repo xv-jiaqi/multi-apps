@@ -39,6 +39,7 @@ describe('Redis rate limit store', () => {
       rateLimitStorePrefix('reportCreate', RATE_LIMIT_KEY_PREFIX),
       rateLimitStorePrefix('collectionUpsert', RATE_LIMIT_KEY_PREFIX),
       rateLimitStorePrefix('uploadCreatePresignedPut', RATE_LIMIT_KEY_PREFIX),
+      rateLimitStorePrefix('miniappVisit', RATE_LIMIT_KEY_PREFIX),
     ];
     expect(new Set(prefixes).size).toBe(prefixes.length);
     expect(prefixes[0]).toBe('cardhub:rl:v1:authMutation:');

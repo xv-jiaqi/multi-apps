@@ -75,4 +75,82 @@ describe('WechatApiSecCheckClient', () => {
       'WeChat msgSecCheck failed',
     );
   });
+
+  it('exchanges a login code for openid and drops session_key', async () => {
+    const calls: string[] = [];
+    const fetchImpl: typeof fetch = async (url) => {
+      calls.push(String(url));
+      return jsonResponse({
+        openid: 'o-user-1',
+        session_key: 'should-not-escape',
+        unionid: 'u-1',
+        errcode: 0,
+      });
+    };
+    const client = new WechatApiSecCheckClient({
+      appId: 'wx-app',
+      appSecret: 'wx-secret',
+      fetchImpl,
+    });
+    const result = await client.code2Session({ code: 'js-code-1' });
+    expect(result).toEqual({ ok: true, openid: 'o-user-1' });
+    expect(JSON.stringify(result)).not.toContain('should-not-escape');
+    expect(JSON.stringify(result)).not.toContain('session_key');
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toContain('https://api.weixin.qq.com/sns/jscode2session');
+    expect(calls[0]).toContain('appid=wx-app');
+    expect(calls[0]).toContain('js_code=js-code-1');
+    expect(calls[0]).toContain('grant_type=authorization_code');
+  });
+
+  it('returns a failed result when WeChat rejects the code, without leaking errmsg', async () => {
+    const fetchImpl: typeof fetch = async () =>
+      jsonResponse({ errcode: 40163, errmsg: 'code been used, session_key leaked?' });
+    const client = new WechatApiSecCheckClient({
+      appId: 'wx-app',
+      appSecret: 'wx-secret',
+      fetchImpl,
+    });
+    const result = await client.code2Session({ code: 'used-code' });
+    expect(result).toEqual({ ok: false, errcode: 40163, reason: 'invalid' });
+    expect(JSON.stringify(result)).not.toMatch(/session_key|leaked|errmsg/i);
+  });
+
+  it('returns a failed result when the HTTP call fails, without retrying', async () => {
+    let hits = 0;
+    const fetchImpl: typeof fetch = async () => {
+      hits += 1;
+      return jsonResponse({ errcode: -1, errmsg: 'system error' }, 500);
+    };
+    const client = new WechatApiSecCheckClient({
+      appId: 'wx-app',
+      appSecret: 'wx-secret',
+      fetchImpl,
+    });
+    await expect(client.code2Session({ code: 'js-code-2' })).resolves.toEqual({
+      ok: false,
+      errcode: null,
+      reason: 'http',
+    });
+    expect(hits).toBe(1);
+  });
+
+  it('returns a timeout failure without retrying or leaking secrets', async () => {
+    let hits = 0;
+    const fetchImpl: typeof fetch = async () => {
+      hits += 1;
+      const error = new Error('The operation was aborted due to timeout');
+      error.name = 'TimeoutError';
+      throw error;
+    };
+    const client = new WechatApiSecCheckClient({
+      appId: 'wx-app',
+      appSecret: 'wx-secret',
+      fetchImpl,
+    });
+    const result = await client.code2Session({ code: 'js-code-3' });
+    expect(result).toEqual({ ok: false, errcode: null, reason: 'timeout' });
+    expect(hits).toBe(1);
+    expect(JSON.stringify(result)).not.toMatch(/session_key|wx-secret|js-code-3/i);
+  });
 });

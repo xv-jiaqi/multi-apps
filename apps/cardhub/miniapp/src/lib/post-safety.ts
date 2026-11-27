@@ -3,10 +3,9 @@
  * trade publish, and card comments. D can reuse this file as well.
  *
  * Only `pass` is publicly visible on the miniapp. `unchecked` (credentials
- * missing or no openid; see content-security.service.ts around the
- * UNCHECKED early return), `review`, `blocked`, and `risky` are not.
- * wx.login / recordMiniappVisit / the openid path is scheduled
- * separately and is not implemented here.
+ * missing or no recent WeChat visit; see content-security.service.ts around
+ * the UNCHECKED early return), `review`, `blocked`, and `risky` are not.
+ * The visit report that makes a write checkable lives in miniapp-visit.ts.
  *
  * After a non-pass write, show Toast `content.submittedForReview`
  * (CH-301 §4 / §7 v1.5). Do not use or change `content.pendingReview`,

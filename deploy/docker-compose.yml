@@ -65,6 +65,14 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
+      # WeChat content security and mini-program login (CH-248 / CH-249).
+      # Empty keeps writes unchecked and recordMiniappVisit on
+      # MINIAPP_NOT_CONFIGURED. CONTENT_SECURITY_TEST_RESULT must stay
+      # unset when NODE_ENV=production.
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_MEDIA_CHECK_CALLBACK_TOKEN: ${WECHAT_MEDIA_CHECK_CALLBACK_TOKEN:-}
+      CONTENT_SECURITY_TEST_RESULT: ${CONTENT_SECURITY_TEST_RESULT:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { randomUUID } from 'node:crypto';
 import type { ContentSafetyKind, ContentSafetyStatus } from '@prisma/client';
+import { APP_ERROR_CODES, t } from '@repo/shared';
 import {
   contentSecurityEnvError,
   readContentSecurityEnv,
@@ -18,6 +19,7 @@ import {
 } from './image-urls';
 import {
   WechatApiSecCheckClient,
+  type Code2SessionResult,
   type MsgSecCheckScene,
   type WechatSecCheckClient,
 } from './wechat-sec-check.client';
@@ -50,9 +52,16 @@ interface ActorRow {
 
 @Injectable()
 export class ContentSecurityService {
+  private readonly logger = new Logger(ContentSecurityService.name);
   private envReader: () => ContentSecurityEnv = () => readContentSecurityEnv();
   private wechatOverride: WechatSecCheckClient | undefined;
+  private code2SessionOverride:
+    | ((input: { code: string }) => Promise<Code2SessionResult>)
+    | undefined;
   private nowFn: () => number = Date.now;
+  private logOverride:
+    | ((level: 'log' | 'warn', message: string, payload: Record<string, unknown>) => void)
+    | undefined;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -60,11 +69,15 @@ export class ContentSecurityService {
   useTestHooks(hooks: {
     env?: () => ContentSecurityEnv;
     wechat?: WechatSecCheckClient;
+    code2Session?: (input: { code: string }) => Promise<Code2SessionResult>;
     now?: () => number;
+    log?: (level: 'log' | 'warn', message: string, payload: Record<string, unknown>) => void;
   }): this {
     if (hooks.env) this.envReader = hooks.env;
     if (hooks.wechat) this.wechatOverride = hooks.wechat;
+    if (hooks.code2Session) this.code2SessionOverride = hooks.code2Session;
     if (hooks.now) this.nowFn = hooks.now;
+    if (hooks.log) this.logOverride = hooks.log;
     return this;
   }
 
@@ -241,11 +254,75 @@ export class ContentSecurityService {
     });
   }
 
-  async recordMiniappVisit(input: { userId: string; openid: string }): Promise<void> {
+  /**
+   * Exchange a one-time login code for openid and record a mini-program visit.
+   * A client-supplied openid is never accepted as identity and never written.
+   * session_key is never stored or logged. The same code is never retried.
+   * Missing or invalid code does not write (never fail-open).
+   */
+  async recordMiniappVisit(input: { userId: string; code?: string }): Promise<void> {
+    const code = input.code;
+    if (typeof code !== 'string' || code.length === 0) {
+      // Already-deployed clients send only the deprecated openid. Answer ok so
+      // they do not see a 400, but record nothing: no code means no identity.
+      this.safeLog('log', 'miniapp visit skipped without code', {
+        event: 'miniapp_visit_skipped_no_code',
+        userId: input.userId,
+      });
+      return;
+    }
+    const env = this.env();
+    if (!env.credentialsConfigured) {
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message: t('zh-CN', 'error.app.MINIAPP_NOT_CONFIGURED'),
+        cause: { appCode: APP_ERROR_CODES.MINIAPP_NOT_CONFIGURED },
+      });
+    }
+    const exchanged = await this.exchangeLoginCode({ code });
+    if (exchanged.ok === false) {
+      this.safeLog('warn', 'miniapp code2Session failed', {
+        event: 'miniapp_code2session_failed',
+        userId: input.userId,
+        errcode: exchanged.errcode,
+        reason: exchanged.reason,
+      });
+      throw new TRPCError({
+        code: 'BAD_GATEWAY',
+        message: t('zh-CN', 'error.app.BAD_GATEWAY'),
+        cause: { appCode: APP_ERROR_CODES.BAD_GATEWAY },
+      });
+    }
     await this.prisma.user.update({
       where: { id: input.userId },
-      data: { wechatOpenid: input.openid, miniappLastSeenAt: new Date(this.now()) },
+      data: { wechatOpenid: exchanged.openid, miniappLastSeenAt: new Date(this.now()) },
     });
+    this.safeLog('log', 'miniapp visit recorded', {
+      event: 'miniapp_visit_recorded',
+      userId: input.userId,
+    });
+  }
+
+  private async exchangeLoginCode(input: { code: string }): Promise<Code2SessionResult> {
+    if (this.code2SessionOverride) {
+      return this.code2SessionOverride(input);
+    }
+    const env = this.env();
+    const client = new WechatApiSecCheckClient({
+      appId: env.appId,
+      appSecret: env.appSecret,
+    });
+    return client.code2Session(input);
+  }
+
+  private safeLog(level: 'log' | 'warn', message: string, payload: Record<string, unknown>): void {
+    if (this.logOverride) {
+      this.logOverride(level, message, payload);
+      return;
+    }
+    const line = `${message} ${JSON.stringify(payload)}`;
+    if (level === 'warn') this.logger.warn(line);
+    else this.logger.log(line);
   }
 
   private requireNonProductionSwitch(env: ContentSecurityEnv): ContentSecurityEnv {

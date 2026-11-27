@@ -62,6 +62,20 @@ describe('rate limit proxy IP handling', () => {
     ).toBe(true);
   });
 
+  it('keeps contentSecurity.recordMiniappVisit at 10 per hour per user, 100 per IP', () => {
+    expect(userRateLimitConfigs.miniappVisit).toEqual({ windowMs: 3_600_000, limit: 10 });
+    expect(productionRateLimitConfigs.miniappVisit.windowMs).toBe(3_600_000);
+    expect(productionRateLimitConfigs.miniappVisit.limit).toBe(100);
+    expect(
+      productionRateLimitConfigs.miniappVisit.skip({
+        url: '/trpc/contentSecurity.recordMiniappVisit',
+      }),
+    ).toBe(false);
+    expect(productionRateLimitConfigs.miniappVisit.skip({ url: '/trpc/listings.publish' })).toBe(
+      true,
+    );
+  });
+
   it('27-12: user and IP layers match CH-227 §1 and §2 27-C', () => {
     const hour = 3_600_000;
     expect(userRateLimitConfigs).toEqual({
@@ -72,6 +86,7 @@ describe('rate limit proxy IP handling', () => {
       reportCreate: { windowMs: hour, limit: 20 },
       collectionUpsert: { windowMs: 60_000, limit: 60 },
       uploadCreatePresignedPut: { windowMs: 60_000, limit: 10 },
+      miniappVisit: { windowMs: hour, limit: 10 },
     });
     expect(IP_FALLBACK_MULTIPLIER).toBe(10);
     const ip = Object.fromEntries(
@@ -89,6 +104,7 @@ describe('rate limit proxy IP handling', () => {
       reportCreate: { windowMs: hour, limit: 200 },
       collectionUpsert: { windowMs: 60_000, limit: 600 },
       uploadCreatePresignedPut: { windowMs: 60_000, limit: 100 },
+      miniappVisit: { windowMs: hour, limit: 100 },
     });
   });
 

@@ -40,6 +40,20 @@ const mediaCheckResponseSchema = z.object({
   trace_id: z.string().min(1).optional(),
 });
 
+const code2SessionResponseSchema = z.object({
+  openid: z.string().min(1).optional(),
+  session_key: z.string().optional(),
+  unionid: z.string().optional(),
+  errcode: z.number().optional(),
+  errmsg: z.string().optional(),
+});
+
+export type Code2SessionFailureReason = 'invalid' | 'timeout' | 'http';
+
+export type Code2SessionResult =
+  | { ok: true; openid: string }
+  | { ok: false; errcode: number | null; reason: Code2SessionFailureReason };
+
 interface TokenCache {
   accessToken: string;
   expiresAtMs: number;
@@ -104,6 +118,37 @@ export class WechatApiSecCheckClient implements WechatSecCheckClient {
       throw new Error('WeChat mediaCheckAsync failed');
     }
     return { traceId: parsed.data.trace_id };
+  }
+
+  /**
+   * Exchange a one-time `wx.login` code for openid. `session_key` is read
+   * from the payload only to drop it; it is never returned or retained.
+   * Callers must not retry the same code.
+   */
+  async code2Session(input: { code: string }): Promise<Code2SessionResult> {
+    const url =
+      'https://api.weixin.qq.com/sns/jscode2session' +
+      `?appid=${encodeURIComponent(this.options.appId)}` +
+      `&secret=${encodeURIComponent(this.options.appSecret)}` +
+      `&js_code=${encodeURIComponent(input.code)}` +
+      '&grant_type=authorization_code';
+    let payload: unknown;
+    try {
+      payload = await this.getJson(url);
+    } catch (error) {
+      const timedOut =
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        (error.name === 'TimeoutError' || error.name === 'AbortError');
+      return { ok: false, errcode: null, reason: timedOut ? 'timeout' : 'http' };
+    }
+    const parsed = code2SessionResponseSchema.safeParse(payload);
+    if (!parsed.success) return { ok: false, errcode: null, reason: 'invalid' };
+    if ((parsed.data.errcode ?? 0) !== 0 || !parsed.data.openid) {
+      return { ok: false, errcode: parsed.data.errcode ?? null, reason: 'invalid' };
+    }
+    return { ok: true, openid: parsed.data.openid };
   }
 
   private async accessToken(): Promise<string> {
