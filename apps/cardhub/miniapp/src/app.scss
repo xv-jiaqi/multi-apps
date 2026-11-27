@@ -45,3 +45,65 @@ taro-button-core.primary-button.primary-button--disabled,
   background-color: $color-neutral-100;
   opacity: 1;
 }
+
+// CH-301 §5: Field label color lives in a class (like PrimaryButton), not an inline hex.
+.ui-mini-field__label,
+taro-text.ui-mini-field__label {
+  color: $color-neutral-600;
+}
+
+// H5 status toast: auto-dismissed in JS, pinned to the top so it does not
+// cover the bottom composer. Weapp uses Taro.showToast instead.
+.miniapp-status-toast {
+  position: fixed;
+  top: $spacing-md;
+  right: $spacing-md;
+  left: $spacing-md;
+  z-index: 10;
+  padding: $spacing-sm $spacing-md;
+  text-align: center;
+  background-color: $color-neutral-900;
+  border-radius: $radius-md;
+  // Clicks must reach controls the bar may visually cover (breadcrumbs).
+  pointer-events: none;
+}
+
+.miniapp-status-toast--bottom {
+  top: auto;
+  bottom: $spacing-md;
+}
+
+.miniapp-status-toast__text {
+  font-size: 28rpx;
+  line-height: 1.4;
+  color: $color-white;
+  pointer-events: none;
+}
+
+
+// CH-301 §5 v1.8: H5 uses a real <button>/<a> so Tab can focus it.
+// Do not use a `button` tag selector: Taro H5 compiles it to
+// `taro-button-core`, which does not match the native <button>.
+// Do not set `font: inherit` here — it has the same specificity as
+// `.primary-button` and would override the 30rpx token size.
+.h5-focusable {
+  appearance: none;
+  margin: 0;
+  cursor: pointer;
+}
+
+.h5-focusable:disabled {
+  cursor: default;
+}
+
+.h5-focusable.primary-button {
+  box-sizing: border-box;
+  width: 100%;
+  border: none;
+}
+
+.h5-focusable-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}

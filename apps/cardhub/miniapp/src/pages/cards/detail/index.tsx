@@ -21,6 +21,9 @@ import { nextNoticeId, type Notice } from '../../../lib/notice';
 import { useBlock } from '../../../lib/use-block';
 import { ArtworkMini } from '../../../components/artwork-mini';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
+import { StatusToast } from '../../../components/status-toast';
+import { isPublicSafetyStatus, SUBMITTED_FOR_REVIEW_KEY } from '../../../lib/post-safety';
+import { useStatusToast } from '../../../lib/status-toast';
 import './index.scss';
 
 type CardBySlugResult = Awaited<ReturnType<typeof trpc.cards.bySlug.query>>;
@@ -61,6 +64,7 @@ export default observer(function CardDetailPage() {
   const [commentError, setCommentError] = useState<Notice<{ text: string }> | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const toast = useStatusToast();
 
   useEffect(() => {
     void loadCard();
@@ -84,16 +88,23 @@ export default observer(function CardDetailPage() {
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      await trpc.comments.create.mutate(parsed.data);
+      const created = await trpc.comments.create.mutate(parsed.data);
       setCommentContent('');
-      void Taro.showToast({ title: tt('miniapp.toast.commentOk'), icon: 'success' });
-      await loadComments({ fresh: true });
+      if (!isPublicSafetyStatus(created.safetyStatus)) {
+        toast.show(tt(SUBMITTED_FOR_REVIEW_KEY));
+        return;
+      }
+      toast.show(tt('miniapp.toast.commentOk'));
+      await loadComments({ fresh: true, keepDataOnError: true });
     } catch (error) {
       showCommentError(
         mutationErrorMessage({
           locale: locale.locale,
           error,
-          copy: { [APP_ERROR_CODES.TOO_MANY_REQUESTS]: tt('card.detail.commentRateLimited') },
+          copy: {
+            [APP_ERROR_CODES.CONTENT_BLOCKED]: tt('content.blocked'),
+            [APP_ERROR_CODES.TOO_MANY_REQUESTS]: tt('card.detail.commentRateLimited'),
+          },
         }),
       );
     } finally {
@@ -204,7 +215,7 @@ export default observer(function CardDetailPage() {
                       <Text className="comment-form__error-text">{commentError.text}</Text>
                     </View>
                   ) : null}
-                  <View className="comment-form__footer">
+                  <View className="comment-form__footer" data-toast-avoid>
                     <Text className="card-detail-page__meta comment-form__count">
                       {commentContent.length} / 500
                     </Text>
@@ -221,7 +232,7 @@ export default observer(function CardDetailPage() {
                 </View>
               ) : (
                 <Link to="/pages/auth/login/index" className="comment-login">
-                  <Text className="card-detail-page__link">{tt('card.detail.loginToComment')}</Text>
+                  <Text className="comment-login__text">{tt('card.detail.loginToComment')}</Text>
                 </Link>
               )}
 
@@ -259,6 +270,7 @@ export default observer(function CardDetailPage() {
             </SectionCard>
           </View>
         )}
+        <StatusToast notice={toast.notice} />
       </View>
     </ScrollView>
   );

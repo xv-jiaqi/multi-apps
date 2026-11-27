@@ -1,5 +1,5 @@
-import { Button } from '@tarojs/components';
 import type { ButtonProps } from '@tarojs/components';
+import { FocusableButton } from './focusable-button';
 
 export interface PrimaryButtonProps extends ButtonProps {
   label: string;
@@ -19,6 +19,9 @@ export interface PrimaryButtonProps extends ButtonProps {
  * Taro H5 also still fires `onClick` on a disabled button. Do not pass
  * `onClick` while disabled, and set `aria-disabled` so assistive tech
  * matches the visual state.
+ *
+ * On H5 this renders a real `<button>` so it is in the tab order (CH-301
+ * §5): `taro-button-core` has a default tabIndex of -1.
  */
 export function PrimaryButton({
   label,
@@ -30,26 +33,17 @@ export function PrimaryButton({
 }: PrimaryButtonProps) {
   const isDisabled = Boolean(disabled);
   return (
-    <Button
+    <FocusableButton
       {...rest}
       className={['primary-button', isDisabled ? 'primary-button--disabled' : '', className]
         .filter(Boolean)
         .join(' ')}
       hoverClass={hoverClass ?? 'primary-button--pressed'}
-      type="default"
-      {...(isDisabled
-        ? ({
-            disabled: true,
-            // Taro ButtonProps typings omit aria-disabled; both forms so H5
-            // and assistive tech can see the state.
-            ariaDisabled: true,
-            'aria-disabled': true,
-          } as ButtonProps)
-        : onClick
-          ? { onClick }
-          : {})}
+      disabled={isDisabled ? true : undefined}
+      aria-disabled={isDisabled ? true : undefined}
+      onClick={isDisabled ? undefined : onClick}
     >
       {label}
-    </Button>
+    </FocusableButton>
   );
 }

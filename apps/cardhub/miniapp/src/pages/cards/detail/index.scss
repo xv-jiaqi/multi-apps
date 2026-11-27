@@ -121,11 +121,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: $spacing-sm;
   margin-top: $spacing-sm;
 }
 
 .comment-form__count {
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .comment-login {
@@ -136,6 +138,11 @@
   margin-bottom: $spacing-md;
   background-color: $color-neutral-100;
   border-radius: $radius-md;
+}
+
+.comment-login__text {
+  font-size: 28rpx;
+  color: $color-brand-600;
 }
 
 .comment-item {

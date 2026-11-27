@@ -9,11 +9,38 @@ type AnyProps = Record<string, unknown> & { children?: ReactNode };
 
 function domProps(props: AnyProps): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(props)) {
-    if (key === 'className' || key === 'style' || key === 'onClick' || key === 'disabled') {
+  const native = (props.nativeProps as Record<string, unknown> | undefined) ?? {};
+  const merged = { ...native, ...props };
+  for (const [key, value] of Object.entries(merged)) {
+    if (key === 'nativeProps') continue;
+    if (
+      key === 'className' ||
+      key === 'style' ||
+      key === 'onClick' ||
+      key === 'onKeyDown' ||
+      key === 'disabled' ||
+      key === 'id' ||
+      key === 'tabIndex' ||
+      key === 'role'
+    ) {
       out[key] = value;
-    } else if (key === 'aria-disabled' || key === 'ariaRole') {
+    } else if (
+      key === 'aria-disabled' ||
+      key === 'aria-describedby' ||
+      key === 'aria-labelledby' ||
+      key === 'aria-label' ||
+      key === 'aria-pressed' ||
+      key === 'ariaRole'
+    ) {
       out[key === 'ariaRole' ? 'role' : key] = value;
+    } else if (key === 'ariaLabelledBy') {
+      out['aria-labelledby'] = value;
+    } else if (key === 'ariaLabel') {
+      out['aria-label'] = value;
+    } else if (key === 'ariaPressed') {
+      out['aria-pressed'] = value;
+    } else if (key === 'maxlength') {
+      out.maxLength = value;
     }
   }
   return out;
