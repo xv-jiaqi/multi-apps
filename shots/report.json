@@ -1,7 +1,7 @@
 {
-  "headSha": "41afd59c451496ff4100fd9a7fedc1fd86726380",
+  "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212",
   "failed": 0,
-  "shots": 29,
+  "shots": 36,
   "report": [
     {
       "viewport": 375,
@@ -1635,6 +1635,41 @@
       "viewport": 375,
       "name": "trade-list-toast-focus-home-zh-375",
       "headSha": "41afd59c451496ff4100fd9a7fedc1fd86726380"
+    },
+    {
+      "viewport": 375,
+      "name": "after-publish-landing-zh-375",
+      "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212"
+    },
+    {
+      "viewport": 1440,
+      "name": "after-publish-landing-zh-1440",
+      "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212"
+    },
+    {
+      "viewport": 375,
+      "name": "after-publish-focus-zh-375-0ms",
+      "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212"
+    },
+    {
+      "viewport": 375,
+      "name": "after-publish-focus-zh-375-50ms",
+      "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212"
+    },
+    {
+      "viewport": 375,
+      "name": "after-publish-focus-zh-375-250ms",
+      "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212"
+    },
+    {
+      "viewport": 375,
+      "name": "after-publish-focus-zh-375-1000ms",
+      "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212"
+    },
+    {
+      "viewport": 375,
+      "name": "after-publish-focus-zh-375-3000ms",
+      "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212"
     }
   ]
 }

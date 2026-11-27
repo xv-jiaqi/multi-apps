@@ -1,7 +1,7 @@
 {
   "title": "Trade publish submit sends one request despite extra clicks",
   "method": "Click submit once (request hung), then click the disabled button 3 more times with force:true.",
-  "headSha": "dc0fa64a13c68fd87b2517e59edea06c44bdbbbe",
+  "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212",
   "results": [
     {
       "name": "trade-publish-submit-clicks",

@@ -1,0 +1,495 @@
+{
+  "headSha": "91fb3bcc830c8093e81463b17e3ef706ccb47212",
+  "cases": [
+    {
+      "tag": "landing-375",
+      "ok": true,
+      "landing": {
+        "windowScrollY": 0,
+        "listScrollTop": 0,
+        "lists": [
+          {
+            "cls": "trade-page taro-scroll-view__scroll-y",
+            "scrollTop": 457,
+            "clientHeight": 812,
+            "scrollHeight": 1269,
+            "display": "block"
+          },
+          {
+            "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+            "scrollTop": 0,
+            "clientHeight": 812,
+            "scrollHeight": 8875,
+            "display": "block"
+          }
+        ],
+        "home": {
+          "x": 16,
+          "y": 16,
+          "w": 24,
+          "h": 19.2,
+          "inVp": true
+        },
+        "toast": {
+          "text": "意向已发布",
+          "y": 16,
+          "h": 48,
+          "top": "16px",
+          "pe": "none"
+        },
+        "active": {
+          "tag": "BODY",
+          "text": "交易意向板首页 / 交易意向板 / 发布交易意向",
+          "y": null
+        },
+        "hash": "#/pages/trade/list/index",
+        "innerH": 812
+      }
+    },
+    {
+      "tag": "focus-stay-375",
+      "ok": true,
+      "samples": [
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page taro-scroll-view__scroll-y",
+              "scrollTop": 457,
+              "clientHeight": 812,
+              "scrollHeight": 1269,
+              "display": "block"
+            },
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 812,
+              "scrollHeight": 8875,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 16,
+            "y": 16,
+            "w": 24,
+            "h": 19.2,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 51.2,
+            "h": 48,
+            "top": "51.1875px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 16
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 812,
+          "t": 0
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page taro-scroll-view__scroll-y",
+              "scrollTop": 457,
+              "clientHeight": 812,
+              "scrollHeight": 1269,
+              "display": "block"
+            },
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 812,
+              "scrollHeight": 8875,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 16,
+            "y": 16,
+            "w": 24,
+            "h": 19.2,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 51.2,
+            "h": 48,
+            "top": "51.1875px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 16
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 812,
+          "t": 50
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 812,
+              "scrollHeight": 8875,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 16,
+            "y": 16,
+            "w": 24,
+            "h": 19.2,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 51.2,
+            "h": 48,
+            "top": "51.1875px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 16
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 812,
+          "t": 250
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 812,
+              "scrollHeight": 8875,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 16,
+            "y": 16,
+            "w": 24,
+            "h": 19.2,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 51.2,
+            "h": 48,
+            "top": "51.1875px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 16
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 812,
+          "t": 1000
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 812,
+              "scrollHeight": 8875,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 16,
+            "y": 16,
+            "w": 24,
+            "h": 19.2,
+            "inVp": true
+          },
+          "toast": null,
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 16
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 812,
+          "t": 3000
+        }
+      ]
+    },
+    {
+      "tag": "landing-1440",
+      "ok": true,
+      "landing": {
+        "windowScrollY": 0,
+        "listScrollTop": 0,
+        "lists": [
+          {
+            "cls": "trade-page taro-scroll-view__scroll-y",
+            "scrollTop": 1575,
+            "clientHeight": 900,
+            "scrollHeight": 2475,
+            "display": "block"
+          },
+          {
+            "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+            "scrollTop": 0,
+            "clientHeight": 900,
+            "scrollHeight": 17686,
+            "display": "block"
+          }
+        ],
+        "home": {
+          "x": 32,
+          "y": 32,
+          "w": 48,
+          "h": 38.4,
+          "inVp": true
+        },
+        "toast": {
+          "text": "意向已发布",
+          "y": 32,
+          "h": 96,
+          "top": "32px",
+          "pe": "none"
+        },
+        "active": {
+          "tag": "BODY",
+          "text": "交易意向板首页 / 交易意向板 / 发布交易意向",
+          "y": null
+        },
+        "hash": "#/pages/trade/list/index",
+        "innerH": 900
+      }
+    },
+    {
+      "tag": "focus-stay-1440",
+      "ok": true,
+      "samples": [
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page taro-scroll-view__scroll-y",
+              "scrollTop": 1575,
+              "clientHeight": 900,
+              "scrollHeight": 2475,
+              "display": "block"
+            },
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 900,
+              "scrollHeight": 17686,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 32,
+            "y": 32,
+            "w": 48,
+            "h": 38.4,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 102.4,
+            "h": 96,
+            "top": "102.391px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 32
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 900,
+          "t": 0
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page taro-scroll-view__scroll-y",
+              "scrollTop": 1575,
+              "clientHeight": 900,
+              "scrollHeight": 2475,
+              "display": "block"
+            },
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 900,
+              "scrollHeight": 17686,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 32,
+            "y": 32,
+            "w": 48,
+            "h": 38.4,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 102.4,
+            "h": 96,
+            "top": "102.391px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 32
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 900,
+          "t": 50
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 900,
+              "scrollHeight": 17686,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 32,
+            "y": 32,
+            "w": 48,
+            "h": 38.4,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 102.4,
+            "h": 96,
+            "top": "102.391px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 32
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 900,
+          "t": 250
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 900,
+              "scrollHeight": 17686,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 32,
+            "y": 32,
+            "w": 48,
+            "h": 38.4,
+            "inVp": true
+          },
+          "toast": {
+            "text": "意向已发布",
+            "y": 102.4,
+            "h": 96,
+            "top": "102.391px",
+            "pe": "none"
+          },
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 32
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 900,
+          "t": 1000
+        },
+        {
+          "windowScrollY": 0,
+          "listScrollTop": 0,
+          "lists": [
+            {
+              "cls": "trade-page trade-list-page taro-scroll-view__scroll-y",
+              "scrollTop": 0,
+              "clientHeight": 900,
+              "scrollHeight": 17686,
+              "display": "block"
+            }
+          ],
+          "home": {
+            "x": 32,
+            "y": 32,
+            "w": 48,
+            "h": 38.4,
+            "inVp": true
+          },
+          "toast": null,
+          "active": {
+            "tag": "A",
+            "text": "首页",
+            "y": 32
+          },
+          "hash": "#/pages/trade/list/index",
+          "innerH": 900,
+          "t": 3000
+        }
+      ]
+    },
+    {
+      "tag": "noteHint-quotes",
+      "ok": true,
+      "hint": "联系方式请填在「联系方式」栏"
+    },
+    {
+      "tag": "crumb-click-through",
+      "ok": true,
+      "hashAfter": "#/pages/index/index",
+      "clickMeasure": {
+        "pe": "none",
+        "centerHitInToast": false,
+        "centerHitIsLink": true
+      },
+      "toastText": "意向已发布"
+    },
+    {
+      "tag": "toast-duration",
+      "ok": true,
+      "visibleMs": 3311,
+      "toastText": "意向已发布"
+    }
+  ]
+}
