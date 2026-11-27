@@ -601,22 +601,27 @@ describe('ContentSecurityService.recordMiniappVisit', () => {
     expect(JSON.stringify(logs)).not.toMatch(/session_key|wx-secret|js-code-1/i);
   });
 
-  it('ignores a client-supplied openid and does not write when no code is sent', async () => {
+  it('ignores a client-supplied openid: no code means no write, no WeChat call, and no error', async () => {
     const { service, prisma } = makeService({ env: configured });
+    const logs: { message: string; payload: Record<string, unknown> }[] = [];
     let calls = 0;
     service.useTestHooks({
       code2Session: async () => {
         calls += 1;
         return { ok: true, openid: 'o-from-wechat' };
       },
+      log: (_level, message, payload) => logs.push({ message, payload }),
     });
 
-    await expect(service.recordMiniappVisit({ userId: 'user-1' })).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      cause: { appCode: APP_ERROR_CODES.VALIDATION },
-    });
+    await expect(service.recordMiniappVisit({ userId: 'user-1' })).resolves.toBeUndefined();
     expect(calls).toBe(0);
     expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(logs).toEqual([
+      {
+        message: 'miniapp visit skipped without code',
+        payload: { event: 'miniapp_visit_skipped_no_code', userId: 'user-1' },
+      },
+    ]);
   });
 
   it('returns BAD_GATEWAY on a code2Session timeout, does not write, and hides secrets', async () => {

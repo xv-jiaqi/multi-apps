@@ -263,11 +263,13 @@ export class ContentSecurityService {
   async recordMiniappVisit(input: { userId: string; code?: string }): Promise<void> {
     const code = input.code;
     if (typeof code !== 'string' || code.length === 0) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: t('zh-CN', 'error.app.VALIDATION'),
-        cause: { appCode: APP_ERROR_CODES.VALIDATION },
+      // Already-deployed clients send only the deprecated openid. Answer ok so
+      // they do not see a 400, but record nothing: no code means no identity.
+      this.safeLog('log', 'miniapp visit skipped without code', {
+        event: 'miniapp_visit_skipped_no_code',
+        userId: input.userId,
       });
+      return;
     }
     const env = this.env();
     if (!env.credentialsConfigured) {

@@ -75,24 +75,10 @@ describe('contentSecurity.recordMiniappVisit', () => {
     expect(message).not.toMatch(/WECHAT_|APP_SECRET|openid|session_key|process\.env/i);
   });
 
-  it('ignores a legacy openid-only payload and does not pass it to the service', async () => {
-    const seen: { userId: string; code?: string }[] = [];
-    const { call, contentSecurity } = makeCaller(async (input) => {
-      seen.push(input);
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: t('zh-CN', 'error.app.VALIDATION'),
-        cause: { appCode: APP_ERROR_CODES.VALIDATION },
-      });
-    });
-    const error = await call(member())
-      .recordMiniappVisit({ openid: 'o-spoofed' })
-      .catch((thrown: unknown) => thrown);
-    expect(error).toMatchObject({
-      code: 'BAD_REQUEST',
-      cause: { appCode: APP_ERROR_CODES.VALIDATION },
-    });
-    expect(seen).toEqual([{ userId: 'user-1', code: undefined }]);
+  it('answers ok to a legacy openid-only payload and never passes the openid to the service', async () => {
+    const { call, contentSecurity } = makeCaller();
+    const result = await call(member()).recordMiniappVisit({ openid: 'o-spoofed' });
+    expect(result).toEqual({ ok: true });
     expect(contentSecurity.recordMiniappVisit).toHaveBeenCalledTimes(1);
     expect(contentSecurity.recordMiniappVisit).toHaveBeenCalledWith({
       userId: 'user-1',
