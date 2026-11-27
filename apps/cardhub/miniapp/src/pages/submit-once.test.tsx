@@ -22,6 +22,8 @@ const taro = vi.hoisted(() => ({
   getStorageSync: vi.fn(() => ''),
   setStorageSync: vi.fn(),
   removeStorageSync: vi.fn(),
+  getEnv: vi.fn(() => 'WEB'),
+  ENV_TYPE: { WEB: 'WEB', WEAPP: 'WEAPP' },
 }));
 vi.mock('@tarojs/taro', () => ({
   default: taro,
@@ -205,7 +207,7 @@ describe('card comments list after posting', () => {
     createdAt: '2026-11-25T00:00:00.000Z',
     replies: [],
     replyCount: 0,
-    safetyStatus: 'review',
+    safetyStatus: 'pass',
   };
 
   // Slow network: the first list request (sent on mount, before the comment
@@ -244,4 +246,42 @@ describe('card comments list after posting', () => {
       expect(container.querySelector('.comment-item__content')?.textContent).toBe('好卡');
     },
   );
+
+  it('does not refresh the list when the comment is not publicly visible', async () => {
+    api.listForCard.mockReset();
+    api.listForCard.mockResolvedValue([]);
+    api.commentCreate.mockResolvedValue({ ...mine, safetyStatus: 'unchecked' });
+    const { container } = render(<CardDetailPage />);
+    await waitFor(() => expect(container.querySelector('textarea')).not.toBeNull());
+    type(container, 'textarea', '好卡');
+    await act(async () => {
+      submitButton(container).click();
+    });
+    await waitFor(() => expect(api.commentCreate).toHaveBeenCalledTimes(1));
+    expect(api.listForCard).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('content.submittedForReview');
+    expect(container.textContent).not.toContain('评论成功');
+    expect(container.textContent).not.toContain('miniapp.toast.commentOk');
+    expect(container.querySelector('[role="status"]')?.textContent).toContain(
+      'content.submittedForReview',
+    );
+    expect(taro.showToast).not.toHaveBeenCalled();
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toBe('');
+  });
+
+  it('shows a 3000ms role=status toast on pass and does not use Taro.showToast', async () => {
+    api.listForCard.mockReset();
+    api.listForCard.mockResolvedValue([]);
+    api.commentCreate.mockResolvedValue(mine);
+    const { container } = render(<CardDetailPage />);
+    await waitFor(() => expect(container.querySelector('textarea')).not.toBeNull());
+    type(container, 'textarea', '好卡');
+    await act(async () => {
+      submitButton(container).click();
+    });
+    await waitFor(() => expect(api.commentCreate).toHaveBeenCalledTimes(1));
+    const status = container.querySelector('[role="status"]');
+    expect(status?.textContent ?? '').toMatch(/评论成功|Comment posted|miniapp.toast.commentOk/);
+    expect(taro.showToast).not.toHaveBeenCalled();
+  });
 });

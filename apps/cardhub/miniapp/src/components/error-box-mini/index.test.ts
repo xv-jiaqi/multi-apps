@@ -16,7 +16,11 @@ import { ErrorBoxMini } from './index';
 
 function buttonOf(el: { props: { children: unknown } }) {
   const kids = Array.isArray(el.props.children) ? el.props.children : [el.props.children];
-  return kids.find((k) => k && (k as { type?: { name?: string } }).type?.name === 'Button') as {
+  return kids.find(
+    (k) =>
+      k &&
+      ['Button', 'FocusableButton'].includes((k as { type?: { name?: string } }).type?.name ?? ''),
+  ) as {
     props: Record<string, unknown>;
   };
 }

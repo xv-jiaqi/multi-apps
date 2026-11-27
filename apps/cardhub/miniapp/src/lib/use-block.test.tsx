@@ -3,7 +3,7 @@ import { act, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useBlock } from './use-block';
 
-type Load = (options?: { fresh?: boolean }) => Promise<void>;
+type Load = (options?: { fresh?: boolean; keepDataOnError?: boolean }) => Promise<void>;
 
 function harness(fetcher: () => Promise<string>) {
   const ref: { load: Load | null; state: unknown } = { load: null, state: null };
@@ -138,5 +138,36 @@ describe('useBlock.load after a write and on sync errors', () => {
     });
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(block.state).toMatchObject({ data: 'ok', failure: null, loading: false });
+  });
+});
+
+describe('useBlock.load keepDataOnError', () => {
+  it('keeps existing data and rejects when a fresh refresh fails', async () => {
+    const first = deferred<string>();
+    const refresh = deferred<string>();
+    const fetcher = vi
+      .fn<() => Promise<string>>()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(refresh.promise);
+    const block = harness(fetcher);
+    let mounted!: Promise<void>;
+    act(() => {
+      mounted = block.load!();
+    });
+    await act(async () => {
+      first.resolve('topic');
+      await mounted;
+    });
+    expect(block.state).toMatchObject({ data: 'topic', failure: null, loading: false });
+
+    let failed!: Promise<void>;
+    act(() => {
+      failed = block.load!({ fresh: true, keepDataOnError: true });
+    });
+    await act(async () => {
+      refresh.reject(new Error('refresh failed'));
+      await expect(failed).rejects.toThrow('refresh failed');
+    });
+    expect(block.state).toMatchObject({ data: 'topic', failure: null, loading: false });
   });
 });

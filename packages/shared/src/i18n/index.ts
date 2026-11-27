@@ -1069,14 +1069,18 @@ const zhCN: Dictionary = {
   'report.detailLabel': '补充说明',
   'report.detailRequired': '请填写补充说明（至少 4 个字）',
   'report.submitFailed': '提交失败，请重试',
-  'content.blocked': '内容未通过审核，请修改后再提交',
+  'content.blocked': '内容未通过审核，没有发布。',
   'content.pendingReview': '审核中',
+  'content.submittedForReview': '已提交，审核通过后显示。',
   'tab.home': '首页',
   'tab.forum': '论坛',
   'tab.trade': '交易',
   'tab.me': '我的',
   'forum.list.loadFailed': '论坛加载失败',
+  'forum.detail.loadFailed': '话题加载失败',
+  'forum.reply.postedRefreshFailed': '已发出，列表暂未更新',
   'trade.list.loadFailed': '交易意向加载失败',
+  'trade.publish.success': '意向已发布',
 };
 
 const enUS: Dictionary = {
@@ -2203,14 +2207,18 @@ const enUS: Dictionary = {
   'report.detailLabel': 'More details',
   'report.detailRequired': 'Add details (at least 4 characters)',
   'report.submitFailed': "Couldn't submit. Try again.",
-  'content.blocked': "This didn't pass review. Edit and try again.",
+  'content.blocked': "This didn't pass review and wasn't published.",
   'content.pendingReview': 'Under review',
+  'content.submittedForReview': "Submitted. It'll show after review.",
   'tab.home': 'Home',
   'tab.forum': 'Forum',
   'tab.trade': 'Trade',
   'tab.me': 'Me',
   'forum.list.loadFailed': "Couldn't load topics",
+  'forum.detail.loadFailed': "Couldn't load topic",
+  'forum.reply.postedRefreshFailed': "Posted. The list hasn't refreshed yet.",
   'trade.list.loadFailed': "Couldn't load listings",
+  'trade.publish.success': 'Listing posted',
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {
