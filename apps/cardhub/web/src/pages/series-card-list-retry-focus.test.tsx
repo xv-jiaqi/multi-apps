@@ -70,6 +70,7 @@ function useSeriesListQuery() {
 }
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     cards: {
       listBySeries: {

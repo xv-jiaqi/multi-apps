@@ -1078,6 +1078,8 @@ const zhCN: Dictionary = {
   'tab.trade': '交易',
   'tab.me': '我的',
   'forum.list.loadFailed': '论坛加载失败',
+  'forum.detail.loadFailed': '话题加载失败',
+  'forum.reply.postedRefreshFailed': '已发出，列表暂未更新',
   'trade.list.loadFailed': '交易意向加载失败',
   'trade.publish.success': '意向已发布',
 };
@@ -2214,6 +2216,8 @@ const enUS: Dictionary = {
   'tab.trade': 'Trade',
   'tab.me': 'Me',
   'forum.list.loadFailed': "Couldn't load topics",
+  'forum.detail.loadFailed': "Couldn't load topic",
+  'forum.reply.postedRefreshFailed': "Posted. The list hasn't refreshed yet.",
   'trade.list.loadFailed': "Couldn't load listings",
   'trade.publish.success': 'Listing posted',
 };

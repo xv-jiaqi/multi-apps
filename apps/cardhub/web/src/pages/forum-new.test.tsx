@@ -9,6 +9,7 @@ import { SAMPLE_F, expectSampleFDom, sampleFRoots } from '../../test/ch223-sampl
 const createMutate = vi.fn();
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({ forum: { topics: { list: { invalidate: vi.fn() } } } }),
     search: {

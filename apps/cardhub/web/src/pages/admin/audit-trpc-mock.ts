@@ -70,6 +70,7 @@ function queryResult() {
 }
 
 export const auditTrpcMock = {
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     search: {
       global: {

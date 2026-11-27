@@ -46,6 +46,12 @@ taro-button-core.primary-button.primary-button--disabled,
   opacity: 1;
 }
 
+// CH-301 §5: Field label color lives in a class (like PrimaryButton), not an inline hex.
+.ui-mini-field__label,
+taro-text.ui-mini-field__label {
+  color: $color-neutral-600;
+}
+
 // H5 status toast: auto-dismissed in JS, pinned to the top so it does not
 // cover the bottom composer. Weapp uses Taro.showToast instead.
 .miniapp-status-toast {

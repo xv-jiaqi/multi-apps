@@ -34,10 +34,12 @@ function domProps(props: AnyProps): Record<string, unknown> {
       key === 'ariaRole'
     ) {
       out[key === 'ariaRole' ? 'role' : key] = value;
-    } else if (key === 'ariaPressed') {
-      out['aria-pressed'] = value;
+    } else if (key === 'ariaLabelledBy') {
+      out['aria-labelledby'] = value;
     } else if (key === 'ariaLabel') {
       out['aria-label'] = value;
+    } else if (key === 'ariaPressed') {
+      out['aria-pressed'] = value;
     } else if (key === 'maxlength') {
       out.maxLength = value;
     }

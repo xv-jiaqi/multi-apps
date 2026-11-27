@@ -91,6 +91,7 @@ function queryResult() {
 }
 
 export const usersTrpcMock = {
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       admin: {

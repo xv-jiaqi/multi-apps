@@ -37,10 +37,10 @@ export function Field({
   return (
     <View style={rpxStyle({ display: 'block', marginBottom: '24rpx' })}>
       <Text
+        className="ui-mini-field__label"
         style={rpxStyle({
           display: 'block',
           fontSize: '24rpx',
-          color: '#6b7280',
           marginBottom: '8rpx',
           textTransform: 'uppercase',
           letterSpacing: '2rpx',

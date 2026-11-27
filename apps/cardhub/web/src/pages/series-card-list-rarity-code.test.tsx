@@ -55,6 +55,7 @@ function answer(input: Input) {
 }
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     cards: {
       listBySeries: {

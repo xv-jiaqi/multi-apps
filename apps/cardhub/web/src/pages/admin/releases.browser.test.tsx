@@ -60,6 +60,7 @@ const list: {
 };
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     useUtils: () => ({
       admin: { releases: { list: { invalidate: vi.fn() } } },

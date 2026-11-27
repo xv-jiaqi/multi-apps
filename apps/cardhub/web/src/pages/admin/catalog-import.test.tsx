@@ -23,6 +23,7 @@ const importImpl: {
 };
 
 vi.mock('../../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     admin: {
       catalog: {

@@ -6,6 +6,7 @@ import { useStores } from '../stores/root-store';
 import { trpc } from '../lib/trpc';
 import { dataErrorRetryClassName, ErrorBox } from './error-box';
 import { ReportButton } from './report-button';
+import { ContactSignInLink } from './contact-sign-in-link';
 import { queryFallback, useFocusOnRecovery } from './retry-button';
 
 interface ListingsForCardProps {
@@ -122,18 +123,21 @@ export const ListingsForCard = observer(function ListingsForCard({
                     <span className="font-semibold text-neutral-900">{priceLabel}</span>
                   </div>
                   {facets ? <p className="truncate text-xs text-neutral-600">{facets}</p> : null}
-                  <p className="truncate text-xs text-muted">
-                    @{listing.seller?.username ?? '-'} ·{' '}
+                  <p
+                    className={
+                      listing.contact === null
+                        ? 'wrap-anywhere text-xs text-muted'
+                        : 'truncate text-xs text-muted'
+                    }
+                  >
+                    @{listing.seller?.username ?? '-'}
                     {listing.contact === null ? (
-                      <Link
-                        to="/login"
-                        state={{ from: `${location.pathname}${location.search}` }}
-                        className="text-link hover:underline"
-                      >
-                        {tt('trade.list.contactSignIn')}
-                      </Link>
-                    ) : (
-                      listing.contact
+                      <>
+                        {' '}
+                        · <ContactSignInLink from={`${location.pathname}${location.search}`} />
+                      </>
+                    ) : listing.contact.trim() === '' ? null : (
+                      <> · {listing.contact}</>
                     )}
                   </p>
                 </div>

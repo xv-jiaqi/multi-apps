@@ -99,6 +99,7 @@ describe('tabBar labels on tab pages (CH-301 §1)', () => {
   it('every tab page calls applyTabBarLabels in useDidShow', () => {
     for (const file of [
       'pages/index/index.tsx',
+      'pages/forum/list/index.tsx',
       'pages/trade/list/index.tsx',
       'pages/me/index.tsx',
     ]) {

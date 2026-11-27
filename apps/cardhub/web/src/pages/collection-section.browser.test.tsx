@@ -54,6 +54,7 @@ const mock = vi.hoisted(() => ({
 }));
 
 vi.mock('../lib/trpc', () => ({
+  clearActiveQueryClient: vi.fn(),
   trpc: {
     collection: {
       progress: { useQuery: () => mock.progress },
