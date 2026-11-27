@@ -7,7 +7,7 @@ export function goToLogin(): void {
   void Taro.navigateTo({ url: LOGIN_PAGE });
 }
 
-/** Replace the current non-tab page (e.g. publish) so returning from login cannot loop. */
+/** Replace the current page so returning from login cannot re-open it and loop. */
 export function redirectToLogin(): void {
   void Taro.redirectTo({ url: LOGIN_PAGE });
 }

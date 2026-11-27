@@ -19,20 +19,19 @@ describe('pickStatusToastPlacement', () => {
     ).toBe('top');
   });
 
-  it('moves to the bottom when the submit row sits under the top toast', () => {
-    // Button at y≈20, count at y 33–52 — the case 周扒皮 measured.
+  it('shifts just below a top control rather than jumping to the bottom', () => {
+    // Submit at y≈20 would be covered by the top slot. Prefer a mid slot
+    // under that row so the toast does not land on a bottom composer.
     expect(
       pickStatusToastPlacement({
         viewport,
         toastSize,
         avoid: [box(16, 20, 274, 44), box(0, 33, 68, 19)],
       }),
-    ).toBe('bottom');
+    ).toEqual({ top: 80 });
   });
 
-  it('stays at the top when only the bottom slot would cover the report cancel button', () => {
-    // Bottom toast is y=748–796 on a 812-tall viewport; a cancel row there
-    // must not force the toast downward.
+  it('stays at the top when only the bottom slot would cover a control', () => {
     expect(
       pickStatusToastPlacement({
         viewport,
@@ -43,8 +42,6 @@ describe('pickStatusToastPlacement', () => {
   });
 
   it('shifts below the top avoid when both default slots would cover controls', () => {
-    // Top toast (16–64) covers a submit row; bottom toast (748–796) clips
-    // a textarea. A mid slot just below the submit row is clear.
     expect(
       pickStatusToastPlacement({
         viewport,
@@ -54,8 +51,7 @@ describe('pickStatusToastPlacement', () => {
     ).toEqual({ top: 80 });
   });
 
-  it('does not sit on a bottom-of-viewport Report button when the submit row is at the top', () => {
-    // 颜如玉: bottom toast 748–796 covered 举报 at y≈777. Mid slot is clear.
+  it('does not sit on a bottom-of-viewport control when the top slot is blocked', () => {
     expect(
       pickStatusToastPlacement({
         viewport,
@@ -65,12 +61,23 @@ describe('pickStatusToastPlacement', () => {
     ).toEqual({ top: 80 });
   });
 
-  it('yields below a focused breadcrumb when the bottom slot also has a control', () => {
+  it('yields below a focused breadcrumb instead of covering it', () => {
+    // 颜如玉: 首页 at y=16–35 is 100% covered by the top toast (16–64).
     expect(
       pickStatusToastPlacement({
         viewport,
         toastSize,
         avoid: [box(16, 16, 24, 19), box(16, 748, 343, 44)],
+      }),
+    ).toEqual({ top: 51 });
+  });
+
+  it('yields below a focused breadcrumb even when the bottom slot is clear', () => {
+    expect(
+      pickStatusToastPlacement({
+        viewport,
+        toastSize,
+        avoid: [box(16, 16, 24, 19)],
       }),
     ).toEqual({ top: 51 });
   });

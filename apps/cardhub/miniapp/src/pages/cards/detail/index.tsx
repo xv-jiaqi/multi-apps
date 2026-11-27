@@ -28,6 +28,7 @@ import {
 import { FORM_ROOT_ID } from '../../../components/report-entry';
 import { ErrorBoxMini } from '../../../components/error-box-mini';
 import { StatusToast } from '../../../components/status-toast';
+import { isPublicSafetyStatus, SUBMITTED_FOR_REVIEW_KEY } from '../../../lib/post-safety';
 import { useStatusToast } from '../../../lib/status-toast';
 import './index.scss';
 
@@ -112,16 +113,23 @@ export default observer(function CardDetailPage() {
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      await trpc.comments.create.mutate(parsed.data);
+      const created = await trpc.comments.create.mutate(parsed.data);
       setCommentContent('');
-      void Taro.showToast({ title: tt('miniapp.toast.commentOk'), icon: 'success' });
-      await loadComments({ fresh: true });
+      if (!isPublicSafetyStatus(created.safetyStatus)) {
+        toast.show(tt(SUBMITTED_FOR_REVIEW_KEY));
+        return;
+      }
+      toast.show(tt('miniapp.toast.commentOk'));
+      await loadComments({ fresh: true, keepDataOnError: true });
     } catch (error) {
       showCommentError(
         mutationErrorMessage({
           locale: locale.locale,
           error,
-          copy: { [APP_ERROR_CODES.TOO_MANY_REQUESTS]: tt('card.detail.commentRateLimited') },
+          copy: {
+            [APP_ERROR_CODES.CONTENT_BLOCKED]: tt('content.blocked'),
+            [APP_ERROR_CODES.TOO_MANY_REQUESTS]: tt('card.detail.commentRateLimited'),
+          },
         }),
       );
     } finally {
@@ -259,9 +267,7 @@ export default observer(function CardDetailPage() {
                   </View>
                 ) : (
                   <Link to="/pages/auth/login/index" className="comment-login">
-                    <Text className="card-detail-page__link">
-                      {tt('card.detail.loginToComment')}
-                    </Text>
+                    <Text className="comment-login__text">{tt('card.detail.loginToComment')}</Text>
                   </Link>
                 )}
 

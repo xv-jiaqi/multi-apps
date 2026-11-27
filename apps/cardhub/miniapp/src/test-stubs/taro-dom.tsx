@@ -38,6 +38,8 @@ function domProps(props: AnyProps): Record<string, unknown> {
       out['aria-checked'] = value;
     } else if (key === 'ariaDisabled') {
       out['aria-disabled'] = value;
+    } else if (key === 'ariaPressed') {
+      out['aria-pressed'] = value;
     } else if (key === 'maxlength') {
       out.maxLength = value;
     }

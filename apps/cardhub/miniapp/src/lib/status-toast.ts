@@ -1,17 +1,117 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Taro from '@tarojs/taro';
-import { isWebEnv } from './env';
 import { nextNoticeId, type Notice } from './notice';
 
 const TOAST_MS = 3000;
 
+let queued: string | null = null;
+
+export function enqueueStatusToast(text: string): void {
+  queued = text;
+}
+
+export function consumeQueuedStatusToast(): string | null {
+  const text = queued;
+  queued = null;
+  return text;
+}
+
+/** For tests. */
+export function resetQueuedStatusToast(): void {
+  queued = null;
+}
+
+export function isWebEnv(): boolean {
+  const env = typeof Taro.getEnv === 'function' ? String(Taro.getEnv()) : '';
+  return env === '' || env === 'WEB';
+}
+
+/**
+ * Native Toast on weapp (auto-dismisses, no custom bar). On H5, a
+ * role=status node that auto-dismisses after 3s. When leaving the
+ * current page, pass `persistAcrossPages` so the next page can show
+ * the H5 node; weapp still uses Taro.showToast which survives navigation.
+ */
+type LiveDisplay = (text: string) => void;
+let liveDisplay: LiveDisplay | null = null;
+
+export function announceStatusToast(
+  text: string,
+  options?: { persistAcrossPages?: boolean },
+): void {
+  if (!isWebEnv()) {
+    void Taro.showToast({ title: text, icon: 'none', duration: TOAST_MS });
+    if (options?.persistAcrossPages) enqueueStatusToast(text);
+    return;
+  }
+  if (options?.persistAcrossPages) {
+    enqueueStatusToast(text);
+    return;
+  }
+  if (liveDisplay) {
+    liveDisplay(text);
+    return;
+  }
+  enqueueStatusToast(text);
+}
+
+export function useStatusToast(): {
+  notice: Notice<{ text: string }> | null;
+  show: (text: string, options?: { persistAcrossPages?: boolean }) => void;
+  consumeQueued: () => void;
+} {
+  const [notice, setNotice] = useState<Notice<{ text: string }> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const display = (text: string) => {
+    clearTimer();
+    if (!isWebEnv()) {
+      void Taro.showToast({ title: text, icon: 'none', duration: TOAST_MS });
+      setNotice(null);
+      return;
+    }
+    setNotice({ id: nextNoticeId(), text });
+    timerRef.current = setTimeout(() => setNotice(null), TOAST_MS);
+  };
+
+  const show = (text: string, options?: { persistAcrossPages?: boolean }) => {
+    if (options?.persistAcrossPages) {
+      if (!isWebEnv()) {
+        void Taro.showToast({ title: text, icon: 'none', duration: TOAST_MS });
+      }
+      enqueueStatusToast(text);
+      return;
+    }
+    display(text);
+  };
+
+  const consumeQueued = () => {
+    const text = consumeQueuedStatusToast();
+    if (text) display(text);
+  };
+
+  useEffect(() => {
+    liveDisplay = display;
+    return () => {
+      if (liveDisplay === display) liveDisplay = null;
+    };
+  });
+
+  useEffect(() => () => clearTimer(), []);
+
+  return { notice, show, consumeQueued };
+}
+
 export const STATUS_TOAST_DURATION_MS = TOAST_MS;
 
 export type Rect = { x: number; y: number; width: number; height: number };
-
-export function rectsOverlap(a: Rect, b: Rect): boolean {
-  return overlapArea(a, b) > 0;
-}
 
 export function overlapArea(a: Rect, b: Rect): number {
   const width = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
@@ -19,15 +119,14 @@ export function overlapArea(a: Rect, b: Rect): number {
   return width > 0 && height > 0 ? width * height : 0;
 }
 
+export function rectsOverlap(a: Rect, b: Rect): boolean {
+  return overlapArea(a, b) > 0;
+}
+
 export type StatusToastPlacement = 'top' | 'bottom' | { top: number };
 
 function slotRect(y: number, toastSize: { width: number; height: number; inset: number }): Rect {
-  return {
-    x: toastSize.inset,
-    y,
-    width: toastSize.width,
-    height: toastSize.height,
-  };
+  return { x: toastSize.inset, y, width: toastSize.width, height: toastSize.height };
 }
 
 function totalOverlap(slot: Rect, avoid: readonly Rect[]): number {
@@ -35,10 +134,11 @@ function totalOverlap(slot: Rect, avoid: readonly Rect[]): number {
 }
 
 /**
- * Prefer the top of the viewport. Check both the top and bottom slots
- * against controls we must keep visible (submit, count, report form,
- * report/delete buttons). If both default slots would overlap, try a
- * mid-viewport slot that covers no avoid box (CH-301 §2.4 / WCAG 2.4.11).
+ * Prefer the top slot. If it would cover a control we must keep visible
+ * (submit, count) or the focused control (WCAG 2.4.11), first try a mid
+ * slot just below those top obstacles so the toast yields without jumping
+ * onto a bottom composer. Fall back to the bottom slot, then a slot above
+ * bottom obstacles, then the side with less overlap.
  */
 export function pickStatusToastPlacement(args: {
   viewport: { width: number; height: number };
@@ -53,7 +153,6 @@ export function pickStatusToastPlacement(args: {
   const topArea = totalOverlap(top, avoid);
   const bottomArea = totalOverlap(bottom, avoid);
   if (topArea === 0) return 'top';
-  if (bottomArea === 0) return 'bottom';
 
   const topHits = avoid.filter((box) => overlapArea(top, box) > 0);
   const belowTop = Math.max(...topHits.map((box) => box.y + box.height)) + toastSize.inset;
@@ -62,6 +161,8 @@ export function pickStatusToastPlacement(args: {
       return { top: belowTop };
     }
   }
+
+  if (bottomArea === 0) return 'bottom';
 
   const bottomHits = avoid.filter((box) => overlapArea(bottom, box) > 0);
   const aboveBottom =
@@ -73,38 +174,6 @@ export function pickStatusToastPlacement(args: {
   }
 
   return bottomArea < topArea ? 'bottom' : 'top';
-}
-
-export { isWebEnv };
-
-export function useStatusToast(): {
-  notice: Notice<{ text: string }> | null;
-  show: (text: string) => void;
-} {
-  const [notice, setNotice] = useState<Notice<{ text: string }> | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const show = (text: string) => {
-    clearTimer();
-    if (!isWebEnv()) {
-      void Taro.showToast({ title: text, icon: 'none', duration: TOAST_MS });
-      setNotice(null);
-      return;
-    }
-    setNotice({ id: nextNoticeId(), text });
-    timerRef.current = setTimeout(() => setNotice(null), TOAST_MS);
-  };
-
-  useEffect(() => () => clearTimer(), []);
-
-  return { notice, show };
 }
 
 const DEFAULT_AVOID = '[data-toast-avoid]';
@@ -137,7 +206,7 @@ export function collectStatusToastAvoidRects(avoidSelector: string = DEFAULT_AVO
   return avoid;
 }
 
-/** Measure avoid boxes and pick top vs bottom while a toast is visible. */
+/** Measure avoid boxes and pick a slot while a toast is visible. */
 export function useStatusToastPlacement(
   notice: Notice<{ text: string }> | null,
   avoidSelector: string = DEFAULT_AVOID,

@@ -1,5 +1,5 @@
-import { Button, Text, View } from '@tarojs/components';
-import type { ButtonProps } from '@tarojs/components';
+import { Text, View } from '@tarojs/components';
+import { FocusableButton } from '@repo/ui-mini';
 import './index.scss';
 
 export interface ErrorBoxMiniProps {
@@ -26,21 +26,15 @@ export function ErrorBoxMini({
   return (
     <View className="error-box-mini" ariaRole="alert">
       <Text className="error-box-mini__title">{title}</Text>
-      <Button
+      <FocusableButton
         className="error-box-mini__retry"
-        // Taro H5 writes `disabled="false"`, which still matches `[disabled]`,
-        // and still fires onClick on a disabled button.
         disabled={retrying ? true : undefined}
+        aria-disabled={retrying ? true : undefined}
         ariaLabel={retrying ? retryingLabel : retryLabel}
-        {...(retrying
-          ? ({
-              ariaDisabled: true,
-              'aria-disabled': true,
-            } as ButtonProps)
-          : { onClick: () => onRetry() })}
+        onClick={retrying ? undefined : () => onRetry()}
       >
         {retrying ? retryingLabel : retryLabel}
-      </Button>
+      </FocusableButton>
     </View>
   );
 }
