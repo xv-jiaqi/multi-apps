@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { APP_ERROR_CODES, t } from '@repo/shared';
 import { TrpcBase } from '../../trpc/trpc-base';
 import type { TrpcContext } from '../../trpc/context';
+import type { UserRateLimiter } from '../../bootstrap/rate-limiters';
 import { ContentSecurityRouter } from './content-security.router';
 import { stubContentSecurity } from './content-security.test-stub';
 
@@ -16,9 +17,14 @@ function member(overrides: Partial<NonNullable<TrpcContext['user']>> = {}): Trpc
   };
 }
 
+const allowAll: UserRateLimiter = {
+  hit: async () => ({ limited: false, totalHits: 1, limit: 10 }),
+};
+
 function makeCaller(
   recordMiniappVisit: (input: { userId: string; code?: string }) => Promise<void> = async () =>
     undefined,
+  userRateLimit: UserRateLimiter = allowAll,
 ) {
   const contentSecurity = stubContentSecurity({
     recordMiniappVisit: jest.fn(recordMiniappVisit),
@@ -31,6 +37,7 @@ function makeCaller(
         req: {} as never,
         res: {} as never,
         user,
+        userRateLimit,
       }),
   };
 }
@@ -97,5 +104,42 @@ describe('contentSecurity.recordMiniappVisit', () => {
     });
     expect(result).toEqual({ ok: true });
     expect(seen).toEqual([{ userId: 'user-1', code: 'js-code-1' }]);
+  });
+
+  it('rejects a banned caller before the quota and the service', async () => {
+    const hit = jest.fn(allowAll.hit);
+    const { call, contentSecurity } = makeCaller(undefined, { hit });
+    await expect(
+      call(member({ bannedAt: new Date() })).recordMiniappVisit({ code: 'js-code-1' }),
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      cause: { appCode: APP_ERROR_CODES.USER_BANNED },
+    });
+    expect(hit).not.toHaveBeenCalled();
+    expect(contentSecurity.recordMiniappVisit).not.toHaveBeenCalled();
+  });
+
+  it('counts the call on the miniappVisit quota and refuses over it before the service', async () => {
+    const hit = jest.fn<ReturnType<UserRateLimiter['hit']>, Parameters<UserRateLimiter['hit']>>(
+      async () => ({ limited: true, totalHits: 11, limit: 10, retryAfterSeconds: 30 }),
+    );
+    const { call, contentSecurity } = makeCaller(undefined, { hit });
+    await expect(call(member()).recordMiniappVisit({ code: 'js-code-1' })).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+      cause: { appCode: APP_ERROR_CODES.TOO_MANY_REQUESTS },
+    });
+    expect(hit).toHaveBeenCalledWith('miniappVisit', 'user-1');
+    expect(contentSecurity.recordMiniappVisit).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the context has no limiter', async () => {
+    const { contentSecurity } = makeCaller();
+    const router = new ContentSecurityRouter(new TrpcBase(), contentSecurity).build();
+    await expect(
+      router
+        .createCaller({ req: {} as never, res: {} as never, user: member() })
+        .recordMiniappVisit({ code: 'js-code-1' }),
+    ).rejects.toMatchObject({ code: 'INTERNAL_SERVER_ERROR' });
+    expect(contentSecurity.recordMiniappVisit).not.toHaveBeenCalled();
   });
 });

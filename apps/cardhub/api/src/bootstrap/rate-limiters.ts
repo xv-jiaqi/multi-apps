@@ -28,7 +28,8 @@ export type RateLimitName =
   | 'listingPublish'
   | 'reportCreate'
   | 'collectionUpsert'
-  | 'uploadCreatePresignedPut';
+  | 'uploadCreatePresignedPut'
+  | 'miniappVisit';
 
 /** Write limiters. Each has a per-user layer and an IP fallback layer. */
 export type WriteRateLimitName = Exclude<RateLimitName, 'authMutation'>;
@@ -362,6 +363,20 @@ class RedisMemoryFallbackStore implements Store {
     }
   }
 
+  /**
+   * Same as increment, but says whether Redis failed and the in-process
+   * counter answered. Callers that guard an outbound call use it to refuse
+   * instead of trusting a per-replica counter.
+   */
+  async incrementWithStatus(key: string) {
+    try {
+      return { result: await this.redisStore.increment(key), degraded: false };
+    } catch (error) {
+      noteRedisRateLimitError(error);
+      return { result: await this.memoryStore.increment(key), degraded: true };
+    }
+  }
+
   async decrement(key: string): Promise<void> {
     try {
       await this.redisStore.decrement(key);
@@ -500,6 +515,18 @@ export type ClearLoginAccountLimit = (identifier: string) => Promise<void>;
 
 type RateLimitWindow = RateLimitOverrideConfig;
 
+/**
+ * Limits that guard a call to a third party. When Redis is down they refuse
+ * the call (fail closed) instead of counting in process, because a per-replica
+ * counter does not bound what reaches the third party.
+ */
+export const FAIL_CLOSED_RATE_LIMIT_NAMES: ReadonlySet<WriteRateLimitName> = new Set([
+  'miniappVisit',
+]);
+
+/** Retry-After sent when a fail-closed limit refuses because Redis is down. */
+export const STORE_DOWN_RETRY_AFTER_SECONDS = 30;
+
 export const WRITE_RATE_LIMIT_NAMES: readonly WriteRateLimitName[] = [
   'commentCreate',
   'forumTopicCreate',
@@ -508,6 +535,7 @@ export const WRITE_RATE_LIMIT_NAMES: readonly WriteRateLimitName[] = [
   'reportCreate',
   'collectionUpsert',
   'uploadCreatePresignedPut',
+  'miniappVisit',
 ];
 
 /** Per-user quota of each write (CH-227 §1). One count per tRPC call. */
@@ -519,6 +547,9 @@ export const userRateLimitConfigs: Record<WriteRateLimitName, RateLimitWindow> =
   reportCreate: { windowMs: 60 * 60_000, limit: 20 },
   collectionUpsert: { windowMs: 60_000, limit: 60 },
   uploadCreatePresignedPut: { windowMs: 60_000, limit: 10 },
+  // Each counted call can become one jscode2session request to WeChat, so
+  // this is the quota that protects the WeChat app (CH-249 §限流).
+  miniappVisit: { windowMs: 60 * 60_000, limit: 10 },
 };
 
 /**
@@ -554,6 +585,7 @@ export const productionRateLimitConfigs: Record<RateLimitName, RateLimitConfig> 
   reportCreate: ipFallback('reportCreate', 'reports.create'),
   collectionUpsert: ipFallback('collectionUpsert', 'collection.upsert'),
   uploadCreatePresignedPut: ipFallback('uploadCreatePresignedPut', 'uploads.createPresignedPut'),
+  miniappVisit: ipFallback('miniappVisit', 'contentSecurity.recordMiniappVisit'),
 };
 
 export function createRateLimiters(
@@ -680,29 +712,51 @@ export function createUserRateLimiter(
   overrides: RateLimitOverrides = {},
   keyPrefix: string = defaultRateLimitPrefix(),
 ): UserRateLimiter {
-  const limiters = new Map<WriteRateLimitName, { window: RateLimitWindow; store: Store }>();
+  const limiters = new Map<
+    WriteRateLimitName,
+    { window: RateLimitWindow; store: RedisMemoryFallbackStore }
+  >();
   for (const name of WRITE_RATE_LIMIT_NAMES) {
     const window = { ...userRateLimitConfigs[name], ...overrides[name] };
     const store = createRedisStore(redis, userRateLimitStorePrefix(name, keyPrefix));
     initStore(store, window);
     limiters.set(name, { window, store });
   }
+
+  function verdictFor(
+    window: RateLimitWindow,
+    hit: { totalHits: number; resetTime?: Date | undefined },
+  ): UserRateLimitVerdict {
+    const limit = window.limit;
+    if (hit.totalHits <= limit) return { limited: false, totalHits: hit.totalHits, limit };
+    const now = Date.now();
+    // Both stores return resetTime; a missing one means a full window is left.
+    const reset = hit.resetTime ?? new Date(now + window.windowMs);
+    return {
+      limited: true,
+      totalHits: hit.totalHits,
+      limit,
+      retryAfterSeconds: retryAfterSeconds({ resetTime: reset, now }),
+    };
+  }
+
   return {
     async hit(name, userId) {
       const limiter = limiters.get(name);
       if (!limiter) throw new Error(`unknown user rate limit ${name}`);
-      const { totalHits, resetTime } = await limiter.store.increment(userId);
-      const limit = limiter.window.limit;
-      if (totalHits <= limit) return { limited: false, totalHits, limit };
-      const now = Date.now();
-      // Both stores return resetTime; a missing one means a full window is left.
-      const reset = resetTime ?? new Date(now + limiter.window.windowMs);
-      return {
-        limited: true,
-        totalHits,
-        limit,
-        retryAfterSeconds: retryAfterSeconds({ resetTime: reset, now }),
-      };
+      if (FAIL_CLOSED_RATE_LIMIT_NAMES.has(name)) {
+        const { result, degraded } = await limiter.store.incrementWithStatus(userId);
+        if (degraded) {
+          return {
+            limited: true,
+            totalHits: result.totalHits,
+            limit: limiter.window.limit,
+            retryAfterSeconds: STORE_DOWN_RETRY_AFTER_SECONDS,
+          };
+        }
+        return verdictFor(limiter.window, result);
+      }
+      return verdictFor(limiter.window, await limiter.store.increment(userId));
     },
   };
 }
