@@ -173,7 +173,12 @@ describe('sign-out listings cache (CH-250 §2-2)', () => {
     expect(screen.queryByText(CONTACT, { exact: false })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '登录后查看联系方式' })).toBeInTheDocument();
 
+    // Same wait as above: the signed-out /trade page also has this link, so
+    // without it the assertions below could read the page that is leaving.
     await router.navigate(`/cards/${CARD_SLUG}`);
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: '交易意向板' })).not.toBeInTheDocument(),
+    );
     expect(await screen.findByRole('link', { name: '登录后查看联系方式' })).toBeInTheDocument();
     expect(screen.queryByText(CONTACT, { exact: false })).not.toBeInTheDocument();
 
